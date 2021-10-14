@@ -20,6 +20,10 @@
 *
          GBLC &ZSYS               Declare variable for system
 *
+* Will we activate AMODE 64 for z/Arch target?
+*
+         GBLC &ZAM64              Declare variable for AM64
+*
 * Do we want to support environments like MVS/XA needing step down?
 *
          GBLC &STEPD              Declare variable for step-down
@@ -37,6 +41,7 @@
 &COMP    SETC 'GCC'               Indicate that this is for GCC
 * &COMP    SETC 'IBMC'            Indicate that this is for IBM C
 &ZSYS    SETC 'ZARCH'    Define either S370, S380, S390 or ZARCH
+&ZAM64   SETC 'NO'      Use AM64 on z/Arch (otherwise AM31)
 &STEPD   SETC 'YES'               Indicate we want to step down
 &OUTM    SETC 'M'                 Indicate move mode
 * &OUTM    SETC 'L'               Indicate locate mode

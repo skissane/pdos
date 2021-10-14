@@ -69,7 +69,7 @@ AMBIT    EQU X'80000000'
 AMBIT    EQU X'00000000'
 .AMB24B  ANOP
 *
-         AIF ('&ZSYS' NE 'ZARCH').AMZB24A
+         AIF ('&ZAM64' NE 'YES').AMZB24A
 AM64BIT  EQU X'00000001'
          AGO .AMZB24B
 .AMZB24A ANOP
@@ -847,7 +847,7 @@ CRNEWIO  DC    X'000C0000'  machine check, EC, DAT off
          DC    A(AMBIT+CRCONT)  continuation after I/O request
          AGO   .ZNEWIOF
 .ZNEWIOE ANOP
-CRWTNER  DC    X'060E0001'  I/O, machine check, EC, wait, DAT on
+CRWTNER  DC    A(X'060E0000'+AM64BIT)
          DC    A(AMBIT)     no error
 CRNEWIO  DC    A(X'00040000'+AM64BIT)
          DC    A(AMBIT)

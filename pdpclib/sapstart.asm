@@ -61,7 +61,7 @@ AMBIT    EQU X'00000000'
 *
 *
 *
-         AIF ('&ZSYS' NE 'ZARCH').AMZB24A
+         AIF ('&ZAM64' NE 'YES').AMZB24A
 AM64BIT  EQU X'00000001'
          AGO .AMZB24B
 .AMZB24A ANOP
@@ -119,7 +119,9 @@ POSTIPL  DS    0H
 * Adding 1 will activate AM64
          LA    R2,POSTIPLZ+1
 *         LA    R2,POSTIPLZ-POSTIPL+1(R12)
+         AIF ('&ZAM64' NE 'YES').NOBSM
          BSM   R0,R2
+.NOBSM   ANOP
 POSTIPLZ DS    0H
          MVC   FLCEINPW(16),WAITER4
          MVC   FLCEMNPW(16),WAITER1
