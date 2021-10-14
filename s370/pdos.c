@@ -245,7 +245,11 @@ old virtual memory map:
 
 /* mandate maximum address space for z/Arch */
 #if defined(ZARCH)
+#ifndef ZAM31
 #define MAXASIZE 4080 /* 16 less than theoretical maximum */
+#else
+#define MAXASIZE 2032 /* 16 less than theoretical maximum */
+#endif
 #define MAXANUM 1
 #endif
 
@@ -2922,7 +2926,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         pdos->context->regs[14] = (int)gotret;
         pdos->context->regs[15] = entry;
         pdos->context->psw1 = PSW_ENABLE_INT; /* need to enable interrupts */
-#if defined(ZARCH)
+#if defined(ZARCH) && !defined(ZAM31)
         pdos->context->psw1 |= 1; /* dispatch in 64-bit mode */
 #endif
         pdos->context->psw2 = entry; /* 24-bit mode for now */

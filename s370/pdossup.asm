@@ -36,7 +36,7 @@ AMBIT    EQU X'80000000'
 AMBIT    EQU X'00000000'
 .AMB24B  ANOP
 *
-         AIF ('&ZSYS' NE 'ZARCH').AMZB24A
+         AIF ('&ZAM64' NE 'YES').AMZB24A
 AM64BIT  EQU X'00000001'
          AGO .AMZB24B
 .AMZB24A ANOP
@@ -370,13 +370,19 @@ DREAD    DS    0H
          ST    R14,FLCESOPW+12
          NI    FLCESOPW+12,X'00'
          ST    R14,FLCESOPW+4
+         AIF   ('&ZAM64' NE 'YES').STAY24A
          OI    FLCESOPW+4,X'80'
+         AGO   .STAY24B
+.STAY24A ANOP
+         NI    FLCESOPW+4,X'00'
+.STAY24B ANOP
 *         NI    FLCESOPW+3,X'FE'
 .ZRDB    ANOP
          LM    R0,R15,FLCFLA          Load OS registers
 *
 * We need to return to 31-bit mode, which PDOS may be operating in.
-         AIF   ('&ZSYS' EQ 'S370' OR '&ZSYS' EQ 'ZARCH').MOD24G
+         AIF   ('&ZSYS' EQ 'S370' OR                                   +
+                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24G
          CALL  @@SETM31
 .MOD24G  ANOP
          LA    R15,3
@@ -403,13 +409,19 @@ DWRITE   DS    0H
          ST    R14,FLCESOPW+12
          NI    FLCESOPW+12,X'00'
          ST    R14,FLCESOPW+4
+         AIF   ('&ZAM64' NE 'YES').STAY24C
          OI    FLCESOPW+4,X'80'
+         AGO   .STAY24D
+.STAY24C ANOP
+         NI    FLCESOPW+4,X'00'
+.STAY24D ANOP
 *         NI    FLCESOPW+3,X'FE'
 .ZWRB    ANOP
          LM    R0,R15,FLCFLA          Load OS registers
 *
 * We need to return to 31-bit mode, which PDOS may be operating in.
-         AIF   ('&ZSYS' EQ 'S370' OR '&ZSYS' EQ 'ZARCH').MOD24D
+         AIF   ('&ZSYS' EQ 'S370' OR                                   +
+                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24D
          CALL  @@SETM31
 .MOD24D  ANOP
          LA    R15,2
@@ -474,7 +486,8 @@ DEXIT    DS    0H
 *
          L     R2,0(R1)               their exit
          L     R3,4(R1)               actual DCB for them
-         AIF   ('&ZSYS' EQ 'S370' OR '&ZSYS' EQ 'ZARCH').MOD24E
+         AIF   ('&ZSYS' EQ 'S370' OR                                   +
+                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24E
          CALL  @@SETM24
 .MOD24E  ANOP
 *
@@ -484,7 +497,8 @@ DEXIT    DS    0H
          BALR  R14,R15
          LM    R0,R12,20(R13)
 *
-         AIF   ('&ZSYS' EQ 'S370' OR '&ZSYS' EQ 'ZARCH').MOD24F
+         AIF   ('&ZSYS' EQ 'S370' OR                                   +
+                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24F
          CALL  @@SETM31
 .MOD24F  ANOP
 *
