@@ -56,8 +56,15 @@ void exit(int status) __attribute__((noreturn));
 void abort(void);
 void exit(int status);
 #endif
-void qsort(void *, size_t, size_t,
-                           int (*)(const void *, const void *));
+
+#ifdef __SUBC__
+void qsort(void *a, size_t b, size_t c,
+    int (*f)());
+#else
+void qsort(void *a, size_t b, size_t c,
+    int (*f)(const void *d, const void *e));
+#endif
+
 void srand(unsigned int seed);
 int rand(void);
 double atof(const char *nptr);
@@ -75,12 +82,25 @@ int abs(int j);
 div_t div(int numer, int denom);
 long labs(long j);
 ldiv_t ldiv(long numer, long denom);
+
+#ifdef __SUBC__
+int atexit(int (*func)());
+#else
 int atexit(void (*func)(void));
+#endif
+
 char *getenv(const char *name);
 int system(const char *string);
+
+#ifdef __SUBC__
+void *bsearch(const void *key, const void *base,
+              size_t nmemb, size_t size,
+              int (*compar)());
+#else
 void *bsearch(const void *key, const void *base,
               size_t nmemb, size_t size,
               int (*compar)(const void *, const void *));
+#endif
 
 #ifdef __WATCOMC__
 #pragma intrinsic (abs,labs,div,ldiv)
