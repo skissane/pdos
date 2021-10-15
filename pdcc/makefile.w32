@@ -16,14 +16,12 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-STRIP=stripwin
 COPTS=-S $(CFLAGS) -fno-common -ansi -Icpplib/include -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
 all: clean pdcc.exe
 
 pdcc.exe: main.o c_ppout.o inc_path.o cpplib.a
-    $(LD) $(LDFLAGS) -o pdcc.exe ../pdpclib/w32start.o main.o c_ppout.o inc_path.o cpplib.a ../pdpclib/msvcrt.a
-    $(STRIP) pdcc.exe
+    $(LD) $(LDFLAGS) -s -o pdcc.exe ../pdpclib/w32start.o main.o c_ppout.o inc_path.o cpplib.a ../pdpclib/msvcrt.a
 
 cpplib.a: cpplib/core.o cpplib/directs.o cpplib/errors.o \
           cpplib/expr.o cpplib/files.o cpplib/chars.o \
