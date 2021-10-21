@@ -1199,13 +1199,23 @@ unsigned int PosDirectCharInputNoEcho(void)
 /* INT 21/AH=08h */
 unsigned int PosGetCharInputNoEcho(void)
 {
-    int scan;
+    static int scan = 0;
     int ascii;
+
+    if(scan != 0)
+    {
+        int retval = scan;
+
+        scan = 0;
+        return retval;
+    }
 
 #ifdef __32BIT__
     waitForKeystroke();
 #endif
     BosReadKeyboardCharacter(&scan, &ascii);
+
+    if(ascii) scan = 0;
 
     return ascii;
 }
