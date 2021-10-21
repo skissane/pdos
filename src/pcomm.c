@@ -31,9 +31,16 @@
 /* Written By NECDET COKYAZICI, Public Domain */
 void putch(int a);
 void bell(void);
-void safegets(char *buffer, int size);
+void safegets(char *buffer, int size, bool use_history);
 
+/* Command history ring buffer */
+#define MAX_COMMAND_HISTORY 32
+static int first_command_history = 0;
+static int last_command_history = 0;
+static char oldbufs[MAX_COMMAND_HISTORY][300];
 
+#define NEXT_HISTORY(idx) ((idx + 1) % MAX_COMMAND_HISTORY)
+#define PREVIOUS_HISTORY(idx) ((idx + MAX_COMMAND_HISTORY - 1) % MAX_COMMAND_HISTORY)
 
 static char buf[300];
 #ifdef __32BIT__
@@ -85,7 +92,7 @@ static int genuine_pdos = 0;
 static pos_video_info savedVideoState;
 
 static void parseArgs(int argc, char **argv);
-static int processInput(void);
+static int processInput(bool save_in_history);
 static void putPrompt(void);
 static int doExec(char *b,char *p);
 static int changedisk(int drive);
@@ -534,7 +541,7 @@ int main(int argc, char **argv)
     {
         int rc;
 
-        rc = processInput();
+        rc = processInput(false);
         if (genuine_pdos)
         {
              PosSetEnv("PATH",origpath);
@@ -558,9 +565,9 @@ int main(int argc, char **argv)
     while (!term)
     {
         putPrompt();
-        safegets(buf, sizeof buf);
+        safegets(buf, sizeof buf, true);
 
-        processInput();
+        processInput(true);
     }
     if (genuine_pdos) PosSetVideoAttribute(0x0C);
     printf("Thankyou for using PCOMM!\n");
@@ -604,7 +611,7 @@ static void parseArgs(int argc, char **argv)
     return;
 }
 
-static int processInput(void)
+static int processInput(bool save_in_history)
 {
     char *p;
     cmdBlock *block;
@@ -621,6 +628,17 @@ static int processInput(void)
     if (isBlankString(buf))
     {
         return 0;
+    }
+
+    if(save_in_history)
+    {
+        strcpy(oldbufs[last_command_history], buf);
+        last_command_history = NEXT_HISTORY(last_command_history);
+
+        if(last_command_history == first_command_history)
+        {
+            first_command_history = NEXT_HISTORY(first_command_history);
+        }
     }
 
     /* Split command and arguments */
@@ -783,7 +801,7 @@ static int runCmdLine(char *cmdLine)
     char savebuf[256];
     strncpy(savebuf,buf,sizeof savebuf);
     strncpy(buf,cmdLine,sizeof buf);
-    rc = processInput();
+    rc = processInput(false);
     strncpy(buf,savebuf,sizeof buf);
     return rc;
 }
@@ -2051,7 +2069,7 @@ static int readBat(char *fnm)
                 putPrompt();
                 printf("%s\n", buf);
             }
-            rc = processInput();
+            rc = processInput(false);
             currentBatchFp = fp; /* In case we ran some other batch file */
             /* Abort if OPTION +A and batch file command failed */
             if (abortFlag && rc != 0)
@@ -2119,16 +2137,72 @@ void bell(void)
     putch('\a');
 }
 
-
-void safegets(char *buffer, int size)
+#define UP_ARROW (72 << 8)
+#define DOWN_ARROW (80 << 8)
+void safegets(char *buffer, int size, bool use_history)
 {
     int a;
     int i = 0;
+    int j;
+    int history_cursor = -1;
 
     while (1)
     {
 
         a = PosGetCharInputNoEcho();
+        if(!a)
+        a = PosGetCharInputNoEcho() << 8;
+
+        if(use_history)
+        {
+
+            if (a == UP_ARROW || a == DOWN_ARROW)
+            {
+
+                if(a == UP_ARROW)
+                {
+                    if(history_cursor == -1 && first_command_history != last_command_history)
+                    history_cursor = PREVIOUS_HISTORY(last_command_history);
+
+                    else if(history_cursor != first_command_history)
+                    history_cursor = PREVIOUS_HISTORY(history_cursor);
+                }
+                if(a == DOWN_ARROW)
+                {
+                    if(history_cursor == -1) continue;
+
+                    if(history_cursor == PREVIOUS_HISTORY(last_command_history))
+                    history_cursor = -1;
+
+                    else
+                    history_cursor = NEXT_HISTORY(history_cursor);
+                }
+
+                /* Delete all characters on the screen */
+                for(j = 0; j < i; ++ j) putch('\b');
+                for(j = 0; j < i; ++ j) putch(' ');
+                for(j = 0; j < i; ++ j) putch('\b');
+
+                if(history_cursor == -1)
+                {
+                    i = 0;
+                }
+                else
+                {
+                    i = strlen(oldbufs[history_cursor]);
+                    /* Put the new command onto the screen and into the buffer */
+                    for(j = 0; j < i; ++ j)
+                    {
+                        char ch = oldbufs[history_cursor][j];
+                        putch(ch);
+                        buffer[j] = ch;
+                    }
+
+                }
+                buffer[i] = '\0';
+                continue;
+            }
+        }
 
         if (i == size)
         {
@@ -2946,7 +3020,7 @@ static int cmd_save_run(char *arg)
         }
         else
         {
-            safegets(line, sizeof line);
+            safegets(line, sizeof line, false);
         }
 
         /* If delimiter line, exit loop */
