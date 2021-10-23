@@ -36,7 +36,12 @@ void __sigign(int sig);
 #define SIGSEGV 5
 #define SIGTERM 6
 
+#ifdef __SUBC__
+int signal(int sig, int (*handler)());
+#else
 void (*signal(int sig, void (*func)(int)))(int);
+#endif
+
 int raise(int sig);
 
 #endif
