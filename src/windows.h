@@ -233,6 +233,11 @@ typedef struct _INPUT_RECORD {
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
 
+typedef struct {
+    char unused1[44];
+    char cFileName[260];
+    char unused2[16];
+} WIN32_FIND_DATA, WIN32_FIND_DATAA;
 
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle);
 
@@ -363,3 +368,11 @@ BOOL WINAPI ReadConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd);
 BOOL WINAPI AllocConsole(void);
 
 BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD lpd);
+
+#define FindFirstFile FindFirstFileA
+HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData);
+
+#define FindNextFile FindNextFileA
+BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData);
+
+BOOL WINAPI FindClose(HANDLE h);

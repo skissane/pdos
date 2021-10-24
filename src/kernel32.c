@@ -12,6 +12,8 @@
 
 #include <windows.h>
 
+#include <string.h>
+
 #include <pos.h>
 
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle)
@@ -298,6 +300,35 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD lpd)
     for (;;) ;
     return (0);
 }
+
+HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
+{
+    DTA *dta;
+    int ret;
+
+    dta = PosGetDTA();
+    ret = PosFindFirst((char *)lpFileName, 0x10);
+    if (ret == 2) return (INVALID_HANDLE_VALUE);
+    strcpy(FindFileData->cFileName, dta->file_name);
+    return ((HANDLE)dta);
+}
+
+BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData)
+{
+    DTA *dta = (DTA *)h;
+    int ret;
+
+    ret = PosFindNext();
+    if (ret != 0) return (0);
+    strcpy(FindFileData->cFileName, dta->file_name);
+    return (1);
+}
+
+BOOL WINAPI FindClose(HANDLE h)
+{
+    return (1);
+}
+
 
 /* auto-genned dummy functions */
 
@@ -1431,18 +1462,6 @@ void WINAPI FileTimeToSystemTime(void)
 {
     size_t len = 36;
     PosWriteFile(1, "FileTimeToSystemTime unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI FindClose(void)
-{
-    size_t len = 25;
-    PosWriteFile(1, "FindClose unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI FindFirstFileA(void)
-{
-    size_t len = 30;
-    PosWriteFile(1, "FindFirstFileA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI FormatMessageA(void)
