@@ -18,7 +18,10 @@
 #include "bios.h"
 #include "exeload.h"
 
-static BIOS bios = { printf, fopen, fseek, fread, fclose, fwrite, NULL };
+#define MEMAMT 28*1024*1024
+
+static BIOS bios = { NULL, 0,
+    printf, fopen, fseek, fread, fclose, fwrite, NULL };
 
 static int (*genstart)(BIOS *bios);
 
@@ -34,6 +37,13 @@ int main(int argc, char **argv)
         printf("Usage: bios pdos.exe config.fil\n");
         return (EXIT_FAILURE);
     }
+    bios.mem_base = malloc(MEMAMT);
+    if (bios.mem_base == NULL)
+    {
+        printf("can't allocate enough memory\n");
+        return (EXIT_FAILURE);
+    }
+    bios.mem_amt = MEMAMT;
     bios.Xstdout = stdout;
     p = calloc(1, 1000000);
     if (p == NULL)
