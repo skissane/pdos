@@ -22,6 +22,8 @@
 
 #include <__os.h>
 
+#include <__memmgr.h>
+
 extern int __minstart;
 
 #ifdef EBCDIC
@@ -36,22 +38,29 @@ extern __start(char *p);
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
-OS os = { __start, printf, 0 };
+OS os = { __start, printf, 0, malloc, NULL, NULL,
+  fopen, fseek, fread, fclose, fwrite };
 
 static int (*pgastart)(OS *os);
 
-static char loadbuf[100000];
-static char membuf[10000];
+MEMMGR memmgr;
 
 int main(void)
 {
     unsigned char *entry_point;
-    unsigned char *p = loadbuf;
+    unsigned char *p = NULL;
     int ret;
 
     __minstart = 0;
     __genstart = 1;
     os.main = &__genmain;
+    os.Xstdin = stdin;
+    os.Xstdout = stdout;
+
+    memmgrDefaults(&memmgr);
+    memmgrInit(&memmgr);
+    memmgrSupply(&memmgr, __bios->mem_base, __bios->mem_amt);
+
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
     if (exeloadDoload(&entry_point, "../pdpclib/pdptest.exe", &p) != 0)
@@ -63,6 +72,7 @@ int main(void)
     printf("about to call app\n");
     ret = pgastart(&os);
     printf("return from app is %d\n", ret);
+    memmgrTerm(&memmgr);
     return (0);
 }
 
@@ -107,13 +117,11 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 
 void *PosAllocMem(unsigned int size, unsigned int flags)
 {
-    static char *mb = membuf;
     char *p;
 
     printf("got request to allocate %lu bytes\n",
         (unsigned long)size);
-    p = mb;
-    mb += size;
+    p = memmgrAllocate(&memmgr, size, 0);
     return (p);
 }
 
