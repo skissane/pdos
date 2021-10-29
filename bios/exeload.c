@@ -92,11 +92,11 @@ int exeloadDoload(unsigned char **entry_point,
      * 1 means it is not the format the function loads.
      * 2 means correct format, but error occured. */
     ret = exeloadLoadAOUT(entry_point, fp, loadloc);
+    if (ret == 1) ret = exeloadLoadMZ(entry_point, fp, loadloc);
     if (ret == 1) ret = exeloadLoadMVS((unsigned char **)entry_point,
                                        fp,
                                        (unsigned char **)loadloc);
     if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
-    if (ret == 1) ret = exeloadLoadMZ(entry_point, fp, loadloc);
     if (ret == 1) ret = exeloadLoadELF(entry_point, fp, loadloc);
 
     fclose(fp);
