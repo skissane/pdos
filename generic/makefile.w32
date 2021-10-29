@@ -11,7 +11,7 @@ COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__WIN32__ -D__PDO
 all: clean pdos.exe
 
 pdos.exe: pdos.o ../bios/exeload.o genstart.o
-    $(LD) $(LDFLAGS) -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/pdosgeno.a
+    $(LD) $(LDFLAGS) -s -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/pdosgeno.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
