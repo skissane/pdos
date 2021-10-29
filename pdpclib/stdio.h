@@ -285,6 +285,15 @@ int ferror(FILE *stream);
 #include <__os.h>
 
 #define printf __os->printf
+#undef stdin
+#define stdin __os->Xstdin
+#undef stdout
+#define stdout __os->Xstdout
+#define fopen __os->fopen
+#define fseek __os->fseek
+#define fread __os->fread
+#define fclose __os->fclose
+#define fwrite __os->fwrite
 #endif
 
 #endif /* __STDIO_INCLUDED */

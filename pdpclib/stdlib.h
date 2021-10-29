@@ -114,4 +114,10 @@ long _Builtin __labs(long j);
 #define labs(j) (__labs((j)))
 #endif
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define malloc __os->malloc
+#endif
+
 #endif
