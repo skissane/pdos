@@ -13,6 +13,7 @@
 typedef struct {
     int (*__start)(char *p);
     int (*printf)(const char *format, ...);
+    int (**main)(int argc, char **argv);
 } OS;
 
 extern OS *__os;
