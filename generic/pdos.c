@@ -33,19 +33,25 @@ extern int __minstart;
 extern BIOS *__bios;
 extern __start(char *p);
 
-OS os = { __start, printf };
+extern int __genstart;
+extern int (*__genmain)(int argc, char **argv);
+
+OS os = { __start, printf, 0 };
 
 static int (*pgastart)(OS *os);
 
-static char loadbuf[10000];
+static char loadbuf[100000];
 static char membuf[10000];
 
 int main(void)
 {
     unsigned char *entry_point;
     unsigned char *p = loadbuf;
+    int ret;
 
     __minstart = 0;
+    __genstart = 1;
+    os.main = &__genmain;
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
     if (exeloadDoload(&entry_point, "../pdpclib/pdptest.exe", &p) != 0)
@@ -54,7 +60,9 @@ int main(void)
         return (EXIT_FAILURE);
     }
     pgastart = (void *)entry_point;
-    pgastart(&os);
+    printf("about to call app\n");
+    ret = pgastart(&os);
+    printf("return from app is %d\n", ret);
     return (0);
 }
 
@@ -80,6 +88,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 {
     printf("got request to read %lu bytes\n", (unsigned long)bytes);
     *readbytes = __bios->fread(data, 1, bytes, (void *)fh);
+    printf("read %lu bytes\n", (unsigned long)*readbytes);
     return (0);
 }
 
@@ -154,7 +163,10 @@ void PosTerminate(int rc)
 
 char *PosGetCommandLine(void)
 {
-    return (0);
+    static char buf[10];
+
+    strcpy(buf, "a b");
+    return (buf);
 }
 
 void *PosGetEnvBlock(void)
