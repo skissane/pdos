@@ -35,7 +35,7 @@ typedef struct {
     long d7;
     long retaddr;
 #elif defined(__WIN32__) || defined(__32BIT__) || defined(__OS2__) \
-    || defined(__gnu_linux__)
+    || defined(__PDOS386__) || defined(__gnu_linux__)
     int ebx;
     int ecx;
     int edx;

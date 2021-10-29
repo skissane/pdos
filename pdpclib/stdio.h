@@ -22,7 +22,8 @@
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__))
 typedef unsigned long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
-    || defined(__WIN32__) || defined(__gnu_linux__) || defined(__AMIGA__))
+    || defined(__WIN32__) || defined(__gnu_linux__) || defined(__AMIGA__) \
+    || defined(__PDOS386__))
 typedef unsigned int size_t;
 #endif
 #endif
@@ -56,7 +57,7 @@ typedef unsigned int size_t;
 
 typedef struct
 {
-#if (defined(__OS2__) || defined(__32BIT__))
+#if (defined(__OS2__) || defined(__32BIT__) || defined(__PDOS386__))
     unsigned long hfile;  /* OS/2 file handle */
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
     || defined(__SMALLERC__))

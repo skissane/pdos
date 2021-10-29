@@ -30,7 +30,7 @@
 #define USHRT_MAX ((unsigned short)65535U)
 
 #if (defined(__OS2__) || defined(__32BIT__) || defined(__MVS__) \
-    || defined(__VSE__) \
+    || defined(__VSE__) || defined(__PDOS386__) \
     || defined(__CMS__) || defined(__WIN32__) || defined(__gnu_linux__) \
     || defined(__AMIGA__) ||defined(__SMALLERC__))
 #define INT_MIN (-INT_MAX-1)

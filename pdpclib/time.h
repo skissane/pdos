@@ -24,7 +24,8 @@ typedef unsigned int clock_t;
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__))
 typedef unsigned long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
-    || defined(__WIN32__) || defined(__gnu_linux__) || defined(__AMIGA__))
+    || defined(__WIN32__) || defined(__gnu_linux__) || defined(__AMIGA__) \
+    || defined(__PDOS386__))
 typedef unsigned int size_t;
 #endif
 #endif
