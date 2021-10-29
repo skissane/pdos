@@ -281,6 +281,12 @@ int ferror(FILE *stream);
 #define ferror(stream) ((stream)->errorInd)
 #endif
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define printf __os->printf
+#endif
+
 #endif /* __STDIO_INCLUDED */
 
 

@@ -49,6 +49,11 @@ extern void (*__userExit[__NATEXIT])(void);
 int __minstart = 0;
 #endif
 
+int main(int argc, char **argv);
+
+int __genstart = 0;
+int (*__genmain)(int argc, char **argv) = main;
+
 #ifdef __MSDOS__
 /* Must be unsigned as it is used for array index */
 #ifndef __SMALLERC__
@@ -71,8 +76,6 @@ int __tso = 0; /* is this a TSO environment? */
 extern int __doperm; /* are we doing the permanent datasets? */
 int __upsi = 0; /* UPSI switches for VSE */
 #endif
-
-int main(int argc, char **argv);
 
 void __exit(int status);
 void CTYP __exita(int status);
@@ -962,7 +965,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #elif defined(__PDPCLIB_DLL)
     return (0);
 #else
-    rc = main(argc, argv);
+    if (!__genstart)
+    {
+        rc = main(argc, argv);
+    }
+    else
+    {
+        rc = __genmain(argc, argv);
+    }
 
     __exit(rc);
     return (rc);
