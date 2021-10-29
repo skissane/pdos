@@ -91,6 +91,8 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
+    __bios->fseek((void *)handle, offset, SEEK_SET);
+    *newpos = offset;
     return (0);
 }
 
