@@ -14,7 +14,9 @@
 
 BIOS *__bios;
 
-int main(void);
+extern int __minstart;
+
+int __start(void *);
 
 
 /* This name is known to certain versions of "ld" as the entry
@@ -24,5 +26,6 @@ use it. */
 int __crt0(BIOS *bios)
 {
     __bios = bios;
-    return (main());
+    __minstart = 1;
+    return (__start(0));
 }
