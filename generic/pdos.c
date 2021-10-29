@@ -11,10 +11,18 @@
 /*********************************************************************/
 
 #include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <bios.h>
 
 #include <pos.h>
+
+#include <exeload.h>
+
+#include <__os.h>
+
+extern int __minstart;
 
 #ifdef EBCDIC
 #define CHAR_ESC_STR "\x27"
@@ -23,17 +31,37 @@
 #endif
 
 extern BIOS *__bios;
+extern __start(char *p);
+
+OS os = { __start, printf };
+
+static int (*pgastart)(OS *os);
+
+static char loadbuf[10000];
+static char membuf[10000];
 
 int main(void)
 {
-    __bios->printf(CHAR_ESC_STR "[2J");
+    unsigned char *entry_point;
+    unsigned char *p = loadbuf;
+
+    __minstart = 0;
+    /* __bios->printf(CHAR_ESC_STR "[2J"); */
     __bios->printf("hello from PDOS\n");
+    if (exeloadDoload(&entry_point, "../pdpclib/pdptest.exe", &p) != 0)
+    {
+        __bios->printf("failed to load program\n");
+        return (EXIT_FAILURE);
+    }
+    pgastart = (void *)entry_point;
+    pgastart(&os);
     return (0);
 }
 
 int PosOpenFile(const char *name, int mode, int *handle)
 {
-    return (0);
+    __bios->printf("got request to open %s\n", name);
+    return (-1);
 }
 
 int PosCloseFile(int fno)
@@ -53,6 +81,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 
 int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
+    __bios->printf("got write of %.10s\n", data);
     return (0);
 }
 
@@ -63,7 +92,14 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 
 void *PosAllocMem(unsigned int size, unsigned int flags)
 {
-    return (0);
+    static char *mb = membuf;
+    char *p;
+
+    __bios->printf("got request to allocate %ld bytes\n",
+        (unsigned long)size);
+    p = mb;
+    mb += size;
+    return (p);
 }
 
 int PosFreeMem(void *ptr)
