@@ -46,11 +46,11 @@ int main(void)
     unsigned char *p = loadbuf;
 
     __minstart = 0;
-    /* __bios->printf(CHAR_ESC_STR "[2J"); */
-    __bios->printf("hello from PDOS\n");
+    /* printf(CHAR_ESC_STR "[2J"); */
+    printf("hello from PDOS\n");
     if (exeloadDoload(&entry_point, "../pdpclib/pdptest.exe", &p) != 0)
     {
-        __bios->printf("failed to load program\n");
+        printf("failed to load program\n");
         return (EXIT_FAILURE);
     }
     pgastart = (void *)entry_point;
@@ -60,12 +60,14 @@ int main(void)
 
 int PosOpenFile(const char *name, int mode, int *handle)
 {
-    __bios->printf("got request to open %s\n", name);
-    return (-1);
+    printf("got request to open %s\n", name);
+    *handle = (int)__bios->fopen(name, "rb");
+    return (0);
 }
 
 int PosCloseFile(int fno)
 {
+    printf("got request to close\n");
     return (0);
 }
 
@@ -76,12 +78,14 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 
 int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 {
+    printf("got request to read %lu bytes\n", (unsigned long)bytes);
+    *readbytes = __bios->fread(data, 1, bytes, (void *)fh);
     return (0);
 }
 
 int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
-    __bios->printf("got write of %.10s\n", data);
+    __bios->fwrite(data, 1, len, __bios->Xstdout);
     return (0);
 }
 
@@ -95,7 +99,7 @@ void *PosAllocMem(unsigned int size, unsigned int flags)
     static char *mb = membuf;
     char *p;
 
-    __bios->printf("got request to allocate %ld bytes\n",
+    printf("got request to allocate %lu bytes\n",
         (unsigned long)size);
     p = mb;
     mb += size;
