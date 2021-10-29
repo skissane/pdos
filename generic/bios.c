@@ -18,7 +18,7 @@
 #include "bios.h"
 #include "exeload.h"
 
-static BIOS bios = { printf };
+static BIOS bios = { printf, fopen, fseek, fread, fclose, fwrite, NULL };
 
 static int (*genstart)(BIOS *bios);
 
@@ -34,6 +34,7 @@ int main(int argc, char **argv)
         printf("Usage: bios pdos.exe config.fil\n");
         return (EXIT_FAILURE);
     }
+    bios.Xstdout = stdout;
     p = calloc(1, 1000000);
     if (p == NULL)
     {
