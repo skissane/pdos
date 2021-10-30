@@ -27,6 +27,8 @@ typedef struct {
     size_t (*fread)(void *ptr, size_t size, size_t nmemb, void *stream);
     int (*fclose)(void *stream);
     size_t (*fwrite)(const void *ptr, size_t size, size_t nmemb, void *stream);
+    char *(*fgets)(char *s, int n, void *stream);
+    char *(*strchr)(const char *s, int c);
 } OS;
 
 extern OS *__os;
