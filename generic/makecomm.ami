@@ -1,0 +1,12 @@
+# This builds a PDOS-generic Amiga hunk
+
+CC=vbccm68k
+COPTS=-D__PDOS386__ -D__PDOSGEN__ -cpu=68020 -fpu=68881 -O=991 -I. -I../pdpclib -I../src
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+  vlink -bamigahunk -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+  $(CC) $(COPTS) -o=$*.s $<
+  vasmm68k_mot -o $*.o -Fhunk $*.s
+  rm -f $*.s
