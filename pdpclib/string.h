@@ -153,6 +153,8 @@ char *__strrchr__(const char *s, int c);
 #include <__os.h>
 
 #define strchr __os->strchr
+#define strcmp __os->strcmp
+#define strncmp __os->strncmp
 #endif
 
 

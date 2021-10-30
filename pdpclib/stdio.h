@@ -295,6 +295,8 @@ int ferror(FILE *stream);
 #define fclose __os->fclose
 #define fwrite __os->fwrite
 #define fgets __os->fgets
+#define fgetc __os->fgetc
+#define fputc __os->fputc
 #endif
 
 #endif /* __STDIO_INCLUDED */
