@@ -33,6 +33,9 @@ typedef struct {
     int (*strncmp)(const char *s1, const char *s2, size_t n);
     int (*fgetc)(void *stream);
     int (*fputc)(int c, void *stream);
+    void *(*PosGetDTA)(void);
+    int (*PosFindFirst)(char *pat, int attrib);
+    int (*PosFindNext)(void);
 } OS;
 
 extern OS *__os;
