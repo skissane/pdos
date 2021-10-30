@@ -1,0 +1,12 @@
+# This builds Amiga hunk executables for Amiga OS 68000
+
+CC=vbccm68k
+COPTS=-D__PDOS386__ -DNOLIBALLOC -cpu=68020 -fpu=68881 -O=991 -I. -I../bios -I../pdpclib -I../src
+
+pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
+  vlink -bamigahunk -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.lib
+
+.c.o:
+  $(CC) $(COPTS) -o=$*.s $<
+  vasmm68k_mot -o $*.o -Fhunk $*.s
+  rm -f $*.s
