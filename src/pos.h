@@ -478,4 +478,14 @@ typedef struct {
 }DTA;
 /**/
 
+
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define PosGetDTA __os->PosGetDTA
+#define PosFindFirst __os->PosFindFirst
+#define PosFindNext __os->PosFindNext
+#endif
+
+
 #endif /* POS_INCLUDED */
