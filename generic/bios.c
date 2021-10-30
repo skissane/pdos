@@ -21,7 +21,7 @@
 #define MEMAMT 28*1024*1024
 
 static BIOS bios = { NULL, 0, NULL,
-    printf, fopen, fseek, fread, fclose, fwrite, NULL };
+    printf, fopen, fseek, fread, fclose, fwrite, fgets, NULL, NULL };
 
 static int (*genstart)(BIOS *bios);
 
@@ -44,6 +44,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     bios.mem_amt = MEMAMT;
+    bios.Xstdin = stdin;
     bios.Xstdout = stdout;
     bios.disk_name = *(argv + 2);
     p = calloc(1, 1000000);
