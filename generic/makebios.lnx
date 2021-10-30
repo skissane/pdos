@@ -1,0 +1,22 @@
+# Produces Linux executable
+
+CC=gcc
+CFLAGS=-m32 -O2
+LD=ld
+LDFLAGS=
+AS=as
+AR=ar
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib
+
+all: clean bios
+
+bios: bios.o ../bios/exeload.o
+	$(LD) $(LDFLAGS) -s -o bios ../pdpclib/w32start.o bios.o ../bios/exeload.o ../pdpclib/pdpwin32.a ../src/kernel32.a
+
+.c.o:
+	$(CC) $(COPTS) -I../bios -o $*.s $<
+	$(AS) -o $@ $*.s
+	rm -f $*.s
+
+clean:
+	rm -f *.o bios

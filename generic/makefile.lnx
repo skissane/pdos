@@ -1,0 +1,22 @@
+# Produces Linux executable.
+
+CC=gcc
+CFLAGS=-m32 -O2
+LD=ld
+LDFLAGS=
+AS=as
+AR=ar
+COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__gnu_linux__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__
+
+all: clean pdos
+
+pdos: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
+	$(LD) $(LDFLAGS) -s -e ___crt0 -o pdos genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
+
+.c.o:
+	$(CC) $(COPTS) -o $*.s $<
+	$(AS) -o $@ $*.s
+	rm -f $*.s
+
+clean:
+	rm -f *.o pdos

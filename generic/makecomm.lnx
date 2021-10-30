@@ -1,0 +1,21 @@
+# This builds a PDOS-generic executable
+
+CC=gcc
+COPTS=-m32 -S -O2 -U__gnu_linux__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+
+all: clean pcomm
+
+pcomm: ../pdpclib/pgastart.o pcomm.o
+	rm -f pcomm
+	ld -s -e ___crt0 -o pcomm ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+	$(CC) $(COPTS) -o $*.s $<
+	as -o $@ $*.s
+	rm -f $*.s
+
+.asm.obj:
+	as -o $@ $<
+
+clean:
+	rm -f pcomm
