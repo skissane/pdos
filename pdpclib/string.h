@@ -148,4 +148,12 @@ char *__strrchr__(const char *s, int c);
 #endif
 #endif
 
+
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define strchr __os->strchr
+#endif
+
+
 #endif
