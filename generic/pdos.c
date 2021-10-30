@@ -24,6 +24,8 @@
 
 #include <__memmgr.h>
 
+#include <fat.h>
+
 extern int __minstart;
 
 #ifdef EBCDIC
@@ -32,24 +34,43 @@ extern int __minstart;
 #define CHAR_ESC_STR "\x1b"
 #endif
 
+#define BIOS_SEEK_SET SEEK_SET
+
 extern BIOS *bios;
 extern __start(char *p);
 
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
-OS os = { __start, printf, 0, malloc, NULL, NULL,
+static OS os = { __start, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite };
 
 static int (*pgastart)(OS *os);
 
-MEMMGR memmgr;
+static MEMMGR memmgr;
+
+static void *disk;
+
+
+#define SECTSZ 512
+
+static unsigned long lba;
+static unsigned char sect[SECTSZ];
+
+static FAT fat;
+static FATFILE fatfile;
+
+static void readLogical(void *diskptr, unsigned long sector, void *buf);
+static void writeLogical(void *diskptr, unsigned long sector, void *buf);
+static void getDateTime(FAT_DATETIME *ptr);
+
 
 int main(void)
 {
     unsigned char *entry_point;
     unsigned char *p = NULL;
     int ret;
+    unsigned char lbabuf[4];
 
     __minstart = 0;
     __genstart = 1;
@@ -63,7 +84,25 @@ int main(void)
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
-    if (exeloadDoload(&entry_point, "../pdpclib/pdptest.exe", &p) != 0)
+    disk = bios->fopen(bios->disk_name, "r+b");
+    if (disk == NULL)
+    {
+        printf("can't open hard disk\n");
+        return (EXIT_FAILURE);
+    }
+    bios->fseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
+    bios->fread(lbabuf, 1, 4, disk);
+    lba = ((unsigned long)lbabuf[3] << 24)
+           | ((unsigned long)lbabuf[2] << 16)
+           | (lbabuf[1] << 8)
+           | lbabuf[0];
+    printf("lba is %lx\n", lba);
+    bios->fseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
+    bios->fread(sect, SECTSZ, 1, disk);
+    printf("fat type is %.5s\n", &sect[0x36]);
+    fatDefaults(&fat);
+    fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
+    if (exeloadDoload(&entry_point, "pdptest.exe", &p) != 0)
     {
         printf("failed to load program\n");
         return (EXIT_FAILURE);
@@ -78,14 +117,18 @@ int main(void)
 
 int PosOpenFile(const char *name, int mode, int *handle)
 {
+    int ret;
+
     printf("got request to open %s\n", name);
-    *handle = (int)bios->fopen(name, "rb");
+    /* *handle = (int)bios->fopen(name, "rb"); */
+    ret = fatOpenFile(&fat, name, &fatfile);
+    *handle = 3;
     return (0);
 }
 
 int PosCloseFile(int fno)
 {
-    printf("got request to close\n");
+    /* printf("got request to close\n"); */
     return (0);
 }
 
@@ -96,9 +139,10 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 
 int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 {
-    printf("got request to read %lu bytes\n", (unsigned long)bytes);
-    *readbytes = bios->fread(data, 1, bytes, (void *)fh);
-    printf("read %lu bytes\n", (unsigned long)*readbytes);
+    /* printf("got request to read %lu bytes\n", (unsigned long)bytes); */
+    /* *readbytes = bios->fread(data, 1, bytes, (void *)fh); */
+    fatReadFile(&fat, &fatfile, data, bytes, readbytes);
+    /* printf("read %lu bytes\n", (unsigned long)*readbytes); */
     return (0);
 }
 
@@ -110,8 +154,9 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
-    bios->fseek((void *)handle, offset, SEEK_SET);
-    *newpos = offset;
+    /* bios->fseek((void *)handle, offset, SEEK_SET);
+    *newpos = offset; */
+    *newpos = fatSeek(&fat, &fatfile, offset, whence);
     return (0);
 }
 
@@ -119,14 +164,15 @@ void *PosAllocMem(unsigned int size, unsigned int flags)
 {
     char *p;
 
-    printf("got request to allocate %lu bytes\n",
-        (unsigned long)size);
+    /* printf("got request to allocate %lu bytes\n",
+        (unsigned long)size); */
     p = memmgrAllocate(&memmgr, size, 0);
     return (p);
 }
 
 int PosFreeMem(void *ptr)
 {
+    memmgrFree(&memmgr, ptr);
     return (0);
 }
 
@@ -180,4 +226,25 @@ char *PosGetCommandLine(void)
 void *PosGetEnvBlock(void)
 {
     return 0;
+}
+
+static void readLogical(void *diskptr, unsigned long sector, void *buf)
+{
+    int ret;
+
+    sector += fat.hidden;
+    bios->fseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
+    ret = bios->fread(buf, SECTSZ, 1, diskptr);
+    return;
+}
+
+static void writeLogical(void *diskptr, unsigned long sector, void *buf)
+{
+    return;
+}
+
+static void getDateTime(FAT_DATETIME *ptr)
+{
+    memset(ptr, '\0', sizeof *ptr);
+    return;
 }
