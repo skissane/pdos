@@ -44,7 +44,8 @@ extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
 static OS os = { __start, printf, 0, malloc, NULL, NULL,
-  fopen, fseek, fread, fclose, fwrite, fgets, strchr };
+  fopen, fseek, fread, fclose, fwrite, fgets, strchr,
+  strcmp, strncmp, fgetc, fputc };
 
 static int (*pgastart)(OS *os);
 
@@ -123,6 +124,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     printf("got request to open %s\n", name);
     /* *handle = (int)bios->fopen(name, "rb"); */
     ret = fatOpenFile(&fat, name, &fatfile);
+    if (ret != 0) return (1);
     *handle = 3;
     return (0);
 }
