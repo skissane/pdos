@@ -32,7 +32,7 @@ extern int __minstart;
 #define CHAR_ESC_STR "\x1b"
 #endif
 
-extern BIOS *__bios;
+extern BIOS *bios;
 extern __start(char *p);
 
 extern int __genstart;
@@ -59,7 +59,7 @@ int main(void)
 
     memmgrDefaults(&memmgr);
     memmgrInit(&memmgr);
-    memmgrSupply(&memmgr, __bios->mem_base, __bios->mem_amt);
+    memmgrSupply(&memmgr, bios->mem_base, bios->mem_amt);
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
@@ -79,7 +79,7 @@ int main(void)
 int PosOpenFile(const char *name, int mode, int *handle)
 {
     printf("got request to open %s\n", name);
-    *handle = (int)__bios->fopen(name, "rb");
+    *handle = (int)bios->fopen(name, "rb");
     return (0);
 }
 
@@ -97,20 +97,20 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 {
     printf("got request to read %lu bytes\n", (unsigned long)bytes);
-    *readbytes = __bios->fread(data, 1, bytes, (void *)fh);
+    *readbytes = bios->fread(data, 1, bytes, (void *)fh);
     printf("read %lu bytes\n", (unsigned long)*readbytes);
     return (0);
 }
 
 int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
-    __bios->fwrite(data, 1, len, __bios->Xstdout);
+    bios->fwrite(data, 1, len, bios->Xstdout);
     return (0);
 }
 
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
-    __bios->fseek((void *)handle, offset, SEEK_SET);
+    bios->fseek((void *)handle, offset, SEEK_SET);
     *newpos = offset;
     return (0);
 }

@@ -12,7 +12,7 @@
 
 #include "bios.h"
 
-BIOS *__bios;
+BIOS *bios;
 
 extern int __minstart;
 
@@ -23,9 +23,9 @@ int __start(void *);
 point of an application and there is no particular reason to not
 use it. */
 
-int __crt0(BIOS *bios)
+int __crt0(BIOS *bios_parm)
 {
-    __bios = bios;
+    bios = bios_parm;
     __minstart = 1;
     return (__start(0));
 }
