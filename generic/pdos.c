@@ -45,7 +45,8 @@ extern int (*__genmain)(int argc, char **argv);
 
 static OS os = { __start, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
-  strcmp, strncmp, fgetc, fputc };
+  strcmp, strncmp, fgetc, fputc,
+  PosGetDTA, PosFindFirst, PosFindNext };
 
 static int (*pgastart)(OS *os);
 
@@ -53,6 +54,7 @@ static MEMMGR memmgr;
 
 static void *disk;
 
+static DTA origdta;
 
 #define SECTSZ 512
 
@@ -239,6 +241,40 @@ char *PosGetCommandLine(void)
 void *PosGetEnvBlock(void)
 {
     return 0;
+}
+
+void *PosGetDTA(void)
+{
+    return (&origdta);
+}
+
+static int ff_search(void)
+{
+    DIRENT dirent;
+    size_t readbytes;
+
+    while (1)
+    {
+        fatReadFile(&fat, &fatfile, &dirent, sizeof dirent, &readbytes);
+        if (readbytes != sizeof dirent) return (1);
+        if (dirent.file_name[0] == '\0') return (1);
+        if (dirent.file_name[0] == DIRENT_DEL) continue;
+        strncpy(origdta.file_name, dirent.file_name, 11);
+        origdta.file_name[11] = '\0';
+        break;
+    }
+    return (0);
+}
+
+int PosFindFirst(char *pat, int attrib)
+{
+    fatOpenFile(&fat, "\\", &fatfile);
+    return (ff_search());
+}
+
+int PosFindNext(void)
+{
+    return (ff_search());
 }
 
 static void readLogical(void *diskptr, unsigned long sector, void *buf)

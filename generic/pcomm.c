@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pos.h>
+
 static char buf[200];
 
 int main(void)
@@ -53,6 +55,19 @@ int main(void)
                 {
                     printf("file not found\n");
                 }
+            }
+        }
+        else if (strncmp(buf, "dir", 3) == 0)
+        {
+            DTA *dta;
+            int ret;
+
+            dta = PosGetDTA();
+            ret = PosFindFirst("*.*", 0x10);
+            while (ret == 0)
+            {
+                printf("%s\n", dta->file_name);
+                ret = PosFindNext();
             }
         }
         else
