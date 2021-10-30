@@ -1,0 +1,25 @@
+# This builds the PDOS-generic OS library on a Linux machine
+
+CC=gcc
+COPTS=-m32 -S -O2 -U__gnu_linux__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -I . -I../src
+
+all: clean pdosgeno.a
+
+pdosgeno.a: stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o winsupc.obj pdossupc.o
+	rm -f pdosgeno.a
+	ar r pdosgeno.a stdio.o string.o stdlib.o winsupc.obj
+	ar r pdosgeno.a start.o time.o errno.o assert.o signal.o
+	ar r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o
+
+.c.o:
+	$(CC) $(COPTS) -o $*.s $<
+	as -o $@ $*.s
+	rm -f $*.s
+
+.asm.obj:
+	as -o $@ $<
+
+clean:
+	rm -f pdosgeno.a
