@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <bios.h>
 
@@ -43,7 +44,7 @@ extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
 static OS os = { __start, printf, 0, malloc, NULL, NULL,
-  fopen, fseek, fread, fclose, fwrite };
+  fopen, fseek, fread, fclose, fwrite, fgets, strchr };
 
 static int (*pgastart)(OS *os);
 
@@ -102,7 +103,7 @@ int main(void)
     printf("fat type is %.5s\n", &sect[0x36]);
     fatDefaults(&fat);
     fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
-    if (exeloadDoload(&entry_point, "pdptest.exe", &p) != 0)
+    if (exeloadDoload(&entry_point, "command.com", &p) != 0)
     {
         printf("failed to load program\n");
         return (EXIT_FAILURE);
@@ -140,8 +141,18 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 {
     /* printf("got request to read %lu bytes\n", (unsigned long)bytes); */
-    /* *readbytes = bios->fread(data, 1, bytes, (void *)fh); */
-    fatReadFile(&fat, &fatfile, data, bytes, readbytes);
+    if (fh < 3)
+    {
+        /* fread is blocking - use fgets as kludge */
+        bios->fgets(data, bytes, bios->Xstdin);
+        *readbytes = strlen(data);
+        /* printf("got %d bytes\n", *readbytes); */
+        /* *readbytes = bios->fread(data, 1, bytes, bios->Xstdin); */
+    }
+    else
+    {
+        fatReadFile(&fat, &fatfile, data, bytes, readbytes);
+    }
     /* printf("read %lu bytes\n", (unsigned long)*readbytes); */
     return (0);
 }
