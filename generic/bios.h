@@ -15,6 +15,7 @@
 typedef struct {
     void *mem_base;
     size_t mem_amt;
+    char *disk_name;
     int (*printf)(const char *format, ...);
     void *(*fopen)(const char *filename, const char *mode);
     int (*fseek)(void *stream, long offset, int whence);

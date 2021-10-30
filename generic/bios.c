@@ -20,7 +20,7 @@
 
 #define MEMAMT 28*1024*1024
 
-static BIOS bios = { NULL, 0,
+static BIOS bios = { NULL, 0, NULL,
     printf, fopen, fseek, fread, fclose, fwrite, NULL };
 
 static int (*genstart)(BIOS *bios);
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     printf("bios starting\n");
     if (argc < 3)
     {
-        printf("Usage: bios pdos.exe config.fil\n");
+        printf("Usage: bios pdos.exe disk.img\n");
         return (EXIT_FAILURE);
     }
     bios.mem_base = malloc(MEMAMT);
@@ -45,6 +45,7 @@ int main(int argc, char **argv)
     }
     bios.mem_amt = MEMAMT;
     bios.Xstdout = stdout;
+    bios.disk_name = *(argv + 2);
     p = calloc(1, 1000000);
     if (p == NULL)
     {
