@@ -1,0 +1,21 @@
+# This builds a PDOS-generic executable
+
+CC=gccwin
+COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+  rm -f pcomm.exe
+  ldwin -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  aswin -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  aswin -o $@ $<
+
+clean:
+  rm -f pcomm.exe
