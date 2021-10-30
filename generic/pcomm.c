@@ -26,8 +26,39 @@ int main(void)
         fgets(buf, sizeof buf, stdin);
         p = strchr(buf, '\n');
         if (p != NULL) *p = '\0';
-        printf("you entered X%sX\n", buf);
-        if (strcmp(buf, "exit") == 0) break;
+        if (strcmp(buf, "exit") == 0)
+        {
+            break;
+        }
+        else if (strncmp(buf, "type", 4) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                FILE *fp;
+
+                p++;
+                fp = fopen(p, "r");
+                if (fp != NULL)
+                {
+                    int c;
+
+                    while ((c = fgetc(fp)) != EOF)
+                    {
+                        fputc(c, stdout);
+                    }
+                    fclose(fp);
+                }
+                else
+                {
+                    printf("file not found\n");
+                }
+            }
+        }
+        else
+        {
+            printf("unknown command\n");
+        }
     }
     return (0);
 }
