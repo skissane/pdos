@@ -3421,7 +3421,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
     {
 #ifdef __AMIGA__
         retpos = Seek(stream->hfile, newpos, OFFSET_BEGINNING);
-        if ((retpos == -1) || (retpos != newpos))
+        if (retpos == -1)
         {
             return (-1);
         }
