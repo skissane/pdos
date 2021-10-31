@@ -1,7 +1,7 @@
 # Produces Linux executable
 
 CC=gcc
-CFLAGS=-m32 -O2
+CFLAGS=-m32 -fno-stack-protector -O2
 LD=ld
 LDFLAGS=
 AS=as
@@ -10,13 +10,8 @@ COPTS=-S $(CFLAGS) -ansi -I../pdpclib
 
 all: clean bios
 
-bios: bios.o ../bios/exeload.o
-	$(LD) $(LDFLAGS) -s -o bios ../pdpclib/w32start.o bios.o ../bios/exeload.o ../pdpclib/pdpwin32.a ../src/kernel32.a
-
-.c.o:
-	$(CC) $(COPTS) -I../bios -o $*.s $<
-	$(AS) -o $@ $*.s
-	rm -f $*.s
+bios: bios.c ../bios/exeload.c
+	$(CC) $(COPTS) -o bios bios.c ../bios/exeload.c
 
 clean:
 	rm -f *.o bios
