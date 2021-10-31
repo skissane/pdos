@@ -48,7 +48,7 @@ char *xstrdup(char *str)
     return (p);
 }
 
-size_t strnlen(char *str, size_t max_len)
+size_t strnlen(const char *str, size_t max_len)
 {
     size_t len;
 

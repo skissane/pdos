@@ -15,4 +15,4 @@ void *xrealloc(void *p, size_t size);
 char *xstrdup(char *str);
 char *xstrndup(char *str, size_t max_len);
 
-size_t strnlen(char *str, size_t max_len);
+size_t strnlen(const char *str, size_t max_len);
