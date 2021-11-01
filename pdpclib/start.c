@@ -49,10 +49,12 @@ extern void (*__userExit[__NATEXIT])(void);
 int __minstart = 0;
 #endif
 
+#ifndef __PDPCLIB_DLL
 int main(int argc, char **argv);
 
 int __genstart = 0;
 int (*__genmain)(int argc, char **argv) = main;
+#endif
 
 #ifdef __MSDOS__
 /* Must be unsigned as it is used for array index */
