@@ -263,8 +263,18 @@ static int exeloadLoadMVS(unsigned char **entry_point,
 {
     size_t readbytes;
     unsigned char *entry;
+    int didalloc = 0;
 
     /* printf("in LoadMVS\n"); */
+    if (*loadloc == NULL)
+    {
+        *loadloc = malloc(1000000);
+        if (*loadloc == NULL)
+        {
+            return (1);
+        }
+        didalloc = 1;
+    }
     rewind(fp);
     readbytes = fread(*loadloc, 1, 1000000, fp);
     /* printf("read %d bytes\n", (int)readbytes); */
@@ -277,6 +287,11 @@ static int exeloadLoadMVS(unsigned char **entry_point,
 
     if (fixPE(*loadloc, &readbytes, &entry, (unsigned long)*loadloc) != 0)
     {
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     *entry_point = entry;
