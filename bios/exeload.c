@@ -93,10 +93,10 @@ int exeloadDoload(unsigned char **entry_point,
      * 2 means correct format, but error occured. */
     ret = exeloadLoadAOUT(entry_point, fp, loadloc);
     if (ret == 1) ret = exeloadLoadMZ(entry_point, fp, loadloc);
+    if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
     if (ret == 1) ret = exeloadLoadMVS((unsigned char **)entry_point,
                                        fp,
                                        (unsigned char **)loadloc);
-    if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
     if (ret == 1) ret = exeloadLoadELF(entry_point, fp, loadloc);
 
     fclose(fp);
@@ -316,20 +316,40 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
     unsigned char *codereloc = NULL;
     unsigned char *datareloc = NULL;
     int iter;
+    int didalloc = 0;
 
     /* printf("in LoadAmiga\n"); */
+    if (*loadloc == NULL)
+    {
+        *loadloc = malloc(1000000);
+        if (*loadloc == NULL)
+        {
+            return (1);
+        }
+        didalloc = 1;
+    }
     p = beg = *loadloc;
     rewind(fp);
     readbytes = fread(p, 1, 1000000, fp);
     /* printf("read %d bytes\n", (int)readbytes); */
     if (readbytes < 4)
     {
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     bssstart = p + readbytes;
     temp = getword(p);
     if (temp != HUNK_HEADER)
     {
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     p += 4;
@@ -337,6 +357,11 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
     if (temp != 0)
     {
         printf("can't handle Amiga Hunk 1\n");
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     p += 4;
@@ -372,6 +397,11 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
     else
     {
         printf("can't handle Amiga Hunk 2\n");
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     p += 12;
@@ -381,6 +411,11 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
     {
         printf("Amiga Hunk expecting code at hex %lx\n",
                (unsigned long)(p - beg));
+        if (didalloc)
+        {
+            free(*loadloc);
+            *loadloc = NULL;
+        }
         return (1);
     }
     p += 4;
@@ -471,6 +506,11 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
         else
         {
             printf("unexpected Amiga Hunk id hex %lx\n", temp);
+            if (didalloc)
+            {
+                free(*loadloc);
+                *loadloc = NULL;
+            }
             return (1);
         }
     }
@@ -522,10 +562,15 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
             }
             else
             {
-                printf("got unexpected Amiga Hunk number hex %lx\n", hunk_nbr);
+                printf("got unexpected Amiga Hunk number hex %x\n", hunk_nbr);
                 printf("code hunk is %d\n", codehunk);
                 printf("data hunk is %d\n", datahunk);
                 printf("bss hunk is %d\n", bsshunk);
+                if (didalloc)
+                {
+                    free(*loadloc);
+                    *loadloc = NULL;
+                }
                 return (1);
             }
             /* WARNING - the following is not entirely accurate. There
@@ -1325,7 +1370,7 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     if (firstbit.header_size * 16 > sizeof(firstbit))
     {
         printf("MZ Header is too large, size: %u\n",
-               firstbit.header_size * 16);
+               (unsigned int)firstbit.header_size * 16);
         return (2);
     }
     /* Loads the rest of the header. */
@@ -2125,7 +2170,7 @@ static int fixPE(unsigned char *buf,
         return (-1);
     }
 #if PE_DEBUG
-    printf("MVS PE total length is %d\n", *len);
+    printf("MVS PE total length is %lu\n", (unsigned long)*len);
 #endif
     p = buf;
     while (1)
@@ -2402,7 +2447,7 @@ static int processRLD(unsigned char *buf,
         {
             if (rlad > 0xffffff)
             {
-                printf("AL3 prevents relocating this module to %x\n", rlad);
+                printf("AL3 prevents relocating this module to %lx\n", rlad);
                 return (-1);
             }
         }
