@@ -45,120 +45,120 @@ ___longj:
 # will be treated as octals when you need decimal.
 
 
-	.globl	_Read
+        .globl  _Read
 _Read:
-	.globl	Read
+        .globl  Read
 Read:
-	MOVEM.L	D2/D3/A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVEM.L	16(A7),D1/D2/D3
-	JSR	-42(A6)
-	MOVEM.L	(A7)+,D2/D3/A6
-	RTS
+        MOVEM.L D2/D3/A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVEM.L 16(A7),D1/D2/D3
+        JSR     -42(A6)
+        MOVEM.L (A7)+,D2/D3/A6
+        RTS
 
 
-	.globl	_Write
+        .globl  _Write
 _Write:
-	.globl	Write
+        .globl  Write
 Write:
-	MOVEM.L	D2/D3/A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVEM.L	16(A7),D1/D2/D3
-	JSR	-48(A6)
-	MOVEM.L	(A7)+,D2/D3/A6
-	RTS
+        MOVEM.L D2/D3/A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVEM.L 16(A7),D1/D2/D3
+        JSR     -48(A6)
+        MOVEM.L (A7)+,D2/D3/A6
+        RTS
 
 
-	.globl	_Input
+        .globl  _Input
 _Input:
-	.globl	Input
+        .globl  Input
 Input:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	JSR	-54(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        JSR     -54(A6)
+        MOVEA.L (A7)+,A6
+        RTS
 
 
-	.globl	_Output
+        .globl  _Output
 _Output:
-	.globl	Output
+        .globl  Output
 Output:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	JSR	-60(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        JSR     -60(A6)
+        MOVEA.L (A7)+,A6
+        RTS
 
 
-	.globl	_AllocMem
+        .globl  _AllocMem
 _AllocMem:
-	.globl	AllocMem
+        .globl  AllocMem
 AllocMem:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_SysBase,A6
-	MOVEM.L	8(A7),D0/D1
-	JSR	-198(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _SysBase,A6
+        MOVEM.L 8(A7),D0/D1
+        JSR     -198(A6)
+        MOVEA.L (A7)+,A6
+        RTS
 
 
-	.globl	_FreeMem
+        .globl  _FreeMem
 _FreeMem:
-	.globl	FreeMem
+        .globl  FreeMem
 FreeMem:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_SysBase,A6
-	MOVEA.L	8(A7),A1
-	MOVE.L	12(A7),D0
-	JSR	-210(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _SysBase,A6
+        MOVEA.L 8(A7),A1
+        MOVE.L  12(A7),D0
+        JSR     -210(A6)
+        MOVEA.L (A7)+,A6
+        RTS
 
 
-	.globl	_Open
+        .globl  _Open
 _Open:
-	.globl	Open
+        .globl  Open
 Open:
-	MOVEM.L	D2/A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVEM.L	12(A7),D1/D2
-	JSR	-30(A6)
-	MOVEM.L	(A7)+,D2/A6
-	RTS
+        MOVEM.L D2/A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVEM.L 12(A7),D1/D2
+        JSR     -30(A6)
+        MOVEM.L (A7)+,D2/A6
+        RTS
 
 
-	.globl	_Close
+        .globl  _Close
 _Close:
-	.globl	Close
+        .globl  Close
 Close:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVE.L	8(A7),D1
-	JSR	-36(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVE.L  8(A7),D1
+        JSR     -36(A6)
+        MOVEA.L (A7)+,A6
+        RTS
 
 
-	.globl	_Seek
+        .globl  _Seek
 _Seek:
-	.globl	Seek
+        .globl  Seek
 Seek:
-	MOVEM.L	D2/D3/A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVEM.L	16(A7),D1/D2/D3
-	JSR	-66(A6)
-	MOVEM.L	(A7)+,D2/D3/A6
-	RTS
+        MOVEM.L D2/D3/A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVEM.L 16(A7),D1/D2/D3
+        JSR     -66(A6)
+        MOVEM.L (A7)+,D2/D3/A6
+        RTS
 
 
-	.globl	_DateStamp
+        .globl  _DateStamp
 _DateStamp:
-	.globl	DateStamp
+        .globl  DateStamp
 DateStamp:
-	MOVE.L	A6,-(A7)
-	MOVEA.L	_DOSBase,A6
-	MOVE.L	8(A7),D1
-	JSR	-192(A6)
-	MOVEA.L	(A7)+,A6
-	RTS
+        MOVE.L  A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVE.L  8(A7),D1
+        JSR     -192(A6)
+        MOVEA.L (A7)+,A6
+        RTS
