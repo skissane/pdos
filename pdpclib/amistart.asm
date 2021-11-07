@@ -36,6 +36,11 @@ ___amistart:
         lea     12(sp),sp
         rts
 
+# This function is required by GCC but isn't used for anything
+        .globl ___main
+___main:
+        rts
+
 # This function receives a return code as a parameter. The stack
 # then needs to be restored and the parameter placed in register d0
 # prior to return to the OS.
