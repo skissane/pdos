@@ -15,4 +15,4 @@ pdptest.exe: amistart.o pdptest.o stdio.o string.o stdlib.o \
   rm -f $*.s
 
 .asm.o:
-  vasmm68k_mot -o $*.o -Fhunk $<
+  vasmm68k_std -o $*.o -Fhunk $<
