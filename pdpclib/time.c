@@ -28,6 +28,9 @@
 #if defined(__MVS__) || defined(__CMS__)
 #include "mvssupa.h"
 #endif
+#ifdef __AMIGA__
+#include <clib/dos_protos.h>
+#endif
 #ifdef __OS2__
 #include <os2.h>
 #endif
@@ -110,6 +113,9 @@ static void scalar_to_ymd(long scalar,
 __PDPCLIB_API__ time_t time(time_t *timer)
 {
     time_t tt;
+#ifdef __AMIGA__
+    struct DateStamp ds;
+#endif
 #ifdef __OS2__
     DATETIME dt;
     APIRET rc;
@@ -132,6 +138,13 @@ __PDPCLIB_API__ time_t time(time_t *timer)
     unsigned int clk[2];
 #endif
 
+#ifdef __AMIGA__
+    DateStamp(&ds);
+    tt = ymd_to_scalar(1978, 1, 1) - ymd_to_scalar(1970, 1, 1);
+    tt += ds.ds_Days;
+    tt = tt * 24 * 60 + ds.ds_Minute;
+    tt = tt * 60 + ds.ds_Tick / 50;
+#endif
 #ifdef __OS2__
     rc = DosGetDateTime(&dt);
     if (rc != 0)
@@ -155,7 +168,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
     tt = __getclk(clk);
 #elif defined(__gnu_linux__)
     tt = __time(NULL);
-#elif !defined(__WIN32__)
+#elif !defined(__WIN32__) && !defined(__AMIGA__)
 
     {
         tt = ymd_to_scalar(dt.year, dt.month, dt.day)
