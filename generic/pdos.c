@@ -147,11 +147,22 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     /* printf("got request to read %lu bytes\n", (unsigned long)bytes); */
     if (fh < 3)
     {
-        /* fread is blocking - use fgets as kludge */
+        /* we need to use fgets, not fread, because we need a function
+           that will terminate at a newline. If the caller is actually
+           trying to do an fgets themselves, then we will be reading 1
+           less byte here because of the terminating NUL allowance. But
+           that doesn't matter either, because if we hit that border
+           condition, the caller will just issue another PosReadFile
+           until they get the newline character they need.
+
+           Note that that is normal line mode reading from stdin. The
+           caller doesn't have the option to wait until the buffer is
+           full, so that doesn't need to be considered. And if they are
+           doing character-oriented input, then a call to this function
+           with a length of 1 will also work when passed to fgets. */
         bios->fgets(data, bytes, bios->Xstdin);
         *readbytes = strlen(data);
         /* printf("got %d bytes\n", *readbytes); */
-        /* *readbytes = bios->fread(data, 1, bytes, bios->Xstdin); */
     }
     else
     {
