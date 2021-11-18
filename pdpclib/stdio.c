@@ -3614,6 +3614,19 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
     if (mode == _IONBF)
     {
         stream->bufTech = mode;
+#ifdef __WIN32__
+        if (stream == stdin)
+        {
+            DWORD dw;
+
+            if (GetConsoleMode(stream->hfile, &dw))
+            {
+                dw &= ~ENABLE_LINE_INPUT;
+                dw &= ~ENABLE_PROCESSED_INPUT;
+                SetConsoleMode(stream->hfile, dw);
+            }
+        }
+#endif
         return (0);
     }
     if (buf == NULL)
