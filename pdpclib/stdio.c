@@ -1905,6 +1905,14 @@ static void freadSlowT(void *ptr,
             {
                 if (*(stream->upto - 1) == '\r')
                 {
+#ifdef __WIN32__
+                    if ((stream == stdin)
+                        && (stream->bufTech == _IONBF))
+                    {
+                        *((char *)ptr + *actualRead - 1) = '\n';
+                    }
+                    else
+#endif
                     *actualRead -= 1;
                 }
             }
