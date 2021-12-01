@@ -162,3 +162,27 @@ DateStamp:
         JSR     -192(A6)
         MOVEA.L (A7)+,A6
         RTS
+
+
+        .globl  _DeleteFile
+_DeleteFile:
+        .globl  DeleteFile
+DeleteFile:
+        MOVE.L  A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVE.L  8(A7),D1
+        JSR     -72(A6)
+        MOVEA.L (A7)+,A6
+        RTS
+
+
+        .globl  _Rename
+_Rename:
+        .globl  Rename
+Rename:
+        MOVEM.L D2/A6,-(A7)
+        MOVEA.L _DOSBase,A6
+        MOVEM.L 12(A7),D1/D2
+        JSR     -78(A6)
+        MOVEM.L (A7)+,D2/A6
+        RTS
