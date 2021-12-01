@@ -21,3 +21,5 @@ long Write(void *a, void *b, long c);
 long Seek(void *a, long offs, long c);
 int Close(void *a);
 struct DateStamp *DateStamp(struct DateStamp *d);
+int DeleteFile(const char *a);
+int Rename(const char *old, const char *new);
