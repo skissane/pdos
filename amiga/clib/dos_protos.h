@@ -17,7 +17,7 @@ void *Input(void);
 void *Output(void);
 void *Open(const char *fnm, long b);
 long Read(void *a, void *b, long c);
-long Write(void *a, void *b, long c);
+long Write(void *a, const void *b, long c);
 long Seek(void *a, long offs, long c);
 int Close(void *a);
 struct DateStamp *DateStamp(struct DateStamp *d);
