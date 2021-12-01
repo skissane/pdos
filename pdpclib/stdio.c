@@ -2949,6 +2949,10 @@ __PDPCLIB_API__ int remove(const char *filename)
     BOOL rc;
 #endif
 
+#ifdef __AMIGA__
+    DeleteFile(filename);
+    ret = 0;
+#endif
 #ifdef __OS2__
     rc = DosDelete((PSZ)filename);
     if (rc != 0)
@@ -3006,6 +3010,10 @@ __PDPCLIB_API__ int rename(const char *old, const char *newnam)
     BOOL rc;
 #endif
 
+#ifdef __AMIGA__
+    Rename(old, newnam);
+    ret = 0;
+#endif
 #ifdef __OS2__
     rc = DosMove((PSZ)old, (PSZ)newnam);
     if (rc != 0)
