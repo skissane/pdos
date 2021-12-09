@@ -244,6 +244,9 @@ int PosSetFileAttributes(const char *fnm,int attr);/*func 43 subfunc 01*/
 int PosGetDeviceInformation(int handle, unsigned int *devinfo);
       /* func 44 subfunc 0 */
 
+int PosSetDeviceInformation(int handle, unsigned int devinfo);
+      /* func 44 subfunc 1 */
+
 int PosBlockDeviceRemovable(int drive); /* func 44 subfunc 8 */
 
 int PosBlockDeviceRemote(int drive,int *da); /* func 44 subfunc 9 */

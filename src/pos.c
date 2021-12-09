@@ -815,6 +815,28 @@ int PosGetDeviceInformation(int handle, unsigned int *devinfo)
     return (regsout.x.ax);
 }
 
+int PosSetDeviceInformation(int handle, unsigned int devinfo)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0x44;
+    regsin.h.al = 0x01;
+#ifdef __32BIT__
+    regsin.d.ebx = handle;
+    regsin.d.edx = devinfo;
+#else
+    regsin.x.bx = handle;
+    regsin.x.dx = devinfo;
+#endif
+    int86(0x21, &regsin, &regsout);
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+}
+
 int PosBlockDeviceRemovable(int drive)
 {
     union REGS regsin;
