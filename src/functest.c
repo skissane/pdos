@@ -604,6 +604,26 @@ static int testPosSetSystemDate(void)
     return 0;
 }
 
+static int testReadFile(void)
+{
+    char buf[10];
+    size_t readbytes;
+    unsigned int devinfo = 0;
+    unsigned int olddi;
+
+    PosGetDeviceInformation(0, &devinfo);
+    printf("devinfo is %x\n", devinfo);
+    devinfo &= 0xff;
+    olddi = devinfo;
+    devinfo |= 1 << 5;
+    PosSetDeviceInformation(0, devinfo);
+    PosReadFile(0, buf, sizeof buf, &readbytes);
+    printf("char is %x\n", buf[0]);
+    PosSetDeviceInformation(0, olddi);
+
+    return 0;
+}
+
 
 int main(void)
 {
@@ -634,7 +654,8 @@ int main(void)
     testBosSerialInitialize();
     testBosSerialWriteChar();
 #endif
-    testBosSerialReadChar();
+    /*testBosSerialReadChar();*/
+    testReadFile();
     
     /*testPosGetDefaultDrive();*/
     /*testPosGetSystemDate();*/
