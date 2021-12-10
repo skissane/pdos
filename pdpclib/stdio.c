@@ -4787,6 +4787,25 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
         c = getc(stream);
         if (c == EOF) break;
         s[cnt] = c;
+        if ((stream == stdin) && stream->reallyu)
+        {
+            if (c == '\b')
+            {
+                if (cnt > 0)
+                {
+                    putc('\b', stdout);
+                    putc(' ', stdout);
+                    putc('\b', stdout);
+                    fflush(stdout);
+                }
+                continue;
+            }
+            else
+            {
+                putc(c, stdout);
+                fflush(stdout);
+            }
+        }
         if (c == '\n') break;
         cnt++;
     }
