@@ -4797,6 +4797,7 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
                     putc(' ', stdout);
                     putc('\b', stdout);
                     fflush(stdout);
+                    cnt--;
                 }
                 continue;
             }
