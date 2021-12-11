@@ -619,6 +619,20 @@ static void int21handler(union REGS *regsin,
                     regsout->x.cflag = 1;
                 }
             }
+            else if (regsin->h.al == 0x01)
+            {
+#ifdef __32BIT__
+                regsout->x.ax = PosSetDeviceInformation(regsin->x.bx,
+                                                        regsin->d.edx);
+#else
+                regsout->x.ax = PosSetDeviceInformation(regsin->x.bx,
+                                                        regsin->x.dx);
+#endif
+                if (regsout->x.ax != 0)
+                {
+                    regsout->x.cflag = 1;
+                }
+            }
             else if (regsin->h.al == 0x08)
             {
 #ifdef __32BIT__
