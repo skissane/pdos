@@ -1554,16 +1554,28 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             }
             if (ascii == 0)
             {
-                if (scan == 72)
+                if (scan == 72) /* up */
                 {
                     num_pending = 2;
                     memcpy(pending, "[A", 2);
                     ascii = 0x1b;
                 }
-                else if (scan == 80)
+                else if (scan == 80) /* down */
                 {
                     num_pending = 2;
                     memcpy(pending, "[B", 2);
+                    ascii = 0x1b;
+                }
+                else if (scan == 75) /* left */
+                {
+                    num_pending = 2;
+                    memcpy(pending, "[D", 2);
+                    ascii = 0x1b;
+                }
+                else if (scan == 77) /* right */
+                {
+                    num_pending = 2;
+                    memcpy(pending, "[C", 2);
                     ascii = 0x1b;
                 }
             }
