@@ -237,6 +237,8 @@ static int ff_handle;
 static DTA origdta;
 static DTA *dta =&origdta;
 
+static int stdin_raw = 0; /* raw keyboard input */
+
 /* DOS version reported to programs.
  * Can be changed via PosSetDosVersion() call. */
 static unsigned int reportedDosVersion = DEFAULT_DOS_VERSION;
@@ -1539,7 +1541,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             waitForKeystroke();
 #endif
             BosReadKeyboardCharacter(&scan, &ascii);
-            if ((ascii == '\b') && (x > 0))
+            if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
                 x--;
                 p[x] = '\0';
@@ -1548,14 +1550,22 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             {
                 p[x] = ascii;
             }
-            pdosWriteText(ascii);
+            if (!stdin_raw) pdosWriteText(ascii);
             if (ascii == '\r')
             {
-                pdosWriteText('\n');
+                if (!stdin_raw) pdosWriteText('\n');
                 /* NB: this will need to be fixed, potential
                 buffer overflow - bummer! */
                 x++;
-                p[x] = '\n';
+                if (!stdin_raw)
+                {
+                    p[x] = '\n';
+                    x++;
+                }
+                break;
+            }
+            if (stdin_raw)
+            {
                 x++;
                 break;
             }
@@ -1708,6 +1718,10 @@ int PosGetDeviceInformation(int handle, unsigned int *devinfo)
         if (handle == 0)
         {
             *devinfo |= (1 << 0); /* standard input device */
+            if (stdin_raw)
+            {
+                *devinfo |= (1 << 5);
+            }
         }
         else if ((handle == 1) || (handle == 2))
         {
@@ -1718,6 +1732,15 @@ int PosGetDeviceInformation(int handle, unsigned int *devinfo)
     else
     {
         /* block device (disk file) */
+    }
+    return (0);
+}
+
+int PosSetDeviceInformation(int handle, unsigned int devinfo)
+{
+    if (handle == 0)
+    {
+        stdin_raw = (devinfo & (1 << 5)) != 0;
     }
     return (0);
 }
