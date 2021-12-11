@@ -1528,6 +1528,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     unsigned char *p;
     size_t x = 0;
     int ret;
+    static int num_pending = 0;
+    static char pending[20];
 
     if (fh < NUM_SPECIAL_FILES)
     {
@@ -1537,10 +1539,34 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             int scan;
             int ascii;
 
+            if (num_pending == 0)
+            {
 #ifdef __32BIT__
-            waitForKeystroke();
+                waitForKeystroke();
 #endif
-            BosReadKeyboardCharacter(&scan, &ascii);
+                BosReadKeyboardCharacter(&scan, &ascii);
+            }
+            else
+            {
+                ascii = pending[0];
+                num_pending--;
+                memmove(pending, pending + 1, num_pending);
+            }
+            if (ascii == 0)
+            {
+                if (scan == 72)
+                {
+                    num_pending = 2;
+                    memcpy(pending, "[A", 2);
+                    ascii = 0x1b;
+                }
+                else if (scan == 80)
+                {
+                    num_pending = 2;
+                    memcpy(pending, "[B", 2);
+                    ascii = 0x1b;
+                }
+            }
             if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
                 x--;
