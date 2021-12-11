@@ -1545,6 +1545,12 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                 waitForKeystroke();
 #endif
                 BosReadKeyboardCharacter(&scan, &ascii);
+                /* double up ESC char as ANSI allows */
+                if (ascii == 0x1b)
+                {
+                    num_pending = 1;
+                    pending[0] = 0x1b;
+                }
             }
             else
             {
