@@ -4613,6 +4613,22 @@ static void pdosWriteText(int ch)
                 BosWriteCharAttrib(currentPage, ' ', currentAttrib,
                     BosGetTextModeCols() - column + 1);
             }
+            else if (ch == 'm')
+            {
+                int x;
+                x = atoi(ansibuf + 2);
+                if ((x >= 30) && (x <= 37))
+                {
+                    /* set foreground color */
+                    currentAttrib &= 0xf0;
+                    currentAttrib |= (x - 30);
+                }
+                else if ((x >= 40) && (x <= 47))
+                {
+                    /* set background color */
+                    currentAttrib = ((x - 40) << 4) | (currentAttrib & 0x0f);
+                }
+            }
             numansi = 0;
             return;
         }
