@@ -4606,6 +4606,13 @@ static void pdosWriteText(int ch)
                 if (column == 0) column++;
                 BosSetCursorPosition(currentPage,row-1,column-1);
             }
+            else if (ch == 'K')
+            {
+                BosReadCursorPosition(currentPage,
+                    &cursorStart,&cursorEnd,&row,&column);
+                BosWriteCharAttrib(currentPage, ' ', currentAttrib,
+                    BosGetTextModeCols() - column + 1);
+            }
             numansi = 0;
             return;
         }
