@@ -283,12 +283,26 @@ BOOL WINAPI WriteConsoleOutputA(
 
 BOOL WINAPI GetConsoleMode(HANDLE hFile, DWORD *dw)
 {
+    unsigned int devinfo;
+
     *dw = 0;
+    PosGetDeviceInformation((int)hFile, &devinfo);
+    if ((devinfo & (1 << 5)) == 0)
+    {
+        *dw = ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT;
+    }
     return (1);
 }
 
 BOOL WINAPI SetConsoleMode(HANDLE hFile, DWORD dw)
 {
+    unsigned int devinfo = 0;
+
+    if ((dw & ENABLE_PROCESSED_INPUT) == 0)
+    {
+        devinfo = 1 << 5;
+    }
+    PosSetDeviceInformation((int)hFile, devinfo);
     return (1);
 }
 
