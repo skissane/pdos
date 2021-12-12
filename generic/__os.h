@@ -36,6 +36,8 @@ typedef struct {
     void *(*PosGetDTA)(void);
     int (*PosFindFirst)(char *pat, int attrib);
     int (*PosFindNext)(void);
+    int (*PosGetDeviceInformation)(int handle, unsigned int *devinfo);
+    int (*PosSetDeviceInformation)(int handle, unsigned int devinfo);
 } OS;
 
 extern OS *__os;
