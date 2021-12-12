@@ -25,4 +25,6 @@ typedef struct {
     char *(*fgets)(char *s, int n, void *stream);
     void *Xstdin;
     void *Xstdout;
+    int (*fflush)(void *stream);
+    int (*setvbuf)(void *stream, char *buf, int mode, size_t size);
 } BIOS;

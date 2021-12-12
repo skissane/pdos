@@ -21,7 +21,8 @@
 #define MEMAMT 28*1024*1024
 
 static BIOS bios = { NULL, 0, NULL,
-    printf, fopen, fseek, fread, fclose, fwrite, fgets, NULL, NULL };
+    printf, fopen, fseek, fread, fclose, fwrite, fgets, NULL, NULL,
+    fflush, setvbuf };
 
 static int (*genstart)(BIOS *bios);
 
