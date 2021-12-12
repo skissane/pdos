@@ -3643,6 +3643,17 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             }
         }
 #endif
+#if defined(__PDOS386__)
+        if (stream == stdin)
+        {
+            unsigned int dw;
+
+            PosGetDeviceInformation(0, &dw);
+            dw &= 0xff;
+            dw |= (1 << 5);
+            PosSetDeviceInformation(0, dw);
+        }
+#endif
         return (0);
     }
     if (buf == NULL)

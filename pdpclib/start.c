@@ -121,6 +121,7 @@ void *DOSBase;
 #include <support.h>
 #include <pos.h>
 unsigned char *__envptr;
+static unsigned int stdin_dw;
 #endif
 
 #if USE_MEMMGR
@@ -330,6 +331,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stdin->hfile = 0;
     __stdout->hfile = 1;
     __stderr->hfile = 2;
+#endif
+
+#if defined(__PDOS386__)
+    PosGetDeviceInformation(0, &stdin_dw);
+    stdin_dw &= 0xff;
 #endif
 
     __stdin->quickBin = 0;
@@ -1051,6 +1057,10 @@ __PDPCLIB_API__ void _c_exit(void)
 #if defined(__WIN32__)
     SetConsoleMode(__stdin->hfile, stdin_dw);
     SetConsoleMode(__stdout->hfile, stdout_dw);
+#endif
+
+#if defined(__PDOS386__)
+    PosSetDeviceInformation(0, stdin_dw);
 #endif
 
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
