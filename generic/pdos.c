@@ -36,6 +36,9 @@ extern int __minstart;
 #endif
 
 #define BIOS_SEEK_SET SEEK_SET
+#define BIOS_IONBF _IONBF
+#define BIOS_IOLBF _IOLBF
+#define BIOS_BUFSIZ BUFSIZ
 
 extern BIOS *bios;
 extern __start(char *p);
@@ -46,7 +49,8 @@ extern int (*__genmain)(int argc, char **argv);
 static OS os = { __start, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, fgetc, fputc,
-  PosGetDTA, PosFindFirst, PosFindNext };
+  PosGetDTA, PosFindFirst, PosFindNext,
+  PosGetDeviceInformation, PosSetDeviceInformation };
 
 static int (*pgastart)(OS *os);
 
@@ -55,6 +59,8 @@ static MEMMGR memmgr;
 static void *disk;
 
 static DTA origdta;
+
+static int stdin_raw = 0;
 
 #define SECTSZ 512
 
@@ -175,6 +181,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
     bios->fwrite(data, 1, len, bios->Xstdout);
+    bios->fflush(bios->Xstdout);
     return (0);
 }
 
@@ -199,6 +206,26 @@ void *PosAllocMem(unsigned int size, unsigned int flags)
 int PosFreeMem(void *ptr)
 {
     memmgrFree(&memmgr, ptr);
+    return (0);
+}
+
+int PosGetDeviceInformation(int handle, unsigned int *devinfo)
+{
+    *devinfo = stdin_raw << 5;
+    return (0);
+}
+
+int PosSetDeviceInformation(int handle, unsigned int devinfo)
+{
+    stdin_raw = ((devinfo & (1 << 5)) != 0);
+    if (stdin_raw)
+    {
+        bios->setvbuf(bios->Xstdin, NULL, BIOS_IONBF, 0);
+    }
+    else
+    {
+        bios->setvbuf(bios->Xstdin, NULL, BIOS_IOLBF, BIOS_BUFSIZ);
+    }
     return (0);
 }
 
