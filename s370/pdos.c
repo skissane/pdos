@@ -248,7 +248,8 @@ old virtual memory map:
 #ifndef ZAM31
 #define MAXASIZE 4080 /* 16 less than theoretical maximum */
 #else
-#define MAXASIZE 2032 /* 16 less than theoretical maximum */
+/* #define MAXASIZE 2032 */ /* 16 less than theoretical maximum */
+#define MAXASIZE 128
 #endif
 #define MAXANUM 1
 #endif
