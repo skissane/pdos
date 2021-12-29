@@ -324,6 +324,7 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
     ret = PosFindFirst((char *)lpFileName, 0x10);
     if (ret == 2) return (INVALID_HANDLE_VALUE);
     strcpy(FindFileData->cFileName, dta->file_name);
+    FindFileData->nFileSizeLow = dta->file_size;
     return ((HANDLE)dta);
 }
 
@@ -335,6 +336,7 @@ BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData)
     ret = PosFindNext();
     if (ret != 0) return (0);
     strcpy(FindFileData->cFileName, dta->file_name);
+    FindFileData->nFileSizeLow = dta->file_size;
     return (1);
 }
 
