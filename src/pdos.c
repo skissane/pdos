@@ -2222,11 +2222,23 @@ void PosPowerOff(void)
 static void make_ff(char *pat)
 {
     char *p;
+    char *q;
 
     strcpy(ff_pat, pat);
     upper_str(ff_pat);
     scrunchf(ff_path, ff_pat);
+
     p = strrchr(ff_path, '\\');
+    q = strrchr(ff_path, '/');
+
+    if (q != NULL)
+    {
+        if ((p == NULL) || (q > p))
+        {
+            p = q;
+        }
+    }
+
     if (p != NULL)
     {
         strcpy(ff_pat, p + 1);
