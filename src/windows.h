@@ -234,7 +234,9 @@ typedef struct _INPUT_RECORD {
 } INPUT_RECORD, *PINPUT_RECORD;
 
 typedef struct {
-    char unused1[44];
+    char unused1a[32];
+    DWORD nFileSizeLow;
+    char unused1b[8];
     char cFileName[260];
     char unused2[16];
 } WIN32_FIND_DATA, WIN32_FIND_DATAA;
