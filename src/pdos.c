@@ -1602,7 +1602,6 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     pending[0] = 'e';
                     ascii = 0x1b;
                 }
-#if 0
                 else if (scan == 0x13)
                 {
                     num_pending = 1;
@@ -1741,7 +1740,6 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     pending[0] = 'm';
                     ascii = 0x1b;
                 }
-#endif
             }
             if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
