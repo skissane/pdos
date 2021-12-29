@@ -1584,6 +1584,164 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[C", 2);
                     ascii = 0x1b;
                 }
+                else if (scan == 0x10)
+                {
+                    num_pending = 1;
+                    pending[0] = 'q';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x11)
+                {
+                    num_pending = 1;
+                    pending[0] = 'w';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x12)
+                {
+                    num_pending = 1;
+                    pending[0] = 'e';
+                    ascii = 0x1b;
+                }
+#if 0
+                else if (scan == 0x13)
+                {
+                    num_pending = 1;
+                    pending[0] = 'r';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x14)
+                {
+                    num_pending = 1;
+                    pending[0] = 't';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x15)
+                {
+                    num_pending = 1;
+                    pending[0] = 'y';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x16)
+                {
+                    num_pending = 1;
+                    pending[0] = 'u';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x17)
+                {
+                    num_pending = 1;
+                    pending[0] = 'i';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x18)
+                {
+                    num_pending = 1;
+                    pending[0] = 'o';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x19)
+                {
+                    num_pending = 1;
+                    pending[0] = 'p';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x1e)
+                {
+                    num_pending = 1;
+                    pending[0] = 'a';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x1f)
+                {
+                    num_pending = 1;
+                    pending[0] = 's';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x20)
+                {
+                    num_pending = 1;
+                    pending[0] = 'd';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x21)
+                {
+                    num_pending = 1;
+                    pending[0] = 'f';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x22)
+                {
+                    num_pending = 1;
+                    pending[0] = 'g';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x23)
+                {
+                    num_pending = 1;
+                    pending[0] = 'h';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x24)
+                {
+                    num_pending = 1;
+                    pending[0] = 'j';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x25)
+                {
+                    num_pending = 1;
+                    pending[0] = 'k';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x26)
+                {
+                    num_pending = 1;
+                    pending[0] = 'l';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x2c)
+                {
+                    num_pending = 1;
+                    pending[0] = 'z';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x2d)
+                {
+                    num_pending = 1;
+                    pending[0] = 'x';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x2e)
+                {
+                    num_pending = 1;
+                    pending[0] = 'c';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x2f)
+                {
+                    num_pending = 1;
+                    pending[0] = 'v';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x30)
+                {
+                    num_pending = 1;
+                    pending[0] = 'b';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x31)
+                {
+                    num_pending = 1;
+                    pending[0] = 'n';
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x32)
+                {
+                    num_pending = 1;
+                    pending[0] = 'm';
+                    ascii = 0x1b;
+                }
+#endif
             }
             if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
