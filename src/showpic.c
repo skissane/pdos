@@ -24,6 +24,9 @@ int main(int argc, char **argv)
     int x;
     int y;
     int color;
+    int backcol = 3;
+    int forecol = 0;
+    int type = 1;
 
     if (argc <= 1)
     {
@@ -37,11 +40,22 @@ int main(int argc, char **argv)
     {
         for (x = 0; x < 320; x++)
         {
-            color = 0;
-            if ((((x / 10) % 2) == 1)
-                && (((y / 10) % 2) == 1))
+            color = backcol;
+            if (type == 0)
             {
-                color = 1;
+                if ((((x / 10) % 2) == 1)
+                    && (((y / 10) % 2) == 1))
+                {
+                    color = forecol;
+                }
+            }
+            else if (type == 1)
+            {
+                if (((x > 100) && (x < 220))
+                    && ((y > 40) && (y < 160)))
+                {
+                    color = forecol;
+                }
             }
             BosWriteGraphicsPixel(page, color, y, x);
         }
