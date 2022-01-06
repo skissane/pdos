@@ -27,10 +27,18 @@ int main(int argc, char **argv)
     int backcol = 3;
     int forecol = 0;
     int type = 1;
+    static char buf[322];
+    FILE *fp;
 
     if (argc <= 1)
     {
         printf("usage: showpic <picture file>\n");
+        return (EXIT_FAILURE);
+    }
+    fp = fopen(*(argv + 1), "r");
+    if (fp == NULL)
+    {
+        printf("failed to open %s\n", *(argv + 1));
         return (EXIT_FAILURE);
     }
     setvbuf(stdin, NULL, _IONBF, 0);
@@ -38,29 +46,22 @@ int main(int argc, char **argv)
     BosSetVideoMode(4);
     for (y = 0; y < 200; y++)
     {
+        fgets(buf, sizeof buf, fp);
         for (x = 0; x < 320; x++)
         {
-            color = backcol;
-            if (type == 0)
+            if (buf[x] == 'X')
             {
-                if ((((x / 10) % 2) == 1)
-                    && (((y / 10) % 2) == 1))
-                {
-                    color = forecol;
-                }
+                color = forecol;
             }
-            else if (type == 1)
+            else
             {
-                if (((x > 100) && (x < 220))
-                    && ((y > 40) && (y < 160)))
-                {
-                    color = forecol;
-                }
+                color = backcol;
             }
             BosWriteGraphicsPixel(page, color, y, x);
         }
     }
     getc(stdin);
     BosSetVideoMode(oldmode);
+    fclose(fp);
     return (0);
 }
