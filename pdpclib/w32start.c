@@ -6,11 +6,9 @@
 /*********************************************************************/
 /*********************************************************************/
 /*                                                                   */
-/*  w32start - startup code for WIN32                                */
+/*  w32start - startup code for WIN32 using MSVCRT.DLL               */
 /*                                                                   */
 /*********************************************************************/
-
-/* This is the main entry point of a console mode executable */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +18,8 @@ int __getmainargs(int *_Argc, char ***_Argv, char ***_Env, int _DoWildCard,
                   int *_StartInfo);
 int main(int argc, char **argv);
 
+/* This is the main entry point of a console mode executable */
+
 /* consider adding this line so that relocatables are generated
    for some/most/all versions of "ld". The reason for this is
    that, at least with binutils 2.14a, there is code in there
@@ -28,10 +28,6 @@ int main(int argc, char **argv);
 /*__declspec(dllexport)*/
 void mainCRTStartup(void)
 {
-#ifdef __STATIC__
-    __start(0);
-    return;
-#else
     int argc;
     char **argv;
     char **environ;
@@ -43,7 +39,6 @@ void mainCRTStartup(void)
     status = main(argc, argv);
 
     exit(status);
-#endif
 }
 
 void __main(void)
