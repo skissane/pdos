@@ -1,26 +1,20 @@
 # This is the makefile for Win32 to build pdpclib using
-# the gcc compiler, and using custom-built Windows tools.
-#
-# The makefile uses spaces, which are normal for Windows
-# users, and Borland make, Microsoft nmake and others are
-# happy to accept them. If you are using Cygwin or a make
-# that unfortunately requires tabs, then simply edit this
-# file, change all spaces to tabs, and it will work, even
-# if the resultant file looks a bit silly.
+# the gcc compiler, and using custom-built Windows tools
+# and for static linking. Use with pdmake etc.
 
 CC=gccwin
 COPTS=-S -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src
 
-all: clean pdptest.exe
+all: pdptest.exe
 
-pdptest.exe: w32start.o pdptest.o stdio.o string.o stdlib.o \
+pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o __memmgr.o winsupc.obj
   rm -f pdpwin32.a
-  arwin r pdpwin32.a w32start.o stdio.o string.o stdlib.o winsupc.obj
+  arwin r pdpwin32.a p32start.o stdio.o string.o stdlib.o winsupc.obj
   arwin r pdpwin32.a start.o time.o errno.o assert.o signal.o
   arwin r pdpwin32.a locale.o ctype.o setjmp.o math.o __memmgr.o
-  ldwin -s -o pdptest.exe w32start.o pdptest.o pdpwin32.a ../src/kernel32.a
+  ldwin -s -o pdptest.exe p32start.o pdptest.o pdpwin32.a ../src/kernel32.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
@@ -29,8 +23,6 @@ pdptest.exe: w32start.o pdptest.o stdio.o string.o stdlib.o \
 
 .asm.obj:
   aswin -o $@ $<
-#  ml -c -coff $<
-#  poasm $<
 
 clean:
   rm -f *.o
