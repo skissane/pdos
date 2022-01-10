@@ -565,6 +565,7 @@ static void fopen3(void)
             case 11:
             case 12:
                 myfile->update = 1;
+                myfile->justseeked = 1;
                 break;
         }
     }
