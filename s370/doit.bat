@@ -63,6 +63,7 @@ copy wtoworld.txt wtoworld.exe
 copy diff.txt diff.exe
 copy uemacs.txt uemacs.exe
 copy edlin.txt edlin.exe
+copy pdmake.txt pdmake.exe
 copy gcc.txt gcc.exe
 copy copyfile.txt copyfile.exe
 copy hexdump.txt hexdump.exe
