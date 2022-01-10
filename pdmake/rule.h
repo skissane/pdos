@@ -29,4 +29,5 @@ void rule_add(char *name, struct dep *deps, struct commands *cmds);
 
 void rule_search_and_build(char *name);
 
+#define rule_add_suffix _Prasu
 void rule_add_suffix(char *name, struct commands *cmds);

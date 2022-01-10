@@ -8,4 +8,5 @@
  * and by any means.
  */
 
+#define read_makefile _Prmkfile
 void read_makefile(const char *filename);

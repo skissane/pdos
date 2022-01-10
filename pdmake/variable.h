@@ -16,9 +16,15 @@ typedef struct variable {
     struct variable *next;
 } variable;
 
+#define variable_add _Pvadd
 variable *variable_add(char *name, char *value);
+#define variable_find _Pvfind
 variable *variable_find(char *name);
+#define variable_change _Pvxchg
 void variable_change(char *name, char *value);
 
+#define variable_expand_line _Pvxplin
 char *variable_expand_line(char *line);
+
+#define parse_var_line _Ppvrlin
 void parse_var_line(char *line);

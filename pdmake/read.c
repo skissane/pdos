@@ -17,6 +17,7 @@
 #include "variable.h"
 #include "rule.h"
 #include "xmalloc.h"
+#include "read.h"
 
 extern variable *default_goal_var;
 
