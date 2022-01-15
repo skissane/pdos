@@ -3,7 +3,7 @@
 # and for static linking. Use with pdmake etc.
 
 CC=gccwin
-COPTS=-S -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src
+COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src
 
 all: pdptest.exe
 

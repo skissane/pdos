@@ -3,7 +3,7 @@
 
 CC=gcc
 CFLAGS=-O2
-COPTS=-c $(CFLAGS) -D__WIN32__ -D__STATIC__ -I . -I../src
+COPTS=-c $(CFLAGS) -fno-common -ansi -D__WIN32__ -D__STATIC__ -I . -I../src
 
 all: pdptest.exe
 
