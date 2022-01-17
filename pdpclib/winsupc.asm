@@ -13,6 +13,7 @@
 
 .globl ___setj
 .globl ___longj
+.globl ___chkstk_ms
 
 ___setj:
         mov eax, [esp+4]
@@ -63,4 +64,10 @@ ___longj:
 
         mov eax, [eax+32]    # return value
 
+        ret
+
+
+# For compiling with GCC 4 we don't want to
+# have to link the GCC library in
+___chkstk_ms:
         ret
