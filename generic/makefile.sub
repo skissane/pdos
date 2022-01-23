@@ -15,11 +15,9 @@ pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
     $(LD) $(LDFLAGS) -s -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
 
 .c.o:
-    pdcc -E -D__SUBC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(COPTS) -o temp.c $<
-    rm -f temp.s
-    $(CC) -S temp.c
-    rm -f $*.s
-    ren temp.s $*.s
+    pdcc -E -D__SUBC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(COPTS) -o $*.i $<
+    $(CC) -S $*.i
+    rm -f $*.i
     $(AS) -o $@ $*.s
     rm -f $*.s
 
