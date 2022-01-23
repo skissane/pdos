@@ -16,7 +16,7 @@ BIOS *bios;
 
 extern int __minstart;
 
-int __start(void *);
+int __start(char *p);
 
 
 /* This name is known to certain versions of "ld" as the entry
@@ -27,5 +27,5 @@ int __crt0(BIOS *bios_parm)
 {
     bios = bios_parm;
     __minstart = 1;
-    return (__start(0));
+    return (__start(NULL));
 }
