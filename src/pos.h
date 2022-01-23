@@ -178,7 +178,7 @@ void PosGetSystemTime(unsigned int *hour, /* func 2c */
                       unsigned int *sec,
                       unsigned int *hundredths);
 
-void PosSetVerifyFlag(int); /* func 2e
+void PosSetVerifyFlag(int flag); /* func 2e
                                - set read-after-write verification flag */
 
 void *PosGetDTA(void); /* func 2f */
@@ -190,7 +190,7 @@ void PosTerminateAndStayResident(int exitCode, int paragraphs); /* func 31 */
 int PosGetBreakFlag(void); /* func 33, subfunc 00
                               - get Ctrl+Break checking flag status */
 
-void PosSetBreakFlag(int); /* func 33, subfunc 01
+void PosSetBreakFlag(int flag); /* func 33, subfunc 01
                               - set Ctrl+Break checking flag status */
 
 int PosGetBootDrive(void); /* func 33, subfunc 05
@@ -312,7 +312,7 @@ void PosSetDosVersion(unsigned int version); /* func f6.03 */
 
 int PosGetLogUnimplemented(void); /* func f6.04 */
 
-void PosSetLogUnimplemented(int); /* func f6.05 */
+void PosSetLogUnimplemented(int flag); /* func f6.05 */
 
 /* So programs can reliably determine if they are running under PDOS-16 or
  * some other implementation of PDOS API, such as FreeDOS, MS-DOS, PC-DOS,
