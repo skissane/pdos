@@ -278,7 +278,7 @@ char *PosGetCommandLine(void)
 
 void *PosGetEnvBlock(void)
 {
-    return 0;
+    return (void *)0;
 }
 
 void *PosGetDTA(void)
