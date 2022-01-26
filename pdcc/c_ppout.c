@@ -15,12 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NOLINE
-#define LINEPREF "#"
-#else
-#define LINEPREF "#line"
-#endif
-
 struct pp_output {
     FILE *out;
     const cpp_token *prev;
@@ -58,9 +52,15 @@ static int print_line(pp_output *pp_o, location_t loc, const char *flags)
                              filename_len);
         *s = '\0';
 
-        fprintf(pp_o->out, LINEPREF " %lu \"%s\"%s\n",
+#ifdef NOLINE
+        fprintf(pp_o->out, "# %lu \"%s\"%s\n",
                 pp_o->line == 0 ? 1 : pp_o->line,
                 new_name, flags);
+#else
+        fprintf(pp_o->out, "#line %lu \"%s\"\n",
+                pp_o->line == 0 ? 1 : pp_o->line,
+                new_name);
+#endif
 
         free(new_name);
     }
