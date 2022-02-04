@@ -1584,6 +1584,18 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[C", 2);
                     ascii = 0x1b;
                 }
+                else if (scan == 0x52) /* Insert */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[2~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x53) /* Delete */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[3~", 3);
+                    ascii = 0x1b;
+                }
                 else if (scan == 0x10)
                 {
                     num_pending = 1;
