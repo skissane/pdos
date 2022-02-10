@@ -1682,7 +1682,23 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
     else
     {
+        size_t x;
+        char *p;
+
         *actualRead = tempRead;
+        /* Windows returns DEL for backspace instead of ^H so we
+           convert to ^H now */
+        if (stream == stdin)
+        {
+            p = ptr;
+            for (x = 0; x < *actualRead; x++)
+            {
+                if (p[x] == 0x7f)
+                {
+                    p[x] = 0x08;
+                }
+            }
+        }
     }
 #endif
 #ifdef __MSDOS__
