@@ -1467,7 +1467,7 @@ static int cmd_copy_run(char *b)
 
         else
         {
-            printf("Destination %s file not found \n",dest);
+            printf("Destination %s file invalid\n",dest);
             rv = 1;
         }
 
