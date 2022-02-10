@@ -290,6 +290,10 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
 
     if (fat->pos_result == FATPOS_FOUND)
     {
+        if ((p->file_attr & DIRENT_SUBDIR) != 0)
+        {
+            return (POS_ERR_ACCESS_DENIED);
+        }
         fat->currcluster = p->start_cluster[1] << 8
                            | p->start_cluster[0];
         if (fat->fat_type == 32)
