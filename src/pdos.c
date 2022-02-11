@@ -4397,7 +4397,7 @@ static int formatcwd(const char *input,char *output)
     /*
      The user misses the '\' e.g. c:1.txt.
      */
-    else if (strlen(input) >= 3 && input[1] == ':'
+    else if (strlen(input) >= 2 && input[1] == ':'
              && input[2] != '\\')
     {
         char *cwd;
