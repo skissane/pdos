@@ -34,8 +34,16 @@
 #include "log.h"
 #include "helper.h"
 
+#define NOHARD
+
 #ifdef __32BIT__
 #include "int80.h"
+
+#ifdef NOHARD
+/* disable hard polling */
+#define waitForKeystroke() (0)
+#endif
+
 #ifdef NOVM
 #define PAGE_SIZE 0x1000
 void *kmalloc(size_t size);
@@ -656,6 +664,7 @@ int liballoc_free(void *addr, size_t num_pages)
     return (0);
 }
 
+#ifndef NOHARD
 static void waitForKeystroke(void)
 {
     while (!PosKeyboardHit())
@@ -663,6 +672,8 @@ static void waitForKeystroke(void)
         schedule();
     }
 }
+#endif
+
 #endif
 
 #ifndef USING_EXE
