@@ -1,5 +1,5 @@
-gcc386 -S -Os -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib pcomm.c
-gcc386 -S -Os -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib dostime.c
+gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib pcomm.c
+gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib dostime.c
 
 as386 -o pcomm.o pcomm.s
 del pcomm.s
