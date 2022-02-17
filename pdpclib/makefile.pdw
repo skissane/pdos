@@ -6,19 +6,14 @@ COPTS=-S -Os -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
 
 pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o pos.o support.o pdossupc.o bos.o \
+       ctype.o setjmp.o math.o pos.o support.o pdossupc.o \
        liballoc.o
   rm -f pdos.a
   ar386 r pdos.a pdosst32.o stdio.o string.o stdlib.o
   ar386 r pdos.a start.o time.o errno.o assert.o signal.o
   ar386 r pdos.a locale.o ctype.o setjmp.o math.o
-  ar386 r pdos.a pos.o support.o pdossupc.o bos.o liballoc.o
+  ar386 r pdos.a pos.o support.o pdossupc.o liballoc.o
   ld386 -N -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
-
-bos.o: ../src/bos.c
-  $(CC) $(COPTS) -o $*.s ../src/bos.c
-  as386 -o $*.o $*.s
-  rm -f $*.s
 
 pos.o: ../src/pos.c
   $(CC) $(COPTS) -o $*.s ../src/pos.c
