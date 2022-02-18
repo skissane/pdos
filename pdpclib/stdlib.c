@@ -823,6 +823,26 @@ __PDPCLIB_API__ int atexit(void (*func)(void))
     return (-1);
 }
 
+static int ins_strncmp(const char *one, const char *two, size_t len)
+{
+    size_t x = 0;
+
+    if (len == 0) return (0);
+    while ((x < len)
+           && (toupper((unsigned char)*one) == toupper((unsigned char)*two)))
+    {
+        if (*one == '\0')
+        {
+            return (0);
+        }
+        one++;
+        two++;
+        x++;
+    }
+    if (x == len) return (0);
+    return (toupper((unsigned char)*one) - toupper((unsigned char)*two));
+}
+
 __PDPCLIB_API__ char *getenv(const char *name)
 {
 #ifdef __OS2__
@@ -845,7 +865,7 @@ __PDPCLIB_API__ char *getenv(const char *name)
     lenn = strlen(name);
     while (*env != '\0')
     {
-        if (strncmp(env, name, lenn) == 0)
+        if (ins_strncmp(env, name, lenn) == 0)
         {
             if (env[lenn] == '=')
             {
@@ -889,11 +909,7 @@ __PDPCLIB_API__ int system(const char *string)
     char *cmdproc;
     char cmdbuf[300];
 
-    cmdproc = getenv("ComSpec");
-    if (cmdproc == NULL)
-    {
-        cmdproc = getenv("COMSPEC");
-    }
+    cmdproc = getenv("COMSPEC");
     if (cmdproc == NULL)
     {
         return (-1);
