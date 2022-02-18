@@ -1571,28 +1571,40 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             }
             if (ascii == 0)
             {
-                if (scan == 72) /* up */
+                if (scan == 0x48) /* up */
                 {
                     num_pending = 2;
                     memcpy(pending, "[A", 2);
                     ascii = 0x1b;
                 }
-                else if (scan == 80) /* down */
+                else if (scan == 0x50) /* down */
                 {
                     num_pending = 2;
                     memcpy(pending, "[B", 2);
                     ascii = 0x1b;
                 }
-                else if (scan == 75) /* left */
+                else if (scan == 0x4b) /* left */
                 {
                     num_pending = 2;
                     memcpy(pending, "[D", 2);
                     ascii = 0x1b;
                 }
-                else if (scan == 77) /* right */
+                else if (scan == 0x4d) /* right */
                 {
                     num_pending = 2;
                     memcpy(pending, "[C", 2);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x73) /* ctrl-left */
+                {
+                    num_pending = 5;
+                    memcpy(pending, "[1;5D", 5);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x74) /* ctrl-right */
+                {
+                    num_pending = 5;
+                    memcpy(pending, "[1;5C", 5);
                     ascii = 0x1b;
                 }
                 else if (scan == 0x52) /* Insert */
@@ -1605,6 +1617,42 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                 {
                     num_pending = 3;
                     memcpy(pending, "[3~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x47) /* home */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[1~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x4f) /* end */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[4~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x51) /* page-down */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[6~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x76) /* ctrl-page-down */
+                {
+                    num_pending = 5;
+                    memcpy(pending, "[6;5~", 5);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x49) /* page-up */
+                {
+                    num_pending = 3;
+                    memcpy(pending, "[5~", 3);
+                    ascii = 0x1b;
+                }
+                else if (scan == 0x84) /* ctrl-page-up */
+                {
+                    num_pending = 5;
+                    memcpy(pending, "[5;5~", 5);
                     ascii = 0x1b;
                 }
                 else if (scan == 0x10)
