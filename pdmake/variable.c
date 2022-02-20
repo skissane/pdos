@@ -119,15 +119,27 @@ char *variable_expand_line(char *line)
 
 void parse_var_line(char *line)
 {
-    char *p = strchr(line, '=');
+    char *equals_sign = strchr(line, '=');
+    char *p;
 
-    if (p == NULL)
+    if (equals_sign == NULL)
     {
         fprintf(stderr, "+++Invalid variable definition!\n");
         return;
     }
 
+    /* Any <blank> characters immediately
+     * before the equals sign must be ignored. */
+    for (p = equals_sign;
+         (p > line) && ((p[-1] == ' ') || (p[-1] == '\t'));
+         p--) ;
     *p = '\0';
+
+    /* Any <blank> characters immediately
+     * after the equals sign must be ignored. */
+    for (p = equals_sign;
+         (p[1] == ' ') || (p[1] == '\t');
+         p++) ;
 
     variable_add(xstrdup(line), xstrdup(p + 1));
 }
