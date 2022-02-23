@@ -123,7 +123,6 @@ void suffix_rule_use(suffix_rule *s, char *name)
     p = strrchr(star_name, '.');
     if (p) *p = '\0';
 
-    variable_change("@", xstrdup(name));
     variable_change("<", lesser_name);
     variable_change("*", star_name);
 
@@ -155,6 +154,69 @@ void suffix_rule_use(suffix_rule *s, char *name)
     }   
 }
 
+int file_exists(char *name)
+{
+    FILE *f;
+
+    f = fopen(name, "r");
+    if (f)
+    {
+        fclose(f);
+        return (1);
+    }
+
+    return (0);
+}
+
+char *find_target(char *target)
+{
+    variable *vpath_var;
+    char *vpath;
+
+    if (file_exists(target)) return (target);
+
+    vpath_var = variable_find("VPATH");
+    if (vpath_var == NULL) return (NULL);
+
+    vpath = vpath_var->value;
+
+    for (;
+         vpath && *vpath;
+         )
+    {
+        char *vpath_part = vpath;
+        char saved_c;
+        char *new_target;
+
+        /* Skips the initial whitespace. */
+        while ((*vpath == ' ') && (*vpath == '\t') && (*vpath == ';')) vpath++;
+
+        /* Finds the end of the current part. */
+        while ((*vpath != ' ') && (*vpath != '\t')
+               && (*vpath != ';') && (*vpath != '\0')) vpath++;
+
+        saved_c = *vpath;
+        *vpath = '\0';
+
+        new_target = xmalloc(strlen(vpath_part) + 1 + strlen(target) + 1);
+        strcpy(new_target, vpath_part);
+        strcat(new_target, "/");
+        strcat(new_target, target);
+
+        *vpath = saved_c;
+
+        if (file_exists(new_target)) return (new_target);
+
+        free(new_target);
+
+        vpath = strchr(vpath, ';');
+        if (vpath == NULL) break;
+        vpath++;
+    }
+
+    return (NULL);
+}
+
 void rule_search_and_build(char *name)
 {
     rule *r;
@@ -175,27 +237,49 @@ void rule_search_and_build(char *name)
     suffix = strrchr(name, '.');
     if (suffix)
     {
+        /* Set here because $@ shall evaluate to FULL target name
+         * of the current target.
+         * This means that the name should not be modified
+         * by the search for target. */
+        variable_change("@", xstrdup(name));
+
         for (s = suffix_rules; s; s = s->next)
         {
             if (strcmp(suffix, s->second) == 0)
             {
-                FILE *f;
-                char *orig, *p;
+                char *prereq_name, *p;
+                char *new_name;
 
-                orig = xmalloc(strlen(name) + strlen(s->first) + 1);
-                memcpy(orig, name, strlen(name) + 1);
-                p = strrchr(orig, '.');
+                /* Creates the name of the prerequisite. */
+                prereq_name = xmalloc(strlen(name) + strlen(s->first) + 1);
+                memcpy(prereq_name, name, strlen(name) + 1);
+                p = strrchr(prereq_name, '.');
                 *p = '\0';
-                strcat(orig, s->first);
+                strcat(prereq_name, s->first);
 
-                f = fopen(orig, "r");
-                free(orig);
+                /* Tries to find the prerequisite. */
+                new_name = find_target(prereq_name);
+                free(prereq_name);
 
-                if (f)
+                if (new_name == NULL) continue; /* Not found. */
+
+                if (strcmp(prereq_name, new_name) == 0) break;
+
+                /* Restore the original suffix in the new name. */
+                if (strlen(s->first) < strlen(s->second))
                 {
-                    fclose(f);
-                    break;
+                    new_name = xrealloc(new_name,
+                                        (strlen(new_name)
+                                         + strlen(s->second)
+                                         - strlen(s->first)));
                 }
+                p = strrchr(new_name, '.');
+                *p = '\0';
+                strcat(new_name, s->second);
+
+                name = new_name;
+
+                break;
             }
         }
 
@@ -207,14 +291,13 @@ void rule_search_and_build(char *name)
     }
 
     {
-        FILE *f = fopen(name, "r");
+        char *new_name = find_target(name);
 
-        if (f == NULL)
+        if (new_name == NULL)
         {
             fprintf(stderr, "No rule to make target `%s'. Stop.", name);
             exit(1);
         }
-        else fclose(f);
     }
 
 }
@@ -223,9 +306,9 @@ void help(void)
 {
     printf("Usage: pdmake [options] [target]...\n");
     printf("Options:\n");
-    printf("  -B                  "
+    printf("  -B, --always-make   "
            "Make everything regardless of timestamps.\n");
-    printf("  -f FILE             "
+    printf("  -f, --file FILE     "
            "Read FILE as a makefile.\n");
     printf("  -h, --help          "
            "Print this message and exit.\n");
@@ -256,7 +339,13 @@ int main(int argc, char **argv)
                 case 'f':
                     if (argv[i][2] == '\0')
                     {
-                        name = argv[++i];
+                        i++;
+                        if (i == argc)
+                        {
+                            printf("option requires an argument -- f\n");
+                            return (0);
+                        }
+                        name = argv[i];
                     }
                     else
                     {
@@ -277,14 +366,28 @@ int main(int argc, char **argv)
                     break;
 
                 case '-':
-                    if (strcmp("ignore-errors", argv[i] + 2) == 0)
+                    if (strcmp("always-make", argv[i] + 2) == 0)
                     {
-                        ignore_errors = 1;
+                        printf("Rebuilding everything, regardless of timestamps.\n");
+                    }
+                    else if (strcmp("file", argv[i] + 2) == 0)
+                    {
+                        i++;
+                        if (i == argc)
+                        {
+                            printf("option `--file' requires an argument\n");
+                            return (0);
+                        }
+                        name = argv[i];
                     }
                     else if (strcmp("help", argv[i] + 2) == 0)
                     {
                         help();
                         return (0);
+                    }
+                    else if (strcmp("ignore-errors", argv[i] + 2) == 0)
+                    {
+                        ignore_errors = 1;
                     }
                     else if (strcmp("dry_run", argv[i] + 2) == 0)
                     {
