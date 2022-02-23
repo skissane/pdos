@@ -21,6 +21,7 @@
 
 static int dry_run = 0; /* Run no commands. */
 static int ignore_errors = 0;
+static int silent = 0;
 
 variable *default_goal_var;
 
@@ -84,7 +85,7 @@ void rule_use(rule *r, char *name)
         new_cmds = xstrdup(p);
         *q = '\n';
         new_cmds = variable_expand_line(new_cmds);
-        printf("%s\n", new_cmds);
+        if (!silent) printf("%s\n", new_cmds);
 
         if (!dry_run)
         {
@@ -134,7 +135,7 @@ void suffix_rule_use(suffix_rule *s, char *name)
         new_cmds = xstrdup(p);
         *q = '\n';
         new_cmds = variable_expand_line(new_cmds);
-        printf("%s\n", new_cmds);
+        if (!silent) printf("%s\n", new_cmds);
 
         if (!dry_run)
         {
@@ -306,16 +307,18 @@ void help(void)
 {
     printf("Usage: pdmake [options] [target]...\n");
     printf("Options:\n");
-    printf("  -B, --always-make   "
+    printf("  -B, --always-make           "
            "Make everything regardless of timestamps.\n");
-    printf("  -f, --file FILE     "
+    printf("  -f, --file FILE             "
            "Read FILE as a makefile.\n");
-    printf("  -h, --help          "
+    printf("  -h, --help                  "
            "Print this message and exit.\n");
-    printf("  -i, --ignore-errors "
+    printf("  -i, --ignore-errors         "
            "Ignore errors from commands.\n");
-    printf("  -n, --dry_run       "
+    printf("  -n, --dry_run               "
            "Run no commands, only print them.\n");
+    printf("  -s, --silent, --quiet       "
+           "Do not print commands.\n");
 }
 
 int main(int argc, char **argv)
@@ -365,6 +368,10 @@ int main(int argc, char **argv)
                     dry_run = 1;
                     break;
 
+                case 's':
+                    silent = 1;
+                    break;
+
                 case '-':
                     if (strcmp("always-make", argv[i] + 2) == 0)
                     {
@@ -392,6 +399,11 @@ int main(int argc, char **argv)
                     else if (strcmp("dry_run", argv[i] + 2) == 0)
                     {
                         dry_run = 1;
+                    }
+                    else if ((strcmp("silent", argv[i] + 2) == 0)
+                             || (strcmp("quiet", argv[i] + 2) == 0))
+                    {
+                        silent = 1;
                     }
                     else printf("Unknown switch! Use -h for help.\n");
                     break;
