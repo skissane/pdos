@@ -13,7 +13,7 @@
 #ifndef __CTYPE_INCLUDED
 #define __CTYPE_INCLUDED
 
-#if defined(__WIN32__) && !defined(__STATIC__)
+#if defined(__WIN32__) && !defined(__STATIC__) || defined(__SUBC__)
 int isalnum(int c);
 int isalpha(int c);
 int iscntrl(int c);
