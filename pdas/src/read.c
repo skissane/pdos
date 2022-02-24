@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "as.h"
 
@@ -73,7 +74,31 @@ static void handler_ascii(void)
                     switch (c)
                     {
                         case '0':
-                            frag_append_1_char('\0');
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        {
+                            unsigned long number;
+                            int i;
+
+                            for (i = 0, number = 0;
+                                 isdigit(c) && (i < 3);
+                                 (c = *input_line_pointer++), i++)
+                            {
+                                number = number * 8 + c - '0';
+                            }
+                            
+                            frag_append_1_char(number & 0xff);
+                            input_line_pointer--;
+                            break;
+                        }
+
+                        default:
+                            as_error("+++handler_ascii\n");
                             break;
                     }
                     break;

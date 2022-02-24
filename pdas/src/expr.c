@@ -73,6 +73,7 @@ static void operand(exprS *expr)
             {
                 case 'x':
                 case 'X':
+                    input_line_pointer++;
                     integer_constant(16, expr);
                     break;
 

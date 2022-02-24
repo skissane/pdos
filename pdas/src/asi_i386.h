@@ -21,7 +21,11 @@
 
 #define TWOBYTE_OPCODE 0x0F
 
+#define ESP_REGISTER_NUMBER 4
 #define EBP_REGISTER_NUMBER 5
+
+#define MODRM_REGMEM_TWO_BYTE_ADDRESSING ESP_REGISTER_NUMBER
+#define SIB_INDEX_NO_INDEX_REGISTER ESP_REGISTER_NUMBER
 
 typedef struct {
     const char *name;
@@ -285,6 +289,18 @@ const template template_table[] = {
     {"jng", 1, 0x7E, None, Jump, {Disp, 0}},
     {"jnle", 1, 0x7F, None, Jump, {Disp, 0}},
     {"jg", 1, 0x7F, None, Jump, {Disp, 0}},
+
+    /* */
+    {"sete", 1, 0x0f94, 0, Modrm, {Reg8 | AnyMem, 0}},
+
+    /* String manipulation instructions. */
+    {"cmps", 0, 0xA6, None, 0, {0, 0}},
+    {"scas", 0, 0xAE, None, 0, {0, 0}},
+
+    /* Prefixes. */
+#define DATA_PREFIX_OPCODE 0x66
+    {"repe", 0, 0xF3, None, 0, {0, 0}},
+    {"repne", 0, 0xF2, None, 0, {0, 0}},
 
     {0, 0}
 };

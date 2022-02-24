@@ -71,6 +71,10 @@ typedef struct {
     sib_byte sib;
 
     const reg_entry *base_reg;
+    const reg_entry *index_reg;
+    unsigned int log2_scale_factor;
+
+    unsigned char prefix;
 } i386_instruction;
 
 static i386_instruction instruction;
@@ -151,6 +155,7 @@ int parse_operand(char *operand_string)
 
         /* Checks for a base index form (like -12(%ebp)). */
         base_string = operand_string + strlen(operand_string) - 1;
+        
         if (*base_string == ')')
         {
             while (*base_string != '(')
@@ -162,7 +167,7 @@ int parse_operand(char *operand_string)
                     return (1);
                 }
             }
-
+            
             displacement_string_end = base_string;
 
             /* Moves past the '('. */
@@ -193,6 +198,93 @@ int parse_operand(char *operand_string)
                 *p = saved_c;
 
                 instruction.types[instruction.operands] = BaseIndex;
+
+                if (*p == ',')
+                {
+                    base_string = p;
+                    base_string++;
+
+                    while ((*base_string == ' ')
+                           || (*base_string == '\t')) base_string++;
+
+                    if (*base_string == REGISTER_PREFIX)
+                    {
+                        base_string++;
+                        
+                        for (p = base_string;
+                             (*p != ',') && (*p != ')');
+                             p++) ;
+                        
+                        saved_c = *p;
+                        *p = '\0';
+                        
+                        instruction.index_reg = find_reg(base_string);
+                        if (instruction.index_reg == NULL)
+                        {
+                            as_error("Bad register name `%s'!\n", base_string);
+                            *p = saved_c;
+                            return (1);
+                        }
+
+                        *p = saved_c;
+
+                        base_string = p;
+                    }
+
+                    if (*base_string != ')')
+                    {
+                        exprS expr;
+                        char *saved_input_line_pointer = input_line_pointer;
+
+                        base_string++;
+
+                        for (p = base_string; *p != ')'; p++) ;
+
+                        input_line_pointer = base_string;
+                        
+                        saved_c = *p;
+                        *p = '\0';
+
+                        expr_read_into(&expr);
+
+                        input_line_pointer = saved_input_line_pointer;
+
+                        if (expr.type != Expr_type_constant)
+                        {
+                            as_error("+++parse operand\n");
+                            return (1);
+                        }
+
+                        switch (expr.add_number)
+                        {
+                            case 0:
+                            case 1:
+                                instruction.log2_scale_factor = 0;
+                                break;
+
+                            case 2:
+                                instruction.log2_scale_factor = 1;
+                                break;
+
+                            case 4:
+                                instruction.log2_scale_factor = 2;
+                                break;
+
+                            case 8:
+                                instruction.log2_scale_factor = 3;
+                                break;
+
+                            default:
+                                as_error("Expecting scale factor"
+                                         " of 1, 2, 4 or 8: got `%s'.\n",
+                                         base_string);
+                                *p = saved_c;
+                                return (1);
+                        }
+
+                        *p = saved_c;  
+                    }
+                }
             }
         }
 
@@ -272,7 +364,7 @@ void optimize_size_of_disps(void)
             && (instruction.disps[operand]->type == Expr_type_constant))
         {
             unsigned long disp = instruction.disps[operand]->add_number;
-
+            
             if (instruction.types[operand] & Disp32)
             {
                 /* This operand has maximally 32 bits,
@@ -578,11 +670,30 @@ void machine_dependent_assemble_line(char *line)
     /* Parses operands. */
     while (*line != '\0')
     {
+        unsigned int paren_not_balanced;
+        
         while ((*line == ' ') || (*line == '\t')) line++;
 
         token_start = line;
+        paren_not_balanced = 0;
+        while (paren_not_balanced || (*line != ','))
+        {
+            if (*line == '\0')
+            {
+                if (paren_not_balanced)
+                {
+                    as_error("Unbalanced parentheses in operand %u.\n",
+                             instruction.operands);
+                    return;
+                }
+                else break;
+            }
 
-        while ((*line != ',') && (*line != '\0')) line++;
+            if (*line == '(') paren_not_balanced++;
+            if (*line == ')') paren_not_balanced--;
+
+            line++;
+        }
 
         if (token_start != line)
         {
@@ -615,6 +726,11 @@ void machine_dependent_assemble_line(char *line)
                 instruction.tm.base_opcode |= 8;
             }
             else instruction.tm.base_opcode |= 1;
+        }
+
+        if (instruction.suffix == WORD_SUFFIX)
+        {
+            instruction.prefix = DATA_PREFIX_OPCODE;
         }
     }
 
@@ -708,8 +824,9 @@ void machine_dependent_assemble_line(char *line)
                     else /* 32 bit base register. */
                     {
                         instruction.modrm.regmem = instruction.base_reg->number;
-                        (instruction.modrm.mode
-                         = modrm_mode_from_disp_size(instruction.types[operand]));
+                        instruction.sib.base = instruction.base_reg->number;
+                        instruction.sib.scale = instruction.log2_scale_factor;
+                        
                         if (instruction.base_reg->number == EBP_REGISTER_NUMBER)
                         {
                             if (instruction.disp_operands == 0)
@@ -718,6 +835,27 @@ void machine_dependent_assemble_line(char *line)
                                 instruction.types[operand] |= Disp8;
                             }
                         }
+
+                        if (instruction.index_reg)
+                        {
+                            (instruction.sib.index
+                             = instruction.index_reg->number);
+                            (instruction.modrm.regmem
+                             = MODRM_REGMEM_TWO_BYTE_ADDRESSING);
+                        }
+                        else
+                        {
+                            (instruction.sib.index
+                             = SIB_INDEX_NO_INDEX_REGISTER);
+                            if (instruction.log2_scale_factor)
+                            {
+                                (instruction.modrm.regmem
+                                 = MODRM_REGMEM_TWO_BYTE_ADDRESSING);
+                            }
+                        }
+
+                        (instruction.modrm.mode
+                         = modrm_mode_from_disp_size(instruction.types[operand]));
                     }
 
                     if (fake_zero_displacement)
@@ -836,6 +974,8 @@ void machine_dependent_assemble_line(char *line)
         {
             int operand;
 
+            if (instruction.prefix) frag_append_1_char(instruction.prefix);
+
             /* High byte of the opcode goes first. */
             if (instruction.tm.base_opcode & 0xFF00)
             {
@@ -849,6 +989,14 @@ void machine_dependent_assemble_line(char *line)
                 frag_append_1_char(((instruction.modrm.regmem << 0)
                                     | (instruction.modrm.reg << 3)
                                     | (instruction.modrm.mode << 6)));
+                if ((instruction.modrm.regmem
+                     == MODRM_REGMEM_TWO_BYTE_ADDRESSING)
+                    && (instruction.modrm.mode != 3))
+                {
+                    frag_append_1_char(((instruction.sib.base << 0)
+                                        | (instruction.sib.index << 3)
+                                        | (instruction.sib.scale << 6)));
+                }
             }
 
             /* Displacements go first. */
