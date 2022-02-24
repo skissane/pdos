@@ -1,0 +1,33 @@
+# Produce Windows executables
+# links with PDPCLIB created by makefile.msv
+
+# Supported options are A_OUT and COFF.
+TARGET_OBJECT_FILE=COFF
+
+VPATH=src;src/object_file
+CC=gccwin
+CFLAGS=-O2
+LD=ldwin
+LDFLAGS=
+AS=aswin
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
+      -D__WIN32__ -D__NOBIVA__ \
+      -DTARGET_OBJECT_FILE_$(TARGET_OBJECT_FILE)
+
+OBJS = main.o as_i386.o error.o expr.o frags.o read.o \
+       sections.o symbols.o write.o xmalloc.o \
+       $(TARGET_OBJECT_FILE).o
+
+all: clean pdas.exe
+
+pdas.exe: $(OBJS)
+  rm -f pdas.a
+  $(LD) $(LDFLAGS) -s -o pdas.exe ../pdpclib/w32start.o $(OBJS) ../pdpclib/msvcrt.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o pdas.exe
