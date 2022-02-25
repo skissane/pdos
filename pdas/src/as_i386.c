@@ -1034,7 +1034,7 @@ void machine_dependent_apply_fixup(fixupS *fixup,
         value += machine_dependent_pcrel_from(fixup);
     }
 #endif
-
+    
     {
         int i;
         
