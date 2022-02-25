@@ -302,7 +302,7 @@ static unsigned long fixup_section(sectionT section)
             if ((add_symbol_section == section)
                 && !MACHINE_DEPENDENT_FORCE_RELOCATION_LOCAL(fixup))
             {
-                add_number = symbol_get_value(fixup->add_symbol);
+                add_number += symbol_get_value(fixup->add_symbol);
                 fixup->add_number = add_number;
                 if (fixup->pcrel)
                 {
