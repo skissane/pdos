@@ -414,13 +414,23 @@ int match_template(const template *t)
 {
     const char *name = t->name;
     unsigned int found_reverse_match = 0;
+    unsigned int suffix_check = ((instruction.suffix == BYTE_SUFFIX)
+                                 ? No_bSuf
+                                 : ((instruction.suffix == WORD_SUFFIX)
+                                    ? No_wSuf
+                                    : ((instruction.suffix == DWORD_SUFFIX)
+                                       ? No_lSuf
+                                       : 0)));
 
     for ( ; t->name && (strcmp(t->name, name) == 0); t++)
     {
         unsigned int operand_type_overlap0, operand_type_overlap1;
         
         if (instruction.operands != t->operands) continue;
-        else if (instruction.operands == 0) break;
+        /* Checks if the suffix is valid for the template. */
+        if (t->opcode_modifier & suffix_check) continue;
+
+        if (instruction.operands == 0) break;
 
         operand_type_overlap0 = instruction.types[0] & t->operand_types[0];
         switch (t->operands)
@@ -630,8 +640,6 @@ void machine_dependent_assemble_line(char *line)
     char *token_start;
     char saved_c;
     const template *t;
-
-    char *orig_line = line; /*+++Only for development purpose. */
     
     memset(&instruction, '\0', sizeof(instruction));
     memset(operand_exprs, '\0', sizeof(operand_exprs));
@@ -912,9 +920,6 @@ void machine_dependent_assemble_line(char *line)
     
     /* Outputs the instruction. */
     {
-        fragS *listing_saved_frag = current_frag;
-        unsigned long instruction_start_in_frag = current_frag->fixed_size;
-
         if (instruction.tm.opcode_modifier & Jump)
         {
             relax_subtypeT relax_subtype;
@@ -1002,18 +1007,6 @@ void machine_dependent_assemble_line(char *line)
             /* Displacements go first. */
             output_disps();
             output_imms();
-        }
-
-        if (flag_generate_listing)
-        {
-            for (;
-                 instruction_start_in_frag < listing_saved_frag->fixed_size;
-                 instruction_start_in_frag++)
-            {
-                as_error("%02x ",
-                       listing_saved_frag->buf[instruction_start_in_frag]);
-            }
-            as_error("    %s\n", orig_line);
         }
     }
 }
@@ -1114,7 +1107,7 @@ long machine_dependent_relax_frag(fragS *frag, sectionT section, long change)
             target += change;
         }
     }
-       
+    
     aim = target - frag->address - frag->fixed_size;
     /* +++Not sure if this is correct,
      * but the same logic is used in machine_dependent_finish_frag. */

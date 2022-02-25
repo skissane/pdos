@@ -14,7 +14,7 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
       -D__WIN32__ -D__NOBIVA__ \
       -DTARGET_OBJECT_FILE_$(TARGET_OBJECT_FILE)
 
-OBJS = main.o as_i386.o error.o expr.o frags.o read.o \
+OBJS = main.o as_i386.o error.o expr.o frags.o listing.o read.o \
        sections.o symbols.o write.o xmalloc.o \
        $(TARGET_OBJECT_FILE).o
 

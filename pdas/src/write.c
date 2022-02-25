@@ -89,6 +89,17 @@ fixupS *fixup_new_expr(fragS *frag,
                                pcrel));
 }
 
+static unsigned long relax_align(unsigned long address,
+                                 unsigned long alignment)
+{
+    unsigned long mask, new_address;
+
+    mask = ~((~0) << alignment);
+    new_address = (address + mask) & (~mask);
+
+    return (new_address - address);
+}
+
 static void relax_section(sectionT section)
 {
     fragS *root_frag, *frag;
@@ -96,7 +107,7 @@ static void relax_section(sectionT section)
 
     section_set(section);
     root_frag = current_frag_chain->first_frag;
-
+    
     /* Initial calculation of frag addresses. */
     address = 0;
     for (frag = root_frag; frag; frag = frag->next)
@@ -109,6 +120,11 @@ static void relax_section(sectionT section)
             case relax_type_none_needed:
                 /* Nothing needs to be done. */
                 break;
+
+            case relax_type_align:
+            case relax_type_align_code:
+                address += relax_align(address, frag->offset);
+                break;
             
             case relax_type_machine_dependent:
                 address += machine_dependent_estimate_size_before_relax(frag,
@@ -120,7 +136,7 @@ static void relax_section(sectionT section)
                 break;
         }
     }
-
+    
     /* The relaxation itself. */
     {
         long change;
@@ -133,7 +149,9 @@ static void relax_section(sectionT section)
             for (frag = root_frag; frag; frag = frag->next)
             {
                 long growth = 0;
-                
+                unsigned long old_address;
+
+                old_address = frag->address;
                 frag->address += change;
                 
                 switch (frag->relax_type)
@@ -142,6 +160,22 @@ static void relax_section(sectionT section)
                         /* Nothing needs is done. */
                         growth = 0;
                         break;
+
+                    case relax_type_align:
+                    case relax_type_align_code:
+                    {
+                        unsigned long old_offset, new_offset;
+
+                        old_offset = relax_align((old_address
+                                                  + frag->fixed_size),
+                                                 frag->offset);
+                        new_offset = relax_align((frag->address
+                                                  + frag->fixed_size),
+                                                 frag->offset);
+                        growth = new_offset - old_offset;
+
+                        break;
+                    }
                     
                     case relax_type_machine_dependent:
                         growth = machine_dependent_relax_frag(frag,
@@ -160,6 +194,7 @@ static void relax_section(sectionT section)
                     changed = 1;
                 }
             }
+            
         } while (changed);
     }
 }
@@ -178,13 +213,42 @@ static void finish_frags_after_relaxation(sectionT section)
             case relax_type_none_needed:
                 /* Nothing needs to be done. */
                 break;
+
+            case relax_type_align:
+            {
+                unsigned long i;
+                
+                frag->offset = (frag->next->address
+                                - (frag->address + frag->fixed_size));
+
+                for (i = 0; i < frag->offset; i++)
+                {
+                    frag->buf[frag->fixed_size++] = 0x00;
+                }
+
+                break;
+            }
+
+            case relax_type_align_code:
+            {
+                unsigned long i;
+                
+                frag->offset = (frag->next->address
+                                - (frag->address + frag->fixed_size));
+
+                for (i = 0; i < frag->offset; i++)
+                {
+                    frag->buf[frag->fixed_size++] = 0x90;
+                }
+                break;
+            }
             
             case relax_type_machine_dependent:
                 machine_dependent_finish_frag(frag);
                 break;
 
             default:
-                as_error("+++relax_section\n");
+                as_error("+++finish_frags_after_relaxation\n");
                 break;
         }
     }

@@ -46,6 +46,9 @@ typedef struct {
 #define ShortForm 0x8 /* Register is encoded in low 3 bits of opcode. */
 #define Jump 0x10 /* Variable length jump instruction. */
 #define Call 0x20 /* call. */
+#define No_bSuf 0x40 /* b suffix is not allowed. */
+#define No_wSuf 0x80 /* w suffix is not allowed. */
+#define No_lSuf 0x100 /* l suffix is not allowed. */
 
     unsigned int operand_types[MAX_OPERANDS];
 /* register */
@@ -139,28 +142,28 @@ const template template_table[] = {
 
     /* Arithmetic instructions. */
     {"add", 2, 0x00, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"add", 2, 0x83, 0, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"add", 2, 0x83, 0, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"add", 2, 0x04, None, W, {Imm, Acc}},
     {"add", 2, 0x80, 0, W | Modrm, {Imm, Reg | AnyMem}},
 
-    {"inc", 1, 0x40, None, ShortForm, {WordReg, 0}},
+    {"inc", 1, 0x40, None, No_bSuf | ShortForm, {WordReg, 0}},
     {"inc", 1, 0xFE, 0, W | Modrm, {Reg | AnyMem, 0}},
 
     {"sub", 2, 0x28, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"sub", 2, 0x83, 5, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"sub", 2, 0x83, 5, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"sub", 2, 0x2C, None, W, {Imm, Acc}},
     {"sub", 2, 0x80, 5, W | Modrm, {Imm, Reg | AnyMem}},
 
-    {"dec", 1, 0x48, None, ShortForm, {WordReg, 0}},
+    {"dec", 1, 0x48, None, No_bSuf | ShortForm, {WordReg, 0}},
     {"dec", 1, 0xFE, 1, W | Modrm, {Reg | AnyMem, 0}},
 
     {"sbb", 2, 0x18, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"sbb", 2, 0x83, 3, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"sbb", 2, 0x83, 3, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"sbb", 2, 0x1c, None, W, {Imm, Acc}},
     {"sbb", 2, 0x80, 3, W | Modrm, {Imm, Reg | AnyMem}},
 
     {"cmp", 2, 0x38, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"cmp", 2, 0x83, 7, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"cmp", 2, 0x83, 7, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"cmp", 2, 0x3c, None, W, {Imm, Acc}},
     {"cmp", 2, 0x80, 7, W | Modrm, {Imm, Reg | AnyMem}},
 
@@ -170,22 +173,22 @@ const template template_table[] = {
     {"test", 2, 0xF6, None, W | Modrm, {Imm, Reg | AnyMem}},
 
     {"and", 2, 0x20, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"and", 2, 0x83, 4, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"and", 2, 0x83, 4, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"and", 2, 0x24, None, W, {Imm, Acc}},
     {"and", 2, 0x80, 4, W | Modrm, {Imm, Reg | AnyMem}},
 
     {"or", 2, 0x08, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"or", 2, 0x83, 1, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"or", 2, 0x83, 1, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"or", 2, 0x0c, None, W, {Imm, Acc}},
     {"or", 2, 0x80, 1, W | Modrm, {Imm, Reg | AnyMem}},
     
     {"xor", 2, 0x30, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"xor", 2, 0x83, 6, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"xor", 2, 0x83, 6, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"xor", 2, 0x34, None, W, {Imm, Acc}},
     {"xor", 2, 0x80, 6, W | Modrm, {Imm, Reg | AnyMem}},
 
     {"adc", 2, 0x10, None, D | W | Modrm, {Reg, Reg | AnyMem}},
-    {"adc", 2, 0x83, 2, Modrm, {Imm8S, WordReg | AnyMem}},
+    {"adc", 2, 0x83, 2, No_bSuf | Modrm, {Imm8S, WordReg | AnyMem}},
     {"adc", 2, 0x14, None, W, {Imm, Acc}},
     {"adc", 2, 0x80, 2, W | Modrm, {Imm, Reg | AnyMem}},
 
@@ -208,7 +211,7 @@ const template template_table[] = {
 
     {"mul", 1, 0xF6, 4, W | Modrm, {Reg | AnyMem, 0}},
     {"imul", 1, 0xF6, 5, W | Modrm, {Reg | AnyMem, 0}},
-    {"imul", 2, 0x0FAF, None, Modrm, {WordReg | AnyMem, WordReg}},
+    {"imul", 2, 0x0FAF, None, No_bSuf | Modrm, {WordReg | AnyMem, WordReg}},
 
     {"div", 1, 0xF6, 6, W | Modrm, {Reg | AnyMem, 0}},
     {"div", 2, 0xF6, 6, W | Modrm, {Reg | AnyMem, Acc}},
@@ -252,7 +255,7 @@ const template template_table[] = {
     {"call", 1, 0xE8, None, Call, {Disp32, 0}},
 
 #define PC_RELATIVE_JUMP 0xEB
-    {"jmp", 1, 0xEB, None, Jump, {Disp, 0}},
+    {"jmp", 1, 0xEB, None, No_bSuf | Jump, {Disp, 0}},
 
     {"ret", 0, 0xC3, None, 0, {0, 0}},
 

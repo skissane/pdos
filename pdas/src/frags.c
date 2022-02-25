@@ -53,6 +53,18 @@ void frag_set_as_variant(relax_typeT relax_type,
     frag_new();
 }
 
+void frag_align(unsigned long alignment)
+{
+    frag_alloc_space(1 << alignment);
+    frag_set_as_variant(relax_type_align, 0, NULL, alignment, 0);
+}
+
+void frag_align_code(unsigned long alignment)
+{
+    frag_alloc_space(1 << alignment);
+    frag_set_as_variant(relax_type_align_code, 0, NULL, alignment, 0);
+}
+
 void frag_alloc_space(unsigned long space)
 {
     if (current_frag->fixed_size + space >= current_frag->size)

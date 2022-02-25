@@ -28,6 +28,10 @@ extern sectionT current_section;
 typedef enum {
     relax_type_none_needed = 0,
 
+    relax_type_align,
+
+    relax_type_align_code,
+
     relax_type_machine_dependent
 } relax_typeT;
 
@@ -67,6 +71,11 @@ symbolS *section_symbol(sectionT section);
 /* error.c */
 unsigned long as_get_error_count(void);
 void as_error(char *format, ...);
+
+/* listing.c */
+void add_listing_line(char *line, unsigned long line_number);
+void update_listing_line(fragS *frag);
+void generate_listing(void);
 
 /* as_i386.c */
 #include "as_i386.h"

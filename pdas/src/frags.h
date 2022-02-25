@@ -50,6 +50,9 @@ void frag_set_as_variant(relax_typeT relax_type,
                          unsigned long offset,
                          unsigned long opcode_offset_in_buf);
 
+void frag_align(unsigned long alignment);
+void frag_align_code(unsigned long alignment);
+
 void frag_alloc_space(unsigned long space);
 void frag_increase_fixed_size(unsigned long increase);
 

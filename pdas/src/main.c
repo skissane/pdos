@@ -109,6 +109,8 @@ int main(int argc, char **argv)
 
     write_object_file();
 
+    if (flag_generate_listing) generate_listing();
+
     if (as_get_error_count()) return (EXIT_FAILURE);
     
     return (0);

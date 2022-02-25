@@ -53,6 +53,41 @@ static void skip_rest_of_line(void)
            && (c != '\0')) c = *input_line_pointer++;
 }
 
+static void handler_align(void)
+{
+    exprS expr;
+    unsigned long alignment;
+
+    expr_read_into(&expr);
+    if (expr.type != Expr_type_constant)
+    {
+        as_error("+++handler_align\n");
+        return;
+    }
+
+    alignment = expr.add_number;
+    /* Converts the alignment into log2. */
+    {
+        unsigned int i;
+
+        for (i = 0; (alignment & 1) == 0; alignment >>= 1, i++) ;
+
+        if (alignment != 1)
+        {
+            as_error("Alignment is not a power of 2!\n");
+            return;
+        }
+        
+        alignment = i;
+    }
+
+    if (current_section == text_section)
+    {
+        frag_align_code(alignment);
+    }
+    else frag_align(alignment);
+}
+
 static void handler_ascii(void)
 {
     char c = *input_line_pointer++;
@@ -320,6 +355,7 @@ typedef struct {
 } Pseudo_op_entry;
 
 const Pseudo_op_entry pseudo_op_table[] = {
+    {"align", &handler_align},
     {"ascii", &handler_ascii},
     {"byte", &handler_byte},
     {"comm", &handler_comm},
@@ -339,6 +375,7 @@ void read_a_source_file(const char *filename)
 {
     FILE *f;
     char buf[100];
+    unsigned long line_number = 0;
 
     f = fopen(filename, "r");
     if (f == NULL)
@@ -351,6 +388,14 @@ void read_a_source_file(const char *filename)
     {
         char *buf_end = buf + strlen(buf);
         input_line_pointer = buf;
+
+        line_number++;
+
+        if (flag_generate_listing)
+        {
+            update_listing_line(current_frag);
+            add_listing_line(input_line_pointer, line_number);
+        }
 
         while (input_line_pointer < buf_end)
         {
@@ -432,6 +477,11 @@ void read_a_source_file(const char *filename)
             as_error("Ignoring rest of line: %s\n", input_line_pointer);
             break;
         }
+    }
+
+    if (flag_generate_listing)
+    {
+        update_listing_line(current_frag);
     }
 
     if (fclose(f))
