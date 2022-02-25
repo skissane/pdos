@@ -9,10 +9,11 @@ pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
        ctype.o setjmp.o math.o pos.o support.o pdossupc.o \
        liballoc.o
   rm -f pdos.a
-  ar386 r pdos.a pdosst32.o stdio.o string.o stdlib.o
-  ar386 r pdos.a start.o time.o errno.o assert.o signal.o
-  ar386 r pdos.a locale.o ctype.o setjmp.o math.o
-  ar386 r pdos.a pos.o support.o pdossupc.o liballoc.o
+  pdar vcq pdos.a pdosst32.o stdio.o string.o stdlib.o
+  pdar vcq pdos.a start.o time.o errno.o assert.o signal.o
+  pdar vcq pdos.a locale.o ctype.o setjmp.o math.o
+  pdar vcq pdos.a pos.o support.o pdossupc.o liballoc.o
+  pdar vs pdos.a
   ld386 -N -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
 
 pos.o: ../src/pos.c
