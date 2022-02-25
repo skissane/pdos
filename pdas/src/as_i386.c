@@ -1082,6 +1082,8 @@ long machine_dependent_estimate_size_before_relax(fragS *frag,
                 return;
         }
 
+        frag->relax_type = relax_type_none_needed;
+
         return (frag->fixed_size - old_frag_fixed_size);
     }
 

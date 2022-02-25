@@ -146,6 +146,11 @@ static void handler_ascii(void)
     skip_rest_of_line();
 }
 
+static void handler_bss(void)
+{
+    section_set(bss_section);
+}
+
 static void handler_comm(void)
 {
     sectionT saved_section = current_section;
@@ -344,6 +349,11 @@ static void handler_text(void)
     section_set(text_section);
 }
 
+static void handler_word(void)
+{
+    handler_constant(2);
+}
+
 static void handler_ignore(void)
 {
     skip_rest_of_line();
@@ -357,6 +367,7 @@ typedef struct {
 const Pseudo_op_entry pseudo_op_table[] = {
     {"align", &handler_align},
     {"ascii", &handler_ascii},
+    {"bss", &handler_bss},
     {"byte", &handler_byte},
     {"comm", &handler_comm},
     {"data", &handler_data},
@@ -368,6 +379,7 @@ const Pseudo_op_entry pseudo_op_table[] = {
     {"long", &handler_long},
     {"space", &handler_space},
     {"text", &handler_text},
+    {"word", &handler_word},
     {0, 0}
 };
 
@@ -474,6 +486,7 @@ void read_a_source_file(const char *filename)
             }
 
             --input_line_pointer;
+            printf("%s\n", buf);
             as_error("Ignoring rest of line: %s\n", input_line_pointer);
             break;
         }
