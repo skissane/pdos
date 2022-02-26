@@ -112,6 +112,7 @@ static void relax_section(sectionT section)
     address = 0;
     for (frag = root_frag; frag; frag = frag->next)
     {
+        frag->relax_marker = 0;
         frag->address = address;
         address += frag->fixed_size;
         
@@ -151,6 +152,7 @@ static void relax_section(sectionT section)
                 long growth = 0;
                 unsigned long old_address;
 
+                frag->relax_marker = !(frag->relax_marker);
                 old_address = frag->address;
                 frag->address += change;
                 

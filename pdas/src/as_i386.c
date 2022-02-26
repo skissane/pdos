@@ -1105,7 +1105,8 @@ long machine_dependent_relax_frag(fragS *frag, sectionT section, long change)
 
         /* The symbol targeted by this jump might have moved
          * during the relaxation. */
-        if (section == symbol_get_section(frag->symbol))
+        if ((section == symbol_get_section(frag->symbol))
+            && (frag->relax_marker != frag->symbol->frag->relax_marker))
         {
             target += change;
         }
@@ -1155,7 +1156,7 @@ void machine_dependent_finish_frag(fragS *frag)
                     + frag->offset
                     - frag->address
                     - frag->fixed_size);
-
+    
     if ((frag->relax_subtype & RELAX_SUBTYPE_LONG_JUMP) == 0)
     {
         /* Original opcode does not need to be changed. */
@@ -1186,7 +1187,7 @@ void machine_dependent_finish_frag(fragS *frag)
     }
 
     displacement -= extension;
-
+    
     {
         int i;
 

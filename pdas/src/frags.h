@@ -33,6 +33,8 @@ typedef struct frag {
     symbolS *symbol;
     unsigned long offset;
     unsigned long opcode_offset_in_buf;
+
+    int relax_marker;
     
     struct frag *next;
 } fragS;
