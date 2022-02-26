@@ -83,6 +83,23 @@ void object_dependent_write_object_file(void)
         }
     }
 
+    /* Calculates bss. */
+    {
+        fragS *frag;
+
+        section_set(bss_section);
+        
+        header.a_bss = 0;
+        for (frag = current_frag_chain->first_frag;
+             frag;
+             frag = frag->next)
+        {
+            if (frag->fixed_size == 0) continue;
+
+            header.a_bss += frag->fixed_size;
+        }
+    }
+
     /* Outputs text relocations. */
     {
         fixupS *fixup;
@@ -109,6 +126,10 @@ void object_dependent_write_object_file(void)
                 else if (symbol_get_section(fixup->add_symbol) == data_section)
                 {
                     reloc.r_symbolnum = N_DATA;
+                }
+                else if (symbol_get_section(fixup->add_symbol) == bss_section)
+                {
+                    reloc.r_symbolnum = N_BSS;
                 }
                 else
                 {
@@ -161,7 +182,7 @@ void object_dependent_write_object_file(void)
         }
     }
 
-    /* +++Outputs data relocations. */
+    /* Outputs data relocations. */
     {
         fixupS *fixup;
         unsigned long start_address_of_data;
@@ -191,6 +212,10 @@ void object_dependent_write_object_file(void)
                 else if (symbol_get_section(fixup->add_symbol) == data_section)
                 {
                     reloc.r_symbolnum = N_DATA;
+                }
+                else if (symbol_get_section(fixup->add_symbol) == bss_section)
+                {
+                    reloc.r_symbolnum = N_BSS;
                 }
                 else
                 {
