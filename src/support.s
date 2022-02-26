@@ -14,6 +14,7 @@
         .globl _outp
         .globl _outpw
         .globl _outpd
+        .globl ___switch
 
         .text
 
@@ -324,3 +325,25 @@ ___longj:
 
         pop     %ebp
         ret
+
+# From and for SubC
+# internal switch(expr) routine
+# %esi = switch table, %eax = expr
+
+___switch:	pushl	%esi
+	movl	%edx,%esi
+	movl	%eax,%ebx
+	cld
+	lodsl
+	movl	%eax,%ecx
+next:	lodsl
+	movl	%eax,%edx
+	lodsl
+	cmpl	%edx,%ebx
+	jnz	no
+	popl	%esi
+	jmp	*%eax
+no:	loop	next
+	lodsl
+	popl	%esi
+	jmp	*%eax
