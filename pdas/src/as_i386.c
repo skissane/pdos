@@ -1113,10 +1113,7 @@ long machine_dependent_relax_frag(fragS *frag, sectionT section, long change)
     }
     
     aim = target - frag->address - frag->fixed_size;
-    /* +++Not sure if this is correct,
-     * but the same logic is used in machine_dependent_finish_frag. */
-    aim -= relax_table[frag->relax_subtype].size_of_variable_part;
-
+    
     if (aim > 0)
     {
         for (new_subtype = frag->relax_subtype;
@@ -1136,7 +1133,7 @@ long machine_dependent_relax_frag(fragS *frag, sectionT section, long change)
         }
     }
     else return (0);
-
+    
     growth = (relax_table[new_subtype].size_of_variable_part
               - relax_table[frag->relax_subtype].size_of_variable_part);
     if (growth) frag->relax_subtype = new_subtype;
