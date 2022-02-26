@@ -1029,12 +1029,13 @@ void machine_dependent_apply_fixup(fixupS *fixup,
 
 #ifdef TARGET_OBJECT_FILE_COFF
     /* +++Explain why is this necessary. */
-    if (fixup->add_symbol && symbol_is_undefined(fixup->add_symbol))
+    if (fixup->pcrel
+        && fixup->add_symbol && symbol_is_undefined(fixup->add_symbol))
     {
         value += machine_dependent_pcrel_from(fixup);
     }
 #endif
-    
+
     {
         int i;
         
