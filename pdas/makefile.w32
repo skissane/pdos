@@ -2,7 +2,7 @@
 # links with PDPCLIB created by makefile.msv
 
 # Supported options are A_OUT and COFF.
-TARGET_OBJECT_FILE=COFF
+TARGET_OBJECT_FILE=A_OUT
 
 VPATH=src;src/object_file
 CC=gccwin
