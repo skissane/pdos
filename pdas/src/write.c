@@ -319,7 +319,7 @@ static unsigned long fixup_section(sectionT section)
         }
         
         machine_dependent_apply_fixup(fixup, add_number);
-
+        
         if (fixup->done == 0)
         {
             section_reloc_count++;
