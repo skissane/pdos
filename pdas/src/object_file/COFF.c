@@ -186,6 +186,7 @@ void object_dependent_write_object_file(void)
             
             if ((symbol_is_external(symbol) == 0)
                 && (symbol_is_undefined(symbol) == 0)
+                && (symbol_get_section(symbol) != bss_section)
                 && (symbol_is_section_symbol(symbol) == 0)) continue;
 
             memset(&symbol_table_entry, '\0', sizeof(symbol_table_entry));
@@ -228,7 +229,7 @@ void object_dependent_write_object_file(void)
                 symbol_table_entry.SectionNumber = 3;
             }
             else as_error("+++COFF symbol table\n");
-
+            
             symbol_table_entry.Type = ((IMAGE_SYM_DTYPE_NULL << 8)
                                        | IMAGE_SYM_TYPE_NULL);
 

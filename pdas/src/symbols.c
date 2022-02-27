@@ -143,5 +143,6 @@ int symbol_is_section_symbol(symbolS *symbol)
 
 int symbol_force_reloc(symbolS *symbol)
 {
-    return ((symbol->section == undefined_section));
+    return ((symbol->section == undefined_section)
+            || (symbol->section == bss_section));
 }

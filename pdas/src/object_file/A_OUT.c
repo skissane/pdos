@@ -145,9 +145,10 @@ void object_dependent_write_object_file(void)
                      symbol && (symbol != fixup->add_symbol);
                      symbol = symbol->next)
                 {
-                    /* Only external and undefined symbols are counted. */
+                    /* Only external, undefined and bss symbols are counted. */
                     if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
-                        || (symbol->section == undefined_section))
+                        || (symbol_get_section(symbol) == undefined_section)
+                        || (symbol_get_section(symbol) == bss_section))
                     {
                         symbol_number++;
                     }
@@ -231,9 +232,10 @@ void object_dependent_write_object_file(void)
                      symbol && (symbol != fixup->add_symbol);
                      symbol = symbol->next)
                 {
-                    /* Only external and undefined symbols are counted. */
+                    /* Only external, undefined and bss symbols are counted. */
                     if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
-                        || (symbol->section == undefined_section))
+                        || (symbol_get_section(symbol) == undefined_section)
+                        || (symbol_get_section(symbol) == bss_section))
                     {
                         symbol_number++;
                     }
@@ -277,9 +279,11 @@ void object_dependent_write_object_file(void)
              symbol;
              symbol = symbol->next)
         {
-            /* Guess only external and undefined symbols need to be written. */
+            /* Guess only external, undefined and bss symbols
+             * need to be written. */
             if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
-                || (symbol->section == undefined_section))
+                || (symbol_get_section(symbol) == undefined_section)
+                || (symbol_get_section(symbol) == bss_section))
             {
                 struct nlist symbol_entry;
 
