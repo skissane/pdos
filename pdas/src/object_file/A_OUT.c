@@ -300,6 +300,10 @@ void object_dependent_write_object_file(void)
                 {
                     symbol_entry.n_type = N_DATA;
                 }
+                else if (symbol->section == bss_section)
+                {
+                    symbol_entry.n_type = N_BSS;
+                }
                 else
                 {
                     as_error("+++other n_type\n");
