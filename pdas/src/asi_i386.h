@@ -305,6 +305,8 @@ const template template_table[] = {
     {"repe", 0, 0xF3, None, 0, {0, 0}},
     {"repne", 0, 0xF2, None, 0, {0, 0}},
 
+    {"nop", 0, 0x90, None, 0, {0, 0}},
+
     {0, 0}
 };
 
