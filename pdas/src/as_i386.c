@@ -1026,7 +1026,7 @@ void machine_dependent_apply_fixup(fixupS *fixup,
         /* We are finished with this fixup and no relocation is needed. */
         fixup->done = 1;
     }
-
+    
 #ifdef TARGET_OBJECT_FILE_COFF
     /* +++Explain why is this necessary. */
     if (fixup->pcrel
@@ -1035,7 +1035,7 @@ void machine_dependent_apply_fixup(fixupS *fixup,
         value += machine_dependent_pcrel_from(fixup);
     }
 #endif
-
+    
     {
         int i;
         
