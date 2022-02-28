@@ -145,14 +145,14 @@ void object_dependent_write_object_file(void)
                      symbol && (symbol != fixup->add_symbol);
                      symbol = symbol->next)
                 {
-                    /* Only external, undefined and bss symbols are counted. */
-                    if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
+                    /* Only external and undefined symbols are counted. */
+                    if (symbol_is_external(symbol)
                         || (symbol_get_section(symbol) == undefined_section))
                     {
                         symbol_number++;
                     }
                 }
-                
+
                 reloc.r_symbolnum = symbol_number;
                 
                 /* r_extern. */
@@ -231,14 +231,14 @@ void object_dependent_write_object_file(void)
                      symbol && (symbol != fixup->add_symbol);
                      symbol = symbol->next)
                 {
-                    /* Only external, undefined and bss symbols are counted. */
-                    if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
+                    /* Only external and undefined symbols are counted. */
+                    if (symbol_is_external(symbol)
                         || (symbol_get_section(symbol) == undefined_section))
                     {
                         symbol_number++;
                     }
                 }
-                
+
                 reloc.r_symbolnum = symbol_number;
                 
                 /* r_extern. */
@@ -277,9 +277,9 @@ void object_dependent_write_object_file(void)
              symbol;
              symbol = symbol->next)
         {
-            /* Guess only external, undefined and bss symbols
+            /* Guess only external and undefined symbols
              * need to be written. */
-            if ((symbol->flags & SYMBOL_FLAG_EXTERNAL)
+            if (symbol_is_external(symbol)
                 || (symbol_get_section(symbol) == undefined_section))
             {
                 struct nlist symbol_entry;
@@ -288,7 +288,7 @@ void object_dependent_write_object_file(void)
 
                 symbol_entry.n_un.n_strx = string_table_pos;
                 string_table_pos += strlen(symbol->name) + 1;
-
+                
                 if (symbol->section == undefined_section)
                 {
                     symbol_entry.n_type = N_UNDF;
@@ -309,11 +309,11 @@ void object_dependent_write_object_file(void)
                 {
                     as_error("+++other n_type\n");
                 }
-
+                
                 /* All our symbols are external. */
                 symbol_entry.n_type |= N_EXT;
 
-                symbol_entry.n_value = symbol->value;
+                symbol_entry.n_value = symbol_get_value(symbol);
 
                 if (fwrite(&symbol_entry, sizeof(symbol_entry), 1, outfile)
                     != 1)
