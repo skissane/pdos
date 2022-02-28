@@ -116,6 +116,11 @@ unsigned long symbol_get_value(symbolS *symbol)
     return (symbol->frag->address + symbol->value);
 }
 
+void symbol_set_value(symbolS *symbol, unsigned long value)
+{
+    symbol->value = value;
+}
+
 unsigned long symbol_get_symbol_table_index(symbolS *symbol)
 {
     return (symbol->symbol_table_index);
@@ -143,6 +148,5 @@ int symbol_is_section_symbol(symbolS *symbol)
 
 int symbol_force_reloc(symbolS *symbol)
 {
-    return ((symbol->section == undefined_section)
-            || (symbol->section == bss_section));
+    return ((symbol->section == undefined_section));
 }

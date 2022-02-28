@@ -153,7 +153,6 @@ static void handler_bss(void)
 
 static void handler_comm(void)
 {
-    sectionT saved_section = current_section;
     char c;
     char *name, *p;
     exprS expr;
@@ -188,23 +187,13 @@ static void handler_comm(void)
 
     if (symbol_is_undefined(symbol))
     {
-        section_set(bss_section);
-
-        symbol->section = bss_section;
-        symbol->frag = current_frag;
-        symbol->value = current_frag->fixed_size;
-        /* Difference between .comm and .lcomm
-         * is that in .comm the symbol is set as global. */
+        symbol_set_value(symbol, expr.add_number);
         symbol_set_external(symbol);
-
-        frag_increase_fixed_size(expr.add_number);
     }
     else
     {
         as_error("Symbol `%s' is already defined!\n", symbol->name);
     }
-
-    section_set(saved_section);
 }
 
 static void handler_constant(int size)

@@ -39,6 +39,7 @@ symbolS *symbol_label(const char *name);
 void symbol_set_external(symbolS *symbol);
 sectionT symbol_get_section(symbolS *symbol);
 unsigned long symbol_get_value(symbolS *symbol);
+void symbol_set_value(symbolS *symbol, unsigned long value);
 unsigned long symbol_get_symbol_table_index(symbolS *symbol);
 void symbol_set_symbol_table_index(symbolS *symbol, unsigned long index);
 
