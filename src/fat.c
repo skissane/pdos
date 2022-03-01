@@ -965,6 +965,17 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
             fatfile->sectorUpto++;
             fatfile->byteUpto = 0;
         }
+        /* don't go past EOF */
+        if (fatEndCluster(fat, fatfile->nextCluster))
+        {
+            if (sectorsAvail > 0)
+            {
+                fatfile->sectorUpto--;
+            }
+            fatfile->byteUpto = fatfile->currpos % fat->sector_size;
+            *readbytes = bytesRead;
+            return (0);
+        }
         fatfile->currentCluster = fatfile->nextCluster;
         if (!fatEndCluster(fat, fatfile->currentCluster))
         {
