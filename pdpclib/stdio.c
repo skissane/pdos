@@ -542,13 +542,9 @@ static void fopen3(void)
         switch (modeType)
         {
             case 2:
-            case 3:
             case 5:
-            case 6:
             case 8:
-            case 9:
             case 11:
-            case 12:
                 myfile->bufStartR = 0;
                 myfile->upto = myfile->fbuf;
                 myfile->mode = __WRITE_MODE;
@@ -559,13 +555,27 @@ static void fopen3(void)
         }
         switch (modeType)
         {
+            case 3:
+            case 6:
             case 7:
             case 8:
+            case 9:
             case 10:
             case 11:
             case 12:
                 myfile->update = 1;
+                myfile->quickBin = 0;
                 myfile->justseeked = 1;
+                break;
+        }
+        switch (modeType)
+        {
+            case 3:
+            case 6:
+            case 9:
+            case 12:
+                myfile->quickBin = 0;
+                fseek(myfile, 0, SEEK_END);
                 break;
         }
     }
@@ -809,14 +819,13 @@ static void osfopen(void)
     else if ((modeType == 3) || (modeType == 6) || (modeType == 9)
              || (modeType == 12))
     {
-        dwCreationDisposition = CREATE_ALWAYS;
+        dwCreationDisposition = OPEN_EXISTING;
     }
     if ((modeType == 1) || (modeType == 4))
     {
         dwDesiredAccess = GENERIC_READ;
     }
-    else if ((modeType == 2) || (modeType == 3) || (modeType == 5)
-             || (modeType == 6))
+    else if ((modeType == 2) || (modeType == 5))
     {
         dwDesiredAccess = GENERIC_WRITE;
     }
@@ -831,6 +840,19 @@ static void osfopen(void)
                                dwCreationDisposition,
                                dwFlagsAndAttributes,
                                NULL);
+    if ((myfile->hfile == INVALID_HANDLE_VALUE)
+        && ((modeType == 3) || (modeType == 6)
+            || (modeType == 9) || (modeType == 12)))
+    {
+        dwCreationDisposition = CREATE_ALWAYS;
+        myfile->hfile = CreateFile(fnm,
+                                   dwDesiredAccess,
+                                   dwShareMode,
+                                   NULL,
+                                   dwCreationDisposition,
+                                   dwFlagsAndAttributes,
+                                   NULL);
+    }
     if (myfile->hfile == INVALID_HANDLE_VALUE)
     {
         err = 1;
@@ -3441,6 +3463,8 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         {
             /* do nothing */
         }
+        newpos = ftell(stream);
+        fseek(stream, newpos, SEEK_SET);
     }
     else if ((newpos >= stream->bufStartR)
         && (newpos < (stream->bufStartR + (stream->endbuf - stream->fbuf)))
