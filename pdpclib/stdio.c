@@ -3297,7 +3297,9 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
                         *u = '\0';
                     }
                 }
-                else if (*(t - 2) == '\r') /* t is protected, u isn't */
+                /* can't inspect t because the \r may have been in
+                   previous buffer */
+                else if (((u - s) >= 2) && (*(u - 2) == '\r'))
                 {
                     *(u - 2) = '\n';
                     *(u - 1) = '\0';
