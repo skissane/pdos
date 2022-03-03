@@ -1500,6 +1500,12 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     char filename[MAX_PATH];
     int ret;
 
+    if (((strncmp(name, "COM", 3) == 0)
+         || (strncmp(name, "com", 3) == 0))
+        && isdigit((unsigned char)name[3]))
+    {
+        return (opencomm(atoi(name + 3), handle));
+    }
     ret = formatcwd(name, filename);
     if (ret) return (ret);
     return (fileCreat(filename, attrib, handle));
