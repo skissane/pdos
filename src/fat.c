@@ -968,22 +968,18 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
         /* don't go past EOF */
         if (fatEndCluster(fat, fatfile->nextCluster))
         {
-            if (sectorsAvail > 0)
-            {
-                fatfile->sectorUpto--;
-            }
+            fatfile->sectorUpto = (fatfile->currpos %
+                                  (fat->sectors_per_cluster * MAXSECTSZ))
+                                   / MAXSECTSZ;
             fatfile->byteUpto = fatfile->currpos % fat->sector_size;
             *readbytes = bytesRead;
             return (0);
         }
         fatfile->currentCluster = fatfile->nextCluster;
-        if (!fatEndCluster(fat, fatfile->currentCluster))
-        {
-            fatClusterAnalyse(fat,
-                              fatfile->currentCluster,
-                              &fatfile->sectorStart,
-                              &fatfile->nextCluster);
-        }
+        fatClusterAnalyse(fat,
+                          fatfile->currentCluster,
+                          &fatfile->sectorStart,
+                          &fatfile->nextCluster);
         fatfile->sectorUpto = 0;
     }
     *readbytes = bytesRead;
