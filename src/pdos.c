@@ -4923,7 +4923,7 @@ static void pdosWriteText(int ch)
                 BosReadCursorPosition(currentPage,
                     &cursorStart,&cursorEnd,&row,&column);
                 BosWriteCharAttrib(currentPage, ' ', currentAttrib,
-                    BosGetTextModeCols() - column + 1);
+                    BosGetTextModeCols() - column);
             }
             else if (ch == 'm')
             {
