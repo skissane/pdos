@@ -1,23 +1,14 @@
-# Produce Windows executables
-# links with PDPCLIB created by makefile.msv
+# Produce a.out executables
+# links with PDPCLIB created by makefile.pdw
 
-CC=gccwin
-CFLAGS=-O2
-LD=ldwin
-LDFLAGS=
-AS=aswin
-AR=arwin
-COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib -D__WIN32__
-
-all: clean world.exe
+all: world.exe
 
 world.exe: world.o
-  $(LD) $(LDFLAGS) -s -o world.exe ../pdpclib/w32start.o world.o ../pdpclib/msvcrt.a
+  pdld386 -N -s -nostdlib -o world.exe ../pdpclib/pdosst32.o world.o ../pdpclib/pdos.a
 
 .c.o:
-  $(CC) $(COPTS) -o $*.s $<
-  $(AS) -o $@ $*.s
+  pdcc -E -D__SUBC__ -D__WIN32__ -D__STATIC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int -I ../pdpclib -o $*.i $<
+  sccwin -S $*.i
+  rm -f $*.i
+  pdas386 -o $@ $*.s
   rm -f $*.s
-
-clean:
-  rm -f *.o world.exe
