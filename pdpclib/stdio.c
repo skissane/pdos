@@ -525,6 +525,7 @@ static void fopen3(void)
         }
         myfile->errorInd = 0;
         myfile->eofInd = 0;
+        myfile->istemp = 0;
         myfile->ungetCh = -1;
         myfile->update = 0;
         myfile->isopen = 1;
@@ -1595,6 +1596,12 @@ __PDPCLIB_API__ int fclose(FILE *stream)
     }
     if (!stream->permfile && !inreopen)
     {
+#if !defined(__MVS__) && !defined(__CMS__)
+        if (stream->istemp)
+        {
+            remove("ZZZZZZZA.$$$");
+        }
+#endif
         __userFiles[stream->intFno] = NULL;
         free(stream);
     }
@@ -3873,7 +3880,13 @@ __PDPCLIB_API__ FILE *tmpfile(void)
 #if defined(__MVS__) || defined(__CMS__)
     return (fopen("dd:ZZZZZZZA", "wb+"));
 #else
-    return (fopen("ZZZZZZZA.$$$", "wb+"));
+    FILE *fu;
+    fu = fopen("ZZZZZZZA.$$$", "wb+");
+    if (fu != NULL)
+    {
+        fu->istemp = 1;
+    }
+    return (fu);
 #endif
 }
 

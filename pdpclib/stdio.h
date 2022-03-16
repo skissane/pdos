@@ -118,6 +118,7 @@ typedef struct
     int isopen;     /* Is this file open? */
     char modeStr[4]; /* 2nd parameter to fopen */
     int tempch; /* work variable for putc */
+    int istemp; /* opened by tmpfile? */
 } FILE;
 
 typedef unsigned long fpos_t;
