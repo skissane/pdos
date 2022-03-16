@@ -357,6 +357,15 @@ void write_object_file(void)
             frag->address = address;
             address += frag->fixed_size;
         }
+
+        section_set(bss_section);
+        for (frag = current_frag_chain->first_frag;
+             frag;
+             frag = frag->next)
+        {
+            frag->address = address;
+            address += frag->fixed_size;
+        }
     }
 #endif
 
