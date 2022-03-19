@@ -307,7 +307,7 @@ before executing them.
 
 After obtaining the source for PDOS/386 go:
 
-compsys
+compsys (after editing to switch to the watcom version)
 (to circumvent an assumed HX bug we need two steps)
 pdmake -n -f makefile.wcd >temp.bat
 temp
