@@ -67,7 +67,9 @@ int exeloadDoload(unsigned long *entry_point, char *prog)
      * 1 means it is not the format the function loads.
      * 2 means correct format, but error occured. */
     ret = exeloadLoadAOUT(entry_point, fhandle);
+#if WARNEXE
     if (ret == 0) printf("warning - still using a.out format\n");
+#endif
     if (ret == 1) ret = exeloadLoadELF(entry_point, fhandle);
     if (ret == 1) ret = exeloadLoadMZ(entry_point, fhandle);
     if (ret != 0)
@@ -1176,8 +1178,10 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
         name2 = kernel32;
         if (warnkernel)
         {
+#if WARNEXE
             printf("warning - this executable is dependent on"
                    " kernel32 instead of just msvcrt\n");
+#endif
         }
     }
     else if (strcmp(name1, "msvcrt.dll") == 0)
@@ -1188,8 +1192,10 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
     }
     else
     {
+#if WARNEXE
         printf("warning - this executable uses a non-standard DLL %s\n",
                name1);
+#endif
         name2 = name1;
     }
     if (PosOpenFile(name2, 0, &fhandle))
