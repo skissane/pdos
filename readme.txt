@@ -311,7 +311,7 @@ compsys (after editing to switch to the watcom version)
 (to circumvent an assumed HX bug we need two steps)
 pdmake -n -f makefile.wcd >temp.bat
 temp
-compimbr
+compimbr (after editing to switch to the watcom version)
 
 XXXXX begin
 cd src
