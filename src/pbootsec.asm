@@ -223,11 +223,12 @@ CalculateLocation proc
  pop dx ;Restore DX to original value
  pop bx ;Restore old value of AX into BX
 
+ xor cx, cx ;Zero cx for later use (note that this clears the carry flag)
+
 ;So, we must add BX into AX to combine the numbers
  add ax, bx
 
 ;But, if it overflows (carry flag set), we must increment DX to compensate
- xor cx, cx ;Zero cx
  adc dx, cx ;ADC will add 0 (cx) and if carry flag set add 1
 
 ;Now we must add our reserved and hidden sectors
