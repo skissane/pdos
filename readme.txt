@@ -154,7 +154,7 @@ this work, because the "sys" command produces an
 incompatible boot sector. Although there is a
 workaround for Freedos:
 
-compb
+compb (after editing to switch to wasmr and tlink)
 compbu
 tcc sectread.c bos.c
 tcc sectwrit.c bos.c
@@ -277,7 +277,7 @@ was created in the following manner:
 format a floppy disk using MSDOS 5.0
 run doinst using the 16-bit version
 raread to get the floppy into a file, e.g. pdos16.img
-compb
+compb (after editing to switch to wasmr and tlink)
 compbu
 bootupd pdos16.img pbootsec.com
 rawrite pdos16.img back to floppy
