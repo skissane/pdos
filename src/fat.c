@@ -1301,6 +1301,7 @@ static void fatPopulateDateTime(FAT *fat, DIRENT *d,
     FAT_DATETIME dt;
     unsigned int moddate;
     unsigned int modtime;
+    unsigned int modhund;
 
     fat->getDateTime(&dt);
     moddate = ((dt.year - 1980) << 9)
@@ -1318,8 +1319,7 @@ static void fatPopulateDateTime(FAT *fat, DIRENT *d,
     }
     if (update_type & FATDATETIME_UPDATE_CREATE)
     {
-        unsigned int modhund = (dt.seconds % 2) * 100 + dt.hundredths;
-
+        modhund = (dt.seconds % 2) * 100 + dt.hundredths;
         d->first_char = (unsigned char)modhund;
         d->create_date[1] = (moddate >> 8);
         d->create_date[0] = moddate & 0xff;
@@ -3064,7 +3064,7 @@ static int createLFNs(FAT *fat, char *lfn, unsigned int lfn_len)
                     /* Start from the DIRENT provided by
                      * findFreeSpaceForLFN. */
                     p = fat->de;
-                    fat->de = 0;
+                    fat->de = NULL;
                     memset(p, '\0', sizeof(DIRENT));
                     /* Because this the first physical LFN
                      * entry, it should have bit 6 set to
@@ -3354,7 +3354,7 @@ static int incrementNumericTail(char *shortname)
     if (!p)
     {
         p = shortname + 7;
-        q = 0;
+        q = NULL;
     }
     else
     {
@@ -3656,7 +3656,7 @@ static void deleteLFNs(FAT *fat)
                     /* If we are just starting, we should start
                      * from where fatPosition found first LFN entry. */
                     p = fat->de;
-                    fat->de = 0;
+                    fat->de = NULL;
                 }
                 if (remaining == 0)
                 {
