@@ -22,18 +22,27 @@
 #include "exeload.h"
 
 /* Headers for executable support. */
+#if NEED_AOUT
 #include "a_out.h"
+#endif
+#if NEED_MZ
 #include "mz.h"
 #include "pecoff.h"
+#endif
+#if NEED_ELF
 #include "elf.h"
+#endif
 
 /* For reading files Pos API must be used directly
  * as PDPCLIB allocates memory from the process address space. */
 
+#if NEED_AOUT
 static int exeloadLoadAOUT(unsigned char **entry_point,
                            FILE *fp,
                            unsigned char **loadloc);
 
+#endif
+#if NEED_MZ
 static int exeloadLoadMZ(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc);
@@ -43,9 +52,6 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          unsigned char **loadloc,
                          unsigned long e_lfanew);
 
-static int exeloadLoadELF(unsigned char **entry_point,
-                          FILE *fp,
-                          unsigned char **loadloc);
 #if 0
 static int exeloadLoadLX(unsigned long *entry_point,
                          int fhandle,
@@ -58,13 +64,17 @@ static int exeloadLoadNE(unsigned long *entry_point,
 static int exeloadLoadPEDLL(unsigned char *exeStart,
                             IMAGE_IMPORT_DESCRIPTOR *import_desc);
 #endif
+#endif
 
+#if NEED_ELF
+static int exeloadLoadELF(unsigned char **entry_point,
+                          FILE *fp,
+                          unsigned char **loadloc);
+#endif
+#if NEED_MVS
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc);
-static int exeloadLoadAmiga(unsigned char **entry_point,
-                            FILE *fp,
-                            unsigned char **loadloc);
 static int fixPE(unsigned char *buf,
                  size_t *len,
                  unsigned char **entry,
@@ -73,13 +83,19 @@ static int processRLD(unsigned char *buf,
                       unsigned long rlad,
                       unsigned char *rld,
                       int len);
+#endif
+#if NEED_AMIGA
+static int exeloadLoadAmiga(unsigned char **entry_point,
+                            FILE *fp,
+                            unsigned char **loadloc);
 
+#endif
 int exeloadDoload(unsigned char **entry_point,
                   char *progname,
                   unsigned char **loadloc)
 {
     FILE *fp;
-    int ret;
+    int ret = 1;
 
     fp = fopen(progname, "rb");
     if (fp == NULL)
@@ -91,13 +107,23 @@ int exeloadDoload(unsigned char **entry_point,
      * Returned 0 means the executable was loaded successfully.
      * 1 means it is not the format the function loads.
      * 2 means correct format, but error occured. */
-    ret = exeloadLoadAOUT(entry_point, fp, loadloc);
+#if NEED_AOUT
+    if (ret == 1) ret = exeloadLoadAOUT(entry_point, fp, loadloc);
+#endif
+#if NEED_MZ
     if (ret == 1) ret = exeloadLoadMZ(entry_point, fp, loadloc);
+#endif
+#if NEED_AMIGA
     if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
+#endif
+#if NEED_MVS
     if (ret == 1) ret = exeloadLoadMVS((unsigned char **)entry_point,
                                        fp,
                                        (unsigned char **)loadloc);
+#endif
+#if NEED_ELF
     if (ret == 1) ret = exeloadLoadELF(entry_point, fp, loadloc);
+#endif
 
     fclose(fp);
     if (ret != 0)
@@ -108,6 +134,7 @@ int exeloadDoload(unsigned char **entry_point,
     return (0);
 }
 
+#if NEED_AOUT
 static int exeloadLoadAOUT(unsigned char **entry_point,
                            FILE *fp,
                            unsigned char **loadloc)
@@ -116,6 +143,13 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
     unsigned long exeLen;
     unsigned char *exeStart;
     unsigned char *bss;
+    unsigned int *corrections;
+    unsigned int i;
+    unsigned int offs;
+    unsigned int type;
+    unsigned int zapdata;
+    unsigned char *zap;
+
 
     if ((fseek(fp, 0, SEEK_SET) != 0)
         || (fread(&firstbit, sizeof(firstbit), 1, fp) != 1))
@@ -184,13 +218,6 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
     memset(bss, '\0', firstbit.a_bss);
     /* Relocations. */
     {
-        unsigned int *corrections;
-        unsigned int i;
-        unsigned int offs;
-        unsigned int type;
-        unsigned int zapdata;
-        unsigned char *zap;
-
         zap = exeStart;
         zapdata = (unsigned int)zap;
         if (firstbit.a_trsize != 0)
@@ -256,7 +283,9 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
 
     return (0);
 }
+#endif
 
+#if NEED_MVS
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc)
@@ -298,7 +327,9 @@ static int exeloadLoadMVS(unsigned char **entry_point,
 
     return (0);
 }
+#endif
 
+#if NEED_AMIGA
 #define getword(p) ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
 #define putword(p, val) (p[0] = (unsigned char)((val >> 24) & 0xff), \
                          p[1] = (unsigned char)((val >> 16) & 0xff), \
@@ -736,7 +767,9 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
 
     return (0);
 }
+#endif
 
+#if NEED_ELF
 static int exeloadLoadELF(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc)
@@ -1360,7 +1393,9 @@ static int exeloadLoadELF(unsigned char **entry_point,
     }
     return (0);
 }
+#endif
 
+#if NEED_MZ
 static int exeloadLoadMZ(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc)
@@ -2139,7 +2174,9 @@ static int exeloadLoadNE(unsigned long *entry_point,
     return (2);
 }
 #endif
+#endif /* NEED_MZ */
 
+#if NEED_MVS
 /* Structures here are documented in Appendix B and E of
    MVS Program Management: Advanced Facilities SA22-7644-14:
    http://publibfp.dhe.ibm.com/cgi-bin/bookmgr/BOOKS/iea2b2b1/CCONTENTS
@@ -2492,3 +2529,4 @@ static int processRLD(unsigned char *buf,
     }
     return (0);
 }
+#endif
