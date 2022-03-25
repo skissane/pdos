@@ -9,7 +9,7 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__WIN32__ -D__STATIC__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -DNEED_MZ
 
 all: clean bios.exe
 

@@ -6,7 +6,7 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__WIN32__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__
+COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__WIN32__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -DNEED_AOUT -DNEED_MZ
 
 all: clean pdos.exe
 
