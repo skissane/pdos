@@ -14,7 +14,7 @@ COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__WIN32__ -D__STATIC__ -D__NOBIVA__
 all: clean bios.exe
 
 bios.exe: bios.o ../bios/exeload.o
-    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/w32start.o bios.o ../bios/exeload.o ../pdpclib/pdpwin32.a ../src/kernel32.a
+    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.o bios.o ../bios/exeload.o ../pdpclib/pdpwin32.a ../src/kernel32.a
 
 .c.o:
     $(CC) $(COPTS) -I../bios -o $*.s $<
