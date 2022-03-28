@@ -16,18 +16,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bos.h"
+#include "pos.h"
 #include "unused.h"
-
-static int readLBA(void *buf, 
-                   int sectors, 
-                   int drive, 
-                   unsigned long sector);
-
-static int writeLBA(void *buf, 
-                    int sectors, 
-                    int drive, 
-                    unsigned long sector);
 
 int main(int argc, char **argv)
 {
@@ -77,7 +67,7 @@ int main(int argc, char **argv)
     }
     
     drive = strtol(*(argv + 1), NULL, 16);
-    rc = readLBA(buf, 1, drive, sect);
+    rc = PosAbsoluteDriveRead(drive, sect, 1, buf);
 
     if (rc != 0)
     {
@@ -87,7 +77,7 @@ int main(int argc, char **argv)
 
     memcpy(buf, mbr, sizeof mbr);
 
-    rc = writeLBA(buf, 1, drive, sect);
+    rc = PosAbsoluteDriveWrite(drive, sect, 1, buf);
 
     if (rc != 0)
     {
@@ -97,73 +87,4 @@ int main(int argc, char **argv)
 
     printf("MBR has been written to drive %x\n", drive);
     return (0);
-}
-
-
-static int readLBA(void *buf, 
-                   int sectors, 
-                   int drive, 
-                   unsigned long sector)
-{
-    int rc;
-    int ret = -1;
-    int tries;
-#ifdef __32BIT__
-    void *readbuf = transferbuf;
-#else
-    void *readbuf = buf;
-#endif
-
-    unused(sectors);
-    tries = 0;
-    while (tries < 5)
-    {
-        rc = BosDiskSectorRLBA(readbuf, 1, drive, sector, 0);
-        if (rc == 0)
-        {
-#ifdef __32BIT__    
-            memcpy(buf, transferbuf, 512);
-#endif        
-            ret = 0;
-            break;
-        }
-        BosDiskReset(drive);
-        tries++;
-    }
-    return (ret);
-}
-
-
-
-static int writeLBA(void *buf, 
-                    int sectors, 
-                    int drive, 
-                    unsigned long sector)
-{
-    int rc;
-    int ret = -1;
-    int tries;
-#ifdef __32BIT__
-    void *writebuf = transferbuf;
-#else
-    void *writebuf = buf;
-#endif
-
-    unused(sectors);
-#ifdef __32BIT__    
-    memcpy(transferbuf, buf, 512);
-#endif        
-    tries = 0;
-    while (tries < 5)
-    {
-        rc = BosDiskSectorWLBA(writebuf, 1, drive, sector, 0);
-        if (rc == 0)
-        {
-            ret = 0;
-            break;
-        }
-        BosDiskReset(drive);
-        tries++;
-    }
-    return (ret);
 }
