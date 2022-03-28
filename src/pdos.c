@@ -4383,6 +4383,30 @@ static void pdos16MemmgrSetOwner(MEMMGR *memmgr, void *ptr,
 
 #endif
 
+unsigned int PosAbsoluteDriveRead(int drive, unsigned long start_sector,
+                                  unsigned int sectors, void *buf)
+{
+    long x;
+
+    for(x=0;x<sectors;x++)
+    {
+        readLBA((char *)buf+x*512, 1, drive, start_sector + x);
+    }
+    return(0);
+}
+
+unsigned int PosAbsoluteDriveWrite(int drive, unsigned long start_sector,
+                                   unsigned int sectors, void *buf)
+{
+    long x;
+
+    for(x=0;x<sectors;x++)
+    {
+        writeLBA((char *)buf+x*512, 1, drive, start_sector + x);
+    }
+    return(0);
+}
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                 unsigned int sectors, void *buf)
@@ -4390,7 +4414,7 @@ unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
     long x;
     for(x=0;x<sectors;x++)
     {
-    readLogical(&disks[drive],x,(char *)buf+x*512);
+    readLogical(&disks[drive],start_sector + x,(char *)buf+x*512);
     }
     return(0);
 }
@@ -4403,7 +4427,7 @@ unsigned int PosAbsoluteDiskWrite(int drive, unsigned long start_sector,
     long x;
     for(x=0;x<sectors;x++)
     {
-    writeLogical(&disks[drive],x,(char *)buf+x*512);
+    writeLogical(&disks[drive],start_sector + x,(char *)buf+x*512);
     }
     return(0);
 }

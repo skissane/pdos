@@ -1303,6 +1303,30 @@ static void int21handler(union REGS *regsin,
             {
                 PosOutp(regsin->d.ebx, regsin->d.ecx);
             }
+            else if (regsin->h.al == 0x42)
+            {
+                DP *dp;
+                void *p;
+
+                dp = (void *)(regsin->d.ebx);
+                p = (void *)(dp->transferaddress);
+                regsout->d.eax = PosAbsoluteDriveRead(regsin->d.edx,
+                                                      dp->sectornumber,
+                                                      dp->numberofsectors,
+                                                      p);
+            }
+            else if (regsin->h.al == 0x43)
+            {
+                DP *dp;
+                void *p;
+
+                dp = (void *)(regsin->d.ebx);
+                p = (void *)(dp->transferaddress);
+                regsout->d.eax = PosAbsoluteDriveWrite(regsin->d.edx,
+                                                       dp->sectornumber,
+                                                       dp->numberofsectors,
+                                                       p);
+            }
 #endif
             else
             {

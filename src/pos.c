@@ -1876,6 +1876,83 @@ void PosOutp(unsigned int port, unsigned char data)
 }
 #endif
 
+/* F6,42 - Absolute Drive Read */
+unsigned int PosAbsoluteDriveRead(int drive,unsigned long start_sector,
+                                  unsigned int sectors,void *buf)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+    DP dp;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x42;
+#ifdef __32BIT__
+    regsin.d.edx = drive;
+    regsin.d.ebx=(int)&dp;
+#else
+    regsin.x.dx = drive;
+    sregs.ds = FP_SEG(&dp);
+    regsin.x.bx = FP_OFF(&dp);
+#endif
+    dp.sectornumber=start_sector;
+    dp.numberofsectors=sectors;
+    dp.transferaddress=buf;
+    int86x(0x21,&regsin,&regsout,&sregs);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+/* F6,43 - Absolute Drive Write */
+unsigned int PosAbsoluteDriveWrite(int drive,unsigned long start_sector,
+                                   unsigned int sectors,void *buf)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+    DP dp;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x43;
+#ifdef __32BIT__
+    regsin.d.edx = drive;
+    regsin.d.ebx=(int)&dp;
+#else
+    regsin.x.dx = drive;
+    sregs.ds = FP_SEG(&dp);
+    regsin.x.bx = FP_OFF(&dp);
+#endif
+    dp.sectornumber=start_sector;
+    dp.numberofsectors=sectors;
+    dp.transferaddress=buf;
+    int86x(0x21,&regsin,&regsout,&sregs);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,
                                  unsigned int sectors,void *buf)

@@ -403,6 +403,13 @@ unsigned char PosInp(unsigned int port);
 /* F6,41 - Write Byte To Port */
 void PosOutp(unsigned int port, unsigned char data);
 
+/* F6,42 - Absolute Drive Read */
+unsigned int PosAbsoluteDriveRead(int drive,unsigned long start_sector,
+                                  unsigned int sectors,void *buf);
+/* F6,43 - Absolute Drive Write */
+unsigned int PosAbsoluteDriveWrite(int drive,unsigned long start_sector,
+                                   unsigned int sectors,void *buf);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 
