@@ -1328,6 +1328,32 @@ static void int21handler(union REGS *regsin,
                                                        p);
             }
 #endif
+#ifndef __32BIT__
+            else if (regsin->h.al == 0x42)
+            {
+                DP *dp;
+                void *p;
+
+                dp = (void *)MK_FP(sregs->ds,regsin->x.bx);
+                p = (void *)(dp->transferaddress);
+                regsout->x.ax = PosAbsoluteDriveRead(regsin->x.dx,
+                                                     dp->sectornumber,
+                                                     dp->numberofsectors,
+                                                     p);
+            }
+            else if (regsin->h.al == 0x43)
+            {
+                DP *dp;
+                void *p;
+
+                dp = (void *)MK_FP(sregs->ds,regsin->x.bx);
+                p = (void *)(dp->transferaddress);
+                regsout->x.ax = PosAbsoluteDriveWrite(regsin->x.dx,
+                                                      dp->sectornumber,
+                                                      dp->numberofsectors,
+                                                      p);
+            }
+#endif
             else
             {
                 logUnimplementedCall(0x21, regsin->h.ah, regsin->h.al);
