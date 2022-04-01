@@ -203,6 +203,10 @@ mov al, [bp + 12]
 mov ah, 042h
 int 021h
 
+jc ___seek1
+mov ax, 0
+___seek1:
+
 pop cx
 pop dx
 pop bx
