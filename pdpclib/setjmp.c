@@ -13,8 +13,14 @@
 #include "setjmp.h"
 #include "stddef.h"
 
-int __setj(jmp_buf env);
-int __longj(void *);
+#if defined(__WATCOMC__) && !defined(__32BIT__)
+#define CTYP __cdecl
+#else
+#define CTYP
+#endif
+
+extern int CTYP __setj(jmp_buf env);
+extern int CTYP __longj(void *);
 
 #ifdef __MSC__
 __PDPCLIB_API__ int setjmp(jmp_buf env)
