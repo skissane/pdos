@@ -195,10 +195,10 @@ push bx
 push dx
 push cx
 
-mov bx, [bp + 8]
-mov dx, [bp + 10]
-mov cx, [bp + 12]
-mov al, [bp + 13]
+mov bx, [bp + 6]
+mov dx, [bp + 8]
+mov cx, [bp + 10]
+mov al, [bp + 12]
 
 mov ah, 042h
 int 021h
