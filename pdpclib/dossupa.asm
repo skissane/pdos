@@ -221,7 +221,7 @@ push bp
 mov bp, sp
 push bx
 
-mov bx,[bp+8]
+mov bx,[bp+6]
 
 mov ah, 03eh
 int 021h
