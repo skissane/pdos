@@ -892,7 +892,7 @@ static void osfopen(void)
     }
     else
     {
-        myfile->hfile = __open(fnm, 0, &errind);
+        myfile->hfile = __open(fnm, 2, &errind);
         if (errind)
         {
             if ((modeType == 3) || (modeType == 6)
