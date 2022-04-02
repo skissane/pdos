@@ -1,0 +1,16 @@
+# Produces MSDOS executable.
+# Links with PDPCLIB created by makefile.wcd.
+
+CC=wcl
+COPTS=-q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Icpplib\include -I..\pdpclib
+
+all: clean pdmake.exe
+
+pdmake.exe: main.obj read.obj variable.obj xmalloc.obj
+  wlink File main.obj,read.obj,variable.obj,xmalloc.obj Name pdmake.exe Form dos Library ..\pdpclib\watcom.lib Option quiet
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f *.obj pdmake.exe
