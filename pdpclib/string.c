@@ -285,9 +285,10 @@ __PDPCLIB_API__ char *strrchr(const char *s, int c)
     const char *p;
 
     p = s + strlen(s);
-    while (p >= s)
+    while (1)
     {
         if (*p == (char)c) return ((char *)p);
+        if (p == s) break;
         p--;
     }
     return (NULL);
