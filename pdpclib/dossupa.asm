@@ -239,8 +239,8 @@ mov bp, sp
 push ds
 push dx
 
-mov dx, [bp + 8]
-mov ds, [bp + 10]
+mov dx, [bp + 6]
+mov ds, [bp + 8]
 
 mov ah, 041h
 int 021h
@@ -261,10 +261,10 @@ push dx
 push es
 push di
 
-mov dx, [bp + 8]
-mov ds, [bp + 10]
-mov di, [bp + 12]
-mov es, [bp + 14]
+mov dx, [bp + 6]
+mov ds, [bp + 8]
+mov di, [bp + 10]
+mov es, [bp + 12]
 
 mov ah, 056h
 int 021h
