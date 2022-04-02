@@ -865,7 +865,9 @@ static void osfopen(void)
     int errind;
 
     if ((modeType == 1) || (modeType == 4)
-        || (modeType == 7) || (modeType == 10))
+        || (modeType == 7) || (modeType == 10)
+        || (modeType == 3) || (modeType == 6)
+        || (modeType == 9) || (modeType == 12))
     {
         mode = 0; /* read */
     }
@@ -876,10 +878,6 @@ static void osfopen(void)
     }
     else
     {
-        mode = 2; /* append or otherwise unsupported */
-        /* because we don't have append mode implemented
-           at the moment on MSDOS, just return with an
-           error immediately */
         err = 1;
         errno = 2;
         return;
@@ -895,6 +893,14 @@ static void osfopen(void)
     else
     {
         myfile->hfile = __open(fnm, 0, &errind);
+        if (errind)
+        {
+            if ((modeType == 3) || (modeType == 6)
+                || (modeType == 9) || (modeType == 12))
+            {
+                myfile->hfile = __creat(fnm, 0, &errind);
+            }
+        }
     }
     if (errind)
     {
