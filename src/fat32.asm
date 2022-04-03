@@ -38,7 +38,7 @@ nop
 ;Lets make our BPB
 ; offset 3
 OEMName           db 'PDOS x.x'
-; offset b
+; offset b (should be considered offset 0 in other code)
 BytesPerSector    dw 512   ;512 bytes is normal ;)
 ; offset d
 SectorsPerClustor db 1     ;Sector == cluster
@@ -114,6 +114,7 @@ mov ax, 07b0h
 mov ds, ax
 mov ax, 0
 mov es, ax
+mov es:[07C02h],dl  ; store boot disk in nop
 Skip:
 xor ax, ax   ;Zeroize ax
 mov ss, ax
@@ -160,7 +161,7 @@ mov si, word ptr es:[7c00h + 512 + 14h]   ; Store high word of cluster in si
 mov di, word ptr es:[7c00h + 512 + 1Ah]   ; Store low word of cluster in di
 
 call CalculateCluster ; Take our cluster # stored in si:di, and return sector in dx:ax
-mov cx, 3 ;Load 3 sectors
+mov cx, 58 ;Load 58 sectors (was 3)
 mov bx, 0700h ;Loaded to es:bx (0x00:0x0700)
 call ReadSectors ;Read the actual sectors
 
