@@ -54,7 +54,8 @@ int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 
 int main(void)
 {
-    loadIO();
+    /* we now get the boot sector to load all the sectors */
+    /* loadIO(); */
 #ifdef CONTINUOUS_LOOP
     for (;;)
 #endif        
