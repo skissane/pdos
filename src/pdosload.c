@@ -88,6 +88,7 @@ void pdosload(void)
     loads = (unsigned long)psp + 0x100;
     load = loads;
     bpb = (unsigned char *)(0x7c00 - 0x600 + 11);
+    diskinfo.drive = bpb[-9]; /* drive number is stored in NOP */
     analyseBpb(&diskinfo, bpb);
     fatDefaults(&gfat);
     fatInit(&gfat, bpb, readLogical, 0, &diskinfo, 0);
@@ -203,7 +204,7 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf)
 
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
 {
-    diskinfo->drive = bpb[25];
+    /* diskinfo->drive = bpb[25]; */
     diskinfo->num_heads = bpb[15];
     diskinfo->hidden = bpb[17]
                        | ((unsigned long)bpb[18] << 8)
