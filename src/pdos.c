@@ -716,7 +716,8 @@ void pdosRun(void)
 #ifndef __32BIT__
     bootBPB = (unsigned char *)0x7c00 + 11;
 #endif
-    bootDrivePhysical = bootBPB[25];
+    /*bootDrivePhysical = bootBPB[25];*/
+    bootDrivePhysical = bootBPB[-9]; /* drive number is in NOP */
     bootDriveLogical = 0;
     disks[0].accessed = 0;
     disks[1].accessed = 0;
