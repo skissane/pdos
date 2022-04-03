@@ -378,49 +378,55 @@ ReadSectors proc
 ReadSectors endp
 
 
-; dump last 9 bits of cx in octal
-; it would be better to dump the entire 16 bits in hex,
-; but that sounds like a lot of work
-; using a loop would be nice too
-
+; routine copied from public domain mon86 and modified
 dumpcx proc
-push bx
-push ax
+;Print out 16-bit value in CX in hex
 
+OUT16:
+push ax
+push bx
+	MOV	AL,CH		;High-order byte first
+	CALL	HEX
+	MOV	AL,CL		;Then low-order byte
+        CALL    HEX
+	MOV	AL," "
+	CALL	OUT2
+pop bx
+pop ax
+        RET
+
+;Output byte in AL as two hex digits
+
+HEX:
+	MOV	BL,AL		;Save for second digit
+;Shift high digit into low 4 bits
+	PUSH	CX
+	MOV	CL,4
+	SHR	AL,CL
+	POP	CX
+
+	CALL	DIGIT		;Output first digit
+HIDIG:
+	MOV	AL,BL		;Now do digit saved in BL
+DIGIT:
+	AND	AL,0FH		;Mask to 4 bits
+;Trick 6-byte hex conversion works on 8086 too.
+	ADD	AL,90H
+	DAA
+	ADC	AL,40H
+	DAA
+
+;Console output of character in AL
+
+OUT2:
+push bx
 mov bx, 0
 
-mov ax, cx
-push cx
-mov cx, 6
-shr ax, cl
-pop cx
-and ax, 07h
-add al, 030h
 mov ah, 0eh
 int 10h
-
-mov ax, cx
-push cx
-mov cx, 3
-shr ax, cl
-pop cx
-and ax, 07h
-add al, 030h
-mov ah, 0eh
-int 10h
-
-mov ax, cx
-and ax, 07h
-add al, 030h
-mov ah, 0eh
-int 10h
-
-mov al, 020h
-int 10h
-
-pop ax
 pop bx
 ret
+
 dumpcx endp
 
 
