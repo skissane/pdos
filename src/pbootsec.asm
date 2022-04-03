@@ -171,7 +171,31 @@ bypass:
 
  mov  [BootDisk], dl   ;Store our boot disk
 
+; get disk geometry from BIOS instead of relying on values
+; stored at format time, because the disk may have been moved
+; to a different machine with a different faking mechanism
+ mov ah, 08h
+ mov di, 0
+; es should already be 0
+; dl is already set
+ int 13h
+ jc ignorec   ; if it fails, just use the values at format time
+
+ and cl,3fh
+ mov ch, 0
+ mov [SectorsPerTrack], cx
+
+; dh currently has maximum head number, which are counted
+; from 0, so the number of heads is 1 more than that, and
+; may overflow a single byte
+ mov dl,dh
+ mov dh,0
+ add dx,1
+ mov [Heads], dx
+
+ignorec:
  call CalculateLocation   ;Gets our data sector into ax
+
  mov  cx, 3         ;Load 3 sectors
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
  call ReadSectors   ;Read the actual sectors
@@ -254,9 +278,10 @@ CalculateLocation endp
 ; Temp = LBA % (Heads_Per_Cylinder * Sectors_Per_Track)
 ; Heads = Temp / Sectors_Per_Track
 ; Sector = Temp % Sectors_Per_Track + 1
-; CX = Cylinder (Highest 10-bits), Sector (Lower 6-bits)
+; CH = Cylinder (Lowest 8-bits)
+; CL = Lowest 6 bits contain Sector. Highest 2 bits are highest
+;      2 bits of cylinder number
 ; DH = Head
-; DL = Drive
 ; Div = Dx:AX / value
 ;  AX = Quotient (Result)
 ;  DX = Remainder (Leftover, Modulus)
@@ -264,6 +289,7 @@ Lba2Chs proc
  div  word ptr [SectorsPerTrack]
 ; AX = DX:AX / SectorsPerTrack (Temp)
 ; DX = DX:AX % SectorsPerTrack (Sector)
+ mov  ch, 0
  mov  cl,  dl     ;Sector #
  inc  cl ;Add one since sector starts at 1, not zero
  xor  dx, dx       ;Zero out dx, so now we are just working on AX
@@ -271,12 +297,17 @@ Lba2Chs proc
 ; AX = AX / Heads ( = Cylinder)
 ; DX = AX % Heads ( = Head)
  mov  dh,  dl     ;Mov dl into dh (dh=head)
-;Have to store cx because 8086 needs it to be able to shl!
+ push dx
+ mov  dh, al ; save lower 8 bits of cylinder number
+ mov  al, 0  ; clear lower 8 bits of cylinder number
+;Have to save cx because 8086 needs it to be able to shr!
  push cx
- mov  cl, 6
- shl  ax,  cl ;Move cylinder 6-bits up to make room for Sector
+ mov  cl, 2
+ shr  ax, cl
  pop  cx
- or  cx,  ax
+ mov  ah, dh
+ pop  dx
+ or   cx, ax
  ret
 Lba2Chs endp
 
@@ -345,6 +376,53 @@ ReadSectors proc
  pop  ax
  ret
 ReadSectors endp
+
+
+; dump last 9 bits of cx in octal
+; it would be better to dump the entire 16 bits in hex,
+; but that sounds like a lot of work
+; using a loop would be nice too
+
+dumpcx proc
+push bx
+push ax
+
+mov bx, 0
+
+mov ax, cx
+push cx
+mov cx, 6
+shr ax, cl
+pop cx
+and ax, 07h
+add al, 030h
+mov ah, 0eh
+int 10h
+
+mov ax, cx
+push cx
+mov cx, 3
+shr ax, cl
+pop cx
+and ax, 07h
+add al, 030h
+mov ah, 0eh
+int 10h
+
+mov ax, cx
+and ax, 07h
+add al, 030h
+mov ah, 0eh
+int 10h
+
+mov al, 020h
+int 10h
+
+pop ax
+pop bx
+ret
+dumpcx endp
+
 
 org 02feh
 lastword dw 0aa55h
