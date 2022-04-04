@@ -1964,7 +1964,7 @@ unsigned int PosDoBoot(int disknum)
 #ifdef __32BIT__
     regsin.d.edx = disknum;
 #else
-    regsin.x.dx = drive;
+    regsin.x.dx = disknum;
 #endif
     int86(0x21,&regsin,&regsout);
 #ifdef __32BIT__

@@ -232,7 +232,7 @@ static void dopoweroff(void)
 
 static void doboot(unsigned long drivenum)
 {
-    boot(drivenum);
+    boot((unsigned int)drivenum);
     return;
 }
 

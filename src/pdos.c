@@ -2458,6 +2458,13 @@ unsigned int PosDoBoot(int disknum)
     runreal_p(doboot, (unsigned short *)disks[disknum].drive);
     return (0);
 }
+#else
+unsigned int PosDoBoot(int disknum)
+{
+    readLogical(&disks[disknum], 0, ABS2ADDR(0x7c00));
+    boot(disks[disknum].drive);
+    return (0);
+}
 #endif
 
 /* !!! END OF POS FUNCTIONS !!! */

@@ -1357,6 +1357,10 @@ static void int21handler(union REGS *regsin,
                                                       dp->numberofsectors,
                                                       p);
             }
+            else if (regsin->h.al == 0x44)
+            {
+                regsout->x.ax = PosDoBoot(regsin->x.dx);
+            }
 #endif
             else
             {
