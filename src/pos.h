@@ -410,6 +410,9 @@ unsigned int PosAbsoluteDriveRead(int drive,unsigned long start_sector,
 unsigned int PosAbsoluteDriveWrite(int drive,unsigned long start_sector,
                                    unsigned int sectors,void *buf);
 
+/* F6,44 - Boot a Disk */
+unsigned int PosDoBoot(int disknum);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

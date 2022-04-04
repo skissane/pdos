@@ -41,6 +41,7 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf);
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
 static unsigned long doreboot(unsigned long parm);
 static void dopoweroff(void);
+static void doboot(unsigned long drive);
 #ifdef PDOS32
 static void ivtCopyEntries(int dest, int orig, int count);
 static void picRemap(int master_offset, int slave_offset);
@@ -97,6 +98,7 @@ void pdosload(void)
     pp.transferbuf = ADDR2ABS(transferbuf);
     pp.doreboot = (unsigned long)(void (far *)())doreboot;
     pp.dopoweroff = (unsigned long)(void (far *)())dopoweroff;
+    pp.doboot = (unsigned long)(void (far *)())doboot;
     pp.bpb = ADDR2ABS(bpb);
     runaout("MSDOS.SYS", load, ADDR2ABS(&pp));
 #else    
@@ -226,6 +228,12 @@ static unsigned long doreboot(unsigned long parm)
 static void dopoweroff(void)
 {
     poweroff();
+}
+
+static void doboot(unsigned long drivenum)
+{
+    boot(drivenum);
+    return;
 }
 
 #ifdef NEED_DUMP

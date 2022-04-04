@@ -1327,6 +1327,10 @@ static void int21handler(union REGS *regsin,
                                                        dp->numberofsectors,
                                                        p);
             }
+            else if (regsin->h.al == 0x44)
+            {
+                regsout->d.eax = PosDoBoot(regsin->d.edx);
+            }
 #endif
 #ifndef __32BIT__
             else if (regsin->h.al == 0x42)

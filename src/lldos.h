@@ -38,6 +38,7 @@ int DOSPREF callwithpsp(char *address,
 void DOSPREF callwithbypass(int retcode);
 void DOSPREF a20e(void);
 void DOSPREF reboot(void);
+void DOSPREF boot(unsigned long drive);
 int DOSPREF getabs(long address);
 void DOSPREF putabs(long address, unsigned ch);
 void DOSPREF poweroff(void);

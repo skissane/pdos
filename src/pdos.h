@@ -7,4 +7,5 @@ typedef struct {
     unsigned long doreboot;
     unsigned long bpb;
     unsigned long dopoweroff;
+    unsigned long doboot;
 } pdos_parms;

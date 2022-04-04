@@ -6,7 +6,7 @@
 
 public getfar, putfar, rportb, wportb, enable, disable
 public callfar, callwithpsp, callwithbypass, a20e
-public reboot, putabs, getabs, poweroff
+public reboot, putabs, getabs, poweroff, boot
 
         .code
 getfar proc, address: dword
@@ -170,8 +170,29 @@ reboot proc
         mov ax, 0
         push ax
         retf
+        pop es ; shouldn't get here
         ret
 reboot endp
+
+boot proc, drive: dword
+        push ds
+        push bx
+
+; i would rather load dx:ax but i don't know how to do that
+        lds bx,drive
+        mov dl, bl
+
+; we want to do a jmp 0000h:7c00h, but that seems not to assemble
+        mov ax, 0h
+        push ax
+        mov ax, 7c00h
+        push ax
+        retf
+
+        pop bx ; shouldn't get here
+        pop ds
+        ret
+boot endp
 
 getabs proc, address3: dword
         push ds

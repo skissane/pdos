@@ -294,6 +294,7 @@ static long freem_start; /* start of free memory below 1 MiB,
                             absolute address */
 static unsigned long doreboot;
 static unsigned long dopoweroff;
+static unsigned long doboot;
 unsigned char *loadaddr = NULL;
 unsigned long entry_point;
 #endif
@@ -2450,6 +2451,15 @@ void PosPowerOff(void)
 }
 #endif
 
+#ifdef __32BIT__
+unsigned int PosDoBoot(int disknum)
+{
+    readLogical(&disks[disknum], 0, (char *)0x7c00);
+    runreal_p(doboot, (unsigned short *)disks[disknum].drive);
+    return (0);
+}
+#endif
+
 /* !!! END OF POS FUNCTIONS !!! */
 
 
@@ -4270,6 +4280,7 @@ int pdosstrt(void)
     transferbuf = (void *)(pp->transferbuf);
     doreboot = pp->doreboot;
     dopoweroff = pp->dopoweroff;
+    doboot = pp->doboot;
     bootBPB = (void *)(pp->bpb);
     protintHandler(0x0, int0);
     protintHandler(0x0E, int0E);
