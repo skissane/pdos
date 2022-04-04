@@ -129,6 +129,7 @@ mov  [BootDisk], dl ;Store our boot disk
  mov di, 0
 ; es should already be 0
 ; dl is already set
+ push es  ; preserve
  int 13h
  jc ignorec   ; if it fails, just use the values at format time
 
@@ -145,6 +146,7 @@ mov  [BootDisk], dl ;Store our boot disk
  mov [Heads], dx
 
 ignorec:
+ pop es
 
 call CalculateLocation ; Gets our data sector into dx:ax
 

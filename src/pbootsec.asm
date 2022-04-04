@@ -179,6 +179,7 @@ bypass:
  mov di, 0
 ; es should already be 0
 ; dl is already set
+ push es  ; preserve
  int 13h
  jc ignorec   ; if it fails, just use the values at format time
 
@@ -195,7 +196,9 @@ bypass:
  mov [Heads], dx
 
 ignorec:
- call CalculateLocation   ;Gets our data sector into ax
+ pop es
+
+ call CalculateLocation   ;Gets our data sector into dx:ax
 
  mov  cx, 58        ;Load 58 sectors (was 3)
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
