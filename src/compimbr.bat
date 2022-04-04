@@ -1,7 +1,7 @@
 rem uses PDPCLIB's makefile.wcd
 
 rem wasm -zq -zcm -Dmemodel=large support.asm
-rem wcl -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib instmbr.c pos.c
+rem wcl -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib instmbr.c pos.c
 rem wlink File instmbr.obj,pos.obj,support.obj Name instmbr.exe Form dos Library ..\pdpclib\watcom.lib Option quiet
 
 
