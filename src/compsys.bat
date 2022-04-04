@@ -1,7 +1,17 @@
-rem Use Watcom's version of int86 routine which compensates
-rem for flags not being popped in INT 25H and 26H
+rem If you want to build an executable that works under
+rem MSDOS, you will need to use Watcom's version of the
+rem int86 routine which compensates for flags not being
+rem popped in INT 25H and 26H
 
-rem wcl -q -I. -ml -DWATNATIVE sys.c pos.c
+rem wcl -zp1 -q -I. -ml -DWATNATIVE sys.c pos.c
+
+
+rem To build an executable that works under PDOS/86 use this:
+
+rem wasm -zq -zcm -Dmemodel=large support.asm
+rem wcl -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib sys.c pos.c
+rem wlink File sys.obj,pos.obj,support.obj Name sys.exe Form dos Library ..\pdpclib\watcom.lib Option quiet
+
 
 
 gccwin -O2 -S -fno-common -ansi -I. -I../pdpclib -D__WIN32__ sys.c
