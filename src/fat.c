@@ -966,7 +966,7 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
             fatfile->byteUpto = 0;
         }
         /* don't go past EOF */
-        if (fatEndCluster(fat, fatfile->nextCluster))
+        if (fatEndCluster(fat, fatfile->nextCluster) && !fatfile->dir)
         {
             fatfile->sectorUpto = (fatfile->currpos %
                                   (fat->sectors_per_cluster * MAXSECTSZ))
