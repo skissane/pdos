@@ -6,13 +6,10 @@
 
 % .model memodel, c
 
-public reboot
-
         .code
 
 top:
 
-reboot proc
         push es
         mov ax, 040h
         mov es, ax
@@ -26,6 +23,5 @@ reboot proc
         retf
         pop es ; shouldn't get here
         ret
-reboot endp
 
 end top
