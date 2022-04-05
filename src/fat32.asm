@@ -237,49 +237,6 @@ adc dx, 0                      ; Add our carry if one happened
 ret
 CalculateLocation endp
 
-;Convert LBA -> CHS
-;Inputs:
-; dx:ax - sector (32-bit value)
-;Outputs:
-; Standard CHS format for use by int 13h
-; INT 13h allows 256 heads, 1024 cylinders, and 63 sectors max
-; Cylinder = LBA / (Heads_Per_Cylinder * Sectors_Per_Track)
-; Temp = LBA % (Heads_Per_Cylinder * Sectors_Per_Track)
-; Heads = Temp / Sectors_Per_Track
-; Sector = Temp % Sectors_Per_Track + 1
-; CH = Cylinder (Lowest 8-bits)
-; CL = Lowest 6 bits contain Sector. Highest 2 bits are highest
-;      2 bits of cylinder number
-; DH = Head
-; Div = Dx:AX / value
-;  AX = Quotient (Result)
-;  DX = Remainder (Leftover, Modulus)
-Lba2Chs proc
- div  word ptr [SectorsPerTrack]
-; AX = DX:AX / SectorsPerTrack (Temp)
-; DX = DX:AX % SectorsPerTrack (Sector)
- mov  ch, 0
- mov  cl,  dl     ;Sector #
- inc  cl ;Add one since sector starts at 1, not zero
- xor  dx, dx       ;Zero out dx, so now we are just working on AX
- div  word ptr [Heads]
-; AX = AX / Heads ( = Cylinder)
-; DX = AX % Heads ( = Head)
- mov  dh,  dl     ;Mov dl into dh (dh=head)
- push dx
- mov  dh, al ; save lower 8 bits of cylinder number
- mov  al, 0  ; clear lower 8 bits of cylinder number
-;Have to save cx because 8086 needs it to be able to shr!
- push cx
- mov  cl, 2
- shr  ax, cl
- pop  cx
- mov  ah, dh
- pop  dx
- or   cx, ax
- ret
-Lba2Chs endp
-
 ;Used to reset our drive before we use it
 ;Inputs:
 ; (None)
@@ -310,13 +267,21 @@ ReadSingleSector proc
  push cx
  push dx
  push es
- call Lba2Chs     ;Grab our CHS
+ push si
  RetryRead:
   call ResetDrive   ;Get drive ready..
-  mov  dl, [BootDisk]  ;Grab our boot disk
-  mov  ax, 0201h   ;Read function, one sector
-  int  13h
+
+mov [lbahigh], dx
+mov [lbalow], ax
+mov [offst],bx
+mov [segmnt],es
+mov ah,042h
+mov si,lba_packet
+mov dl, [BootDisk]  ;Grab our boot disk
+int 013h        ; BIOS LBA read
+
   jc   RetryRead
+ pop si
  pop es
  pop dx
  pop cx
@@ -402,6 +367,21 @@ pop bx
 ret
 
 dumpcx endp
+
+
+; I don't know how to align on an 8-byte boundary, but
+; this should be good enough
+org 02e8h
+; LBA packet for BIOS disk read
+lba_packet:
+size       db 010h
+reserved   db 0
+sectors    dw 1
+offst      dw 0  ; 07c00h
+segmnt     dw 0
+lbalow     dw 0
+lbahigh    dw 0
+lbapadding dd 0
 
 
 org 02feh
