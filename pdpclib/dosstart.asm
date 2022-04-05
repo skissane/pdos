@@ -7,6 +7,9 @@
 
 extrn ___start:proc
 
+extrn _end:byte
+extrn _edata:byte
+
 public ___psp
 public ___envptr
 public ___osver
@@ -66,6 +69,21 @@ int 21h
 
 mov dx,DGROUP
 mov ds,dx
+
+; we are responsible for clearing our own BSS
+; in Watcom at least, the BSS is at the end of the DGROUP
+; which can be referenced as _end, and the end of the
+; DATA section is referenced as _edata
+; We can use rep stos to clear the memory, which initializes
+; using the byte in al, starting at es:di, for a length of cx
+
+mov cx, offset DGROUP:_end
+mov di, offset DGROUP:_edata
+sub cx, di
+mov es, dx ; we still have that set from above
+mov al, 0
+rep stosb
+
 
 mov ah,30h
 int 21h
