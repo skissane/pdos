@@ -1,5 +1,6 @@
 ; Public domain MBR by Mark Raymond
-; in nasm format
+; Modified by Paul Edwards to be masm format
+; and only use 8086 instructions
 
 ; This is a standard MBR, which loads the VBR of the
 ; active partition to 0x7c00 and jumps to it.
@@ -30,9 +31,19 @@
 ; * The disk cannot be read
 ; * The VBR does not end with the boot signature (0xaa55)
 
+% .model memodel
 
-[BITS 16]
-[ORG 0x0600]
+_DATA segment word public USE16 'DATA'
+_DATA ends
+_BSS segment word public USE16 'BSS'
+_BSS ends
+
+_TEXT segment word public USE16 'CODE'
+
+
+org 0600h
+
+top:
 
 ; Clear interrupts during initialization
 cli
@@ -42,28 +53,48 @@ xor ax,ax
 mov ds,ax
 mov es,ax
 mov ss,ax
-mov sp,0x7c00
+mov sp,07c00h
 
 ; Allow interrupts
 ; See http://forum.osdev.org/viewtopic.php?p=236455#p236455 for more information
 sti
 
 ; Relocate the MBR
-mov si,0x7c00       ; Set source and destination
-mov di,0x0600
-mov cx,0x0100       ; 0x100 words = 512 bytes
+mov si,07c00h       ; Set source and destination
+mov di,0600h
+mov cx,0100h       ; 0x100 words = 512 bytes
 rep movsw           ; Copy mbr to 0x0600
-jmp 0:relocated     ; Far jump to copied MBR
+;jmp 0:relocated     ; Far jump to copied MBR
+mov ax, 0
+push ax
+mov ax, relocated
+push ax
+retf
+
+
+; I don't know how to request 8-byte alignment, so
+; use this for now
+org 0630h
+; LBA packet for BIOS disk read
+lba_packet:
+size       db 010h
+reserved   db 0
+sectors    dw 1
+offst      dw 07c00h
+segmnt     dw 0
+lbalow     dw 0
+lbahigh    dw 0
+lbapadding dd 0
 
 relocated:
 
 ; Search partitions for one with active bit set
-mov si,partition_table
+mov si,07beh   ; partition_table
 mov cx,4
 test_active:
-test byte[si+partition.status],0x80
+test byte ptr [si],080h
 jnz found_active
-add si,entry_length
+add si,16 ; entry_length
 loop test_active
 ; If we get here, no active partition was found,
 ; so output and error message and hang
@@ -72,31 +103,33 @@ jmp fatal_error
 
 ; Found a partition with active bit set
 found_active:
-cmp byte[si+partition.type],0; check partition type, should be non-zero
+cmp byte ptr [si+4],0; check partition type, should be non-zero
 mov bp,active_partition_invalid
 jz fatal_error
 
 ; Check BIOS LBA extensions exist
-mov ah,0x41
-mov bx,0x55aa
-int 0x13
+mov ah,041h
+mov bx,055aah
+int 013h
 mov bp,no_lba_extensions
 jc fatal_error
-cmp bx,0xaa55
+cmp bx,0aa55h
 jnz fatal_error
 
 ; Load volume boot record
-mov eax,[si+partition.start_lba]  ; put sector number into LBA packet
-mov [lba_packet.lba],eax
-mov cx,3        ; three tries
+mov ax,[si+8]  ; put sector number into LBA packet
+mov [lbalow],ax
+mov ax,[si+10]
+mov [lbahigh],ax
+mov cx,10        ; ten tries
 push si         ; save pointer to partition info
 try_read:
-mov ah,0x42
+mov ah,042h
 mov si,lba_packet
-int 0x13        ; BIOS LBA read (dl already set to disk number)
+int 013h        ; BIOS LBA read (dl already set to disk number)
 jnc read_done
 mov ah,0
-int 0x13        ; reset disk system
+int 013h        ; reset disk system
 loop try_read
 mov bp,read_failure
 jmp fatal_error
@@ -104,20 +137,25 @@ read_done:
 pop si          ; restore pointer to partition info
 
 ; Check the volume boot record is bootable
-cmp word[0x7dfe],0xaa55
+cmp word ptr es:[07dfeh],0aa55h
 mov bp,invalid_vbr
 jnz fatal_error
 
 ; Jump to the volume boot record
 mov bp,si           ; ds:bp is sometimes used by Windows instead of ds:si
-jmp 0x0000:0x7c00   ; if boot signature passes, we can jump,
+;jmp 0000h:07c00h   ; if boot signature passes, we can jump,
                     ; as ds:si and dl are already set
+mov ax, 0
+push ax
+mov ax, 07c00h
+push ax
+retf
 
 output_loop:
-int 0x10        ; output
+int 010h        ; output
 inc bp
 fatal_error:
-mov ah,0x0e     ; BIOS teletype
+mov ah,0eh     ; BIOS teletype
 mov al,[bp]     ; get next char
 cmp al,0        ; check for end of string
 jnz output_loop
@@ -130,40 +168,38 @@ hlt
 jmp hang
 
 ; Error messages
-no_active_partitions:     db "No active partition found!",0
-active_partition_invalid: db "Active partition has invalid partition type!",0
-no_lba_extensions:        db "BIOS does not support LBA extensions!",0
-read_failure:             db "Failed to read volume boot record!",0
-invalid_vbr:              db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
+no_active_partitions:
+xx1     db "No active partition found!",0
+active_partition_invalid:
+xx2 db "Active partition has invalid partition type!",0
+no_lba_extensions:
+xx3        db "BIOS does not support LBA extensions!",0
+read_failure:
+xx4             db "Failed to read volume boot record!",0
+invalid_vbr:
+xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 
-; LBA packet for BIOS disk read
-align 8,db 0
-lba_packet:
-.size       db 0x10
-.reserved   db 0
-.sectors    dw 0x0001
-.offset     dw 0x7c00
-.segment    dw 0x0000
-.lba        dd 0
-.lbapadding dd 0
+org 07b8h
 
-; Pad to the end of the code section
-times 440-($-$$) db 0
+;org 07beh
+;partition_table:
 
-absolute $
-sig:         resb 4
-padding:     resb 2
-partition_table:
+;struc partition
+;.start:
+;.status:     resb 1
+;.start_chs:  resb 3
+;.type:       resb 1
+;.end_chs:    resb 3
+;.start_lba:  resd 1
+;.length_lba: resd 1
+;.end:
+;endstruc
 
-struc partition
-.start:
-.status:     resb 1
-.start_chs:  resb 3
-.type:       resb 1
-.end_chs:    resb 3
-.start_lba:  resd 1
-.length_lba: resd 1
-.end:
-endstruc
+;org 07ffh
+;filler db 0
 
-entry_length equ partition.end - partition.start
+
+_TEXT ends
+
+end top
+
