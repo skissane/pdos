@@ -10,6 +10,8 @@ public reboot
 
         .code
 
+top:
+
 reboot proc
         push es
         mov ax, 040h
@@ -26,4 +28,4 @@ reboot proc
         ret
 reboot endp
 
-end
+end top
