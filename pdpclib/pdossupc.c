@@ -120,10 +120,9 @@ void __freemem(void *ptr)
 }
 #endif
 
-void __exec(char *cmd, void *env)
+int __exec(char *cmd, void *env)
 {
-    PosExec(cmd, env);
-    return;
+    return (PosExec(cmd, env));
 }
 
 int __getrc(void)
