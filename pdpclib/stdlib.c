@@ -319,6 +319,7 @@ __PDPCLIB_API__ void free(void *ptr)
 #else
     if (ptr != NULL)
     {
+        ptr = (char *)ptr - sizeof(size_t);
         __freemem(ptr);
     }
 #endif
