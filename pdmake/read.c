@@ -32,6 +32,7 @@ static long read_line(struct linebuf *lbuf)
 {
     char *p, *end;
     long lines_read = 0;
+    size_t offset;
 
     p = lbuf->start;
     end = lbuf->start + lbuf->size;
@@ -39,26 +40,34 @@ static long read_line(struct linebuf *lbuf)
     while (fgets(p, end - p, lbuf->f))
     {
         p += strlen(p);
+        offset = p - lbuf->start;
 
         lines_read++;
 
-        if ((p[-1] == '\n') && (p[-2] != '\\'))
+        if (offset >= 2)
         {
-            p[-1] = '\0';
-            break;
+            if ((p[-1] == '\n') && (p[-2] != '\\'))
+            {
+                p[-1] = '\0';
+                break;
+            }
+        }
+        else if (offset >= 1)
+        {
+            if (p[-1] == '\n')
+            {
+                p[-1] = '\0';
+                break;
+            }
         }
 
         if (end - p >= 80) continue;
 
-        {
-            size_t offset = p - lbuf->start;
+        lbuf->size *= 2;
+        lbuf->start = xrealloc(lbuf->start, lbuf->size);
 
-            lbuf->size *= 2;
-            lbuf->start = xrealloc(lbuf->start, lbuf->size);
-
-            p = lbuf->start + offset;
-            end = lbuf->start + lbuf->size;
-        }
+        p = lbuf->start + offset;
+        end = lbuf->start + lbuf->size;
     }
     
     return (lines_read);
