@@ -86,7 +86,7 @@ void CTYP __allocmem(size_t size, void **ptr);
 void CTYP __freemem(void *ptr);
 #endif
 extern unsigned char *__envptr;
-void CTYP __exec(char *cmd, void *env);
+int CTYP __exec(char *cmd, void *env);
 int CTYP __getrc(void);
 #endif
 
@@ -954,6 +954,7 @@ __PDPCLIB_API__ int system(const char *string)
     return (ExitCode);
 #endif
 #ifdef __MSDOS__
+    int rc;
     static unsigned char cmdt[140];
     static
 #ifdef __PDOS386__
@@ -984,7 +985,8 @@ __PDPCLIB_API__ int system(const char *string)
     {
         cmd = "\\command.com";
     }
-    __exec(cmd, &parmblock);
+    rc = __exec(cmd, &parmblock);
+    if (rc != 0) return (-rc);
     return (__getrc());
 #endif
 #if defined(MUSIC)
