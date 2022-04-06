@@ -470,6 +470,10 @@ mov ah, 04bh
 cld              ; dos 2 "bug"
 int 21h
 
+jc ___exec1
+mov ax, 0
+___exec1:
+
 cli
 mov ss, dummy2
 mov sp, dummy1
