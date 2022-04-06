@@ -77,13 +77,14 @@ mov ds,dx
 ; We can use rep stos to clear the memory, which initializes
 ; using the byte in al, starting at es:di, for a length of cx
 
+push es
 mov cx, offset DGROUP:_end
 mov di, offset DGROUP:_edata
 sub cx, di
 mov es, dx ; we still have that set from above
 mov al, 0
 rep stosb
-
+pop es
 
 mov ah,30h
 int 21h
