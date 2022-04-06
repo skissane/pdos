@@ -124,10 +124,12 @@ __PDPCLIB_API__ void *malloc(size_t size)
 #if defined(__32BIT__) && !defined(NOLIBALLOC)
     return (__malloc(size));
 #else
-    void *ptr;
+    size_t *ptr;
 
-    __allocmem(size, &ptr);
-    return (ptr);
+    __allocmem(size + sizeof(size_t), &ptr);
+    if (ptr == NULL) return (NULL);
+    *ptr = size;
+    return (ptr + 1);
 #endif
 #endif
 #if USE_MEMMGR
