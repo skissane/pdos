@@ -11,6 +11,9 @@ else
 extrn main:proc
 endif
 
+extrn _end:byte
+extrn _edata:byte
+
 _DATA   segment word public 'DATA'
 _DATA   ends
 _BSS    segment word public 'BSS'
@@ -48,6 +51,21 @@ mov ax, cs
 mov ax, DGROUP
 mov ds, ax
 ;call far ptr _displayc
+
+; we are responsible for clearing our own BSS
+; in Watcom at least, the BSS is at the end of the DGROUP
+; which can be referenced as _end, and the end of the
+; DATA section is referenced as _edata
+; We can use rep stos to clear the memory, which initializes
+; using the byte in al, starting at es:di, for a length of cx
+
+mov cx, offset DGROUP:_end
+mov di, offset DGROUP:_edata
+sub cx, di
+mov es, ax ; we still have that set from above
+mov al, 0
+rep stosb
+
 
 ifdef WATCOM
 call far ptr main_
