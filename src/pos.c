@@ -1096,7 +1096,7 @@ int PosReallocMem(void *ptr, unsigned int newpages, unsigned int *maxp)
     return (regsout.x.ax);
 }
 
-void PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
+int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
     union REGS regsin;
     union REGS regsout;
@@ -1114,7 +1114,11 @@ void PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
     regsin.x.bx = FP_OFF(parmblock);
 #endif
     int86x(0x21, &regsin, &regsout, &sregs);
-    return;
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
 }
 
 void PosReadBufferedInput(pos_input_buffer *buf)

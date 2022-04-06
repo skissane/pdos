@@ -271,7 +271,7 @@ int PosFreeMem(void *ptr); /* func 49 */
 /* func 4a */
 int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp);
 
-void PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock); /* func 4b */
+int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock); /* func 4b */
 
 void PosTerminate(int rc); /* func 4c */
 

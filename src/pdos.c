@@ -122,11 +122,11 @@ int intB0(unsigned int *regs);
 #endif
 static void loadConfig(void);
 static void loadPcomm(void);
-static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock);
+static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock);
 #ifdef __32BIT__
 #define ASYNCHRONOUS 0
 #define SYNCHRONOUS  1
-static void loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous);
+static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous);
 static void startExe32(void);
 static void terminateExe32(void);
 static int fixexe32(unsigned long entry, unsigned int sp,
@@ -2250,15 +2250,14 @@ int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
 }
 #endif
 
-void PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
+int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
     char tempp[FILENAME_MAX];
 
-    if (formatcwd(prog, tempp)) return;
+    if (formatcwd(prog, tempp)) return (55);
     /* +++Add a way to let user know it failed on formatcwd. */
     prog = tempp;
-    loadExe(prog, parmblock);
-    return;
+    return (loadExe(prog, parmblock));
 }
 
 void PosTerminate(int rc)
@@ -3117,11 +3116,10 @@ static void loadPcomm(void)
 /* 1. header is larger */
 /* 6. executable needs 2-stage load */
 
-static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
+static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
 #ifdef __32BIT__
-    loadExe32(prog, parmblock, SYNCHRONOUS);
-    return;
+    return (loadExe32(prog, parmblock, SYNCHRONOUS));
 #else
     unsigned char firstbit[10];
     unsigned int headerLen;
@@ -3151,7 +3149,7 @@ static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     int isexe = 0;
     DTA *olddta;
 
-    if (fileOpen(prog, &fno)) return;
+    if (fileOpen(prog, &fno)) return (1);
     fileRead(fno, firstbit, sizeof firstbit, &readbytes);
     if (memcmp(firstbit, "MZ", 2) == 0)
     {
@@ -3203,7 +3201,7 @@ static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
             exeLen+extraLen, (unsigned long)maxPages * 16);
         memmgrFree(&memmgr, header);
         memmgrFree(&memmgr, envptr);
-        return;
+        return (2);
     }
     pcb = pdos16MemmgrAllocPages(&memmgr, (exeLen + extraLen) / 16, 0);
     if (pcb != NULL)
@@ -3223,7 +3221,7 @@ static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         if (header != NULL) memmgrFree(&memmgr, header);
         memmgrFree(&memmgr, envptr);
         fileClose(fno);
-        return;
+        return (3);
     }
 
     /* set various values in the psp */
@@ -3373,7 +3371,7 @@ static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     /* Set TSR flag back to 0 */
     tsrFlag = 0;
 
-    return;
+    return (0);
 #endif
 }
 
@@ -3382,7 +3380,7 @@ static void loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
 #include "elf.h"
 #include "exeload.h"
 
-static void loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
+static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
 {
     char *commandLine = "";
     char *envptr;
@@ -3398,7 +3396,7 @@ static void loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
     if (commandLine == NULL)
     {
         printf("insufficient memory to allocate parameter block\n");
-        return;
+        return (1);
     }
     strcpy(commandLine, ct);
 
@@ -3445,6 +3443,7 @@ static void loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
 
     if (synchronous) createThreadAndBlock(startExe32, newProc);
     else createThread(startExe32, newProc);
+    return (0);
 }
 
 static void startExe32(void)

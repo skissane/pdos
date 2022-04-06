@@ -814,11 +814,20 @@ static void int21handler(union REGS *regsin,
             if (regsin->h.al == 0)
             {
 #ifdef __32BIT__
-                PosExec((void *)(regsin->d.edx), (void *)(regsin->d.ebx));
+                regsout->d.eax = PosExec((void *)(regsin->d.edx),
+                                         (void *)(regsin->d.ebx));
 #else
-                PosExec(MK_FP(sregs->ds, regsin->x.dx),
-                        MK_FP(sregs->es, regsin->x.bx));
+                regsout->x.ax = PosExec(MK_FP(sregs->ds, regsin->x.dx),
+                                        MK_FP(sregs->es, regsin->x.bx));
 #endif
+                if (regsout->x.ax != 0)
+                {
+                    regsout->x.cflag = 1;
+                }
+                else
+                {
+                    regsout->x.cflag = 0;
+                }
             }
             /* AL=01: Load but don't execute (for use by debuggers) */
             /* AL=03: Load overlay */
