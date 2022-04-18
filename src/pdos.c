@@ -211,6 +211,7 @@ static unsigned int tempDrive;
 static unsigned int bootDrivePhysical;
 static unsigned int bootDriveLogical;
 static unsigned int lastDrive;
+static int gotpart; /* did we get a partition on this disk? */
 static unsigned char *bootBPB;
 static char *cwd;
 static int lastrc;
@@ -895,12 +896,18 @@ static void initdisks(void)
     lastDrive = 2;
     for (x = 0x80; x < 0x84; x++)
     {
+        gotpart = 0;
         rc = BosFixedDiskStatus(x);
         if (rc != 0)
         {
             printf("status %d from disk %x being ignored\n", rc, x);
         }
         scanPartition(x);
+        if (gotpart)
+        {
+            printf("\n");
+            gotpart = 0;
+        }
     }
     return;
 }
@@ -1061,6 +1068,12 @@ static void processPartition(int drive, unsigned char *prm)
     strcpy(disks[lastDrive].cwd, "");
     disks[lastDrive].accessed = 1;
     disks[lastDrive].valid = 1;
+    if (!gotpart)
+    {
+        gotpart = 1;
+        printf("drive %x : ", drive);
+    }
+    printf("%c ", 'A' + lastDrive);
     lastDrive++;
     return;
 }
