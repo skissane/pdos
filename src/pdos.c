@@ -994,7 +994,7 @@ static void processPartition(int drive, unsigned char *prm)
     unsigned long sector;
 
     head = prm[1];
-    sect = prm[2] & 0x1f;
+    sect = prm[2] & 0x3f;
     track = (((unsigned int)prm[2] & 0xc0) << 2) | prm[3];
     sector = prm[8]
             | ((unsigned long)prm[9] << 8)
@@ -1094,7 +1094,7 @@ static void processExtended(int drive, unsigned char *prm)
         lba = 1;
     }
     head = prm[1];
-    sect = prm[2] & 0x1f;
+    sect = prm[2] & 0x3f;
     track = (((unsigned int)prm[2] & 0xc0) << 2) | prm[3];
     sector = prm[8]
             | ((unsigned long)prm[9] << 8)
@@ -1131,7 +1131,7 @@ static void processExtended(int drive, unsigned char *prm)
             processPartition(drive, buf + PT_OFFSET);
         }
         head = buf[PT_OFFSET + 1 * PT_LEN + 1];
-        sect = buf[PT_OFFSET + 1 * PT_LEN + 2] & 0x1f;
+        sect = buf[PT_OFFSET + 1 * PT_LEN + 2] & 0x3f;
         track = (((unsigned int)buf[PT_OFFSET + 1 * PT_LEN + 2]
                 & 0xc0) << 2)
                 | buf[PT_OFFSET + 1 * PT_LEN + 3];
