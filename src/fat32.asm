@@ -162,6 +162,16 @@ call ReadSingleSector  ; Read the first DataEntry of our root directory so we ca
 mov si, word ptr es:[7c00h + 512 + 14h]   ; Store high word of cluster in si
 mov di, word ptr es:[7c00h + 512 + 1Ah]   ; Store low word of cluster in di
 
+mov bl, byte ptr es:[7c00h + 512 + 0bh] ; file attribute
+and bl, 08h
+jz already
+
+; previous entry was a volume label. let's hope this is the real deal instead
+mov si, word ptr es:[7c00h + 512 + 20h + 14h]   ; Store high word of cluster in si
+mov di, word ptr es:[7c00h + 512 + 20h + 1Ah]   ; Store low word of cluster in di
+
+already:
+
 call CalculateCluster ; Take our cluster # stored in si:di, and return sector in dx:ax
 mov cx, 58 ;Load 58 sectors (was 3)
 mov bx, 0700h ;Loaded to es:bx (0x00:0x0700)
