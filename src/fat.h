@@ -39,6 +39,7 @@ is cluster 2, marking the beginning of the data area. */
 #define DIRENT_READONLY 0x01
 #define DIRENT_HIDDEN 0x02
 #define DIRENT_SYSTEM 0x04
+#define DIRENT_LABEL 0x08
 #define DIRENT_SUBDIR 0x10
 #define DIRENT_ARCHIVE 0x20
 #define DIRENT_DEVICE 0X40
