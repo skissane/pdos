@@ -285,6 +285,11 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
     {
         fnm++;
     }
+    /* don't allow filenames that start with blank or NUL */
+    if ((fnm[0] == '\0') || (fnm[0] == ' '))
+    {
+        return (POS_ERR_ACCESS_DENIED);
+    }
     fatPosition(fat,fnm);
     p = fat->de;
 
