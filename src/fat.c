@@ -389,6 +389,11 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
         fatfile->currpos = 0;
         fatfile->dir = 0;
 
+        /* This is needed if we switch to reading */
+        fatfile->sectorCount = fat->sectors_per_cluster;
+        fatfile->nextCluster = 0;
+        fatfile->lastSectors = 0;
+
         /* if file or deleted entry was found, don't mark next entry as null */
         if (found || fat->found_deleted)
         {
@@ -901,8 +906,12 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
 
         if (fatEndCluster(fat, fatfile->nextCluster) && !fatfile->dir)
         {
+            if (fatfile->fileSize == 0)
+            {
+                sectorsAvail = 0;
+            }
             /* exception - a full cluster has 0 last sectors */
-            if ((fatfile->lastSectors == 0) && (fatfile->lastBytes == 0))
+            else if ((fatfile->lastSectors == 0) && (fatfile->lastBytes == 0))
             {
                 /* do nothing */
             }
@@ -1406,6 +1415,13 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
         /* Marks fatfile->nextCluster as invalid so fatReadFile will
            update it. */
         fatfile->nextCluster = 0;
+        /* and we might be reading, so we need these things */
+        fatfile->lastBytes = (unsigned int)
+                             (fatfile->fileSize
+                              % ((unsigned long)fat->sectors_per_cluster
+                                 * (unsigned long)fat->sector_size));
+        fatfile->lastSectors = fatfile->lastBytes / fat->sector_size;
+        fatfile->lastBytes = fatfile->lastBytes % fat->sector_size;
         return (newpos);
     }
     /* If the new position is zero or negative,
@@ -1424,6 +1440,13 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
         /* Marks fatfile->nextCluster as invalid so fatReadFile will
            update it. */
         fatfile->nextCluster = 0;
+        /* and we might be reading, so we need these things */
+        fatfile->lastBytes = (unsigned int)
+                             (fatfile->fileSize
+                              % ((unsigned long)fat->sectors_per_cluster
+                                 * (unsigned long)fat->sector_size));
+        fatfile->lastSectors = fatfile->lastBytes / fat->sector_size;
+        fatfile->lastBytes = fatfile->lastBytes % fat->sector_size;
         return (newpos);
     }
     /* (fat->sectors_per_cluster * MAXSECTSZ) is size of cluster in bytes. */
@@ -1488,6 +1511,13 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
     fatfile->currpos = newpos;
     /* Marks fatfile->nextCluster as invalid so fatReadFile will update it. */
     fatfile->nextCluster = 0;
+    /* and we might be reading, so we need these things */
+    fatfile->lastBytes = (unsigned int)
+                         (fatfile->fileSize
+                          % ((unsigned long)fat->sectors_per_cluster
+                             * (unsigned long)fat->sector_size));
+    fatfile->lastSectors = fatfile->lastBytes / fat->sector_size;
+    fatfile->lastBytes = fatfile->lastBytes % fat->sector_size;
     return (newpos);
 }
 
