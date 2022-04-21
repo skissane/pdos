@@ -10,5 +10,5 @@ world.exe: world.o
   pdcc -E -D__SUBC__ -D__WIN32__ -D__STATIC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int -I ../pdpclib -o $*.i $<
   sccwin -S $*.i
   rm -f $*.i
-  pdas386 -o $@ $*.s
+  pdas -o $@ $*.s
   rm -f $*.s
