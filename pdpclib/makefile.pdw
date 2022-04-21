@@ -22,7 +22,7 @@ pos.o: ../src/pos.c
   rm -f $*.s
 
 support.o: ../src/support.s
-  as386 -o $*.o ../src/support.s
+  pdas -o $*.o ../src/support.s
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
