@@ -45,10 +45,10 @@ del log.s
 as386 -o helper.o helper.s
 del helper.s
 
-as386 -o strt32.o strt32.s
-as386 -o support.o support.s
-as386 -o protints.o protints.s
-as386 -o pdoss.o pdoss.s
+pdas -o strt32.o strt32.s
+pdas -o support.o support.s
+pdas -o protints.o protints.s
+pdas -o pdoss.o pdoss.s
 
 del os.a
 ar386 -r os.a bos.o fat.o exeload.o
