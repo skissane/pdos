@@ -16,9 +16,9 @@
 int _assert(char *x, char *y, int z);
 
 #ifdef NDEBUG
-#define assert(ignore) ((void)0)
+#define assert(ignore) (0)
 #else
-#define assert(x) (x) ? ((void)0) : \
+#define assert(x) (x) ? (0) : \
     _assert(#x, __FILE__, __LINE__)
 #endif
 
