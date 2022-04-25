@@ -126,7 +126,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
 #else
     size_t *ptr;
 
-    __allocmem(size + sizeof(size_t), &ptr);
+    __allocmem(size + sizeof(size_t), (void **)&ptr);
     if (ptr == NULL) return (NULL);
     *ptr = size;
     return (ptr + 1);
