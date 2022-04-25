@@ -103,7 +103,7 @@ int __liballoc_free(void *addr, size_t num_pages)
 
 void __allocmem(size_t size, void **ptr)
 {
-#ifdef __32BIT__
+#if defined(__32BIT__) || defined(__PDOS386__)
     *ptr = PosAllocMem(size, POS_LOC32);
 #elif defined(__SMALLERC__)
     *ptr = PosAllocMemPages((size >> 4) + (((size % 16) != 0) ? 1 : 0), NULL);
