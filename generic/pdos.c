@@ -253,9 +253,9 @@ int PosRenameFile(const char *old, const char *new)
     return (0);
 }
 
-void PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
+int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
-    return;
+    return (0);
 }
 
 int PosGetReturnCode(void)
