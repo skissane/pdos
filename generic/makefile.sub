@@ -3,16 +3,15 @@
 
 CC=sccwin
 CFLAGS=
-LD=ldwin
+LD=pdld386
 LDFLAGS=
-AS=aswin
-AR=arwin
+AS=pdas
 COPTS=$(CFLAGS) -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -DNEED_AOUT
 
 all: clean pdos.exe
 
 pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
-    $(LD) $(LDFLAGS) -s -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
+    $(LD) $(LDFLAGS) -N -s -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
 
 .c.o:
     pdcc -E -D__SUBC__ -Dunsigned= -Dsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(COPTS) -o $*.i $<
