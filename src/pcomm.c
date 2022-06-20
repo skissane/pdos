@@ -570,7 +570,7 @@ int main(int argc, char **argv)
         processInput(true);
     }
     if (genuine_pdos) PosSetVideoAttribute(0x0C);
-    printf("Thankyou for using PCOMM!\n");
+    printf("Thank you for using PCOMM!\n");
     if (genuine_pdos) PosSetVideoAttribute(savedVideoState.currentAttrib);
     return (0);
 }
@@ -716,9 +716,9 @@ static void promptSymProc_B(char *prompt, int *index)
 /* $D - prints current date */
 static void promptSymProc_D(char *prompt, int *index)
 {
-    int y, m, d, dw;
+    unsigned int y, m, d, dw;
     PosGetSystemDate(&y,&m,&d,&dw);
-    printf("%04d-%02d-%02d", y, m, d);
+    printf("%04u-%02u-%02u", y, m, d);
 }
 
 /* $E - prints escape character */
@@ -1276,8 +1276,8 @@ static int cmd_ver_run(char *arg)
 
 static int cmd_path_run(char *s)
 {
-     if (isBlankString(s))
-     {
+    if (isBlankString(s))
+    {
         char *t;
 
         t = path;
@@ -2138,6 +2138,8 @@ void bell(void)
 }
 
 #define UP_ARROW (72 << 8)
+#define LEFT_ARROW (75 << 8)
+#define RIGHT_ARROW (77 << 8)
 #define DOWN_ARROW (80 << 8)
 void safegets(char *buffer, int size, bool use_history)
 {
@@ -2145,13 +2147,14 @@ void safegets(char *buffer, int size, bool use_history)
     int i = 0;
     int j;
     int history_cursor = -1;
+    int pos = 0;
 
     while (1)
     {
 
         a = PosGetCharInputNoEcho();
         if(!a)
-        a = PosGetCharInputNoEcho() << 8;
+            a = PosGetCharInputNoEcho() << 8;
 
         if(use_history)
         {
@@ -2179,7 +2182,9 @@ void safegets(char *buffer, int size, bool use_history)
                 }
 
                 /* Delete all characters on the screen */
+                for(j = pos; j < i; ++ j) putch(' ');
                 for(j = 0; j < i; ++ j) putch('\b');
+
                 for(j = 0; j < i; ++ j) putch(' ');
                 for(j = 0; j < i; ++ j) putch('\b');
 
@@ -2200,8 +2205,24 @@ void safegets(char *buffer, int size, bool use_history)
 
                 }
                 buffer[i] = '\0';
+                pos = i;
                 continue;
             }
+            if (a == LEFT_ARROW) {
+                if (pos > 0) {
+                    putch('\b');
+                    pos--;
+                }
+                continue;
+            }
+            if (a == RIGHT_ARROW) {
+                if (buffer[pos]) {
+                    putch(buffer[pos]);
+                    pos++;
+                }
+                continue;
+            }
+            if (!(a & 0xff)) continue;
         }
 
         if (i == size)
@@ -2209,17 +2230,19 @@ void safegets(char *buffer, int size, bool use_history)
             buffer[size] = '\0';
 
             if ((a == '\n') || (a == '\r'))
-            return;
+                return;
 
             bell();
         }
 
         if ((i == 0) && (a == '\b'))
-        continue;
+            continue;
+        /* TODO: tab completions */
+        if (a == '\t')
+            continue;
 
         if (i < size)
         {
-
             if ((a == '\n') || (a == '\r'))
             {
                 putch('\n');
@@ -2233,29 +2256,38 @@ void safegets(char *buffer, int size, bool use_history)
             if (a == '\b')
             {
 
-                if (i == 0)
-                continue;
+                if (pos == 0)
+                    continue;
 
                 else
-                i--;
+                    pos--;
 
+                i--;
+                memmove(buffer+pos, buffer+pos+1, i-pos);
                 putch('\b');
-                putch(' ');
-                putch('\b');
+                goto reprint;
 
                 continue;
             }
-            else
-            putch(a);
-
-
             if (isprint((unsigned char)a))
             {
-                buffer[i] = a;
+                putch(a);
+                memmove(buffer+pos+1, buffer+pos, i-pos+1);
+                buffer[pos] = a;
+                pos++;
                 i++;
+                goto reprint;
             }
             else bell();
 
+            continue;
+    reprint:
+            for (j = pos;j <= i;j++) putch(buffer[j]);
+            if (a == '\b') {
+                putch(' ');
+                putch('\b');
+            }
+            for (j = i;j >= pos;j--) putch('\b');
         }
         else bell();
 

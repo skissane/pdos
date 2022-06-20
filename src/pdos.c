@@ -5018,7 +5018,7 @@ static void pdosWriteText(int ch)
         {
             column--;
             BosSetCursorPosition(currentPage,row,column);
-            BosWriteCharAttrib(currentPage, ' ', currentAttrib, 1);
+            /* BosWriteCharAttrib(currentPage, ' ', currentAttrib, 1); */
         }
     }
     else if (ch == 7 || ch == 0xA || ch == 0xD)
