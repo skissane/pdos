@@ -2216,7 +2216,7 @@ void safegets(char *buffer, int size, bool use_history)
                 continue;
             }
             if (a == RIGHT_ARROW) {
-                if (buffer[pos]) {
+                if (pos < i) {
                     putch(buffer[pos]);
                     pos++;
                 }
@@ -2235,8 +2235,6 @@ void safegets(char *buffer, int size, bool use_history)
             bell();
         }
 
-        if ((i == 0) && (a == '\b'))
-            continue;
         /* TODO: tab completions */
         if (a == '\t')
             continue;
@@ -2265,29 +2263,28 @@ void safegets(char *buffer, int size, bool use_history)
                 i--;
                 memmove(buffer+pos, buffer+pos+1, i-pos);
                 putch('\b');
-                goto reprint;
-
-                continue;
             }
-            if (isprint((unsigned char)a))
+            else if (isprint((unsigned char)a))
             {
                 putch(a);
                 memmove(buffer+pos+1, buffer+pos, i-pos+1);
                 buffer[pos] = a;
                 pos++;
                 i++;
-                goto reprint;
             }
-            else bell();
+            else
+            {
+                bell();
 
-            continue;
-    reprint:
-            for (j = pos;j <= i;j++) putch(buffer[j]);
+                continue;
+            }
+
+            for (j = pos;j < i;j++) putch(buffer[j]);
             if (a == '\b') {
                 putch(' ');
                 putch('\b');
             }
-            for (j = i;j >= pos;j--) putch('\b');
+            for (j = i - 1;j >= pos;j--) putch('\b');
         }
         else bell();
 
