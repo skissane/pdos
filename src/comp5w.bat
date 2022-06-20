@@ -1,18 +1,18 @@
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib pdos.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib bos.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib fat.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib patmat.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib memmgr.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib protintp.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib exeload.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib physmem.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib vmm.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib liballoc.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib process.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int21.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int80.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib log.c
-gcc386 -S -O2 -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib helper.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib pdos.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib bos.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib fat.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib patmat.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib memmgr.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib protintp.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib exeload.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib physmem.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib vmm.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib liballoc.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib process.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int21.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int80.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib log.c
+gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib helper.c
 
 as386 -o pdos.o pdos.s
 del pdos.s
