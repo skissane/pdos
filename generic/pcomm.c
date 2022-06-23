@@ -20,6 +20,7 @@ static char buf[200];
 int main(void)
 {
     char *p;
+    char *q;
 
     printf("welcome to pcomm\n");
     while (1)
@@ -54,6 +55,52 @@ int main(void)
                 else
                 {
                     printf("file not found\n");
+                }
+            }
+        }
+        else if (strncmp(buf, "copy", 4) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                FILE *fp;
+                FILE *fq;
+
+                p++;
+                q = strchr(p, ' ');
+                if (q == NULL)
+                {
+                    printf("two files needed\n");
+                }
+                else
+                {
+                    *q = '\0';
+                    q++;
+                    fp = fopen(p, "rb");
+                    if (fp == NULL)
+                    {
+                        printf("failed to open input file\n");
+                    }
+                    else
+                    {
+                        fq = fopen(q, "wb");
+                        if (fq == NULL)
+                        {
+                            printf("failed to open output file\n");
+                            fclose(fp);
+                        }
+                        else
+                        {
+                            int c;
+
+                            while ((c = fgetc(fp)) != EOF)
+                            {
+                                fputc(c, fq);
+                            }
+                            fclose(fp);
+                            fclose(fq);
+                        }
+                    }
                 }
             }
         }

@@ -70,6 +70,14 @@ static unsigned char sect[SECTSZ];
 static FAT fat;
 static FATFILE fatfile;
 
+#define MAX_HANDLE 20
+
+static struct {
+    int inuse;
+    void *fptr;
+    FATFILE ff;
+} handles[MAX_HANDLE];
+
 static void readLogical(void *diskptr, unsigned long sector, void *buf);
 static void writeLogical(void *diskptr, unsigned long sector, void *buf);
 static void getDateTime(FAT_DATETIME *ptr);
@@ -112,7 +120,7 @@ int main(void)
     printf("fat type is %.5s\n", &sect[0x36]);
     fatDefaults(&fat);
     fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
-    if (exeloadDoload(&entry_point, "command.com", &p) != 0)
+    if (exeloadDoload(&entry_point, ":pcomm.exe", &p) != 0)
     {
         printf("failed to load program\n");
         return (EXIT_FAILURE);
@@ -128,23 +136,81 @@ int main(void)
 int PosOpenFile(const char *name, int mode, int *handle)
 {
     int ret;
+    int x;
 
     printf("got request to open %s\n", name);
-    /* *handle = (int)bios->fopen(name, "rb"); */
-    ret = fatOpenFile(&fat, name, &fatfile);
+    for (x = 3; x < MAX_HANDLE; x++)
+    {
+        if (!handles[x].inuse) break;
+    }
+    if (x == MAX_HANDLE)
+    {
+        return (1);
+    }
+    if (name[0] == ':')
+    {
+        handles[x].fptr = bios->fopen(name + 1, "rb");
+        if (handles[x].fptr != NULL)
+        {
+            *handle = x;
+            return (0);
+        }
+        else
+        {
+            return (1);
+        }
+    }
+    ret = fatOpenFile(&fat, name, &handles[x].ff);
     if (ret != 0) return (1);
-    *handle = 3;
+    *handle = x;
     return (0);
 }
 
 int PosCloseFile(int fno)
 {
     /* printf("got request to close\n"); */
+    if (handles[fno].fptr)
+    {
+        bios->fclose(handles[fno].fptr);
+        handles[fno].fptr = NULL;
+    }
+    else
+    {
+    }
+    handles[fno].inuse = 0;
     return (0);
 }
 
 int PosCreatFile(const char *name, int attrib, int *handle)
 {
+    int ret;
+    int x;
+
+    printf("got request to create %s\n", name);
+    for (x = 3; x < MAX_HANDLE; x++)
+    {
+        if (!handles[x].inuse) break;
+    }
+    if (x == MAX_HANDLE)
+    {
+        return (1);
+    }
+    if (name[0] == ':')
+    {
+        handles[x].fptr = bios->fopen(name + 1, "wb");
+        if (handles[x].fptr != NULL)
+        {
+            *handle = x;
+            return (0);
+        }
+        else
+        {
+            return (1);
+        }
+    }
+    ret = fatCreatFile(&fat, name, &handles[x].ff, attrib);
+    if (ret != 0) return (1);
+    *handle = x;
     return (0);
 }
 
@@ -172,7 +238,14 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     }
     else
     {
-        fatReadFile(&fat, &fatfile, data, bytes, readbytes);
+        if (handles[fh].fptr != NULL)
+        {
+            *readbytes = bios->fread(data, 1, bytes, handles[fh].fptr);
+        }
+        else
+        {
+            fatReadFile(&fat, &handles[fh].ff, data, bytes, readbytes);
+        }
     }
     /* printf("read %lu bytes\n", (unsigned long)*readbytes); */
     return (0);
@@ -180,8 +253,22 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 
 int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
-    bios->fwrite(data, 1, len, bios->Xstdout);
-    bios->fflush(bios->Xstdout);
+    if (fh < 3)
+    {
+        bios->fwrite(data, 1, len, bios->Xstdout);
+        bios->fflush(bios->Xstdout);
+    }
+    else
+    {
+        if (handles[fh].fptr != NULL)
+        {
+            *writtenbytes = bios->fwrite(data, 1, len, handles[fh].fptr);
+        }
+        else
+        {
+            fatWriteFile(&fat, &handles[fh].ff, data, len, writtenbytes);
+        }
+    }
     return (0);
 }
 
@@ -189,7 +276,7 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
     /* bios->fseek((void *)handle, offset, SEEK_SET);
     *newpos = offset; */
-    *newpos = fatSeek(&fat, &fatfile, offset, whence);
+    *newpos = fatSeek(&fat, &handles[handle].ff, offset, whence);
     return (0);
 }
 
