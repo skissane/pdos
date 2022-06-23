@@ -153,6 +153,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
         if (handles[x].fptr != NULL)
         {
             *handle = x;
+            handles[x].inuse = 1;
             return (0);
         }
         else
@@ -163,6 +164,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     ret = fatOpenFile(&fat, name, &handles[x].ff);
     if (ret != 0) return (1);
     *handle = x;
+    handles[x].inuse = 1;
     return (0);
 }
 
@@ -201,6 +203,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
         if (handles[x].fptr != NULL)
         {
             *handle = x;
+            handles[x].inuse = 1;
             return (0);
         }
         else
@@ -211,6 +214,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     ret = fatCreatFile(&fat, name, &handles[x].ff, attrib);
     if (ret != 0) return (1);
     *handle = x;
+    handles[x].inuse = 1;
     return (0);
 }
 
