@@ -414,6 +414,11 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf)
 
 static void writeLogical(void *diskptr, unsigned long sector, void *buf)
 {
+    int ret;
+
+    sector += fat.hidden;
+    bios->fseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
+    ret = bios->fwrite(buf, SECTSZ, 1, diskptr);
     return;
 }
 
