@@ -1837,6 +1837,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             {
                 x--;
                 p[x] = '\0';
+                pdosWriteText(ascii);
+                pdosWriteText(' ');
             }
             else
             {
