@@ -1987,6 +1987,37 @@ unsigned int PosDoBoot(int disknum)
 }
 
 
+/* F6,45 - screen capture */
+/* disk of -1 terminates */
+unsigned int PosScrncap(int disknum)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x45;
+#ifdef __32BIT__
+    regsin.d.edx = disknum;
+#else
+    regsin.x.dx = disknum;
+#endif
+    int86(0x21,&regsin,&regsout);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,
                                  unsigned int sectors,void *buf)

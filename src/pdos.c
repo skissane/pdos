@@ -144,6 +144,9 @@ static int dirDelete(const char *dnm);
 static int fileSeek(int fno, long offset, int whence, long *newpos);
 static int opencomm(int num, int *handle);
 static int opendrv(int num, int *handle);
+static int opennul(int *handle);
+static int openzero(int *handle);
+static int openscap(int num, int *handle);
 static int fileClose(int fno);
 static int fileRead(int fno, void *buf, size_t szbuf, size_t *readbytes);
 static void accessDisk(int drive);
@@ -182,6 +185,7 @@ static char *envAllocateEmpty(char *progName);
 static char *envModify(char *envPtr, char *name, char *value);
 static void getDateTime(FAT_DATETIME *ptr);
 static int isDriveValid(int drive);
+static int ins_strcmp(const char *one, const char *two);
 
 static MEMMGR memmgr;
 #ifdef __32BIT__
@@ -227,6 +231,9 @@ static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 #define HANDTYPE_FILE 0
 #define HANDTYPE_COMM 1
 #define HANDTYPE_DRIVE 2
+#define HANDTYPE_NUL 3
+#define HANDTYPE_ZERO 4
+#define HANDTYPE_SCAP 5
 
 #define MAXFILES 40
 static struct {
@@ -245,6 +252,11 @@ static struct {
     unsigned long sectupto;
 
 } fhandle[MAXFILES];
+
+static int scrncapDrv = -1;
+static char scrncapBuf[512];
+static unsigned long scrncapSector;
+static int scrncapUpto;
 
 static char ff_path[FILENAME_MAX];
 static char ff_pat[FILENAME_MAX];
@@ -1587,16 +1599,32 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 
     if (((strncmp(name, "COM", 3) == 0)
          || (strncmp(name, "com", 3) == 0))
-        && isdigit((unsigned char)name[3]))
+        && isdigit((unsigned char)name[3])
+        && (strchr(name, ':') != NULL))
     {
         return (opencomm(atoi(name + 3), handle));
     }
     else if (((strncmp(name, "DRV", 3) == 0)
          || (strncmp(name, "drv", 3) == 0))
-        && isdigit((unsigned char)name[3])
+        && isxdigit((unsigned char)name[3])
         && (strchr(name, ':') != NULL))
     {
         return (opendrv((int)strtol(name + 3, NULL, 16), handle));
+    }
+    else if (ins_strcmp(name, "NUL:") == 0)
+    {
+        return (opennul(handle));
+    }
+    else if (ins_strcmp(name, "ZERO:") == 0)
+    {
+        return (openzero(handle));
+    }
+    else if (((strncmp(name, "SCAP", 4) == 0)
+         || (strncmp(name, "scap", 4) == 0))
+        && isxdigit((unsigned char)name[4])
+        && (strchr(name, ':') != NULL))
+    {
+        return (openscap((int)strtol(name + 4, NULL, 16), handle));
     }
     ret = formatcwd(name, filename);
     if (ret) return (ret);
@@ -1610,16 +1638,32 @@ int PosOpenFile(const char *name, int mode, int *handle)
 
     if (((strncmp(name, "COM", 3) == 0)
          || (strncmp(name, "com", 3) == 0))
-        && isdigit((unsigned char)name[3]))
+        && isdigit((unsigned char)name[3])
+        && (strchr(name, ':') != NULL))
     {
         return (opencomm(atoi(name + 3), handle));
     }
     else if (((strncmp(name, "DRV", 3) == 0)
          || (strncmp(name, "drv", 3) == 0))
-        && isdigit((unsigned char)name[3])
+        && isxdigit((unsigned char)name[3])
         && (strchr(name, ':') != NULL))
     {
         return (opendrv((int)strtol(name + 3, NULL, 16), handle));
+    }
+    else if (ins_strcmp(name, "NUL:") == 0)
+    {
+        return (opennul(handle));
+    }
+    else if (ins_strcmp(name, "ZERO:") == 0)
+    {
+        return (openzero(handle));
+    }
+    else if (((strncmp(name, "SCAP", 4) == 0)
+         || (strncmp(name, "scap", 4) == 0))
+        && isxdigit((unsigned char)name[4])
+        && (strchr(name, ':') != NULL))
+    {
+        return (openscap((int)strtol(name + 4, NULL, 16), handle));
     }
     ret = formatcwd(name, filename);
     if (ret) return (ret);
@@ -1997,6 +2041,55 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
             ret = 0;
         }
     }
+    else if (fhandle[fh].handtype == HANDTYPE_NUL)
+    {
+        *readbytes = 0;
+        ret = 0;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_ZERO)
+    {
+        memset(data, '\x00', bytes);
+        *readbytes = bytes;
+        ret = 0;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_SCAP)
+    {
+        int n;
+        int rc;
+        char *p;
+
+        if ((bytes % 512) != 0)
+        {
+            ret = POS_ERR_ACCESS_DENIED;
+        }
+        else
+        {
+            *readbytes = 0;
+            for (n = 0; n < bytes / 512; n++)
+            {
+                if (readLBA((char *)data + n * 512,
+                            1,
+                            fhandle[fh].drv,
+                            fhandle[fh].sectupto) != 0)
+                {
+                    break;
+                }
+                p = memchr((char *)data + n * 512, '\x00', 512);
+                if (p != NULL)
+                {
+                    /* we should really set an EOF flag and prevent
+                       further reading, but let's see where this gets
+                       us for now. It will at least remain stuck on
+                       the last sector */
+                    *readbytes += (p - ((char *)data + n * 512));
+                    break;
+                }
+                *readbytes += 512;
+                fhandle[fh].sectupto++;
+            }
+            ret = 0;
+        }
+    }
     else
     {
         ret = fileRead(fh, data, bytes, readbytes);
@@ -2016,10 +2109,13 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
         for (x = 0; x < len; x++)
         {
             /* need this for Linux calls */
+            /* but it interferes with screen capture, so disable */
+#if 0
             if (p[x] == '\n')
             {
                 pdosWriteText('\r');
             }
+#endif
             pdosWriteText(p[x]);
         }
         *writtenbytes = len;
@@ -2065,6 +2161,22 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
             ret = 0;
         }
     }
+    else if (fhandle[fh].handtype == HANDTYPE_NUL)
+    {
+        *writtenbytes = len;
+        ret = 0;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_ZERO)
+    {
+        /* no concept of writing to a NUL-generator */
+        ret = POS_ERR_ACCESS_DENIED;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_SCAP)
+    {
+        /* there is a concept of writing to a screen
+           capture file, but it hasn't been implemented yet */
+        ret = POS_ERR_ACCESS_DENIED;
+    }
     else
     {
         ret = fileWrite(fh, data, len, writtenbytes);
@@ -2097,8 +2209,16 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
     {
         return (POS_ERR_INVALID_HANDLE);
     }
-    if (fhandle[handle].handtype == HANDTYPE_DRIVE)
+    if ((fhandle[handle].handtype == HANDTYPE_DRIVE)
+        || (fhandle[handle].handtype == HANDTYPE_NUL)
+        || (fhandle[handle].handtype == HANDTYPE_ZERO)
+        || (fhandle[handle].handtype == HANDTYPE_SCAP)
+       )
     {
+        /* note that it is not ideal that we are returning
+           success for a screen capture file. An editor may
+           choose to seek around. When we have such an editor,
+           it can provide the test case. */
         return (0);
     }
     return (fileSeek(handle, offset, whence, newpos));
@@ -2620,6 +2740,18 @@ unsigned int PosDoBoot(int disknum)
     return (0);
 }
 #endif
+
+unsigned int PosScrncap(int disknum)
+{
+    scrncapDrv = disknum;
+    if (disknum != -1)
+    {
+        scrncapSector = 1;
+        scrncapUpto = 0;
+        memset(scrncapBuf, '\x00', sizeof scrncapBuf);
+    }
+    return (0);
+}
 
 /* !!! END OF POS FUNCTIONS !!! */
 
@@ -3976,6 +4108,62 @@ static int opendrv(int num, int *handle)
     return (0);
 }
 
+static int opennul(int *handle)
+{
+    int x;
+
+    for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
+    {
+        if (!fhandle[x].inuse)
+        {
+            break;
+        }
+    }
+    if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
+    fhandle[x].inuse = 1;
+    fhandle[x].handtype = HANDTYPE_NUL;
+    *handle = x;
+    return (0);
+}
+
+static int openzero(int *handle)
+{
+    int x;
+
+    for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
+    {
+        if (!fhandle[x].inuse)
+        {
+            break;
+        }
+    }
+    if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
+    fhandle[x].inuse = 1;
+    fhandle[x].handtype = HANDTYPE_ZERO;
+    *handle = x;
+    return (0);
+}
+
+static int openscap(int num, int *handle)
+{
+    int x;
+
+    for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
+    {
+        if (!fhandle[x].inuse)
+        {
+            break;
+        }
+    }
+    if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
+    fhandle[x].inuse = 1;
+    fhandle[x].drv = num;
+    fhandle[x].sectupto = 1;
+    fhandle[x].handtype = HANDTYPE_ZERO;
+    *handle = x;
+    return (0);
+}
+
 static int fileClose(int fno)
 {
     fhandle[fno].handtype = HANDTYPE_FILE;
@@ -5207,6 +5395,22 @@ static void pdosWriteText(int ch)
         column++;
         BosSetCursorPosition(currentPage,row,column);
     }
+    /* if screen capture is active, write character to disk.
+       we're missing ANSI control sequences, but that's not
+       the primary focus at the moment */
+    if (scrncapDrv != -1)
+    {
+        scrncapBuf[scrncapUpto++] = ch;
+        writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
+        if (scrncapUpto == 512)
+        {
+            memset(scrncapBuf, '\x00', sizeof scrncapBuf);
+            /* to ensure file is NUL-terminated at all times */
+            writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
+            scrncapUpto = 0;
+        }
+    }
+    return;
 }
 #endif
 
@@ -5564,7 +5768,7 @@ void * PosGetEnvBlock(void)
     return curPCB->envBlock;
 }
 
-static int ins_strcmp(char *one, char *two)
+static int ins_strcmp(const char *one, const char *two)
 {
     while (toupper((unsigned char)*one) == toupper((unsigned char)*two))
     {

@@ -1354,6 +1354,10 @@ static void int21handler(union REGS *regsin,
             {
                 regsout->d.eax = PosDoBoot(regsin->d.edx);
             }
+            else if (regsin->h.al == 0x45)
+            {
+                regsout->d.eax = PosScrncap(regsin->d.edx);
+            }
 #endif
 #ifndef __32BIT__
             else if (regsin->h.al == 0x42)
@@ -1383,6 +1387,10 @@ static void int21handler(union REGS *regsin,
             else if (regsin->h.al == 0x44)
             {
                 regsout->x.ax = PosDoBoot(regsin->x.dx);
+            }
+            else if (regsin->h.al == 0x45)
+            {
+                regsout->d.ax = PosScrncap(regsin->x.dx);
             }
 #endif
             else

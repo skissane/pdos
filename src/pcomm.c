@@ -197,6 +197,7 @@ CMDPROTO(reboot);
 CMDPROTO(rem);
 CMDPROTO(ren);
 CMDPROTO(save);
+CMDPROTO(scrncap);
 CMDPROTO(set);
 CMDPROTO(sleep);
 CMDPROTO(time);
@@ -263,6 +264,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(rem,"","Comment in a batch file"),
     CMDDEF(ren,"|rename","Renames files and directories"),
     CMDDEF(save,"","Saves user input to file"),
+    CMDDEF(scrncap,"","Start/stop screen capture"),
     CMDDEF(set,"","Show/modify environment variables"),
     CMDDEF(sleep,"","Sleep for some seconds"),
     CMDDEF(time,"","Shows the time"),
@@ -1061,6 +1063,24 @@ static int cmd_del_run(char *fnm)
     return 0;
 }
 
+static int cmd_scrncap_run(char *drive)
+{
+    int drivnum;
+
+    CMD_REQUIRES_ARGS(drive);
+
+    if (ins_strcmp(drive, "off") == 0)
+    {
+        drivnum = -1;
+    }
+    else
+    {
+        drivnum = (int)strtol(drive, NULL, 16);
+    }
+    PosScrncap(drivnum);
+    return (0);
+}
+
 static int cmd_dir_run(char *pattern)
 {
     DTA *dta;
@@ -1664,6 +1684,13 @@ static void cmd_poweroff_help(void)
 static void cmd_del_help(void)
 {
     printf("DEL [path]\n");
+}
+
+static void cmd_scrncap_help(void)
+{
+    printf("SCRNCAP [drive] [off]\n");
+    printf("drive is in hex. First hard disk is 80\n");
+    printf("It will be wiped. Please don't use this command\n");
 }
 
 static void cmd_copy_help(void)

@@ -413,6 +413,9 @@ unsigned int PosAbsoluteDriveWrite(int drive,unsigned long start_sector,
 /* F6,44 - Boot a Disk */
 unsigned int PosDoBoot(int disknum);
 
+/* F6,45 - start or stop screen capture */
+unsigned int PosScrncap(int disknum);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 
