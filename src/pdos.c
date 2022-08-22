@@ -2058,13 +2058,17 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
         int rc;
         char *p;
 
+        *readbytes = 0;
         if ((bytes % 512) != 0)
         {
             ret = POS_ERR_ACCESS_DENIED;
         }
+        else if (fhandle[fh].sectupto == 0)
+        {
+            ret = 0;
+        }
         else
         {
-            *readbytes = 0;
             for (n = 0; n < bytes / 512; n++)
             {
                 if (readLBA((char *)data + n * 512,
@@ -2077,11 +2081,9 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                 p = memchr((char *)data + n * 512, '\x00', 512);
                 if (p != NULL)
                 {
-                    /* we should really set an EOF flag and prevent
-                       further reading, but let's see where this gets
-                       us for now. It will at least remain stuck on
-                       the last sector */
                     *readbytes += (p - ((char *)data + n * 512));
+                    /* sectupto is set to 0 as an EOF indicator */
+                    fhandle[fh].sectupto = 0;
                     break;
                 }
                 *readbytes += 512;
@@ -4159,7 +4161,7 @@ static int openscap(int num, int *handle)
     fhandle[x].inuse = 1;
     fhandle[x].drv = num;
     fhandle[x].sectupto = 1;
-    fhandle[x].handtype = HANDTYPE_ZERO;
+    fhandle[x].handtype = HANDTYPE_SCAP;
     *handle = x;
     return (0);
 }
