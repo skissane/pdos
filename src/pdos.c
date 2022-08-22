@@ -100,6 +100,7 @@ void pdosRun(void);
 static void initdisks(void);
 static void scanPartition(int drive);
 static void processPartition(int drive, unsigned char *prm);
+static void processNoMBR(int drive, unsigned char *buf, unsigned long sector);
 static void processExtended(int drive, unsigned char *prm);
 
 static void initfiles(void);
@@ -952,6 +953,14 @@ static void scanPartition(int drive)
     {
         printf("can't read MBR sector 0/0/1 or LBA 0 of drive %x\n", drive);
     }
+    /* this is not ideal as the MBR code could contain this */
+    /* this is to support drives with just a single VBR, no MBR */
+    else if ((memcmp(buf + 0x52, "FAT32", 5) == 0)
+             || (memcmp(buf + 0x36, "FAT12", 5) == 0)
+             || (memcmp(buf + 0x36, "FAT16", 5) == 0))
+    {
+        processNoMBR(drive, buf, 0);
+    }
     else
     {
         psector = 0;
@@ -1049,6 +1058,44 @@ static void processPartition(int drive, unsigned char *prm)
         }
         return;
     }
+    analyseBpb(&disks[lastDrive], bpb);
+
+    /* we set the lba to whatever mode we are currently in */
+    disks[lastDrive].lba = lba;
+
+    /* the number of hidden sectors doesn't appear to be properly
+    filled in for extended partitions when formatted with MSDOS,
+    so we just use the value computed already */
+    disks[lastDrive].hidden = sector;
+
+    /* if physical disks and hidden sectors match, this is the boot drive */
+    if ((drive == bootDrivePhysical)
+        && (disks[lastDrive].hidden == bootinfo.hidden))
+    {
+        bootDriveLogical = lastDrive;
+    }
+    disks[lastDrive].drive = drive;
+    fatDefaults(&disks[lastDrive].fat);
+    fatInit(&disks[lastDrive].fat, bpb, readLogical,
+        writeLogical, &disks[lastDrive], getDateTime);
+    strcpy(disks[lastDrive].cwd, "");
+    disks[lastDrive].accessed = 1;
+    disks[lastDrive].valid = 1;
+    if (!gotpart)
+    {
+        gotpart = 1;
+        printf("drive %x : ", drive);
+    }
+    printf("%c ", 'A' + lastDrive);
+    lastDrive++;
+    return;
+}
+
+static void processNoMBR(int drive, unsigned char *buf, unsigned long sector)
+{
+    unsigned char *bpb;
+
+    bpb = buf + 11;
     analyseBpb(&disks[lastDrive], bpb);
 
     /* we set the lba to whatever mode we are currently in */
