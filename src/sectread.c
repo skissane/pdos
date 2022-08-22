@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "pos.h"
 #include "bos.h"
 #include "unused.h"
 
@@ -23,10 +24,6 @@ static int readAbs(void *buf,
                 int track,
                 int head,
                 int sect);
-static int readLBA(void *buf, 
-                   int sectors, 
-                   int drive, 
-                   unsigned long sector);
 
 int main(int argc, char **argv)
 {
@@ -68,7 +65,7 @@ int main(int argc, char **argv)
     
     if (lba)
     {
-        rc = readLBA(buf, 1, drive, sect);
+        rc = PosAbsoluteDriveRead(drive, sect, 1, buf);
     }
     else
     {
@@ -112,40 +109,6 @@ static int readAbs(void *buf,
 #ifdef __32BIT__
             memcpy(buf, transferbuf, 512);
 #endif
-            ret = 0;
-            break;
-        }
-        BosDiskReset(drive);
-        tries++;
-    }
-    return (ret);
-}
-
-
-static int readLBA(void *buf, 
-                   int sectors, 
-                   int drive, 
-                   unsigned long sector)
-{
-    int rc;
-    int ret = -1;
-    int tries;
-#ifdef __32BIT__
-    void *readbuf = transferbuf;
-#else
-    void *readbuf = buf;
-#endif
-
-    unused(sectors);
-    tries = 0;
-    while (tries < 5)
-    {
-        rc = BosDiskSectorRLBA(readbuf, 1, drive, sector, 0);
-        if (rc == 0)
-        {
-#ifdef __32BIT__    
-            memcpy(buf, transferbuf, 512);
-#endif        
             ret = 0;
             break;
         }
