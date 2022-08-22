@@ -778,6 +778,10 @@ void pdosRun(void)
         printf("less than 4 MiB available - system halting\n");
         for (;;) ;
     }
+    else
+    {
+        printf("detected %ld bytes of extended memory\n", memavail);
+    }
 #ifdef EXE32
     memavail -= 0x500000; /* room for disk cache */
     memmgrSupply(&memmgr, (void *)0x700000, memavail);
