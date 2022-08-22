@@ -4420,10 +4420,12 @@ unsigned int PosAbsoluteDriveRead(int drive, unsigned long start_sector,
                                   unsigned int sectors, void *buf)
 {
     long x;
+    int rc;
 
     for(x=0;x<sectors;x++)
     {
-        readLBA((char *)buf+x*512, 1, drive, start_sector + x);
+        rc = readLBA((char *)buf+x*512, 1, drive, start_sector + x);
+        if (rc != 0) return (rc);
     }
     return(0);
 }
@@ -4432,10 +4434,12 @@ unsigned int PosAbsoluteDriveWrite(int drive, unsigned long start_sector,
                                    unsigned int sectors, void *buf)
 {
     long x;
+    int rc;
 
     for(x=0;x<sectors;x++)
     {
-        writeLBA((char *)buf+x*512, 1, drive, start_sector + x);
+        rc = writeLBA((char *)buf+x*512, 1, drive, start_sector + x);
+        if (rc != 0) return (rc);
     }
     return(0);
 }

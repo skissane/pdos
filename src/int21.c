@@ -1323,6 +1323,13 @@ static void int21handler(union REGS *regsin,
                                                       dp->sectornumber,
                                                       dp->numberofsectors,
                                                       p);
+#ifdef __32BIT__
+                if (regsout->d.eax) regsout->x.cflag = 1;
+                else regsout->x.cflag = 0;
+#else
+                if (regsout->x.ax) regsout->x.cflag = 1;
+                else regsout->x.cflag = 0;
+#endif
             }
             else if (regsin->h.al == 0x43)
             {
@@ -1335,6 +1342,13 @@ static void int21handler(union REGS *regsin,
                                                        dp->sectornumber,
                                                        dp->numberofsectors,
                                                        p);
+#ifdef __32BIT__
+                if (regsout->d.eax) regsout->x.cflag = 1;
+                else regsout->x.cflag = 0;
+#else
+                if (regsout->x.ax) regsout->x.cflag = 1;
+                else regsout->x.cflag = 0;
+#endif
             }
             else if (regsin->h.al == 0x44)
             {
