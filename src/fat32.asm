@@ -173,7 +173,9 @@ mov di, word ptr es:[7c00h + 512 + 20h + 1Ah]   ; Store low word of cluster in d
 already:
 
 call CalculateCluster ; Take our cluster # stored in si:di, and return sector in dx:ax
-mov cx, 58 ;Load 58 sectors (was 3)
+mov cx, 55 ;Load 55 sectors (was 58, was 3)
+; I dropped down to 55 in case we have a cdrom with 2048 byte
+; sectors of which just the first 512 bytes are populated
 mov bx, 0700h ;Loaded to es:bx (0x00:0x0700)
 call ReadSectors ;Read the actual sectors
 
