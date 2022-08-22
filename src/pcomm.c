@@ -769,7 +769,7 @@ static void promptSymProc_T(char *prompt, int *index)
 {
     unsigned int hr, min, sec, hund;
     PosGetSystemTime(&hr,&min,&sec,&hund);
-    printf("%02d:%02d:%02d", hr, min, sec);
+    printf("%02u:%02u:%02u", hr, min, sec);
 }
 
 /* $V - prints DOS version number */
@@ -1263,7 +1263,7 @@ static int cmd_ver_run(char *arg)
                                       stats.maxAllocated : stats.maxFree));
     /* Show video subsystem info */
     PosGetVideoInfo(&videoInfo, sizeof(pos_video_info));
-    printf("Video mode %Xh (%dx%d), page %d\n",
+    printf("Video mode %Xh (%ux%u), page %u\n",
             videoInfo.mode,
             videoInfo.cols,
             videoInfo.rows,
@@ -1472,13 +1472,13 @@ static int cmd_copy_run(char *b)
         }
 
         fclose(fsrc);
-        printf("Copied %ld bytes\n", total_read);
+        printf("Copied %lu bytes\n", total_read);
         /* Verify copied file */
         if (PosGetVerifyFlag())
         {
             printf("Verifying copied file...\n");
             fdest = fopen(dest, "rb");
-            if (dest == NULL)
+            if (fdest == NULL)
             {
                 printf(
                   "ERROR: failed opening destination file for verification\n");
@@ -1491,13 +1491,13 @@ static int cmd_copy_run(char *b)
             fclose(fdest);
             if (verify_read == total_read)
             {
-                printf("SUCCESS: Read %ld bytes from destination file\n",
+                printf("SUCCESS: Read %lu bytes from destination file\n",
                         verify_read);
             }
             else
             {
                 printf(
-                     "ERROR: Read %ld bytes from destination (expected %ld)\n",
+                     "ERROR: Read %lu bytes from destination (expected %lu)\n",
                         verify_read, total_read);
                 return 1;
             }
@@ -3088,7 +3088,7 @@ static void showVideoSetError(char *attr, int n, bool hex)
 static int cmd_v_run(char *arg)
 {
     pos_video_info videoInfo;
-    unsigned int n;
+    long n;
     char *token;
     int ret;
 
@@ -3109,7 +3109,7 @@ static int cmd_v_run(char *arg)
         arg = splitFirstWord(arg);
         if (ins_strcmp("STATUS",token)==0)
         {
-            printf("V MODE=%X PAGE=%d FG=%d BG=%d ROW=%d COL=%d\n",
+            printf("V MODE=%X PAGE=%u FG=%u BG=%u ROW=%u COL=%u\n",
                     videoInfo.mode,
                     videoInfo.page,
                     videoInfo.currentAttrib & 0xf,
@@ -3117,7 +3117,7 @@ static int cmd_v_run(char *arg)
                     videoInfo.row,
                     videoInfo.col
             );
-            printf("    ROWS=%d COLS=%d CSTART=%d CEND=%d\n",
+            printf("    ROWS=%u COLS=%u CSTART=%u CEND=%u\n",
                     videoInfo.rows,
                     videoInfo.cols,
                     videoInfo.cursorStart,
@@ -3228,7 +3228,7 @@ static int cmd_v_run(char *arg)
             videoInfo.mode = n;
             if (PosSetVideoMode(videoInfo.mode) != 0)
             {
-                printf("ERROR: Setting video MODE=%X failed\n", n);
+                printf("ERROR: Setting video MODE=%lX failed\n", n);
                 showVideoSetError("MODE",n,true);
                 return 1;
             }
