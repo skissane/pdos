@@ -16,6 +16,10 @@
 
 #include <pos.h>
 
+#ifndef NOLIBALLOC
+#include <liballoc.h>
+#endif
+
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle)
 {
     if (nStdHandle == -10) return ((HANDLE)0);
@@ -166,12 +170,20 @@ DWORD WINAPI GetLastError(void)
 
 HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
 {
+#ifndef NOLIBALLOC
+    __malloc(dwBytes);
+#else
     return (PosAllocMem(dwBytes, POS_LOC32));
+#endif
 }
 
 HGLOBAL WINAPI GlobalFree(HGLOBAL hMem)
 {
+#ifndef NOLIBALLOC
+    __free(hMem);
+#else
     PosFreeMem(hMem);
+#endif
     return (NULL);
 }
 
