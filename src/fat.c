@@ -1297,7 +1297,10 @@ int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf, size_t szbuf,
                         bbuf);
         fatfile->currpos += tsz;
         done += tsz;
-        if (tsz == fat->sector_size)
+        /* I think in the circumstance where we are updating an existing
+           file, we need to advance sectorUpto, but when creating a new
+           file we want to stay put */
+        if ((fatfile->currpos < fatfile->fileSize) && (tsz == fat->sector_size))
         {
             fatfile->sectorUpto++;
         }
