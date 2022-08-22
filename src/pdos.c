@@ -5408,6 +5408,7 @@ static void pdosWriteText(int ch)
         {
             memset(scrncapBuf, '\x00', sizeof scrncapBuf);
             /* to ensure file is NUL-terminated at all times */
+            scrncapSector++;
             writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
             scrncapUpto = 0;
         }
