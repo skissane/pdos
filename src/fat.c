@@ -1938,6 +1938,10 @@ static void fatDirSectorSearch(FAT *fat,
                     fat->temp_dirSect = startSector + x;
                 }
             }
+            else if (p->file_attr == DIRENT_LABEL)
+            {
+                /* ignore labels */
+            }
             /* Checks for LFN.
              * All LFNs have attribute
              * DIRENT_LFN (0x0F). */
