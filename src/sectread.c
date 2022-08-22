@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        sect = atol(*(argv + 2));
+        sect = strtol(*(argv + 2), NULL, 0);
         lba = 1;
     }
     fq = fopen(*(argv + 3), "wb");
