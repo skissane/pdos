@@ -7,7 +7,13 @@
 /*********************************************************************/
 /*                                                                   */
 /*  secttest - test writing and rereading sectors to see if your USB */
-/*  stick really has that many sectors                               */
+/*  stick really has that many sectors. Puts random data also, to    */
+/*  defeat any compression being done. A USB manufacturer could      */
+/*  theoretically guard against this exact program, so a custom      */
+/*  variation would need to be done to be reasonably sure of         */
+/*  redefeating them. Depends how paranoid you are. Don't think      */
+/*  about it too much or you'll wake up screaming and end up in the  */
+/*  funny farm.
 /*                                                                   */
 /*********************************************************************/
 
@@ -20,6 +26,8 @@ int main(int argc, char **argv)
 {
     char buf[512];
     int drive;
+    int numint;
+    int n;
     unsigned long sect;
     unsigned long x;
     int rc;
@@ -36,9 +44,19 @@ int main(int argc, char **argv)
     drive = strtol(*(argv + 1), NULL, 16);
     sect = strtoul(*(argv + 2), NULL, 0);
     memset(buf, '\0', sizeof buf);
+    srand(0); /* consistency is fine. Don't need to use time() */
+    numint = (sizeof buf - sizeof(long)) / sizeof(int);
     for (x = 0; x <= sect; x++)
     {
         *(unsigned long *)buf = x;
+        if (x != 0) /* protect MBR - let it be zeroed */
+        {
+            /* defeat compression */
+            for (n = 0; n < numint; n++)
+            {
+                *(int *)(buf + sizeof(long) + n * sizeof(int)) = rand();
+            }
+        }
         rc = PosAbsoluteDriveWrite(drive, x, 1, buf);
         if (rc != 0)
         {
@@ -48,7 +66,6 @@ int main(int argc, char **argv)
     }
     for (x = 0; x <= sect; x++)
     {
-        *(unsigned long *)buf = x;
         rc = PosAbsoluteDriveRead(drive, x, 1, buf);
         if (rc != 0)
         {
