@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "pos.h"
 #include "bos.h"
 #include "unused.h"
 
@@ -24,10 +25,6 @@ static int writeAbs(void *buf,
                     int track,
                     int head,
                     int sect);
-static int writeLBA(void *buf, 
-                    int sectors, 
-                    int drive, 
-                    unsigned long sector);
 
 int main(int argc, char **argv)
 {
@@ -68,7 +65,7 @@ int main(int argc, char **argv)
     }
     if (lba)
     {
-        rc = writeLBA(buf, 1, drive, sect);
+        rc = PosAbsoluteDriveWrite(drive, sect, 1, buf);
     }
     else
     {
@@ -111,40 +108,6 @@ static int writeAbs(void *buf,
     while (tries < 5)
     {
         rc = BosDiskSectorWrite(writebuf, 1, drive, track, head, sect);
-        if (rc == 0)
-        {
-            ret = 0;
-            break;
-        }
-        BosDiskReset(drive);
-        tries++;
-    }
-    return (ret);
-}
-
-
-static int writeLBA(void *buf, 
-                    int sectors, 
-                    int drive, 
-                    unsigned long sector)
-{
-    int rc;
-    int ret = -1;
-    int tries;
-#ifdef __32BIT__
-    void *writebuf = transferbuf;
-#else
-    void *writebuf = buf;
-#endif
-
-    unused(sectors);
-#ifdef __32BIT__    
-    memcpy(transferbuf, buf, 512);
-#endif        
-    tries = 0;
-    while (tries < 5)
-    {
-        rc = BosDiskSectorWLBA(writebuf, 1, drive, sector, 0);
         if (rc == 0)
         {
             ret = 0;
