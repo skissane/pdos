@@ -71,15 +71,15 @@ void fatDefaults(FAT *fat)
  * fatInit - initialize the FAT handler.
  */
 
-void fatInit(FAT *fat,
-             unsigned char *bpb,
-             void (*readLogical)(void *diskptr, unsigned long sector,
+int fatInit(FAT *fat,
+            unsigned char *bpb,
+            void (*readLogical)(void *diskptr, unsigned long sector,
+                                void *buf),
+            void (*writeLogical)(void *diskptr, unsigned long sector,
                                  void *buf),
-             void (*writeLogical)(void *diskptr, unsigned long sector,
-                                  void *buf),
-             void *parm,
-             void (*getDateTime)(FAT_DATETIME *ptr)
-             )
+            void *parm,
+            void (*getDateTime)(FAT_DATETIME *ptr)
+            )
 {
     fat->readLogical = readLogical;
     fat->writeLogical = writeLogical;
@@ -173,7 +173,7 @@ void fatInit(FAT *fat,
 
         /* FSInfo structure sector is not needed for minifat. */
     }
-    return;
+    return (0);
 }
 
 

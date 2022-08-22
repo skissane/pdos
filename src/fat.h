@@ -212,13 +212,13 @@ typedef struct {
 
 
 void fatDefaults(FAT *fat);
-void fatInit(FAT *fat,
-             unsigned char *bpb,
-             void (*readLogical)(void *diskptr, unsigned long sector, void *buf),
-             void (*writeLogical)(void *diskptr, unsigned long sector, void *buf),
-             void *parm,
-             void (*getDateTime)(FAT_DATETIME *ptr)
-             );
+int fatInit(FAT *fat,
+            unsigned char *bpb,
+            void (*readLogical)(void *diskptr, unsigned long sector, void *buf),
+            void (*writeLogical)(void *diskptr, unsigned long sector, void *buf),
+            void *parm,
+            void (*getDateTime)(FAT_DATETIME *ptr)
+            );
 void fatTerm(FAT *fat);
 unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                           int attrib);

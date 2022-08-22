@@ -88,15 +88,15 @@ void fatDefaults(FAT *fat)
  * fatInit - initialize the FAT handler.
  */
 
-void fatInit(FAT *fat,
-             unsigned char *bpb,
-             void (*readLogical)(void *diskptr, unsigned long sector,
+int fatInit(FAT *fat,
+            unsigned char *bpb,
+            void (*readLogical)(void *diskptr, unsigned long sector,
+                                void *buf),
+            void (*writeLogical)(void *diskptr, unsigned long sector,
                                  void *buf),
-             void (*writeLogical)(void *diskptr, unsigned long sector,
-                                  void *buf),
-             void *parm,
-             void (*getDateTime)(FAT_DATETIME *ptr)
-             )
+            void *parm,
+            void (*getDateTime)(FAT_DATETIME *ptr)
+            )
 {
     fat->readLogical = readLogical;
     fat->writeLogical = writeLogical;
@@ -105,6 +105,11 @@ void fatInit(FAT *fat,
     /* BPB passed by PDOS is already at offset 11
      * (skipping jump code and OEM info). */
     fat->sector_size = bpb[0] | ((unsigned int)bpb[1] << 8);
+    /* avoid divide by zero later */
+    if (fat->sector_size == 0)
+    {
+        return (-1);
+    }
     fat->sectors_per_cluster = bpb[2];
     fat->bytes_per_cluster = fat->sector_size * fat->sectors_per_cluster;
     /* Reserved sectors before FATs. 2 bytes.
@@ -196,7 +201,7 @@ void fatInit(FAT *fat,
     }
     /* Sets the externally set flag to default value. */
     fat->last_access_recording = 0;
-    return;
+    return (0);
 }
 
 /*

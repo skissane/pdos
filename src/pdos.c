@@ -1076,8 +1076,13 @@ static void processPartition(int drive, unsigned char *prm)
     }
     disks[lastDrive].drive = drive;
     fatDefaults(&disks[lastDrive].fat);
-    fatInit(&disks[lastDrive].fat, bpb, readLogical,
-        writeLogical, &disks[lastDrive], getDateTime);
+    rc = fatInit(&disks[lastDrive].fat, bpb, readLogical,
+            writeLogical, &disks[lastDrive], getDateTime);
+    if (rc != 0)
+    {
+        printf("FAT partition corrupt, rc %d\n", rc);
+        return;
+    }
     strcpy(disks[lastDrive].cwd, "");
     disks[lastDrive].accessed = 1;
     disks[lastDrive].valid = 1;
