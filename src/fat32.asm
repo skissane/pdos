@@ -279,7 +279,6 @@ ReadSingleSector proc
  push es
  push si
  RetryRead:
-  call ResetDrive   ;Get drive ready..
 
 mov [lbahigh], dx
 mov [lbalow], ax
@@ -290,7 +289,10 @@ mov si,lba_packet
 mov dl, [BootDisk]  ;Grab our boot disk
 int 013h        ; BIOS LBA read
 
-  jc   RetryRead
+  jnc fin
+  call ResetDrive   ;Get drive ready..
+  jmp   RetryRead
+fin:
  pop si
  pop es
  pop dx

@@ -347,11 +347,13 @@ ReadSingleSector proc
  push es
  call Lba2Chs     ;Grab our CHS
  RetryRead:
-  call ResetDrive   ;Get drive ready..
   mov  dl, [BootDisk]  ;Grab our boot disk
   mov  ax, 0201h   ;Read function, one sector
   int  13h
-  jc   RetryRead
+  jnc  fin
+ call ResetDrive   ;Get drive ready..
+ jmp   RetryRead
+fin:
  pop es
  pop dx
  pop cx
