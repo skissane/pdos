@@ -52,7 +52,7 @@ size_t strnlen(const char *str, size_t max_len)
 {
     size_t len;
 
-    for (len = 0; str[len] && (len < max_len); len++);
+    for (len = 0; (len < max_len) && str[len]; len++);
 
     return (len);
 }

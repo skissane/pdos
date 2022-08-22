@@ -190,7 +190,7 @@ char *find_target(char *target)
         char *new_target;
 
         /* Skips the initial whitespace. */
-        while ((*vpath == ' ') && (*vpath == '\t') && (*vpath == ';')) vpath++;
+        while ((*vpath == ' ') || (*vpath == '\t') || (*vpath == ';')) vpath++;
 
         /* Finds the end of the current part. */
         while ((*vpath != ' ') && (*vpath != '\t')
