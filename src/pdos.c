@@ -143,6 +143,7 @@ static int fileDelete(const char *fnm);
 static int dirDelete(const char *dnm);
 static int fileSeek(int fno, long offset, int whence, long *newpos);
 static int opencomm(int num, int *handle);
+static int opendrv(int num, int *handle);
 static int fileClose(int fno);
 static int fileRead(int fno, void *buf, size_t szbuf, size_t *readbytes);
 static void accessDisk(int drive);
@@ -223,13 +224,26 @@ static int attr;
 /* note that on EBCDIC, the alphabet isn't contiguous */
 static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+#define HANDTYPE_FILE 0
+#define HANDTYPE_COMM 1
+#define HANDTYPE_DRIVE 2
+
 #define MAXFILES 40
 static struct {
     FATFILE fatfile;
     FAT *fatptr;
     int inuse;
     int special;
+
+    int handtype;
+
+    /* this variable is the com port number - only used by com ports */
     int comm;
+
+    /* these variables specific to raw disks */
+    int drv;
+    unsigned long sectupto;
+
 } fhandle[MAXFILES];
 
 static char ff_path[FILENAME_MAX];
@@ -1208,13 +1222,13 @@ static void initfiles(void)
     {
         fhandle[x].inuse = 1;
         fhandle[x].special = 1;
-        fhandle[x].comm = 0;
+        fhandle[x].handtype = HANDTYPE_FILE;
     }
     for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
     {
         fhandle[x].inuse = 0;
         fhandle[x].special = 0;
-        fhandle[x].comm = 0;
+        fhandle[x].handtype = HANDTYPE_FILE;
     }
     return;
 }
@@ -1577,6 +1591,13 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     {
         return (opencomm(atoi(name + 3), handle));
     }
+    else if (((strncmp(name, "DRV", 3) == 0)
+         || (strncmp(name, "drv", 3) == 0))
+        && isdigit((unsigned char)name[3])
+        && (strchr(name, ':') != NULL))
+    {
+        return (opendrv((int)strtol(name + 3, NULL, 16), handle));
+    }
     ret = formatcwd(name, filename);
     if (ret) return (ret);
     return (fileCreat(filename, attrib, handle));
@@ -1592,6 +1613,13 @@ int PosOpenFile(const char *name, int mode, int *handle)
         && isdigit((unsigned char)name[3]))
     {
         return (opencomm(atoi(name + 3), handle));
+    }
+    else if (((strncmp(name, "DRV", 3) == 0)
+         || (strncmp(name, "drv", 3) == 0))
+        && isdigit((unsigned char)name[3])
+        && (strchr(name, ':') != NULL))
+    {
+        return (opendrv((int)strtol(name + 3, NULL, 16), handle));
     }
     ret = formatcwd(name, filename);
     if (ret) return (ret);
@@ -1927,7 +1955,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
         *readbytes = x;
         ret = 0;
     }
-    else if (fhandle[fh].comm)
+    else if (fhandle[fh].handtype == HANDTYPE_COMM)
     {
         int c;
         int port;
@@ -1942,6 +1970,32 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
         *(char *)data = c;
         *readbytes = 1;
         ret = 0;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_DRIVE)
+    {
+        int n;
+        int rc;
+
+        if ((bytes % 512) != 0)
+        {
+            ret = POS_ERR_ACCESS_DENIED;
+        }
+        else
+        {
+            for (n = 0; n < bytes / 512; n++)
+            {
+                if (readLBA((char *)data + n * 512,
+                            1,
+                            fhandle[fh].drv,
+                            fhandle[fh].sectupto) != 0)
+                {
+                    break;
+                }
+                fhandle[fh].sectupto++;
+            }
+            *readbytes = n * 512;
+            ret = 0;
+        }
     }
     else
     {
@@ -1971,7 +2025,7 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
         *writtenbytes = len;
         ret = 0;
     }
-    else if (fhandle[fh].comm)
+    else if (fhandle[fh].handtype == HANDTYPE_COMM)
     {
         const char *buf = data;
         int port;
@@ -1984,6 +2038,32 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
         }
         *writtenbytes = x;
         ret = 0;
+    }
+    else if (fhandle[fh].handtype == HANDTYPE_DRIVE)
+    {
+        int n;
+        int rc;
+
+        if ((len % 512) != 0)
+        {
+            ret = POS_ERR_ACCESS_DENIED;
+        }
+        else
+        {
+            for (n = 0; n < len / 512; n++)
+            {
+                if (writeLBA((char *)data + n * 512,
+                             1,
+                             fhandle[fh].drv,
+                             fhandle[fh].sectupto) != 0)
+                {
+                    break;
+                }
+                fhandle[fh].sectupto++;
+            }
+            *writtenbytes = n * 512;
+            ret = 0;
+        }
     }
     else
     {
@@ -2016,6 +2096,10 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
         || !(fhandle[handle].inuse))
     {
         return (POS_ERR_INVALID_HANDLE);
+    }
+    if (fhandle[handle].handtype == HANDTYPE_DRIVE)
+    {
+        return (0);
     }
     return (fileSeek(handle, offset, whence, newpos));
 }
@@ -3867,18 +3951,35 @@ static int opencomm(int num, int *handle)
     if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
     fhandle[x].inuse = 1;
     fhandle[x].comm = num;
+    fhandle[x].handtype = HANDTYPE_COMM;
+    *handle = x;
+    return (0);
+}
+
+static int opendrv(int num, int *handle)
+{
+    int x;
+
+    for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
+    {
+        if (!fhandle[x].inuse)
+        {
+            break;
+        }
+    }
+    if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
+    fhandle[x].inuse = 1;
+    fhandle[x].drv = num;
+    fhandle[x].sectupto = 0;
+    fhandle[x].handtype = HANDTYPE_DRIVE;
     *handle = x;
     return (0);
 }
 
 static int fileClose(int fno)
 {
-    if (fhandle[fno].comm)
-    {
-        fhandle[fno].comm = 0;
-        fhandle[fno].inuse = 0;
-    }
-    else if (!fhandle[fno].special)
+    fhandle[fno].handtype = HANDTYPE_FILE;
+    if (!fhandle[fno].special)
     {
         fhandle[fno].inuse = 0;
     }
@@ -4226,6 +4327,13 @@ static int readAbs(void *buf,
     return (ret);
 }
 
+/* Note that this was originally meant to read multiple sectors, but
+   that has not been implemented yet, and if it was, is a subset of
+   sectors an error? If not, how do you indicate how many sectors
+   were read? return count? Ok, but some callers are treating anything
+   non-zero as an error. Not a big deal. Just always read 1 sector for
+   now. I guess not much choice but agreeing non-zero is an error.
+   Potential alternative is less than zero is an error */
 static int readLBA(void *buf,
                 int sectors,
                 int drive,
