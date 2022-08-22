@@ -38,6 +38,10 @@ static void fixexe(unsigned long laddr,
                    unsigned int *progentry);
 #endif
 static void readLogical(void *diskptr, unsigned long sector, void *buf);
+static int readLBA(void *buf,
+                int sectors,
+                int drive,
+                unsigned long sector);
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
 static unsigned long doreboot(unsigned long parm);
 static void dopoweroff(void);
@@ -183,25 +187,78 @@ static void fixexe(unsigned long laddr,
 
 static void readLogical(void *diskptr, unsigned long sector, void *buf)
 {
-    int track;
+    unsigned long track;
     int head;
     int sect;
     DISKINFO *diskinfo;
     int ret;
+    static int donewarn = 0;
 
     diskinfo = (DISKINFO *)diskptr;
     sector += diskinfo->hidden;
-    track = (int)(sector / diskinfo->sectors_per_cylinder);
+    track = (unsigned long)(sector / diskinfo->sectors_per_cylinder);
+
     head = (int)(sector % diskinfo->sectors_per_cylinder);
     sect = head % diskinfo->sectors_per_track + 1;
     head = head / diskinfo->sectors_per_track;
-    ret = readAbs(buf, 1, diskinfo->drive, track, head, sect);
+    if (track >= 1024)
+    {
+        if (!donewarn)
+        {
+            dumpbuf("cylinder is beyond reach - using LBA\r\n", 38);
+            dumplong(track);
+            dumpbuf(" ", 1);
+            dumplong((long)diskinfo->num_heads);
+            dumpbuf(" ", 1);
+            dumplong((long)diskinfo->sectors_per_track);
+            dumpbuf("\r\n", 2);
+            donewarn = 1;
+        }
+        ret = readLBA(buf, 1, diskinfo->drive, sector);
+    }
+    else
+    {
+        ret = readAbs(buf, 1, diskinfo->drive, track, head, sect);
+    }
     if (ret != 0)
     {
         dumpbuf("halt0001", 8);
         for (;;) ;
     }
     return;
+}
+
+static int readLBA(void *buf,
+                int sectors,
+                int drive,
+                unsigned long sector)
+{
+    int rc;
+    int ret = -1;
+    int tries;
+#ifdef __32BIT__
+    void *readbuf = transferbuf;
+#else
+    void *readbuf = buf;
+#endif
+
+    unused(sectors);
+    tries = 0;
+    while (tries < 5)
+    {
+        rc = BosDiskSectorRLBA(readbuf, 1, drive, sector, 0);
+        if (rc == 0)
+        {
+#ifdef __32BIT__
+            memcpy(buf, transferbuf, 512);
+#endif
+            ret = 0;
+            break;
+        }
+        BosDiskReset(drive);
+        tries++;
+    }
+    return (ret);
 }
 
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
