@@ -156,7 +156,13 @@ int fatInit(FAT *fat,
      *       16 |         65526
      *       32 |     268435456
      * Reason for this is unknown, but those numbers are confirmed. */
-    if ((fat->sectors_per_disk / fat->sectors_per_cluster) < 4087)
+    /* however, other systems don't do that, so give priority to
+       the fat32 signature */
+    if ((bpb[0x37] == 0x29) && (bpb[0x1b] != 0x29))
+    {
+        fat->fat_type = 32;
+    }
+    else if ((fat->sectors_per_disk / fat->sectors_per_cluster) < 4087)
     {
         fat->fat_type = 12;
     }
