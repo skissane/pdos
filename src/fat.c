@@ -1297,6 +1297,10 @@ int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf, size_t szbuf,
                         bbuf);
         fatfile->currpos += tsz;
         done += tsz;
+        if (tsz == fat->sector_size)
+        {
+            fatfile->sectorUpto++;
+        }
     }
     /* fileSize contains the size of the entire file and it is changed
      * only if something is written after original file size. */
