@@ -1708,14 +1708,17 @@ static void fatNextSearch(FAT *fat, char *search, const char **upto)
     else memcpy(search, *upto, p - *upto);
     /* Stores length of this part of path. */
     fat->path_part_len = p - *upto;
-    if (fat->last)
+    /* sometimes people go \fred\\mary\john.txt so skip multiple
+       directory separators */
+    if (!fat->last)
     {
-        *upto = p;
+        p++;
+        while ((*p == '\\') || (*p == '/'))
+        {
+            p++;
+        }
     }
-    else
-    {
-        *upto = p + 1;
-    }
+    *upto = p;
     return;
 }
 
