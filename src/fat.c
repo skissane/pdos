@@ -942,19 +942,16 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
             /* but if this is the last cluster, we need special processing */
             if (fatEndCluster(fat, fatfile->nextCluster) && !fatfile->dir)
             {
-                /* if we have reached the last sector, abide by lastBytes */
-                if (fatfile->sectorUpto == fatfile->lastSectors)
+                /* exception - a full cluster has 0 last sectors */
+                if ((fatfile->lastSectors == 0)
+                    && (fatfile->lastBytes == 0))
                 {
-                    /* exception - a full cluster has 0 last sectors */
-                    if ((fatfile->lastSectors == 0)
-                        && (fatfile->lastBytes == 0))
-                    {
-                        /* do nothing */
-                    }
-                    else
-                    {
-                        bytesAvail = fatfile->lastBytes;
-                    }
+                    /* do nothing */
+                }
+                /* if we have reached the last sector, abide by lastBytes */
+                else if (fatfile->sectorUpto == fatfile->lastSectors)
+                {
+                    bytesAvail = fatfile->lastBytes;
                 }
             }
             /* while we haven't used up the bytesAvail */
@@ -993,10 +990,19 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
         /* don't go past EOF */
         if (fatEndCluster(fat, fatfile->nextCluster) && !fatfile->dir)
         {
-            fatfile->sectorUpto = (fatfile->currpos %
-                                  (fat->sectors_per_cluster * MAXSECTSZ))
-                                   / MAXSECTSZ;
-            fatfile->byteUpto = fatfile->currpos % fat->sector_size;
+            /* exception - a full cluster has 0 last sectors */
+            if ((fatfile->lastSectors == 0)
+                && (fatfile->lastBytes == 0))
+            {
+                /* do nothing */
+            }
+            else
+            {
+                fatfile->sectorUpto = (fatfile->currpos %
+                                      (fat->sectors_per_cluster * MAXSECTSZ))
+                                       / MAXSECTSZ;
+                fatfile->byteUpto = fatfile->currpos % fat->sector_size;
+            }
             *readbytes = bytesRead;
             return (0);
         }
