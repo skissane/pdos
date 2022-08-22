@@ -478,7 +478,15 @@ __PDPCLIB_API__ int rand(void)
     int ret;
 
     myseed = myseed * 1103515245UL + 12345;
-    ret = (int)((myseed >> 16) & 0x8fff);
+#if defined(__32BIT__) || defined(__WIN32__)
+    /* I don't know if this is valid */
+    /* But I don't want the high 16 bits to be zero */
+    ret = (int)((myseed >> 16) & 0x7fff);
+    myseed = myseed * 1103515245UL + 12345;
+    ret = (ret << 16) | (int)((myseed >> 16) & 0xffff);
+#else
+    ret = (int)((myseed >> 16) & 0x7fff);
+#endif
     return (ret);
 }
 
