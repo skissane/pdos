@@ -146,7 +146,7 @@ int readAbs(void *buf, int sectors, int drive, int track, int head, int sect)
     
     unused(sectors);
     tries = 0;
-    while (tries < 5)
+    while (1) /* (tries < 5) */
     {
         rc = BosDiskSectorRead(buf, 1, drive, track, head, sect);
         if (rc == 0)
@@ -154,7 +154,10 @@ int readAbs(void *buf, int sectors, int drive, int track, int head, int sect)
             ret = 0;
             break;
         }
-        BosDiskReset(drive);
+        while (BosDiskReset(drive) != 0)
+        {
+            /* infinite retries */
+        }
         tries++;
     }
     return (ret);

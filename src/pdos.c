@@ -4540,7 +4540,7 @@ static int readLBA(void *buf,
 
     unused(sectors);
     tries = 0;
-    while (tries < 5)
+    while ((tries < 5) || (drive == bootDrivePhysical))
     {
         rc = BosDiskSectorRLBA(readbuf, 1, drive, sector, 0);
         if (rc == 0)
@@ -4551,7 +4551,17 @@ static int readLBA(void *buf,
             ret = 0;
             break;
         }
-        BosDiskReset(drive);
+        if (drive == bootDrivePhysical)
+        {
+            while (BosDiskReset(drive) != 0)
+            {
+                /* infinite retries */
+            }
+        }
+        else
+        {
+            BosDiskReset(drive);
+        }
         tries++;
     }
     return (ret);
