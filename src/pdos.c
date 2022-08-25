@@ -1058,8 +1058,8 @@ static void processPartition(int drive, unsigned char *prm)
     }
     if (rc != 0)
     {
-        printf("can't read sector %d/%d/%d of drive %x\n",
-               track, head, sect, drive);
+        printf("can't read sector %lu (%d/%d/%d) of drive %x\n",
+               sector, track, head, sect, drive);
         return;
     }
     bpb = buf + 11;
