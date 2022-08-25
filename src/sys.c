@@ -154,11 +154,11 @@ int main(int argc, char **argv)
         }
         else if (i == 2)
         {
-            /* COMMAND.COM last. */
+            /* COMMAND.EXE last. */
             src_end[0] = '\0';
-            strcat(src_path, "COMMAND.COM");
+            strcat(src_path, "COMMAND.EXE");
             dest_path[3] = '\0';
-            strcat(dest_path, "COMMAND.COM");
+            strcat(dest_path, "COMMAND.EXE");
         }
         fsrc = fopen(src_path, "rb");
         if (fsrc != NULL)

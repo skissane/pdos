@@ -3377,7 +3377,7 @@ static void loadPcomm(void)
     kernel32[0] = msvcrt[0] = alphabet[bootDriveLogical];
     if (strcmp(shell, "") == 0)
     {
-        strcpy(shell,"?:\\COMMAND.COM");
+        strcpy(shell,"?:\\COMMAND.EXE");
         shell[0] = alphabet[bootDriveLogical];
         pb = &p;
 #ifdef __32BIT__
