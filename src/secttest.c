@@ -24,7 +24,7 @@
 
 int main(int argc, char **argv)
 {
-    char buf[512];
+    unsigned char buf[512];
     int drive;
     int numint;
     int n;
@@ -43,6 +43,63 @@ int main(int argc, char **argv)
     
     drive = strtol(*(argv + 1), NULL, 16);
     sect = strtoul(*(argv + 2), NULL, 0);
+
+    memset(buf, 0xAA, sizeof buf);
+    for (x = 0; x <= sect; x++)
+    {
+        rc = PosAbsoluteDriveWrite(drive, x, 1, buf);
+        if (rc != 0)
+        {
+            printf("write of sector %lu failed with rc %d\n", x, rc);
+            return (EXIT_FAILURE);
+        }
+    }
+    for (x = 0; x <= sect; x++)
+    {
+        rc = PosAbsoluteDriveRead(drive, x, 1, buf);
+        if (rc != 0)
+        {
+            printf("read of sector %lu failed with rc %d\n", x, rc);
+            return (EXIT_FAILURE);
+        }
+        for (n = 0; n < sizeof buf; n++)
+        {
+            if (buf[n] != 0xAA)
+            {
+                printf("integrity check failed1 on sector %lu\n", x);
+                return (EXIT_FAILURE);
+            }
+        }
+    }
+
+    memset(buf, 0x55, sizeof buf);
+    for (x = 0; x <= sect; x++)
+    {
+        rc = PosAbsoluteDriveWrite(drive, x, 1, buf);
+        if (rc != 0)
+        {
+            printf("write of sector %lu failed with rc %d\n", x, rc);
+            return (EXIT_FAILURE);
+        }
+    }
+    for (x = 0; x <= sect; x++)
+    {
+        rc = PosAbsoluteDriveRead(drive, x, 1, buf);
+        if (rc != 0)
+        {
+            printf("read of sector %lu failed with rc %d\n", x, rc);
+            return (EXIT_FAILURE);
+        }
+        for (n = 0; n < sizeof buf; n++)
+        {
+            if (buf[n] != 0x55)
+            {
+                printf("integrity check failed2 on sector %lu\n", x);
+                return (EXIT_FAILURE);
+            }
+        }
+    }
+
     memset(buf, '\0', sizeof buf);
     srand(1); /* consistency is fine. Don't need to use time() */
     numint = (sizeof buf - sizeof(long)) / sizeof(int);
@@ -75,7 +132,7 @@ int main(int argc, char **argv)
         }
         if (*(unsigned long *)buf != x)
         {
-            printf("integrity check failed on sector %lu\n", x);
+            printf("integrity check failed3 on sector %lu\n", x);
             return (EXIT_FAILURE);
         }
         if (x == 0)
@@ -84,7 +141,7 @@ int main(int argc, char **argv)
             {
                 if (buf[n] != 0)
                 {
-                    printf("integrity check failed2 on sector %lu\n", x);
+                    printf("integrity check failed4 on sector %lu\n", x);
                     return (EXIT_FAILURE);
                 }
             }
@@ -96,7 +153,7 @@ int main(int argc, char **argv)
             {
                 if (*(int *)(buf + sizeof(long) + n * sizeof(int)) != rand())
                 {
-                    printf("integrity check failed3 on sector %lu\n", x);
+                    printf("integrity check failed5 on sector %lu\n", x);
                     return (EXIT_FAILURE);
                 }
             }
