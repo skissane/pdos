@@ -144,6 +144,11 @@ int fatInit(FAT *fat,
     fat->rootentries = bpb[6] | ((unsigned int)bpb[7] << 8);
     fat->rootsize = fat->rootentries / (fat->sector_size / 32);
     fat->sectors_per_track = (bpb[13] | ((unsigned int)bpb[14] << 8));
+    /* avoid divide by zero later */
+    if (fat->sectors_per_track == 0)
+    {
+        return (-1);
+    }
     fat->filestart = fat->rootstart + fat->rootsize;
 #if 0
     printf("filestart is %d\n", fat->filestart);
