@@ -61,6 +61,7 @@ int main(int argc, char **argv)
     }
     skipb(fp, start);
     dodump(fp, start, count);
+    fclose(fp);
     return (EXIT_SUCCESS);
 }
 
