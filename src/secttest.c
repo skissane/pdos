@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     drive = strtol(*(argv + 1), NULL, 16);
     sect = strtoul(*(argv + 2), NULL, 0);
     memset(buf, '\0', sizeof buf);
-    srand(0); /* consistency is fine. Don't need to use time() */
+    srand(1); /* consistency is fine. Don't need to use time() */
     numint = (sizeof buf - sizeof(long)) / sizeof(int);
     for (x = 0; x <= sect; x++)
     {
@@ -64,6 +64,7 @@ int main(int argc, char **argv)
             return (EXIT_FAILURE);
         }
     }
+    srand(1);
     for (x = 0; x <= sect; x++)
     {
         rc = PosAbsoluteDriveRead(drive, x, 1, buf);
@@ -74,8 +75,31 @@ int main(int argc, char **argv)
         }
         if (*(unsigned long *)buf != x)
         {
-            printf("integrity check failed on sector %ld\n", x);
+            printf("integrity check failed on sector %lu\n", x);
             return (EXIT_FAILURE);
+        }
+        if (x == 0)
+        {
+            for (n = 0; n < sizeof buf; n++)
+            {
+                if (buf[n] != 0)
+                {
+                    printf("integrity check failed2 on sector %lu\n", x);
+                    return (EXIT_FAILURE);
+                }
+            }
+        }
+        else
+        {
+            /* see if the random numbers are still intact */
+            for (n = 0; n < numint; n++)
+            {
+                if (*(int *)(buf + sizeof(long) + n * sizeof(int)) != rand())
+                {
+                    printf("integrity check failed3 on sector %lu\n", x);
+                    return (EXIT_FAILURE);
+                }
+            }
         }
     }
     printf("passed integrity check\n");
