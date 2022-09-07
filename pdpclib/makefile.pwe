@@ -34,10 +34,10 @@ pos.obj: ../src/pos.c
   $(CC) $(COPTS) ..\src\pos.c
 
 support.obj: ../src/support.s
-  as -o $@ ../src/support.s
+  aswin -o $@ ../src/support.s
 
 .c.obj:
   $(CC) $(COPTS) $<
 
 .s.obj:
-  as -o $@ $<
+  aswin -o $@ $<
