@@ -16,7 +16,7 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -fno-common -ansi -Icpplib/include -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -fno-common -ansi -Icpplib -Icpplib/include -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
 all: clean pdcc.exe
 
