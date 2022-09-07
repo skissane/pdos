@@ -331,7 +331,7 @@ void read_makefile(const char *filename)
 {
     struct linebuf lbuf;
 
-    lbuf.f = fopen(filename, "rt");
+    lbuf.f = fopen(filename, "r");
     if (lbuf.f == NULL)
     {
         printf("Unable to open %s: %s\n", filename, strerror(errno));

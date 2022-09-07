@@ -149,7 +149,7 @@ char *variable_expand_line(char *line)
                     FILE *o_stdout = stdout;
                     char *shell_out = NULL;
                     printf("***warning: shell might not work on PDOS\n");
-                    stdout = fopen("TMPFILE$", "r+t");
+                    stdout = fopen("TMPFILE$", "r+");
                     if (stdout)
                     {
                         static char tmpbuf[80];
