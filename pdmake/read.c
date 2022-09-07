@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 #include "dep.h"
 #include "commands.h"
@@ -24,18 +26,15 @@ extern variable *default_goal_var;
 struct linebuf {
     char *start;
     size_t size;
-
     FILE *f;
 };
 
 static long read_line(struct linebuf *lbuf)
 {
-    char *p, *end;
     long lines_read = 0;
     size_t offset;
-
-    p = lbuf->start;
-    end = lbuf->start + lbuf->size;
+    char *p = lbuf->start;
+    char *end = lbuf->start + lbuf->size;
 
     while (fgets(p, end - p, lbuf->f))
     {
@@ -73,14 +72,10 @@ static long read_line(struct linebuf *lbuf)
     return (lines_read);
 }
 
-#define isspace(c) ((c == '\t') || (c == ' '))
-
 static void remove_backslash_newlines(char *line)
 {
     char *in = line, *out = line;
-    char *p;
-
-    p = strchr(in, '\n');
+    char *p = strchr(in, '\n');
     if (p == NULL) return;
 
     do {
@@ -101,7 +96,6 @@ static void remove_backslash_newlines(char *line)
 static void remove_comment(char *line)
 {
     char *p = strchr(line, '#');
-
     if (p) *p = '\0';
 }
 
@@ -215,7 +209,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
         if (line[0] == '\0') continue;
 
-        if ((line[0] == '\t') || (line[0] == ' '))
+        if (isspace(line[0]))
         {
             if (filenames)
             {
@@ -244,21 +238,18 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
         remove_comment(clean);
         p = clean;
 
-        while ((*p == '\t') || (*p == ' ')) p++;
-
+        /* Skip blank lines */
+        while (isspace(*p)) p++;
         if (*p == '\0') continue;
 
         if (strchr(p, '='))
         {
             record_waiting_files();
-
             parse_var_line(p);
-
             continue;
         }
 
         /* +++Check for "include"! */
-
         {
             char *semicolonp, *commentp;
 
@@ -284,7 +275,6 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
                 line = variable_expand_line(xstrdup(line));
                 colon = strchr(line, ':');
-
                 if (colon == NULL)
                 {
                     fprintf(stderr, "Missing ':' in rule line!\n");
@@ -341,11 +331,10 @@ void read_makefile(const char *filename)
 {
     struct linebuf lbuf;
 
-    lbuf.f = fopen(filename, "r");
-
+    lbuf.f = fopen(filename, "rt");
     if (lbuf.f == NULL)
     {
-        printf("Failed to open %s!\n", filename);
+        printf("Unable to open %s: %s\n", filename, strerror(errno));
         return;
     }
 
