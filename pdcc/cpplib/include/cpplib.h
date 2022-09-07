@@ -149,7 +149,7 @@ struct cpp_macro_argument {
 };
 
 struct cpp_token {
-    int type;
+    enum cpp_tokentype type;
     int flags;
     location_t src_loc;
     union {
@@ -187,7 +187,7 @@ struct cpp_macro {
     cpp_token tokens[1];
 };
 
-enum {
+enum cpp_unkown_type {
     UNKNOWN_VOID = 0,
     UNKNOWN_MACRO_PARAMETER,
     UNKNOWN_MACRO,
@@ -212,7 +212,7 @@ union _cpp_unknown_value {
 
 struct cpp_unknown {
     symtab_cell cell;
-    int type;
+    enum cpp_unkown_type type;
     int flags;
 
     unsigned int is_directive;

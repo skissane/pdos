@@ -24,7 +24,7 @@ static unsigned int hex_value(unsigned int c)
     if ((c >= 'A') && (c <= 'F')) return (c + 10 - 'A');
 
     printf("CPPLIB Internal error %s:%u", __FILE__, __LINE__);
-    abort();
+    return 0;
 }
 
 int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
@@ -37,7 +37,6 @@ int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
     {
         printf("+++strings other than CPP_STRING and CPP_CHAR"
                " are not supported %d %s\n", __LINE__, __FILE__);
-        abort();
         return (1);
     }
 
@@ -180,7 +179,7 @@ cppchar_t cpp_interpret_charconst(cpp_reader *reader, const cpp_token *token,
     if (wide)
     {
         printf("+++wide chars not supported %d %s\n", __LINE__, __FILE__);
-        abort();
+        return (0);
     }
     else
     {

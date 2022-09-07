@@ -92,7 +92,6 @@ static cpp_dir *search_path_head(cpp_reader *reader,
         return (&(reader->no_search_path));
 
     file = reader->mffc == NULL ? reader->main_file : reader->mffc->file;
-
     if (angled) dir = reader->angled_include;
     else if (typ == INCLUDE_TYPE_COMMAND_LINE)
         return(make_cpp_dir(reader, "./"));
@@ -104,7 +103,7 @@ static cpp_dir *search_path_head(cpp_reader *reader,
     if (dir == NULL)
     {
         cpp_error(reader, CPP_DL_ERROR,
-                  "no include path in which to search for %s", name);
+                  "No include path in which to search for %s", name);
     }
 
     return (dir);
@@ -210,17 +209,19 @@ static _cpp_file *create__cpp_file(cpp_reader *reader,
                                    const char *name)
 {
     _cpp_file *file = xmalloc(sizeof(*file));
-
     file->f = NULL;
     file->dir = dir;
     file->name = xmalloc(strlen((const char *)name) + 1);
     strcpy((char *)(file->name), (const char *)name);
-
     file->dir_name = NULL;
-
     file->not_found = 1;
-
     return (file);
+}
+
+void _cpp_free_file(_cpp_file *file)
+{
+    if (file->name) free(file->name);
+    free(file);
 }
 
 static char *add_file_to_dir(_cpp_file *file,

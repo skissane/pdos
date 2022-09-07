@@ -75,7 +75,7 @@ void _cpp_process_line_notes(cpp_reader *reader)
         else
         {
             printf("CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-            abort();
+            return;
         }
     }
 }
@@ -513,6 +513,7 @@ cpp_token *_cpp_lex_token_direct(cpp_reader *reader)
 new_line:
     result->flags = 0;
     mffc = reader->mffc;
+    if (mffc == NULL) return NULL;
     if (mffc->need_line)
     {
         if (_cpp_get_new_line(reader) == 0)
@@ -841,6 +842,7 @@ cpp_token *_cpp_lex_token(cpp_reader *reader)
             result = reader->cur_token++;
         }
         else result = _cpp_lex_token_direct(reader);
+        if (result == NULL) return NULL;
         
         if (result->flags & START_OF_LINE)
         {
@@ -994,7 +996,7 @@ unsigned int _cpp_remaining_tokens_in_unknown2(cpp_unknown2 *unknown2)
     }
 
     printf("CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-    abort();
+    return 0;
 }
 
 const cpp_token *_cpp_token_from_unknown2_at(cpp_unknown2 *unknown2,
@@ -1007,7 +1009,7 @@ const cpp_token *_cpp_token_from_unknown2_at(cpp_unknown2 *unknown2,
     }
 
     printf("CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-    abort();
+    return NULL;
 }
 
 void cpp_force_token_locations(cpp_reader *reader, location_t lok)

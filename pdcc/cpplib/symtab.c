@@ -18,14 +18,14 @@
 symtab *symtab_create_symtab(unsigned int size,
                              symtab_cell *(*alloc_cell)(void))
 {
-    symtab *tab = malloc(sizeof(*tab));
+    symtab *tab = xmalloc(sizeof(*tab));
     int i;
 
     if (tab == NULL) return (NULL);
 
     tab->size = size;
     tab->alloc_cell = alloc_cell;
-    tab->cells = malloc(sizeof(*(tab->cells)) * size);
+    tab->cells = xmalloc(sizeof(*(tab->cells)) * size);
 
     if (tab->cells == NULL)
     {
@@ -71,7 +71,6 @@ symtab_cell *symtab_find(symtab *tab,
         printf("failed to allocate memory\n");
         abort();
     }
-
     cell->name = xmalloc(len + 1);
 
     memcpy(cell->name, name, len);

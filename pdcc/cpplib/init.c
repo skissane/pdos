@@ -159,6 +159,7 @@ void cpp_init_builtins(cpp_reader *reader, int hosted)
 
 const char *cpp_read_main_file(cpp_reader *reader, const char *name)
 {
+    const char *ret = NULL;
     location_t loc;
 
     loc.file = NULL;
@@ -170,8 +171,10 @@ const char *cpp_read_main_file(cpp_reader *reader, const char *name)
                                       0,
                                       0,
                                       loc);
-    if (_cpp_file_not_found(reader->main_file)) return (NULL);
-    if (_cpp_add_file(reader, reader->main_file, 0, loc)) return (NULL);
+    if (_cpp_file_not_found(reader->main_file)) goto end;
+    if (_cpp_add_file(reader, reader->main_file, 0, loc)) goto end;
     
-    return (name);
+    ret = name;
+end:
+    return (ret);
 }

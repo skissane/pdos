@@ -126,7 +126,7 @@ static unsigned int hex_value(unsigned int z)
     if ((z >= 'A') && (z <= 'F')) return (z + 10 - 'A');
 
     fprintf(stderr, "CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-    abort();
+    return 0;
 }
 
 unsigned int cpp_classify_number(cpp_reader *reader,
@@ -600,7 +600,7 @@ static cpp_number evaluate_token(cpp_reader *reader,
         default:
             fprintf(stderr,
                     "CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-            abort();
+            return result;
     }
 
     return (result);

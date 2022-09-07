@@ -19,13 +19,13 @@
 static symtab_cell *alloc_cell(void)
 {
     void *cell = xmalloc(sizeof(cpp_unknown));
-
     memset(cell, '\0', sizeof(cpp_unknown));
     return (cell);
 }
 
 static void free_cell(symtab_cell *cell)
 {
+    if (cell->name) free(cell->name);
     free(cell);
 }
 
@@ -36,11 +36,6 @@ void _cpp_init_symtab(cpp_reader *reader, symtab *tab)
     if (tab == NULL)
     {
         tab = symtab_create_symtab(1024, &alloc_cell);
-        if (tab == NULL)
-        {
-            printf("failed to allocate symtab\n");
-            abort();
-        }
         reader->own_table = 1;
     }
     else reader->own_table = 0;

@@ -193,7 +193,6 @@ static cpp_macro *macro_add_token(cpp_reader *reader, cpp_macro *macro)
 
     macro = xrealloc(macro,
                      sizeof(*macro) + sizeof(cpp_token) * (macro->count));
-    
     {
         cpp_token *saved_cur_token = reader->cur_token;
 
@@ -212,7 +211,6 @@ static cpp_macro *macro_add_token(cpp_reader *reader, cpp_macro *macro)
                                                   ->value.parameter_index);
         token->value.macro_argument.spelling = unknown;
     }
-
     return (macro);
 }
 
@@ -436,10 +434,7 @@ int warn_of_redefinition(cpp_reader *reader, cpp_unknown *unknown,
 
 int _cpp_define_macro(cpp_reader *reader, cpp_unknown *unknown)
 {
-    cpp_macro *macro;
-
-    macro = create_definition(reader);
-
+    cpp_macro *macro = create_definition(reader);
     if (macro == NULL) return (1);
 
     if (cpp_macro_s(unknown))
@@ -456,7 +451,6 @@ int _cpp_define_macro(cpp_reader *reader, cpp_unknown *unknown)
 
     unknown->type = UNKNOWN_MACRO;
     unknown->value.macro = macro;
-
     return (0);
 }
 
@@ -464,6 +458,5 @@ void _cpp_undefine_macro(cpp_unknown *unknown)
 {
     unknown->type = UNKNOWN_VOID;
     unknown->flags &= ~UNKNOWN_DISABLED;
-
     destroy_macro(unknown->value.macro);
 }

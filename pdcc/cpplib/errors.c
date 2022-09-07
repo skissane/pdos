@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 
 static void cpp_diagnostics(cpp_reader *reader,
                             enum cpp_diagnostic_level level,
@@ -22,12 +23,7 @@ static void cpp_diagnostics(cpp_reader *reader,
 {
     location_t loc;
     
-    if (!(reader->callbacks.diagnostics))
-    {
-        printf("reader->callbacks.diagnostics is NULL\n");
-        abort();
-    }
-
+    assert(reader->callbacks.diagnostics);
     if (reader->cur_token == reader->cur_tokenrow->start)
     {
         loc.file = NULL;
@@ -61,14 +57,8 @@ static void cpp_diagnostics_with_line(cpp_reader *reader,
                                       const char *message,
                                       va_list *vl)
 {
-    if (!(reader->callbacks.diagnostics))
-    {
-        printf("reader->callbacks.diagnostics is NULL\n");
-        abort();
-    }
-
+    assert(reader->callbacks.diagnostics);
     if (column) src_loc.column = column;
-    
     reader->callbacks.diagnostics(reader, level, ignored,
                                   src_loc, message, vl);
 }

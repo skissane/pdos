@@ -10,6 +10,7 @@
 
 #include "c_ppout.h"
 #include "cpplib.h"
+#include "xmalloc.c"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ static int print_line(pp_output *pp_o, location_t loc, const char *flags)
         if (new_name == NULL)
         {
             printf("failed to allocate memory\n");
-            abort();
+            return (-1);
         }
 
         pp_o->line = loc.line;
@@ -151,13 +152,7 @@ static void file_change(cpp_reader *reader,
 
 pp_output *init_pp_output(cpp_reader *reader, FILE *out)
 {
-    pp_output *pp_o = malloc(sizeof(*pp_o));
-
-    if (pp_o == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
+    pp_output *pp_o = xmalloc(sizeof(*pp_o));
 
     cpp_get_callbacks(reader)->line_change = &line_change;
     cpp_get_callbacks(reader)->file_change = &file_change;
@@ -183,6 +178,7 @@ void preprocess_file(pp_output *pp_o, cpp_reader *reader)
     {
         location_t loc;
         const cpp_token *token = cpp_get_token_with_location(reader, &loc);
+        if (token == NULL) goto end;
 
         if (token->type == CPP_END) break;
         
@@ -261,8 +257,7 @@ void preprocess_file(pp_output *pp_o, cpp_reader *reader)
         pp_o->printed = 1;
     }
 
+end:
     if (pp_o->printed) putc('\n', pp_o->out);
-
     if (pp_o->out != stdout) fclose(pp_o->out);
-    free(pp_o);
 }

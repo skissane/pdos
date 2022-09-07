@@ -184,7 +184,7 @@ void _cpp_return_tokens(cpp_reader *reader, unsigned int count)
         if (count != 1)
         {
             printf("Internal error %s:%u\n", __FILE__, __LINE__);
-            abort();
+            return;
         }
         switch (reader->unknown2->tokens_kind)
         {
@@ -910,8 +910,6 @@ static int builtin_macro(cpp_reader *reader, cpp_unknown *unknown,
         if (reader->state.in_directive) return (0);
 
         printf("+++_Pragma is not supported %s:%u\n", __FILE__, __LINE__);
-        abort();
-
         return (0);
     }
 
@@ -1014,7 +1012,7 @@ static int end_unknown2(cpp_unknown2 *unknown2)
     }
 
     printf("CPPLIB Internal error %s:%u\n", __FILE__, __LINE__);
-    abort();
+    return (-1);
 }
 
 static const cpp_token *get_token_from_unknown2(cpp_reader *reader)
@@ -1030,7 +1028,7 @@ static const cpp_token *get_token_from_unknown2(cpp_reader *reader)
     }
 
     printf("CPPLIB %s:%u Internal error\n", __FILE__, __LINE__);
-    abort();
+    return (NULL);
 }
 
 /* Tries to paste 2 tokens. Returns 0 on success.
@@ -1078,10 +1076,9 @@ static int paste_tokens(cpp_reader *reader,
         free(memory);
         return (1);
     }
-
-    free(memory);
     *pleft = left;
     _cpp_remove_mffc(reader);
+    /* Memory pointer was given to the MFFC which already deallocated it :/ */
     return (0);
 }
 
@@ -1093,7 +1090,7 @@ static void paste_all_tokens(cpp_reader *reader, const cpp_token *left)
     if ((unknown2 == NULL) || (!(left->flags & PASTE_LEFT)))
     {
         printf("Internal error %s:%u\n", __FILE__, __LINE__);
-        abort();
+        return;
     }
 
     do {
@@ -1111,7 +1108,7 @@ static void paste_all_tokens(cpp_reader *reader, const cpp_token *left)
             if (right->flags & PASTE_LEFT)
             {
                 printf("Internal error %s:%u\n", __FILE__, __LINE__);
-                abort();
+                return;
             }
         }
         
@@ -1166,25 +1163,13 @@ const cpp_token *cpp_get_token_1(cpp_reader *reader,
             break;
         }
 
+        if (result == NULL) return NULL;
         loc = result->src_loc;
-
-        if (result->flags & NO_EXPAND)
-        {
-            break;
-        }
-
-        if (result->type != CPP_IDENT)
-        {
-            break;
-        }
-
+        if (result->flags & NO_EXPAND) break;
+        if (result->type != CPP_IDENT) break;
         unknown = result->value.unknown;
 
-        if (unknown->type == UNKNOWN_VOID)
-        {
-            break;
-        }
-
+        if (unknown->type == UNKNOWN_VOID) break;
         if (!(unknown->flags & UNKNOWN_DISABLED))
         {
             int expanded = 0;
@@ -1421,7 +1406,7 @@ void cpp_output_token(const cpp_token *token, FILE *output)
                 if (name[i] & ~0x7F)
                 {
                     printf("+++FINISH cpp_output_token\n");
-                    abort();
+                    return;
                 }
                 else putc(name[i], output);
             }

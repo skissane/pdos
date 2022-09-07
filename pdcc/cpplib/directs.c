@@ -514,7 +514,6 @@ static void do_include(cpp_reader *reader)
 static void do_define(cpp_reader *reader)
 {
     cpp_unknown *unknown = read_macro_name(reader, 1);
-
     if (unknown)
     {
         _cpp_define_macro(reader, unknown);
@@ -611,7 +610,7 @@ static void do_error(cpp_reader *reader)
 static void do_pragma(cpp_reader *reader)
 {
     printf("+++IMPLEMENT do_pragma %s:%u\n", __FILE__, __LINE__);
-    abort();
+    return;
 }
 
 static void do_linemarker(cpp_reader *reader)

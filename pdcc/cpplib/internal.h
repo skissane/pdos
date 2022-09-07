@@ -220,6 +220,7 @@ _cpp_file *_cpp_find_file(cpp_reader *reader,
                           int angled,
                           int ignored2,
                           location_t loc);
+void _cpp_free_file(_cpp_file *file);
 int _cpp_file_not_found(_cpp_file *file);
 int _cpp_add_file(cpp_reader *reader,
                   _cpp_file *file,

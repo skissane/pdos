@@ -28,6 +28,7 @@ include_paths *ic_create_include_paths(void);
 void ic_add_cpp_dir_to_chain(include_paths *ic,
                              cpp_dir *dir,
                              enum include_path_type type);
+void ic_free_cpp_dir(cpp_dir *dir);
 void ic_add_path(include_paths *ic,
                  char *path,
                  enum include_path_type type);

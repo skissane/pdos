@@ -11,6 +11,8 @@
 #include "cpplib.h"
 #include "c_ppout.h"
 #include "inc_path.h"
+#include "xmalloc.c"
+#include "xrealloc.c"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,31 +30,23 @@ typedef struct {
     unsigned int input_name_count;
     const char *output_name;
     int preprocess_only_flag;
+    int compile_flag;
     void *processor;
-
     struct deferred_option *deferred_options;
     unsigned int deferred_count;
-
     int hosted;
-    
 } global_core;
 
 global_core *global_create_core(void)
 {
-    global_core *core = malloc(sizeof(*core));
-
-    if (core == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
-
+    global_core *core = xmalloc(sizeof(*core));
     core->reader = NULL;
     core->ic = NULL;
     core->input_names = NULL;
     core->input_name_count = 0;
     core->output_name = NULL;
     core->preprocess_only_flag = 0;
+    core->compile_flag = 1;
 
     core->deferred_options = NULL;
     core->deferred_count = 0;
@@ -120,13 +114,8 @@ void c_init_options(global_core *core,
 
     cpp_get_callbacks(core->reader)->diagnostics = &diagnostics;
 
-    core->deferred_options = malloc(sizeof(struct deferred_option)
+    core->deferred_options = xmalloc(sizeof(struct deferred_option)
                                     * option_count);
-    if (core->deferred_options == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
     core->deferred_count = 0;
 }
 
@@ -137,7 +126,6 @@ void c_after_options(global_core *core)
     if (core->preprocess_only_flag)
     {
         FILE *output;
-
         if ((core->output_name == NULL)
             || (core->output_name[0] == '\0'))
         {
@@ -146,16 +134,15 @@ void c_after_options(global_core *core)
         else output = fopen(core->output_name, "w");
 
         core->processor = init_pp_output(core->reader, output);
+        if (cpp_read_main_file(core->reader, core->input_names[0]) == NULL)
+        {
+            printf("+++Error c_after_options\n");
+            return;
+        }
     }
     else
     {
         printf("+++Finish c_after_options\n");
-    }
-
-    if (cpp_read_main_file(core->reader, core->input_names[0]) == NULL)
-    {
-        printf("+++Error c_after_options\n");
-        abort();
     }
 }
 
@@ -201,7 +188,20 @@ static void c_finish_options(global_core *core)
 
 static void c_end(global_core *core)
 {
+    int i;
     cpp_destroy_reader(core->reader);
+    for (i = 0; i < 4; i++)
+    {
+        cpp_dir *d = core->ic->tails[i];
+        core->ic->tails[i] = 0;
+        while (d != NULL)
+        {
+            cpp_dir *dn = d->next;
+            ic_free_cpp_dir(d);
+            d = dn;
+        }
+    }
+
     free(core->ic);
     if (core->preprocess_only_flag)
     {
@@ -212,16 +212,14 @@ static void c_end(global_core *core)
 static char *xstrdup(const char *str)
 {
     size_t len = strlen(str);
-    char *out = malloc(len + 1);
-    if (out == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
-
+    char *out = xmalloc(len + 1);
     strcpy(out, str);
-
     return (out);
+}
+
+static void assemble_file(cpp_reader *reader)
+{
+    return;
 }
 
 int main(int argc, char **argv)
@@ -258,10 +256,12 @@ int main(int argc, char **argv)
             argv[i]++;
             switch (argv[i][0])
             {
+                case 'C':
+                    core->compile_flag = 0;
+                    break;
                 case 'E':
                     core->preprocess_only_flag = 1;
                     break;
-
                 case 'I':
                     if (argv[i][1] != '\0')
                     {
@@ -276,7 +276,6 @@ int main(int argc, char **argv)
                                     INCLUDE_PATH_ANGLED);
                     }
                     break;
-
                 case 'o':
                     if (argv[i][1] != '\0')
                     {
@@ -286,9 +285,7 @@ int main(int argc, char **argv)
                     {
                         core->output_name = argv[++i];
                     }
-                
                     break;
-
                 case 'D':
                     if (argv[i][1] != '\0')
                     {
@@ -298,21 +295,15 @@ int main(int argc, char **argv)
                     {
                         defer_option(core, OPT_D, argv[++i]);
                     }
-                
                     break;
             }
         }
         else
         {
             core->input_name_count++;
-            core->input_names = realloc(core->input_names,
+            core->input_names = xrealloc(core->input_names,
                                         (sizeof(*(core->input_names))
                                          * (core->input_name_count)));
-            if (core->input_names == NULL)
-            {
-                printf("failed to allocate memory\n");
-                abort();
-            }
             core->input_names[core->input_name_count - 1] = argv[i];
         }
     }
@@ -327,8 +318,6 @@ int main(int argc, char **argv)
     if (!(core->preprocess_only_flag))
     {
         printf("+++Only preprocessor is currently working\n");
-        printf("use option -E\n");
-        goto end;
     }
     
     c_after_options(core);
@@ -340,11 +329,13 @@ int main(int argc, char **argv)
     {
         preprocess_file(core->processor, core->reader);
     }
+    if (core->compile_flag)
+    {
+        assemble_file(core->reader);
+    }
 
 end:
     c_end(core);
-    
     global_destroy_core(core);
-
     return (0);
 }

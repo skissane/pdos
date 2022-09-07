@@ -9,6 +9,7 @@
  */
 
 #include "inc_path.h"
+#include "xmalloc.c"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,13 +18,7 @@
 include_paths *ic_create_include_paths(void)
 {
     int i;
-    include_paths *ic = malloc(sizeof(*ic));
-
-    if (ic == NULL)
-    {
-        printf("Failed to allocate memory\n");
-        abort();
-    }
+    include_paths *ic = xmalloc(sizeof(*ic));
 
     for (i = 0; i < INCLUDE_PATH_MAX; i++)
     {
@@ -44,6 +39,12 @@ void ic_add_cpp_dir_to_chain(include_paths *ic,
     ic->tails[type] = dir;
 }
 
+void ic_free_cpp_dir(cpp_dir *dir)
+{
+    if (dir->name != NULL) free(dir->name);
+    free(dir);
+}
+
 /* path must point to permanently allocated string. */
 void ic_add_path(include_paths *ic,
                  char *path,
@@ -62,13 +63,7 @@ void ic_add_path(include_paths *ic,
         *end = '\0';
     }
 
-    dir = malloc(sizeof(*dir));
-    if (dir == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
-
+    dir = xmalloc(sizeof(*dir));
     dir->next = NULL;
     dir->name = path;
 
