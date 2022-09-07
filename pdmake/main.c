@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "variable.h"
 #include "read.h"
@@ -56,6 +57,38 @@ void rule_add_suffix(char *name, struct commands *cmds)
     suffix_rules = s;
 }
 
+int rule_run_command(const char *name, char *p, char *q) {
+    int is_silent = silent;
+    int is_ignore_error = ignore_errors;
+    char *new_cmds;
+    char *s;
+
+    *q = '\0';
+    new_cmds = xstrdup(p);
+    *q = '\n';
+    new_cmds = variable_expand_line(new_cmds);
+    s = new_cmds;
+    while (isspace(*s) || *s == '-' || *s == '@') {
+        if (*s == '-') is_silent = 1;
+        if (*s == '@') is_ignore_error = 1;
+        s++;
+    }
+    
+    if (!is_silent) printf("%s\n", new_cmds);
+    if (!dry_run)
+    {
+        int error = system(s);
+        if (!is_ignore_error && error)
+        {
+            fprintf(stderr, "[%s] Error %d: %s\n", name, error,
+                strerror(error));
+            return -1;
+        }
+    }
+    free(new_cmds);
+    return 0;
+}
+
 void rule_use(rule *r, char *name)
 {
     struct dep *dep;
@@ -81,23 +114,11 @@ void rule_use(rule *r, char *name)
     q = strchr(p, '\n');
     while (1)
     {
-        *q = '\0';
-        new_cmds = xstrdup(p);
-        *q = '\n';
-        new_cmds = variable_expand_line(new_cmds);
-        if (!silent) printf("%s\n", new_cmds);
-
-        if (!dry_run)
+        int error = rule_run_command(name, p, q);
+        if (error < 0)
         {
-            int error = system(new_cmds);
-
-            if (!ignore_errors && error)
-            {
-                fprintf(stderr, "[%s] Error %d\n", name, error);
-                exit(1);
-            }
+            return;
         }
-        free(new_cmds);
 
         p = q + 1;
         q = strchr(p, '\n');
@@ -131,23 +152,11 @@ void suffix_rule_use(suffix_rule *s, char *name)
     q = strchr(p, '\n');
     while (1)
     {
-        *q = '\0';
-        new_cmds = xstrdup(p);
-        *q = '\n';
-        new_cmds = variable_expand_line(new_cmds);
-        if (!silent) printf("%s\n", new_cmds);
-
-        if (!dry_run)
+        int error = rule_run_command(name, p, q);
+        if (error < 0)
         {
-            int error = system(new_cmds);
-
-            if (!ignore_errors && error)
-            {
-                fprintf(stderr, "[%s] Error %d\n", name, error);
-                exit(1);
-            }
+            return;
         }
-        free(new_cmds);
 
         p = q + 1;
         q = strchr(p, '\n');
@@ -190,11 +199,10 @@ char *find_target(char *target)
         char *new_target;
 
         /* Skips the initial whitespace. */
-        while ((*vpath == ' ') || (*vpath == '\t') || (*vpath == ';')) vpath++;
+        while (isspace(*vpath) || (*vpath == ';')) vpath++;
 
         /* Finds the end of the current part. */
-        while ((*vpath != ' ') && (*vpath != '\t')
-               && (*vpath != ';') && (*vpath != '\0')) vpath++;
+        while (!isspace(*vpath) && (*vpath != ';') && (*vpath != '\0')) vpath++;
 
         saved_c = *vpath;
         *vpath = '\0';
@@ -243,7 +251,6 @@ void rule_search_and_build(char *name)
          * This means that the name should not be modified
          * by the search for target. */
         variable_change("@", xstrdup(name));
-
         for (s = suffix_rules; s; s = s->next)
         {
             if (strcmp(suffix, s->second) == 0)
@@ -261,9 +268,7 @@ void rule_search_and_build(char *name)
                 /* Tries to find the prerequisite. */
                 new_name = find_target(prereq_name);
                 free(prereq_name);
-
                 if (new_name == NULL) continue; /* Not found. */
-
                 if (strcmp(prereq_name, new_name) == 0) break;
 
                 /* Restore the original suffix in the new name. */
@@ -293,11 +298,10 @@ void rule_search_and_build(char *name)
 
     {
         char *new_name = find_target(name);
-
         if (new_name == NULL)
         {
-            fprintf(stderr, "No rule to make target `%s'. Stop.", name);
-            exit(1);
+            fprintf(stderr, "No rule to make target `%s'. Stop.\n", name);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -321,6 +325,19 @@ void help(void)
            "Do not print commands.\n");
 }
 
+/* OS variable */
+#ifdef __WIN32__
+const char *os_name = "Windows_NT";
+#elif defined __PDOS386__
+const char *os_name = "PDOS";
+#elif defined __MSDOS__
+const char *os_name = "MSDOS";
+#elif defined __linux__
+const char *os_name = "Linux";
+#else
+const char *os_name = "Unix";
+#endif
+
 int main(int argc, char **argv)
 {
     int i;
@@ -328,6 +345,7 @@ int main(int argc, char **argv)
     char *goal = NULL;
     
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
+    variable_add(xstrdup("OS"), xstrdup(os_name));
 
     for (i = 1; i < argc; i++)
     {
