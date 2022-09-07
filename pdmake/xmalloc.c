@@ -19,9 +19,9 @@ void *xmalloc(size_t size)
     if (p == NULL)
     {
         fprintf(stderr, "Failed to allocate memory!\n");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
-    
+
     return (p);
 }
 
@@ -32,13 +32,13 @@ void *xrealloc(void *p, size_t size)
     if (p == NULL)
     {
         fprintf(stderr, "Failed to allocate memory!\n");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 
     return (p);
 }
 
-char *xstrdup(const char *str)
+char *xstrdup(char *str)
 {
     size_t size = strlen(str) + 1;
     char *p = xmalloc(size);
@@ -51,13 +51,13 @@ char *xstrdup(const char *str)
 size_t strnlen(const char *str, size_t max_len)
 {
     size_t len;
-    
+
     for (len = 0; (len < max_len) && str[len]; len++);
 
     return (len);
 }
 
-char *xstrndup(const char *str, size_t max_len)
+char *xstrndup(char *str, size_t max_len)
 {
     size_t len = strnlen(str, max_len);
     char *p = xmalloc(len + 1);
