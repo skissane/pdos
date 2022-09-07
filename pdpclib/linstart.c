@@ -29,3 +29,25 @@ void *__allocmem(size_t size)
 {
     return (membuf);
 }
+
+
+#if defined(__WATCOMC__)
+
+#define CTYP __cdecl
+
+/* this is invoked by long double manipulations
+   in stdio.c and needs to be done properly */
+
+int CTYP _CHP(void)
+{
+    return (0);
+}
+
+/* don't know what these are */
+
+void CTYP cstart_(void) { return; }
+void CTYP _argc(void) { return; }
+void CTYP argc(void) { return; }
+void CTYP _8087(void) { return; }
+
+#endif
