@@ -144,28 +144,7 @@ char *variable_expand_line(char *line)
 
                 s = cmd_body;
                 while (isspace(*s)) s++;
-                if (!strcmp(cmd, "shell"))
-                {
-                    FILE *o_stdout = stdout;
-                    char *shell_out = NULL;
-                    printf("***warning: shell might not work on PDOS\n");
-                    stdout = fopen("TMPFILE$", "r+");
-                    if (stdout)
-                    {
-                        static char tmpbuf[80];
-                        system(s);
-                        while (fgets(tmpbuf, sizeof(tmpbuf), stdout))
-                        {
-                            shell_out = realloc(shell_out,
-                                strlen(shell_out) + strlen(tmpbuf) + 1);
-                            strcat(shell_out, tmpbuf);
-                        }
-                        fclose(stdout);
-                    }
-                    stdout = o_stdout;
-                    /* printf("cmd=\"%s\",line=\"%s\",shell_out=\"%s\"\n", cmd, cmd_body, shell_out); */
-                }
-                else if (!strcmp(cmd, "subst"))
+                if (!strcmp(cmd, "subst"))
                 {
                     char *from_s, *to_s, *to_repl;
                     char *token;
