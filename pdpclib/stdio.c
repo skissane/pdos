@@ -898,7 +898,11 @@ static void osfopen(void)
             if ((modeType == 3) || (modeType == 6)
                 || (modeType == 9) || (modeType == 12))
             {
+#ifdef __gnu_linux__
+                myfile->hfile = __open(fnm, 1, &errind);
+#else
                 myfile->hfile = __creat(fnm, 0, &errind);
+#endif
             }
         }
     }
