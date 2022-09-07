@@ -34,7 +34,7 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <windows.h>
 #endif
 
-#if defined(__WATCOMC__)
+#if defined(__WATCOMC__) && !defined(WATLIN)
 #define CTYP __cdecl
 #else
 #define CTYP
