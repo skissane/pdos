@@ -1,0 +1,35 @@
+# This is the makefile to build Linux executables linked with pdpclib using
+# the watcom compiler.
+#
+
+CC=wcl386
+COPTS=-q -s -3s -zl -fpi87 -c -I. -I..\src -D__gnu_linux__ -DUSE_MEMMGR -DWATLIN
+
+pdptest: linstart.obj linsupa.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj support.obj
+  rm -f watcom.lib
+  wlib -b -q watcom +stdio.obj
+  wlib -b -q watcom +string.obj
+  wlib -b -q watcom +stdlib.obj
+  wlib -b -q watcom +start.obj
+  wlib -b -q watcom +time.obj
+  wlib -b -q watcom +errno.obj
+  wlib -b -q watcom +assert.obj
+  wlib -b -q watcom +signal.obj
+  wlib -b -q watcom +locale.obj
+  wlib -b -q watcom +ctype.obj
+  wlib -b -q watcom +setjmp.obj
+  wlib -b -q watcom +math.obj
+  wlib -b -q watcom +support.obj
+  wlib -b -q watcom +__memmgr.obj
+  wlink File linstart.obj,linsupa.obj,pdptest.obj Name pdptest.exe Form elf Library watcom.lib Option map,quiet,start=__start
+
+.c.obj:
+	$(CC) $(COPTS) $<
+
+linsupa.obj: linsupa.asm
+	  aswin -o $*.obj linsupa.asm
+
+support.obj: ../src/support.s
+    aswin -o $*.obj ../src/support.s
