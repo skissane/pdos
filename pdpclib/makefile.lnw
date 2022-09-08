@@ -23,7 +23,7 @@ pdptest: linstart.obj linsupa.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcom +math.obj
   wlib -b -q watcom +support.obj
   wlib -b -q watcom +__memmgr.obj
-  wlink File linstart.obj,linsupa.obj,pdptest.obj Name pdptest.exe Form elf Library watcom.lib Option map,quiet,start=__start
+  wlink File linstart.obj,linsupa.obj,pdptest.obj Name pdptest.exe Form elf Library watcom.lib Option map,quiet,start=_start
 
 .c.obj:
 	$(CC) $(COPTS) $<
