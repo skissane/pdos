@@ -1170,6 +1170,7 @@ static void processExtended(int drive, unsigned char *prm)
     int systemId;
     unsigned long sector;
     unsigned long extsector;
+    int rc;
 
     if (prm[PTO_SYSID] == PTS_W95EL)
     {
@@ -1183,23 +1184,33 @@ static void processExtended(int drive, unsigned char *prm)
             | ((unsigned long)prm[10] << 16)
             | ((unsigned long)prm[11] << 24);
     extsector = sector;
-    while (sect != 0)
+    while (sector != 0)
     {
         if (lba)
         {
-            readLBA(buf,
-                    sectors,
-                    drive,
-                    sector);
+            rc = readLBA(buf,
+                         sectors,
+                         drive,
+                         sector);
         }
         else
         {
-            readAbs(buf,
-                    sectors,
-                    drive,
-                    track,
-                    head,
-                    sect);
+            rc = readAbs(buf,
+                         sectors,
+                         drive,
+                         track,
+                         head,
+                         sect);
+        }
+        if (rc != 0)
+        {
+            printf("failed to read sector %ld\n", sector);
+            break;
+        }
+        if ((buf[510] != 0x55) || (buf[511] != 0xaa))
+        {
+            printf("extended partition without 55aa\n");
+            break;
         }
         systemId = buf[PT_OFFSET + 0 * PT_LEN + PTO_SYSID];
         if ((systemId == PTS_FAT12)
