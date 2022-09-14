@@ -19,7 +19,30 @@
 #include "support.h"
 #include "xmalloc.h"
 
+/** Stores all the scoped blocks for lookup of symbols */
+static cc_expr *g_scoped_blocks = NULL;
+static size_t g_n_scoped_blocks = 0;
+static void cc_add_scoped_block(cc_expr block)
+{
+    g_scoped_blocks = xrealloc(g_scoped_blocks, (g_n_scoped_blocks + 1)
+                               * sizeof(cc_expr));
+    g_scoped_blocks[g_n_scoped_blocks++] = block;
+}
+
+static cc_expr *cc_get_scoped_block(size_t id)
+{
+    size_t i;
+    for (i = 0; i < g_n_scoped_blocks; i++)
+        if (g_scoped_blocks[i].id == id)
+            return &g_scoped_blocks[i];
+    return NULL;
+}
+
 static void cc_dump_type(cc_reader *reader, const cc_type *type);
+static void cc_dump_variable(cc_reader *reader, const cc_variable *var);
+static void cc_dump_expr(cc_reader *reader, const cc_expr *expr);
+static cc_expr cc_parse_block_expr(cc_reader *reader);
+
 static void cc_dump_member(cc_reader *reader, const cc_member *member)
 {
     cc_dump_type(reader, &member->type);
@@ -112,6 +135,12 @@ static void cc_dump_variable(cc_reader *reader, const cc_variable *var)
         if (var->type.data.f.variadic)
             printf("...");
         printf(")");
+
+        if (var->block_expr)
+        {
+            printf("(Block of %s)::", var->name);
+            cc_dump_expr(reader, var->block_expr);
+        }
     }
     printf("\n");
 }
@@ -183,19 +212,11 @@ static void cc_dump_expr(cc_reader *reader, const cc_expr *expr)
 
         printf("types=%u\n", expr->data.block.n_types);
         for (i = 0; i < expr->data.block.n_types; i++)
-        {
-            const cc_type *type = &expr->data.block.types[i];
-            cc_dump_type(reader, type);
-        }
+            cc_dump_type(reader, &expr->data.block.types[i]);
 
         printf("vars=%u\n", expr->data.block.n_vars);
         for (i = 0; i < expr->data.block.n_vars; i++)
-        {
-            const cc_variable *var = &expr->data.block.vars[i];
-            cc_dump_variable(reader, var);
-            if (var->block_expr)
-                cc_dump_expr(reader, var->block_expr);
-        }
+            cc_dump_variable(reader, &expr->data.block.vars[i]);
 
         for (i = 0; i < expr->data.block.n_exprs; i++)
             cc_dump_expr(reader, &expr->data.block.exprs[i]);
@@ -557,11 +578,14 @@ static void cc_parse_call_params(cc_reader *reader, cc_expr *call)
     }
 }
 
-static void cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
+static int cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
                                 const cc_expr *expr)
 {
     size_t i;
     assert(tok->type == CC_TOKEN_IDENT);
+    if (expr == NULL)
+        return -1;
+
     for (i = 0; i < expr->data.block.n_vars; i++)
     {
         cc_variable *var = &expr->data.block.vars[i];
@@ -569,9 +593,10 @@ static void cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
         {
             tok->type = CC_TOKEN_VARIABLE;
             tok->data.var = var;
-            return;
+            return 0;
         }
     }
+
     for (i = 0; i < expr->data.block.n_types; i++)
     {
         cc_type *type = &expr->data.block.types[i];
@@ -579,9 +604,11 @@ static void cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
         {
             tok->type = CC_TOKEN_TYPE;
             tok->data.type = type;
-            return;
+            return 0;
         }
     }
+    return cc_resolve_symbol_1(reader, tok,
+        cc_get_scoped_block(expr->data.block.parent_id));
 }
 
 /**
@@ -594,9 +621,14 @@ static void cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
 static void cc_resolve_symbol(cc_reader *reader, cc_token *tok)
 {
     assert(tok->type == CC_TOKEN_IDENT);
-    cc_resolve_symbol_1(reader, tok, reader->curr_block);
+    if (!cc_resolve_symbol_1(reader, tok, reader->curr_block))
+        return;
+    
+    if (!cc_resolve_symbol_1(reader, tok, reader->root_expr))
+        return;
+    
     cc_report(reader, CC_DL_ERROR, "Can't resolve identifier %s to a variable "
-                                   "or a typename", tok->data.name);
+        "or a typename", tok->data.name);
 }
 
 static cc_expr cc_parse_assignment_expr(cc_reader *reader)
@@ -639,18 +671,24 @@ cc_expr cc_parse_expression(cc_reader *reader)
 {
     cc_expr expr = {0};
     expr.id = cc_get_unique_id(reader);
-    if (reader->curr_token->type == CC_TOKEN_LPAREN)
+    switch (reader->curr_token->type)
     {
+    case CC_TOKEN_LPAREN:
         cc_consume_token(reader);
-        expr.type = CC_EXPR_CAST;
-        expr.data.cast.type = cc_parse_type(reader);
-        if (reader->curr_token->type != CC_TOKEN_RPAREN)
-            cc_report(reader, CC_DL_ERROR, "Missing terminating \")\" in "
-                                           "cast");
-        cc_consume_token(reader);
+        if (reader->curr_token->type == CC_TOKEN_IDENT)
+        {
+            expr.type = CC_EXPR_CAST;
+            expr.data.cast.type = cc_parse_type(reader);
+            if (reader->curr_token->type != CC_TOKEN_RPAREN)
+                cc_report(reader, CC_DL_ERROR, "Missing terminating \")\" in "
+                                               "cast");
+            cc_consume_token(reader);
+        }
+        else
+            cc_report(reader, CC_DL_ERROR, "Parenthized expressions not "
+                                           "supported\n");
         return expr;
-    }
-    else if (reader->curr_token->type == CC_TOKEN_IDENT)
+    case CC_TOKEN_IDENT:
     {
         cc_token ident_tok = cc_consume_token(reader);
         cc_resolve_symbol(reader, &ident_tok);
@@ -680,48 +718,82 @@ cc_expr cc_parse_expression(cc_reader *reader)
         }
         cc_report(reader, CC_DL_ERROR, "Unresolvable identifier \"%s\"",
             ident_tok.data.name);
+        break;
     }
     /* <string> ? */
-    else if (reader->curr_token->type == CC_TOKEN_STRING)
-    {
+    case CC_TOKEN_STRING:
         expr.type = CC_EXPR_STRING;
         expr.data.string.data = reader->curr_token->data.string;
         cc_consume_token(reader);
         return expr;
-    }
     /* <number> ? */
-    else if (reader->curr_token->type == CC_TOKEN_NUMBER)
-    {
+    case CC_TOKEN_NUMBER:
         expr.type = CC_EXPR_CONSTANT;
         expr.data._const.numval = reader->curr_token->data.numval;
         cc_consume_token(reader);
         return expr;
-    }
     /* <type> <decl> */
-    else if (reader->curr_token->type == CC_TOKEN_KW_AUTO
-          || reader->curr_token->type == CC_TOKEN_KW_DOUBLE
-          || reader->curr_token->type == CC_TOKEN_KW_FAR
-          || reader->curr_token->type == CC_TOKEN_KW_FLOAT
-          || reader->curr_token->type == CC_TOKEN_KW_INT
-          || reader->curr_token->type == CC_TOKEN_KW_LONG
-          || reader->curr_token->type == CC_TOKEN_KW_CHAR
-          || reader->curr_token->type == CC_TOKEN_KW_STRUCT
-          || reader->curr_token->type == CC_TOKEN_KW_UNION
-          || reader->curr_token->type == CC_TOKEN_KW_ENUM
-          || reader->curr_token->type == CC_TOKEN_KW_SHORT
-          || reader->curr_token->type == CC_TOKEN_KW_SIGNED
-          || reader->curr_token->type == CC_TOKEN_KW_UNSIGNED
-          || reader->curr_token->type == CC_TOKEN_IDENT)
+    case CC_TOKEN_KW_AUTO:
+    case CC_TOKEN_KW_DOUBLE:
+    case CC_TOKEN_KW_FAR:
+    case CC_TOKEN_KW_FLOAT:
+    case CC_TOKEN_KW_INT:
+    case CC_TOKEN_KW_LONG:
+    case CC_TOKEN_KW_CHAR:
+    case CC_TOKEN_KW_STRUCT:
+    case CC_TOKEN_KW_UNION:
+    case CC_TOKEN_KW_ENUM:
+    case CC_TOKEN_KW_SHORT:
+    case CC_TOKEN_KW_SIGNED:
+    case CC_TOKEN_KW_UNSIGNED:
+    case CC_TOKEN_KW_EXTERN:
+    case CC_TOKEN_KW_STATIC:
+    case CC_TOKEN_KW_VOLATILE:
+    case CC_TOKEN_KW_CONST:
     {
+        cc_variable *var;
         expr.type = CC_EXPR_DECL;
         if (reader->curr_token->type == CC_TOKEN_IDENT)
             cc_resolve_symbol(reader, reader->curr_token);
         expr.data.decl.var = cc_parse_variable(reader);
-        *cc_add_variable(reader) = expr.data.decl.var;
+        var = cc_add_variable(reader); /* Add to list of variables */
+        *var = expr.data.decl.var;
+        /* Now fuck you and make a good parsing of that lbrace */
+        /* TODO: This is terrible, we're duplicating data!!! */
+        if (reader->curr_token->type == CC_TOKEN_LBRACE)
+        {
+            var->block_expr = xcalloc(sizeof(cc_expr));
+            *var->block_expr = cc_parse_block_expr(reader);
+            expr.data.decl.var.block_expr = xcalloc(sizeof(cc_expr));
+            *expr.data.decl.var.block_expr = *var->block_expr;
+        }
         return expr;
     }
-    cc_report(reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",
-        g_token_info[reader->curr_token->type].name);
+    case CC_TOKEN_PLUS:
+        expr.type = CC_EXPR_PLUS;
+        cc_consume_token(reader);
+        return expr;
+    case CC_TOKEN_MINUS:
+        expr.type = CC_EXPR_MINUS;
+        cc_consume_token(reader);
+        return expr;
+    case CC_TOKEN_REM:
+        expr.type = CC_EXPR_REM;
+        cc_consume_token(reader);
+        return expr;
+    case CC_TOKEN_DIV:
+        expr.type = CC_EXPR_DIV;
+        cc_consume_token(reader);
+        return expr;
+    case CC_TOKEN_ASTERISK:
+        expr.type = CC_EXPR_MUL;
+        cc_consume_token(reader);
+        return expr;
+    default:
+        cc_report(reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",
+            g_token_info[reader->curr_token->type].name);
+        break;
+    }
 }
 
 /**
@@ -740,6 +812,11 @@ cc_expr cc_parse_statment(cc_reader *reader)
         cc_consume_token(reader);
         return expr;
     }
+    /* <block> {} <block-end> */
+    else if (reader->curr_token->type == CC_TOKEN_LBRACE)
+    {
+        return cc_parse_block_expr(reader);
+    }
     /* return <expr> ; */
     else if (reader->curr_token->type == CC_TOKEN_KW_RETURN)
     {
@@ -756,7 +833,6 @@ cc_expr cc_parse_statment(cc_reader *reader)
         if (reader->curr_token->type != CC_TOKEN_LPAREN)
             cc_report(reader, CC_DL_ERROR, "Expected \"(\" after if block");
         cc_consume_token(reader);
-
         expr.type = CC_EXPR_IF;
         expr.data.if_else.cond_expr = xcalloc(sizeof(cc_expr));
         *expr.data.if_else.cond_expr = cc_parse_condition(reader,
@@ -764,10 +840,7 @@ cc_expr cc_parse_statment(cc_reader *reader)
         /* Multiline block */
         expr.data.if_else.body_expr = xcalloc(sizeof(cc_expr));
         if (reader->curr_token->type == CC_TOKEN_LBRACE)
-        {
-            cc_consume_token(reader);
             *expr.data.if_else.body_expr = cc_parse_block_expr(reader);
-        }
         /* Single line block */
         else
             *expr.data.if_else.body_expr = cc_parse_statment(reader);
@@ -783,23 +856,32 @@ cc_expr cc_parse_statment(cc_reader *reader)
  * @param reader Reader object
  * @return cc_expr Block expression
  */
-cc_expr cc_parse_block_expr(cc_reader *reader)
+static cc_expr cc_parse_block_expr(cc_reader *reader)
 {
+    cc_expr *old_block = reader->curr_block;
     cc_expr expr = {0};
     expr.id = cc_get_unique_id(reader);
     expr.type = CC_EXPR_BLOCK;
     if (reader->curr_token->type != CC_TOKEN_LBRACE)
-        cc_report(reader, CC_DL_ERROR, "Expected an opening brace \"}\"");
+        cc_report(reader, CC_DL_ERROR, "Expected a brace \"{\"");
+    cc_consume_token(reader);
+    expr.data.block.parent_id = reader->curr_block->id; /* Set parent rel */
+    reader->curr_block = &expr; /* Temporarily set new block */
     while (reader->curr_token->type != CC_TOKEN_RBRACE)
     {
-        cc_expr st_expr = cc_parse_statment(reader); /* Statment */
         expr.data.block.exprs = xrealloc(expr.data.block.exprs,
                                         (expr.data.block.n_exprs + 1)
                                         * sizeof(cc_expr));
-        expr.data.block.exprs[expr.data.block.n_exprs++] = st_expr;
+        expr.data.block.exprs[expr.data.block.n_exprs++]
+            = cc_parse_statment(reader); /* Save statment into block */
         if (reader->curr_token->type == CC_TOKEN_EOF)
-            cc_report(reader, CC_DL_ERROR, "Expected a closing brace \"{\"");
+            cc_report(reader, CC_DL_ERROR, "Expected a brace \"}\"");
     }
+    reader->curr_block = old_block; /* Restore old block */
+    cc_add_scoped_block(expr); /* Save a copy of the block into the scoped
+                                * block list so we will have access to the
+                                * symbols */
+    cc_consume_token(reader);
     return expr;
 }
 
@@ -891,22 +973,32 @@ static void cc_delete_redundant(cc_reader *reader, const cc_expr *expr)
 }
 
 /**
- * @brief Review and make a final pass to expressions
- * 
+ * @brief Perform the parsing until EOF is reached
  * @param reader 
  */
-static void cc_review_exprs(cc_reader *reader)
+static void cc_parser_do(cc_reader *reader)
 {
-    size_t i;
-    for (i = 0; i < reader->curr_block->data.block.n_vars; i++)
+    cc_expr *expr;
+    expr = reader->root_expr = xcalloc(sizeof(cc_expr));
+    expr->id = cc_get_unique_id(reader);
+    expr->type = CC_EXPR_BLOCK;
+    reader->curr_block = expr;
+    while (reader->curr_token->type != CC_TOKEN_EOF)
     {
-        const cc_variable *var = &reader->curr_block->data.block.vars[i];
-        if (var->block_expr)
-        {
-            /* Delete empty exprs */
-        }
+        expr->data.block.exprs = xrealloc(expr->data.block.exprs,
+                                          (expr->data.block.n_exprs + 1)
+                                          * sizeof(cc_expr));
+        expr->data.block.exprs[expr->data.block.n_exprs++]
+            = cc_parse_statment(reader); /* Statment */
     }
+
+    /* TODO: constant propagation, operator precedence,
+     * elimination offsets, packing, string-optimizations (such as using
+     * the stack for small strings), pattern matching, behaviour detection
+     * etc, etc, etc */
+#ifdef DEBUG
     cc_dump_expr(reader, reader->root_expr);
+#endif
 }
 
 int cc_parse_file(cc_reader *reader)
@@ -914,7 +1006,9 @@ int cc_parse_file(cc_reader *reader)
     char line[80];
     while (fgets(line, sizeof(line), reader->input) != 0)
         cc_lex_line(reader, line);
+#ifdef DEBUG
     cc_dump_tokens(reader);
+#endif
 
     if (reader->tokens == NULL)
     {
@@ -928,13 +1022,10 @@ int cc_parse_file(cc_reader *reader)
     reader->tokens[reader->n_tokens++].type = CC_TOKEN_EOF;
     reader->curr_token = &reader->tokens[0];
 
-    reader->root_expr = xcalloc(sizeof(cc_expr));
-    reader->curr_block = reader->root_expr;
-    *cc_add_type(reader) = cc_parse_type(reader);
-    *cc_add_variable(reader) = cc_parse_variable(reader);
-    *cc_add_variable(reader) = cc_parse_variable(reader);
-    cc_review_exprs(reader);
+    cc_parser_do(reader);
     cc_i386gen(reader, reader->root_expr);
+#ifdef DEBUG
     printf("+++End of compilation\n");
+#endif
     return 0;
 }

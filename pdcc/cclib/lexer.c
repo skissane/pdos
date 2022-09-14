@@ -138,6 +138,7 @@ cc_token cc_consume_token(cc_reader *reader)
         reader->n_tokens * sizeof(cc_token));
     reader->curr_token = &reader->tokens[0];
     return tok;
+    printf("CONSUMING=%s\n", g_token_info[reader->curr_token->type].name);
 #endif
     return *reader->curr_token++;
 }
@@ -248,7 +249,6 @@ static char *cc_interpret_string(cc_reader *reader, const char *src)
 int cc_lex_line(cc_reader *reader, const char *line)
 {
     const char *p = line;
-    printf("# %s", p);
     while (*p)
     {
         cc_token tok = {0};
@@ -408,13 +408,10 @@ int cc_lex_line(cc_reader *reader, const char *line)
             {
                 char *start = p;
                 char term = *(p - 1);
-                tok.type = term == '\'' ? CC_TOKEN_LITERAL
-                                        : CC_TOKEN_STRING;
+                tok.type = term == '\'' ? CC_TOKEN_LITERAL : CC_TOKEN_STRING;
                 for ( ; *p != term && *p != '\0'; p++)
-                {
                     if (*p == '\\')
                         p++;
-                }
 
                 if (*p == term)
                 {
@@ -437,14 +434,14 @@ int cc_lex_line(cc_reader *reader, const char *line)
             {
                 const char *start = p;
                 char is_keyword = 0;
-                size_t i;
+                size_t len, i;
                 while (is_ident(*p))
                     p++;
+                len = (size_t)(p - start);
                 
                 tok.type = CC_TOKEN_KW;
                 for (i = CC_TOKEN_KW; i < CC_NUM_TOKENS; i++)
                 {
-                    size_t len = (size_t)(p - start);
                     if (strlen(g_token_info[i].name) == len
                      && !strncmp(g_token_info[i].name, start, len))
                     {
@@ -457,7 +454,6 @@ int cc_lex_line(cc_reader *reader, const char *line)
                 /* Identifier */
                 if (!is_keyword)
                 {
-                    size_t len = (size_t)(p - start);
                     tok.type = CC_TOKEN_IDENT;
                     tok.data.name = xstrndup(start, len);
                 }

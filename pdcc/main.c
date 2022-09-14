@@ -186,7 +186,6 @@ void c_after_options(global_core *core)
             printf("+++Can't open %s\n", core->input_names[0]);
             return;
         }
-        printf("+++Finish c_after_options\n");
     }
 }
 
@@ -359,9 +358,6 @@ int main(int argc, char **argv)
         printf("Error: no input files.\nUse --help for help.\n");
         goto end;
     }
-
-    if (!(core->preprocess_flag))
-        printf("+++Only preprocessor is currently working\n");
     
     c_after_options(core);
 

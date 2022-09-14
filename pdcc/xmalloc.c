@@ -52,7 +52,8 @@ char *xstrdup(const char *str)
 char *xstrndup(const char *str, size_t len)
 {
     char *out = xmalloc(len + 1);
-    strncpy(out, str, len);
+    memcpy(out, str, len);
+    out[len] = '\0';
     return (out);
 }
 

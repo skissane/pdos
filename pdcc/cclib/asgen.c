@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 #include "cclib.h"
 #include "support.h"
 #include "xmalloc.h"
@@ -60,16 +61,29 @@ void cc_i386gen(cc_reader *reader, const cc_expr *expr);
  */
 static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
 {
+    size_t i, len;
     switch (expr->type)
     {
     case CC_EXPR_NONE:
         fprintf(reader->output, "# none");
         break;
     case CC_EXPR_STRING:
-        fprintf(reader->output, "\tpush str_%u\n", expr->id);
+        fprintf(reader->output, "\tpush S%u\n", expr->id);
+        fprintf(reader->output, "\tjmp S%u_end\n", expr->id);
+        fprintf(reader->output, "S%u:\n", expr->id);
+        fprintf(reader->output, "\tdb ");
+        len = strlen(expr->data.string.data);
+        for (i = 0; i < len; i++)
+        {
+            fprintf(reader->output, "0x%x", expr->data.string.data[i]);
+            if (i < len - 1)
+                fprintf(reader->output, ",");
+        }
+        fprintf(reader->output, "\n");
+        fprintf(reader->output, "S%u_end:\n", expr->id);
         return 4;
     case CC_EXPR_CONSTANT:
-        fprintf(reader->output, "\tpush %lu", expr->data._const.numval);
+        fprintf(reader->output, "\tpush %lu\n", expr->data._const.numval);
         return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
@@ -152,7 +166,7 @@ static void cc_i386gen_decl(cc_reader *reader, const cc_variable *var)
 static void cc_i386gen_if(cc_reader *reader, const cc_expr *cond_expr,
                           const cc_expr *body_expr)
 {
-    fprintf(reader->output, "\tcmp fuck you\n");
+    fprintf(reader->output, "\t# TODO: comparison\n");
 }
 
 static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
@@ -193,6 +207,7 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
 
         /* Pop stack */
         fprintf(reader->output, "\tadd esp, %u\n", stack_size);
+        stack_size = 0;
         break;
     case CC_EXPR_STRING:
         printf("str_%u: db ", expr->id);
@@ -208,10 +223,10 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         printf("%lu", expr->data._const.numval);
         break;
     case CC_EXPR_BLOCK:
-        printf("# {\n");
+        printf(";; {\n");
         for (i = 0; i < expr->data.block.n_exprs; i++)
             cc_i386gen_top(reader, &expr->data.block.exprs[i]);
-        printf("# }\n");
+        printf(";; }\n");
         break;
     default:
         printf("Unknown expr type %u\n", expr->type);
@@ -219,21 +234,33 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
     }
 }
 
-void cc_i386gen(cc_reader *reader, const cc_expr *expr)
+static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
 {
-    size_t i;
-    printf("+++Generated i386 assembly\n");
+    if (var->linkage != CC_LINKAGE_EXTERN)
+        fprintf(reader->output, "%s:\n", var->name);
+    else
+        fprintf(reader->output, ";; extern %s\n", var->name);
 
-    fprintf(reader->output, "bits 32\n");
-    for (i = 0; i < expr->data.block.n_vars; i++)
+    switch (var->type.mode)
     {
-        const cc_variable *var = &expr->data.block.vars[i];
-        if (var->type.mode == CC_TYPE_FUNCTION && var->block_expr)
+    case CC_TYPE_FUNCTION:
+        if (var->block_expr)
         {
-            fprintf(reader->output, "%s:\n", var->name);
             cc_i386gen_prologue(reader, var->block_expr);    
             cc_i386gen_top(reader, var->block_expr);
             cc_i386gen_epilogue(reader, var->block_expr);
         }
+        break;
+    default:
+        break;
     }
+}
+
+void cc_i386gen(cc_reader *reader, const cc_expr *expr)
+{
+    size_t i;
+    assert(expr->type == CC_EXPR_BLOCK);
+    fprintf(reader->output, "bits 32\n");
+    for (i = 0; i < expr->data.block.n_vars; i++)
+        cc_i386gen_variable(reader, &expr->data.block.vars[i]);
 }

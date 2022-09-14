@@ -33,16 +33,16 @@ void cc_report(cc_reader *reader, enum cc_diagnostic_level level,
     fprintf(stderr, ":" TTY_RESET "\n");
 
     rewind(reader->input);
-    while (fgets(line, 80, reader->input) && line_cnt != loc->line - 1)
+    while (fgets(line, 80, reader->input) && line_cnt != loc->line)
         line_cnt++;
     
-    if (line_cnt == loc->line - 1)
+    if (line_cnt == loc->line)
     {
         char *p = strchr(line, '\n');
         size_t i;
         if (p) *p = '\0';
         fprintf(stderr, "%s\n", line);
-        for (i = 1; i < loc->column; i++)
+        for (i = 0; i < loc->column; i++)
             fputc('-', stderr);
         fprintf(stderr, "^\n");
     }

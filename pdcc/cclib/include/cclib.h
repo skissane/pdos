@@ -180,7 +180,7 @@ struct cc_expr {
             size_t n_enum_types;
             cc_variable *vars;
             size_t n_vars;
-            cc_expr *parent_block;
+            size_t parent_id;
         } block;
         struct {
             unsigned long numval; /* Numeric value for constant */
@@ -231,7 +231,6 @@ struct cc_reader {
 
 cc_variable cc_parse_variable(cc_reader *reader);
 cc_expr cc_parse_statment(cc_reader *reader);
-cc_expr cc_parse_block_expr(cc_reader *reader);
 cc_member cc_parse_member(cc_reader *reader);
 cc_type cc_parse_type(cc_reader *reader);
 int cc_parse_file(cc_reader *reader);
