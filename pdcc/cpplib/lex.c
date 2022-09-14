@@ -11,8 +11,7 @@
 #include "cpplib.h"
 #include "internal.h"
 #include "support.h"
-#include "xmalloc.c"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,8 +87,8 @@ void _cpp_process_line_notes(cpp_reader *reader)
 int _cpp_skip_block_comment(cpp_reader *reader)
 {
     cpp_mffc *mffc = reader->mffc;
-    const unsigned char *pos = mffc->pos;
-    unsigned char c;
+    const char *pos = mffc->pos;
+    char c;
 
     pos++;
     if (*pos == '/') pos++;
@@ -157,16 +156,14 @@ static void skip_whitespace(cpp_reader *reader, unsigned char c)
 }
 
 static cpp_unknown *read_ident(cpp_reader *reader,
-                               const unsigned char *start)
+                               const char *start)
 {
     cpp_unknown *unknown;
     size_t len;
-    const unsigned char *pos = start + 1;
+    const char *pos = start + 1;
 
     while (ISIDNUM(*pos))
-    {
         pos++;
-    }
 
     len = pos - start;
 
@@ -185,10 +182,9 @@ static cpp_unknown *read_ident(cpp_reader *reader,
 
 static void read_number(cpp_reader *reader, cpp_string *string)
 {
-    const unsigned char *start, *cur;
-    unsigned char *result;
-
-    start = reader->mffc->pos - 1;
+    const char *start = reader->mffc->pos - 1;
+    const char *cur;
+    char *result;
 
     do {
         cur = reader->mffc->pos;
@@ -204,22 +200,17 @@ static void read_number(cpp_reader *reader, cpp_string *string)
 
     string->len = cur - start;
     result = xmalloc(string->len + 1);
-    memcpy(result, start, string->len);
-    result[string->len] = '\0';
+    strncpy(result, start, string->len);
     string->text = result;
 }
 
 static void create_literal(cpp_reader *reader,
                            cpp_token *token,
-                           const unsigned char *start,
-                           unsigned int len,
+                           const char *start, size_t len,
                            enum cpp_tokentype type)
 {
-    unsigned char *result;
-    
-    result = xmalloc(len + 1);
-    memcpy(result, start, len);
-    result[len] = '\0';
+    char *result = xmalloc(len + 1);
+    strncpy(result, start, len);
 
     token->type = type;
     token->value.string.text = result;
@@ -228,14 +219,13 @@ static void create_literal(cpp_reader *reader,
 
 static void read_string(cpp_reader *reader,
                         cpp_token *token,
-                        const unsigned char *start)
+                        const char *start)
 {
     enum cpp_tokentype type;
-    const unsigned char *pos;
+    const char *pos = start;
     int saw_NUL = 0;
-    unsigned char terminator;
+    char terminator;
 
-    pos = start;
     terminator = *(pos++);
     if (terminator == 'L' || terminator == 'U') terminator = *(pos++);
     else if (terminator == 'u')
@@ -266,7 +256,7 @@ static void read_string(cpp_reader *reader,
 
     for (;;)
     {
-        unsigned char c = *(pos++);
+        char c = *(pos++);
 
         if ((c == '\\')
             /* In #include-like directives, terminators are not escapable. */
@@ -311,7 +301,7 @@ static void read_string(cpp_reader *reader,
 }
 
 static void add_line_note(cpp_mffc *mffc,
-                          const unsigned char *pos,
+                          const char *pos,
                           unsigned int type)
 {
     if (mffc->notes_used == mffc->notes_cap)
@@ -326,7 +316,7 @@ static void add_line_note(cpp_mffc *mffc,
     mffc->notes_used++;
 }
 
-const unsigned char *find(const unsigned char *s)
+const char *find(const char *s)
 {
     while (!((*s == '\n') || (*s == '\r')
              || (*s == '\\') || (*s == '?')))
@@ -339,36 +329,33 @@ const unsigned char *find(const unsigned char *s)
 
 void _cpp_clean_line(cpp_reader *reader)
 {
-    cpp_mffc *mffc;
-    const unsigned char *s;
-    unsigned char c, *d, *p;
+    cpp_mffc *mffc = reader->mffc;
+    char *s = (char *)(mffc->pos = mffc->line_base = mffc->next_line);
+    char c, *d, *p;
 
-    mffc = reader->mffc;
     mffc->cur_note = mffc->notes_used = 0;
-    s = mffc->pos = mffc->line_base = mffc->next_line;
     mffc->need_line = 0;
-
     if (mffc->from_stage3 == 0)
     {
-        const unsigned char *backslash = NULL;
+        const char *backslash = NULL;
         while (1)
         {
             /* Optimized search for '\n', '\r', '\\', '?'. */
-            s = find(s);
+            s = (char *)find(s);
             if (*s == '\\')
             {
                 backslash = s++;
             }
             else if (*s == '?')
             {
-                if ((s[1] == '?') && _cpp_trigraph_map[s[2]])
+                if ((s[1] == '?') && _cpp_trigraph_map[(int)s[2]])
                 {
                     /* Adds line note for -Wtrigraphs. */
                     add_line_note(mffc, s, s[2]);
                     if (CPP_OPTION(reader, trigraphs))
                     {
-                        d = (unsigned char *)s;
-                        *d = _cpp_trigraph_map[s[2]];
+                        d = s;
+                        *d = _cpp_trigraph_map[(int)s[2]];
                         s += 2;
                         goto slow_path;
                     }
@@ -380,7 +367,7 @@ void _cpp_clean_line(cpp_reader *reader)
         }
 
         /* *s is '\r' or '\n'. */
-        d = (unsigned char *)s;
+        d = s;
 
         if (s == mffc->end) goto end;
 
@@ -410,9 +397,8 @@ void _cpp_clean_line(cpp_reader *reader)
             if (c == '\r' || c == '\n')
             {
                 if ((c == '\r') && (s != mffc->end) && (s[1] == '\n'))
-                {
                     s++;
-                }
+                
                 if (s == mffc->end) break;
 
                 /* Escaped new line? */
@@ -424,13 +410,13 @@ void _cpp_clean_line(cpp_reader *reader)
                 d = p - 2;
                 mffc->next_line = p - 1;
             }
-            else if (c == '?' && (s[1] == '?') && _cpp_trigraph_map[s[2]])
+            else if (c == '?' && (s[1] == '?') && _cpp_trigraph_map[(int)s[2]])
             {
                 /* Adds line note for -Wtrigraphs. */
                 add_line_note(mffc, s, s[2]);
                 if (CPP_OPTION(reader, trigraphs))
                 {
-                    *d = _cpp_trigraph_map[s[2]];
+                    *d = _cpp_trigraph_map[(int)s[2]];
                     s += 2;
                 }
             }
@@ -440,19 +426,16 @@ void _cpp_clean_line(cpp_reader *reader)
     {
         while (*s != '\n' && *s != '\r') s++;
 
-        d = (unsigned char *)s;
-
+        d = s;
         if ((s[0] == '\r') && (s != mffc->end) && (s[1] == '\n'))
-        {
             s++;
-        }
     }
 
 end:
     *d = '\n';
     /* Guard note, that should not be processed. */
     add_line_note(mffc, d + 1, '\n');
-    mffc->next_line = (unsigned char *)s + 1;    
+    mffc->next_line = s + 1;    
 }
 
 /* Returns 1, if new line was loaded. */
@@ -460,18 +443,14 @@ int _cpp_get_new_line(cpp_reader *reader)
 {
     /* New line cannot start while in directive. */
     if(reader->state.in_directive)
-    {
         return (0);
-    }
 
     for (;;)
     {
         cpp_mffc *mffc = reader->mffc;
 
         if (mffc->need_line == 0)
-        {
             return (1);
-        }
         
         if (mffc->next_line < mffc->end)
         {
@@ -878,7 +857,7 @@ cpp_token *_cpp_lex_token(cpp_reader *reader)
     return (result);
 }
 
-const cpp_token *cpp_peek_token(cpp_reader *reader, unsigned int index)
+const cpp_token *cpp_peek_token(cpp_reader *reader, size_t index)
 {
     cpp_unknown2 *unknown2 = reader->unknown2;
     const cpp_token *token;

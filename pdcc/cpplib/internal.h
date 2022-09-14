@@ -48,7 +48,7 @@ typedef struct cpp_unknown2 {
 } cpp_unknown2;
 
 typedef struct {
-    const unsigned char *pos;
+    const char *pos;
 
     /* Type of note. '\\' means an escaped newline,
      * ' ' means an escaped newline with space before '\\',
@@ -60,12 +60,12 @@ typedef struct {
 
 /* Memory for file content. */
 typedef struct cpp_mffc {
-    const unsigned char *pos;
-    const unsigned char *line_base;
-    const unsigned char *next_line;
+    const char *pos;
+    const char *line_base;
+    const char *next_line;
 
-    const unsigned char *start; /* Pointer for free(). */
-    const unsigned char *end;
+    const char *start; /* Pointer for free(). */
+    const char *end;
 
     _cpp_line_note *notes; /* Array of notes. */
     unsigned int cur_note;
@@ -141,7 +141,7 @@ struct cpp_reader {
 
     struct spec_unknowns spec_unknowns;
 
-    unsigned char *macro_memory;
+    char *macro_memory;
     unsigned int macro_memory_size;
 
     symtab *tab;
@@ -205,7 +205,7 @@ void _cpp_undefine_macro(cpp_unknown *unknown);
 void _cpp_init_directives(cpp_reader *reader);
 int _cpp_handle_directive(cpp_reader *reader);
 void _cpp_define_builtin(cpp_reader *reader, const char *);
-cpp_mffc *_cpp_add_mffc(cpp_reader *, unsigned char *, size_t,
+cpp_mffc *_cpp_add_mffc(cpp_reader *, char *, size_t,
                         int from_stage3);
 void _cpp_remove_mffc(cpp_reader *);
 void _cpp_change_file(cpp_reader *, enum cpp_reasons,

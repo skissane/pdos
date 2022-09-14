@@ -11,8 +11,7 @@
 #include "cpplib.h"
 #include "internal.h"
 #include "support.h"
-#include "xmalloc.c"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +28,8 @@ struct if_stack {
 typedef void (*directive_handler)(cpp_reader *);
 typedef struct directive {
     directive_handler handler;
-    const unsigned char *name;
-    unsigned int len;
+    const char *name;
+    size_t len;
     unsigned int flags;
 } directive;
 
@@ -67,7 +66,7 @@ enum {
     DIRECTIVE_COUNT
 };
 
-#define D(name, ename, flags) {do_##name, (const unsigned char *)#name, \
+#define D(name, ename, flags) {do_##name, #name, \
                                sizeof (#name) - 1, flags},
 static const directive directives[] = {
     DIRECTIVE_TABLE
@@ -75,7 +74,7 @@ static const directive directives[] = {
 #undef D
 
 static const directive dir_linemarker = {
-    do_linemarker, (const unsigned char *)"#", 1, 0
+    do_linemarker, "#", 1, 0
 };
 
 /* Prototypes. */
@@ -155,13 +154,11 @@ static const cpp_token *get_token_without_padding(cpp_reader *reader)
     }
 }
 
-static unsigned char *glue_header_name(cpp_reader *reader)
+static char *glue_header_name(cpp_reader *reader)
 {
     const cpp_token *token;
-    unsigned char *memory;
     size_t total = 0, capacity = 2048;
-
-    memory = xmalloc(capacity);
+    char *memory = xmalloc(capacity);
     for (;;)
     {
         size_t len;
@@ -193,22 +190,19 @@ static unsigned char *glue_header_name(cpp_reader *reader)
     return (memory);
 }
 
-static unsigned char *parse_include(cpp_reader *reader,
-                                    int *pangled,
-                                    location_t *loc)
+static char *parse_include(cpp_reader *reader,
+                           int *pangled,
+                           location_t *loc)
 {
-    unsigned char *name;
-    const cpp_token *token;
-
-    token = get_token_without_padding(reader);
+    char *name;
+    const cpp_token *token = get_token_without_padding(reader);
     *loc = token->src_loc;
     if ((token->type == CPP_STRING)
         || (token->type == CPP_HEADER_NAME))
     {
         name = xmalloc(token->value.string.len - 1);
-        memcpy(name, token->value.string.text + 1,
-               token->value.string.len - 2);
-        name[token->value.string.len - 2] = '\0';
+        strncpy(name, token->value.string.text + 1,
+                token->value.string.len - 2);
         *pangled = (token->type == CPP_HEADER_NAME);
     }
     else if (token->type == CPP_LESS)
@@ -234,7 +228,7 @@ static unsigned char *parse_include(cpp_reader *reader,
 void run_directive(cpp_reader *reader, int number_dir,
                    char *p, size_t len)
 {
-    _cpp_add_mffc(reader, (unsigned char *)p, len, 1 /* from_stage3 */);
+    _cpp_add_mffc(reader, p, len, 1 /* from_stage3 */);
     start_directive(reader);
 
     _cpp_clean_line(reader);
@@ -301,7 +295,7 @@ static void add_conditional(cpp_reader *reader, int skip,
     mffc->if_stack = ifs;
 }
 
-static int str_to_linenum(const unsigned char *text,
+static int str_to_linenum(const char *text,
                           size_t len,
                           unsigned long *line,
                           int *overflow)
@@ -482,11 +476,9 @@ static void do_endif(cpp_reader *reader)
 
 static void do_include(cpp_reader *reader)
 {
-    unsigned char *filename;
     int angled; /* <name> */
     location_t loc;
-
-    filename = parse_include(reader, &angled, &loc);
+    char *filename = parse_include(reader, &angled, &loc);
     if (filename == NULL) return;
 
     if (*filename == '\0')
@@ -501,13 +493,7 @@ static void do_include(cpp_reader *reader)
 
     /* Removes accumulated unknown2. */
     skip_rest_of_line(reader);
-
-    _cpp_add_include(reader,
-                     (char *)filename,
-                     angled,
-                     INCLUDE_TYPE_INCLUDE,
-                     loc);
-
+    _cpp_add_include(reader, filename, angled, INCLUDE_TYPE_INCLUDE, loc);
     free(filename);
 }
 
@@ -596,7 +582,7 @@ static void do_line(cpp_reader *reader)
 
 static void do_error(cpp_reader *reader)
 {
-    unsigned char *line;
+    char *line;
     
     reader->state.prevent_expansion++;
     line = cpp_output_line_to_string(reader, reader->directive->name);
@@ -818,7 +804,7 @@ void _cpp_init_directives(cpp_reader *reader)
 }
 
 cpp_mffc *_cpp_add_mffc(cpp_reader *reader,
-                        unsigned char *start,
+                        char *start,
                         size_t size,
                         int from_stage3)
 {

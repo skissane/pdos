@@ -11,7 +11,7 @@
 #include "cpplib.h"
 #include "internal.h"
 #include "support.h"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +49,7 @@ struct op {
                           && ((a).low == (b).low))
 
 unsigned int cpp_interpret_float_suffix(cpp_reader *reader,
-                                        const unsigned char *str,
+                                        const char *str,
                                         size_t len)
 {
     size_t f, l;
@@ -83,13 +83,10 @@ unsigned int cpp_interpret_float_suffix(cpp_reader *reader,
 }
 
 unsigned int cpp_interpret_int_suffix(cpp_reader *reader,
-                                      const unsigned char *str,
+                                      const char *str,
                                       size_t len)
 {
-    size_t l, u;
-
-    l = u = 0;
-
+    size_t l = 0, u = 0;
     while (len--)
     {
         switch(str[len])
@@ -133,8 +130,8 @@ unsigned int cpp_classify_number(cpp_reader *reader,
                                  const cpp_token *token,
                                  location_t virtual_loc)
 {
-    const unsigned char *str = token->value.string.text;
-    const unsigned char *end;
+    const char *str = token->value.string.text;
+    const char *end;
     unsigned int result, radix, max_digit;
     enum {NOT_FLOAT, AFTER_POINT, AFTER_EXPONENT} float_flag;
     int seen_digit;
@@ -404,7 +401,7 @@ cpp_number cpp_interpret_integer(cpp_reader *reader,
                                  unsigned int type)
 {
     cpp_number result;
-    const unsigned char *p;
+    const char *p;
 
     result.unsignedp = !!(type & CPP_NUMBER_UNSIGNED);
     result.overflow = 0;
@@ -420,7 +417,7 @@ cpp_number cpp_interpret_integer(cpp_reader *reader,
     {
         cpp_number_part max;
         size_t precision = CPP_OPTION(reader, precision);
-        const unsigned char *end = p + (token->value.string.len);
+        const char *end = p + (token->value.string.len);
         unsigned int base = 10;
         int overflow = 0;
 

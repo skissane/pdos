@@ -25,13 +25,9 @@ static void cpp_diagnostics(cpp_reader *reader,
     
     assert(reader->callbacks.diagnostics);
     if (reader->cur_token == reader->cur_tokenrow->start)
-    {
         loc.file = NULL;
-    }
     else
-    {
         loc = reader->cur_token[-1].src_loc;
-    }
     
     reader->callbacks.diagnostics(reader, level, ignored,
                                   loc, message, vl);

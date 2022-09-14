@@ -9,17 +9,17 @@
  */
 
 #include "symtab.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-symtab *symtab_create_symtab(unsigned int size,
+symtab *symtab_create_symtab(size_t size,
                              symtab_cell *(*alloc_cell)(void))
 {
     symtab *tab = xmalloc(sizeof(*tab));
-    int i;
+    size_t i;
 
     if (tab == NULL) return (NULL);
 
@@ -42,11 +42,11 @@ symtab *symtab_create_symtab(unsigned int size,
 }
 
 symtab_cell *symtab_find(symtab *tab,
-                         const unsigned char *name,
-                         unsigned int len)
+                         const char *name,
+                         size_t len)
 {
     int value = 0;
-    int i;
+    size_t i;
     symtab_cell *cell, **prev_cell;
 
     for (i = 0; i < len; i++)
@@ -58,23 +58,13 @@ symtab_cell *symtab_find(symtab *tab,
     cell = tab->cells[value % (tab->size)];
     prev_cell = &(tab->cells[value % (tab->size)]);
     for (; cell; prev_cell = &(cell->next), cell = cell->next)
-    {
-        if ((cell->len == len) && (memcmp(cell->name, name, len) == 0))
-        {
+        if (cell->len == len && strncmp(cell->name, name, len) == 0)
             return (cell);
-        }
-    }
 
     cell = tab->alloc_cell();
-    if (cell == NULL)
-    {
-        printf("failed to allocate memory\n");
-        abort();
-    }
     cell->name = xmalloc(len + 1);
 
-    memcpy(cell->name, name, len);
-    cell->name[len] = '\0';
+    strncpy(cell->name, name, len);
     cell->len = len;
     cell->next = NULL;
 

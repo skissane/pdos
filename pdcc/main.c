@@ -9,10 +9,10 @@
  */
 
 #include "cpplib.h"
+#include "cclib.h"
 #include "c_ppout.h"
 #include "inc_path.h"
-#include "xmalloc.c"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,13 +25,15 @@ struct deferred_option {
 
 typedef struct {
     cpp_reader *reader;
+    cc_reader *cc_reader;
     include_paths *ic;
     const char **input_names;
     unsigned int input_name_count;
     const char *output_name;
-    int preprocess_only_flag;
+    int preprocess_flag;
     int compile_flag;
     void *processor;
+    void *compiler;
     struct deferred_option *deferred_options;
     unsigned int deferred_count;
     int hosted;
@@ -41,11 +43,12 @@ global_core *global_create_core(void)
 {
     global_core *core = xmalloc(sizeof(*core));
     core->reader = NULL;
+    core->cc_reader = NULL;
     core->ic = NULL;
     core->input_names = NULL;
     core->input_name_count = 0;
     core->output_name = NULL;
-    core->preprocess_only_flag = 0;
+    core->preprocess_flag = 1;
     core->compile_flag = 1;
 
     core->deferred_options = NULL;
@@ -74,6 +77,7 @@ static void defer_option(global_core *core, int code, const char *arg)
     core->deferred_count++;
 }
 
+#include "diag.h"
 static void diagnostics(cpp_reader *reader,
                         enum cpp_diagnostic_level level,
                         int ignored,
@@ -81,28 +85,42 @@ static void diagnostics(cpp_reader *reader,
                         const char *message,
                         va_list *vl)
 {
-    fprintf(stderr, "\n");
+    if (loc.file)
+        fprintf(stderr, TTY_RED TTY_BOLD "%s:%li:%i: " TTY_RESET TTY_BOLD,
+            loc.file, loc.line, loc.column);
+    else
+        fprintf(stderr, TTY_RED TTY_BOLD "<unknown>: " TTY_RESET TTY_BOLD);
+    vfprintf(stderr, message, *vl);
+    fprintf(stderr, ":" TTY_RESET "\n");
+
+    /* Print the line with the error */
     if (loc.file)
     {
-        fprintf(stderr, "%s:%lu:%i: ", loc.file, loc.line, loc.column);
+        FILE *fp = fopen(loc.file, "r");
+        if(fp)
+        {
+            unsigned long line_cnt = 0;
+            char line[80];
+            rewind(fp);
+            while (fgets(line, 80, fp) && line_cnt != loc.line - 1)
+                line_cnt++;
+            
+            if (line_cnt == loc.line - 1)
+            {
+                char *p = strchr(line, '\n');
+                size_t i;
+                if (p) *p = '\0';
+                fprintf(stderr, "%s\n", line);
+                for (i = 1; i < loc.column; i++)
+                    fputc('-', stderr);
+                fprintf(stderr, "^\n");
+            }
+            fclose(fp);
+        }
     }
-    else
-    {
-        fprintf(stderr, "unknown location: ");
-    }
-    switch(level)
-    {
-        case CPP_DL_WARNING: fprintf(stderr, "warning: "); break;
-        case CPP_DL_ERROR: fprintf(stderr, "error: "); break;
-        case CPP_DL_CRITICAL: fprintf(stderr, "critical error: "); break;
-        case CPP_DL_INTERNAL_ERROR: fprintf(stderr, "internal error: "); break;
-    }
-    vfprintf(stderr, message, *vl);
-    fprintf(stderr, "\n");
-    if (level == CPP_DL_CRITICAL)
-    {
-        /* +++Compilation failure. */
-    }
+
+    if (level == CC_DL_ERROR)
+        exit(EXIT_FAILURE);
 }
 
 void c_init_options(global_core *core,
@@ -123,7 +141,7 @@ void c_after_options(global_core *core)
 {
     ic_register_include_chains(core->ic, core->reader);
     
-    if (core->preprocess_only_flag)
+    if (core->preprocess_flag)
     {
         FILE *output;
         if ((core->output_name == NULL)
@@ -140,8 +158,34 @@ void c_after_options(global_core *core)
             return;
         }
     }
-    else
+
+    if (core->compile_flag)
     {
+        FILE *output;
+        if ((core->output_name == NULL)
+            || (core->output_name[0] == '\0'))
+        {
+            output = stdout;
+        }
+        else output = fopen(core->output_name, "w");
+
+        core->cc_reader = xmalloc(sizeof(*core->cc_reader));
+        memset(core->cc_reader, 0, sizeof(*core->cc_reader));
+        
+        core->cc_reader->output = output;
+        core->cc_reader->file = xstrdup(core->input_names[0]);
+        core->cc_reader->input = fopen(core->input_names[0], "r");
+        core->cc_reader->char_bits = 8;
+        core->cc_reader->short_bits = 16;
+        core->cc_reader->int_bits = 32;
+        core->cc_reader->long_bits = 64;
+        core->cc_reader->llong_bits = 64;
+        core->cc_reader->ptr_bits = 32;
+        if (core->cc_reader->input == NULL)
+        {
+            printf("+++Can't open %s\n", core->input_names[0]);
+            return;
+        }
         printf("+++Finish c_after_options\n");
     }
 }
@@ -151,39 +195,42 @@ static void c_finish_options(global_core *core)
     location_t loc;
     unsigned int i;
 
-    loc.file = "<built-in>";
-    loc.line = 1;
-    loc.column = 0;
-    cpp_get_callbacks(core->reader)->file_change(core->reader,
-                                                 loc,
-                                                 CPP_REASON_RENAME);
-
-    cpp_force_token_locations(core->reader, loc);
-    cpp_init_builtins(core->reader, core->hosted);
-
-    loc.file = "<command-line>";
-    loc.line = 1;
-    loc.column = 0;
-    cpp_get_callbacks(core->reader)->file_change(core->reader,
-                                                 loc,
-                                                 CPP_REASON_RENAME);
-
-    cpp_force_token_locations(core->reader, loc);
-
-    for (i = 0; i < core->deferred_count; i++)
+    if (core->preprocess_flag)
     {
-        struct deferred_option *option;
-        option = &(core->deferred_options[i]);
+        loc.file = "<built-in>";
+        loc.line = 1;
+        loc.column = 0;
+        cpp_get_callbacks(core->reader)->file_change(core->reader,
+                                                    loc,
+                                                    CPP_REASON_RENAME);
 
-        switch (option->code)
+        cpp_force_token_locations(core->reader, loc);
+        cpp_init_builtins(core->reader, core->hosted);
+
+        loc.file = "<command-line>";
+        loc.line = 1;
+        loc.column = 0;
+        cpp_get_callbacks(core->reader)->file_change(core->reader,
+                                                    loc,
+                                                    CPP_REASON_RENAME);
+
+        cpp_force_token_locations(core->reader, loc);
+
+        for (i = 0; i < core->deferred_count; i++)
         {
-            case OPT_D:
-                cpp_define(core->reader, option->arg);
-                break;
-        }
-    }
+            struct deferred_option *option;
+            option = &(core->deferred_options[i]);
 
-    cpp_stop_forcing_token_locations(core->reader);
+            switch (option->code)
+            {
+                case OPT_D:
+                    cpp_define(core->reader, option->arg);
+                    break;
+            }
+        }
+
+        cpp_stop_forcing_token_locations(core->reader);
+    }
 }
 
 static void c_end(global_core *core)
@@ -203,35 +250,33 @@ static void c_end(global_core *core)
     }
 
     free(core->ic);
-    if (core->preprocess_only_flag)
+    if (core->preprocess_flag)
     {
         free(core->processor);
     }
 }
 
-static char *xstrdup(const char *str)
+static void compile_file(cc_reader *reader)
 {
-    size_t len = strlen(str);
-    char *out = xmalloc(len + 1);
-    strcpy(out, str);
-    return (out);
+    cc_parse_file(reader);
 }
 
-static void assemble_file(cpp_reader *reader)
+static global_core *core = NULL;
+static void global_exit(void)
 {
-    return;
+    if (core != NULL)
+    {
+        c_end(core);
+        global_destroy_core(core);
+    }
 }
 
 int main(int argc, char **argv)
-{
+{    
     int i;
-    
-    global_core *core;
-
     for (i = 1; i < argc; i++)
     {
-        if ((strcmp(argv[i], "--help") == 0)
-            || (strcmp(argv[i], "-h") == 0))
+        if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
         {
             printf("Usage: pdcc [options] file...\n");
             printf("Options:\n");
@@ -240,13 +285,12 @@ int main(int argc, char **argv)
             printf("  -o <file>       Puts output into <file>.\n");
             printf("  -I <directory>  #include searches in <directory>.\n");
             printf("  -D <macro>      Defines <macro>.\n");
-
             return (0);
         }
     }
 
+    atexit(&global_exit);
     core = global_create_core();
-
     c_init_options(core, argc - 1, NULL);
 
     for (i = 1; i < argc; i++)
@@ -257,10 +301,12 @@ int main(int argc, char **argv)
             switch (argv[i][0])
             {
                 case 'C':
-                    core->compile_flag = 0;
+                    core->compile_flag = 1;
+                    core->preprocess_flag = 0;
                     break;
                 case 'E':
-                    core->preprocess_only_flag = 1;
+                    core->preprocess_flag = 1;
+                    core->compile_flag = 0;
                     break;
                 case 'I':
                     if (argv[i][1] != '\0')
@@ -310,32 +356,21 @@ int main(int argc, char **argv)
 
     if (core->input_name_count == 0)
     {
-        printf("Error: no input files.\n");
-        printf("Use --help for help.\n");
+        printf("Error: no input files.\nUse --help for help.\n");
         goto end;
     }
 
-    if (!(core->preprocess_only_flag))
-    {
+    if (!(core->preprocess_flag))
         printf("+++Only preprocessor is currently working\n");
-    }
     
     c_after_options(core);
 
     /* Call for each file. */
     c_finish_options(core);
-
-    if (core->preprocess_only_flag)
-    {
+    if (core->preprocess_flag)
         preprocess_file(core->processor, core->reader);
-    }
     if (core->compile_flag)
-    {
-        assemble_file(core->reader);
-    }
-
+        compile_file(core->cc_reader);
 end:
-    c_end(core);
-    global_destroy_core(core);
     return (0);
 }

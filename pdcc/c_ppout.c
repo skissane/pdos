@@ -10,7 +10,7 @@
 
 #include "c_ppout.h"
 #include "cpplib.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,21 +36,13 @@ static int print_line(pp_output *pp_o, location_t loc, const char *flags)
     {
         const char *filename = loc.file;
         size_t filename_len = strlen(filename);
-        unsigned char *new_name = malloc(filename_len * 4 + 1);
-        unsigned char *s;
-
-        if (new_name == NULL)
-        {
-            printf("failed to allocate memory\n");
-            return (-1);
-        }
+        char *new_name = xmalloc(filename_len * 4 + 1);
+        char *s;
 
         pp_o->line = loc.line;
         pp_o->src_file = filename;
 
-        s = cpp_quote_string(new_name,
-                             (const unsigned char *) filename,
-                             filename_len);
+        s = cpp_quote_string(new_name, filename, filename_len);
         *s = '\0';
 
 #ifdef NOLINE

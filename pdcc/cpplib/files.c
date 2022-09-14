@@ -12,7 +12,7 @@
 #include "internal.h"
 #include "filename.h"
 #include "support.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -57,8 +57,7 @@ static char *dir_name_of_file(_cpp_file *file)
         size_t dllzhka = filename(file->path) - (file->path);
         char *name = xmalloc(dllzhka + 1);
 
-        memcpy(name, file->path, dllzhka);
-        name[dllzhka] = '\0';
+        strncpy(name, file->path, dllzhka);
         file->dir_name = name;
     }
 
@@ -141,7 +140,7 @@ static void open_file_failed(cpp_reader *reader,
 static int read_file(cpp_reader *reader, _cpp_file *file, location_t loc)
 {
     FILE *f;
-    unsigned char *memory;
+    char *memory;
     size_t size = 8 * 1024;
     size_t read_bytes = 0;
     size_t change;
@@ -211,8 +210,7 @@ static _cpp_file *create__cpp_file(cpp_reader *reader,
     _cpp_file *file = xmalloc(sizeof(*file));
     file->f = NULL;
     file->dir = dir;
-    file->name = xmalloc(strlen((const char *)name) + 1);
-    strcpy((char *)(file->name), (const char *)name);
+    file->name = xstrdup(name);
     file->dir_name = NULL;
     file->not_found = 1;
     return (file);
@@ -273,26 +271,18 @@ static int find_file_in_dir(cpp_reader *reader,
     return (0);
 }
 
-_cpp_file *_cpp_find_file(cpp_reader *reader,
-                          const char *name,
-                          cpp_dir *start_dir,
-                          int ignored,
-                          int angled,
-                          int ignored2,
-                          location_t loc)
+_cpp_file *_cpp_find_file(cpp_reader *reader, const char *name,
+                          cpp_dir *start_dir, int ignored, int angled,
+                          int ignored2, location_t loc)
 {
-    _cpp_file *file;
-
-    file = create__cpp_file(reader, start_dir, name);
+    _cpp_file *file = create__cpp_file(reader, start_dir, name);
     for (;;)
     {
         if (find_file_in_dir(reader, file, NULL, loc)) break;
 
         file->dir = file->dir->next;
         if (file->dir == NULL)
-        {
             return (file);
-        }
     }
     
     return (file);

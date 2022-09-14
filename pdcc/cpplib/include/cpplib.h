@@ -25,11 +25,7 @@ typedef struct cpp_unknown cpp_unknown;
 typedef struct cpp_macro cpp_macro;
 typedef struct cpp_dir cpp_dir;
 
-typedef struct {
-    const char *file;
-    unsigned long line;
-    int column;
-} location_t;
+#include "diag.h"
 
 #define TYPE_TABLE \
 IDONOTKNOW(EQ, "=") \
@@ -139,8 +135,8 @@ enum c_lang {
                                or before this token after # operator. */
 
 struct cpp_string {
-    unsigned int len;
-    const unsigned char *text;
+    size_t len;
+    const char *text;
 };
 
 struct cpp_macro_argument {
@@ -297,24 +293,23 @@ const cpp_token *cpp_get_token_with_location(cpp_reader *reader,
 void cpp_destroy_reader(cpp_reader *);
 
 
-cpp_unknown *cpp_find(cpp_reader *, const unsigned char *, unsigned int);
+cpp_unknown *cpp_find(cpp_reader *reader, const char *str, size_t index);
 
-const cpp_token *cpp_get_token(cpp_reader *);
-const cpp_token *cpp_peek_token(cpp_reader *reader, unsigned int index);
+const cpp_token *cpp_get_token(cpp_reader *reader);
+const cpp_token *cpp_peek_token(cpp_reader *reader, size_t index);
 
 int cpp_avoid_paste(cpp_reader *reader,
                     const cpp_token *token1,
                     const cpp_token *token2);
 
 unsigned int cpp_token_len(const cpp_token *token);
-unsigned char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
-                               unsigned char *memory, int who_knows);
-const unsigned char *cpp_token_as_text(const cpp_token *);
-unsigned char *cpp_quote_string(unsigned char *dest,
-                                const unsigned char *source,
-                                unsigned int len);
-unsigned char *cpp_output_line_to_string(cpp_reader *reader,
-                                         const unsigned char *directive_name);
+char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
+                      char *memory, int who_knows);
+const char *cpp_token_as_text(const cpp_token *);
+char *cpp_quote_string(char *dest, const char *source,
+                       size_t len);
+char *cpp_output_line_to_string(cpp_reader *reader,
+                                const char *directive_name);
 void cpp_output_token(const cpp_token *token, FILE *output);
 
 void cpp_force_token_locations(cpp_reader *reader, location_t loc);
@@ -374,20 +369,17 @@ unsigned int cpp_classify_number(cpp_reader *reader,
                                  location_t virtual_loc);
 
 unsigned int cpp_interpret_float_suffix(cpp_reader *reader,
-                                        const unsigned char *str,
+                                        const char *str,
                                         size_t len);
 
 unsigned int cpp_interpret_int_suffix(cpp_reader *reader,
-                                      const unsigned char *str,
+                                      const char *str,
                                       size_t len);
 
 /* Evaluates a token classified as CPP_NUMBER_INTEGER. */
 cpp_number cpp_interpret_integer(cpp_reader *reader,
                                  const cpp_token *token,
                                  unsigned int flags);
-
-
-
 void cpp_error(cpp_reader *reader, enum cpp_diagnostic_level level,
                const char *message, ...);
 void cpp_error_with_line(cpp_reader *reader, enum cpp_diagnostic_level level,

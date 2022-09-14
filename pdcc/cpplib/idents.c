@@ -10,7 +10,7 @@
 
 #include "cpplib.h"
 #include "internal.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -45,7 +45,7 @@ void _cpp_init_symtab(cpp_reader *reader, symtab *tab)
     _cpp_init_directives(reader);
 
     s = &(reader->spec_unknowns);
-#define STR_AND_LEN(str) (const unsigned char *)(str), sizeof(str) - 1
+#define STR_AND_LEN(str) (str), sizeof(str) - 1
     s->n_defined = cpp_find(reader, STR_AND_LEN("defined"));
     s->n___VA_ARGS__ = cpp_find(reader, STR_AND_LEN("__VA_ARGS__"));
 }
@@ -58,9 +58,7 @@ void _cpp_destroy_symtab(cpp_reader *reader)
     }
 }
 
-cpp_unknown *cpp_find(cpp_reader *reader,
-                      const unsigned char *name,
-                      unsigned int len)
+cpp_unknown *cpp_find(cpp_reader *reader, const char *name, size_t len)
 {
     return (CPP_UNKNOWN(symtab_find(reader->tab, name, len)));
 }

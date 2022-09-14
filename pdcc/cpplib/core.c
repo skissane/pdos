@@ -10,8 +10,7 @@
 
 #include "cpplib.h"
 #include "internal.h"
-#include "xmalloc.c"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,20 +27,20 @@ enum {
 
 struct spelling {
     int type;
-    unsigned char *text;
+    char *text;
 };
 
-static const unsigned char *digraph_spelling[] = {
-    (const unsigned char *)"%:",
-    (const unsigned char *)"%:%:",
-    (const unsigned char *)"<:",
-    (const unsigned char *)":>",
-    (const unsigned char *)"<%",
-    (const unsigned char *)"%>"
+static const char *digraph_spelling[] = {
+    (const char *)"%:",
+    (const char *)"%:%:",
+    (const char *)"<:",
+    (const char *)":>",
+    (const char *)"<%",
+    (const char *)"%>"
 };
 
-#define IDONOTKNOW(a, b) {SPELLING_OPERATOR, (unsigned char *)b},
-#define IDONOTKNOW2(a, b) {SPELLING_ ## b, (unsigned char *)#a},
+#define IDONOTKNOW(a, b) {SPELLING_OPERATOR, (char *)b},
+#define IDONOTKNOW2(a, b) {SPELLING_ ## b, (char *)#a},
 static const struct spelling token_spelling[] = {TYPE_TABLE};
 #undef IDONOTKNOW
 #undef IDONOTKNOW2
@@ -288,7 +287,7 @@ static void *collect_args(cpp_reader *reader, cpp_unknown *unknown,
                           unsigned int *arg_count_p)
 {
     cpp_macro *macro = unknown->value.macro;
-    unsigned char *memory;
+    char *memory;
     macro_arg *args, *arg;
     const cpp_token **token_p;
     unsigned int parameter_count;
@@ -324,7 +323,7 @@ static void *collect_args(cpp_reader *reader, cpp_unknown *unknown,
             if (&(arg->first[token_count + 2])
                 > (const cpp_token **)(memory + size))
             {
-                unsigned char *old = memory;
+                char *old = memory;
 
                 size += 987 * sizeof(cpp_token *);
                 memory = xrealloc(memory, size);
@@ -332,7 +331,7 @@ static void *collect_args(cpp_reader *reader, cpp_unknown *unknown,
                 args = (macro_arg *)memory;
                 arg = args + (arg_count - 1);
                 token_p = (const cpp_token **)(memory
-                                               + (((unsigned char *)token_p)
+                                               + (((char *)token_p)
                                                   - old));
                 arg->first = token_p;
             }
@@ -489,7 +488,7 @@ static unsigned int macro_real_token_count(cpp_macro *macro)
 /* Allocates and returns CPP_STRING token with text with len.
  * text must be permanently allocated. */
 static const cpp_token *new_string_token(cpp_reader *reader,
-                                         unsigned char *text,
+                                         char *text,
                                          unsigned int len)
 {
     cpp_token *token = _cpp_temp_token(reader);
@@ -505,8 +504,8 @@ static const cpp_token *new_string_token(cpp_reader *reader,
 
 static const cpp_token *strigify_arg(cpp_reader *reader, macro_arg *arg)
 {
-    unsigned char *memory, *end, *dest;
-    unsigned int i, escape_it, backslash_count = 0;
+    char *memory, *end, *dest;
+    size_t i, escape_it, backslash_count = 0;
     const cpp_token *source = NULL;
     size_t len;
 
@@ -522,7 +521,7 @@ static const cpp_token *strigify_arg(cpp_reader *reader, macro_arg *arg)
         {
             if ((source == NULL)
                 || (!(source->flags & AFTER_WHITE)
-                    && (token->value.source == NULL)));
+                    && (token->value.source == NULL)))
             {
                 source = token->value.source;
             }
@@ -561,7 +560,7 @@ static const cpp_token *strigify_arg(cpp_reader *reader, macro_arg *arg)
 
         if (escape_it)
         {
-            unsigned char *pmemory = xmalloc(len);
+            char *pmemory = xmalloc(len);
             len = cpp_spell_token(reader, token, pmemory, 1) - pmemory;
             dest = cpp_quote_string(dest, pmemory, len);
             free(pmemory);
@@ -618,13 +617,6 @@ static void expand_arg(cpp_reader *reader, macro_arg *arg)
     }
 
     _cpp_remove_unknown2(reader);
-}
-
-static void *token_memory_new(cpp_reader *reader, size_t size)
-{
-    void *memory = xmalloc(sizeof(cpp_token *) * size);
-
-    return (memory);
 }
 
 static void copy_paste_flag(cpp_reader *reader, const cpp_token **paste_flag,
@@ -687,7 +679,7 @@ static void replace_args(cpp_reader *reader, cpp_unknown *unknown,
         }
     }
 
-    memory = token_memory_new(reader, tokens_total);
+    memory = xmalloc(sizeof(cpp_token *) * tokens_total);
     first = (const cpp_token **)memory;
     real_first = first;
 
@@ -801,11 +793,11 @@ static void replace_args(cpp_reader *reader, cpp_unknown *unknown,
                           first - (const cpp_token **)memory);
 }
 
-unsigned char *_cpp_builtin_macro_text(cpp_reader *reader,
-                                       cpp_unknown *unknown,
-                                       location_t loc)
+char *_cpp_builtin_macro_text(cpp_reader *reader,
+                              cpp_unknown *unknown,
+                              location_t loc)
 {
-    unsigned char *result = NULL;
+    char *result = NULL;
     unsigned long number = 1;
 
     switch (unknown->value.builtin)
@@ -865,17 +857,12 @@ unsigned char *_cpp_builtin_macro_text(cpp_reader *reader,
             break;
 
         case BT_FILE: {
-            unsigned int len;
-            const char *name;
-            unsigned char *p;
-
-            name = loc.file;
-
-            len = strlen(name);
-            p = xmalloc(len * 2 + 3);
+            const char *name = loc.file;
+            size_t len = strlen(name);
+            char *p = xmalloc(len * 2 + 3);
             result = p;
             *p = '"';
-            p = cpp_quote_string(p + 1, (const unsigned char *)name, len);
+            p = cpp_quote_string(p + 1, name, len);
             *(p++) = '"';
             *p = '\0';
             break;
@@ -899,9 +886,9 @@ unsigned char *_cpp_builtin_macro_text(cpp_reader *reader,
 static int builtin_macro(cpp_reader *reader, cpp_unknown *unknown,
                          location_t loc, location_t expansion_loc)
 {
-    unsigned char *p;
+    char *p;
     size_t len;
-    unsigned char *p2;
+    char *p2;
     cpp_token *token;
 
     if (unknown->value.builtin == BT_PRAGMA)
@@ -943,7 +930,7 @@ static int builtin_macro(cpp_reader *reader, cpp_unknown *unknown,
 }
 
 static int expand_macro(cpp_reader *reader, cpp_unknown *unknown,
-                        const cpp_token *result, location_t loc)
+                        location_t loc)
 {
     reader->about_to_expand_macro = 1;
     if (unknown->type == UNKNOWN_MACRO)
@@ -1037,7 +1024,7 @@ static int paste_tokens(cpp_reader *reader,
                         const cpp_token **pleft,
                         const cpp_token *right)
 {
-    unsigned char *memory, *end, *left_end;
+    char *memory, *end, *left_end;
     cpp_token *left;
     unsigned int len;
 
@@ -1184,8 +1171,7 @@ const cpp_token *cpp_get_token_1(cpp_reader *reader,
                 break;
             }
 
-            expanded = expand_macro(reader, unknown, result, loc);
-
+            expanded = expand_macro(reader, unknown, loc);
             if (expanded)
             {
                 result = padding_token(reader, result);
@@ -1244,14 +1230,14 @@ unsigned int cpp_token_len(const cpp_token *token)
     }
 }
 
-unsigned char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
-                               unsigned char *memory, int who_knows)
+char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
+                      char *memory, int who_knows)
 {
     switch (token_spelling[token->type].type)
     {
         case SPELLING_OPERATOR: {
-            const unsigned char *spelling;
-            unsigned char c;
+            const char *spelling;
+            char c;
 
             if (token->flags & DIGRAPH)
             {
@@ -1265,7 +1251,7 @@ unsigned char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
         }
         
         case SPELLING_IDENT:
-            if (1 /*who_knows +++FINISH UCNs */)
+            if (who_knows)
             {
                 memcpy(memory,
                        token->value.unknown->cell.name,
@@ -1292,7 +1278,7 @@ unsigned char *cpp_spell_token(cpp_reader *reader, const cpp_token *token,
     return (memory);
 }
 
-const unsigned char *cpp_token_as_text(const cpp_token *token)
+const char *cpp_token_as_text(const cpp_token *token)
 {
     switch (token_spelling[token->type].type)
     {
@@ -1304,15 +1290,13 @@ const unsigned char *cpp_token_as_text(const cpp_token *token)
             else return (token_spelling[token->type].text);
         case SPELLING_IDENT: return (token->value.unknown->cell.name);
         case SPELLING_LITERAL: return (token->value.string.text);
-        case SPELLING_NONE: return ((unsigned char *)"");
+        case SPELLING_NONE: return ("");
     }
 
-    return ((unsigned char *)"Unknown token type!");
+    return ("Unknown token type!");
 }
 
-unsigned char *cpp_quote_string(unsigned char *dest,
-                                const unsigned char *source,
-                                unsigned int len)
+char *cpp_quote_string(char *dest, const char *source, size_t len)
 {
     while (len--)
     {
@@ -1335,13 +1319,13 @@ unsigned char *cpp_quote_string(unsigned char *dest,
     return (dest);
 }
 
-unsigned char *cpp_output_line_to_string(cpp_reader *reader,
-                                         const unsigned char *directive_name)
+char *cpp_output_line_to_string(cpp_reader *reader,
+                                const char *directive_name)
 {
     const cpp_token *token;
-    unsigned int out = 0;
-    unsigned int allocated = 128;
-    unsigned char *result = xmalloc(allocated);
+    size_t out = 0;
+    size_t allocated = 128;
+    char *result = xmalloc(allocated);
     
     if (directive_name)
     {
@@ -1352,9 +1336,9 @@ unsigned char *cpp_output_line_to_string(cpp_reader *reader,
     token = cpp_get_token(reader);
     while (token->type != CPP_END)
     {
-        unsigned char *end;
+        char *end;
         /* +2 for space and terminating '\0'. */
-        unsigned int len = cpp_token_len(token) + 2;
+        size_t len = cpp_token_len(token) + 2;
 
         if (out + len > allocated)
         {
@@ -1380,7 +1364,7 @@ void cpp_output_token(const cpp_token *token, FILE *output)
     switch (token_spelling[token->type].type)
     {
         case SPELLING_OPERATOR: {
-            const unsigned char *spelling;
+            const char *spelling;
             int c;
 
             if (token->flags & DIGRAPH)
@@ -1399,7 +1383,7 @@ void cpp_output_token(const cpp_token *token, FILE *output)
         
         case SPELLING_IDENT: {
             size_t i;
-            const unsigned char *name = UNKNOWN_NAME(token->value.unknown);
+            const char *name = UNKNOWN_NAME(token->value.unknown);
 
             for (i = 0; i < UNKNOWN_LEN(token->value.unknown); i++)
             {
@@ -1428,17 +1412,11 @@ int cpp_avoid_paste(cpp_reader *reader,
                     const cpp_token *token2)
 {
     enum cpp_tokentype a = token1->type, b = token2->type;
-    unsigned char c;
-
-    c = ' ';
+    char c = ' ';
     if (token2->flags & DIGRAPH)
-    {
         c = digraph_spelling[b - CPP_FIRST_DIGRAPH][0];
-    }
     else if (token_spelling[b].type == SPELLING_OPERATOR)
-    {
         c = token_spelling[b].text[0];
-    }
 
     /* Quickly finds anything that can paste with '='. */
     if ((a <= CPP_RSHIFT) && (c == '=')) return (1);

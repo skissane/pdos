@@ -10,8 +10,7 @@
 
 #include "cpplib.h"
 #include "internal.h"
-#include "xmalloc.c"
-#include "xrealloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,7 +174,7 @@ static int collect_parameters(cpp_reader *reader, int *parameter_count,
                     "expected ')' before end of line",
                     "expected ')' after \"...\""};
                 int i = after_ident;
-                const unsigned char *as_text = NULL;
+                const char *as_text = NULL;
                 if (*variadic) i = 4;
                 else if (token->type == CPP_END) i += 2;
                 else as_text = cpp_token_as_text(token);

@@ -11,7 +11,7 @@
 #include "cpplib.h"
 #include "internal.h"
 #include "support.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,8 +30,8 @@ static unsigned int hex_value(unsigned int c)
 int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
                          cpp_string *out, enum cpp_tokentype type)
 {
-    const unsigned char *p;
-    unsigned char *p2;
+    const char *p = in->text;
+    char *p2;
     
     if ((type != CPP_STRING) && (type != CPP_CHAR))
     {
@@ -43,7 +43,7 @@ int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
     p2 = xmalloc(in->len);
 
     out->text = p2;
-    for ((p = in->text);
+    for ( ;
          p < in->text + in->len;
          p++, p2++)
     {
@@ -56,13 +56,13 @@ int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
                 case 'a': *p2 = '\a'; continue;
                 case 'b': *p2 = '\b'; continue;
                 case 'f': *p2 = '\f'; continue;
-                case 'n': *p2 = '\r'; continue;
-                case 'r': *p2 = '\n'; continue;
+                case 'n': *p2 = '\n'; continue;
+                case 'r': *p2 = '\r'; continue;
                 case 't': *p2 = '\t'; continue;
                 case 'v': *p2 = '\v'; continue;
                 case '0': *p2 = '\0'; continue;
                 case 'x': {
-                    const unsigned char *orig = p;
+                    const char *orig = p;
                     unsigned int h;
                     p++;
                     if (!ISXDIGIT(*p))
@@ -96,7 +96,7 @@ int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
                 case '1': case '2': case '3':
                 case '4': case '5': case '6':
                 case '7': {
-                    const unsigned char *orig = p;
+                    const char *orig = p;
                     unsigned int h;
 
                     h = 0;
@@ -125,7 +125,6 @@ int cpp_interpret_string(cpp_reader *reader, const cpp_string *in,
         }
         *p2 = *p;
     }
-    
     return (0);
 }
 
@@ -135,6 +134,13 @@ cppchar_t narrow_str_to_charconst(cpp_reader *reader, cpp_string str,
 {
     size_t width = CPP_OPTION(reader, char_precision);
     cppchar_t result = str.text[1];
+
+    if ((type != CPP_STRING) && (type != CPP_CHAR))
+    {
+        printf("+++strings other than CPP_STRING and CPP_CHAR"
+               " are not supported %d %s\n", __LINE__, __FILE__);
+        return (1);
+    }
     
     *pchars_seen = 1;
     *unsignedp = 0;
@@ -148,7 +154,6 @@ cppchar_t narrow_str_to_charconst(cpp_reader *reader, cpp_string str,
         }
         else result |= ~mask;
     }
-    
     return (result);
 }
 

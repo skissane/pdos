@@ -9,7 +9,7 @@
  */
 
 #include "inc_path.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

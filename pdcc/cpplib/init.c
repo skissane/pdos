@@ -10,7 +10,7 @@
 
 #include "cpplib.h"
 #include "internal.h"
-#include "xmalloc.c"
+#include "xmalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,12 +113,12 @@ void cpp_destroy_reader(cpp_reader *reader)
 }
 
 struct builtin_macro {
-    const unsigned char *name;
-    const unsigned int len;
+    const char *name;
+    const size_t len;
     const unsigned int value;
 };
 
-#define STR_AND_LEN(str) (const unsigned char *)(str), sizeof(str) - 1
+#define STR_AND_LEN(str) (str), sizeof(str) - 1
 #define A(name, value) {STR_AND_LEN(name), value}
 
 static const struct builtin_macro builtin[] = {
@@ -164,13 +164,8 @@ const char *cpp_read_main_file(cpp_reader *reader, const char *name)
 
     loc.file = NULL;
     
-    reader->main_file = _cpp_find_file(reader,
-                                      name,
-                                      &(reader->no_search_path),
-                                      0,
-                                      0,
-                                      0,
-                                      loc);
+    reader->main_file = _cpp_find_file(reader, name, &(reader->no_search_path),
+                                       0, 0, 0, loc);
     if (_cpp_file_not_found(reader->main_file)) goto end;
     if (_cpp_add_file(reader, reader->main_file, 0, loc)) goto end;
     
