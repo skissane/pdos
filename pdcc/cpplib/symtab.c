@@ -62,9 +62,7 @@ symtab_cell *symtab_find(symtab *tab,
             return (cell);
 
     cell = tab->alloc_cell();
-    cell->name = xmalloc(len + 1);
-
-    strncpy(cell->name, name, len);
+    cell->name = xstrndup(name, len + 1);
     cell->len = len;
     cell->next = NULL;
 

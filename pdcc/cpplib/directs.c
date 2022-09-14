@@ -200,9 +200,8 @@ static char *parse_include(cpp_reader *reader,
     if ((token->type == CPP_STRING)
         || (token->type == CPP_HEADER_NAME))
     {
-        name = xmalloc(token->value.string.len - 1);
-        strncpy(name, token->value.string.text + 1,
-                token->value.string.len - 2);
+        name = xstrndup(token->value.string.text + 1,
+                        token->value.string.len - 2);
         *pangled = (token->type == CPP_HEADER_NAME);
     }
     else if (token->type == CPP_LESS)

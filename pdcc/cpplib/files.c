@@ -55,9 +55,7 @@ static char *dir_name_of_file(_cpp_file *file)
     if (file->dir_name == NULL)
     {
         size_t dllzhka = filename(file->path) - (file->path);
-        char *name = xmalloc(dllzhka + 1);
-
-        strncpy(name, file->path, dllzhka);
+        char *name = xstrndup(file->path, dllzhka + 1);
         file->dir_name = name;
     }
 
@@ -123,7 +121,6 @@ int _cpp_add_include(cpp_reader *reader,
     file = _cpp_find_file(reader, name, dir, 0,
                           angled_name, (type == INCLUDE_TYPE_DEFAULT), loc);
     if ((type == INCLUDE_TYPE_DEFAULT) && (file == NULL)) return (1);
-    
     return (_cpp_add_file(reader, file, 0, loc));
 }
 

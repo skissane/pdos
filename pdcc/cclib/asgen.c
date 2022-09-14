@@ -65,25 +65,20 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
     switch (expr->type)
     {
     case CC_EXPR_NONE:
-        fprintf(reader->output, "# none");
+        fprintf(reader->output, ";; none");
         break;
     case CC_EXPR_STRING:
-        fprintf(reader->output, "\tpush S%u\n", expr->id);
-        fprintf(reader->output, "\tjmp S%u_end\n", expr->id);
+        fprintf(reader->output, "\tpushl S%u\n", expr->id);
+        fprintf(reader->output, "\tjmpl S%u_end\n", expr->id);
         fprintf(reader->output, "S%u:\n", expr->id);
-        fprintf(reader->output, "\tdb ");
         len = strlen(expr->data.string.data);
         for (i = 0; i < len; i++)
-        {
-            fprintf(reader->output, "0x%x", expr->data.string.data[i]);
-            if (i < len - 1)
-                fprintf(reader->output, ",");
-        }
+            fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
         fprintf(reader->output, "\n");
         fprintf(reader->output, "S%u_end:\n", expr->id);
         return 4;
     case CC_EXPR_CONSTANT:
-        fprintf(reader->output, "\tpush %lu\n", expr->data._const.numval);
+        fprintf(reader->output, "\tpushl $%lu\n", expr->data._const.numval);
         return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
@@ -94,8 +89,8 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
 
 static void cc_i386gen_prologue(cc_reader *reader, const cc_expr *expr)
 {
-    fprintf(reader->output, "\tmov esp, ebp\n");
-    fprintf(reader->output, "\tpush ebp\n");
+    fprintf(reader->output, "\tmovl %%esp, %%ebp\n");
+    fprintf(reader->output, "\tpushl %%ebp\n");
     stack_size = 0;
 }
 
@@ -104,15 +99,15 @@ static void cc_i386gen_epilogue(cc_reader *reader, const cc_expr *expr)
     size_t i;
     if (expr == NULL)
     {
-        fprintf(reader->output, "\tret\n");
+        fprintf(reader->output, "\tretl\n");
         return;
     }
 
     if (expr->type == CC_EXPR_BLOCK)
     {
-        fprintf(reader->output, "\tpop ebp\n");
-        fprintf(reader->output, "\tmov ebp, esp\n");
-        fprintf(reader->output, "\tret\n");
+        fprintf(reader->output, "\tpopl %%ebp\n");
+        fprintf(reader->output, "\tmovl %%ebp, %%esp\n");
+        fprintf(reader->output, "\tretl\n");
         return;
     }
     printf("Unknown expr type %u for epilogue\n", expr->type);
@@ -147,7 +142,7 @@ static void cc_i386gen_return(cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_NONE:
         break;
     case CC_EXPR_CONSTANT:
-        fprintf(reader->output, "\tmov eax, %u\n", expr->data._const.numval);
+        fprintf(reader->output, "\tmovl %%eax, %u\n", expr->data._const.numval);
         break;
     default:
         printf("unknown expr %u\n", expr->type);
@@ -159,14 +154,14 @@ static void cc_i386gen_decl(cc_reader *reader, const cc_variable *var)
 {
     size_t size = cc_get_variable_size(var);
     stack_size += size;
-    fprintf(reader->output, "\tsub %u, esp #%s, %u\n", size, var->name,
+    fprintf(reader->output, "\tsubl $%u, %%esp #%s, %u\n", size, var->name,
             stack_size);
 }
 
 static void cc_i386gen_if(cc_reader *reader, const cc_expr *cond_expr,
                           const cc_expr *body_expr)
 {
-    fprintf(reader->output, "\t# TODO: comparison\n");
+    fprintf(reader->output, "\t/* TODO: comparison */\n");
 }
 
 static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
@@ -194,7 +189,7 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
             stack_size += cc_i386gen_push(reader, param_expr);
         }
 
-        fprintf(reader->output, "\tcall ");
+        fprintf(reader->output, "\tcalll ");
         if (expr->data.call.callee_func)
             fprintf(reader->output, "%s\n", expr->data.call.callee_func->name);
         else if (expr->data.call.callee)
@@ -206,7 +201,7 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         }
 
         /* Pop stack */
-        fprintf(reader->output, "\tadd esp, %u\n", stack_size);
+        fprintf(reader->output, "\taddl $%u, %%esp\n", stack_size);
         stack_size = 0;
         break;
     case CC_EXPR_STRING:
@@ -223,10 +218,10 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         printf("%lu", expr->data._const.numval);
         break;
     case CC_EXPR_BLOCK:
-        printf(";; {\n");
+        fprintf(reader->output, "# {\n");
         for (i = 0; i < expr->data.block.n_exprs; i++)
             cc_i386gen_top(reader, &expr->data.block.exprs[i]);
-        printf(";; }\n");
+        fprintf(reader->output, "# }\n");
         break;
     default:
         printf("Unknown expr type %u\n", expr->type);
@@ -237,9 +232,12 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
 static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
 {
     if (var->linkage != CC_LINKAGE_EXTERN)
+    {
+        fprintf(reader->output, ".global %s\n", var->name);
         fprintf(reader->output, "%s:\n", var->name);
+    }
     else
-        fprintf(reader->output, ";; extern %s\n", var->name);
+        fprintf(reader->output, ".global %s\n", var->name);
 
     switch (var->type.mode)
     {
@@ -260,7 +258,7 @@ void cc_i386gen(cc_reader *reader, const cc_expr *expr)
 {
     size_t i;
     assert(expr->type == CC_EXPR_BLOCK);
-    fprintf(reader->output, "bits 32\n");
+    fprintf(reader->output, "# bits 32\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
         cc_i386gen_variable(reader, &expr->data.block.vars[i]);
 }

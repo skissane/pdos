@@ -199,8 +199,7 @@ static void read_number(cpp_reader *reader, cpp_string *string)
     } while (0 /*+++Finish UCNs*/);
 
     string->len = cur - start;
-    result = xmalloc(string->len + 1);
-    strncpy(result, start, string->len);
+    result = xstrndup(start, string->len + 1);
     string->text = result;
 }
 
@@ -209,8 +208,7 @@ static void create_literal(cpp_reader *reader,
                            const char *start, size_t len,
                            enum cpp_tokentype type)
 {
-    char *result = xmalloc(len + 1);
-    strncpy(result, start, len);
+    char *result = xstrndup(start, len + 1);
 
     token->type = type;
     token->value.string.text = result;
