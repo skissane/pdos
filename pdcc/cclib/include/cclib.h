@@ -9,26 +9,24 @@
  */
 
 #ifndef CCLIB_H
-#define CCLIB_H
+#define CCLIB_H 1
 
-#include "cpplib.h"
-#include "lexer.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include "cpplib.h"
+#include "lexer.h"
 
+#ifndef CC_READER_DEFINED
+#   define CC_READER_DEFINED 1
 typedef struct cc_reader cc_reader;
-typedef struct cc_type cc_type;
-typedef struct cc_variable cc_variable;
+#endif
 typedef struct cc_token_info cc_token_info;
 typedef struct cc_ptrinfo cc_ptrinfo;
 typedef struct cc_member cc_member;
 typedef struct cc_enum_member cc_enum_member;
 typedef struct cc_param cc_param;
 typedef struct cc_expr cc_expr;
-enum cc_token_type;
-enum cc_type_mode;
-enum cc_linkage;
 
 typedef enum cc_type_mode {
     CC_TYPE_VOID,

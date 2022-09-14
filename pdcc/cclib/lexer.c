@@ -406,7 +406,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
         case '\'':
         case '\"':
             {
-                char *start = p;
+                const char *start = p;
                 char term = *(p - 1);
                 tok.type = term == '\'' ? CC_TOKEN_LITERAL : CC_TOKEN_STRING;
                 for ( ; *p != term && *p != '\0'; p++)

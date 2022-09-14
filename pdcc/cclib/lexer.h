@@ -13,7 +13,10 @@
 
 #include "diag.h"
 
+#ifndef CC_READER_DEFINED
+#   define CC_READER_DEFINED 1
 typedef struct cc_reader cc_reader;
+#endif
 typedef struct cc_type cc_type;
 typedef struct cc_variable cc_variable;
 typedef struct cc_token cc_token;

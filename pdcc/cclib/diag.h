@@ -11,11 +11,14 @@
 #ifndef CC_DIAG_H
 #define CC_DIAG_H 1
 
+#ifndef CC_READER_DEFINED
+#   define CC_READER_DEFINED 1
+typedef struct cc_reader cc_reader;
+#endif
+
 #define TTY_RED     "\x1B[0;91m"
 #define TTY_RESET   "\x1B[0;0m"
 #define TTY_BOLD    "\x1B[1m"
-
-typedef struct cc_reader cc_reader;
 
 typedef struct {
     const char *file;

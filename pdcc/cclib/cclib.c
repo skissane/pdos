@@ -559,7 +559,7 @@ static void cc_parse_call_params(cc_reader *reader, cc_expr *call)
                                               (call->data.call.n_params + 1)
                                               * sizeof(cc_expr));
             call->data.call.params[call->data.call.n_params++] = expr;
-            expr = ((cc_expr){0});
+            memset(&expr, 0, sizeof(expr));
             continue;
         }
         else if (reader->curr_token->type == CC_TOKEN_RPAREN)
