@@ -74,6 +74,7 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
         len = strlen(expr->data.string.data);
         for (i = 0; i < len; i++)
             fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
+        fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
         fprintf(reader->output, "\n");
         fprintf(reader->output, "S%u_end:\n", expr->id);
         return 4;
