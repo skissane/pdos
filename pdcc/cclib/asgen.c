@@ -90,8 +90,8 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
 
 static void cc_i386gen_prologue(cc_reader *reader, const cc_expr *expr)
 {
-    fprintf(reader->output, "\tmovl %%esp, %%ebp\n");
     fprintf(reader->output, "\tpushl %%ebp\n");
+    fprintf(reader->output, "\tmovl %%esp, %%ebp\n");
     stack_size = 0;
 }
 
@@ -106,8 +106,8 @@ static void cc_i386gen_epilogue(cc_reader *reader, const cc_expr *expr)
 
     if (expr->type == CC_EXPR_BLOCK)
     {
-        fprintf(reader->output, "\tpopl %%ebp\n");
         fprintf(reader->output, "\tmovl %%ebp, %%esp\n");
+        fprintf(reader->output, "\tpopl %%ebp\n");
         fprintf(reader->output, "\tretl\n");
         return;
     }
@@ -238,7 +238,7 @@ static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
         fprintf(reader->output, "_%s:\n", var->name);
     }
     else
-        fprintf(reader->output, ".global _%s\n", var->name);
+        fprintf(reader->output, "# _%s\n", var->name);
 
     switch (var->type.mode)
     {
