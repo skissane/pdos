@@ -68,8 +68,8 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
         fprintf(reader->output, ";; none");
         break;
     case CC_EXPR_STRING:
-        fprintf(reader->output, "\tpushl S%u\n", expr->id);
-        fprintf(reader->output, "\tjmpl S%u_end\n", expr->id);
+        fprintf(reader->output, "\tpushl $S%u\n", expr->id);
+        fprintf(reader->output, "\tjmp S%u_end\n", expr->id);
         fprintf(reader->output, "S%u:\n", expr->id);
         len = strlen(expr->data.string.data);
         for (i = 0; i < len; i++)
@@ -142,7 +142,7 @@ static void cc_i386gen_return(cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_NONE:
         break;
     case CC_EXPR_CONSTANT:
-        fprintf(reader->output, "\tmovl %%eax, %u\n", expr->data._const.numval);
+        fprintf(reader->output, "\tmovl $%u, %%eax\n", expr->data._const.numval);
         break;
     default:
         printf("unknown expr %u\n", expr->type);
@@ -154,7 +154,7 @@ static void cc_i386gen_decl(cc_reader *reader, const cc_variable *var)
 {
     size_t size = cc_get_variable_size(var);
     stack_size += size;
-    fprintf(reader->output, "\tsubl $%u, %%esp #%s, %u\n", size, var->name,
+    fprintf(reader->output, "\tsubl $%u, %%esp #_%s, %u\n", size, var->name,
             stack_size);
 }
 
@@ -189,9 +189,9 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
             stack_size += cc_i386gen_push(reader, param_expr);
         }
 
-        fprintf(reader->output, "\tcalll ");
+        fprintf(reader->output, "\tcall ");
         if (expr->data.call.callee_func)
-            fprintf(reader->output, "%s\n", expr->data.call.callee_func->name);
+            fprintf(reader->output, "_%s\n", expr->data.call.callee_func->name);
         else if (expr->data.call.callee)
             cc_i386gen_runtime_funptr(reader, expr->data.call.callee);
         else
@@ -233,11 +233,11 @@ static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
 {
     if (var->linkage != CC_LINKAGE_EXTERN)
     {
-        fprintf(reader->output, ".global %s\n", var->name);
-        fprintf(reader->output, "%s:\n", var->name);
+        fprintf(reader->output, ".global _%s\n", var->name);
+        fprintf(reader->output, "_%s:\n", var->name);
     }
     else
-        fprintf(reader->output, ".global %s\n", var->name);
+        fprintf(reader->output, ".global _%s\n", var->name);
 
     switch (var->type.mode)
     {
