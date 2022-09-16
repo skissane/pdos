@@ -28,13 +28,19 @@ static int testBosGetVideoMode(void)
 
 static int testBosSerialInitialize(void)
 {
-    BosSerialInitialize(0, 0x3);
+    int rc;
+
+    rc = BosSerialInitialize(0, 0xe3);
+    printf("initialize returned %d\n", rc);
     return (0);
 }
 
 static int testBosSerialWriteChar(void)
 {
-    BosSerialWriteChar(0, 'X');
+    int rc;
+
+    rc = BosSerialWriteChar(0, 'X');
+    printf("serial write returned %d\n", rc);
     return (0);
 }
 
@@ -316,7 +322,7 @@ static int testAbsoluteDiskRead(void)
     int x;
     int y;
     char buf[512];
-    char *p=&buf;
+    char *p=buf;
 
     ret=PosAbsoluteDiskRead(0x04,0x01,0x01,buf);
     /*Hexdump of dp for freedos*/
@@ -650,12 +656,12 @@ int main(void)
     
     /* testPosSelectDisk(); */
 
-#if 0
+#if 1
     testBosSerialInitialize();
     testBosSerialWriteChar();
 #endif
     /*testBosSerialReadChar();*/
-    testReadFile();
+    /*testReadFile();*/
     
     /*testPosGetDefaultDrive();*/
     /*testPosGetSystemDate();*/
