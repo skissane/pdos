@@ -20,22 +20,26 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib -Icpplib/i
 
 all: clean pdcc.exe
 
-pdcc.exe: main.o c_ppout.o inc_path.o cpplib.a
-    $(LD) $(LDFLAGS) -s -o pdcc.exe ../pdpclib/w32start.o main.o c_ppout.o inc_path.o cpplib.a ../pdpclib/msvcrt.a
+pdcc.exe: main.o c_ppout.o inc_path.o cpplib.a cclib.a
+    $(LD) $(LDFLAGS) -s -o pdcc.exe ../pdpclib/w32start.o main.o c_ppout.o inc_path.o cpplib.a cclib.a ../pdpclib/msvcrt.a
 
 cpplib.a: cpplib/core.o cpplib/directs.o cpplib/errors.o \
           cpplib/expr.o cpplib/files.o cpplib/chars.o \
           cpplib/idents.o cpplib/init.o cpplib/lex.o \
           cpplib/macro.o cpplib/support.o cpplib/symtab.o \
-          xmalloc.o \
-          cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o
+          xmalloc.o
     rm -f cpplib.a
     $(AR) r cpplib.a cpplib/core.o cpplib/directs.o cpplib/errors.o
     $(AR) r cpplib.a cpplib/expr.o cpplib/files.o cpplib/chars.o
     $(AR) r cpplib.a cpplib/idents.o cpplib/init.o cpplib/lex.o
     $(AR) r cpplib.a cpplib/macro.o cpplib/support.o cpplib/symtab.o
     $(AR) r cpplib.a xmalloc.o
-    $(AR) r cpplib.a cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o
+
+cclib.a: cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o \
+         xmalloc.o
+    rm -f cclib.a
+    $(AR) r cclib.a cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o
+    $(AR) r cpplib.a xmalloc.o
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
@@ -43,4 +47,4 @@ cpplib.a: cpplib/core.o cpplib/directs.o cpplib/errors.o \
     rm -f $*.s
 
 clean:
-    rm -f *.o cpplib/*.o cpplib.a pdcc.exe
+    rm -f *.o cpplib/*.o cpplib.a cclib/*.o cclib.a pdcc.exe
