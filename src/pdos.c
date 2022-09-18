@@ -1184,7 +1184,7 @@ static void processExtended(int drive, unsigned char *prm)
             | ((unsigned long)prm[10] << 16)
             | ((unsigned long)prm[11] << 24);
     extsector = sector;
-    while (sector != 0)
+    while (1)
     {
         if (lba)
         {
@@ -1232,6 +1232,7 @@ static void processExtended(int drive, unsigned char *prm)
                 | ((unsigned long)buf[PT_OFFSET + 1 * PT_LEN + 9] << 8)
                 | ((unsigned long)buf[PT_OFFSET + 1 * PT_LEN + 10] << 16)
                 | ((unsigned long)buf[PT_OFFSET + 1 * PT_LEN + 11] << 24);
+        if (sector == 0) break;
         sector += extsector;
     }
     return;
