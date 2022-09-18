@@ -39,7 +39,6 @@ variable *variable_find(char *name)
 
     for (var = vars; var; var = var->next)
     {
-        if (var == NULL) return NULL;
         if ((var->len == len) && (strcmp(name, var->name) == 0)) break;
     }
 
@@ -82,7 +81,7 @@ static char *variable_suffix_replace(char *body, const char *from_s,
         {
             size_t rem = strlen(to_s) - strlen(from_s);
             /* Move the entire string rem characters to make space for to_s */
-            new_body = realloc(new_body, strlen(new_body) + rem);
+            new_body = xrealloc(new_body, strlen(new_body) + rem);
             memmove(p + rem, p, strlen(p) + 1);
             memcpy(p, to_s, strlen(to_s));
         }
@@ -107,7 +106,7 @@ char *variable_expand_line(char *line)
         {
             char *new, *replacement = "", *alloc_repl = NULL;
             char *p, *t;
-            variable *var;
+            variable *var = NULL;
             char name[2] = {0, 0};
 
             if (line[pos + 1] == '$')

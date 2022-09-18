@@ -92,7 +92,6 @@ int rule_run_command(const char *name, char *p, char *q) {
 void rule_use(rule *r, char *name)
 {
     struct dep *dep;
-    char *new_cmds;
     char *p, *q;
     char *star_name;
     
@@ -130,7 +129,6 @@ void suffix_rule_use(suffix_rule *s, char *name)
 {
     char *lesser_name, *star_name;
     char *p;
-    char *new_cmds;
     char *q;
     
     if (s->cmds == NULL) return;
