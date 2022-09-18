@@ -18,4 +18,4 @@ pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
 	$(CC) $(COPTS) $<
 
 linsupa.o: linsupa.asm
-	as --32 -o $@ $<
+	as --32 -o $@ linsupa.asm
