@@ -16,6 +16,8 @@
 #include "variable.h"
 #include "xmalloc.h"
 
+extern int doing_inference_rule_commands;
+
 static variable *vars = NULL;
 
 variable *variable_add(char *name, char *value)
@@ -42,6 +44,12 @@ variable *variable_find(char *name)
         if ((var->len == len) && (strcmp(name, var->name) == 0)) break;
     }
 
+    if (var && !doing_inference_rule_commands && var->name[0] == '<' && var->name[1] == '\0')
+    {
+        fprintf(stderr, "\"$<\" is not valid outside of inference rules, exiting\n");
+        exit(EXIT_FAILURE);
+    }
+
     return (var);
 }
 
@@ -63,7 +71,6 @@ static char *variable_suffix_replace(char *body, const char *from_s,
     char *p;
     while ((p = strstr(new_body, from_s)) != NULL)
     {
-        size_t rem = strlen(from_s);
         if (strlen(from_s) == strlen(to_s)) /* Equally sized */
         {
             memcpy(p, to_s, strlen(to_s));

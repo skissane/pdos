@@ -25,6 +25,7 @@ static int ignore_errors = 0;
 static int silent = 0;
 
 variable *default_goal_var;
+int doing_inference_rule_commands = 0;
 
 static rule *rules = NULL;
 static suffix_rule *suffix_rules = NULL;
@@ -102,6 +103,8 @@ void rule_use(rule *r, char *name)
 
     if (r->cmds == NULL) return;
 
+    doing_inference_rule_commands = 0;
+
     star_name = xstrdup(name);
     p = strrchr(star_name, '.');
     if (p) *p = '\0';
@@ -130,8 +133,10 @@ void suffix_rule_use(suffix_rule *s, char *name)
     char *lesser_name, *star_name;
     char *p;
     char *q;
-    
+
     if (s->cmds == NULL) return;
+
+    doing_inference_rule_commands = 1;
 
     lesser_name = xmalloc(strlen(name) + strlen(s->first) + 1);
     memcpy(lesser_name, name, strlen(name) + 1);
