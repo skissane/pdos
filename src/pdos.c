@@ -5307,7 +5307,20 @@ static void pdosWriteText(int ch)
     static int numansi = 0;
     static char ansibuf[50];
 
-#if 1
+    /* if screen capture is active, write character to disk. */
+    if (scrncapDrv != -1)
+    {
+        scrncapBuf[scrncapUpto++] = ch;
+        writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
+        if (scrncapUpto == 512)
+        {
+            memset(scrncapBuf, '\x00', sizeof scrncapBuf);
+            /* to ensure file is NUL-terminated at all times */
+            scrncapSector++;
+            writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
+            scrncapUpto = 0;
+        }
+    }
     if ((ch == 0x1b) && (numansi == 0))
     {
         ansibuf[numansi++] = ch;
@@ -5335,7 +5348,12 @@ static void pdosWriteText(int ch)
                 if (1) /* ansibuf[2] == '2') */
                 {
                     int x;
-                    for (x = 0; x < 50; x++)
+                    int rows;
+
+                    /* we need to double the rows in case we are currently
+                       positioned at the top of the screen */
+                    rows = BosGetTextModeRows() * 2 + 1;
+                    for (x = 0; x < rows; x++)
                     {
                         BosWriteText(currentPage,'\n',0);
                     }
@@ -5391,7 +5409,6 @@ static void pdosWriteText(int ch)
             return;
         }
     }
-#endif
 
     if (ch == 8)
     {
@@ -5418,22 +5435,6 @@ static void pdosWriteText(int ch)
         BosWriteCharAttrib(currentPage, ch, currentAttrib, 1);
         column++;
         BosSetCursorPosition(currentPage,row,column);
-    }
-    /* if screen capture is active, write character to disk.
-       we're missing ANSI control sequences, but that's not
-       the primary focus at the moment */
-    if (scrncapDrv != -1)
-    {
-        scrncapBuf[scrncapUpto++] = ch;
-        writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
-        if (scrncapUpto == 512)
-        {
-            memset(scrncapBuf, '\x00', sizeof scrncapBuf);
-            /* to ensure file is NUL-terminated at all times */
-            scrncapSector++;
-            writeLBA(scrncapBuf, 1, scrncapDrv, scrncapSector);
-            scrncapUpto = 0;
-        }
     }
     return;
 }
