@@ -15,34 +15,77 @@
 
 #include "variable.h"
 #include "xmalloc.h"
+#include "hashtab.h"
 
 extern int doing_inference_rule_commands;
 
-static variable *vars = NULL;
+static struct hashtab *variables_hashtab = NULL;
+
+static hash_value_t hash_variable (const void *p)
+{
+    const struct variable *variable = (const struct variable *) p;
+    
+    return hashtab_help_default_hash_string (variable->name);
+}
+
+static int equal_variable (const void *p1, const void *p2)
+{
+    const struct variable *variable1 = (const struct variable *) p1;
+    const struct variable *variable2 = (const struct variable *) p2;
+    
+    return strcmp (variable1->name, variable2->name) == 0;
+}
+
+static struct variable *find_variable_internal (const char *name)
+{
+    struct variable fake = { NULL, NULL };
+
+    fake.name = (char *) name;
+    
+    return (struct variable *) hashtab_find (variables_hashtab, &fake);
+}
+
+static void free_variable_internal (void *p)
+{
+    struct variable *var = (struct variable *) p;
+
+    free (var->name);
+    free (var->value);
+    free (var);
+}
+
+void variables_init (void)
+{
+    variables_hashtab = hashtab_create_hashtab (0,
+                                                &hash_variable,
+                                                &equal_variable,
+                                                &xmalloc,
+                                                &free);
+}
+
+void variables_destroy (void)
+{
+    hashtab_for_each_element (variables_hashtab, &free_variable_internal);
+    hashtab_destroy_hashtab (variables_hashtab);
+}
 
 variable *variable_add(char *name, char *value)
 {
     variable *var = xmalloc(sizeof(*var));
 
     var->name = name;
-    var->len = strlen(name);
     var->value = value;
 
-    var->next = vars;
-    vars = var;
+    hashtab_insert (variables_hashtab, var);
 
     return (var);
 }
 
 variable *variable_find(char *name)
 {
-    size_t len = strlen(name);
     variable *var;
 
-    for (var = vars; var; var = var->next)
-    {
-        if ((var->len == len) && (strcmp(name, var->name) == 0)) break;
-    }
+    var = find_variable_internal (name);
 
     if (var && !doing_inference_rule_commands && var->name[0] == '<' && var->name[1] == '\0')
     {
@@ -64,8 +107,9 @@ void variable_change(char *name, char *value)
     }
 }
 
-static char *variable_suffix_replace(char *body, const char *from_s,
-    const char *to_s)
+static char *variable_suffix_replace(char *body,
+                                     const char *from_s,
+                                     const char *to_s)
 {
     char *new_body = xstrdup(body);
     char *p;

@@ -10,11 +10,11 @@
 
 typedef struct variable {
     char *name;
-    size_t len;
     char *value;
-
-    struct variable *next;
 } variable;
+
+void variables_init (void);
+void variables_destroy (void);
 
 #define variable_add _Pvadd
 variable *variable_add(char *name, char *value);

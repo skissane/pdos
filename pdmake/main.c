@@ -346,6 +346,8 @@ int main(int argc, char **argv)
     int i;
     char *name = "Makefile";
     char *goal = NULL;
+
+    variables_init ();
     
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
     variable_add(xstrdup("OS"), xstrdup(os_name));
@@ -367,7 +369,7 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option requires an argument -- f\n");
-                            return (0);
+                            goto end;
                         }
                         name = argv[i];
                     }
@@ -404,7 +406,7 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option `--file' requires an argument\n");
-                            return (0);
+                            goto end;
                         }
                         name = argv[i];
                     }
@@ -443,9 +445,12 @@ int main(int argc, char **argv)
     if (goal == NULL) goal = default_goal_var->value;
 
     /* No goal is set, so there is nothing to do. */
-    if (strcmp(goal, "") == 0) return (0);
+    if (strcmp(goal, "") == 0) goto end;
     
     rule_search_and_build(goal);
+
+end:
+    variables_destroy ();
     
     return (0);
 }
