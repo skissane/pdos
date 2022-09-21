@@ -5345,19 +5345,7 @@ static void pdosWriteText(int ch)
             ansibuf[numansi] = '\0';
             if (ch == 'J')
             {
-                if (1) /* ansibuf[2] == '2') */
-                {
-                    int x;
-                    int rows;
-
-                    /* we need to double the rows in case we are currently
-                       positioned at the top of the screen */
-                    rows = BosGetTextModeRows() * 2 + 1;
-                    for (x = 0; x < rows; x++)
-                    {
-                        BosWriteText(currentPage,'\n',0);
-                    }
-                }
+                PosClearScreen();
             }
             else if (ch == 'H')
             {
