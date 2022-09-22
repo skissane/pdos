@@ -346,7 +346,8 @@ int main(int argc, char **argv)
     int i;
     char *name = "Makefile";
     char *goal = NULL;
-    
+
+    variables_init();
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
     variable_add(xstrdup("OS"), xstrdup(os_name));
 
@@ -444,8 +445,9 @@ int main(int argc, char **argv)
 
     /* No goal is set, so there is nothing to do. */
     if (strcmp(goal, "") == 0) return (0);
-    
+
     rule_search_and_build(goal);
-    
+
+    variables_destroy();
     return (0);
 }
