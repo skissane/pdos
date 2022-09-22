@@ -133,9 +133,9 @@ void suffix_rule_use(suffix_rule *s, char *name)
     char *lesser_name, *star_name;
     char *p;
     char *q;
-
+    
     if (s->cmds == NULL) return;
-
+    
     doing_inference_rule_commands = 1;
 
     lesser_name = xmalloc(strlen(name) + strlen(s->first) + 1);
@@ -346,8 +346,6 @@ int main(int argc, char **argv)
     int i;
     char *name = "Makefile";
     char *goal = NULL;
-
-    variables_init ();
     
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
     variable_add(xstrdup("OS"), xstrdup(os_name));
@@ -369,7 +367,7 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option requires an argument -- f\n");
-                            goto end;
+                            return (0);
                         }
                         name = argv[i];
                     }
@@ -406,7 +404,7 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option `--file' requires an argument\n");
-                            goto end;
+                            return (0);
                         }
                         name = argv[i];
                     }
@@ -445,12 +443,9 @@ int main(int argc, char **argv)
     if (goal == NULL) goal = default_goal_var->value;
 
     /* No goal is set, so there is nothing to do. */
-    if (strcmp(goal, "") == 0) goto end;
+    if (strcmp(goal, "") == 0) return (0);
     
     rule_search_and_build(goal);
-
-end:
-    variables_destroy ();
     
     return (0);
 }
