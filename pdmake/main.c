@@ -133,9 +133,9 @@ void suffix_rule_use(suffix_rule *s, char *name)
     char *lesser_name, *star_name;
     char *p;
     char *q;
-    
+
     if (s->cmds == NULL) return;
-    
+
     doing_inference_rule_commands = 1;
 
     lesser_name = xmalloc(strlen(name) + strlen(s->first) + 1);
@@ -249,11 +249,12 @@ void rule_search_and_build(char *name)
     suffix = strrchr(name, '.');
     if (suffix)
     {
+        char *duplicated_name = xstrdup (name);
         /* Set here because $@ shall evaluate to FULL target name
          * of the current target.
          * This means that the name should not be modified
          * by the search for target. */
-        variable_change("@", xstrdup(name));
+        variable_change("@", xstrdup(duplicated_name));
         for (s = suffix_rules; s; s = s->next)
         {
             if (strcmp(suffix, s->second) == 0)
@@ -262,17 +263,25 @@ void rule_search_and_build(char *name)
                 char *new_name;
 
                 /* Creates the name of the prerequisite. */
-                prereq_name = xmalloc(strlen(name) + strlen(s->first) + 1);
-                memcpy(prereq_name, name, strlen(name) + 1);
+                prereq_name = xmalloc(strlen(duplicated_name) + strlen(s->first) + 1);
+                memcpy(prereq_name, duplicated_name, strlen(duplicated_name) + 1);
                 p = strrchr(prereq_name, '.');
                 *p = '\0';
                 strcat(prereq_name, s->first);
 
                 /* Tries to find the prerequisite. */
                 new_name = find_target(prereq_name);
-                free(prereq_name);
-                if (new_name == NULL) continue; /* Not found. */
-                if (strcmp(prereq_name, new_name) == 0) break;
+                if (new_name == NULL) { /* Not found. */
+                    free (prereq_name);
+                    continue;
+                }
+                /* find_target () returns the argument if VPATH is not used
+                 * but the target is found. */
+                if (prereq_name == new_name) {
+                    free (prereq_name);
+                    break;
+                }
+                free (prereq_name);
 
                 /* Restore the original suffix in the new name. */
                 if (strlen(s->first) < strlen(s->second))
@@ -286,7 +295,8 @@ void rule_search_and_build(char *name)
                 *p = '\0';
                 strcat(new_name, s->second);
 
-                name = new_name;
+                free (duplicated_name);
+                duplicated_name = new_name;
 
                 break;
             }
@@ -294,13 +304,16 @@ void rule_search_and_build(char *name)
 
         if (s)
         {
-            suffix_rule_use(s, name);
+            suffix_rule_use(s, duplicated_name);
+            free (duplicated_name);
             return;
         }
+        free (duplicated_name);
     }
 
     {
         char *new_name = find_target(name);
+        if (new_name != name) free (new_name);
         if (new_name == NULL)
         {
             fprintf(stderr, "No rule to make target `%s'. Stop.\n", name);
@@ -347,7 +360,8 @@ int main(int argc, char **argv)
     char *name = "Makefile";
     char *goal = NULL;
 
-    variables_init();
+    variables_init ();
+    
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
     variable_add(xstrdup("OS"), xstrdup(os_name));
 
@@ -368,7 +382,7 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option requires an argument -- f\n");
-                            return (0);
+                            goto end;
                         }
                         name = argv[i];
                     }
@@ -380,7 +394,7 @@ int main(int argc, char **argv)
 
                 case 'h':
                     help();
-                    return (0);
+                    goto end;
 
                 case 'i':
                     ignore_errors = 1;
@@ -405,14 +419,14 @@ int main(int argc, char **argv)
                         if (i == argc)
                         {
                             printf("option `--file' requires an argument\n");
-                            return (0);
+                            goto end;
                         }
                         name = argv[i];
                     }
                     else if (strcmp("help", argv[i] + 2) == 0)
                     {
                         help();
-                        return (0);
+                        goto end;
                     }
                     else if (strcmp("ignore-errors", argv[i] + 2) == 0)
                     {
@@ -444,10 +458,12 @@ int main(int argc, char **argv)
     if (goal == NULL) goal = default_goal_var->value;
 
     /* No goal is set, so there is nothing to do. */
-    if (strcmp(goal, "") == 0) return (0);
-
+    if (strcmp(goal, "") == 0) goto end;
+    
     rule_search_and_build(goal);
 
-    variables_destroy();
+end:
+    variables_destroy ();
+    
     return (0);
 }
