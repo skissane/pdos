@@ -1717,6 +1717,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                 waitForKeystroke();
 #endif
                 BosReadKeyboardCharacter(&scan, &ascii);
+                /* printf("scan is %x, ascii is %x\n", scan, ascii); */
                 /* double up ESC char as ANSI allows */
                 if (ascii == 0x1b)
                 {
@@ -1774,7 +1775,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[2~", 3);
                     ascii = 0x1b;
                 }
-                else if (scan == 0x53) /* Delete */
+                else if ((scan == 0x53) /* Delete */
+                         || (scan == 0x0e)) /* alt-backspace for chromebook */
                 {
                     num_pending = 3;
                     memcpy(pending, "[3~", 3);
@@ -1792,7 +1794,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[4~", 3);
                     ascii = 0x1b;
                 }
-                else if (scan == 0x51) /* page-down */
+                else if ((scan == 0x51) /* page-down */
+                         || (scan == 0xa0)) /* ctrl-down for chromebook */
                 {
                     num_pending = 3;
                     memcpy(pending, "[6~", 3);
@@ -1804,7 +1807,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[6;5~", 5);
                     ascii = 0x1b;
                 }
-                else if (scan == 0x49) /* page-up */
+                else if ((scan == 0x49) /* page-up */
+                         || (scan == 0x98)) /* ctrl-up for chromebook */
                 {
                     num_pending = 3;
                     memcpy(pending, "[5~", 3);
