@@ -149,6 +149,8 @@ void BosReadKeyboardCharacter(int *scancode, int *ascii); /* 16:0 */
 
 int BosReadKeyboardStatus(int *scancode, int *ascii); /* 16:1 */
 
+int BosGetKeyboardShiftStatus(unsigned int *flags); /* 16:2 */
+
 void BosSystemWarmBoot(void); /* 19: */
 
 void BosGetSystemTime(unsigned long *ticks, unsigned int *midnight);/*1A.0*/

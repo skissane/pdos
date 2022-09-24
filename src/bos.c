@@ -889,6 +889,27 @@ int BosReadKeyboardStatus(int *scancode, int *ascii)
     return (regsout.x.flags & 0x40);
 }
 
+/* BosGetKeyboardShiftStatus - BIOS Int 16h Function 02h */
+/*
+    Input: None.
+    Returns: Status of shift/ctrl/alt etc
+    Notes: None.
+*/
+
+int BosGetKeyboardShiftStatus(unsigned int *flags)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0x02;
+
+    int86(0x16 + BIOS_INT_OFFSET, &regsin, &regsout);
+
+    *flags = regsout.h.al;
+
+    return (0);
+}
+
 /* BosSystemWarmBoot - BIOS Int 19h */
 
 void BosSystemWarmBoot(void)
