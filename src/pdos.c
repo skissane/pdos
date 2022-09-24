@@ -1794,8 +1794,28 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[4~", 3);
                     ascii = 0x1b;
                 }
-                else if ((scan == 0x51) /* page-down */
-                         || (scan == 0xa0)) /* ctrl-down for chromebook */
+                else if (scan == 0xa0) /* chromebook mappings for alt-down */
+                {
+                    unsigned int flags;
+
+                    BosGetKeyboardShiftStatus(&flags);
+                    /* if ctrl key pressed */
+                    if (flags & (1 << 2))
+                    {
+                        /* end */
+                        num_pending = 3;
+                        memcpy(pending, "[4~", 3);
+                        ascii = 0x1b;
+                    }
+                    else
+                    {
+                        /* page down */
+                        num_pending = 3;
+                        memcpy(pending, "[6~", 3);
+                        ascii = 0x1b;
+                    }
+                }
+                else if (scan == 0x51) /* page-down */
                 {
                     num_pending = 3;
                     memcpy(pending, "[6~", 3);
@@ -1807,8 +1827,28 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[6;5~", 5);
                     ascii = 0x1b;
                 }
-                else if ((scan == 0x49) /* page-up */
-                         || (scan == 0x98)) /* ctrl-up for chromebook */
+                else if (scan == 0x98) /* chromebook mappings for alt-up */
+                {
+                    unsigned int flags;
+
+                    BosGetKeyboardShiftStatus(&flags);
+                    /* if ctrl key pressed */
+                    if (flags & (1 << 2))
+                    {
+                        /* home */
+                        num_pending = 3;
+                        memcpy(pending, "[1~", 3);
+                        ascii = 0x1b;
+                    }
+                    else
+                    {
+                        /* page up */
+                        num_pending = 3;
+                        memcpy(pending, "[5~", 3);
+                        ascii = 0x1b;
+                    }
+                }
+                else if (scan == 0x49) /* page-up */
                 {
                     num_pending = 3;
                     memcpy(pending, "[5~", 3);
