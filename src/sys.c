@@ -146,11 +146,11 @@ int main(int argc, char **argv)
     {
         if (i == 1)
         {
-            /* MSDOS.SYS second. */
+            /* PDOS.SYS second. */
             src_end[0] = '\0';
-            strcat(src_path, "MSDOS.SYS");
+            strcat(src_path, "PDOS.SYS");
             dest_path[3] = '\0';
-            strcat(dest_path, "MSDOS.SYS");
+            strcat(dest_path, "PDOS.SYS");
         }
         else if (i == 2)
         {

@@ -71,7 +71,7 @@ void pdosload(void)
     unsigned int progentry;
     int x;
 #endif
-    char *name = "MSDOS.SYS";
+    char *name = "PDOS.SYS";
     unsigned int flags = 0;
 
 #ifdef PDOS32
@@ -93,7 +93,7 @@ void pdosload(void)
     BosGetKeyboardShiftStatus(&flags);
     if (flags & (1 << 0))
     {
-        name = "MSDOS.BAK";
+        name = "PDOS.BAK";
     }
     /* start loading PDOS straight after PLOAD, ie 0x600 + 64k */
     psp = 0x10600UL;
