@@ -71,6 +71,8 @@ void pdosload(void)
     unsigned int progentry;
     int x;
 #endif
+    char *name = "MSDOS.SYS";
+    unsigned int flags = 0;
 
 #ifdef PDOS32
     /* Copies BIOS interrupt vectors and remaps IRQs
@@ -88,6 +90,11 @@ void pdosload(void)
     }
 #endif
 
+    BosGetKeyboardShiftStatus(&flags);
+    if (flags & (1 << 0))
+    {
+        name = "MSDOS.BAK";
+    }
     /* start loading PDOS straight after PLOAD, ie 0x600 + 64k */
     psp = 0x10600UL;
     loads = (unsigned long)psp + 0x100;
@@ -104,9 +111,9 @@ void pdosload(void)
     pp.dopoweroff = (unsigned long)(void (far *)())dopoweroff;
     pp.doboot = (unsigned long)(void (far *)())doboot;
     pp.bpb = ADDR2ABS(bpb);
-    runaout("MSDOS.SYS", load, ADDR2ABS(&pp));
+    runaout(name, load, ADDR2ABS(&pp));
 #else    
-    fatOpenFile(&gfat, "MSDOS.SYS", &fatfile);
+    fatOpenFile(&gfat, name, &fatfile);
     do 
     {
         fatReadFile(&gfat, &fatfile, buf, 0x200, &readbytes);
