@@ -2,7 +2,7 @@
 # For the 32-bit version of PDOS we define __PDOS386__
 
 CC=gcc386
-COPTS=-S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
+COPTS=-S -O2 -ansi -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
 
 pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
