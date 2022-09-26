@@ -130,7 +130,7 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock);
 static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous);
 static void startExe32(void);
 static void terminateExe32(void);
-static int fixexe32(unsigned long entry, unsigned int sp,
+static int fixexe32(unsigned char *entry, unsigned int sp,
                     unsigned long exeStart, unsigned long dataStart);
 #endif
 static int fileCreat(const char *fnm, int attrib, int *handle);
@@ -324,7 +324,7 @@ static unsigned long doreboot;
 static unsigned long dopoweroff;
 static unsigned long doboot;
 unsigned char *loadaddr = NULL;
-unsigned long entry_point;
+unsigned char *entry_point;
 #endif
 
 #ifndef __32BIT__
@@ -3721,9 +3721,9 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
 }
 
 #ifdef __32BIT__
-#include "a_out.h"
-#include "elf.h"
-#include "exeload.h"
+#include <a_out.h>
+#include <elf.h>
+#include <exeload.h>
 
 static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
 {
@@ -3793,7 +3793,7 @@ static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
 
 static void startExe32(void)
 {
-    unsigned long old_entry_point;
+    unsigned char *old_entry_point;
     char *old_loadaddr;
     int ret;
     char *prog;
@@ -3830,7 +3830,8 @@ static void startExe32(void)
 
     old_entry_point = entry_point;
     old_loadaddr = loadaddr;
-    ret = exeloadDoload(&entry_point, prog);
+    loadaddr = NULL;
+    ret = exeloadDoload(&entry_point, prog, &loadaddr);
     if (ret == 0)
     {
         /* Program has been successfully loaded,
@@ -3908,7 +3909,7 @@ static void terminateExe32(void)
     terminateThread();
 }
 
-static int fixexe32(unsigned long entry, unsigned int sp,
+static int fixexe32(unsigned char *entry, unsigned int sp,
                     unsigned long exeStart, unsigned long dataStart)
 {
     struct {
