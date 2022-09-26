@@ -1,18 +1,18 @@
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib pdos.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib bos.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib fat.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib patmat.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib memmgr.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib protintp.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib exeload.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib physmem.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib vmm.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib liballoc.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib process.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int21.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib int80.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib log.c
-gcc386 -S -O2 -ansi -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib helper.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib pdos.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib bos.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib fat.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib patmat.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib memmgr.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib protintp.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib ../bios/exeload.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib physmem.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib vmm.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib liballoc.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib process.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib int21.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib int80.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib log.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib helper.c
 
 as386 -o pdos.o pdos.s
 del pdos.s
@@ -52,7 +52,7 @@ pdas -o pdoss.o pdoss.s
 
 del os.a
 ar386 -r os.a bos.o fat.o exeload.o
-ar386 -r os.a physmem.o vmm.o liballoc.o process.o
+ar386 -r os.a physmem.o vmm.o process.o
 ar386 -r os.a int21.o int80.o log.o helper.o
 ar386 -r os.a memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
 
