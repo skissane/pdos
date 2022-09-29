@@ -9,8 +9,6 @@
  */
 
 typedef struct rule {
-    struct rule *next;
-
     char *name;
     struct dep *deps;
     struct commands *cmds;
@@ -25,9 +23,15 @@ typedef struct suffix_rule {
     struct commands *cmds;
 } suffix_rule;
 
-void rule_add(char *name, struct dep *deps, struct commands *cmds);
+extern struct suffix_rule *suffix_rules;
 
-void rule_search_and_build(char *name);
+void rules_init (void);
+void rules_destroy (void);
+
+void rule_add (char *name, struct dep *deps, struct commands *cmds);
+struct rule *rule_find (const char *name);
+
+void rule_search_and_build (char *name);
 
 #define rule_add_suffix _Prasu
-void rule_add_suffix(char *name, struct commands *cmds);
+void rule_add_suffix (char *name, struct commands *cmds);

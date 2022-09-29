@@ -27,37 +27,6 @@ static int silent = 0;
 variable *default_goal_var;
 int doing_inference_rule_commands = 0;
 
-static rule *rules = NULL;
-static suffix_rule *suffix_rules = NULL;
-
-void rule_add(char *name, struct dep *deps, struct commands *cmds)
-{
-    rule *r = xmalloc(sizeof(*r));
-
-    r->name = name;
-    r->deps = deps;
-    r->cmds = cmds;
-
-    r->next = rules;
-    rules = r;
-}
-
-void rule_add_suffix(char *name, struct commands *cmds)
-{
-    suffix_rule *s = xmalloc(sizeof(*s));
-    char *p = strchr(name + 1, '.');
-
-    *p = '\0';
-    s->first = xstrdup(name);
-    *p = '.';
-    s->second = xstrdup(p);
-
-    s->cmds = cmds;
-
-    s->next = suffix_rules;
-    suffix_rules = s;
-}
-
 int rule_run_command(const char *name, char *p, char *q) {
     int is_silent = silent;
     int is_ignore_error = ignore_errors;
@@ -235,10 +204,7 @@ void rule_search_and_build(char *name)
     suffix_rule *s;
     char *suffix;
 
-    for (r = rules; r; r = r->next)
-    {
-        if (strcmp(name, r->name) == 0) break;
-    }
+    r = rule_find (name);
 
     if (r)
     {
@@ -361,6 +327,7 @@ int main(int argc, char **argv)
     char *goal = NULL;
 
     variables_init ();
+    rules_init ();
     
     default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
     variable_add(xstrdup("OS"), xstrdup(os_name));
@@ -463,6 +430,7 @@ int main(int argc, char **argv)
     rule_search_and_build(goal);
 
 end:
+    rules_destroy ();
     variables_destroy ();
     
     return (0);

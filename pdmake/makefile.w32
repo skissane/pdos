@@ -13,8 +13,8 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -D__WIN32__
 
 all: clean pdmake.exe
 
-pdmake.exe: main.o read.o variable.o xmalloc.o hashtab.o
-  $(LD) $(LDFLAGS) -s -o pdmake.exe ../pdpclib/w32start.o main.o read.o variable.o xmalloc.o hashtab.o ../pdpclib/msvcrt.a
+pdmake.exe: main.o read.o rule.o variable.o xmalloc.o hashtab.o
+  $(LD) $(LDFLAGS) -s -o pdmake.exe ../pdpclib/w32start.o main.o read.o rule.o variable.o xmalloc.o hashtab.o ../pdpclib/msvcrt.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<

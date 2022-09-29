@@ -163,7 +163,7 @@ void record_files(struct nameseq *filenames,
 
     for (ns = filenames, old_ns = NULL;
          ns;
-         old_ns = ns, ns = ns->next, free(old_ns))
+         old_ns = ns, ns = ns->next, free (old_ns->name), free (old_ns))
     {
         if ((ns->name[0] == '.')
             && (strchr(ns->name, '\\') == NULL)
@@ -314,6 +314,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
                         continue;
                     }
 
+                    free (default_goal_var->value);
                     default_goal_var->value = xstrdup(ns->name);
                     break;
                 }
