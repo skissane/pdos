@@ -265,6 +265,8 @@ static char shell[100] = "";
 char kernel32[] = "?:\\KERNEL32.DLL";
 char msvcrt[] = "?:\\MSVCRT.DLL";
 
+int G_live = 0;
+
 /* warn of any application errors in case application
    doesn't adequately report them. */
 static int warnerror = 0;
@@ -393,10 +395,12 @@ static void initThreading(void)
         for (;;);
     }
     memset(curTCB, 0, sizeof(TCB));
+#ifndef NOVM
     curTCB->state = TCB_STATE_RUNNING;
 
     createThread(cleanTerminatedThreads, NO_PROCESS);
     cleanerTCB = firstReadyTCB;
+#endif
     {
         /* Timer interrupt handler is installed
          * after the rest of multitasking system is ready. */
@@ -419,6 +423,7 @@ static TCB *createThread(void (*entry)(void), PDOS_PROCESS *pcb)
     TCB *newTCB = kmalloc(sizeof(TCB));
     unsigned int *new_stack;
     int i;
+    unsigned int savedEFLAGS;
 
     if (newTCB == NULL)
     {
@@ -429,7 +434,7 @@ static TCB *createThread(void (*entry)(void), PDOS_PROCESS *pcb)
     memset(newTCB, 0, sizeof(TCB));
 
     {
-        unsigned int savedEFLAGS = getEFLAGSAndDisable();
+        savedEFLAGS = getEFLAGSAndDisable();
 
         new_stack = vmmAlloc(&kernel_vmm, 0, TCB_STACK_SIZE);
 
@@ -456,12 +461,13 @@ static TCB *createThread(void (*entry)(void), PDOS_PROCESS *pcb)
         new_stack--;
         *new_stack = 0;
     }
+    /* *new_stack = savedEFLAGS; */ /* better than 0? */
 
     newTCB->stack_pointer = new_stack;
     newTCB->state = TCB_STATE_READY;
     newTCB->pcb = pcb;
     {
-        unsigned int savedEFLAGS = getEFLAGSAndDisable();
+        savedEFLAGS = getEFLAGSAndDisable();
 
         if (lastReadyTCB)
         {
@@ -483,8 +489,9 @@ static TCB *createThread(void (*entry)(void), PDOS_PROCESS *pcb)
 static void createThreadAndBlock(void (*entry)(void), PDOS_PROCESS *pcb)
 {
     unsigned int savedEFLAGS = getEFLAGSAndDisable();
-    TCB *newTCB = createThread(entry, pcb);
+    TCB *newTCB;
 
+    newTCB = createThread(entry, pcb);
     newTCB->waitingParentTCB = curTCB;
     blockThread(TCB_STATE_CHILDWAIT);
     setEFLAGS(savedEFLAGS);
@@ -645,7 +652,9 @@ static void lockMutex(volatile int *mutex)
 
     while (*mutex)
     {
+#ifndef NOVM
         schedule();
+#endif
     }
     *mutex = 1;
 
@@ -901,6 +910,11 @@ void pdosRun(void)
     much memory, we only end up supplying 0x5000U. */
     memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x5000U);
 #endif
+
+#ifdef NOVM
+    enable();
+#endif
+
 #ifndef USING_EXE
     loadPcomm();
 #ifndef __32BIT__
@@ -2586,11 +2600,13 @@ int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
 int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
     char tempp[FILENAME_MAX];
+    int ret;
 
     if (formatcwd(prog, tempp)) return (55);
     /* +++Add a way to let user know it failed on formatcwd. */
     prog = tempp;
-    return (loadExe(prog, parmblock));
+    ret = loadExe(prog, parmblock);
+    return (ret);
 }
 
 void PosTerminate(int rc)
@@ -3183,7 +3199,9 @@ int int26(unsigned int *regs)
 /* IRQ 0 - Timer Interrupt. */
 int intB0(unsigned int *regs)
 {
+#ifndef NOVM
     schedule();
+#endif
 
     return (0);
 }
@@ -3786,8 +3804,13 @@ static int loadExe32(char *prog, POSEXEC_PARMBLOCK *parmblock, int synchronous)
     if (newProc->parent != NULL)
         newProc->parent->status = PDOS_PROCSTATUS_CHILDWAIT;
 
+#ifdef NOVM
+    curPCB = newProc;
+    startExe32();
+#else
     if (synchronous) createThreadAndBlock(startExe32, newProc);
     else createThread(startExe32, newProc);
+#endif
     return (0);
 }
 
@@ -3798,7 +3821,6 @@ static void startExe32(void)
     int ret;
     char *prog;
 
-    memId += 256;
     /* Tells the new VMM what address range can it use. */
     vmmSupply(curPCB->vmm, (void *)PROCESS_SPACE_START, PROCESS_SPACE_SIZE);
 
@@ -3822,7 +3844,10 @@ static void startExe32(void)
         if (prog == NULL)
         {
             printf("Not enough memory for storing executable path\n");
+#ifndef NOVM
             terminateExe32();
+#endif
+            return;
         }
         memcpy(prog, curPCB->commandLine, progLen);
         prog[progLen] = '\0';
@@ -3853,7 +3878,10 @@ static void startExe32(void)
     loadaddr = old_loadaddr;
     entry_point = old_entry_point;
 
+#ifndef NOVM
     terminateExe32();
+#endif
+    return;
 }
 
 static void terminateExe32(void)
@@ -3870,10 +3898,8 @@ static void terminateExe32(void)
     /* Frees the process address space. */
 #ifndef NOVM
     vmmFree(newProc->vmm, (void *)PROCESS_SPACE_START, PROCESS_SPACE_SIZE);
-#else
-    memmgrFreeId(&physmemmgr, memId);
-#endif
     memId -= 256;
+#endif
 
     {
         /* No more process memory will be handled,
@@ -3886,7 +3912,6 @@ static void terminateExe32(void)
         loadPageDirectory(kernel_vmm.pd_physaddr);
         curPCB = NO_PROCESS;
         curTCB->pcb = NO_PROCESS;
-
         setEFLAGS(savedEFLAGS);
     }
 
@@ -3937,9 +3962,14 @@ static int fixexe32(unsigned char *entry, unsigned int sp,
     realdata->base_23_16 = (dataStart >> 16) & 0xff;
     realdata->base_31_24 = (dataStart >> 24) & 0xff;
 
+    memId += 256;
     ret = call32(entry, sp, curTCB);
     /* printf("ret is %x\n", ret); */
 
+#ifdef NOVM
+    memmgrFreeId(&physmemmgr, memId);
+    memId -= 256;
+#endif
     *realcode = savecode;
     *realdata = savedata;
     return (ret);
