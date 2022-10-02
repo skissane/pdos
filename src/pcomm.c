@@ -50,6 +50,7 @@ static unsigned char cmdt[140];
 #endif
 #define PATH_MAX 500
 static char path[PATH_MAX] = ";" ; /* Used to store path */
+static char origpath2[PATH_MAX] = "" ; /* Used to store original path */
 static POSEXEC_PARMBLOCK
     parmblock = { 0, cmdt, NULL, NULL };
 static size_t len;
@@ -503,6 +504,7 @@ int main(int argc, char **argv)
         if (strlen(origpath) < PATH_MAX)
         {
             strcpy(path, origpath);
+            strcpy(origpath2, origpath);
         }
     }
     if (genuine_pdos)
@@ -546,8 +548,11 @@ int main(int argc, char **argv)
         rc = processInput(false);
         if (genuine_pdos)
         {
-             PosSetEnv("PATH",origpath);
-             __envptr = PosGetEnvBlock();
+             if (origpath != NULL)
+             {
+                 PosSetEnv("PATH",origpath2);
+                 __envptr = PosGetEnvBlock();
+             }
         }
         return (rc);
     }
