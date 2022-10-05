@@ -17,15 +17,24 @@ static FILE *comm;
 static char buf[1000];
 
 static char *getline(FILE *comm, char *buf, size_t szbuf);
+static char *put(FILE *comm, char *buf);
 static char *putline(FILE *comm, char *buf);
 static int fasc(int asc);
 static int tasc(int loc);
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    char *user = NULL;
+    char *pw = NULL;
+
+    if (argc == 4)
     {
-        printf("usage: pdpnntp <comm channel>\n");
+        user = *(argv + 2);
+        pw = *(argv + 3);
+    }
+    else if (argc != 2)
+    {
+        printf("usage: pdpnntp <comm channel> [user] [password]\n");
         return (EXIT_FAILURE);
     }
 
@@ -59,7 +68,29 @@ int main(int argc, char **argv)
         printf("%s\n", buf);
     }
 #endif
-
+    if (user != NULL)
+    {
+        printf("putting user\n");
+        fseek(comm, 0, SEEK_CUR);
+        put(comm, "AUTHINFO USER ");
+        putline(comm, user);
+        fseek(comm, 0, SEEK_CUR);
+        getline(comm, buf, sizeof buf);
+        printf("%s\n", buf);
+        printf("putting password\n");
+        fseek(comm, 0, SEEK_CUR);
+        put(comm, "AUTHINFO PASS ");
+        putline(comm, pw);
+        fseek(comm, 0, SEEK_CUR);
+        getline(comm, buf, sizeof buf);
+        printf("%s\n", buf);
+    }
+    printf("doing quit\n");
+    fseek(comm, 0, SEEK_CUR);
+    putline(comm, "QUIT");
+    fseek(comm, 0, SEEK_CUR);
+    getline(comm, buf, sizeof buf);
+    printf("%s\n", buf);
     fclose(comm);
     return (0);
 }
@@ -72,6 +103,12 @@ static char *getline(FILE *comm, char *buf, size_t szbuf)
     for (x = 0; x < szbuf - 2; x++)
     {
         c = getc(comm);
+        /* ignore virtualbox returning NULs for timeout */
+        if (c == 0)
+        {
+            x--;
+            continue;
+        }
         if (c == 0x0d)
         {
             getc(comm);
@@ -80,6 +117,19 @@ static char *getline(FILE *comm, char *buf, size_t szbuf)
         buf[x] = fasc(c);
     }
     buf[x] = '\0';
+    return (buf);
+}
+
+static char *put(FILE *comm, char *buf)
+{
+    size_t x;
+
+    x = 0;
+    while (buf[x] != '\0')
+    {
+        putc(tasc(buf[x]), comm);
+        x++;
+    }
     return (buf);
 }
 
