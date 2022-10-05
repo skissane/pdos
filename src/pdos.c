@@ -2206,7 +2206,13 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
         port = fhandle[fh].comm - 1;
         for (x = 0; x < len; x++)
         {
-            BosSerialWriteChar(port, buf[x]);
+            int status;
+
+            status = BosSerialWriteChar(port, buf[x]);
+            if ((status & 0x80) != 0)
+            {
+                printf("status writing to serial port is %x\n", status);
+            }
         }
         *writtenbytes = x;
         ret = 0;
