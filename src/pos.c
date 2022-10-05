@@ -2017,6 +2017,40 @@ unsigned int PosScrncap(int disknum)
 #endif
 }
 
+#ifdef __32BIT__
+/* F6,46 - GetStdHandle */
+void *PosGetStdHandle(unsigned int nStdHandle)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x46;
+
+    regsin.d.edx = nStdHandle;
+
+    int86(0x21, &regsin, &regsout);
+    return ((void *)(regsout.d.eax));
+}
+
+
+/* F6,47 - SetStdHandle */
+unsigned int PosSetStdHandle(unsigned int nStdHandle, void *hHandle)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x47;
+
+    regsin.d.edx = nStdHandle;
+    regsin.d.ebx = (unsigned long)hHandle;
+
+    int86(0x21, &regsin, &regsout);
+    return ((unsigned int)(regsout.d.eax));
+}
+#endif
+
 
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,

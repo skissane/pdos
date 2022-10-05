@@ -243,6 +243,8 @@ typedef struct {
 
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle);
 
+BOOL WINAPI SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
+
 BOOL WINAPI WriteFile(HANDLE hFile,
                       LPCVOID lpBuffer,
                       DWORD nNumberOfBytesToWrite,

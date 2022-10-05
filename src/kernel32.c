@@ -22,10 +22,7 @@
 
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle)
 {
-    if (nStdHandle == -10) return ((HANDLE)0);
-    if (nStdHandle == -11) return ((HANDLE)1);
-    if (nStdHandle == -12) return ((HANDLE)2);
-    return ((HANDLE)-1);
+    return PosGetStdHandle(nStdHandle);
 }
 
 BOOL WINAPI WriteFile(HANDLE hFile,
@@ -1282,12 +1279,13 @@ void WINAPI SetProcessWorkingSetSize(void)
     PosWriteFile(1, "SetProcessWorkingSetSize unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI SetStdHandle(void)
+
+
+BOOL WINAPI SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 {
-    size_t len = 28;
-    PosWriteFile(1, "SetStdHandle unimplemented\r\n", len, &len);
-    for (;;) ;
+    return PosSetStdHandle(nStdHandle, hHandle);
 }
+
 void WINAPI SetSystemTime(void)
 {
     size_t len = 29;

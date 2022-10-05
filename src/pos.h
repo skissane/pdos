@@ -416,6 +416,12 @@ unsigned int PosDoBoot(int disknum);
 /* F6,45 - start or stop screen capture */
 unsigned int PosScrncap(int disknum);
 
+/* F6,46 - GetStdHandle */
+void *PosGetStdHandle(unsigned int nStdHandle);
+
+/* F6,47 - SetStdHandle */
+unsigned int PosSetStdHandle(unsigned int nStdHandle, void *hHandle);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

@@ -1393,6 +1393,16 @@ static void int21handler(union REGS *regsin,
                 regsout->d.ax = PosScrncap(regsin->x.dx);
             }
 #endif
+#ifdef __32BIT__
+            else if (regsin->h.al == 0x46)
+            {
+                regsout->d.eax = (unsigned long)PosGetStdHandle(regsin->d.edx);
+            }
+            else if (regsin->h.al == 0x47)
+            {
+                regsout->d.eax = PosSetStdHandle(regsin->d.edx, (void *)(regsin->d.ebx));
+            }
+#endif
             else
             {
                 logUnimplementedCall(0x21, regsin->h.ah, regsin->h.al);

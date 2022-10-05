@@ -253,6 +253,10 @@ static struct {
 
 } fhandle[MAXFILES];
 
+static int stdin_fhandle_index = 0;
+static int stdout_fhandle_index = 1;
+static int stderr_fhandle_index = 2;
+
 static int scrncapDrv = -1;
 static char scrncapBuf[512];
 static unsigned long scrncapSector;
@@ -2825,6 +2829,29 @@ unsigned int PosScrncap(int disknum)
         memset(scrncapBuf, '\x00', sizeof scrncapBuf);
     }
     return (0);
+}
+
+void *PosGetStdHandle(unsigned int nStdHandle)
+{
+    if (nStdHandle == -10) return ((void *)stdin_fhandle_index);
+    if (nStdHandle == -11) return ((void *)stdout_fhandle_index);
+    if (nStdHandle == -12) return ((void *)stderr_fhandle_index);
+    return ((void *)-1);
+}
+
+unsigned int PosSetStdHandle(unsigned int nStdHandle, void *hHandle)
+{
+    if ((int)hHandle >= MAXFILES || (int)hHandle < 0)
+    {
+        return (0);
+    }
+
+    if (nStdHandle == -10) stdin_fhandle_index = (int)hHandle;
+    else if (nStdHandle == -11) stdout_fhandle_index = (int)hHandle;
+    else if (nStdHandle == -12) stderr_fhandle_index = (int)hHandle;
+    else return (0);
+
+    return (1);
 }
 
 /* !!! END OF POS FUNCTIONS !!! */

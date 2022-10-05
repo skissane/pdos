@@ -203,6 +203,12 @@ easier debugging during early stages of development:
 #Int 21/AX=F640h - PDOS - Read Byte From Port
 #Int 21/AX=F641h - PDOS - Write Byte To Port
 
+
+
+
+#Int 21/AX=F646h - PD-Windows - GetStdHandle
+#Int 21/AX=F647h - PD-Windows - SetStdHandle
+
 For a full reference of standard and non-standard DOS calls check:
 http://www.ctyme.com/intr/int-21.htm
 
