@@ -3877,7 +3877,7 @@ static void startExe32(void)
         if (prog == NULL)
         {
             printf("Not enough memory for storing executable path\n");
-#ifndef NOVM
+#if 1 /* ndef NOVM */
             terminateExe32();
 #endif
             return;
@@ -3889,6 +3889,7 @@ static void startExe32(void)
     old_entry_point = entry_point;
     old_loadaddr = loadaddr;
     loadaddr = NULL;
+    memId += 256;
     ret = exeloadDoload(&entry_point, prog, &loadaddr);
     if (ret == 0)
     {
@@ -3911,7 +3912,7 @@ static void startExe32(void)
     loadaddr = old_loadaddr;
     entry_point = old_entry_point;
 
-#ifndef NOVM
+#if 1 /* ndef NOVM */
     terminateExe32();
 #endif
     return;
@@ -3929,10 +3930,12 @@ static void terminateExe32(void)
     /* Terminates the process. */
     newProc->status = PDOS_PROCSTATUS_TERMINATED;
     /* Frees the process address space. */
-#ifndef NOVM
+#ifdef NOVM
+    memmgrFreeId(&physmemmgr, memId);
+    memId -= 256;
+#else
     vmmFree(newProc->vmm, (void *)PROCESS_SPACE_START, PROCESS_SPACE_SIZE);
     memId -= 256;
-#endif
 
     {
         /* No more process memory will be handled,
@@ -3947,6 +3950,7 @@ static void terminateExe32(void)
         curTCB->pcb = NO_PROCESS;
         setEFLAGS(savedEFLAGS);
     }
+#endif
 
     {
         unsigned int savedEFLAGS = getEFLAGSAndDisable();
@@ -3964,7 +3968,9 @@ static void terminateExe32(void)
     kfree(newProc->envBlock);
     kfree(newProc);
 
+#ifndef NOVM
     terminateThread();
+#endif
 }
 
 static int fixexe32(unsigned char *entry, unsigned int sp,
@@ -3995,14 +4001,9 @@ static int fixexe32(unsigned char *entry, unsigned int sp,
     realdata->base_23_16 = (dataStart >> 16) & 0xff;
     realdata->base_31_24 = (dataStart >> 24) & 0xff;
 
-    memId += 256;
     ret = call32(entry, sp, curTCB);
     /* printf("ret is %x\n", ret); */
 
-#ifdef NOVM
-    memmgrFreeId(&physmemmgr, memId);
-    memId -= 256;
-#endif
     *realcode = savecode;
     *realdata = savedata;
     return (ret);
