@@ -1713,6 +1713,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
     /* Frees memory not needed by the process. */
     free(section_table);
     free(optional_hdr);
+    if (*loadloc == NULL)
+    {
+        *loadloc = exeStart;
+    }
     return (0);
 }
 
