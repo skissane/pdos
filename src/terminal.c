@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 {
     unsigned int port;
     int c;
+    int last = 0;
     char *whofirst;
 
     if (argc <= 2)
@@ -49,6 +50,10 @@ int main(int argc, char **argv)
         {
             c = fgetc(stdin);
             if (c == CHAR_ESC_CHAR) exit(0);
+            if (c == '\n')
+            {
+                BosSerialWriteChar(port, '\r');
+            }
             BosSerialWriteChar(port, c);
             if (c == CHAR_XON_CHAR) break;
         }
@@ -58,12 +63,35 @@ int main(int argc, char **argv)
             while (1)
             {
                 c = BosSerialReadChar(port);
+                /* printf("got %x from bios\n", c); */
                 if ((c & 0x8000U) == 0) break;
             }
             c &= 0xff;
             if (c == CHAR_XON_CHAR) break;
             /* printf("%02X %c\n", c, c); */
-            fputc(c, stdout);
+            if (c != 0x00)
+            {
+                if (last == 0x0d)
+                {
+                    if (c == 0x0a)
+                    {
+                        last = c;
+                        continue;
+                    }
+                    last = c;
+                }
+                else if (c == 0x0d)
+                {
+                    last = c;
+                    c = '\n';
+                }
+                else
+                {
+                    last = c;
+                }
+                fputc(c, stdout);
+                fflush(stdout);
+            }
         }
     }
     return (0);
