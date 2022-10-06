@@ -296,6 +296,8 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
     unsigned char lbuf[MAXSECTSZ];
     FATFILE tempfatfile;
     int ret;
+    unsigned long sector;
+    unsigned int x;
 
     if ((fnm[0] == '\\') || (fnm[0] == '/'))
     {
@@ -339,9 +341,13 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
         fatChain(fat,&tempfatfile);
         fat->dirSect = tempfatfile.sectorStart;
 
-        fatReadLogical(fat, fat->dirSect, lbuf);
-        lbuf[0] = '\0';
-        fatWriteLogical(fat, fat->dirSect, lbuf);
+        memset(lbuf, '\0', sizeof lbuf);
+        for (sector = fat->dirSect;
+             sector < fat->dirSect + fat->sectors_per_cluster;
+             sector++)
+        {
+            fatWriteLogical(fat, sector, lbuf);
+        }
 
         /* Position on the new empty slot. */
         fatPosition(fat,fnm);
@@ -410,35 +416,7 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
         fatfile->nextCluster = 0;
         fatfile->lastSectors = 0;
 
-        /* if file or deleted entry was found, don't mark next entry as null */
-        if (found || fat->found_deleted)
-        {
-            fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-        }
-        else
-        {
-            p++;
-            if ((unsigned char *) p != (fat->dbuf + fat->sector_size))
-            {
-                p->file_name[0] = '\0';
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-            }
-            else
-            {
-                /* We are at the end of dirSect, so empty
-                 * entry is added to the next one. */
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-
-                /* Empty entries are not added at the end of cluster. */
-                if ((fat->dirSect - fat->startSector
-                    != fat->sectors_per_cluster - 1))
-                {
-                    fatReadLogical(fat, fat->dirSect + 1, lbuf);
-                    lbuf[0] = '\0';
-                    fatWriteLogical(fat, fat->dirSect + 1, lbuf);
-                }
-            }
-        }
+        fatWriteLogical(fat, fat->dirSect, fat->dbuf);
     }
     return (0);
 }
@@ -454,6 +432,8 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
     unsigned long startsector;
     FATFILE tempfatfile;
     int ret;
+    unsigned long sector;
+    unsigned int x;
 
     if ((dnm[0] == '\\') || (dnm[0] == '/'))
     {
@@ -496,9 +476,13 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
         fatChain(fat,&tempfatfile);
         fat->dirSect = tempfatfile.sectorStart;
 
-        fatReadLogical(fat, fat->dirSect, lbuf);
-        lbuf[0] = '\0';
-        fatWriteLogical(fat, fat->dirSect, lbuf);
+        memset(lbuf, '\0', sizeof lbuf);
+        for (sector = fat->dirSect;
+             sector < fat->dirSect + fat->sectors_per_cluster;
+             sector++)
+        {
+            fatWriteLogical(fat, sector, lbuf);
+        }
 
         /* Position on the new empty slot. */
         fatPosition(fat,dnm);
@@ -548,35 +532,7 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
                                      FATDATETIME_UPDATE_CREATE |
                                      FATDATETIME_UPDATE_ACCESS));
 
-        /* if deleted entry was found, don't mark next entry as null */
-        if (fat->found_deleted)
-        {
-            fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-        }
-        else
-        {
-            p++;
-            if ((unsigned char *) p != (fat->dbuf + fat->sector_size))
-            {
-                p->file_name[0] = '\0';
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-            }
-            else
-            {
-                /* We are at the end of dirSect, so empty
-                 * entry is added to the next one. */
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-
-                /* Empty entries are not added at the end of cluster. */
-                if ((fat->dirSect - fat->startSector
-                    != fat->sectors_per_cluster - 1))
-                {
-                    fatReadLogical(fat, fat->dirSect + 1, lbuf);
-                    lbuf[0] = '\0';
-                    fatWriteLogical(fat, fat->dirSect + 1, lbuf);
-                }
-            }
-        }
+        fatWriteLogical(fat, fat->dirSect, fat->dbuf);
 
         fat->currcluster = startcluster;
         fatMarkCluster(fat, fat->currcluster);
@@ -632,6 +588,8 @@ unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
     unsigned char lbuf[MAXSECTSZ];
     FATFILE tempfatfile;
     int ret;
+    unsigned long sector;
+    unsigned int x;
 
     if ((fnm[0] == '\\') || (fnm[0] == '/'))
     {
@@ -657,9 +615,13 @@ unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
         fatChain(fat,&tempfatfile);
         fat->dirSect = tempfatfile.sectorStart;
 
-        fatReadLogical(fat, fat->dirSect, lbuf);
-        lbuf[0] = '\0';
-        fatWriteLogical(fat, fat->dirSect, lbuf);
+        memset(lbuf, '\0', sizeof lbuf);
+        for (sector = fat->dirSect;
+             sector < fat->dirSect + fat->sectors_per_cluster;
+             sector++)
+        {
+            fatWriteLogical(fat, sector, lbuf);
+        }
 
         /* Position on the new empty slot. */
         fatPosition(fat,fnm);
@@ -710,35 +672,7 @@ unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
         fatfile->currpos = 0;
         fatfile->dir = 0;
 
-        /* if deleted entry was found, don't mark next entry as null */
-        if (fat->found_deleted)
-        {
-            fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-        }
-        else
-        {
-            p++;
-            if ((unsigned char *) p != (fat->dbuf + fat->sector_size))
-            {
-                p->file_name[0] = '\0';
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-            }
-            else
-            {
-                /* We are at the end of dirSect, so empty
-                 * entry is added to the next one. */
-                fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-
-                /* Empty entries are not added at the end of cluster. */
-                if ((fat->dirSect - fat->startSector
-                    != fat->sectors_per_cluster - 1))
-                {
-                    fatReadLogical(fat, fat->dirSect + 1, lbuf);
-                    lbuf[0] = '\0';
-                    fatWriteLogical(fat, fat->dirSect + 1, lbuf);
-                }
-            }
-        }
+        fatWriteLogical(fat, fat->dirSect, fat->dbuf);
     }
     return (0);
 }
