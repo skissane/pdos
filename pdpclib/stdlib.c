@@ -967,7 +967,11 @@ __PDPCLIB_API__ int system(const char *string)
 #endif
 #ifdef __MSDOS__
     int rc;
+#ifdef __PDOS386__
+    static unsigned char cmdt[300];
+#else
     static unsigned char cmdt[140];
+#endif
     static
 #ifdef __PDOS386__
     POSEXEC_PARMBLOCK
@@ -987,16 +991,26 @@ __PDPCLIB_API__ int system(const char *string)
     {
         return (1);
     }
-    len = strlen(string);
-    cmdt[0] = (unsigned char)(len + 3);
-    memcpy(&cmdt[1], "/c ", 3);
-    memcpy(&cmdt[4], string, len);
-    memcpy(&cmdt[len + 4], "\r", 2);
     cmd = getenv("COMSPEC");
     if (cmd == NULL)
     {
         cmd = "\\command.com";
     }
+#ifdef __PDOS386__
+    if ((strlen(cmd) + strlen(string) + 5) > sizeof cmdt)
+    {
+        return (-1);
+    }
+    strcpy(cmdt, cmd);
+    strcat(cmdt, " /c ");
+    strcat(cmdt, string);
+#else
+    len = strlen(string);
+    cmdt[0] = (unsigned char)(len + 3);
+    memcpy(&cmdt[1], "/c ", 3);
+    memcpy(&cmdt[4], string, len);
+    memcpy(&cmdt[len + 4], "\r", 2);
+#endif
     rc = __exec(cmd, &parmblock);
     if (rc != 0) return (-rc);
     return (__getrc());
