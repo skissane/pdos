@@ -3912,6 +3912,8 @@ static void startExe32(void)
     loadaddr = old_loadaddr;
     entry_point = old_entry_point;
 
+    kfree(prog);
+
 #if 1 /* ndef NOVM */
     terminateExe32();
 #endif
