@@ -3932,10 +3932,7 @@ static void terminateExe32(void)
     /* Terminates the process. */
     newProc->status = PDOS_PROCSTATUS_TERMINATED;
     /* Frees the process address space. */
-#ifdef NOVM
-    memmgrFreeId(&physmemmgr, memId);
-    memId -= 256;
-#else
+#ifndef NOVM
     vmmFree(newProc->vmm, (void *)PROCESS_SPACE_START, PROCESS_SPACE_SIZE);
     memId -= 256;
 
@@ -3973,6 +3970,12 @@ static void terminateExe32(void)
 #ifndef NOVM
     terminateThread();
 #endif
+
+#ifdef NOVM
+    memmgrFreeId(&physmemmgr, memId);
+    memId -= 256;
+#endif
+
 }
 
 static int fixexe32(unsigned char *entry, unsigned int sp,
