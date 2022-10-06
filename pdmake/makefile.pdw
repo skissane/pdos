@@ -1,13 +1,15 @@
 # Produce a.out executables
 # build against PDPCLIB built with makefile.pdw
 
+VPATH=./hashtab
+
 CC=gcc386
-COPTS=-S -Os -fno-common -ansi -I. -I../pdpclib -D__PDOS386__ -D__32BIT__
+COPTS=-S -Os -fno-common -ansi -I. -I./hashtab -I../pdpclib -D__PDOS386__ -D__32BIT__
 
 all: clean pdmake.exe
 
-pdmake.exe: main.o read.o variable.o xmalloc.o
-  ld386 -N -s -e ___pdosst32 -o pdmake.exe ../pdpclib/pdosst32.o main.o read.o variable.o xmalloc.o ../pdpclib/pdos.a 
+pdmake.exe: main.o read.o rule.o variable.o xmalloc.o hashtab.o
+  ld386 -N -s -e ___pdosst32 -o pdmake.exe ../pdpclib/pdosst32.o main.o read.o rule.o variable.o xmalloc.o hashtab.o ../pdpclib/pdos.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
