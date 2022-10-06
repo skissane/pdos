@@ -878,6 +878,14 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
         /* +++Find out what error should be returned. */
         return (POS_ERR_ACCESS_DENIED);
     }
+    if (!fatfile->dir && (fatfile->currpos > fatfile->fileSize))
+    {
+        /* position is after EOF */
+        /* so nothing is read and error is returned */
+        *readbytes = 0;
+        /* +++Find out what error should be returned. */
+        return (POS_ERR_ACCESS_DENIED);
+    }
     if (!(fatfile->dir))
     {
         fatfile->byteUpto = fatfile->currpos % fat->sector_size;
