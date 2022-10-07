@@ -38,7 +38,7 @@ static void fatDirSectorSearch(FAT *fat,
                                unsigned char *lfn,
                                unsigned int *lfn_len,
                                unsigned char *checksum,
-                               DIRENT *lfn_start_de,
+                               DIRENT **lfn_start_de,
                                unsigned long *lfn_start_cluster,
                                unsigned long *lfn_start_dirSect);
 static void fatReadLogical(FAT *fat, unsigned long sector, void *buf);
@@ -1708,7 +1708,7 @@ static void fatRootSearch(FAT *fat, char *search)
     unsigned char checksum;
     /* We also store some information about start entry
      * of LFN so it will be possible to delete LFN. */
-    DIRENT lfn_start_de;
+    DIRENT *lfn_start_de;
     unsigned long lfn_start_cluster;
     unsigned long lfn_start_dirSect;
     if (fat->rootsize)
@@ -1741,7 +1741,7 @@ static void fatDirSearch(FAT *fat, char *search)
     unsigned char checksum;
     /* We also store some information about start entry
      * of LFN so it will be possible to delete LFN. */
-    DIRENT lfn_start_de;
+    DIRENT *lfn_start_de;
     unsigned long lfn_start_cluster;
     unsigned long lfn_start_dirSect;
 
@@ -1862,7 +1862,7 @@ static void fatDirSectorSearch(FAT *fat,
                                unsigned char *lfn,
                                unsigned int *lfn_len,
                                unsigned char *checksum,
-                               DIRENT *lfn_start_de,
+                               DIRENT **lfn_start_de,
                                unsigned long *lfn_start_cluster,
                                unsigned long *lfn_start_dirSect)
 {
@@ -1928,7 +1928,7 @@ static void fatDirSectorSearch(FAT *fat,
                     /* Stores some information about this
                      * entry so it can be later found when
                      * it is going to be deleted. */
-                    lfn_start_de = p;
+                    *lfn_start_de = p;
                     *lfn_start_cluster = fat->currcluster;
                     *lfn_start_dirSect = startSector + x;
                 }
@@ -1965,7 +1965,7 @@ static void fatDirSectorSearch(FAT *fat,
                         /* Information about the last (first physical)
                          * entry are stored in FAT structure so they
                          * can be accessed by other functions. */
-                        fat->temp_de = lfn_start_de;
+                        fat->temp_de = *lfn_start_de;
                         fat->temp_currcluster = *lfn_start_cluster;
                         fat->temp_dirSect = *lfn_start_dirSect;
                         /* Adds the LFN to fat->corrected_path. */
@@ -2006,7 +2006,7 @@ static void fatDirSectorSearch(FAT *fat,
                         /* Information about the last (first physical)
                          * entry are stored in FAT structure so they
                          * can be accessed by other functions. */
-                        fat->temp_de = lfn_start_de;
+                        fat->temp_de = *lfn_start_de;
                         fat->temp_currcluster = *lfn_start_cluster;
                         fat->temp_dirSect = *lfn_start_dirSect;
                         /* We also let other functions know that
