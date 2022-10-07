@@ -297,7 +297,6 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
     FATFILE tempfatfile;
     int ret;
     unsigned long sector;
-    unsigned int x;
 
     if ((fnm[0] == '\\') || (fnm[0] == '/'))
     {
@@ -433,7 +432,6 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
     FATFILE tempfatfile;
     int ret;
     unsigned long sector;
-    unsigned int x;
 
     if ((dnm[0] == '\\') || (dnm[0] == '/'))
     {
@@ -589,7 +587,6 @@ unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
     FATFILE tempfatfile;
     int ret;
     unsigned long sector;
-    unsigned int x;
 
     if ((fnm[0] == '\\') || (fnm[0] == '/'))
     {
@@ -3433,6 +3430,8 @@ static int findFreeSpaceForLFN(FAT *fat, unsigned int required_free,
     int at_end = 0;
     FATFILE tempfatfile;
     int ret;
+    unsigned char lbuf[MAXSECTSZ];
+    unsigned long sector;
 
     /* We use numsectors as pointer to let the
      * other function know what we set it to. */
@@ -3603,6 +3602,14 @@ static int findFreeSpaceForLFN(FAT *fat, unsigned int required_free,
             /* We are extending the directory, so all
              * entries after this point are empty. */
             at_end = 1;
+
+            memset(lbuf, '\0', sizeof lbuf);
+            for (sector = tempfatfile.sectorStart;
+                 sector < tempfatfile.sectorStart + fat->sectors_per_cluster;
+                 sector++)
+            {
+                fatWriteLogical(fat, sector, lbuf);
+            }
         }
         else fat->currcluster = nextCluster;
     }
