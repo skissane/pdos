@@ -50,9 +50,9 @@ int rule_run_command(const char *name, char *p, char *q) {
         int error = system(s);
         if (!is_ignore_error && error)
         {
-            fprintf(stderr, "[%s] Error %d: %s\n", name, error,
-                strerror(error));
-            return -1;
+            fprintf (stderr, "[%s] Error %d: %s\n", name, error,
+                     strerror(error));
+            exit (EXIT_FAILURE);
         }
     }
     free(new_cmds);
