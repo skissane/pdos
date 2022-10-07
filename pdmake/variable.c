@@ -211,11 +211,15 @@ char *variable_expand_line(char *line)
                 }
                 else
                 {
+                    char *p2 = strchr (body, ')');
+
                     /* Take in account suffix replacements of the form:
                     * $(VAR:src=dst) */
                     p = strchr(body, ':');
                     /*printf("[%s -> %s]\n", p, line + pos);*/
-                    if (p != NULL)
+                    /* The second condition prevents "$(TARGET): something"
+                     * from being wrongly detected as suffix replacement. */
+                    if (p != NULL && (!p2 || p < p2))
                     {
                         variable *src_var;
                         char *s1, *s2;
@@ -252,7 +256,7 @@ char *variable_expand_line(char *line)
                     }
                     else
                     {
-                        p = strchr(body, ')');
+                        p = p2;
                         if (p == NULL)
                         {
                             fprintf(stderr, "+++Invalid variable usage!\n");
