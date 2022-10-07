@@ -209,10 +209,12 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
         if (line[0] == '\0') continue;
 
-        if (isspace(line[0]))
+        if (line[0] == ' ' || line[0] == '\t')
         {
             if (filenames)
             {
+                while (line[0] == ' ' || line[0] == '\t') line++;
+
                 if (commands_index + strlen(line) + 1 > commands_size)
                 {
                     commands_size = (commands_index + strlen(line) + 1) * 2;
