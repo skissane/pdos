@@ -27,8 +27,8 @@ $(TARGET): $(OBJS)
 .c.o:
   $(CC) $(COPTS) -o $@.s $<
   $(AS) -o $@ $@.s
-  del $@.s
+  rm -f $@.s
 
 clean:
-  del *.o
-  del $(TARGET)
+  rm -f *.o
+  rm -f $(TARGET)

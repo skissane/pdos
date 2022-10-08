@@ -19,7 +19,7 @@ LD=ld386
 
 TARGET=PDOS.SYS
 TEMP_ARCHIVE=os.a
-ARCHIVE_OBJS=bos.o fat.o exeload.o physmem.o vmm.o process.o int21.o \
+ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o \
              int80.o log.o helper.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
 OBJS=strt32.o pdos.o
 
@@ -27,21 +27,21 @@ all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
   $(LD) -N -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
-  del $(TEMP_ARCHIVE)
+  rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
-  del $(TEMP_ARCHIVE)
+  rm -f $(TEMP_ARCHIVE)
   $(AR) -r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $@.s $<
   $(AS) -o $@ $@.s
-  del $@.s
+  rm -f $@.s
 
 .s.o:
   $(AS) -o $@ $<
 
 clean:
-  del *.o
-  del $(TARGET)
-  del $(TEMP_ARCHIVE)
+  rm -f *.o
+  rm -f $(TARGET)
+  rm -f $(TEMP_ARCHIVE)

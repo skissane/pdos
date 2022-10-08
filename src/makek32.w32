@@ -30,18 +30,18 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
 .c.eo:
   $(CC) $(COPTS) -D__EXPORT__ -o $@.s $<
   $(AS) -o $@ $@.s
-  del $@.s
+  rm -f $@.s
 
 .c.o:
   $(CC) $(COPTS) -D__32BIT__ -o $@.s $<
   $(AS) -o $@ $@.s
-  del $@.s
+  rm -f $@.s
 
 .s.o:
   $(AS) -o $@ $<
 
 clean:
-  del *.eo 
-  del *.o
-  del kernel32.dll
-  del kernel32.a
+  rm -f *.eo 
+  rm -f *.o
+  rm -f kernel32.dll
+  rm -f kernel32.a
