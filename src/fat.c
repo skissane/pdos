@@ -432,6 +432,7 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
     FATFILE tempfatfile;
     int ret;
     unsigned long sector;
+    unsigned int x;
 
     if ((dnm[0] == '\\') || (dnm[0] == '/'))
     {
@@ -540,6 +541,10 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
                 + fat->filestart;
 
         memset(lbuf,'\0',sizeof(lbuf));
+        for (x = 1; x < fat->sectors_per_cluster; x++)
+        {
+            fatWriteLogical(fat, startsector + x, lbuf);
+        }
 
         memset(&dot,'\0',sizeof(dot));
         memset(dot.file_name, ' ', sizeof(dot.file_name)
