@@ -266,8 +266,8 @@ static char ff_path[FILENAME_MAX];
 static char ff_pat[FILENAME_MAX];
 
 static char shell[100] = "";
-char kernel32[] = "?:\\KERNEL32.DLL";
-char msvcrt[] = "?:\\MSVCRT.DLL";
+extern char kernel32[];
+extern char msvcrt[];
 
 int G_live = 0;
 
@@ -3482,6 +3482,8 @@ static void loadPcomm(void)
 #endif
 
     kernel32[0] = msvcrt[0] = alphabet[bootDriveLogical];
+    strcpy(kernel32 + 1, ":\\KERNEL32.DLL");
+    strcpy(msvcrt + 1, ":\\MSVCRT.DLL");
     if (strcmp(shell, "") == 0)
     {
         strcpy(shell,"?:\\COMMAND.EXE");
