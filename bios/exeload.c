@@ -28,6 +28,8 @@
 #if NEED_MZ
 #include "mz.h"
 #include "pecoff.h"
+char msvcrt[FILENAME_MAX] = "\\MSVCRT.DLL";
+char kernel32[FILENAME_MAX] = "\\KERNEL32.DLL";
 #endif
 #if NEED_ELF
 #include "elf.h"
@@ -1742,11 +1744,11 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
     if ((strcmp(name1, "kernel32.dll") == 0)
         || (strcmp(name1, "KERNEL32.dll") == 0))
     {
-        name2 = "\\KERNEL32.DLL";
+        name2 = kernel32;
     }
     else if (strcmp(name1, "msvcrt.dll") == 0)
     {
-        name2 = "\\MSVCRT.DLL";
+        name2 = msvcrt;
     }
     else
     {
