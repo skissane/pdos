@@ -3489,6 +3489,10 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         && (newpos < (stream->bufStartR + (stream->endbuf - stream->fbuf)))
         && !stream->update
         && !stream->quickBin
+        /* being at end of the buffer could be because quickbin was in
+           effect, even if it is now switched off, so data may not be
+           populated */
+        && (stream->upto != stream->endbuf)
         && (stream->mode == __READ_MODE))
     {
         stream->upto = stream->fbuf + (size_t)(newpos - stream->bufStartR);
