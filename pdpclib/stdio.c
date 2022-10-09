@@ -3486,13 +3486,16 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         fseek(stream, newpos, SEEK_SET);
     }
     else if ((newpos >= stream->bufStartR)
-        && (newpos < (stream->bufStartR + (stream->endbuf - stream->fbuf)))
+        /* when seeking repeatedly to the same location, the new position
+           will be pointing to the end of the buffer, so we want <= not < */
+        && (newpos <= (stream->bufStartR + (stream->endbuf - stream->fbuf)))
         && !stream->update
         && !stream->quickBin
-        /* being at end of the buffer could be because quickbin was in
-           effect, even if it is now switched off, so data may not be
-           populated */
-        && (stream->upto != stream->endbuf)
+        /* when we have just seeked, we will be at the end of the buffer,
+           but the data in the buffer is not actually valid, so we can't
+           adjust the pointer to make it valid. An exception is if they
+           are seeking to the same location. */
+        && ((stream->upto != stream->endbuf) || (oldpos == newpos))
         && (stream->mode == __READ_MODE))
     {
         stream->upto = stream->fbuf + (size_t)(newpos - stream->bufStartR);
