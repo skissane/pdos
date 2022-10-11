@@ -1006,6 +1006,7 @@ int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf, size_t szbuf,
        )
     {
         fat->currcluster = fatFindFreeCluster(fat);
+        if (!fat->currcluster) return (POS_ERR_PATH_NOT_FOUND);
         fatfile->currentCluster = fat->currcluster;
         fatfile->startcluster = fat->currcluster;
         fatMarkCluster(fat, fat->currcluster);
@@ -2220,11 +2221,13 @@ static unsigned int fatFindFreeCluster(FAT *fat)
     int found = 0;
     int x;
     unsigned long ret;
+    unsigned long fatend;
 
+    fatend = fat->fatstart + fat->fatsize;
     if (fat->fat_type == 16)
     {
         for (fatSector = fat->fatstart;
-             fatSector < fat->rootstart;
+             fatSector < fatend;
              fatSector++)
         {
             fatReadLogical(fat, fatSector, buf);
@@ -2250,7 +2253,7 @@ static unsigned int fatFindFreeCluster(FAT *fat)
          * sectors and offsets. */
         fatSector = 0;
         for (ret = 0;
-             ret <= (fat->rootstart - fat->fatstart)*fat->sector_size*2/3;
+             ret <= (fatend - fat->fatstart)*fat->sector_size*2/3;
              ret++)
         {
             /* Calculates offset. offset = cluster * 1.5 % sector size */
@@ -2306,7 +2309,7 @@ static unsigned int fatFindFreeCluster(FAT *fat)
 
         /* Looks for free clusters starting from the last allocated cluster. */
         for (;
-             fatSector < fat->rootstart;
+             fatSector < fatend;
              fatSector++)
         {
             fatReadLogical(fat, fatSector, buf);
