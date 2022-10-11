@@ -422,6 +422,9 @@ void *PosGetStdHandle(unsigned int nStdHandle);
 /* F6,47 - SetStdHandle */
 unsigned int PosSetStdHandle(unsigned int nStdHandle, void *hHandle);
 
+/* F6,48 - start system monitor */
+unsigned int PosMonitor(void);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

@@ -269,7 +269,14 @@ static char shell[100] = "";
 extern char kernel32[];
 extern char msvcrt[];
 
+/* these are used for debugging purposes */
+/* note that dividing 1 by 0 will give an exception which
+   prints useful information and then puts you into the
+   monitor */
 int G_live = 0;
+void *G_ptr = NULL;
+int G_one = 1;
+int G_zero = 0;
 
 /* warn of any application errors in case application
    doesn't adequately report them. */
@@ -2837,6 +2844,25 @@ unsigned int PosScrncap(int disknum)
     return (0);
 }
 
+unsigned int PosMonitor(void)
+{
+    unsigned char *addr;
+    int x;
+
+    printf("enter a hex address, 0 to exit\n");
+    while (1)
+    {
+        scanf("%p", &addr);
+        if (addr == NULL) break;
+        for (x = 0; x < 16; x++)
+        {
+            printf("%02X ", addr[x]);
+        }
+        printf("\n");
+    }
+    return (0);
+}
+
 void *PosGetStdHandle(unsigned int nStdHandle)
 {
     if (nStdHandle == -10) return ((void *)stdin_fhandle_index);
@@ -3110,8 +3136,8 @@ int int0(unsigned int *regs)
     printf("regs are at %p\n", regs);
     oldsp = (unsigned int *)regs[8];
     printf("old stack starts at %p\n", oldsp);
-    ebp = (unsigned int *)oldsp[-1];
-    printf("EBP is probably %p\n", ebp);
+    ebp = (unsigned int *)regs[-4];
+    printf("EBP should be %p\n", ebp);
     printf("interrupt address is %08X\n", oldsp[8]);
     printf("flags are %08X\n", oldsp[10]);
     printf("EBP chain to EBP is %08X\n", ebp[0]);
@@ -3120,7 +3146,15 @@ int int0(unsigned int *regs)
     printf("called address was possibly relative %08X\n", retaddr[-1]);
     printf("which would make it absolute address %08X\n",
            (char *)retaddr + retaddr[-1]);
+    ebp = (unsigned int *)ebp[0];
+    printf("EBP chain to EBP is %08X\n", ebp[0]);
+    retaddr = (unsigned int *)ebp[1];
+    printf("previous function's return address is %p\n", retaddr);
+    printf("called address was possibly relative %08X\n", retaddr[-1]);
+    printf("which would make it absolute address %08X\n",
+           (char *)retaddr + retaddr[-1]);
 
+    PosMonitor();
     printf("System halting\n");
     for (;;);
 
