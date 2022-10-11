@@ -1035,7 +1035,10 @@ int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf, size_t szbuf,
     /* If a new cluster is not needed, fat->currcluster
      * is restored from fatfile->currentCluster because
      * FAT structure is shared between file handles. */
-    else fat->currcluster = fatfile->currentCluster;
+    else
+    {
+        fat->currcluster = fatfile->currentCluster;
+    }
     /* Current position in file is larger than size of file,
      * so we need to expand the file to reach it. */
     if (fatfile->currpos > fatfile->fileSize)
@@ -1425,6 +1428,23 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
     /* (fat->sectors_per_cluster * MAXSECTSZ) is size of cluster in bytes. */
     currclusters = fatfile->currpos / (fat->sectors_per_cluster * MAXSECTSZ);
 
+    if ((fatfile->currpos % (fat->sectors_per_cluster * MAXSECTSZ)) == 0)
+    {
+        /* I'm not sure if this logic is correct */
+        /* If we are on a cluster boundary, we may or may not have read
+           in the next cluster, depending on whether we were reading,
+           writing, or seeking. I think sectorUpto will be non-zero if we
+           are still on the old sector. Although perhaps not if the
+           cluster size is 1 sector and fatWriteFile has chosen not to
+           increment the sectorUpto for some reason - possibly fatWriteFile
+           should be changed. Regardless if we're currently at the
+           beginning of the file, we don't want to go negative. */
+        if ((fatfile->currpos != 0) && (fatfile->sectorUpto != 0))
+        {
+            currclusters--;
+        }
+    }
+
     /* If we are seeking past the end of the file, then just position on
        the end of the file instead. */
     if (fatfile->fileSize < newpos)
@@ -1435,8 +1455,6 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
     {
         realpos = newpos;
     }
-    reqclusters = realpos
-                  / (fat->sectors_per_cluster * MAXSECTSZ);
 
     /* If we are positioned at the end of a sector, then sectorUpto
        will be one too big, as we don't break into a new sector or
@@ -1450,6 +1468,8 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
     {
         adjust = 0;
     }
+    reqclusters = (realpos - adjust)
+                  / (fat->sectors_per_cluster * MAXSECTSZ);
     fatfile->sectorUpto = ((realpos - adjust) %
                            (fat->sectors_per_cluster * MAXSECTSZ))
                             / MAXSECTSZ;
@@ -2340,6 +2360,13 @@ static void fatChain(FAT *fat, FATFILE *fatfile)
 
     oldcluster = fat->currcluster;
     newcluster = fatFindFreeCluster(fat);
+    /* sanity check */
+    if (fatEndCluster(fat, oldcluster))
+    {
+        printf("internal error - attempt to chain %lu to %lu\n",
+               oldcluster, newcluster);
+        PosMonitor();
+    }
     if (fat->fat_type == 16)
     {
         /* for fat-16, each cluster in the FAT takes up 2 bytes */
