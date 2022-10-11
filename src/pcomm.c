@@ -186,6 +186,7 @@ CMDPROTO(goto);
 CMDPROTO(help);
 CMDPROTO(mcd);
 CMDPROTO(md);
+CMDPROTO(monitor);
 CMDPROTO(option);
 CMDPROTO(path);
 CMDPROTO(pause);
@@ -253,6 +254,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(help,"","Provides information about PDOS commands"),
     CMDDEF(mcd,"","Make new directory and change to it"),
     CMDDEF(md,"|mkdir","Creates new directories"),
+    CMDDEF(monitor,"","Enter the system monitor"),
     CMDDEF(option,"","Controls behavioural flags"),
     CMDDEF(path,"","Displays or modifies PATH variable"),
     CMDDEF(pause,"","Wait for user to press any key"),
@@ -1086,6 +1088,13 @@ static int cmd_scrncap_run(char *drive)
     return (0);
 }
 
+static int cmd_monitor_run(char *ignored)
+{
+    CMD_HAS_NO_ARGS(ignored);
+    PosMonitor();
+    return 0;
+}
+
 static int cmd_dir_run(char *pattern)
 {
     DTA *dta;
@@ -1696,6 +1705,11 @@ static void cmd_scrncap_help(void)
     printf("SCRNCAP [drive] [off]\n");
     printf("drive is in hex. First hard disk is 80\n");
     printf("It will be wiped. Please don't use this command\n");
+}
+
+static void cmd_monitor_help(void)
+{
+    printf("MONITOR\n");
 }
 
 static void cmd_copy_help(void)
