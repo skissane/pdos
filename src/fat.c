@@ -1655,6 +1655,13 @@ static void fatNextSearch(FAT *fat, char *search, const char **upto)
                     fat->origshortname_len = p - *upto;
                 }
             }
+            /* allow a single dot to be found */
+            if (memcmp(*upto, ".", 2) == 0)
+            {
+                memcpy(search, ".          ", 11);
+            }
+            else
+            {
             /* Pads the name part with spaces. */
             memset(search + (q - *upto), ' ', 8 - (q - *upto));
             /* Uppers the extension part. */
@@ -1671,6 +1678,7 @@ static void fatNextSearch(FAT *fat, char *search, const char **upto)
             }
             /* Pads the extension part with spaces. */
             memset(search + 8 + (p - q) - 1, ' ', 3 - ((p - q) - 1));
+            }
         }
         else
         {
@@ -3290,6 +3298,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
     if (!fat->processing_root)
     {
         strcpy(path, fat->corrected_path);
+        strcat(path, "."); /* this should be first entry in directory */
         fatPosition(fat, path);
         fat->processing_root = 0;
     }
