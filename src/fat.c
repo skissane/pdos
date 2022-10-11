@@ -3276,7 +3276,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
     DIRENT *p;
     int ret;
     int notfound;
-    int eod = 0;
+    int eod;
 
     /* Stores variables from FAT which are needed for writing LFNs. */
     stored_de = fat->de;
@@ -3315,6 +3315,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
     while (1)
     {
         notfound = 1;
+        eod = 0;
         /* Loops over clusters. */
         while (!fatEndCluster(fat, fat->currcluster) ||
                (fat->processing_root && fat->rootsize))
