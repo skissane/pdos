@@ -3276,6 +3276,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
     DIRENT *p;
     int ret;
     int notfound;
+    int eod = 0;
 
     /* Stores variables from FAT which are needed for writing LFNs. */
     stored_de = fat->de;
@@ -3338,6 +3339,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
                     {
                         /* If it is end of directory,
                          * we end the current dirent loop. */
+                        eod = 1;
                         break;
                     }
                     if (p->file_name[0] == DIRENT_DEL ||
@@ -3355,7 +3357,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
                         notfound = 0;
                     }
                 }
-                if (p->file_name[0] == '\0')
+                if (eod)
                 {
                     /* If it is end of directory,
                      * we end the current sector loop. */
@@ -3363,7 +3365,7 @@ static int checkNumericTail(FAT *fat, char *shortname)
                 }
             }
             if ((fat->processing_root && fat->rootsize)
-                || p->file_name[0] == '\0')
+                || eod)
             {
                 /* If it is end of directory,
                  * we end the current cluster loop. */
