@@ -1,4 +1,4 @@
-gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib pdos.c
+gcc386 -S -O0 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib pdos.c
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib bos.c
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib fat.c
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib patmat.c
