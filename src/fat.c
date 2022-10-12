@@ -2305,6 +2305,20 @@ static unsigned int fatFindFreeCluster(FAT *fat)
         }
         /* Calculates from where should we start looking for clusters. */
         fatSector = fat->fatstart + (ret * 4) / fat->sector_size;
+
+        /* we gratuitously nuke the last sector, because I'm not sure
+           it is fully populated, or has end cluster markers for the
+           invalid clusters */
+        fatend--;
+
+        /* we put in this protection because I'm not sure the previous
+           ret calculation is actually correct */
+        if (fatSector >= fatend)
+        {
+            ret = 0;
+            fatSector = fat->fatstart;
+        }
+
         x = (ret * 4) % fat->sector_size;
 
         /* Looks for free clusters starting from the last allocated cluster. */
