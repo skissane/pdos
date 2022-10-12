@@ -2371,6 +2371,14 @@ static void fatChain(FAT *fat, FATFILE *fatfile)
 
     oldcluster = fat->currcluster;
     newcluster = fatFindFreeCluster(fat);
+    if (newcluster == 0)
+    {
+        /* we need to set a return code on error in fatChain,
+           and then all the callers of fatChain - a job for
+           another day */
+        printf("PDOS can't handle disk full situation\n");
+        PosMonitor();
+    }
     /* sanity check */
     if (fatEndCluster(fat, oldcluster))
     {
