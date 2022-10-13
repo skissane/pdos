@@ -115,21 +115,30 @@ public __U4M
 __U4M:
 public f_lxmul@
 f_lxmul@ proc
-push bp
-mov bp,sp
 push cx
+push bx
+push si
+push di
 
-push ax
-mul cx
-mov cx, ax
-pop ax
-mul bx
-add dx, cx
+; Code provided by Terje Mathisen
+mov si,ax
+mov di,dx
+mul cx ;; hi * lo
+xchg ax,di ;; First mul saved, grab org dx
+mul bx ;; lo * hi
+add di,ax ;; top word of result
 
+mov ax,si ;; retrieve original AX
+mul bx ;; lo * lo
+add dx,di
+
+pop di
+pop si
+pop bx
 pop cx
-pop bp
 ret
 f_lxmul@ endp
+
 
 _TEXT ends
 
