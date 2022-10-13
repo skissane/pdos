@@ -4800,7 +4800,7 @@ static int writeLBA(void *buf,
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
 {
     diskinfo->drive = bpb[25];
-    diskinfo->num_heads = bpb[15];
+    diskinfo->num_heads = bpb[15] | ((unsigned int)bpb[16] << 8);
     diskinfo->hidden = bpb[17]
                     | ((unsigned long)bpb[18] << 8)
                     | ((unsigned long)bpb[19] << 16)
