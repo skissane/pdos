@@ -739,7 +739,7 @@ static void fatClusterAnalyse(FAT *fat,
     static unsigned char buf[MAXSECTSZ];
     int offset;
 
-    *startSector = (cluster - 2) * (long)fat->sectors_per_cluster
+    *startSector = (cluster - 2) * (unsigned long)fat->sectors_per_cluster
                    + fat->filestart;
     if (fat->fat_type == 16)
     {

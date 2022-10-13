@@ -1832,7 +1832,7 @@ static void fatClusterAnalyse(FAT *fat,
     if (fatEndCluster(fat, cluster)) return;
 
     *startSector = (cluster - FIRST_DATA_CLUSTER)
-                   * (long)fat->sectors_per_cluster
+                   * (unsigned long)fat->sectors_per_cluster
                    + fat->filestart;
     if (fat->fat_type == 16)
     {
