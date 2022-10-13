@@ -105,7 +105,7 @@ static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
     diskinfo->sector_size = bpb[0] | ((unsigned int)bpb[1] << 8);
     diskinfo->numfats = bpb[5];
     diskinfo->fatsize = bpb[11] | ((unsigned int)bpb[12] << 8);
-    diskinfo->num_heads = bpb[15];
+    diskinfo->num_heads = bpb[15] | ((unsigned int)bpb[16] << 8);
     diskinfo->hidden = bpb[17]
                        | ((unsigned long)bpb[18] << 8)
                        | ((unsigned long)bpb[19] << 16)
