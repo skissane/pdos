@@ -13,7 +13,7 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r temp.a stdio.o string.o stdlib.o
   $(AR) r temp.a start.o time.o errno.o assert.o signal.o locale.o
   $(AR) r temp.a ctype.o setjmp.o math.o armsupa.o
-  $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o temp.a
+  $(LD) -N -s -nostdlib -o pdptest.exe linstart.o pdptest.o temp.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
