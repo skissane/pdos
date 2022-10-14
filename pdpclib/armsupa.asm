@@ -196,11 +196,10 @@ ___udivsi3:   rsb     r2,r1,#0
 # in:  r0 = num,  r1 = den
 # out: r0 = quot
 
-        .globl  ___umodsi3
-        .align  2
         .globl  ___divsi3
+        .align  2
 ___divsi3:
-___umodsi3:   stmfd   sp!,{lr}
+        stmfd   sp!,{lr}
         eor     r3,r0,r1        @ r3 = sign
 #       asr     r3,r3,#31
         cmp     r1,#0
@@ -225,10 +224,13 @@ divz:   mov     r0,#8           @ SIGFPE
 # out: r0 = rem
 
         .globl  ___modsi3
+        .globl  ___umodsi3
         .align  2
-___modsi3:   stmfd   sp!,{lr}
+___modsi3:
+___umodsi3:
+        stmfd   sp!,{lr}
 #        asr     r4,r0,#31               @ r4 = sign
-        bl      ___umodsi3
+        bl      ___divsi3
         mov     r0,r1
         cmp     r4,#0
         rsbne   r0,r0,#0
