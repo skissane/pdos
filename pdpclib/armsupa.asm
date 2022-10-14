@@ -45,20 +45,20 @@ __longjmp:
 
 # void _exita(int rc);
 
-        .globl  __exita
+        .globl  ___exita
         .align  2
-__exita:
+___exita:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ rc
         mov     r7,#1           @ SYS_exit
         swi     0
         ldmia   sp!,{pc}
 
-# int __write(int fd, void *buf, int len);
+# int ___write(int fd, void *buf, int len);
 
-        .globl  __write
+        .globl  ___write
         .align  2
-__write:
+___write:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
         ldr     r1,[sp,#8]      @ buf
@@ -67,11 +67,11 @@ __write:
         swi     0
 wrtok:  ldmia   sp!,{pc}
 
-# int __read(int fd, void *buf, int len);
+# int ___read(int fd, void *buf, int len);
 
-        .globl  __read
+        .globl  ___read
         .align  2
-__read:
+___read:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
         ldr     r1,[sp,#8]      @ buf
@@ -79,11 +79,11 @@ __read:
         mov     r7,#3           @ SYS_read
         swi     0
 redok:  ldmia   sp!,{pc}
-# int __seek(int fd, int pos, int how);
+# int ___seek(int fd, int pos, int how);
 
-        .globl  __lseek
+        .globl  ___seek
         .align  2
-__lseek:
+___seek:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ how
         ldr     r1,[sp,#8]      @ off_t
@@ -107,9 +107,9 @@ crtok:  ldmia   sp!,{pc}
 
 # int _open(char *path, int flags);
 
-        .globl  __open
+        .globl  ___open
         .align  2
-__open:
+___open:
         stmfd   sp!,{lr}
         mov     r2,#0x1A4       @ 0644
         ldr     r1,[sp,#8]      @ flags
@@ -120,9 +120,9 @@ opnok:  ldmia   sp!,{pc}
 
 # int _close(int fd);
 
-        .globl  __close
+        .globl  ___close
         .align  2
-__close:
+___close:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
@@ -166,3 +166,8 @@ __time:
 timok:  ldr     r0,[sp]
         add     sp,sp,#16
         ldmia   sp!,{pc}
+
+# This function is required by GCC but isn't used for anything
+        .globl ___main
+___main:
+#        ret
