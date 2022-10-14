@@ -65,7 +65,7 @@ __write:
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#4           @ SYS_write
         swi     0
-wrtok:  pop     {pc}
+wrtok:  ldmia   sp!,{pc}
 
 # int __read(int fd, void *buf, int len);
 
@@ -78,8 +78,7 @@ __read:
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#3           @ SYS_read
         swi     0
-redok:  pop     {pc}
-
+redok:  ldmia   sp!,{pc}
 # int __seek(int fd, int pos, int how);
 
         .globl  __lseek
@@ -92,7 +91,7 @@ __lseek:
         mov     r7,#19
         swi     0
 lskok:  
-        pop     {pc}
+        ldmia   sp!,{pc}
 
 # int __creat(char *path, int mode);
 
@@ -104,7 +103,7 @@ __creat:
         ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
         swi     0
-crtok:  pop     {pc}
+crtok:  ldmia   sp!,{pc}
 
 # int _open(char *path, int flags);
 
@@ -117,7 +116,7 @@ __open:
         ldr     r0,[sp,#4]      @ path
         mov     r7,#5           @ SYS_open
         swi     0
-opnok:  pop     {pc}
+opnok:  ldmia   sp!,{pc}
 
 # int _close(int fd);
 
@@ -128,7 +127,7 @@ __close:
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
         swi     0
-clsok:  pop     {pc}
+clsok:  ldmia   sp!,{pc}
 
 # int __remove(char *path);
 
@@ -139,7 +138,7 @@ __remove:
         ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
         swi     0
-unlok:  pop     {pc}
+unlok:  ldmia   sp!,{pc}
 
 # int __rename(char *old, char *new);
 
@@ -151,7 +150,7 @@ __rename:
         ldr     r0,[sp,#4]      @ old
         mov     r7,#0x26        @ SYS_rename
         swi     0
-renok:  pop     {pc}
+renok:  ldmia   sp!,{pc}
 
 # int __time(void);
 
@@ -166,4 +165,4 @@ __time:
         swi     0
 timok:  ldr     r0,[sp]
         add     sp,sp,#16
-        pop     {pc}
+        ldmia   sp!,{pc}
