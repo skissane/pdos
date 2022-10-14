@@ -51,7 +51,7 @@ __exita:
         push    {lr}
         ldr     r0,[sp,#4]      @ rc
         mov     r7,#1           @ SYS_exit
-        svc     0
+        swi     0
         pop     {pc}
 
 # int __write(int fd, void *buf, int len);
@@ -64,7 +64,7 @@ __write:
         ldr     r1,[sp,#8]      @ buf
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#4           @ SYS_write
-        svc     0
+        swi     0
 wrtok:  pop     {pc}
 
 # int __read(int fd, void *buf, int len);
@@ -76,7 +76,7 @@ __read: push    {lr}
         ldr     r1,[sp,#8]      @ buf
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#3           @ SYS_read
-        svc     0
+        swi     0
 redok:  pop     {pc}
 
 # int __seek(int fd, int pos, int how);
@@ -89,7 +89,7 @@ __lseek:
         ldr     r1,[sp,#8]      @ off_t
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#19
-        svc     0
+        swi     0
 lskok:  
         pop     {pc}
 
@@ -102,7 +102,7 @@ __creat:
         ldr     r1,[sp,#8]      @ mode
         ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
-        svc     0
+        swi     0
 crtok:  pop     {pc}
 
 # int _open(char *path, int flags);
@@ -114,7 +114,7 @@ __open: push    {lr}
         ldr     r1,[sp,#8]      @ flags
         ldr     r0,[sp,#4]      @ path
         mov     r7,#5           @ SYS_open
-        svc     0
+        swi     0
 opnok:  pop     {pc}
 
 # int _close(int fd);
@@ -125,7 +125,7 @@ __close:
         push    {lr}
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
-        svc     0
+        swi     0
 clsok:  pop     {pc}
 
 # int __remove(char *path);
@@ -136,7 +136,7 @@ __remove:
         push    {lr}
         ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
-        svc     0
+        swi     0
 unlok:  pop     {pc}
 
 # int __rename(char *old, char *new);
@@ -148,7 +148,7 @@ __rename:
         ldr     r1,[sp,#8]      @ new
         ldr     r0,[sp,#4]      @ old
         mov     r7,#0x26        @ SYS_rename
-        svc     0
+        swi     0
 renok:  pop     {pc}
 
 # int __time(void);
@@ -160,7 +160,7 @@ __time: push    {lr}
         mov     r1,sp
         mov     r0,#0           @ CLOCK_REALTIME
         mov     r7,#0x107       @ SYS_clock_gettime
-        svc     0
+        swi     0
 timok:  ldr     r0,[sp]
         add     sp,sp,#16
         pop     {pc}
