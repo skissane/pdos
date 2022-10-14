@@ -32,7 +32,7 @@
 #if (defined(__OS2__) || defined(__32BIT__) || defined(__MVS__) \
     || defined(__VSE__) || defined(__PDOS386__) \
     || defined(__CMS__) || defined(__WIN32__) || defined(__gnu_linux__) \
-    || defined(__AMIGA__) ||defined(__SMALLERC__))
+    || defined(__AMIGA__) ||defined(__SMALLERC__) || defined(__ARM__))
 #define INT_MIN (-INT_MAX-1)
 #define INT_MAX 2147483647
 #define UINT_MAX 4294967295U

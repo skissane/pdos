@@ -90,11 +90,12 @@
 /* Note that PDOS is for the 32-bit version, since the 16-bit
    version uses the MSDOS version since it is compatible with it */
 /* linux is pretty similar too */
-#if defined(__PDOS386__) || defined(__gnu_linux__) || defined(__SMALLERC__)
+#if defined(__PDOS386__) || defined(__gnu_linux__) || defined(__SMALLERC__) \
+    || defined(__ARM__)
 #define __MSDOS__
 #endif
 
-#if defined(__MSDOS__) && !defined(__gnu_linux__)
+#if defined(__MSDOS__) && !defined(__gnu_linux__) && !defined(__ARM__)
 #if defined(__WATCOMC__) && !defined(__32BIT__)
 #define CTYP __cdecl
 #else
@@ -130,7 +131,7 @@ extern void CTYP __rename(const char *old, const char *newnam);
 #define VARIABLE_TEXT 3
 #endif
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__) || defined(__ARM__)
 
 extern int __open(const char *a, int b, int c);
 extern int __write(int a, const void *b, int c);
@@ -884,7 +885,7 @@ static void osfopen(void)
     }
     if (mode)
     {
-#ifdef __gnu_linux__
+#if defined(__gnu_linux__) || defined(__ARM__)
         myfile->hfile = __open(fnm, 1, &errind);
 #else
         myfile->hfile = __creat(fnm, 0, &errind);
@@ -898,7 +899,7 @@ static void osfopen(void)
             if ((modeType == 3) || (modeType == 6)
                 || (modeType == 9) || (modeType == 12))
             {
-#ifdef __gnu_linux__
+#if defined(__gnu_linux__) || defined(__ARM__)
                 myfile->hfile = __open(fnm, 1, &errind);
 #else
                 myfile->hfile = __creat(fnm, 0, &errind);
@@ -2290,7 +2291,7 @@ static void fwriteSlowT(const void *ptr,
             stream->upto = stream->fbuf;
             stream->bufStartR += tempWritten;
         }
-#ifndef __gnu_linux__
+#if !defined(__gnu_linux__) && !defined(__ARM__)
         if (stream->textMode)
         {
             memcpy(stream->upto, "\r\n", 2);
@@ -2670,7 +2671,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
         if (specifier == 'p')
         {
             lng = 1;
@@ -2706,7 +2708,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
         if (!lng)
         {
             ulvalue &= 0xffff;
@@ -2729,7 +2732,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
             precision = 9;
 #else
             precision = 8;
@@ -2758,7 +2762,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
             if ((x == 4) && (specifier == 'p'))
             {
                 work[x] = ':';
@@ -2770,7 +2775,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
         if (specifier == 'p')
         {
             while (x < 5)
@@ -4233,7 +4239,8 @@ static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s)
 /* DOS has a ':' in the pointer - skip that */
 #if defined(__MSDOS__) && \
     !defined(__PDOS386__) && \
-    !defined(__gnu_linux__)
+    !defined(__gnu_linux__) && \
+    !defined(__ARM__)
                         else if ((*format == 'p') && (ch == ':'))
                         {
                             inch();

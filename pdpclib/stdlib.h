@@ -20,7 +20,7 @@
 typedef unsigned long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
     || defined(__WIN32__) || defined(__gnu_linux__) || defined(__AMIGA__) \
-    || defined(__PDOS386__))
+    || defined(__PDOS386__) || defined(__ARM__))
 typedef unsigned int size_t;
 #endif
 #endif

@@ -46,7 +46,7 @@
 void CTYP __datetime(void *ptr);
 #endif
 
-#ifdef __gnu_linux__
+#if defined(__gnu_linux__) || defined(__ARM__)
 unsigned long __time(unsigned long *);
 #endif
 
@@ -166,7 +166,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #endif
 #if defined(__MVS__) || defined(__CMS__)
     tt = __getclk(clk);
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__) || defined(__ARM__)
     tt = __time(NULL);
 #elif !defined(__WIN32__) && !defined(__AMIGA__)
 
