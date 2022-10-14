@@ -170,7 +170,10 @@ timok:  ldr     r0,[sp]
 # This function is required by GCC but isn't used for anything
         .globl ___main
 ___main:
-#        ret
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	ldmea	fp, {fp, sp, pc}^
 
 # unsigned integer divide
 # inner loop code taken from http://me.henri.net/fp-div.html
