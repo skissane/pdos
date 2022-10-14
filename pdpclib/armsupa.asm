@@ -129,22 +129,22 @@ ___close:
         swi     0
 clsok:  ldmia   sp!,{pc}
 
-# int __remove(char *path);
+# int ___remove(char *path);
 
-        .globl  __remove
+        .globl  ___remove
         .align  2
-__remove:
+___remove:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
         swi     0
 unlok:  ldmia   sp!,{pc}
 
-# int __rename(char *old, char *new);
+# int ___rename(char *old, char *new);
 
-        .globl  __rename
+        .globl  ___rename
         .align  2
-__rename:
+___rename:
         stmfd   sp!,{lr}
         ldr     r1,[sp,#8]      @ new
         ldr     r0,[sp,#4]      @ old
@@ -171,3 +171,62 @@ timok:  ldr     r0,[sp]
         .globl ___main
 ___main:
 #        ret
+
+# unsigned integer divide
+# inner loop code taken from http://me.henri.net/fp-div.html
+# in:  r0 = num,  r1 = den
+# out: r0 = quot, r1 = rem
+
+        .globl  ___udivsi3
+        .align  2
+___udivsi3:   rsb     r2,r1,#0
+        mov     r1,#0
+        adds    r0,r0,r0
+        .rept   32
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+        .endr
+        mov     pc,lr
+
+# signed integer divide
+# in:  r0 = num,  r1 = den
+# out: r0 = quot
+
+        .globl  ___umodsi3
+        .align  2
+        .globl  ___divsi3
+___divsi3:
+___umodsi3:   stmfd   sp!,{lr}
+        eor     r3,r0,r1        @ r3 = sign
+#       asr     r3,r3,#31
+        cmp     r1,#0
+        beq     divz
+        rsbmi   r1,r1,#0
+        cmp     r0,#0
+        rsbmi   r0,r0,#0
+        bl      ___udivsi3
+        cmp     r3,#0
+        rsbne   r0,r0,#0
+        ldmia   sp!,{pc}
+divz:   mov     r0,#8           @ SIGFPE
+        stmfd   sp!,{r0}
+        mov     r0,#1
+        stmfd   sp!,{r0}
+#        bl      Craise
+        mov     r0,#0           @ if raise(SIGFPE) failed, return 0
+        ldmia   sp!,{pc}
+
+# signed integer modulo
+# in:  r0 = num,  r1 = den
+# out: r0 = rem
+
+        .globl  ___modsi3
+        .align  2
+___modsi3:   stmfd   sp!,{lr}
+#        asr     r4,r0,#31               @ r4 = sign
+        bl      ___umodsi3
+        mov     r0,r1
+        cmp     r4,#0
+        rsbne   r0,r0,#0
+        ldmia   sp!,{pc}
