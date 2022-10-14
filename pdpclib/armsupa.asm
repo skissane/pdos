@@ -48,18 +48,18 @@ __longjmp:
         .globl  __exita
         .align  2
 __exita:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ rc
         mov     r7,#1           @ SYS_exit
         swi     0
-        pop     {pc}
+        ldmia   sp!,{pc}
 
 # int __write(int fd, void *buf, int len);
 
         .globl  __write
         .align  2
 __write:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
         ldr     r1,[sp,#8]      @ buf
         ldr     r0,[sp,#4]      @ fd
@@ -71,7 +71,8 @@ wrtok:  pop     {pc}
 
         .globl  __read
         .align  2
-__read: push    {lr}
+__read:
+        stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
         ldr     r1,[sp,#8]      @ buf
         ldr     r0,[sp,#4]      @ fd
@@ -84,7 +85,7 @@ redok:  pop     {pc}
         .globl  __lseek
         .align  2
 __lseek:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ how
         ldr     r1,[sp,#8]      @ off_t
         ldr     r0,[sp,#4]      @ fd
@@ -98,7 +99,7 @@ lskok:
         .globl  __creat
         .align  2
 __creat:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r1,[sp,#8]      @ mode
         ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
@@ -109,7 +110,8 @@ crtok:  pop     {pc}
 
         .globl  __open
         .align  2
-__open: push    {lr}
+__open:
+        stmfd   sp!,{lr}
         mov     r2,#0x1A4       @ 0644
         ldr     r1,[sp,#8]      @ flags
         ldr     r0,[sp,#4]      @ path
@@ -122,7 +124,7 @@ opnok:  pop     {pc}
         .globl  __close
         .align  2
 __close:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
         swi     0
@@ -133,7 +135,7 @@ clsok:  pop     {pc}
         .globl  __remove
         .align  2
 __remove:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
         swi     0
@@ -144,7 +146,7 @@ unlok:  pop     {pc}
         .globl  __rename
         .align  2
 __rename:
-        push    {lr}
+        stmfd   sp!,{lr}
         ldr     r1,[sp,#8]      @ new
         ldr     r0,[sp,#4]      @ old
         mov     r7,#0x26        @ SYS_rename
@@ -155,7 +157,8 @@ renok:  pop     {pc}
 
         .globl  __time
         .align  2
-__time: push    {lr}
+__time:
+        stmfd   sp!,{lr}
         sub     sp,sp,#16       @ struct timespec
         mov     r1,sp
         mov     r0,#0           @ CLOCK_REALTIME
