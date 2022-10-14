@@ -90,7 +90,7 @@ int CTYP __exec(char *cmd, void *env);
 int CTYP __getrc(void);
 #endif
 
-#ifdef __gnu_linux__
+#if defined(__gnu_linux__) || defined(__ARM__)
 void *__allocmem(size_t size);
 #endif
 
@@ -137,7 +137,8 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
     if (size > MAX_CHUNK)
     {
-#if defined(__MVS__) || defined(__CMS__) || defined(__gnu_linux__)
+#if defined(__MVS__) || defined(__CMS__) || defined(__gnu_linux__) \
+    || defined(__ARM__)
 #if defined(MULMEM)
         /* If we support multiple memory requests */
         ptr = __getm(size);
@@ -151,7 +152,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
             *(size_t *)ptr = size;
             ptr = (char *)ptr + sizeof(size_t);
         }
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__) || defined(__ARM__)
         ptr = __allocmem(size + sizeof(size_t));
         if (ptr != NULL)
         {
@@ -189,7 +190,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
                 *(size_t *)ptr2 = size;
                 ptr2 = (char *)ptr2 + sizeof(size_t);
             }
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__) || defined(__ARM__)
             ptr2 = __allocmem(REQ_CHUNK);
             if (ptr2 != NULL)
             {
@@ -220,7 +221,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         ptr = (char *)ptr + sizeof(size_t);
     }
     return (ptr);
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__) || defined(__ARM__)
     void *ptr;
 
     ptr = __allocmem(size + sizeof(size_t));
@@ -368,12 +369,13 @@ __PDPCLIB_API__ void abort(void)
     raise(SIGABRT);
     exit(EXIT_FAILURE);
 #if !defined(__EMX__) && !defined(__GNUC__) && !defined(__WIN32__) \
-  && !defined(__gnu_linux__)
+  && !defined(__gnu_linux__) && !defined(__ARM__)
     return;
 #endif
 }
 
 #if !defined(__EMX__) && !defined(__GNUC__) && !defined(__gnu_linux__) \
+    && !defined(__ARM__) \
     || defined(WATLIN)
 void __exit(int status);
 #else
@@ -384,7 +386,7 @@ __PDPCLIB_API__ void exit(int status)
 {
     __exit(status);
 #if !defined(__EMX__) && !defined(__GNUC__) && !defined(__WIN32__) \
-  && !defined(__gnu_linux__)
+  && !defined(__gnu_linux__) && !defined(__ARM__)
     return;
 #endif
 }
