@@ -159,7 +159,7 @@ __time: push    {lr}
         sub     sp,sp,#16       @ struct timespec
         mov     r1,sp
         mov     r0,#0           @ CLOCK_REALTIME
-        mov     r7,#0x107       @ SYS_clock_gettime
+        ldr     r7,=0x107       @ SYS_clock_gettime
         swi     0
 timok:  ldr     r0,[sp]
         add     sp,sp,#16
