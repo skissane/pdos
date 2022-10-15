@@ -3,6 +3,8 @@
 # This program written by Paul Edwards
 # Released to the public domain
 
+.globl ___setj
+___setj:
 .globl __setj
 __setj:
 push %ebp
@@ -35,6 +37,8 @@ ret
 
 
 
+.globl ___longj
+___longj:
 .globl __longj
 __longj:
 push %ebp
@@ -68,6 +72,8 @@ pop %ebp
 ret
 
 
+.globl ___write
+___write:
 .globl __write
 __write:
 push %ebp
@@ -92,6 +98,8 @@ pop %ebp
 ret
 
 
+.globl ___read
+___read:
 .globl __read
 __read:
 push %ebp
@@ -117,6 +125,8 @@ ret
 
 
 
+.globl ___open
+___open:
 .globl __open
 __open:
 push %ebp
@@ -144,6 +154,8 @@ ret
 
 .globl __seek
 __seek:
+.globl ___seek
+___seek:
 push %ebp
 mov %esp, %ebp
 push %ebx
@@ -167,6 +179,8 @@ ret
 
 
 
+.globl ___rename
+___rename:
 .globl __rename
 __rename:
 push %ebp
@@ -186,6 +200,8 @@ pop %ebx
 pop %ebp
 
 
+.globl ___remove
+___remove:
 .globl __remove
 __remove:
 push %ebp
@@ -201,6 +217,8 @@ pop %ebp
 ret
 
 
+.globl ___close
+___close:
 .globl __close
 __close:
 push %ebp
@@ -216,6 +234,8 @@ pop %ebp
 ret
 
 
+.globl ___exita
+___exita:
 .globl __exita
 __exita:
 # exit/terminate
@@ -230,6 +250,8 @@ pop %ebp
 ret
 
 
+.globl ___time
+___time:
 .globl __time
 __time:
 push %ebp
