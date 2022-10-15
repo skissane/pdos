@@ -3,9 +3,9 @@
 #
 
 CC=gcc386
-AR=ar-pdos
-LD=ld-pdos
-AS=as-pdos
+AR=are86
+LD=lde86
+AS=ase86
 COPTS=-S -O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -I.
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
