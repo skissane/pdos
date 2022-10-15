@@ -1,0 +1,26 @@
+# This is the makefile for Linux to build pdpclib using
+# the pdos gcc compiler.
+#
+
+CC=gcc386
+AR=ar-pdos
+LD=ld-pdos
+AS=as-pdos
+COPTS=-S -O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -I.
+
+pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o __memmgr.o
+  rm -f pdplinux.a
+  $(AR) r pdplinux.a linstart.o linsupa.o stdio.o string.o stdlib.o
+  $(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
+  $(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
+  $(LD) -s -nostdlib -e __start -o pdptest.exe linstart.o pdptest.o pdplinux.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) -o $@ $<
