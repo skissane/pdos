@@ -3,7 +3,7 @@
 #
 
 CC=wcl386
-COPTS=-q -s -3s -zl -fpi87 -c -I. -I..\src -D__gnu_linux__ -DUSE_MEMMGR -DWATLIN
+COPTS=-q -s -3s -zl -fpi87 -c -I. -D__gnu_linux__ -DUSE_MEMMGR -DWATLIN
 
 pdptest: linstart.obj linsupa.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
