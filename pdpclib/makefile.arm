@@ -4,7 +4,7 @@ CC=gccarm
 AR=ararm
 LD=ldarm
 AS=asarm
-COPTS=-S -O2 -D__ARM__ -D__NOBIVA__ -DUSE_MEMMGR -I.
+COPTS=-S -O2 -D__ARM__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
