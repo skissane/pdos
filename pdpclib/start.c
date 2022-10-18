@@ -19,6 +19,10 @@
 #include "__memmgr.h"
 #endif
 
+#ifdef __ARM__
+#define __gnu_linux__
+#endif
+
 extern FILE *__userFiles[__NFILE];
 
 extern void (*__userExit[__NATEXIT])(void);
