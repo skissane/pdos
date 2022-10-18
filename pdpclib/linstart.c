@@ -18,7 +18,14 @@ int _start(char *p)
 {
     int rc;
 
+    /* I don't know what the official rules for ARM are, but
+       looking at the stack on entry showed that this code
+       would work */
+#ifdef __ARM__
+    rc = __start(*(int *)(&p + 6), &p + 7);
+#else
     rc = __start(*(int *)(&p - 1), &p);
+#endif
     __exita(rc);
     return (rc);
 }
