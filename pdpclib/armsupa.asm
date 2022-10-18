@@ -55,8 +55,7 @@ __longjmp:
 __exita:
 ___exita:
         stmfd   sp!,{lr}
-        ldr     r0,[sp,#4]      @ rc
-#        mov     r0,#9
+#        ldr     r0,[sp,#4]      @ rc
         mov     r7,#1           @ SYS_exit
         swi     0
         ldmia   sp!,{pc}
@@ -69,9 +68,9 @@ ___exita:
 __write:
 ___write:
         stmfd   sp!,{lr}
-        ldr     r2,[sp,#12]     @ len
-        ldr     r1,[sp,#8]      @ buf
-        ldr     r0,[sp,#4]      @ fd
+#        ldr     r2,[sp,#12]     @ len
+#        ldr     r1,[sp,#8]      @ buf
+#        ldr     r0,[sp,#4]      @ fd
         mov     r7,#4           @ SYS_write
         swi     0
 wrtok:  ldmia   sp!,{pc}
