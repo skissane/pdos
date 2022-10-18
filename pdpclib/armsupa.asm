@@ -17,8 +17,10 @@
         .align  2
 # int setjmp(jmp_buf env);
 
+        .globl  _setjmp
         .globl  __setjmp
         .align  2
+_setjmp:
 __setjmp:
         ldr     r1,[sp]         @ env
         mov     r2,sp
@@ -31,8 +33,10 @@ __setjmp:
 
 # void longjmp(jmp_buf env, int v);
 
+        .globl  _longjmp
         .globl  __longjmp
         .align  2
+_longjmp:
 __longjmp:
         ldr     r0,[sp,#4]      @ v
         cmp     r0,#0
@@ -45,19 +49,24 @@ __longjmp:
 
 # void _exita(int rc);
 
+        .globl  __exita
         .globl  ___exita
         .align  2
+__exita:
 ___exita:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ rc
+#        mov     r0,#9
         mov     r7,#1           @ SYS_exit
         swi     0
         ldmia   sp!,{pc}
 
 # int ___write(int fd, void *buf, int len);
 
+        .globl  __write
         .globl  ___write
         .align  2
+__write:
 ___write:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
@@ -69,8 +78,10 @@ wrtok:  ldmia   sp!,{pc}
 
 # int ___read(int fd, void *buf, int len);
 
+        .globl  __read
         .globl  ___read
         .align  2
+__read:
 ___read:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ len
@@ -81,8 +92,10 @@ ___read:
 redok:  ldmia   sp!,{pc}
 # int ___seek(int fd, int pos, int how);
 
+        .globl  __seek
         .globl  ___seek
         .align  2
+__seek:
 ___seek:
         stmfd   sp!,{lr}
         ldr     r2,[sp,#12]     @ how
@@ -96,8 +109,10 @@ lskok:
 # int __creat(char *path, int mode);
 
         .globl  __creat
+        .globl  ___creat
         .align  2
 __creat:
+___creat:
         stmfd   sp!,{lr}
         ldr     r1,[sp,#8]      @ mode
         ldr     r0,[sp,#4]      @ path
@@ -107,8 +122,10 @@ crtok:  ldmia   sp!,{pc}
 
 # int _open(char *path, int flags);
 
+        .globl  __open
         .globl  ___open
         .align  2
+__open:
 ___open:
         stmfd   sp!,{lr}
         mov     r2,#0x1A4       @ 0644
@@ -120,8 +137,10 @@ opnok:  ldmia   sp!,{pc}
 
 # int _close(int fd);
 
+        .globl  __close
         .globl  ___close
         .align  2
+__close:
 ___close:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ fd
@@ -131,8 +150,10 @@ clsok:  ldmia   sp!,{pc}
 
 # int ___remove(char *path);
 
+        .globl  __remove
         .globl  ___remove
         .align  2
+__remove:
 ___remove:
         stmfd   sp!,{lr}
         ldr     r0,[sp,#4]      @ path
@@ -142,8 +163,10 @@ unlok:  ldmia   sp!,{pc}
 
 # int ___rename(char *old, char *new);
 
+        .globl  __rename
         .globl  ___rename
         .align  2
+__rename:
 ___rename:
         stmfd   sp!,{lr}
         ldr     r1,[sp,#8]      @ new
@@ -155,8 +178,10 @@ renok:  ldmia   sp!,{pc}
 # int __time(void);
 
         .globl  __time
+        .globl  ___time
         .align  2
 __time:
+___time:
         stmfd   sp!,{lr}
         sub     sp,sp,#16       @ struct timespec
         mov     r1,sp
@@ -168,7 +193,9 @@ timok:  ldr     r0,[sp]
         ldmia   sp!,{pc}
 
 # This function is required by GCC but isn't used for anything
+        .globl __main
         .globl ___main
+__main:
 ___main:
         movs    pc, lr
 
@@ -177,9 +204,12 @@ ___main:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot, r1 = rem
 
+        .globl  __udivsi3
         .globl  ___udivsi3
         .align  2
-___udivsi3:   rsb     r2,r1,#0
+__udivsi3:
+___udivsi3:
+        rsb     r2,r1,#0
         mov     r1,#0
         adds    r0,r0,r0
         .rept   32
@@ -193,8 +223,10 @@ ___udivsi3:   rsb     r2,r1,#0
 # in:  r0 = num,  r1 = den
 # out: r0 = quot
 
+        .globl  __divsi3
         .globl  ___divsi3
         .align  2
+__divsi3:
 ___divsi3:
         stmfd   sp!,{lr}
         eor     r3,r0,r1        @ r3 = sign
@@ -221,10 +253,14 @@ divz:   mov     r0,#8           @ SIGFPE
 # in:  r0 = num,  r1 = den
 # out: r0 = rem
 
+        .globl  __modsi3
         .globl  ___modsi3
+        .globl  __umodsi3
         .globl  ___umodsi3
         .align  2
+__modsi3:
 ___modsi3:
+__umodsi3:
 ___umodsi3:
         stmfd   sp!,{lr}
 #        asr     r4,r0,#31               @ r4 = sign
