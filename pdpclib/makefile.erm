@@ -17,7 +17,7 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) -W -o $*.o $*.s
+  $(AS) -o $*.o $*.s
   rm -f $*.s
 
 .asm.o:
