@@ -1,10 +1,13 @@
 # This builds ARM ELF executables for Linux
 
-CC=gccerm
+CC=gccarm
+#CC=gccerm
 AR=arerm
 LD=lderm
 AS=aserm
-COPTS=-S -O2 -D__ARM__ -DUSE_MEMMGR -I.
+#COPTS=-S -O0 -D__NOARGS__ -D__ARM__ -DUSE_MEMMGR -I.
+COPTS=-S -O0 -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
+#COPTS=-S -O2 -D__ARM__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -13,7 +16,8 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r temp.a stdio.o string.o stdlib.o
   $(AR) r temp.a start.o time.o errno.o assert.o signal.o locale.o
   $(AR) r temp.a ctype.o setjmp.o math.o armsupa.o __memmgr.o
-  $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o temp.a
+  $(LD) -e __start -s -nostdlib -o pdptest.exe linstart.o pdptest.o temp.a
+  echo $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o temp.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
