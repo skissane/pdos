@@ -150,7 +150,8 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     printf("%lu bytes copied\n", total);
-    
+
+    fclose(fp);
     fclose(fq); /* keep last in case it is stdout */
 
     return (0);
