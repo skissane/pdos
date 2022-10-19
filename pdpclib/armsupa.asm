@@ -129,7 +129,7 @@ crtok:  ldmia   sp!,{pc}
 __open:
 ___open:
         stmfd   sp!,{lr}
-        mov     r2,#0x1A4       @ 0644
+#        mov     r2,#0x1A4       @ 0644
 #        ldr     r1,[sp,#8]      @ flags
 #        ldr     r0,[sp,#4]      @ path
         mov     r7,#5           @ SYS_open
