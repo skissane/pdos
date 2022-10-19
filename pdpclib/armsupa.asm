@@ -115,6 +115,7 @@ __creat:
 ___creat:
         stmfd   sp!,{lr}
 #        ldr     r1,[sp,#8]      @ mode
+        mov     r1,#0x1A4       @ 0644
 #        ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
         swi     0
