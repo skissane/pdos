@@ -89,6 +89,7 @@ ___read:
         mov     r7,#3           @ SYS_read
         swi     0
 redok:  ldmia   sp!,{pc}
+
 # int ___seek(int fd, int pos, int how);
 
         .globl  __seek
