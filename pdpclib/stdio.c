@@ -546,6 +546,8 @@ static void fopen3(void)
         }
 #endif
         myfile->mode = __READ_MODE;
+        /* gccerm, but not gccarm, seems to have a problem with this
+           switch */
         switch (modeType)
         {
             case 2:
