@@ -83,9 +83,9 @@ wrtok:  ldmia   sp!,{pc}
 __read:
 ___read:
         stmfd   sp!,{lr}
-        ldr     r2,[sp,#12]     @ len
-        ldr     r1,[sp,#8]      @ buf
-        ldr     r0,[sp,#4]      @ fd
+#        ldr     r2,[sp,#12]     @ len
+#        ldr     r1,[sp,#8]      @ buf
+#        ldr     r0,[sp,#4]      @ fd
         mov     r7,#3           @ SYS_read
         swi     0
 redok:  ldmia   sp!,{pc}
@@ -97,9 +97,9 @@ redok:  ldmia   sp!,{pc}
 __seek:
 ___seek:
         stmfd   sp!,{lr}
-        ldr     r2,[sp,#12]     @ how
-        ldr     r1,[sp,#8]      @ off_t
-        ldr     r0,[sp,#4]      @ fd
+#        ldr     r2,[sp,#12]     @ how
+#        ldr     r1,[sp,#8]      @ off_t
+#        ldr     r0,[sp,#4]      @ fd
         mov     r7,#19
         swi     0
 lskok:  
@@ -113,8 +113,8 @@ lskok:
 __creat:
 ___creat:
         stmfd   sp!,{lr}
-        ldr     r1,[sp,#8]      @ mode
-        ldr     r0,[sp,#4]      @ path
+#        ldr     r1,[sp,#8]      @ mode
+#        ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
         swi     0
 crtok:  ldmia   sp!,{pc}
@@ -128,8 +128,8 @@ __open:
 ___open:
         stmfd   sp!,{lr}
         mov     r2,#0x1A4       @ 0644
-        ldr     r1,[sp,#8]      @ flags
-        ldr     r0,[sp,#4]      @ path
+#        ldr     r1,[sp,#8]      @ flags
+#        ldr     r0,[sp,#4]      @ path
         mov     r7,#5           @ SYS_open
         swi     0
 opnok:  ldmia   sp!,{pc}
@@ -142,7 +142,7 @@ opnok:  ldmia   sp!,{pc}
 __close:
 ___close:
         stmfd   sp!,{lr}
-        ldr     r0,[sp,#4]      @ fd
+#        ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
         swi     0
 clsok:  ldmia   sp!,{pc}
@@ -155,7 +155,7 @@ clsok:  ldmia   sp!,{pc}
 __remove:
 ___remove:
         stmfd   sp!,{lr}
-        ldr     r0,[sp,#4]      @ path
+#        ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
         swi     0
 unlok:  ldmia   sp!,{pc}
@@ -168,8 +168,8 @@ unlok:  ldmia   sp!,{pc}
 __rename:
 ___rename:
         stmfd   sp!,{lr}
-        ldr     r1,[sp,#8]      @ new
-        ldr     r0,[sp,#4]      @ old
+#        ldr     r1,[sp,#8]      @ new
+#        ldr     r0,[sp,#4]      @ old
         mov     r7,#0x26        @ SYS_rename
         swi     0
 renok:  ldmia   sp!,{pc}
