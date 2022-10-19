@@ -22,7 +22,16 @@ int _start(char *p)
        looking at the stack on entry showed that this code
        would work */
 #ifdef __ARM__
+
+#ifdef __NOARGS__
+    char *progname = "progname";
+    rc = __start(1, &progname);
+#elif defined(__UNOPT__)
+    rc = __start(*(int *)(&p + 5), &p + 6);
+#else
     rc = __start(*(int *)(&p + 6), &p + 7);
+#endif
+
 #else
     rc = __start(*(int *)(&p - 1), &p);
 #endif
