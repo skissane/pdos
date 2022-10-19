@@ -141,21 +141,26 @@ extern void __close(int handle);
 extern void __remove(const char *filename);
 extern void __rename(const char *old, const char *newnam);
 
+#define O_RDONLY 0x0
 #define O_WRONLY 0x1
+#define O_RDWR   0x2
 #define O_CREAT  0x40
 #define O_TRUNC  0x200
-#define O_RDONLY 0x0
 
 static int open(const char *a, int b, int *c)
 {
-    int ret;
+    int ret = -1;
 
     *c = 0;
-    if (b)
+    if (b == 2)
+    {
+        ret = __open(a, O_RDWR, 0);
+    }
+    else if (b == 1)
     {
         ret = __open(a, O_WRONLY | O_CREAT | O_TRUNC, 0664);
     }
-    else
+    else if (b == 0)
     {
         ret = __open(a, O_RDONLY, 0);
     }
