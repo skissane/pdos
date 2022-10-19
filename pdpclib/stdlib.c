@@ -65,6 +65,9 @@ extern int __tso;
 #if defined(MULMEM)
 #define MAX_CHUNK 67100672
 #define REQ_CHUNK 67100672
+#elif defined(__gnu_linux__) || defined(__ARM__)
+#define MAX_CHUNK 30000000 /* maximum size we will store in memmgr */
+#define REQ_CHUNK 30000000 /* size that we request from OS */
 #else
 #define MAX_CHUNK 67100672 /* maximum size we will store in memmgr */
 #define REQ_CHUNK 67100672 /* size that we request from OS */
