@@ -407,6 +407,12 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stderr->theirBuffer = 0;
     __stderr->permfile = 1;
     __stderr->isopen = 1;
+
+#if USE_MEMMGR
+    memmgrDefaults(&__memmgr);
+    memmgrInit(&__memmgr);
+#endif
+
 #else
     int dyna_sysprint = 0;
     int dyna_systerm = 0;
