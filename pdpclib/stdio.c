@@ -3359,6 +3359,12 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
                 }
                 else
                 {
+#ifdef __ARM__
+/* there is a bug where it seems to reach here, but I can't use
+   printf to debug it, because adding a printf makes the problem
+   disappear. So we'll just live with this for now */
+                    printf("");
+#endif
                     if ((*(t - 2) == '\r') && (*(t - 1) == '\n'))
                     {
                         *(u - 2) = '\n';
