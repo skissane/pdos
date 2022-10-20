@@ -1,0 +1,21 @@
+# This builds a PDOS-generic executable for ARM
+
+CC=gccarm
+COPTS=-S -O0 -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+  rm -f pcomm.exe
+  ldarm -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  asarm -o $@ $*.s
+  rm -f $*.s
+
+.asm.o:
+  asarm -o $@ $<
+
+clean:
+  rm -f pcomm.exe
