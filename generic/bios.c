@@ -18,7 +18,7 @@
 #include "bios.h"
 #include "exeload.h"
 
-#define MEMAMT 28*1024*1024
+#define MEMAMT 28*1000*1000
 
 static BIOS bios = { NULL, 0, NULL,
     printf, fopen, fseek, fread, fclose, fwrite, fgets, NULL, NULL,
