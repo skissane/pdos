@@ -21,4 +21,4 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   rm -f $*.s
 
 .asm.o:
-  $(AS) -o $@ $<
+  $(AS) --defsym LINUX=1 -o $@ $<
