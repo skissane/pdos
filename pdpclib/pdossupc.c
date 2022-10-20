@@ -153,10 +153,12 @@ void __datetime(void *ptr)
     return;
 }
 
+#ifndef NOUNDMAIN
 void __main(void)
 {
     return;
 }
+#endif
 
 void CTYP __exita(int retcode)
 {
