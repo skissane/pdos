@@ -194,7 +194,14 @@ __PDPCLIB_API__ void *malloc(size_t size)
                 ptr2 = (char *)ptr2 + sizeof(size_t);
             }
 #elif defined(__gnu_linux__) || defined(__ARM__)
-            ptr2 = __allocmem(REQ_CHUNK);
+            if (__memmgr.start == NULL)
+            {
+                ptr2 = __allocmem(REQ_CHUNK);
+            }
+            else
+            {
+                ptr2 = NULL;
+            }
             if (ptr2 != NULL)
             {
                 *(size_t *)ptr2 = size;
