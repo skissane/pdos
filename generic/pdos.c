@@ -48,7 +48,7 @@ extern int (*__genmain)(int argc, char **argv);
 
 static OS os = { __start, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
-  strcmp, strncmp, fgetc, fputc,
+  strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation };
 
@@ -404,6 +404,12 @@ int PosFindFirst(char *pat, int attrib)
 int PosFindNext(void)
 {
     return (ff_search());
+}
+
+unsigned int PosMonitor(void)
+{
+    printf("no monitor available\n");
+    for (;;) ;
 }
 
 static void readLogical(void *diskptr, unsigned long sector, void *buf)
