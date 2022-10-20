@@ -1,0 +1,25 @@
+# This builds the PDOS-generic OS library for ARM
+
+CC=gccarm
+COPTS=-S -O0 -U__ARM__ -DNOUNDMAIN -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -I . -I../src
+
+all: clean pdosgeno.a
+
+pdosgeno.a: stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o armsupa.o pdossupc.o
+        rm -f pdosgeno.a
+        ararm r pdosgeno.a stdio.o string.o stdlib.o armsupa.o
+        ararm r pdosgeno.a start.o time.o errno.o assert.o signal.o
+        ararm r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o
+
+.c.o:
+        $(CC) $(COPTS) -o $*.s $<
+        asarm -o $@ $*.s
+        rm -f $*.s
+
+.asm.o:
+        asarm -o $@ $<
+
+clean:
+        rm -f pdosgeno.a
