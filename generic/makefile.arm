@@ -1,0 +1,22 @@
+# produce pdos.exe as an ARM a.out
+
+CC=gccarm
+CFLAGS=-O0 -D__UNOPT__
+LD=ldarm
+LDFLAGS=
+AS=asarm
+AR=ararm
+COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -DNOLIBALLOC -DNEED_AOUT
+
+all: clean pdos.exe
+
+pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
+    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o pdos.exe
