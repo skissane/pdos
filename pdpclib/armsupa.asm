@@ -47,6 +47,7 @@ __longjmp:
         ldr     lr,[r1,#8]
         mov     pc,lr
 
+.ifdef LINUX
 # void _exita(int rc);
 
         .globl  __exita
@@ -193,12 +194,16 @@ timok:  ldr     r0,[sp]
         add     sp,sp,#16
         ldmia   sp!,{pc}
 
+.endif
+
+
 # This function is required by GCC but isn't used for anything
         .globl __main
         .globl ___main
 __main:
 ___main:
         movs    pc, lr
+
 
 # unsigned integer divide
 # inner loop code taken from http://me.henri.net/fp-div.html
