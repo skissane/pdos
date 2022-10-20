@@ -156,6 +156,8 @@ char *__strrchr__(const char *s, int c);
 #define strchr __os->strchr
 #define strcmp __os->strcmp
 #define strncmp __os->strncmp
+#define strcpy __os->strcpy
+#define strlen __os->strlen
 #endif
 
 
