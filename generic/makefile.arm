@@ -1,6 +1,5 @@
 # produce pdos.exe as an ARM a.out
 
-
 CC=gccarm
 CFLAGS=-O0 -D__UNOPT__
 LD=ldarm
