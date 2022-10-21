@@ -126,6 +126,13 @@ int main(void)
         return (EXIT_FAILURE);
     }
     pgastart = (void *)entry_point;
+
+    for (ret = 0; ret < 500; ret++)
+    {
+        printf("please accept a delay before we execute pcomm.exe "
+               "in BSS memory\n");
+    }
+
     printf("about to call app\n");
     ret = pgastart(&os);
     printf("return from app is %d\n", ret);
