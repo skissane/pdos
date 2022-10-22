@@ -1059,6 +1059,7 @@ void __exit(int status)
     __exita(status);
     }
     runnum--;
+    /* need a longjmp back to main() here */
 #endif
 }
 
