@@ -279,14 +279,14 @@ divz:   mov     r0,#8           @ SIGFPE
         .align  2
 __modsi3:
 ___modsi3:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r4,lr}
 #        asr     r4,r0,#31               @ r4 = sign
-#        mov     r4,r0,asr#31
+        mov     r4,r0,asr#31
         bl      ___divsi3
         mov     r0,r1
-#        cmp     r4,#0
-#        rsbne   r0,r0,#0
-        ldmia   sp!,{pc}
+        cmp     r4,#0
+        rsbne   r0,r0,#0
+        ldmia   sp!,{r4,pc}
 
 # unsigned integer modulo
 # in:  r0 = num,  r1 = den
