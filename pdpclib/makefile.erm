@@ -5,7 +5,7 @@ CC=gccarm
 AR=arerm
 LD=lderm
 AS=aserm
-#COPTS=-S -O0 -D__NOARGS__ -D__ARM__ -DUSE_MEMMGR -I.
+#COPTS=-S -O0 -D__NOARGS__ -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
 COPTS=-S -O0 -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
 #COPTS=-S -O2 -D__ARM__ -DUSE_MEMMGR -I.
 
