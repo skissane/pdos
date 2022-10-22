@@ -1,10 +1,13 @@
 # This builds ARM executables for Linux
+# But actually they won't run on Linux because ldarm uses
+# a non-standard text start offset of 0 instead of 0x8000.
+# Even if Linux still supported a.out format
 
 CC=gccarm
 AR=ararm
 LD=ldarm
 AS=asarm
-COPTS=-S -O2 -D__ARM__ -DUSE_MEMMGR -I.
+COPTS=-S -O0 -D__ARM__ -D__UNOPT__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
