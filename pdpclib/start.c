@@ -38,6 +38,35 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <windows.h>
 #endif
 
+
+#ifdef __gnu_linux__
+
+struct termios {
+    unsigned int c_iflag;
+    unsigned int c_oflag;
+    unsigned int c_cflag;
+    unsigned int c_lflag;
+    unsigned int whoknows[50];
+};
+
+static struct termios tios_save;
+static struct termios tios_new;
+
+int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+
+#define TCGETS 0x00005401U
+#define TCSETS 0x00005402U
+
+#define ISIG 0x1
+#define ICANON 0x2
+#define ECHO 0x8
+#define ECHONL 0x40
+
+#define IXON 0x400
+
+#endif
+
+
 #if defined(__WATCOMC__) && !defined(WATLIN)
 #define CTYP __cdecl
 #else
@@ -340,6 +369,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if defined(__PDOS386__)
     PosGetDeviceInformation(0, &stdin_dw);
     stdin_dw &= 0xff;
+#endif
+
+#if defined(__gnu_linux__)
+    __ioctl(0, TCGETS, (unsigned long)&tios_save);
+    tios_new = tios_save;
+    tios_new.c_iflag &= ~IXON;
+    tios_new.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
+    __ioctl(0, TCSETS, (unsigned long)&tios_new);
 #endif
 
     __stdin->quickBin = 0;
@@ -1071,6 +1108,10 @@ __PDPCLIB_API__ void _c_exit(void)
 
 #if defined(__PDOS386__)
     PosSetDeviceInformation(0, stdin_dw);
+#endif
+
+#if defined(__gnu_linux__)
+    __ioctl(0, TCSETS, (unsigned long)&tios_save);
 #endif
 
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
