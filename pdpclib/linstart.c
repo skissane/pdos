@@ -5,10 +5,19 @@
 #include "errno.h"
 #include "stddef.h"
 
+/* malloc calls get this */
+static char membuf[31000000];
 
 extern int __start(int argc, char **argv);
 extern int __exita(int rc);
 
+#ifdef NEED_MPROTECT
+extern int __mprotect(void *buf, size_t len, int prot);
+
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define PROT_EXEC 4
+#endif
 
 /* We can get away with a minimal startup code, plus make it
    a C program. There is no return address. Instead, on the
@@ -17,6 +26,12 @@ extern int __exita(int rc);
 int _start(char *p)
 {
     int rc;
+
+#ifdef NEED_MPROTECT
+    /* make malloced memory executable */
+    /* most environments already make the memory executable */
+    __mprotect(membuf, sizeof membuf, PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
 
     /* I don't know what the official rules for ARM are, but
        looking at the stack on entry showed that this code
@@ -39,7 +54,6 @@ int _start(char *p)
     return (rc);
 }
 
-static char membuf[31000000];
 
 void *__allocmem(size_t size)
 {
