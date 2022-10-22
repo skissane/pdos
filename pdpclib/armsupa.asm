@@ -252,7 +252,7 @@ ___divsi3:
         stmfd   sp!,{lr}
         eor     r3,r0,r1        @ r3 = sign
 #       asr     r3,r3,#31
-        mov     r3,r3,ror #31
+        mov     r3,r3,asr#31
         cmp     r1,#0
         beq     divz
         rsbmi   r1,r1,#0
