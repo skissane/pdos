@@ -5,7 +5,7 @@ COPTS=-S -O0 -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpc
 
 all: clean pcomm.exe
 
-pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
   rm -f pcomm.exe
   ldarm -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
 
