@@ -1885,6 +1885,9 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                     memcpy(pending, "[5;5~", 5);
                     ascii = 0x1b;
                 }
+                /* all the following are Alt- combinations, e.g.
+                   scancode of 0x10 is Alt-q which should be presented
+                   as ESC q */
                 else if (scan == 0x10)
                 {
                     num_pending = 1;
