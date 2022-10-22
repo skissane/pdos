@@ -209,6 +209,21 @@ ___mprotect:
         swi     0
 mpok:   ldmia   sp!,{pc}
 
+# int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+
+        .globl  __ioctl
+        .globl  ___ioctl
+        .align  2
+__ioctl:
+___ioctl:
+        stmfd   sp!,{lr}
+#        ldr     r2,[sp,#12]     @ arg
+#        ldr     r1,[sp,#8]      @ cmd
+#        ldr     r0,[sp,#4]      @ fd
+        mov     r7,#54           @ SYS_ioctl
+        swi     0
+iocok:  ldmia   sp!,{pc}
+
 .endif
 
 
