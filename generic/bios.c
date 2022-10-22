@@ -18,6 +18,9 @@
 #include "__os.h"
 #include "exeload.h"
 
+extern int __genstart;
+extern int (*__genmain)(int argc, char **argv);
+
 /* A BIOS is meant to be machine-specific, so this is not a big deal */
 #if 1
 #define PATH "./"
@@ -62,6 +65,9 @@ int main(int argc, char **argv)
     bios.mem_amt = MEMAMT;
     bios.Xstdin = stdin;
     bios.Xstdout = stdout;
+    __genstart = 1;
+    bios.main = &__genmain;
+
     if (argc < 3)
     {
         /* should really get this from a config file */
