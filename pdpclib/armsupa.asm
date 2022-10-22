@@ -194,6 +194,21 @@ timok:  ldr     r0,[sp]
         add     sp,sp,#16
         ldmia   sp!,{pc}
 
+# int ___mprotect(const void *buf, size_t len, int prot);
+
+        .globl  __mprotect
+        .globl  ___mprotect
+        .align  2
+__mprotect:
+___mprotect:
+        stmfd   sp!,{lr}
+#        ldr     r2,[sp,#12]     @ prot
+#        ldr     r1,[sp,#8]      @ len
+#        ldr     r0,[sp,#4]      @ buf
+        mov     r7,#125          @ SYS_mprotect
+        swi     0
+mpok:   ldmia   sp!,{pc}
+
 .endif
 
 
