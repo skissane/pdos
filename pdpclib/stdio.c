@@ -3281,6 +3281,46 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
         *u++ = (char)stream->ungetCh;
         stream->ungetCh = -1;
     }
+
+#if defined(__gnu_linux__) || defined(__ARM__)
+    if (stream == stdin)
+    {
+        n--;
+        while (processed < n)
+        {
+            c = getc(stream);
+            if (c == EOF) break;
+            s[processed] = c;
+            if ((c == '\b') || (c == 0x7f))
+            {
+                if (processed > 0)
+                {
+                    putc('\b', stdout);
+                    putc(' ', stdout);
+                    putc('\b', stdout);
+                    fflush(stdout);
+                    processed--;
+                }
+                continue;
+            }
+            else
+            {
+                putc(c, stdout);
+                fflush(stdout);
+            }
+            if (c == '\n') break;
+            processed++;
+        }
+        if ((processed == 0) && (c == EOF)) return (NULL);
+        if ((processed < n) && !stream->noNl)
+        {
+            s[processed++] = '\n';
+        }
+        s[processed] = '\0';
+        return (s);
+    }
+#endif
+
     while (1)
     {
         t = stream->upto;
