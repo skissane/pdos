@@ -38,6 +38,7 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <windows.h>
 #endif
 
+static int runnum = 0;
 
 #ifdef __gnu_linux__
 
@@ -291,6 +292,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     char parmbuf[310]; /* z/VSE can have a PARM up to 300 characters */
 #endif
 
+    runnum++;
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
 #ifdef __AMIGA__
@@ -372,13 +374,18 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #if defined(__gnu_linux__)
+    if (runnum == 1)
+    {
     __ioctl(0, TCGETS, (unsigned long)&tios_save);
     tios_new = tios_save;
     tios_new.c_iflag &= ~IXON;
     tios_new.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
     __ioctl(0, TCSETS, (unsigned long)&tios_new);
+    }
 #endif
 
+    if (runnum == 1)
+    {
     __stdin->quickBin = 0;
     __stdin->quickText = 0;
     __stdin->textMode = 1;
@@ -449,6 +456,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     memmgrDefaults(&__memmgr);
     memmgrInit(&__memmgr);
 #endif
+    }
 
 #else
     int dyna_sysprint = 0;
@@ -1111,7 +1119,10 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 #if defined(__gnu_linux__)
+    if (runnum == 1)
+    {
     __ioctl(0, TCSETS, (unsigned long)&tios_save);
+    }
 #endif
 
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
@@ -1121,6 +1132,8 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 
+    if (runnum == 1)
+    {
 #if USE_MEMMGR
     memmgrTerm(&__memmgr);
 
@@ -1133,6 +1146,8 @@ __PDPCLIB_API__ void _c_exit(void)
     }
 #endif
 #endif /* USE_MEMMGR */
+    }
+    runnum--;
 }
 
 #ifdef __WIN32__
