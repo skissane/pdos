@@ -10,9 +10,9 @@
 /*                                                                   */
 /*********************************************************************/
 
-#include "bios.h"
+#include "__os.h"
 
-BIOS *bios;
+OS *bios;
 
 extern int __minstart;
 
@@ -23,7 +23,7 @@ int __start(char *p);
 point of an application and there is no particular reason to not
 use it. */
 
-int __crt0(BIOS *bios_parm)
+int __crt0(OS *bios_parm)
 {
     bios = bios_parm;
     __minstart = 1;

@@ -104,6 +104,7 @@ int main(void)
                 }
             }
         }
+#if HAVE_DIR
         else if (strncmp(buf, "dir", 3) == 0)
         {
             DTA *dta;
@@ -117,6 +118,7 @@ int main(void)
                 ret = PosFindNext();
             }
         }
+#endif
         else
         {
             printf("unknown command\n");

@@ -15,8 +15,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <bios.h>
-
 #include <pos.h>
 
 #include <exeload.h>
@@ -40,15 +38,16 @@ extern int __minstart;
 #define BIOS_IOLBF _IOLBF
 #define BIOS_BUFSIZ BUFSIZ
 
-extern BIOS *bios;
+extern OS *bios;
 extern __start(char *p);
 
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
-static OS os = { __start, printf, 0, malloc, NULL, NULL,
+static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
+  fflush, setvbuf,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation };
 
@@ -89,6 +88,7 @@ int main(void)
     unsigned char *p = NULL;
     int ret;
     unsigned char lbabuf[4];
+    void *mem_base;
 
     __minstart = 0;
     __genstart = 1;
@@ -96,9 +96,15 @@ int main(void)
     os.Xstdin = stdin;
     os.Xstdout = stdout;
 
+    mem_base = bios->malloc(bios->mem_amt);
+    if (mem_base == NULL)
+    {
+        bios->printf("failed to do promised malloc\n");
+        return (EXIT_FAILURE);
+    }
     memmgrDefaults(&memmgr);
     memmgrInit(&memmgr);
-    memmgrSupply(&memmgr, bios->mem_base, bios->mem_amt);
+    memmgrSupply(&memmgr, mem_base, bios->mem_amt);
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
