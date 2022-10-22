@@ -281,7 +281,7 @@ __modsi3:
 ___modsi3:
         stmfd   sp!,{lr}
 #        asr     r4,r0,#31               @ r4 = sign
-#        mov     r4,r0,ror #31
+#        mov     r4,r0,asr#31
         bl      ___divsi3
         mov     r0,r1
 #        cmp     r4,#0
@@ -298,10 +298,6 @@ ___modsi3:
 __umodsi3:
 ___umodsi3:
         stmfd   sp!,{lr}
-#        asr     r4,r0,#31               @ r4 = sign
-#        mov     r4,r0,ror #31
         bl      ___udivsi3
         mov     r0,r1
-#        cmp     r4,#0
-#        rsbne   r0,r0,#0
         ldmia   sp!,{pc}
