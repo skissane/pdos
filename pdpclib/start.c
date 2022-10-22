@@ -1054,7 +1054,11 @@ void __exit(int status)
 #ifdef __WIN32__
     ExitProcess(status);
 #else
+    if (runnum == 1)
+    {
     __exita(status);
+    }
+    runnum--;
 #endif
 }
 
@@ -1147,7 +1151,6 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 #endif /* USE_MEMMGR */
     }
-    runnum--;
 }
 
 #ifdef __WIN32__
