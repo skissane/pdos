@@ -265,3 +265,28 @@ int $0x80
 pop %ebx
 pop %ebp
 ret
+
+
+.globl ___ioctl
+___ioctl:
+.globl __ioctl
+__ioctl:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+# function code 54 = ioctl
+movl $54, %eax
+# file descriptor
+movl 8(%ebp), %ebx
+# command
+movl 12(%ebp), %ecx
+# parameter
+movl 16(%ebp), %edx
+int $0x80
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
