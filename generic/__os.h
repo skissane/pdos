@@ -10,6 +10,15 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* Note that a BIOS that uses this interface is unlikely to populate
+   all of these things, especially if running on hardware of the
+   1980s era. You can expect restrictions such as only fopen (of a
+   filename such as "0x80"), fread, fwrite, fseek actually working,
+   and only working if you give them offsets and lengths that are
+   multiples of 512 and/or the sector size. Also the buffer that
+   data is read into/written from may have alignment requirements
+   such as 16 bytes or 512 bytes. It depends on what is out there. */
+
 #ifndef __OS_INCLUDED
 #define __OS_INCLUDED
 
