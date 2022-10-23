@@ -292,9 +292,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     char parmbuf[310]; /* z/VSE can have a PARM up to 300 characters */
 #endif
 
-    runnum++;
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
+    runnum++;
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
     {
@@ -473,6 +473,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     int ret;
     int have_sysparm;
 
+    runnum++;
 /*
  Now build the SVC 202 string for sysprint
 */
@@ -558,7 +559,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         dyna_sysin = 1;
     }
 
+#else /* not CMS */
+    runnum++;
 #endif
+
 #if USE_MEMMGR
     memmgrDefaults(&__memmgr);
     memmgrInit(&__memmgr);
