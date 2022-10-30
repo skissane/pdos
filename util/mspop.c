@@ -310,7 +310,7 @@ int main(int argc, char **argv)
     }
 
     printf("Press any key to exit\n");
-    if (strstr(argv[1], ".WAV"))
+    if (strstr(argv[1], ".WAV") || strstr(argv[1], ".wav"))
     {
         sctx.base = 0x20;
         sctx.irq = 2;
