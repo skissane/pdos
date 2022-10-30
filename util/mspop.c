@@ -126,8 +126,11 @@ static int DriverSB_Init(int base, int irq, char inout, int bits)
     /* Send first DSP */
     outb((0x206 + base), 1);
     /* Wait 3ms */
+    PosSleep(1);
+#if 0
     for (i = 0; i < 30000; i++)
         ;
+#endif
     /* Do final DSP reset */
     outb((0x206 + base), 0);
     /* Read final 0xAA code */
