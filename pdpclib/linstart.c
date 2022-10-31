@@ -38,10 +38,7 @@ int _start(char *p)
        would work */
 #ifdef __ARM__
 
-#ifdef __NOARGS__
-    char *progname = "progname";
-    rc = __start(1, &progname);
-#elif defined(__UNOPT__)
+#if defined(__UNOPT__)
     rc = __start(*(int *)(&p + 5), &p + 6);
 #else
     rc = __start(*(int *)(&p + 6), &p + 7);
