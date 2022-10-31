@@ -930,15 +930,21 @@ static void osfopen(void)
 
     if ((modeType == 1) || (modeType == 4))
     {
-        mode = 0;
+        mode = 0; /* reading */
     }
     else if ((modeType == 2) || (modeType == 5))
     {
+        mode = 1; /* writing */
+    }
+    else if (modeType == 11)
+    {
+        fprintf(stderr, "we don't have the ability to do update, "
+                "but switching to write mode as a kludge\n");
         mode = 1;
     }
     else
     {
-        mode = 2;
+        mode = 2; /* update */
 
         /* because we don't have the ability to update files
            at the moment on MVS or CMS, just return with an
@@ -1372,7 +1378,7 @@ static void osfopen(void)
        }
     }
 
-    if ((modeType == 4) || (modeType == 5))
+    if ((modeType == 4) || (modeType == 5) || (modeType == 11))
     {
         myfile->style = 0; /* binary */
     }
