@@ -6,7 +6,7 @@ LD=lderm
 LDFLAGS=-e __start
 AS=aserm
 AR=arerm
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__ARM__ -DNEED_AOUT
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src -D__ARM__ -DNEED_AOUT
 
 all: clean bios.exe
 
@@ -14,7 +14,7 @@ bios.exe: bios.o ../bios/exeload.o
     $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../pdpclib/pdperm.a
 
 .c.o:
-    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(CC) $(COPTS) -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
 
