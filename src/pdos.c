@@ -143,7 +143,7 @@ static int fileDelete(const char *fnm);
 static int dirDelete(const char *dnm);
 static int fileSeek(int fno, long offset, int whence, long *newpos);
 static int opencomm(int num, int *handle);
-static int opendrv(int num, int *handle);
+static int opendrv(int num, unsigned long numsects, int *handle);
 static int opennul(int *handle);
 static int openzero(int *handle);
 static int openscap(int num, int *handle);
@@ -250,6 +250,7 @@ static struct {
     /* these variables specific to raw disks */
     int drv;
     unsigned long sectupto;
+    unsigned long numsects;
 
 } fhandle[MAXFILES];
 
@@ -1646,7 +1647,21 @@ int PosCreatFile(const char *name, int attrib, int *handle)
         && isxdigit((unsigned char)name[3])
         && (strchr(name, ':') != NULL))
     {
-        return (opendrv((int)strtol(name + 3, NULL, 16), handle));
+        unsigned long numsects;
+        const char *p;
+
+        p = strchr(name, ':');
+        p++;
+        if (*p == ';')
+        {
+            p++;
+            numsects = strtoul(p, NULL, 0);
+        }
+        else
+        {
+            numsects = 0xffffffffUL;
+        }
+        return (opendrv((int)strtol(name + 3, NULL, 16), numsects, handle));
     }
     else if (ins_strcmp(name, "NUL:") == 0)
     {
@@ -1685,7 +1700,21 @@ int PosOpenFile(const char *name, int mode, int *handle)
         && isxdigit((unsigned char)name[3])
         && (strchr(name, ':') != NULL))
     {
-        return (opendrv((int)strtol(name + 3, NULL, 16), handle));
+        unsigned long numsects;
+        const char *p;
+
+        p = strchr(name, ':');
+        p++;
+        if (*p == ';')
+        {
+            p++;
+            numsects = strtoul(p, NULL, 0);
+        }
+        else
+        {
+            numsects = 0xffffffffUL;
+        }
+        return (opendrv((int)strtol(name + 3, NULL, 16), numsects, handle));
     }
     else if (ins_strcmp(name, "NUL:") == 0)
     {
@@ -2112,6 +2141,10 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
         {
             for (n = 0; n < bytes / 512; n++)
             {
+                if (fhandle[fh].sectupto >= fhandle[fh].numsects)
+                {
+                    break;
+                }
                 if (readLBA((char *)data + n * 512,
                             1,
                             fhandle[fh].drv,
@@ -2240,6 +2273,10 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
         {
             for (n = 0; n < len / 512; n++)
             {
+                if (fhandle[fh].sectupto >= fhandle[fh].numsects)
+                {
+                    break;
+                }
                 if (writeLBA((char *)data + n * 512,
                              1,
                              fhandle[fh].drv,
@@ -2301,8 +2338,29 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
     {
         return (POS_ERR_INVALID_HANDLE);
     }
-    if ((fhandle[handle].handtype == HANDTYPE_DRIVE)
-        || (fhandle[handle].handtype == HANDTYPE_NUL)
+    if (fhandle[handle].handtype == HANDTYPE_DRIVE)
+    {
+        if ((fhandle[handle].numsects != 0xffffffffUL)
+            && (whence == SEEK_END))
+        {
+            fhandle[handle].sectupto = fhandle[handle].numsects;
+            *newpos = fhandle[handle].sectupto * 512;
+        }
+        else if ((fhandle[handle].numsects != 0xffffffffUL)
+                 && (whence == SEEK_SET)
+                 && (offset % 512 == 0)
+                 && (offset / 512 < fhandle[handle].numsects))
+        {
+            fhandle[handle].sectupto = offset / 512;
+            *newpos = fhandle[handle].sectupto * 512;
+        }
+        else
+        {
+            return (-1);
+        }
+        return (0);
+    }
+    if ((fhandle[handle].handtype == HANDTYPE_NUL)
         || (fhandle[handle].handtype == HANDTYPE_ZERO)
         || (fhandle[handle].handtype == HANDTYPE_SCAP)
        )
@@ -4255,7 +4313,7 @@ static int opencomm(int num, int *handle)
     return (0);
 }
 
-static int opendrv(int num, int *handle)
+static int opendrv(int num, unsigned long numsects, int *handle)
 {
     int x;
 
@@ -4271,6 +4329,7 @@ static int opendrv(int num, int *handle)
     fhandle[x].drv = num;
     fhandle[x].sectupto = 0;
     fhandle[x].handtype = HANDTYPE_DRIVE;
+    fhandle[x].numsects = numsects;
     *handle = x;
     return (0);
 }
