@@ -23,7 +23,8 @@ extern int (*__genmain)(int argc, char **argv);
 
 /* A BIOS is meant to be machine-specific, so this is not a big deal */
 #if 1
-#define PATH "./"
+#define PATH ""
+/* #define PATH "./" */
 #else
 #define PATH "/storage/emulated/0/Download/"
 #endif
