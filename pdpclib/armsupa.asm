@@ -209,6 +209,21 @@ ___mprotect:
         swi     0
 mpok:   ldmia   sp!,{pc}
 
+# int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
+
+        .globl  __getdents
+        .globl  ___getdents
+        .align  2
+__getdents:
+___getdents:
+        stmfd   sp!,{lr}
+#        ldr     r2,[sp,#12]     @ count
+#        ldr     r1,[sp,#8]      @ dirent
+#        ldr     r0,[sp,#4]      @ fd
+        mov     r7,#141          @ SYS_getdents
+        swi     0
+gdok:   ldmia   sp!,{pc}
+
 # int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
         .globl  __ioctl
