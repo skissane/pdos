@@ -98,6 +98,12 @@ static int dolevel(void)
             strcpy(out, to);
             strcat(out, "\\");
             strcat(out, dta->lfn);
+            fq = fopen(out, "rb");
+            if (fq != NULL)
+            {
+                fclose(fq);
+                goto below;
+            }
             fp = fopen(in, "rb");
             if (fp == NULL)
             {
@@ -127,6 +133,7 @@ static int dolevel(void)
             fclose(fp);
             fclose(fq);
         }
+below:
         ret = PosFindNext();
     }
     return (0);
