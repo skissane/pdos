@@ -62,7 +62,6 @@ static int dolevel(void)
 
     strcpy(oldfrom, from);
     strcpy(oldto, to);
-    olddta = *dta;
 
     p = from + strlen(from);
     strcpy(p, "\\");
@@ -77,11 +76,25 @@ static int dolevel(void)
             strcat(from, dta->lfn);
             strcat(to, "\\");
             strcat(to, dta->lfn);
-            PosMakeDir(to);
-            dolevel();
+            if (dta->lfn[0] == '\0')
+            {
+                strcat(from, dta->file_name);
+                strcat(to, dta->file_name);
+            }
+            if ((strcmp(dta->file_name, ".") == 0)
+                || (strcmp(dta->file_name, "..") == 0))
+            {
+                /* ignore */
+            }
+            else
+            {
+                olddta = *dta;
+                PosMakeDir(to);
+                dolevel();
+                *dta = olddta;
+            }
             strcpy(from, oldfrom);
             strcpy(to, oldto);
-            *dta = olddta;
         }
         else
         {
@@ -98,6 +111,11 @@ static int dolevel(void)
             strcpy(out, to);
             strcat(out, "\\");
             strcat(out, dta->lfn);
+            if (dta->lfn[0] == '\0')
+            {
+                strcat(in, dta->file_name);
+                strcat(out, dta->file_name);
+            }
             fq = fopen(out, "rb");
             if (fq != NULL)
             {
