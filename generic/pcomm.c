@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <pos.h>
 
@@ -119,6 +120,14 @@ int main(void)
             }
         }
 #endif
+        else if ((strncmp(buf, "date", 4) == 0)
+                 || (strncmp(buf, "time", 4) == 0))
+        {
+            time_t timer;
+
+            time(&timer);
+            printf("%s", ctime(&timer));
+        }
         else
         {
             printf("unknown command\n");
