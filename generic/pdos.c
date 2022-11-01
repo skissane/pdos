@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <pos.h>
 
@@ -49,7 +50,8 @@ static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
   PosGetDTA, PosFindFirst, PosFindNext,
-  PosGetDeviceInformation, PosSetDeviceInformation };
+  PosGetDeviceInformation, PosSetDeviceInformation,
+  ctime, time };
 
 static int (*pgastart)(OS *os);
 

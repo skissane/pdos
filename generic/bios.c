@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "__os.h"
 #include "exeload.h"
@@ -63,7 +64,8 @@ static OS bios = { their_start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
 #else
   0, 0, 0,
 #endif
-  0, 0 };
+  0, 0,
+  ctime, time };
 
 static char buf[200];
 static char cmd[200];

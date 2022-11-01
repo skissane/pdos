@@ -23,6 +23,7 @@
 #define __OS_INCLUDED
 
 #include <stddef.h>
+#include <time.h>
 
 typedef struct {
     /* a BIOS may not have this, as it implies the existence of a
@@ -66,6 +67,8 @@ typedef struct {
     int (*PosFindNext)(void);
     int (*PosGetDeviceInformation)(int handle, unsigned int *devinfo);
     int (*PosSetDeviceInformation)(int handle, unsigned int devinfo);
+    char *(*ctime)(const void *timer);
+    time_t (*time)(time_t *timer);
 } OS;
 
 extern OS *__os;
