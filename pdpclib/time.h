@@ -57,4 +57,13 @@ struct tm *localtime(const time_t *timer);
 size_t strftime(char *s, size_t maxsize,
                 const char *format, const struct tm *timeptr);
 
+
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define ctime(timer) (__os->ctime(timer))
+#define time(timer) (__os->time(timer))
+#endif
+
+
 #endif
