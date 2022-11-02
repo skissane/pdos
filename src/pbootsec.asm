@@ -143,12 +143,15 @@ FileSystem  db  'FAT     '   ;File system (FAT12 or FAT16)
 
 ; offset 3e and onwards is our own code
 
+bypass:
+jmp bypass2
+
 BootDisk db 0
 ; new disk parameter table
 ;dpt db 11 dup(?)
 
 
-bypass:
+bypass2:
 ;Always clear direction bit first, just incase bios leaves it unset
  cld
  ;This should grab our current instruction pointer

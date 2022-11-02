@@ -95,11 +95,17 @@ VolumeLabel         db 'PDOS Volume'    ;11 bytes
 ; offset 52
 FileSystem          db 'FAT32   '      ;File system
 
+; offset Hex 59h, Decimal 89 - Code Start
+bypass:
+jmp bypass2
+
 ; Used to store our boot disk when we first start
+; Some software is dependent on the second byte of the boot sector
+; to determine the FAT size, so this variable can't come immediately
+; after the BPB.
 BootDisk db 0
 
-; offset Hex 5ah, Decimal 90 - Code Start
-bypass:
+bypass2:
 ;Always clear direction bit first, just incase bios leaves it unset
 cld
 ;This should grab our current instruction pointer
