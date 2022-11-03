@@ -1390,11 +1390,11 @@ static void int21handler(union REGS *regsin,
             }
             else if (regsin->h.al == 0x45)
             {
-                regsout->d.ax = PosScrncap(regsin->x.dx);
+                regsout->x.ax = PosScrncap(regsin->x.dx);
             }
             else if (regsin->h.al == 0x48)
             {
-                regsout->d.ax = PosMonitor();
+                regsout->x.ax = PosMonitor();
             }
 #endif
 #ifdef __32BIT__

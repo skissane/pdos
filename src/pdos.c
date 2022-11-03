@@ -267,8 +267,10 @@ static char ff_path[FILENAME_MAX];
 static char ff_pat[FILENAME_MAX];
 
 static char shell[100] = "";
+#ifndef __32BIT__
 extern char kernel32[];
 extern char msvcrt[];
+#endif
 
 /* these are used for debugging purposes */
 /* note that dividing 1 by 0 will give an exception which
@@ -2908,6 +2910,7 @@ unsigned int PosMonitor(void)
     int x;
 
     printf("enter a hex address, 0 to exit\n");
+#ifdef __32BIT__
     while (1)
     {
         scanf("%p", &addr);
@@ -2918,6 +2921,7 @@ unsigned int PosMonitor(void)
         }
         printf("\n");
     }
+#endif
     return (0);
 }
 
@@ -3573,9 +3577,12 @@ static void loadPcomm(void)
     char parm[FILENAME_MAX + 20];
 #endif
 
+#ifdef __32BIT__
     kernel32[0] = msvcrt[0] = alphabet[bootDriveLogical];
     strcpy(kernel32 + 1, ":\\KERNEL32.DLL");
     strcpy(msvcrt + 1, ":\\MSVCRT.DLL");
+#endif
+
     if (strcmp(shell, "") == 0)
     {
         strcpy(shell,"?:\\COMMAND.EXE");
