@@ -267,7 +267,7 @@ static char ff_path[FILENAME_MAX];
 static char ff_pat[FILENAME_MAX];
 
 static char shell[100] = "";
-#ifndef __32BIT__
+#ifdef __32BIT__
 extern char kernel32[];
 extern char msvcrt[];
 #endif
