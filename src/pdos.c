@@ -1702,16 +1702,13 @@ int PosOpenFile(const char *name, int mode, int *handle)
         unsigned long numsects;
         const char *p;
 
+        numsects = 0xffffffffUL;
         p = strchr(name, ':');
         p++;
-        if (*p == ';')
+        if (strncmp(p, ";size=", 6) == 0)
         {
-            p++;
+            p += 6;
             numsects = strtoul(p, NULL, 0);
-        }
-        else
-        {
-            numsects = 0xffffffffUL;
         }
         return (opendrv((int)strtol(name + 3, NULL, 16), numsects, handle));
     }
