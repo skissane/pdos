@@ -43,7 +43,7 @@ typedef struct { long quot; long rem; } ldiv_t;
 #define EXIT_FAILURE 1
 #endif
 #if defined(__32BIT__) || defined(__WIN32__)
-#define RAND_MAX 2147483648
+#define RAND_MAX 2147483647
 #else
 #define RAND_MAX 32767
 #endif
