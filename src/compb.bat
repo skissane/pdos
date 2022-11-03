@@ -1,4 +1,3 @@
-@echo off
 rem wasmr -zq -zcm -Dmemodel=tiny pbootsec.asm
 rem rem tasm requires 2 passes to generate the desired near jump
 rem rem for first instruction
