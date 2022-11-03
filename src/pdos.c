@@ -2907,19 +2907,69 @@ unsigned int PosScrncap(int disknum)
 unsigned int PosMonitor(void)
 {
     unsigned char *addr;
-    int x;
+    unsigned char *endaddr;
+    char buf[50];
+    char *p;
+    char prtln[100];
+    size_t x;
+    size_t count;
+    int c;
+    int pos1;
+    int pos2;
 
-    printf("enter a hex address, 0 to exit\n");
+    printf("enter a hex address or range, 0 to exit\n");
 #ifdef __32BIT__
     while (1)
     {
-        scanf("%p", &addr);
-        if (addr == NULL) break;
-        for (x = 0; x < 16; x++)
+        fgets(buf, sizeof buf, stdin);
+        sscanf(buf, "%p", &addr);
+        endaddr = addr;
+        p = strchr(buf, '-');
+        if (p != NULL)
         {
-            printf("%02X ", addr[x]);
+            sscanf(p + 1, "%p", &endaddr);
         }
-        printf("\n");
+
+        if ((addr == NULL) && (p == NULL)) break;
+
+        count = endaddr - addr + 1;
+        x = 0;
+        while (x != count)
+        {
+            c = addr[x];
+            if (x % 16 == 0)
+            {
+                memset(prtln, ' ', sizeof prtln);
+                sprintf(prtln, "%p ", addr + x);
+                pos1 = 9;
+                pos2 = 46;
+            }
+            sprintf(prtln + pos1, "%0.2X", c);
+            if (isprint((unsigned char)c))
+            {
+                sprintf(prtln + pos2, "%c", c);
+            }
+            else
+            {
+                sprintf(prtln + pos2, ".");
+            }
+            pos1 += 2;
+            *(prtln + pos1) = ' ';
+            pos2++;
+            if (x % 4 == 3)
+            {
+                *(prtln + pos1++) = ' ';
+            }
+            if (x % 16 == 15)
+            {
+                printf("%s\n", prtln);
+            }
+            x++;
+        }
+        if (x % 16 != 0)
+        {
+            printf("%s\n", prtln);
+        }
     }
 #endif
     return (0);
