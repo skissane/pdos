@@ -23,7 +23,7 @@ _DATA ends
 _BSS segment word public USE16 'BSS'
 _BSS ends
 
-_TEXT segment word public USE16 'CODE'
+_TEXT segment para public USE16 'CODE'
 
 org 0100h
 top:
@@ -388,11 +388,10 @@ ret
 
 dumpcx endp
 
-
-; I don't know how to align on an 8-byte boundary, but
-; this should be good enough
-org 02e8h
-; LBA packet for BIOS disk read
+; wasm appears to store sequences of 89C0 instead of NULs when aligning,
+; but nevermind
+align 8
+; LBA packet for BIOS disk read (needs to be 8-byte aligned)
 lba_packet:
 size       db 010h
 reserved   db 0

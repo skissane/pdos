@@ -38,7 +38,7 @@ _DATA ends
 _BSS segment word public USE16 'BSS'
 _BSS ends
 
-_TEXT segment word public USE16 'CODE'
+_TEXT segment para public USE16 'CODE'
 
 
 org 0600h
@@ -71,20 +71,6 @@ mov ax, relocated
 push ax
 retf
 
-
-; I don't know how to request 8-byte alignment, so
-; use this for now
-org 0630h
-; LBA packet for BIOS disk read
-lba_packet:
-size       db 010h
-reserved   db 0
-sectors    dw 1
-offst      dw 07c00h
-segmnt     dw 0
-lbalow     dw 0
-lbahigh    dw 0
-lbapadding dd 0
 
 relocated:
 
@@ -179,6 +165,19 @@ xx4             db "Failed to read volume boot record!",0
 invalid_vbr:
 xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 
+; LBA packet for BIOS disk read
+align 8
+lba_packet:
+size       db 010h
+reserved   db 0
+sectors    dw 1
+offst      dw 07c00h
+segmnt     dw 0
+lbalow     dw 0
+lbahigh    dw 0
+lbapadding dd 0
+
+; force padding to 440 bytes of code
 org 07b8h
 
 ;org 07beh
