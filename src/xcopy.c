@@ -122,6 +122,7 @@ static int dolevel(void)
                 fclose(fq);
                 goto below;
             }
+            printf("%s\n", in);
             fp = fopen(in, "rb");
             if (fp == NULL)
             {
