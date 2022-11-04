@@ -21,6 +21,8 @@ static char to[FILENAME_MAX];
 
 static DTA *dta;
 
+static int overwrite = 0;
+
 static int dolevel(void);
 
 int main(int argc, char **argv)
@@ -30,8 +32,13 @@ int main(int argc, char **argv)
     if (argc != 5)
     {
         printf("usage: xcopy <filespec> /s /e /n\n");
+        printf("also /y instead of /n is supported\n");
         printf("copies file structure into current directory\n");
         return (EXIT_FAILURE);
+    }
+    if (strcmp(argv[4], "/y") == 0)
+    {
+        overwrite = 1;
     }
     dta = PosGetDTA();
     strcpy(from, *(argv + 1));
@@ -116,11 +123,14 @@ static int dolevel(void)
                 strcat(in, dta->file_name);
                 strcat(out, dta->file_name);
             }
-            fq = fopen(out, "rb");
-            if (fq != NULL)
+            if (!overwrite)
             {
-                fclose(fq);
-                goto below;
+                fq = fopen(out, "rb");
+                if (fq != NULL)
+                {
+                    fclose(fq);
+                    goto below;
+                }
             }
             printf("%s\n", in);
             fp = fopen(in, "rb");
