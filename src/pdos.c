@@ -3111,11 +3111,6 @@ static void scrunchf(char *dest, char *new)
     {
         strcat(dest, new);
     }
-    else if ((strchr(new, '\\') != NULL) || (strchr(new, '/') != NULL))
-    {
-        strcat(dest, "\\");
-        strcat(dest, new);
-    }
     else
     {
         strcat(dest, mycwd);
