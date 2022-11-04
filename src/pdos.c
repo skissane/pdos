@@ -251,6 +251,9 @@ static struct {
     int drv;
     unsigned long sectupto;
     unsigned long numsects;
+    /* just to floppy disks mainly */
+    unsigned int sectors_per_track;
+    unsigned int sectors_per_cylinder;
 
 } fhandle[MAXFILES];
 
@@ -2141,10 +2144,30 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
                 {
                     break;
                 }
-                if (readLBA((char *)data + n * 512,
-                            1,
-                            fhandle[fh].drv,
-                            fhandle[fh].sectupto) != 0)
+                if (fhandle[fh].drv < 0x80)
+                {
+                    int track;
+                    int head;
+                    int sect;
+
+                    track = fhandle[fh].sectupto
+                            / fhandle[fh].sectors_per_cylinder;
+                    head = fhandle[fh].sectupto
+                           % fhandle[fh].sectors_per_cylinder;
+                    sect = head % fhandle[fh].sectors_per_track + 1;
+                    head = head / fhandle[fh].sectors_per_track;
+                    if (readAbs((char *)data + n * 512,
+                                1,
+                                fhandle[fh].drv,
+                                track, head, sect) != 0)
+                    {
+                        break;
+                    }
+                }
+                else if (readLBA((char *)data + n * 512,
+                                 1,
+                                 fhandle[fh].drv,
+                                 fhandle[fh].sectupto) != 0)
                 {
                     break;
                 }
@@ -2273,10 +2296,30 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
                 {
                     break;
                 }
-                if (writeLBA((char *)data + n * 512,
-                             1,
-                             fhandle[fh].drv,
-                             fhandle[fh].sectupto) != 0)
+                if (fhandle[fh].drv < 0x80)
+                {
+                    int track;
+                    int head;
+                    int sect;
+
+                    track = fhandle[fh].sectupto
+                            / fhandle[fh].sectors_per_cylinder;
+                    head = fhandle[fh].sectupto
+                           % fhandle[fh].sectors_per_cylinder;
+                    sect = head % fhandle[fh].sectors_per_track + 1;
+                    head = head / fhandle[fh].sectors_per_track;
+                    if (writeAbs((char *)data + n * 512,
+                                 1,
+                                 fhandle[fh].drv,
+                                 track, head, sect) != 0)
+                    {
+                        break;
+                    }
+                }
+                else if (writeLBA((char *)data + n * 512,
+                                  1,
+                                  fhandle[fh].drv,
+                                  fhandle[fh].sectupto) != 0)
                 {
                     break;
                 }
@@ -4376,6 +4419,32 @@ static int opendrv(int num, unsigned long numsects, int *handle)
         }
     }
     if (x == MAXFILES) return (-POS_ERR_MANY_OPEN_FILES);
+
+    if (num < 0x80)
+    {
+        int rc;
+        unsigned int tracks;
+        unsigned int sectors;
+        unsigned int heads;
+        unsigned int attached;
+        unsigned char *parmtable;
+        unsigned int drivetype;
+
+        rc = BosDriveParms(num,
+                           &tracks,
+                           &sectors,
+                           &heads,
+                           &attached,
+                           &parmtable,
+                           &drivetype);
+        if (rc != 0)
+        {
+            return (-1);
+        }
+        fhandle[x].sectors_per_track = sectors;
+        fhandle[x].sectors_per_cylinder = sectors * heads;
+    }
+
     fhandle[x].inuse = 1;
     fhandle[x].drv = num;
     fhandle[x].sectupto = 0;
