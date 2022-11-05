@@ -3,13 +3,14 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
+ifndef AS86
 .model tiny
 
 .stack 400h
 
 .code
+endif
 
-org 0100h
 top:
 
 fninit
