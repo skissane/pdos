@@ -115,7 +115,14 @@ int main(void)
             ret = PosFindFirst("*.*", 0x10);
             while (ret == 0)
             {
-                printf("%s\n", dta->file_name);
+                if (dta->lfn[0] != '\0')
+                {
+                    printf("%s\n", dta->lfn);
+                }
+                else
+                {
+                    printf("%s\n", dta->file_name);
+                }
                 ret = PosFindNext();
             }
         }

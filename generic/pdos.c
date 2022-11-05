@@ -101,7 +101,7 @@ int main(void)
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)
     {
-        bios->printf("failed to do promised malloc\n");
+        bios->Xprintf("failed to do promised malloc\n");
         return (EXIT_FAILURE);
     }
     memmgrDefaults(&memmgr);
@@ -110,21 +110,21 @@ int main(void)
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
-    disk = bios->fopen(bios->disk_name, "r+b");
+    disk = bios->Xfopen(bios->disk_name, "r+b");
     if (disk == NULL)
     {
         printf("can't open hard disk\n");
         return (EXIT_FAILURE);
     }
-    bios->fseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
-    bios->fread(lbabuf, 1, 4, disk);
+    bios->Xfseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
+    bios->Xfread(lbabuf, 1, 4, disk);
     lba = ((unsigned long)lbabuf[3] << 24)
            | ((unsigned long)lbabuf[2] << 16)
            | (lbabuf[1] << 8)
            | lbabuf[0];
     printf("lba is %lx\n", lba);
-    bios->fseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
-    bios->fread(sect, SECTSZ, 1, disk);
+    bios->Xfseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
+    bios->Xfread(sect, SECTSZ, 1, disk);
     printf("fat type is %.5s\n", &sect[0x36]);
     fatDefaults(&fat);
     fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
@@ -164,7 +164,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     }
     if (name[0] == ':')
     {
-        handles[x].fptr = bios->fopen(name + 1, "rb");
+        handles[x].fptr = bios->Xfopen(name + 1, "rb");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
@@ -188,7 +188,7 @@ int PosCloseFile(int fno)
     /* printf("got request to close\n"); */
     if (handles[fno].fptr)
     {
-        bios->fclose(handles[fno].fptr);
+        bios->Xfclose(handles[fno].fptr);
         handles[fno].fptr = NULL;
     }
     else
@@ -214,7 +214,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     }
     if (name[0] == ':')
     {
-        handles[x].fptr = bios->fopen(name + 1, "wb");
+        handles[x].fptr = bios->Xfopen(name + 1, "wb");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
@@ -251,7 +251,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
            full, so that doesn't need to be considered. And if they are
            doing character-oriented input, then a call to this function
            with a length of 1 will also work when passed to fgets. */
-        bios->fgets(data, bytes, bios->Xstdin);
+        bios->Xfgets(data, bytes, bios->Xstdin);
         *readbytes = strlen(data);
         /* printf("got %d bytes\n", *readbytes); */
     }
@@ -259,7 +259,7 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     {
         if (handles[fh].fptr != NULL)
         {
-            *readbytes = bios->fread(data, 1, bytes, handles[fh].fptr);
+            *readbytes = bios->Xfread(data, 1, bytes, handles[fh].fptr);
         }
         else
         {
@@ -274,14 +274,14 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
 {
     if (fh < 3)
     {
-        bios->fwrite(data, 1, len, bios->Xstdout);
+        bios->Xfwrite(data, 1, len, bios->Xstdout);
         bios->fflush(bios->Xstdout);
     }
     else
     {
         if (handles[fh].fptr != NULL)
         {
-            *writtenbytes = bios->fwrite(data, 1, len, handles[fh].fptr);
+            *writtenbytes = bios->Xfwrite(data, 1, len, handles[fh].fptr);
         }
         else
         {
@@ -326,11 +326,11 @@ int PosSetDeviceInformation(int handle, unsigned int devinfo)
     stdin_raw = ((devinfo & (1 << 5)) != 0);
     if (stdin_raw)
     {
-        bios->setvbuf(bios->Xstdin, NULL, BIOS_IONBF, 0);
+        bios->Xsetvbuf(bios->Xstdin, NULL, BIOS_IONBF, 0);
     }
     else
     {
-        bios->setvbuf(bios->Xstdin, NULL, BIOS_IOLBF, BIOS_BUFSIZ);
+        bios->Xsetvbuf(bios->Xstdin, NULL, BIOS_IOLBF, BIOS_BUFSIZ);
     }
     return (0);
 }
@@ -432,8 +432,8 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf)
     int ret;
 
     sector += fat.hidden;
-    bios->fseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
-    ret = bios->fread(buf, SECTSZ, 1, diskptr);
+    bios->Xfseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
+    ret = bios->Xfread(buf, SECTSZ, 1, diskptr);
     return;
 }
 
@@ -442,8 +442,8 @@ static void writeLogical(void *diskptr, unsigned long sector, void *buf)
     int ret;
 
     sector += fat.hidden;
-    bios->fseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
-    ret = bios->fwrite(buf, SECTSZ, 1, diskptr);
+    bios->Xfseek(diskptr, sector * SECTSZ, BIOS_SEEK_SET);
+    ret = bios->Xfwrite(buf, SECTSZ, 1, diskptr);
     return;
 }
 

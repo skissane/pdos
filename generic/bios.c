@@ -255,8 +255,10 @@ static int ff_search(void)
             return (1);
         }
     }
-    strncpy(origdta.file_name, buf + upto + 10, 11);
-    origdta.file_name[11] = '\0';
+    strncpy(origdta.file_name, buf + upto + 10, sizeof origdta.file_name);
+    origdta.file_name[sizeof origdta.file_name - 1] = '\0';
+    strncpy(origdta.lfn, buf + upto + 10, sizeof origdta.lfn);
+    origdta.lfn[sizeof origdta.lfn - 1] = '\0';
     upto += *(short *)(buf + upto + 8);
     if (upto >= avail)
     {
