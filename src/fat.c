@@ -212,6 +212,12 @@ int fatInit(FAT *fat,
     }
     /* Sets the externally set flag to default value. */
     fat->last_access_recording = 0;
+
+    /* this variable is not actually used */
+    fat->data_area = fat->reserved_sectors
+                     + fat->numfats * fat->fatsize;
+    fat->num_clusters = (fat->sectors_per_disk - fat->data_area)
+                        / fat->sectors_per_cluster;
     return (0);
 }
 
@@ -2244,7 +2250,10 @@ static unsigned int fatFindFreeCluster(FAT *fat)
         if (found)
         {
             ret = (fatSector-fat->fatstart)*MAXSECTSZ/2 + x/2;
-            return (ret);
+            if (ret < fat->num_clusters)
+            {
+                return (ret);
+            }
         }
     }
     else if (fat->fat_type == 12)
@@ -2281,7 +2290,10 @@ static unsigned int fatFindFreeCluster(FAT *fat)
             if (ret % 2 && buf[x+1]) continue;
             else if (!(ret % 2) && (buf[x+1] & 0xf)) continue;
 
-            return (ret);
+            if (ret < fat->num_clusters)
+            {
+                return (ret);
+            }
         }
     }
     else if (fat->fat_type == 32)
@@ -2300,24 +2312,14 @@ static unsigned int fatFindFreeCluster(FAT *fat)
             if (ret == 0xffffffff) ret = 0x02;
             /* Checks if it is a valid cluster number.
              * If it is not, starts from cluster 0.*/
-            if (ret >= fat->sectors_per_disk / fat->sectors_per_cluster)
-            ret = 0;
+            if (ret >= fat->num_clusters)
+            {
+                ret = 0;
+            }
+
         }
         /* Calculates from where should we start looking for clusters. */
         fatSector = fat->fatstart + (ret * 4) / fat->sector_size;
-
-        /* we gratuitously nuke the last sector, because I'm not sure
-           it is fully populated, or has end cluster markers for the
-           invalid clusters */
-        fatend--;
-
-        /* we put in this protection because I'm not sure the previous
-           ret calculation is actually correct */
-        if (fatSector >= fatend)
-        {
-            ret = 0;
-            fatSector = fat->fatstart;
-        }
 
         x = (ret * 4) % fat->sector_size;
 
@@ -2340,6 +2342,23 @@ static unsigned int fatFindFreeCluster(FAT *fat)
             if (found) break;
             /* Resets offset. */
             x = 0;
+        }
+        if (found)
+        {
+            unsigned long oldret = ret;
+
+            ret = (fatSector-fat->fatstart)*MAXSECTSZ/4 + x/4;
+            /* this can occur because the FAT size can have unused or
+               partially used sectors and should not be used as a stopper */
+            if (ret >= fat->num_clusters)
+            {
+                found = 0;
+                ret = oldret;
+            }
+            else
+            {
+                return (ret);
+            }
         }
         /* If we started from last allocated cluster, but did not find
          * anything, we search from fatstart to the cluster. */
@@ -2366,7 +2385,10 @@ static unsigned int fatFindFreeCluster(FAT *fat)
         if (found)
         {
             ret = (fatSector-fat->fatstart)*MAXSECTSZ/4 + x/4;
-            return (ret);
+            if (ret < fat->num_clusters)
+            {
+                return (ret);
+            }
         }
     }
     return (0);

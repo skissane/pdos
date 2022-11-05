@@ -163,6 +163,8 @@ typedef struct {
     unsigned int fsinfosector;
     unsigned long rootstartcluster;
     unsigned long fatsize;
+    unsigned long data_area;
+    unsigned long num_clusters;
     int fat_type;
     unsigned long hidden;
     unsigned long startSector;
