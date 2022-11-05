@@ -286,19 +286,19 @@ int ferror(FILE *stream);
 #if defined(__PDOSGEN__)
 #include <__os.h>
 
-#define printf __os->printf
+#define printf __os->Xprintf
 #undef stdin
 #define stdin __os->Xstdin
 #undef stdout
 #define stdout __os->Xstdout
-#define fopen __os->fopen
-#define fseek __os->fseek
-#define fread __os->fread
-#define fclose __os->fclose
-#define fwrite __os->fwrite
-#define fgets __os->fgets
-#define fgetc __os->fgetc
-#define fputc __os->fputc
+#define fopen __os->Xfopen
+#define fseek __os->Xfseek
+#define fread __os->Xfread
+#define fclose __os->Xfclose
+#define fwrite __os->Xfwrite
+#define fgets __os->Xfgets
+#define fgetc __os->Xfgetc
+#define fputc __os->Xfputc
 #endif
 
 #endif /* __STDIO_INCLUDED */
