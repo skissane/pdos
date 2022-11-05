@@ -70,6 +70,10 @@ typedef struct {
     int (*PosSetDeviceInformation)(int handle, unsigned int devinfo);
     char *(*ctime)(const time_t *timer);
     time_t (*time)(time_t *timer);
+    int (*PosChangeDir)(const char *to);
+    int (*PosMakeDir)(const char *dname);
+    int (*PosRemoveDir)(const char *dname);
+    int (*Xremove)(const char *filename);
 } OS;
 
 extern OS *__os;

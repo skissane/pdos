@@ -65,7 +65,14 @@ static OS bios = { their_start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   0, 0, 0,
 #endif
   0, 0,
-  ctime, time };
+  ctime, time,
+#if defined(__gnu_linux__) || defined(__ARM__)
+  PosChangeDir, PosMakeDir, PosRemoveDir,
+#else
+  0, 0, 0,
+#endif
+  remove,
+};
 
 static char buf[200];
 static char cmd[200];
@@ -277,6 +284,21 @@ int PosFindFirst(char *pat, int attrib)
 int PosFindNext(void)
 {
     return (ff_search());
+}
+
+int PosChangeDir(const char *to)
+{
+    return (__chdir(to));
+}
+
+int PosMakeDir(const char *dname)
+{
+    return (__mkdir(dname, 0777));
+}
+
+int PosRemoveDir(const char *dname)
+{
+    return (__rmdir(dname));
 }
 
 #endif

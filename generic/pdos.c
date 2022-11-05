@@ -51,7 +51,10 @@ static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   fflush, setvbuf,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation,
-  ctime, time };
+  ctime, time,
+  0, 0, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
+  remove
+};
 
 static int (*pgastart)(OS *os);
 

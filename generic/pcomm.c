@@ -135,6 +135,38 @@ int main(void)
             time(&timer);
             printf("%s", ctime(&timer));
         }
+        else if (strncmp(buf, "cd", 2) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                PosChangeDir(p + 1);
+            }
+        }
+        else if (strncmp(buf, "md", 2) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                PosMakeDir(p + 1);
+            }
+        }
+        else if (strncmp(buf, "rd", 2) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                PosRemoveDir(p + 1);
+            }
+        }
+        else if (strncmp(buf, "del", 3) == 0)
+        {
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                remove(p + 1);
+            }
+        }
         else
         {
             printf("unknown command\n");
