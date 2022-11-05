@@ -510,6 +510,9 @@ typedef struct {
 #define PosGetDTA __os->PosGetDTA
 #define PosFindFirst __os->PosFindFirst
 #define PosFindNext __os->PosFindNext
+#define PosChangeDir __os->PosChangeDir
+#define PosMakeDir __os->PosMakeDir
+#define PosRemoveDir __os->PosRemoveDir
 #endif
 
 
