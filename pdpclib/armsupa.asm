@@ -239,6 +239,46 @@ ___ioctl:
         swi     0
 iocok:  ldmia   sp!,{pc}
 
+# int ___chdir(const char *filename);
+
+        .globl  __chdir
+        .globl  ___chdir
+        .align  2
+__chdir:
+___chdir:
+        stmfd   sp!,{lr}
+#        ldr     r0,[sp,#4]      @ filename
+        mov     r7,#12           @ SYS_chdir
+        swi     0
+cdok:  ldmia   sp!,{pc}
+
+# int ___mkdir(const char *pathname, unsigned int mode);
+
+        .globl  __mkdir
+        .globl  ___mkdir
+        .align  2
+__mkdir:
+___mkdir:
+        stmfd   sp!,{lr}
+#        ldr     r1,[sp,#8]      @ mode
+#        ldr     r0,[sp,#4]      @ pathname
+        mov     r7,#39           @ SYS_mkdir
+        swi     0
+mdok:  ldmia   sp!,{pc}
+
+# int ___rmdir(const char *pathname);
+
+        .globl  __rmdir
+        .globl  ___rmdir
+        .align  2
+__rmdir:
+___rmdir:
+        stmfd   sp!,{lr}
+#        ldr     r0,[sp,#4]      @ pathname
+        mov     r7,#40           @ SYS_rmdir
+        swi     0
+rdok:  ldmia   sp!,{pc}
+
 .endif
 
 
