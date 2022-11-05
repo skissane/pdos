@@ -3,12 +3,19 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
+ifndef AS86
 % .model memodel, c
+endif
+
+ifdef AS86
+;.8086
+endif
 
 ifdef SMALLERC
 .386
 endif
 
+ifndef AS86
 assume cs:_TEXT, ds:DGROUP
 
 _DATA   segment word public 'DATA'
@@ -17,14 +24,36 @@ _BSS    segment word public 'BSS'
 _BSS    ends
 
 _TEXT segment word public 'CODE'
+endif
+
+ifdef AS86
+define intnum word ptr [bp + 6]
+endif
 
 public int86
 ifdef SMALLERC
 int86 proc uses eax ebx cx dx esi di ds es, \
            intnum:dword, regsin:ptr, regsout:ptr
 else
+ifndef AS86
 int86 proc uses ax bx cx dx si di ds es, \
            intnum:word, regsin:ptr, regsout:ptr
+else
+public _int86
+_int86:
+	push bp
+	mov bp, sp
+
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push ds
+	push es
+
+endif
 endif
 
 ifndef SMALLERC
@@ -231,9 +260,22 @@ mov [si + 10], di
 pop ax ; actually si
 mov [si + 8], ax
 
-ret
-int86 endp
+ifdef	AS86
+pop es
+pop ds
+pop di
+pop si
+pop dx
+pop cx
+pop bx
+pop ax
+pop bp
+endif
 
+ret
+ifndef	AS86
+int86 endp
+endif
 
 
 public int86x
@@ -241,8 +283,25 @@ ifdef SMALLERC
 int86x proc uses eax ebx cx dx esi di ds es, \
            intnum:dword, regsin:ptr, regsout:ptr, sregs:ptr
 else
+ifndef AS86
 int86x proc uses ax bx cx dx si di ds es, \
             intnum:word, regsin:ptr, regsout:ptr, sregs:ptr
+else
+public _int86x
+_int86x:
+	push bp
+	mov bp, sp
+
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push ds
+	push es
+
+endif
 endif
 
 push ds; for restoration after interrupt
@@ -486,9 +545,26 @@ pop ax
 mov [si + 0], ax ; restore es
 
 pop ds  ; restore value saved over interrupt (but accessed directly already)
-ret
-int86x endp
 
+ifdef	AS86
+pop es
+pop ds
+pop di
+pop si
+pop dx
+pop cx
+pop bx
+pop ax
+pop bp
+endif
+
+ret
+ifndef	AS86
+int86x endp
+endif
+
+ifndef	AS86
 _TEXT ends
+endif
 
 end
