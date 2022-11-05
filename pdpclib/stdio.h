@@ -298,6 +298,7 @@ int ferror(FILE *stream);
 #define fgets __os->Xfgets
 #define fgetc __os->Xfgetc
 #define fputc __os->Xfputc
+#define remove __os->Xremove
 #endif
 
 #endif /* __STDIO_INCLUDED */
