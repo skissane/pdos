@@ -5,8 +5,8 @@ CC=gccarm
 AR=arerm
 LD=lderm
 AS=aserm
-COPTS=-S -O0 -fno-common -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
-#COPTS=-S -O2 -fno-common -D__ARM__ -DUSE_MEMMGR -I.
+COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
+#COPTS=-S -O2 -fno-common -mapcs-32 -D__ARM__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -21,7 +21,7 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $*.o $*.s
-  rm -f $*.s
+  echo rm -f $*.s
 
 .asm.o:
   $(AS) --defsym LINUX=1 -o $@ $<
