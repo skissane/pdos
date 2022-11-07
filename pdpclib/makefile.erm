@@ -21,7 +21,7 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $*.o $*.s
-  echo rm -f $*.s
+  rm -f $*.s
 
 .asm.o:
   $(AS) --defsym LINUX=1 -o $@ $<
