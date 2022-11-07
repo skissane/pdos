@@ -6,7 +6,7 @@ LD=ldarm
 LDFLAGS=
 AS=asarm
 AR=ararm
-COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -DNOLIBALLOC -DNEED_AOUT
+COPTS=-S $(CFLAGS) -mapcs-32 -ansi -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -DNOLIBALLOC -DNEED_AOUT
 
 all: clean pdos.exe
 

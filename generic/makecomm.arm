@@ -1,7 +1,7 @@
 # This builds a PDOS-generic executable for ARM
 
 CC=gccarm
-COPTS=-S -O0 -DHAVE_DIR -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+COPTS=-S -O0 -mapcs-32 -DHAVE_DIR -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
 
 all: clean pcomm.exe
 
