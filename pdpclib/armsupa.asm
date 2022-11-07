@@ -287,7 +287,7 @@ rdok:  ldmia   sp!,{pc}
         .globl ___main
 __main:
 ___main:
-        movs    pc, lr
+        mov    pc, lr
 
 
 # unsigned integer divide
