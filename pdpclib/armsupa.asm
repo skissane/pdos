@@ -22,7 +22,8 @@
         .align  2
 _setjmp:
 __setjmp:
-        ldr     r1,[sp]         @ env
+#        ldr     r1,[sp]         @ env
+        mov     r1,r0
         mov     r2,sp
         add     r2,r2,#4
         str     sp,[r1]
@@ -38,10 +39,16 @@ __setjmp:
         .align  2
 _longjmp:
 __longjmp:
-        ldr     r0,[sp,#4]      @ v
+#        ldr     r0,[sp,#4]      @ v
+        mov     r2,r0
+        mov     r0,r1
+
         cmp     r0,#0
         moveq   r0,#1
-        ldr     r1,[sp]         @ env
+
+#        ldr     r1,[sp]         @ env
+        mov     r1,r2
+
         ldr     sp,[r1]
         ldr     r11,[r1,#4]
         ldr     lr,[r1,#8]
