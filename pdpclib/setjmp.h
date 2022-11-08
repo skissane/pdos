@@ -34,7 +34,7 @@ typedef struct {
     long d6;
     long d7;
     long retaddr;
-#elif defined(__ARM__)
+#elif defined(__ARM__) || defined(__ARMGEN__)
     void *sp;
     void *fp;
     void *ip;
@@ -67,14 +67,18 @@ typedef struct {
     void *retaddr;
     int ds;
     int es;
+#else
+#error unknown system in setjmp.h
 #endif
     int retval;
 } jmp_buf[1];
 
+void longjmp(jmp_buf env, int val);
+
 #ifdef __MSC__
 int setjmp(jmp_buf env);
 
-#elif defined(__ARM__)
+#elif defined(__ARM__) || defined(__ARMGEN__)
 /* it appears that gcc has _setjmp as a known keyword which
    is causing issues on ARM, so we change the name */
 #define setjmp(x) __Ysetjmp(x)
@@ -84,7 +88,5 @@ int __Ysetjmp(jmp_buf env);
 #define setjmp(x) _setjmp(x)
 int _setjmp(jmp_buf env);
 #endif
-
-void longjmp(jmp_buf env, int val);
 
 #endif
