@@ -1,0 +1,23 @@
+# Produces Linux executable
+# You should have build pdpclib with makefile.lnp first
+
+CC=gcc386
+CFLAGS=-O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -DNEED_AOUT
+LD=lde86
+LDFLAGS=
+AS=ase86
+AR=are86
+COPTS=-S $(CFLAGS) -ansi -I../bios -I../pdpclib -I../src
+
+all: clean bios
+
+bios: bios.o ../bios/exeload.o
+  $(LD) -s -nostdlib -e __start -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../pdpclib/pdplinux.a
+
+.c.o:
+    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+	rm -f *.o bios
