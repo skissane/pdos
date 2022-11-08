@@ -10,6 +10,86 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* We have the following independent concepts:
+
+1. What processor is used, e.g. __ARM__ or __386__ or __8086__
+This is important to setjmp as it needs an appropriate sized
+buffer for the registers that need to be saved. Note that the
+8086 has different memory models, and in e.g. tiny and small
+memory models, the segment registers shouldn't be saved/
+restored, as the OS could theoretically use this knowledge to
+move the application to some other location. Although the
+executable would need to be specially marked that it can be
+dynamically relocated, as otherwise it could directly obtain
+memory from the OS at runtime and change the segment registers
+(via far pointers). The important thing is that the concept exists.
+
+2. What compiler is used, e.g. __GCC__ (and version number within that,
+and forks within that, and targets within that - not just processor
+as the target but also the calling convention).
+
+3. Whether the OS exports the C library (PDOS-generic does, PDOS/386 doesn't)
+
+4. What API is used, e.g. Pos* vs Win32 vs Posix. Note that it is
+possible to get one API to be implemented via translation into another
+API.
+
+5. The size of ints, e.g. __32BIT__ vs __16BIT__
+
+6. The API (e.g. Pos) versus any operating system that actually
+implements that API (e.g. PDOS/386). Or Win32 API implemented by
+PDOS/386.
+
+7. Whether the OS itself relies on a generic pseudo-BIOS/HAL
+
+8. Whether the OS/BIOS provides data in blocks (e.g. MVS or a PC BIOS) or
+whether you can read/write an arbitrary number of bytes.
+
+9. The fact that the C library, including PDPCLIB, reconciles block
+versus character mode if necessary, and the application always gets
+a character mode interface.
+
+10. Whether the OS does the conversion of blocks (ie blocks on a
+mainframe CKD disk, or sectors on a PC) into characters within the
+OS itself, or outsources that job to the C library that it relies on.
+Currently PDOS/386 does Bos* calls in the OS itself to read disk
+sectors, but PDPCLIB could have done those Bos* calls itself, in the
+same flavor of code that MVS/CMS/VSE use, which would likely have
+been neater, and a better abstraction. PDOS/386 may be restructured
+to do this in the future, but it may simply become PDOS-generic if
+that is done. That's still unclear to me. Something like pcomm
+calling PosMonitor() to implement the "monitor" command is something
+beyond what can be considered generic, ie dealing with 80386 registers,
+and might possibly need to be shifted up to a higher layer (the HAL/
+pseudo-BIOS) - but that HAL needs to do printfs which are back in
+the OS to do, I think. You can't expect a BIOS to provide a full C
+library, even though that is the case when running under some
+other OS.
+
+Historically these concepts have all been jumbled up in PDOS/PDPCLIB
+and never been reconciled.
+
+So let's try to reconcile at least some of them now.
+
+And apologies for Pos* being a bit confusing since the name is similar
+to POSIX, but they are completely unrelated. Pos* was actually inspired
+by Dos* from OS/2 which I thought was a neat naming convention for
+the MSDOS INT 21H functions, even though I hated the actual parameter types.
+
+__POSGEN__ - this define means that both the C library and the Pos*
+interface have been exported by the operating system (not necessarily
+PDOS-generic) via the well-defined, set in stone (ha ha) __os structure.
+Applications can define this. It's not for use when compiling the
+actual OS. Or should this be split up into __POS__ and __GENERIC__?
+Or __POS__ to specify the API and __CEXPORT__ to say the C library has
+been exported (which could be done independently of exporting the
+rest of the Pos* API). Note that there is a difference between using
+the C library and building the C library.
+
+__POSGENOS__ - I give up.
+
+*/
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
