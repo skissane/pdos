@@ -134,6 +134,8 @@ long _Builtin __labs(long j);
 #define strtoul __os->Xstrtoul
 #define qsort __os->Xqsort
 #define bsearch __os->Xbsearch
+#define abs __os->Xabs
+#define atof __os->Xatof
 
 #endif
 

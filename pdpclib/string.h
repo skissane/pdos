@@ -171,6 +171,8 @@ char *__strrchr__(const char *s, int c);
 #define strpbrk __os->strpbrk
 #define strspn __os->strspn
 #define strcspn __os->strcspn
+#define memchr __os->memchr
+#define strncat __os->strncat
 #endif
 
 

@@ -13,7 +13,6 @@
 #ifndef __CTYPE_INCLUDED
 #define __CTYPE_INCLUDED
 
-#if defined(__WIN32__) && !defined(__STATIC__) || defined(__SUBC__)
 int isalnum(int c);
 int isalpha(int c);
 int iscntrl(int c);
@@ -27,6 +26,16 @@ int isupper(int c);
 int isxdigit(int c);
 int tolower(int c);
 int toupper(int c);
+
+#if defined(__WIN32__) && !defined(__STATIC__) || defined(__SUBC__)
+
+/* don't use macros on these environments */
+
+#elif defined(__PDOSGEN__)
+#include <__os.h>
+
+#define isalnum __os->isalnum
+#define isxdigit __os->isxdigit
 
 #else
 extern unsigned short *__isbuf;

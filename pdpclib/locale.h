@@ -45,4 +45,12 @@ struct lconv {
 char *setlocale(int category, const char *locale);
 struct lconv *localeconv(void);
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define setlocale __os->setlocale
+
+#endif
+
+
 #endif

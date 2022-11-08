@@ -309,6 +309,12 @@ int ferror(FILE *stream);
 #define ungetc __os->Xungetc
 #define vsprintf __os->Xvsprintf
 #define sprintf __os->Xsprintf
+#define ftell __os->Xftell
+#define perror __os->Xperror
+#define rewind __os->Xrewind
+#define sscanf __os->Xsscanf
+#define rename __os->Xrename
+#define clearerr __os->Xclearerr
 #endif
 
 #endif /* __STDIO_INCLUDED */

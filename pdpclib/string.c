@@ -27,6 +27,12 @@ __PDPCLIB_API__ void *memcpy(void *s1, const void *s2, size_t n)
     return (__os->memcpy(s1, s2, n));
 }
 
+#undef memset
+__PDPCLIB_API__ void *memset(void *s, int c, size_t n)
+{
+    return (__os->memset(s, c, n));
+}
+
 #else
 
 #ifdef memmove

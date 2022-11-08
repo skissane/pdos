@@ -22,4 +22,12 @@ int _assert(char *x, char *y, int z);
     _assert(#x, __FILE__, __LINE__)
 #endif
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define _assert __os->_assert
+
+#endif
+
+
 #endif
