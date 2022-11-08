@@ -1,4 +1,5 @@
 # produce pdos.exe as an ARM a.out
+# You must have built pdpclib with makefile.arg first
 
 CC=gccarm
 CFLAGS=-O0 -D__UNOPT__
