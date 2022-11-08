@@ -73,6 +73,13 @@ typedef struct {
 
 #ifdef __MSC__
 int setjmp(jmp_buf env);
+
+#elif defined(__ARM__)
+/* it appears that gcc has _setjmp as a known keyword which
+   is causing issues on ARM, so we change the name */
+#define setjmp(x) __Ysetjmp(x)
+int __Ysetjmp(jmp_buf env);
+
 #else
 #define setjmp(x) _setjmp(x)
 int _setjmp(jmp_buf env);

@@ -17,11 +17,11 @@
         .align  2
 # int setjmp(jmp_buf env);
 
-        .globl  _setjmp
-        .globl  __setjmp
+        .globl  __Ysetjmp
+        .globl  ___Ysetjmp
         .align  2
-_setjmp:
-__setjmp:
+__Ysetjmp:
+___Ysetjmp:
 #        ldr     r1,[sp]         @ env
         mov     r1,r0
         mov     r2,sp
