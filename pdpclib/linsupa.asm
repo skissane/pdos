@@ -290,3 +290,83 @@ pop %ecx
 pop %ebx
 pop %ebp
 ret
+
+
+.globl ___chdir
+___chdir:
+.globl __chdir
+__chdir:
+push %ebp
+mov %esp, %ebp
+push %ebx
+# function code 12 = chdir
+movl $12, %eax
+# filename (directory name)
+movl 8(%ebp), %ebx
+int $0x80
+pop %ebx
+pop %ebp
+ret
+
+
+.globl ___rmdir
+___rmdir:
+.globl __rmdir
+__rmdir:
+push %ebp
+mov %esp, %ebp
+push %ebx
+# function code 40 = rmdir
+movl $40, %eax
+# pathname
+movl 8(%ebp), %ebx
+int $0x80
+pop %ebx
+pop %ebp
+ret
+
+
+.globl ___mkdir
+___mkdir:
+.globl __mkdir
+__mkdir:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+# function code 39 = mkdir
+movl $39, %eax
+# pathname
+movl 8(%ebp), %ebx
+# mode
+movl 12(%ebp), %ecx
+int $0x80
+pop %ecx
+pop %ebx
+pop %ebp
+ret
+
+
+.globl ___getdents
+___getdents:
+.globl __getdents
+__getdents:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+# function code 141 = getdents
+movl $141, %eax
+# file descriptor
+movl 8(%ebp), %ebx
+# dirent
+movl 12(%ebp), %ecx
+# count
+movl 16(%ebp), %edx
+int $0x80
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
