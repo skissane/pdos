@@ -14,7 +14,21 @@
 #include "string.h"
 #include "stddef.h"
 
-#ifndef __PDOSGEN__
+#if defined(__PDOSGEN__)
+
+/* Because the compiler sometimes generates a deliberate call to
+   memcpy, the memcpy function needs to exist. We could instead make
+   the compiler generate code that honors the memcpy macro, but for
+   now, this will do */
+
+#undef memcpy
+__PDPCLIB_API__ void *memcpy(void *s1, const void *s2, size_t n)
+{
+    return (__os->memcpy(s1, s2, n));
+}
+
+#else
+
 #ifdef memmove
 #undef memmove
 #endif
@@ -409,12 +423,6 @@ __PDPCLIB_API__ size_t strlen(const char *s)
     while (*p != '\0') p++;
     return ((size_t)(p - s));
 }
-#endif /* above stuff excluded for PDOS-generic */
-
-/* But because the compiler sometimes generates a deliberate call to
-   memcpy, the memcpy function needs to exist. We could instead make
-   the compiler generate code that honors the memcpy macro, but for
-   now, this will do */
 
 #ifndef USE_ASSEMBLER
 #ifdef memcpy
@@ -473,3 +481,5 @@ __PDPCLIB_API__ void *memcpy(void *s1, const void *s2, size_t n)
 }
 #endif /* 32BIT */
 #endif /* USE_ASSEMBLER */
+
+#endif /* __PDOSGEN__ */
