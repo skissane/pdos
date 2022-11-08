@@ -38,6 +38,13 @@ typedef struct {
     void *sp;
     void *fp;
     void *ip;
+    int r4;
+    int r5;
+    int r6;
+    int r7;
+    int r8;
+    int r9;
+    int r10;
 #elif defined(__WIN32__) || defined(__32BIT__) || defined(__OS2__) \
     || defined(__PDOS386__) || defined(__gnu_linux__)
     int ebx;

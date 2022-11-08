@@ -25,20 +25,28 @@ __setjmp:
 #        ldr     r1,[sp]         @ env
         mov     r1,r0
         mov     r2,sp
-        add     r2,r2,#4
-        str     sp,[r1]
+#        add     r2,r2,#4
+#        str     sp,[r1]
+        str     r2,[r1]
         str     r11,[r1,#4]
         str     lr,[r1,#8]
+        str     r4,[r1,#12]
+        str     r5,[r1,#16]
+        str     r6,[r1,#20]
+        str     r7,[r1,#24]
+        str     r8,[r1,#28]
+        str     r9,[r1,#32]
+        str     r10,[r1,#36]
         mov     r0,#0
         mov     pc,lr
 
 # void longjmp(jmp_buf env, int v);
 
+        .globl  longjmp
         .globl  _longjmp
-        .globl  __longjmp
         .align  2
+longjmp:
 _longjmp:
-__longjmp:
 #        ldr     r0,[sp,#4]      @ v
         mov     r2,r0
         mov     r0,r1
@@ -52,6 +60,13 @@ __longjmp:
         ldr     sp,[r1]
         ldr     r11,[r1,#4]
         ldr     lr,[r1,#8]
+        ldr     r4,[r1,#12]
+        ldr     r5,[r1,#16]
+        ldr     r6,[r1,#20]
+        ldr     r7,[r1,#24]
+        ldr     r8,[r1,#28]
+        ldr     r9,[r1,#32]
+        ldr     r10,[r1,#36]
         mov     pc,lr
 
 .ifdef LINUX
