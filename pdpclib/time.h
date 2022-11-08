@@ -68,8 +68,7 @@ size_t strftime(char *s, size_t maxsize,
    that forever, as people can rightly create function pointers
    and set one of them to time. */
 #define time(timer) (__os->Xtime(timer))
-/* ditto clock */
-#define clock() __os->Xclock()
+#define clock __os->Xclock
 
 #endif
 
