@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <errno.h>
+#include <signal.h>
 
 #include "__os.h"
 #include "exeload.h"
@@ -72,6 +74,11 @@ static OS bios = { their_start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   0, 0, 0,
 #endif
   remove,
+  memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
+  getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
+  sprintf, signal, raise, calloc, realloc, atoi, strtol, strtoul, qsort,
+  bsearch, localtime, clock, strerror, strrchr, strstr, strpbrk, strspn,
+  strcspn,
 };
 
 static char buf[200];
