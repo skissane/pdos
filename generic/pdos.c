@@ -107,6 +107,7 @@ int main(void)
     os.main = &__genmain;
     os.Xstdin = stdin;
     os.Xstdout = stdout;
+    os.Xstderr = stderr;
 
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)

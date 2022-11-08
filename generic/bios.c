@@ -98,6 +98,7 @@ int main(int argc, char **argv)
     bios.mem_amt = MEMAMT;
     bios.Xstdin = stdin;
     bios.Xstdout = stdout;
+    bios.Xstderr = stderr;
     __genstart = 1;
     bios.main = &__genmain;
 
