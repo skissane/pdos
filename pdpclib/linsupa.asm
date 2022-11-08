@@ -3,36 +3,31 @@
 # This program written by Paul Edwards
 # Released to the public domain
 
+
 .globl ___setj
 ___setj:
 .globl __setj
 __setj:
-push %ebp
-mov %esp, %ebp
-
-movl 8(%ebp), %eax
-push %ebp
+mov 4(%esp), %eax
+push %ebx
 mov %esp, %ebx
-push %ebx # esp
+mov %ebx, 20(%eax) #esp
 
-movl %ecx, 4(%eax)
-movl %edx, 8(%eax)
-movl %edi, 12(%eax)
-movl %esi, 16(%eax)
+mov %ebp, %ebx
+mov %ebx, 24(%eax)
 
-pop %ebx
-movl %ebx, 20(%eax) # esp
-movl 0(%ebp), %ebx
-movl %ebx, 24(%eax) # ebp
+mov %ecx, 4(%eax)
+mov %edx, 8(%eax)
+mov %edi, 12(%eax)
+mov %esi, 16(%eax)
 
-movl 4(%ebp), %ebx # return address
-movl %ebx, 28(%eax) # return address
+mov 4(%esp), %ebx    # return address
+mov %ebx, 28(%eax)   # return address
 
 pop %ebx
-movl %ebx, 0(%eax)
+mov %ebx,0(%eax)
 mov $0, %eax
 
-pop %ebp
 ret
 
 
@@ -41,33 +36,26 @@ ret
 ___longj:
 .globl __longj
 __longj:
-push %ebp
-mov %esp, %ebp
-
-movl 8(%ebp), %eax
-movl 20(%eax), %ebp
+mov 4(%esp), %eax
+mov 20(%eax), %ebp
 mov %ebp, %esp
 
-pop %ebx # position of old ebx
-pop %ebx # position of old ebp
-pop %ebx # position of old return address
+pop %ebx            # position of old ebx
+pop %ebx            # position of old return address
 
-mov 28(%eax), %ebx # return address
+mov 28(%eax), %ebx  # return address
 push %ebx
 
-mov 24(%eax), %ebx # ebp saved as normal
-push %ebx
-mov %esp, %ebp
+mov 24(%eax), %ebx
+mov %ebx, %ebp
 
-movl 0(%eax), %ebx
-movl 4(%eax), %ecx
-movl 8(%eax), %edx
-movl 12(%eax), %edi
-movl 16(%eax), %esi
+mov 0(%eax), %ebx
+mov 4(%eax), %ecx
+mov 8(%eax), %edx
+mov 12(%eax), %edi
+mov 16(%eax), %esi
 
-movl 32(%eax), %eax
-
-pop %ebp
+mov 60(%eax), %eax    # return value
 
 ret
 
