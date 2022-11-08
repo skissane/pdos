@@ -25,6 +25,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 typedef struct {
     /* a BIOS may not have this, as it implies the existence of a
@@ -61,19 +62,58 @@ typedef struct {
     size_t (*strlen)(const char *s);
     int (*Xfgetc)(FILE *stream);
     int (*Xfputc)(int c, FILE *stream);
-    int (*fflush)(FILE *stream);
+    int (*Xfflush)(FILE *stream);
     int (*Xsetvbuf)(FILE *stream, char *buf, int mode, size_t size);
     void *(*PosGetDTA)(void);
     int (*PosFindFirst)(char *pat, int attrib);
     int (*PosFindNext)(void);
     int (*PosGetDeviceInformation)(int handle, unsigned int *devinfo);
     int (*PosSetDeviceInformation)(int handle, unsigned int devinfo);
-    char *(*ctime)(const time_t *timer);
-    time_t (*time)(time_t *timer);
+    char *(*Xctime)(const time_t *timer);
+    time_t (*Xtime)(time_t *timer);
     int (*PosChangeDir)(const char *to);
     int (*PosMakeDir)(const char *dname);
     int (*PosRemoveDir)(const char *dname);
     int (*Xremove)(const char *filename);
+    void *(*memcpy)(void *s1, const void *s2, size_t n);
+    char *(*strncpy)(char *s1, const char *s2, size_t n);
+    char *(*strcat)(char *s1, const char *s2);
+    FILE *Xstderr;
+    void (*free)(void *ptr);
+    void (*abort)(void);
+    void *(*memset)(void *s, int c, size_t n);
+    int (*Xfputs)(const char *s, FILE *stream);
+    int (*Xfprintf)(FILE *stream, const char *format, ...);
+    char *(*Xgetenv)(const char *name);
+    void *(*memmove)(void *s1, const void *s2, size_t n);
+    void (*Xexit)(int status);
+    int (*memcmp)(const void *s1, const void *s2, size_t n);
+    int *(*_errno)(void); /* internal use */
+    char *(*Xtmpnam)(char *s);
+    int (*Xvfprintf)(FILE *stream, const char *format, va_list arg);
+    int (*Xungetc)(int c, FILE *stream);
+    int (*Xvsprintf)(char *s, const char *format, va_list arg);
+    int (*Xsprintf)(char *s, const char *format, ...);
+    void (*(*signal)(int sig, void (*func)(int)))(int);
+    int (*raise)(int sig);
+    void *(*Xcalloc)(size_t nmemb, size_t size);
+    void *(*Xrealloc)(void *ptr, size_t size);
+    int (*Xatoi)(const char *nptr);
+    long (*Xstrtol)(const char *nptr, char **endptr, int base);
+    unsigned long (*Xstrtoul)(const char *nptr, char **endptr, int base);
+    void (*Xqsort)(void *a, size_t b, size_t c,
+                  int (*f)(const void *d, const void *e));
+    void *(*Xbsearch)(const void *key, const void *base,
+                     size_t nmemb, size_t size,
+                     int (*compar)(const void *, const void *));
+    struct tm *(*Xlocaltime)(const time_t *timer);
+    clock_t (*Xclock)(void);
+    char *(*strerror)(int errnum);
+    char *(*strrchr)(const char *s, int c);
+    char *(*strstr)(const char *s1, const char *s2);
+    char *(*strpbrk)(const char *s1, const char *s2);
+    size_t (*strspn)(const char *s1, const char *s2);
+    size_t (*strcspn)(const char *s1, const char *s2);
 } OS;
 
 extern OS *__os;
