@@ -1052,7 +1052,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
        Note that the runnum increments for every invocation */
     if (!__genstart)
     {
+#if defined(__ARM__)
+        rc = 0;
+#else
         rc = setjmp(jb);
+#endif
         if (rc != 0)
         {
             /* we're here because of longjmp */
@@ -1069,7 +1073,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
     else
     {
+#if defined(__ARM__)
+        rc = 0;
+#else
         rc = setjmp(jb);
+#endif
         if (rc != 0)
         {
             rc = globrc;
@@ -1111,7 +1119,11 @@ void __exit(int status)
     __exita(status);
     }
     globrc = status;
+
+#if !defined(__ARM__)
     longjmp(jb, status);
+#endif
+
 #endif
 }
 
