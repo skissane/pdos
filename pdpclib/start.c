@@ -14,6 +14,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stddef.h"
+#include "setjmp.h"
 
 #if USE_MEMMGR
 #include "__memmgr.h"
@@ -82,6 +83,11 @@ int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 /* Used for PDOS itself to avoid API calls when starting. */
 int __minstart = 0;
 #endif
+
+/* will be set by __exit */
+static int globrc = 0;
+
+static jmp_buf jb;
 
 #ifndef __PDPCLIB_DLL
 int main(int argc, char **argv);
@@ -271,6 +277,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     char *p;
 #endif
     int x;
+    int oldglobrc = globrc;
+    jmp_buf oldjb;
 #if !defined(__gnu_linux__)
     int argc;
     static char *argv[MAXPARMS + 1];
@@ -295,6 +303,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
     runnum++;
+    memcpy(&oldjb, &jb, sizeof oldjb);
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
     {
@@ -474,6 +483,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     int have_sysparm;
 
     runnum++;
+    memcpy(&oldjb, &jb, sizeof oldjb);
 /*
  Now build the SVC 202 string for sysprint
 */
@@ -561,6 +571,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
 #else /* not CMS */
     runnum++;
+    memcpy(&oldjb, &jb, sizeof oldjb);
 #endif
 
 #if USE_MEMMGR
@@ -1032,16 +1043,50 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #elif defined(__PDPCLIB_DLL)
     return (0);
 #else
+    /* note that any executable (mainly one being used as a
+       pseudo-BIOS/HAL) can choose to export it's C library,
+       and in that case, the called program should not directly
+       call the OS's exit function, but should return here so
+       that this executable regains control. But exit() can be
+       called from anywhere. So we need to use setjmp and longjmp.
+       Note that the runnum increments for every invocation */
     if (!__genstart)
     {
-        rc = main(argc, argv);
+        rc = setjmp(jb);
+        if (rc != 0)
+        {
+            /* we're here because of longjmp */
+            /* the invoker needs to set globrc first, otherwise
+               we can't distinguish a genuine return code */
+            rc = globrc;
+        }
+        else
+        {
+            /* I'm not sure if we can eliminate this call to main
+               and always use genmain instead */
+            rc = main(argc, argv);
+        }
     }
     else
     {
-        rc = __genmain(argc, argv);
+        rc = setjmp(jb);
+        if (rc != 0)
+        {
+            rc = globrc;
+        }
+        else
+        {
+            rc = __genmain(argc, argv);
+        }
     }
+    globrc = oldglobrc;
+    memcpy(&jb, &oldjb, sizeof jb);
 
+    if (runnum == 1)
+    {
     __exit(rc);
+    }
+    runnum--;
     return (rc);
 #endif
 }
@@ -1053,7 +1098,10 @@ void _c_exit(void);
 void __exit(int status)
 {
     /* Complete C library termination and exit with error code. */
+    if (runnum == 1)
+    {
     _cexit();
+    }
 
 #ifdef __WIN32__
     ExitProcess(status);
@@ -1062,8 +1110,8 @@ void __exit(int status)
     {
     __exita(status);
     }
-    runnum--;
-    /* need a longjmp back to main() here */
+    globrc = status;
+    longjmp(jb, status);
 #endif
 }
 
