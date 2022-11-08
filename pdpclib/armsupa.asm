@@ -13,7 +13,7 @@
 # https://gist.github.com/yamnikov-oleg/454f48c3c45b735631f2
 # https://syscalls.w3challs.com/?arch=arm_strong
 
-        .data
+        .text
         .align  2
 # int setjmp(jmp_buf env);
 
@@ -28,15 +28,15 @@ __setjmp:
 #        add     r2,r2,#4
 #        str     sp,[r1]
         str     r2,[r1]
-        str     r11,[r1,#4]
-        str     lr,[r1,#8]
+        str     r11,[r1,#4]   @ fp
+        str     lr,[r1,#8]    @ r14
         str     r4,[r1,#12]
         str     r5,[r1,#16]
         str     r6,[r1,#20]
         str     r7,[r1,#24]
         str     r8,[r1,#28]
-        str     r9,[r1,#32]
-        str     r10,[r1,#36]
+        str     r9,[r1,#32]   @ rfp
+        str     r10,[r1,#36]  @ sl
         mov     r0,#0
         mov     pc,lr
 
@@ -58,7 +58,7 @@ _longjmp:
         mov     r1,r2
 
         ldr     sp,[r1]
-        ldr     r11,[r1,#4]
+        ldr     r11,[r1,#4]      @ fp
         ldr     lr,[r1,#8]
         ldr     r4,[r1,#12]
         ldr     r5,[r1,#16]
