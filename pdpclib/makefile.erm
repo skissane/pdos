@@ -10,11 +10,11 @@ COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o armsupa.o __memmgr.o
+       ctype.o math.o armsupa.o __memmgr.o
   rm -f pdperm.a
   $(AR) r pdperm.a stdio.o string.o stdlib.o
   $(AR) r pdperm.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r pdperm.a ctype.o setjmp.o math.o armsupa.o __memmgr.o
+  $(AR) r pdperm.a ctype.o math.o armsupa.o __memmgr.o
   $(LD) -e __start -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
   echo $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
 

@@ -11,11 +11,11 @@ COPTS=-S -O0 -D__ARM__ -mapcs-32 -D__UNOPT__ -DUSE_MEMMGR -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o armsupa.o __memmgr.o
+       ctype.o math.o armsupa.o __memmgr.o
   rm -f pdparm.a
   $(AR) r pdparm.a stdio.o string.o stdlib.o
   $(AR) r pdparm.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r pdparm.a ctype.o setjmp.o math.o armsupa.o __memmgr.o
+  $(AR) r pdparm.a ctype.o math.o armsupa.o __memmgr.o
   $(LD) -N -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdparm.a
 
 .c.o:
