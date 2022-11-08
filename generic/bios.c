@@ -17,6 +17,8 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
+#include <locale.h>
+#include <assert.h>
 
 #include "__os.h"
 #include "exeload.h"
@@ -78,7 +80,8 @@ static OS bios = { their_start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
   sprintf, signal, raise, calloc, realloc, atoi, strtol, strtoul, qsort,
   bsearch, localtime, clock, strerror, strrchr, strstr, strpbrk, strspn,
-  strcspn,
+  strcspn, memchr, ftell, abs, setlocale, perror, rewind, strncat, sscanf,
+  isalnum, isxdigit, rename, clearerr, _assert, atof,
 };
 
 static char buf[200];

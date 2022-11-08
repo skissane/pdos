@@ -114,6 +114,20 @@ typedef struct {
     char *(*strpbrk)(const char *s1, const char *s2);
     size_t (*strspn)(const char *s1, const char *s2);
     size_t (*strcspn)(const char *s1, const char *s2);
+    void *(*memchr)(const void *s, int c, size_t n);
+    long (*Xftell)(FILE *stream);
+    int (*Xabs)(int j);
+    char *(*setlocale)(int category, const char *locale);
+    void (*Xperror)(const char *s);
+    void (*Xrewind)(FILE *stream);
+    char *(*strncat)(char *s1, const char *s2, size_t n);
+    int (*Xsscanf)(const char *s, const char *format, ...);
+    int (*isalnum)(int c);
+    int (*isxdigit)(int c);
+    int (*Xrename)(const char *old, const char *newnam);
+    void (*Xclearerr)(FILE *stream);
+    int (*_assert)(char *x, char *y, int z); /* internal use */
+    double (*Xatof)(const char *nptr);
 } OS;
 
 extern OS *__os;
