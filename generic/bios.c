@@ -32,7 +32,7 @@ extern int (*__genmain)(int argc, char **argv);
 #define PATH "/storage/emulated/0/Download/"
 #endif
 
-#define MEMAMT 28*1000*1000
+#define MEMAMT 24*1000*1000
 
 #if defined(__gnu_linux__) || defined(__ARM__)
 extern int __start(int argc, char **argv);
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
         bios.disk_name = *(argv + 2);
         prog_name = argv[1];
     }
-    p = calloc(1, 1000000);
+    p = calloc(1, 5000000);
     if (p == NULL)
     {
         printf("insufficient memory\n");
