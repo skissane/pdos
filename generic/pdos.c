@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <signal.h>
 
 #include <pos.h>
 
@@ -53,7 +55,12 @@ static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
   PosGetDeviceInformation, PosSetDeviceInformation,
   ctime, time,
   0, 0, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
-  remove
+  remove,
+  memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
+  getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
+  sprintf, signal, raise, calloc, realloc, atoi, strtol, strtoul, qsort,
+  bsearch, localtime, clock, strerror, strrchr, strstr, strpbrk, strspn,
+  strcspn,
 };
 
 static int (*pgastart)(OS *os);
@@ -278,7 +285,7 @@ int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
     if (fh < 3)
     {
         bios->Xfwrite(data, 1, len, bios->Xstdout);
-        bios->fflush(bios->Xstdout);
+        bios->Xfflush(bios->Xstdout);
     }
     else
     {
