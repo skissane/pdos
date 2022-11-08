@@ -8,6 +8,10 @@
 /*                                                                   */
 /*  pcomm - command processor for pdos                               */
 /*                                                                   */
+/*  Note that pcomm is pretty much an ordinary C program, however    */
+/*  if it is executed with /p it reads autoexec.bat and if it is     */
+/*  executed with /c it runs a single command and then exits.        */
+/*                                                                   */
 /*********************************************************************/
 
 #include <stdio.h>
