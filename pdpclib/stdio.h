@@ -290,6 +290,8 @@ int ferror(FILE *stream);
 #define stdin __os->Xstdin
 #undef stdout
 #define stdout __os->Xstdout
+#undef stderr
+#define stderr __os->Xstderr
 #define fopen __os->Xfopen
 #define fseek __os->Xfseek
 #define fread __os->Xfread
@@ -298,7 +300,15 @@ int ferror(FILE *stream);
 #define fgets __os->Xfgets
 #define fgetc __os->Xfgetc
 #define fputc __os->Xfputc
+#define fflush __os->Xfflush
 #define remove __os->Xremove
+#define fputs __os->Xfputs
+#define fprintf __os->Xfprintf
+#define tmpnam __os->Xtmpnam
+#define vfprintf __os->Xvfprintf
+#define ungetc __os->Xungetc
+#define vsprintf __os->Xvsprintf
+#define sprintf __os->Xsprintf
 #endif
 
 #endif /* __STDIO_INCLUDED */

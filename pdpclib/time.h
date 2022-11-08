@@ -60,8 +60,17 @@ size_t strftime(char *s, size_t maxsize,
 #if defined(__PDOSGEN__)
 #include <__os.h>
 
-#define ctime(timer) (__os->ctime(timer))
-#define time(timer) (__os->time(timer))
+#define ctime __os->Xctime
+#define localtime __os->Xlocaltime
+
+/* in case someone did "int time;", defining a macro like this
+   allows the two to co-exist, for now. But we can't keep it like
+   that forever, as people can rightly create function pointers
+   and set one of them to time. */
+#define time(timer) (__os->Xtime(timer))
+/* ditto clock */
+#define clock() __os->Xclock()
+
 #endif
 
 

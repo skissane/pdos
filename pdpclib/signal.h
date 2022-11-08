@@ -19,7 +19,7 @@ void __sigdfl(int sig);
 void __sigerr(int sig);
 void __sigign(int sig);
 
-#if defined(__WIN32__) && !defined(__STATIC__)
+#if (defined(__WIN32__) && !defined(__STATIC__)) || defined (__PDOSGEN__)
 #define SIG_DFL 0
 #define SIG_ERR -1
 #define SIG_IGN 1
@@ -43,5 +43,14 @@ void (*signal(int sig, void (*func)(int)))(int);
 #endif
 
 int raise(int sig);
+
+
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define signal __os->signal
+#define raise __os->raise
+#endif
+
 
 #endif

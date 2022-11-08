@@ -20,4 +20,10 @@
 
 int *_errno(void);
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+#undef errno
+#define errno (*(__os->_errno()))
+#endif
+
 #endif

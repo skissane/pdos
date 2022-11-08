@@ -157,6 +157,20 @@ char *__strrchr__(const char *s, int c);
 #define strncmp __os->strncmp
 #define strcpy __os->strcpy
 #define strlen __os->strlen
+#undef memcpy
+#define memcpy __os->memcpy
+#define strncpy __os->strncpy
+#define strcat __os->strcat
+#define memset __os->memset
+#define memmove __os->memmove
+#undef memcmp
+#define memcmp __os->memcmp
+#define strerror __os->strerror
+#define strrchr __os->strrchr
+#define strstr __os->strstr
+#define strpbrk __os->strpbrk
+#define strspn __os->strspn
+#define strcspn __os->strcspn
 #endif
 
 

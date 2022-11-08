@@ -122,6 +122,19 @@ long _Builtin __labs(long j);
 #include <__os.h>
 
 #define malloc __os->malloc
+#define free __os->free
+#undef abort
+#define abort __os->abort
+#define getenv __os->Xgetenv
+#define exit __os->Xexit
+#define calloc __os->Xcalloc
+#define realloc __os->Xrealloc
+#define atoi __os->Xatoi
+#define strtol __os->Xstrtol
+#define strtoul __os->Xstrtoul
+#define qsort __os->Xqsort
+#define bsearch __os->Xbsearch
+
 #endif
 
 #endif
