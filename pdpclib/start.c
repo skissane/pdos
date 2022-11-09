@@ -1189,6 +1189,12 @@ void __exit(int status)
     if (runnum == 1)
     {
     __exita(status);
+    /* in case exita returns here, which is the case for PDOS-generic
+       running under the pseudo-BIOS currently, decrement the run number
+       so that we don't get called again */
+    runnum--;
+    /* and we can't go through another longjmp either */
+    return;
     }
     globrc = status;
 
