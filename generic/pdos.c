@@ -69,8 +69,6 @@ static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
 
 static int (*pgastart)(OS *os);
 
-static MEMMGR memmgr;
-
 static void *disk;
 
 static DTA origdta;
@@ -119,9 +117,10 @@ int main(void)
         bios->Xprintf("failed to do promised malloc\n");
         return (EXIT_FAILURE);
     }
-    memmgrDefaults(&memmgr);
-    memmgrInit(&memmgr);
-    memmgrSupply(&memmgr, mem_base, bios->mem_amt);
+    /* C library will have done this already */
+    /* memmgrDefaults(&__memmgr);
+    memmgrInit(&__memmgr); */
+    memmgrSupply(&__memmgr, mem_base, bios->mem_amt);
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("hello from PDOS\n");
@@ -159,7 +158,9 @@ int main(void)
     printf("about to call app\n");
     ret = pgastart(&os);
     printf("return from app is %d\n", ret);
-    memmgrTerm(&memmgr);
+    /* we need to rely on the C library to do the termination when it
+       has finished closing files */
+    /* memmgrTerm(&__memmgr); */
     return (0);
 }
 
@@ -320,13 +321,13 @@ void *PosAllocMem(unsigned int size, unsigned int flags)
 
     /* printf("got request to allocate %lu bytes\n",
         (unsigned long)size); */
-    p = memmgrAllocate(&memmgr, size, 0);
+    p = memmgrAllocate(&__memmgr, size, 0);
     return (p);
 }
 
 int PosFreeMem(void *ptr)
 {
-    memmgrFree(&memmgr, ptr);
+    memmgrFree(&__memmgr, ptr);
     return (0);
 }
 
