@@ -40,61 +40,61 @@ _int86:
         mov     20(%esi), %edi
         mov     16(%esi), %esi
               
-        cmp     $0x10, 8(%ebp)
+        cmpl    $0x10, 8(%ebp)
         jne     not10
         int     $0x10
         jmp     fintry
 not10:
 
-        cmp     $0x13, 8(%ebp)
+        cmpl    $0x13, 8(%ebp)
         jne     not13
         int     $0x13
         jmp     fintry
 not13:
 
-        cmp     $0x14, 8(%ebp)
+        cmpl    $0x14, 8(%ebp)
         jne     not14
         int     $0x14
         jmp     fintry
 not14:
 
-        cmp     $0x15, 8(%ebp)
+        cmpl    $0x15, 8(%ebp)
         jne     not15
         int     $0x15
         jmp     fintry
 not15:
 
-        cmp     $0x16, 8(%ebp)
+        cmpl    $0x16, 8(%ebp)
         jne     not16
         int     $0x16
         jmp     fintry
 not16:
 
-        cmp     $0x1A, 8(%ebp)
+        cmpl    $0x1A, 8(%ebp)
         jne     not1A
         int     $0x1A
         jmp     fintry  
 not1A:
 
-        cmp     $0x20, 8(%ebp)
+        cmpl    $0x20, 8(%ebp)
         jne     not20
         int     $0x20
         jmp     fintry
 not20:
 
-        cmp     $0x21, 8(%ebp)
+        cmpl    $0x21, 8(%ebp)
         jne     not21
         int     $0x21
         jmp     fintry
 not21:
 
-        cmp     $0x25, 8(%ebp)
+        cmpl    $0x25, 8(%ebp)
         jne     not25
         int     $0x25
         jmp     fintry
 not25:
 
-        cmp     $0x26, 8(%ebp)
+        cmpl    $0x26, 8(%ebp)
         jne     not26
         int     $0x26
         jmp     fintry
