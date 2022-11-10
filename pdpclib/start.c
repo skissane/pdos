@@ -67,7 +67,10 @@ library, even though that is the case when running under some
 other OS.
 
 Historically these concepts have all been jumbled up in PDOS/PDPCLIB
-and never been reconciled.
+and never been reconciled. Which is why there are anomalies such as
+a PDOS-generic application for ARM is built needing PDOS386 defined,
+when it has nothing whatsoever to do with an 80386. It works, but is
+confusing and not properly abstracted/defined.
 
 So let's try to reconcile at least some of them now.
 
