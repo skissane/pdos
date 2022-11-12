@@ -20,9 +20,7 @@ typedef struct {
 
 static char onechar[4];
 
-static void __main(void);
-
-int main(int junk, EFI_SYSTEM *system)
+int efimain(int junk, EFI_SYSTEM *system)
 {
     onechar[0] = 'X';
     system->simple->print_func(system->simple, onechar);
@@ -32,9 +30,4 @@ int main(int junk, EFI_SYSTEM *system)
     system->simple->print_func(system->simple, onechar);
     for (;;) ;
     return (5);
-}
-
-static void __main(void)
-{
-    return;
 }

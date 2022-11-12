@@ -7,7 +7,7 @@ AS=aswin
 COPTS=-S -O2 -D__WIN32__ -D__NOBIVA__ -I.
 
 pdptest.exe: efistart.o
-  $(LD) -s -subsystem efi -e _main -nostdlib -o pdptest.exe efistart.o
+  $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
