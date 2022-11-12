@@ -8,24 +8,24 @@
 /*********************************************************************/
 
 typedef struct {
-    char junk1[50];
-    int (*print_func)(void *x);
+    char junk1[8];
+    int (*print_func)(void *x, void *y);
 } EFI_SIMPLE_TEXT;
 
 typedef struct {
-    char junk1[50];
-    int stdout_handle;
+    char junk1[32];
+    void *stdout_handle;
     EFI_SIMPLE_TEXT *simple;
 } EFI_SYSTEM;
 
-static char onechar[3];
+static char onechar[4];
 
 static int __main(void);
 
 int main(int junk, EFI_SYSTEM *system)
 {
     onechar[0] = 'X';
-    system->simple->print_func(onechar);
+    system->simple->print_func(system->stdout_handle, onechar);
     for (;;) ;
     return (5);
 }
