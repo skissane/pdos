@@ -20,7 +20,7 @@ typedef struct {
 
 static char onechar[4];
 
-static int __main(void);
+static void __main(void);
 
 int main(int junk, EFI_SYSTEM *system)
 {
@@ -34,7 +34,7 @@ int main(int junk, EFI_SYSTEM *system)
     return (5);
 }
 
-static int __main(void)
+static void __main(void)
 {
-    return (3);
+    return;
 }
