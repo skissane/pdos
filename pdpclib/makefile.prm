@@ -4,7 +4,7 @@ CC=gccprm
 AR=arprm
 LD=ldprm
 AS=asprm
-COPTS=-S -O2 -D__ARM__ -D__NOBIVA__ -I.
+COPTS=-S -O2 -mapcs-32 -D__ARM__ -D__NOBIVA__ -I.
 
 pdptest.exe: efistart.o
   $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
