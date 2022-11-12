@@ -13,7 +13,7 @@ typedef struct {
 } EFI_SIMPLE_TEXT;
 
 typedef struct {
-    char junk1[32];
+    char junk1[36];
     void *stdout_handle;
     EFI_SIMPLE_TEXT *simple;
 } EFI_SYSTEM;
