@@ -26,6 +26,10 @@ int main(int junk, EFI_SYSTEM *system)
 {
     onechar[0] = 'X';
     system->simple->print_func(system->simple, onechar);
+    onechar[0] = '\r';
+    system->simple->print_func(system->simple, onechar);
+    onechar[0] = '\n';
+    system->simple->print_func(system->simple, onechar);
     for (;;) ;
     return (5);
 }
