@@ -8,12 +8,12 @@
 /*********************************************************************/
 
 typedef struct {
-    char junk1[8];
+    char junk1[4];
     int (*print_func)(void *x, void *y);
 } EFI_SIMPLE_TEXT;
 
 typedef struct {
-    char junk1[36];
+    char junk1[40];
     void *stdout_handle;
     EFI_SIMPLE_TEXT *simple;
 } EFI_SYSTEM;
@@ -28,6 +28,8 @@ int efimain(int junk, EFI_SYSTEM *system)
     system->simple->print_func(system->simple, onechar);
     onechar[0] = '\n';
     system->simple->print_func(system->simple, onechar);
+
     for (;;) ;
+
     return (5);
 }
