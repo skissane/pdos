@@ -1,0 +1,18 @@
+# This builds EFI executables for the 80386
+
+CC=gccwin
+AR=arwin
+LD=ldwin
+AS=aswin
+COPTS=-S -O2 -D__WIN32__ -D__NOBIVA__ -I.
+
+pdptest.exe: efistart.o
+  $(LD) -s -subsystem efi -e _main -nostdlib -o pdptest.exe efistart.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) -o $@ $<
