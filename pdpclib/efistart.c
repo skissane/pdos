@@ -25,7 +25,7 @@ static int __main(void);
 int main(int junk, EFI_SYSTEM *system)
 {
     onechar[0] = 'X';
-    system->simple->print_func(system->stdout_handle, onechar);
+    system->simple->print_func(system->simple, onechar);
     for (;;) ;
     return (5);
 }
