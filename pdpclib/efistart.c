@@ -47,27 +47,11 @@ typedef struct {
 } EFI_SYSTEM;
 
 
-#ifdef __ARM__
-
-int efimain(int junk, EFI_SYSTEM *sys)
-{
-    static char onechar[4];
-    EFI_SYSTEM *system = sys;
-
-    onechar[0] = 'X';
-    system->simple->print_func(system->simple, onechar);
-
-    for (;;) ;
-
-    return (0);
-}
-
-#else
-
-/* This isn't working on ARM for some reason.
-   Instruction prefetch error */
-
 static EFI_SYSTEM *system;
+
+/* for some reason, on ARM only, this variable can't be put
+   into print_string, otherwise you get a prefetch error */
+static char onechar[4];
 
 static int print_string(char *str);
 
@@ -86,7 +70,6 @@ int efimain(int junk, EFI_SYSTEM *sys)
 
 static int print_string(char *str)
 {
-    static char onechar[4];
     int x = 0;
 
     while (str[x] != '\0')
@@ -102,5 +85,3 @@ static int print_string(char *str)
     }
     return (x);
 }
-
-#endif
