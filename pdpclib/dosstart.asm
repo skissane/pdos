@@ -14,22 +14,16 @@ public ___psp
 public ___envptr
 public ___osver
 
-_DATA   segment word public 'DATA'
+.stack 1000h
+
+.data
+
 banner  db  "PDPCLIB"
 ___psp   dd  ?
 ___envptr dd ?
 ___osver dw ?
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-_STACK  segment word stack 'STACK'
-        db 1000h dup(?)
-_STACK  ends
 
-DGROUP  group   _DATA,_BSS
-        assume cs:_TEXT,ds:DGROUP
-
-_TEXT segment word public 'CODE'
+.code
 
 top:
 
@@ -130,7 +124,5 @@ ___main proc
 ret
 ___main endp
 
-
-_TEXT ends
 
 end top
