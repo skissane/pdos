@@ -3,28 +3,17 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-ifndef AS86
-% .model memodel, c
-endif
-
 ifdef AS86
-;.8086
+% .model memodel
+else
+% .model memodel, c
 endif
 
 ifdef SMALLERC
 .386
 endif
 
-ifndef AS86
-assume cs:_TEXT, ds:DGROUP
-
-_DATA   segment word public 'DATA'
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-
-_TEXT segment word public 'CODE'
-endif
+.code
 
 ifdef AS86
 define intnum word ptr [bp + 6]
@@ -40,7 +29,7 @@ int86 proc uses ax bx cx dx si di ds es, \
            intnum:word, regsin:ptr, regsout:ptr
 else
 public _int86
-_int86:
+_int86 proc
 	push bp
 	mov bp, sp
 
@@ -273,8 +262,11 @@ pop bp
 endif
 
 ret
-ifndef	AS86
+
+ifndef AS86
 int86 endp
+else
+_int86 endp
 endif
 
 
@@ -288,7 +280,7 @@ int86x proc uses ax bx cx dx si di ds es, \
             intnum:word, regsin:ptr, regsout:ptr, sregs:ptr
 else
 public _int86x
-_int86x:
+_int86x proc
 	push bp
 	mov bp, sp
 
@@ -559,12 +551,12 @@ pop bp
 endif
 
 ret
-ifndef	AS86
+
+ifndef AS86
 int86x endp
+else
+_int86x endp
 endif
 
-ifndef	AS86
-_TEXT ends
-endif
 
 end
