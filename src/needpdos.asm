@@ -2,11 +2,10 @@
 ;
 ; This program written by Paul Edwards
 ; Released to the public domain
-;
-; Assemble with tasm -l needpdos.asm
-; Link with tlink needpdos
 
 .model tiny
+
+.stack 400h
 
 ; Note that the string as it currently stands is exactly the
 ; right size to fit into "ldwin" peigen.c. And note that
@@ -14,34 +13,22 @@
 ; for updating peigen.c. So you can change the string but not
 ; make it bigger. Unless you change other stuff as well.
 
-_DATA   segment word public 'DATA'
+.data
 msg  db  "Install HX or upgrade to PDOS/386 or Wine etc"
 msg2 db  0DH
 msg3 db  0AH
 msg4 db "$"
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-_STACK  segment word stack 'STACK'
-        db 1000h dup(?)
-_STACK  ends
 
-DGROUP  group   _DATA,_BSS
-        assume cs:_TEXT,ds:DGROUP
+.code
 
-_TEXT segment word public 'CODE'
+; Note that although in the tiny memory model cs and ds will
+; be pointing to the PSP and the IP will be 100H on entry,
+; that is something for the linker to sort out, we don't do
+; our own "org 100h" as we would if the intended destination
+; was a .com file. I could be wrong though ...
 
+public top
 top:
-
-___intstart proc
-
-; I am suspicious about how this DGROUP gets set. Although it seems
-; to work, it appears as x'0000' in the executable, so it must be
-; dependent on being relocated. But we don't want relocations to
-; be done, as we are only changing the code, not the header. So
-; switching DS (pointing to PSP) to CS is the right thing to do.
-;mov dx,DGROUP
-;mov ds,dx
 
 push cs
 pop ds
@@ -57,10 +44,5 @@ int 21h ; terminate
 ; No need for a return. We're screwed anyway if the above
 ; doesn't work. There's nothing on the stack to return to.
 ;ret
-
-___intstart endp
-
-
-_TEXT ends
 
 end top
