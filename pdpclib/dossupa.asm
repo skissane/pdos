@@ -12,18 +12,13 @@ public fidrqq
 public fiwrqq
 public fierqq
 
-_DATA   segment word public 'DATA'
+.data
+
 fidrqq  dw  ?
 fiwrqq  dw  ?
 fierqq  dw  ?
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
 
-DGROUP  group   _DATA,_BSS
-        assume cs:_TEXT,ds:DGROUP
-
-_TEXT segment word public 'CODE'
+.code
 
 public ___open
 ___open proc
@@ -900,7 +895,5 @@ __CHP proc
 ret
 __CHP endp
 endif
-
-_TEXT ends
 
 end
