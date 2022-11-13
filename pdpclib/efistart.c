@@ -49,10 +49,6 @@ typedef struct {
 
 static EFI_SYSTEM *system;
 
-/* for some reason, on ARM only, this variable can't be put
-   into print_string, otherwise you get a prefetch error */
-static char onechar[4];
-
 static int print_string(char *str);
 
 int efimain(int junk, EFI_SYSTEM *sys)
@@ -70,6 +66,7 @@ int efimain(int junk, EFI_SYSTEM *sys)
 
 static int print_string(char *str)
 {
+    static char onechar[4];
     int x = 0;
 
     while (str[x] != '\0')
