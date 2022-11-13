@@ -1,6 +1,6 @@
 @echo on
 wasm -zq -zcm -Dmemodel=tiny support.asm 
-rem as86 -DAS86 -o support.obj support.asm
+rem as86 -DAS86 -Dmemodel=tiny -o support.obj support.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM ploadst.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
 wasm -zq -zcm -Dmemodel=tiny lldos.asm
