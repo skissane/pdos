@@ -117,36 +117,45 @@ ret
 __creat endp
 
 
+; extern int CTYP __read(int handle, void *buf, size_t len, int *errind);
+
 public __read
-__read proc
-push bp
-mov bp,sp
+__read proc handle:word, buf:ptr, len:word, errind:ptr
 
 push bx
 push cx
 push dx
 push ds
 
-mov bx,[bp+6]
-mov dx,[bp+10]
-mov ds,dx
-mov dx,[bp+8]
-mov cx,[bp+12]
+mov bx,handle
+if @DataSize
+lds dx, buf
+else
+mov dx, buf
+endif
+mov cx,len
 
 mov ah, 3fh
 int 21h
 
 jc ___read1
-mov dx,[bp+16]
-mov ds,dx
-mov bx,[bp+14]
+
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 0
 jmp short ___read2
+
 ___read1:
-mov dx,[bp+16]
-mov ds,dx
-mov bx,[bp+14]
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 1
+
 ___read2:
 
 pop ds
@@ -154,7 +163,6 @@ pop dx
 pop cx
 pop bx
 
-pop bp
 ret
 __read endp
 
