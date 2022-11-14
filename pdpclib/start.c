@@ -1059,25 +1059,36 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __osver = osver;
 #endif
 
+
     if(__osver > 0x300)
     {
         env=__envptr;
-        while (1)
+        if (env != NULL)
         {
-            if (*env++ == '\0' && *env++ == '\0')
+            while (1)
             {
-                if (*(unsigned short *)env != 0)
+                if (*env++ == '\0' && *env++ == '\0')
                 {
-                    argv[0] = (char *)env + 2;
+                    if (*(unsigned short *)env != 0)
+                    {
+                        argv[0] = (char *)env + 2;
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
 
-    p = p + 0x80;
-    p[*p + 1] = '\0';
-    p++;
+    if (p == NULL)
+    {
+        p = "";
+    }
+    else
+    {
+        p = p + 0x80;
+        p[*p + 1] = '\0';
+        p++;
+    }
 #endif
 #if !defined(__gnu_linux__)
     while (*p == ' ')
