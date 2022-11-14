@@ -31,7 +31,7 @@ public newstack
 public rtop_stage2
 public protget32
 
-_DATA   segment word public 'DATA'
+.data
 ; used for initial protected mode jump
 joffs   dd ?
 
@@ -57,13 +57,9 @@ newstack dd ?
 savecr3 dd 0
 
 oldds   dw ?
-_DATA   ends
 
-_BSS    segment word public 'BSS'
-_BSS    ends
 
-assume cs:_TEXT
-_TEXT segment word use16 public 'CODE'
+.code
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; unsigned long rawprota(...);
@@ -235,7 +231,6 @@ endif
 endif
         ret
 protget32 endp
-_TEXT ends
 
 
 _TEXT32 segment dword use32 public 'CODE'
