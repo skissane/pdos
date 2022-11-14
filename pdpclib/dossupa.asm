@@ -3,10 +3,10 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-% .model memodel
+% .model memodel, c
 
-extrn ___divide:proc
-extrn ___modulo:proc
+extrn __divide:proc
+extrn __modulo:proc
 
 public fidrqq
 public fiwrqq
@@ -20,8 +20,8 @@ fierqq  dw  ?
 
 .code
 
-public ___open
-___open proc
+public __open
+__open proc
 push bp
 mov bp, sp
 
@@ -55,11 +55,11 @@ pop bx
 
 pop bp
 ret
-___open endp
+__open endp
 
 
-public ___creat
-___creat proc
+public __creat
+__creat proc
 push bp
 mov bp, sp
 
@@ -93,11 +93,11 @@ pop bx
 
 pop bp
 ret
-___creat endp
+__creat endp
 
 
-public ___read
-___read proc
+public __read
+__read proc
 push bp
 mov bp,sp
 
@@ -135,11 +135,11 @@ pop bx
 
 pop bp
 ret
-___read endp
+__read endp
 
 
-public ___write
-___write proc
+public __write
+__write proc
 push bp
 mov bp,sp
 
@@ -177,13 +177,13 @@ pop bx
 
 pop bp
 ret
-___write endp
+__write endp
 
 
 ; seek - handle, offset, type
 
-public ___seek
-___seek proc
+public __seek
+__seek proc
 push bp
 mov bp, sp
 push bx
@@ -207,11 +207,11 @@ pop dx
 pop bx
 pop bp
 ret
-___seek endp
+__seek endp
 
 
-public ___close
-___close proc
+public __close
+__close proc
 push bp
 mov bp, sp
 push bx
@@ -224,11 +224,11 @@ int 021h
 pop bx
 pop bp
 ret
-___close endp
+__close endp
 
 
-public ___remove
-___remove proc
+public __remove
+__remove proc
 push bp
 mov bp, sp
 push ds
@@ -244,11 +244,11 @@ pop dx
 pop ds
 pop bp
 ret
-___remove endp
+__remove endp
 
 
-public ___rename
-___rename proc
+public __rename
+__rename proc
 push bp
 mov bp, sp
 push ds
@@ -270,12 +270,12 @@ pop dx
 pop ds
 pop bp
 ret
-___rename endp
+__rename endp
 
 
 
-public ___allocmem
-___allocmem proc
+public __allocmem
+__allocmem proc
 push bp
 mov bp,sp
 
@@ -309,11 +309,11 @@ pop dx
 pop bx
 pop bp
 ret
-___allocmem endp
+__allocmem endp
 
 
-public ___freemem
-___freemem proc
+public __freemem
+__freemem proc
 push bp
 mov bp,sp
 push es
@@ -338,11 +338,11 @@ pop dx
 pop es
 pop bp
 ret
-___freemem endp
+__freemem endp
 
 
-public ___setj
-___setj proc
+public __setj
+__setj proc
         push bp
         mov bp,sp
         push ds
@@ -387,11 +387,11 @@ ___setj proc
         pop ds
         pop bp
         ret
-___setj endp
+__setj endp
 
 
-public ___longj
-___longj proc
+public __longj
+__longj proc
         push bp
         mov bp, sp
 
@@ -431,12 +431,12 @@ ___longj proc
 
         pop bp
         ret
-___longj endp
+__longj endp
 
 
 ; full path, parm block
-public ___exec
-___exec proc
+public __exec
+__exec proc
 push bp
 mov bp, sp
 push ds
@@ -483,12 +483,12 @@ pop dx
 pop ds
 pop bp
 ret
-___exec endp
+__exec endp
 
 
 ; get return code/errorlevel
-public ___getrc
-___getrc proc
+public __getrc
+__getrc proc
 push bp
 mov bp, sp
 
@@ -497,11 +497,11 @@ int 21h
 
 pop bp
 ret
-___getrc endp
+__getrc endp
 
 
-public ___datetime
-___datetime proc
+public __datetime
+__datetime proc
 push bp
 mov bp, sp
 push ds
@@ -542,13 +542,13 @@ pop dx
 pop ds
 pop bp
 ret
-___datetime endp
+__datetime endp
 
 
 ifdef WATCOM
 ; divide dx:ax by cx:bx, result in dx:ax
-public __U4D
-__U4D proc
+public _U4D
+_U4D proc
 push cx
 push bx
 push dx
@@ -562,7 +562,7 @@ mov cx, dx
 mov bx, ax
 call far ptr f_ludiv@
 ret
-__U4D endp
+_U4D endp
 endif
 
 
@@ -590,7 +590,7 @@ push word ptr [bp + 12]
 push word ptr [bp + 10]
 push word ptr [bp + 8]
 push word ptr [bp + 6]
-call far ptr ___divide
+call far ptr __divide
 add sp, 8
 
 ludiv_fin:
@@ -604,8 +604,8 @@ f_ludiv@ endp
 ; dx:ax divided by cx:bx, result in dx:ax, module on cx:bx
 
 ifdef WATCOM
-public __I4D
-__I4D proc
+public _I4D
+_I4D proc
 push cx
 push bx
 push dx
@@ -619,7 +619,7 @@ mov cx, dx
 mov bx, ax
 call far ptr f_ldiv@
 ret
-__I4D endp
+_I4D endp
 endif
 
 
@@ -643,7 +643,7 @@ push word ptr [bp + 12]
 push word ptr [bp + 10]
 push word ptr [bp + 8]
 push word ptr [bp + 6]
-call far ptr ___divide
+call far ptr __divide
 add sp, 8
 
 ldiv_fin:
@@ -674,7 +674,7 @@ push word ptr [bp + 12]
 push word ptr [bp + 10]
 push word ptr [bp + 8]
 push word ptr [bp + 6]
-call far ptr ___modulo
+call far ptr __modulo
 add sp, 8
 
 lmod_fin:
@@ -707,7 +707,7 @@ push word ptr [bp + 12]
 push word ptr [bp + 10]
 push word ptr [bp + 8]
 push word ptr [bp + 6]
-call far ptr ___modulo
+call far ptr __modulo
 add sp, 8
 
 lumod_fin:
@@ -719,10 +719,10 @@ f_lumod@ endp
 
 ; multiply cx:bx by dx:ax, result in dx:ax
 
-public __I4M
-__I4M:
-public __U4M
-__U4M:
+public _I4M
+_I4M:
+public _U4M
+_U4M:
 public f_lxmul@
 f_lxmul@ proc
 push cx
@@ -890,10 +890,10 @@ ret
 ___COS__ endp
 
 ifdef WATCOM
-public __CHP
-__CHP proc
+public _CHP
+_CHP proc
 ret
-__CHP endp
+_CHP endp
 endif
 
 end
