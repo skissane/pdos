@@ -33,13 +33,7 @@
 
 % .model memodel
 
-_DATA segment word public USE16 'DATA'
-_DATA ends
-_BSS segment word public USE16 'BSS'
-_BSS ends
-
-_TEXT segment para public USE16 'CODE'
-
+.code
 
 org 0600h
 
@@ -166,7 +160,10 @@ invalid_vbr:
 xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 
 ; LBA packet for BIOS disk read
-align 8
+; It was previously 8-byte aligned (with "align 8"), but that
+; gives a warning
+; from wasm (which gets treated as an error), and it seems
+; that alignment is not actually required
 lba_packet:
 size       db 010h
 reserved   db 0
@@ -197,8 +194,6 @@ org 07b8h
 ;org 07ffh
 ;filler db 0
 
-
-_TEXT ends
 
 end top
 
