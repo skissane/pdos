@@ -260,7 +260,8 @@ if @DataSize
 les di, newnam
 else
 mov di, newnam
-mov es, ds
+push ds
+pop es
 endif
 
 mov ah, 056h
@@ -274,6 +275,17 @@ __rename endp
 
 public __allocmem
 __allocmem proc uses bx dx ds, sz:word, res:ptr
+
+if @DataSize eq 0
+
+; return NULL
+
+mov bx, res
+mov word ptr [bx], 0
+
+ret
+
+else
 
 mov bx,sz
 
@@ -291,17 +303,14 @@ mov ax, 0
 
 allocok:
 
-if @DataSize
 lds bx, res
-else
-error no chance of working
-mov bx, res
-endif
-
 mov word ptr [bx], 0
 mov word ptr [bx+2], ax
 
 ret
+
+endif
+
 __allocmem endp
 
 
@@ -311,7 +320,7 @@ __freemem proc uses es dx cx, buf:ptr
 if @DataSize
 les cx, buf
 else
-error unsupported
+ret
 endif
 
 mov ah, 049h
@@ -323,10 +332,9 @@ __freemem endp
 
 public __setj
 __setj proc
-if @CodeSize
-else
+if @CodeSize eq 0
         mov ax, 0
-ret
+        ret
 endif
         push bp
         mov bp,sp
