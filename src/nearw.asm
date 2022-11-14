@@ -8,15 +8,7 @@
 ;extrn ___divide:proc
 ;extrn ___modulo:proc
 
-_DATA   segment word public 'DATA'
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-
-DGROUP  group   _DATA,_BSS
-        assume cs:_TEXT,ds:DGROUP
-
-_TEXT segment word public 'CODE'
+.code
 
 ifdef WATCOM
 ; divide dx:ax by cx:bx, result in dx:ax
@@ -139,7 +131,5 @@ pop cx
 ret
 f_lxmul@ endp
 
-
-_TEXT ends
 
 end

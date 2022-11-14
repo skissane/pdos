@@ -8,9 +8,7 @@
 extrn ___divide:proc
 extrn ___modulo:proc
 
-assume cs:_TEXT,ds:_TEXT
-
-_TEXT segment word public 'CODE'
+.code
 
 public n_ludiv@
 n_ludiv@ proc
@@ -201,7 +199,5 @@ shr dx, cl
 pop bx
 ret
 n_lxursh@ endp
-
-_TEXT ends
 
 end
