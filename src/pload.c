@@ -65,12 +65,6 @@ int main(void)
 #endif        
 }
 
-/* we need to enter here to avoid Watcom name mangling of main() */
-void dstart(void)
-{
-    main();
-}
-
 static void loadIO(void)
 {
     long sector = 0;
