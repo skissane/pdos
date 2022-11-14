@@ -24,40 +24,48 @@ fierqq  dw  ?
 
 .code
 
+; extern int CTYP __open(const char *filename, int mode, int *errind);
+
 public __open
-__open proc
-push bp
-mov bp, sp
+__open proc fnm:ptr, mode:word, errind:ptr
 
 push bx
 push dx
 push ds
 
-mov dx,[bp+8]
-mov ds,dx
-mov dx,[bp+6]
-mov al,[bp+10]
+if @CodeSize
+lds dx, fnm
+else
+mov dx, fnm
+endif
+
+mov al,byte ptr mode
 
 mov ah, 3dh
 int 21h
 
 jc ___open1
-mov dx,[bp+14]
-mov ds,dx
-mov bx,[bp+12]
+if @CodeSize
+lds bx, errind
+else
+mov bx, errind
+endif
+
 mov word ptr [bx], 0
 jmp short ___open2
+
 ___open1:
-mov dx,[bp+14]
-mov ds,dx
-mov bx,[bp+12]
+if @CodeSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 1
 ___open2:
 pop ds
 pop dx
 pop bx
 
-pop bp
 ret
 __open endp
 
