@@ -3,39 +3,26 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-% .model memodel
+% .model memodel, c
 
-ifdef WATCOM
-extrn main_:proc
-else
-extrn main:proc
-endif
+extrn dstart:proc
 
 extrn _end:byte
 extrn _edata:byte
 
-_DATA   segment word public 'DATA'
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-_STACK  segment word stack 'STACK'
-        db 1000h dup(?)
-_STACK  ends
+.stack 1000h
 
-DGROUP  group   _DATA,_BSS
-        assume cs:_TEXT,ds:DGROUP
-
-_TEXT segment word public 'CODE'
+.code
 
 top:
 
 ifdef WATCOM
-public _cstart_
-_cstart_:
+public cstart_
+cstart_:
 endif
 
-public ___startup
-___startup proc
+public __startup
+__startup proc
 
 push cs
 push cs
@@ -67,23 +54,22 @@ mov al, 0
 rep stosb
 
 
-ifdef WATCOM
-call far ptr main_
-else
-call far ptr main
-endif
+; Because main is effectively a reserved word, and gets
+; mangled by Watcom when we can't handle it being mangled,
+; we call dstart instead, which calls main.
+call dstart
 
-;call far ptr _displayc
+;call displayc
 
 sub sp,2
 mov ax, 0
 push ax
-call far ptr ___exita
-___startup endp
+call __exita
+__startup endp
 
 ;display a 'C' just to let us know that it's working!
-;public _displayc
-;_displayc proc
+;public displayc
+;displayc proc
 ;push ax
 ;push bx
 ;mov ah, 0eh
@@ -94,16 +80,15 @@ ___startup endp
 ;pop bx
 ;pop ax
 ;ret
-;_displayc endp
+;displayc endp
 
-public ___exita
-___exita proc
+public __exita
+__exita proc
 pop ax
 pop ax
 mov ah,4ch
 int 21h ; terminate
-___exita endp
+__exita endp
 
-_TEXT ends
-          
+
 end top

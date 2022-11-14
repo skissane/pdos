@@ -5016,6 +5016,11 @@ int pdosstrt(void)
     return (__start(0));
     return (0);
 }
+#else
+int dstart(void)
+{
+    main();
+}
 #endif
 
 #ifndef __32BIT__
