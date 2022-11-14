@@ -423,23 +423,20 @@ endif
 __longj endp
 
 
+; int CTYP __exec(char *cmd, void *env);
 ; full path, parm block
-public __exec
-__exec proc
-push bp
-mov bp, sp
-push ds
-push dx
-push es
-push bx
-push cx
-push si
-push di
 
-mov dx, [bp + 6]
-mov ds, [bp + 8]
-mov bx, [bp + 10]
-mov es, [bp + 12]
+public __exec
+__exec proc uses ds dx es bx cx si di, path:ptr, env:ptr
+
+if @DataSize
+lds dx, path
+les bx, env
+else
+mov dx, path
+mov bx, env
+mov es, dx
+endif
 
 jmp short bypass
 dummy1 dw ?
@@ -463,14 +460,6 @@ mov ss, dummy2
 mov sp, dummy1
 sti
 
-pop di
-pop si
-pop cx
-pop bx
-pop es
-pop dx
-pop ds
-pop bp
 ret
 __exec endp
 
