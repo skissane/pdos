@@ -18,12 +18,7 @@
 
 % .model memodel
 
-_DATA segment word public USE16 'DATA'
-_DATA ends
-_BSS segment word public USE16 'BSS'
-_BSS ends
-
-_TEXT segment para public USE16 'CODE'
+.code
 
 org 0100h
 top:
@@ -389,8 +384,7 @@ ret
 dumpcx endp
 
 ; wasm appears to store sequences of 89C0 instead of NULs when aligning,
-; but nevermind
-align 8
+; but nevermind. Unclear if "align 8" is actually needed. Removed for now
 ; LBA packet for BIOS disk read (needs to be 8-byte aligned)
 lba_packet:
 size       db 010h
@@ -405,7 +399,5 @@ lbapadding dd 0
 
 org 02feh
 lastword dw 0aa55h
-
-_TEXT ends
 
 end top
