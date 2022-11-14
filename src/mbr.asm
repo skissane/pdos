@@ -66,6 +66,25 @@ push ax
 retf
 
 
+; I tried "align 8" to do alignment, but that gave an
+; error because the alighnment was stricter than the
+; segment. I tried using "para" for the segment, which
+; worked, but I want to switch to the simplified
+; directives. So this unfortunate construct is back in.
+; It is unclear whether this really needs to be 8-byte
+; aligned.
+org 0630h
+; LBA packet for BIOS disk read
+lba_packet:
+size       db 010h
+reserved   db 0
+sectors    dw 1
+offst      dw 07c00h
+segmnt     dw 0
+lbalow     dw 0
+lbahigh    dw 0
+lbapadding dd 0
+
 relocated:
 
 ; Search partitions for one with active bit set
@@ -159,21 +178,6 @@ xx4             db "Failed to read volume boot record!",0
 invalid_vbr:
 xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 
-; LBA packet for BIOS disk read
-; It was originally 8-byte aligned, but that gives a warning
-; from wasm (which gets treated as an error), and it seems
-; that alignment is not actually required
-lba_packet:
-size       db 010h
-reserved   db 0
-sectors    dw 1
-offst      dw 07c00h
-segmnt     dw 0
-lbalow     dw 0
-lbahigh    dw 0
-lbapadding dd 0
-
-; force padding to 440 bytes of code
 org 07b8h
 
 ;org 07beh
