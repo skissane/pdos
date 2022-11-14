@@ -20,12 +20,7 @@
 
 % .model memodel
 
-_DATA   segment word public 'DATA'
-_DATA   ends
-_BSS segment word public 'BSS'
-_BSS ends
-
-_TEXT segment word public 'CODE'
+.code
 
 org 0100h
 top:
@@ -443,8 +438,6 @@ dumpcx endp
 
 org 02feh
 lastword dw 0aa55h
-
-_TEXT ends
 
 end top
 
