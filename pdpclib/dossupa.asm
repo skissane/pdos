@@ -249,56 +249,70 @@ ret
 __seek endp
 
 
+; extern void CTYP __close(int handle);
+
 public __close
-__close proc
-push bp
-mov bp, sp
+__close proc handle:word
+
 push bx
 
-mov bx,[bp+6]
+mov bx,handle
 
 mov ah, 03eh
 int 021h
 
 pop bx
-pop bp
+
 ret
 __close endp
 
 
+; extern void CTYP __remove(const char *filename);
+
 public __remove
-__remove proc
-push bp
-mov bp, sp
+__remove proc filename:ptr
+
 push ds
 push dx
 
-mov dx, [bp + 6]
-mov ds, [bp + 8]
+if @DataSize
+lds dx, filename
+else
+mov dx, filename
+endif
 
 mov ah, 041h
 int 021h
 
 pop dx
 pop ds
-pop bp
+
 ret
 __remove endp
 
 
+; extern void CTYP __rename(const char *old, const char *newnam);
+
 public __rename
-__rename proc
-push bp
-mov bp, sp
+__rename proc old:ptr, newnam:ptr
+
 push ds
 push dx
 push es
 push di
 
-mov dx, [bp + 6]
-mov ds, [bp + 8]
-mov di, [bp + 10]
-mov es, [bp + 12]
+if @DataSize
+lds dx, old
+else
+mov dx, old
+endif
+
+if @DataSize
+les di, newnam
+else
+mov di, newnam
+mov es, ds
+endif
 
 mov ah, 056h
 int 021h
@@ -307,7 +321,7 @@ pop di
 pop es
 pop dx
 pop ds
-pop bp
+
 ret
 __rename endp
 
@@ -534,28 +548,29 @@ __exec endp
 ; get return code/errorlevel
 public __getrc
 __getrc proc
-push bp
-mov bp, sp
 
 mov ah, 04dh
 int 21h
 
-pop bp
 ret
 __getrc endp
 
 
+; void CTYP __datetime(void *ptr);
+
 public __datetime
-__datetime proc
-push bp
-mov bp, sp
+__datetime proc buf:ptr
+
 push ds
 push dx
 push cx
 push bx
 
-mov bx, [bp + 6]
-mov ds, [bp + 8]
+if @DataSize
+lds bx, buf
+else
+mov bx, buf
+endif
 
 mov ah, 02ah
 int 021h
@@ -585,7 +600,7 @@ pop bx
 pop cx
 pop dx
 pop ds
-pop bp
+
 ret
 __datetime endp
 
