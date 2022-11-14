@@ -3,32 +3,22 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-ifdef WATCOM
-% .model memodel
-extrn main_:proc
-else
 % .model memodel, c
-extrn main:proc
-endif
 
+extrn dstart:proc
 
-_DATA   segment word public 'DATA'
-_DATA   ends
-_BSS    segment word public 'BSS'
-_BSS    ends
-
-_TEXT segment word public 'CODE'
+.code
 
 org 0100h
 top:
 
 ifdef WATCOM
-public _cstart_
-_cstart_:
+public cstart_
+cstart_:
 endif
 
-public __startup
-__startup proc
+public _startup
+_startup proc
 
 ; signify MSDOS version 5 ("sys.com" looks for this byte at offset 3
 ; in the io.sys file).
@@ -70,16 +60,12 @@ mov sp, 0fffeh
 
 bypass:
 
-ifdef WATCOM
-call near ptr main_
-else
-call near ptr main
-endif
+call dstart
 sub sp,2
 mov ax, 0
 push ax
-call near ptr __exita
-__startup endp
+call _exita
+_startup endp
 
 ifdef NEED_DISPLAYC
 ;display a 'C' just to let us know that it's working!
@@ -98,16 +84,15 @@ ret
 displayc endp
 endif
 
-public __exita
-__exita proc
+public _exita
+_exita proc
 ;myloop:
 ;jmp myloop
 pop ax
 pop ax
 mov ah,4ch
 int 21h ; terminate
-__exita endp
+_exita endp
 
-_TEXT ends
 
 end top
