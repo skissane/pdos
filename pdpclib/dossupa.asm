@@ -27,11 +27,8 @@ fierqq  dw  ?
 ; extern int CTYP __open(const char *filename, int mode, int *errind);
 
 public __open
-__open proc filename:ptr, mode:word, errind:ptr
-
-push bx
-push dx
-push ds
+__open proc uses bx dx ds, \
+            filename:ptr, mode:word, errind:ptr
 
 if @DataSize
 lds dx, filename
@@ -61,10 +58,8 @@ else
 mov bx, errind
 endif
 mov word ptr [bx], 1
+
 ___open2:
-pop ds
-pop dx
-pop bx
 
 ret
 __open endp
