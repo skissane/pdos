@@ -3,6 +3,10 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
+; Note that a "proc" with an argument (parameter to the
+; proc) will do a "push bp" and "mov bp,sp" itself, and
+; will pop the bp at function exit.
+
 % .model memodel, c
 
 extrn __divide:proc
@@ -138,36 +142,48 @@ ret
 __read endp
 
 
+; extern int CTYP __write(int handle, const void *buf, size_t len, int *errind);
+
 public __write
-__write proc
-push bp
-mov bp,sp
+__write proc handle:word, buf:ptr, len:word, errind:ptr
 
 push bx
 push cx
 push dx
 push ds
 
-mov bx,[bp+6]
-mov dx,[bp+10]
-mov ds,dx
-mov dx,[bp+8]
-mov cx,[bp+12]
+mov bx,handle
+
+if @DataSize
+lds dx, buf
+else
+mov dx, buf
+endif
+
+mov cx, len
 
 mov ah, 40h
 int 21h
 
 jc ___write1
-mov dx,[bp+16]
-mov ds,dx
-mov bx,[bp+14]
+
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
+
 mov word ptr [bx], 0
 jmp short ___write2
+
 ___write1:
-mov dx,[bp+16]
-mov ds,dx
-mov bx,[bp+14]
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 1
+
 ___write2:
 
 pop ds
@@ -175,7 +191,6 @@ pop dx
 pop cx
 pop bx
 
-pop bp
 ret
 __write endp
 
@@ -273,17 +288,16 @@ ret
 __rename endp
 
 
+; void CTYP __allocmem(size_t size, void **ptr);
 
 public __allocmem
-__allocmem proc
-push bp
-mov bp,sp
+__allocmem proc sz:word, res:ptr
 
 push bx
 push dx
 push ds
 
-mov bx,[bp+6]
+mov bx,sz
 
 shr bx,1
 shr bx,1
@@ -296,10 +310,15 @@ int 21h
 
 jnc allocok
 mov ax, 0
+
 allocok:
-mov dx,[bp+10]
-mov ds,dx
-mov bx,[bp+8]
+
+if @DataSize
+lds bx, res
+else
+error no chance of working
+mov bx, res
+endif
 
 mov word ptr [bx], 0
 mov word ptr [bx+2], ax
@@ -307,42 +326,40 @@ mov word ptr [bx+2], ax
 pop ds
 pop dx
 pop bx
-pop bp
+
 ret
 __allocmem endp
 
 
 public __freemem
-__freemem proc
-push bp
-mov bp,sp
+__freemem proc buf:ptr
 push es
 push dx
 push cx
 
-mov dx,[bp+6]
-mov cx,[bp+8]
+if @DataSize
+les cx, buf
+else
+error unsupported
+endif
 
-shr dx, 1
-shr dx, 1
-shr dx, 1
-shr dx, 1
-
-add cx, dx
-mov es, cx
 mov ah, 049h
 int 21h
 
 pop cx
 pop dx
 pop es
-pop bp
 ret
 __freemem endp
 
 
 public __setj
 __setj proc
+if @CodeSize
+else
+        mov ax, 0
+ret
+endif
         push bp
         mov bp,sp
         push ds
@@ -392,6 +409,10 @@ __setj endp
 
 public __longj
 __longj proc
+if @CodeSize
+else
+ret
+endif
         push bp
         mov bp, sp
 
@@ -557,40 +578,41 @@ push cx
 push bx
 push dx
 push ax
-call far ptr f_lumod@
+call f_lumod@
 mov cx, dx
 mov bx, ax
-call far ptr f_ludiv@
+call f_ludiv@
 ret
 _U4D endp
 endif
 
 
+; must release stack space in this procedure
 public f_ludiv@
-f_ludiv@ proc far
+f_ludiv@ proc
 push bp
 mov bp,sp
 push bx
 
-cmp word ptr [bp + 12], 0
+cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne ludiv_full
 
-mov ax, [bp + 8]
+mov ax, [bp + 6 + @CodeSize * 2]
 mov dx, 0
-div word ptr [bp + 10]
+div word ptr [bp + 8 + @CodeSize * 2]
 mov bx, ax
-mov ax, [bp + 6]
-div word ptr [bp + 10]
+mov ax, [bp + 4 + @CodeSize * 2]
+div word ptr [bp + 8 + @CodeSize * 2]
 
 mov dx, bx
 jmp short ludiv_fin
 
 ludiv_full:
-push word ptr [bp + 12]
-push word ptr [bp + 10]
-push word ptr [bp + 8]
-push word ptr [bp + 6]
-call far ptr __divide
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+push word ptr [bp + 6 + @CodeSize * 2]
+push word ptr [bp + 4 + @CodeSize * 2]
+call __divide
 add sp, 8
 
 ludiv_fin:
@@ -614,10 +636,10 @@ push cx
 push bx
 push dx
 push ax
-call far ptr f_lmod@
+call f_lmod@
 mov cx, dx
 mov bx, ax
-call far ptr f_ldiv@
+call f_ldiv@
 ret
 _I4D endp
 endif
@@ -630,20 +652,20 @@ push bp
 mov bp,sp
 push dx
 
-cmp word ptr [bp + 12], 0
+cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne ldiv_full
 
-mov ax,[bp+6]
-mov dx,[bp+8]
-idiv word ptr [bp+10]
+mov ax,[bp+4+@CodeSize*2]
+mov dx,[bp+6+@CodeSize*2]
+idiv word ptr [bp+8+@CodeSize*2]
 jmp short ldiv_fin
 
 ldiv_full:
-push word ptr [bp + 12]
-push word ptr [bp + 10]
-push word ptr [bp + 8]
-push word ptr [bp + 6]
-call far ptr __divide
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+push word ptr [bp + 6 + @CodeSize * 2]
+push word ptr [bp + 4 + @CodeSize * 2]
+call __divide
 add sp, 8
 
 ldiv_fin:
@@ -659,22 +681,22 @@ f_lmod@ proc
 push bp
 mov bp,sp
 
-cmp word ptr [bp + 12], 0
+cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne lmod_full
 
-mov ax,[bp+6]
-mov dx,[bp+8]
-idiv word ptr [bp+10]
+mov ax,[bp+4+@CodeSize*2]
+mov dx,[bp+6+@CodeSize*2]
+idiv word ptr [bp+8+@CodeSize*2]
 mov ax,dx
 mov dx,0
 jmp short lmod_fin
 
 lmod_full:
-push word ptr [bp + 12]
-push word ptr [bp + 10]
-push word ptr [bp + 8]
-push word ptr [bp + 6]
-call far ptr __modulo
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+push word ptr [bp + 6 + @CodeSize * 2]
+push word ptr [bp + 4 + @CodeSize * 2]
+call __modulo
 add sp, 8
 
 lmod_fin:
@@ -690,24 +712,24 @@ f_lumod@ proc
 push bp
 mov bp,sp
 
-cmp word ptr [bp + 12], 0
+cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne lumod_full
 
-mov ax, [bp + 8]
+mov ax, [bp + 6 + @CodeSize * 2]
 mov dx, 0
-div word ptr [bp + 10]
-mov ax, [bp + 6]
-div word ptr [bp + 10]
+div word ptr [bp + 8 + @CodeSize * 2]
+mov ax, [bp + 4 + @CodeSize * 2]
+div word ptr [bp + 8 + @CodeSize * 2]
 mov ax,dx
 mov dx, 0
 jmp short lumod_fin
 
 lumod_full:
-push word ptr [bp + 12]
-push word ptr [bp + 10]
-push word ptr [bp + 8]
-push word ptr [bp + 6]
-call far ptr __modulo
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+push word ptr [bp + 6 + @CodeSize * 2]
+push word ptr [bp + 4 + @CodeSize * 2]
+call __modulo
 add sp, 8
 
 lumod_fin:
@@ -859,8 +881,8 @@ push ds
 push es
 push si
 push di
-lds si, [bp + 6]
-les di, [bp + 10]
+lds si, [bp + 4 + @CodeSize * 2]
+les di, [bp + 8 + @CodeSize * 2]
 cld
 rep movsb
 

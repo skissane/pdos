@@ -40,7 +40,12 @@ nop
 nop
 
 ; push the psp now, ready for calling start
+
+if @DataSize
 push ds
+else
+error you must use a model with far data pointers
+endif
 mov ax, 0
 push ax
 
@@ -110,13 +115,10 @@ ret
 __asmstart endp
 
 public __exita
-__exita proc
-push bp
-mov bp, sp
-mov ax, [bp + 6]
+__exita proc rc:word
+mov ax, rc
 mov ah,4ch
 int 21h ; terminate
-pop bp
 ret
 __exita endp
 

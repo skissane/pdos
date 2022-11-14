@@ -23,15 +23,15 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcom +math.obj
   wlib -b -q watcom +dossupc.obj
   wlib -b -q watcom +dossupa.obj
-  wlink File pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet
+  wlink File pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart
 
 .c.obj:
   $(CC) $(COPTS) $<
 
 dosstart.obj: dosstart.asm
-# ml -c -Dmemodel=large dosstart.asm
+#  ml -c -Dmemodel=large dosstart.asm
   wasm -zcm -q -DWATCOM -Dmemodel=large dosstart.asm
 
 dossupa.obj: dossupa.asm
-# ml -c -Dmemodel=large -DWATCOM dossupa.asm
+#  ml -c -Dmemodel=large -DWATCOM dossupa.asm
   wasm -zcm -q -DWATCOM -Dmemodel=large dossupa.asm
