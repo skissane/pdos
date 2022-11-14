@@ -68,11 +68,8 @@ __open endp
 ; extern int CTYP __creat(const char *filename, int mode, int *errind);
 
 public __creat
-__creat proc filename:ptr, mode:word, errind:ptr
-
-push bx
-push dx
-push ds
+__creat proc uses bx dx ds, \
+             filename:ptr, mode:word, errind:ptr
 
 if @DataSize
 lds dx, filename
@@ -104,9 +101,6 @@ endif
 mov word ptr [bx], 1
 
 ___creat2:
-pop ds
-pop dx
-pop bx
 
 ret
 __creat endp
@@ -115,12 +109,8 @@ __creat endp
 ; extern int CTYP __read(int handle, void *buf, size_t len, int *errind);
 
 public __read
-__read proc handle:word, buf:ptr, len:word, errind:ptr
-
-push bx
-push cx
-push dx
-push ds
+__read proc uses bx cx dx ds, \
+            handle:word, buf:ptr, len:word, errind:ptr
 
 mov bx,handle
 if @DataSize
@@ -153,11 +143,6 @@ mov word ptr [bx], 1
 
 ___read2:
 
-pop ds
-pop dx
-pop cx
-pop bx
-
 ret
 __read endp
 
@@ -165,12 +150,8 @@ __read endp
 ; extern int CTYP __write(int handle, const void *buf, size_t len, int *errind);
 
 public __write
-__write proc handle:word, buf:ptr, len:word, errind:ptr
-
-push bx
-push cx
-push dx
-push ds
+__write proc uses bx cx dx ds, \
+             handle:word, buf:ptr, len:word, errind:ptr
 
 mov bx,handle
 
@@ -206,11 +187,6 @@ mov word ptr [bx], 1
 
 ___write2:
 
-pop ds
-pop dx
-pop cx
-pop bx
-
 ret
 __write endp
 
@@ -218,11 +194,8 @@ __write endp
 ; extern int CTYP __seek(int handle, long offset, int whence);
 
 public __seek
-__seek proc handle:word, offs:dword, whence:word
-
-push bx
-push dx
-push cx
+__seek proc uses bx dx cx, \
+            handle:word, offs:dword, whence:word
 
 mov bx, handle
 mov dx, word ptr offs
@@ -236,10 +209,6 @@ jc ___seek1
 mov ax, 0
 ___seek1:
 
-pop cx
-pop dx
-pop bx
-
 ret
 __seek endp
 
@@ -247,16 +216,12 @@ __seek endp
 ; extern void CTYP __close(int handle);
 
 public __close
-__close proc handle:word
-
-push bx
+__close proc uses bx, handle:word
 
 mov bx,handle
 
 mov ah, 03eh
 int 021h
-
-pop bx
 
 ret
 __close endp
@@ -265,10 +230,7 @@ __close endp
 ; extern void CTYP __remove(const char *filename);
 
 public __remove
-__remove proc filename:ptr
-
-push ds
-push dx
+__remove proc uses ds dx, filename:ptr
 
 if @DataSize
 lds dx, filename
@@ -279,9 +241,6 @@ endif
 mov ah, 041h
 int 021h
 
-pop dx
-pop ds
-
 ret
 __remove endp
 
@@ -289,12 +248,7 @@ __remove endp
 ; extern void CTYP __rename(const char *old, const char *newnam);
 
 public __rename
-__rename proc old:ptr, newnam:ptr
-
-push ds
-push dx
-push es
-push di
+__rename proc uses ds dx es di, old:ptr, newnam:ptr
 
 if @DataSize
 lds dx, old
@@ -312,11 +266,6 @@ endif
 mov ah, 056h
 int 021h
 
-pop di
-pop es
-pop dx
-pop ds
-
 ret
 __rename endp
 
@@ -324,11 +273,7 @@ __rename endp
 ; void CTYP __allocmem(size_t size, void **ptr);
 
 public __allocmem
-__allocmem proc sz:word, res:ptr
-
-push bx
-push dx
-push ds
+__allocmem proc uses bx dx ds, sz:word, res:ptr
 
 mov bx,sz
 
@@ -356,19 +301,12 @@ endif
 mov word ptr [bx], 0
 mov word ptr [bx+2], ax
 
-pop ds
-pop dx
-pop bx
-
 ret
 __allocmem endp
 
 
 public __freemem
-__freemem proc buf:ptr
-push es
-push dx
-push cx
+__freemem proc uses es dx cx, buf:ptr
 
 if @DataSize
 les cx, buf
@@ -379,9 +317,6 @@ endif
 mov ah, 049h
 int 21h
 
-pop cx
-pop dx
-pop es
 ret
 __freemem endp
 
@@ -554,12 +489,7 @@ __getrc endp
 ; void CTYP __datetime(void *ptr);
 
 public __datetime
-__datetime proc buf:ptr
-
-push ds
-push dx
-push cx
-push bx
+__datetime proc uses ds dx cx bx, buf:ptr
 
 if @DataSize
 lds bx, buf
@@ -590,11 +520,6 @@ mov al, dh
 mov [bx + 10], ax
 mov dh, 0
 mov [bx + 12], dx
-
-pop bx
-pop cx
-pop dx
-pop ds
 
 ret
 __datetime endp
@@ -780,11 +705,7 @@ _I4M:
 public _U4M
 _U4M:
 public f_lxmul@
-f_lxmul@ proc
-push cx
-push bx
-push si
-push di
+f_lxmul@ proc uses cx bx si di
 
 ; Code provided by Terje Mathisen
 mov si,ax
@@ -798,10 +719,6 @@ mov ax,si ;; retrieve original AX
 mul bx ;; lo * lo
 add dx,di
 
-pop di
-pop si
-pop bx
-pop cx
 ret
 f_lxmul@ endp
 
@@ -809,8 +726,7 @@ f_lxmul@ endp
 ; shift dx:ax left by cl
 
 public f_lxlsh@
-f_lxlsh@ proc
-push bx
+f_lxlsh@ proc uses bx
 
 cmp cl, 24
 jl lxlsh_16
@@ -850,7 +766,6 @@ shl dx, cl
 or dl, bh
 shl ax, cl
 
-pop bx
 ret
 f_lxlsh@ endp
 
@@ -858,8 +773,7 @@ f_lxlsh@ endp
 ; shift dx:ax right by cl
 
 public f_lxursh@
-f_lxursh@ proc
-push bx
+f_lxursh@ proc uses bx
 
 cmp cl, 24
 jl lxursh_16
@@ -899,12 +813,12 @@ shr ax, cl
 or ah, bl
 shr dx, cl
 
-pop bx
 ret
 f_lxursh@ endp
 
 
 ; this procedure needs to fix up the stack
+; can't use "uses" keyword until proc knows about parameters
 public f_scopy@
 f_scopy@ proc
 
