@@ -3,11 +3,7 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-ifdef AS86
-% .model memodel
-else
 % .model memodel, c
-endif
 
 ifdef SMALLERC
 .386
@@ -15,34 +11,13 @@ endif
 
 .code
 
-ifdef AS86
-define intnum word ptr [bp + 6]
-endif
-
 public int86
 ifdef SMALLERC
 int86 proc uses eax ebx cx dx esi di ds es, \
            intnum:dword, regsin:ptr, regsout:ptr
 else
-ifndef AS86
 int86 proc uses ax bx cx dx si di ds es, \
            intnum:word, regsin:ptr, regsout:ptr
-else
-public _int86
-_int86 proc
-	push bp
-	mov bp, sp
-
-	push ax
-	push bx
-	push cx
-	push dx
-	push si
-	push di
-	push ds
-	push es
-
-endif
 endif
 
 ifndef SMALLERC
@@ -249,25 +224,9 @@ mov [si + 10], di
 pop ax ; actually si
 mov [si + 8], ax
 
-ifdef	AS86
-pop es
-pop ds
-pop di
-pop si
-pop dx
-pop cx
-pop bx
-pop ax
-pop bp
-endif
-
 ret
 
-ifndef AS86
 int86 endp
-else
-_int86 endp
-endif
 
 
 public int86x
@@ -275,25 +234,8 @@ ifdef SMALLERC
 int86x proc uses eax ebx cx dx esi di ds es, \
            intnum:dword, regsin:ptr, regsout:ptr, sregs:ptr
 else
-ifndef AS86
 int86x proc uses ax bx cx dx si di ds es, \
             intnum:word, regsin:ptr, regsout:ptr, sregs:ptr
-else
-public _int86x
-_int86x proc
-	push bp
-	mov bp, sp
-
-	push ax
-	push bx
-	push cx
-	push dx
-	push si
-	push di
-	push ds
-	push es
-
-endif
 endif
 
 push ds; for restoration after interrupt
@@ -538,25 +480,9 @@ mov [si + 0], ax ; restore es
 
 pop ds  ; restore value saved over interrupt (but accessed directly already)
 
-ifdef	AS86
-pop es
-pop ds
-pop di
-pop si
-pop dx
-pop cx
-pop bx
-pop ax
-pop bp
-endif
-
 ret
 
-ifndef AS86
 int86x endp
-else
-_int86x endp
-endif
 
 
 end
