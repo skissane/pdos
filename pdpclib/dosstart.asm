@@ -43,9 +43,8 @@ nop
 
 if @DataSize
 push ds
-else
-error you must use a model with far data pointers
 endif
+; in small etc memory model, this will be a NULL
 mov ax, 0
 push ax
 
@@ -102,7 +101,11 @@ mov es, dx
 
 ; we have already pushed the pointer to psp
 call __start
+if @DataSize
 add sp, 4  ; delete psp from stack
+else
+add sp, 2
+endif
 
 push ax
 
