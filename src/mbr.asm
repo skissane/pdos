@@ -160,7 +160,9 @@ invalid_vbr:
 xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 
 ; LBA packet for BIOS disk read
-align 8
+; It was originally 8-byte aligned, but that gives a warning
+; from wasm (which gets treated as an error), and it seems
+; that alignment is not actually required
 lba_packet:
 size       db 010h
 reserved   db 0
