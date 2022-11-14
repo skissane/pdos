@@ -33,13 +33,7 @@
 
 % .model memodel
 
-_DATA segment word public USE16 'DATA'
-_DATA ends
-_BSS segment word public USE16 'BSS'
-_BSS ends
-
-_TEXT segment para public USE16 'CODE'
-
+.code
 
 org 0600h
 
@@ -197,8 +191,6 @@ org 07b8h
 ;org 07ffh
 ;filler db 0
 
-
-_TEXT ends
 
 end top
 
