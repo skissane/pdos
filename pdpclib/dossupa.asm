@@ -220,20 +220,19 @@ ret
 __write endp
 
 
-; seek - handle, offset, type
+; extern int CTYP __seek(int handle, long offset, int whence);
 
 public __seek
-__seek proc
-push bp
-mov bp, sp
+__seek proc handle:word, offs:dword, whence:word
+
 push bx
 push dx
 push cx
 
-mov bx, [bp + 6]
-mov dx, [bp + 8]
-mov cx, [bp + 10]
-mov al, [bp + 12]
+mov bx, handle
+mov dx, word ptr offs
+mov cx, word ptr offs + 2
+mov al, byte ptr whence
 
 mov ah, 042h
 int 021h
@@ -245,7 +244,7 @@ ___seek1:
 pop cx
 pop dx
 pop bx
-pop bp
+
 ret
 __seek endp
 
