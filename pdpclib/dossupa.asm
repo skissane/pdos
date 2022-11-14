@@ -3,7 +3,7 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-.model large
+% .model memodel
 
 extrn ___divide:proc
 extrn ___modulo:proc

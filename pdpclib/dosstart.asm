@@ -3,7 +3,7 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-.model large
+% .model memodel
 
 extrn ___start:proc
 
@@ -94,7 +94,7 @@ mov dx, ds
 mov es, dx
 
 ; we have already pushed the pointer to psp
-call far ptr ___start
+call ___start
 add sp, 4  ; delete psp from stack
 
 push ax
@@ -102,7 +102,7 @@ push ax
 ; how do I get rid of the warning about "instruction can be compacted
 ; with override"?  The answer is certainly NOT to change the "far" to
 ; "near".
-call far ptr ___exita
+call ___exita
 add sp, 2
 ret
 ___intstart endp

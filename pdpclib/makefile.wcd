@@ -29,9 +29,9 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(CC) $(COPTS) $<
 
 dosstart.obj: dosstart.asm
-  wasm -q -DWATCOM dosstart.asm
+  wasm -q -DWATCOM -Dmemodel=large dosstart.asm
 
 dossupa.obj: dossupa.asm
-  wasm -q -DWATCOM dossupa.asm
+  wasm -q -DWATCOM -Dmemodel=large dossupa.asm
 
 
