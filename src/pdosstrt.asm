@@ -16,6 +16,11 @@ extrn _edata:byte
 
 top:
 
+; This is required here, but not in PDPCLIB, because
+; here we are using -ecc, but we can't do that in PDPCLIB
+; because we can't put an intrusive dstart in every main
+; and we can't handle the unusual parameter passing either
+; Here it is void
 ifdef WATCOM
 public cstart_
 cstart_:
