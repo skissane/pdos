@@ -3,31 +3,33 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
-% .model memodel
+% .model memodel, c
 
-extrn ___start:proc
+extrn __start:proc
 
 extrn _end:byte
 extrn _edata:byte
 
-public ___psp
-public ___envptr
-public ___osver
+public __psp
+public __envptr
+public __osver
 
 .stack 1000h
 
 .data
 
 banner  db  "PDPCLIB"
-___psp   dd  ?
-___envptr dd ?
-___osver dw ?
+__psp   dd  ?
+__envptr dd ?
+__osver dw ?
 
 .code
 
 top:
 
-___intstart proc
+public __asmstart
+
+__asmstart proc
 
 ; add some nops to create a cs-addressable save area, and also create a
 ; bit of an eyecatcher
@@ -83,18 +85,18 @@ pop es
 mov ah,30h
 int 21h
 xchg al,ah
-mov [___osver],ax
+mov [__osver],ax
 
-mov word ptr ___psp, 0
-mov word ptr [___psp + 2], es
-mov word ptr ___envptr, 0
+mov word ptr __psp, 0
+mov word ptr [__psp + 2], es
+mov word ptr __envptr, 0
 mov dx, es:[02ch]
-mov word ptr [___envptr + 2], dx
+mov word ptr [__envptr + 2], dx
 mov dx, ds
 mov es, dx
 
 ; we have already pushed the pointer to psp
-call ___start
+call __start
 add sp, 4  ; delete psp from stack
 
 push ax
@@ -102,13 +104,13 @@ push ax
 ; how do I get rid of the warning about "instruction can be compacted
 ; with override"?  The answer is certainly NOT to change the "far" to
 ; "near".
-call ___exita
+call __exita
 add sp, 2
 ret
-___intstart endp
+__asmstart endp
 
-public ___exita
-___exita proc
+public __exita
+__exita proc
 push bp
 mov bp, sp
 mov ax, [bp + 6]
@@ -116,13 +118,13 @@ mov ah,4ch
 int 21h ; terminate
 pop bp
 ret
-___exita endp
+__exita endp
 
 
-public ___main
-___main proc
+public __main
+__main proc
 ret
-___main endp
+__main endp
 
 
 end top
