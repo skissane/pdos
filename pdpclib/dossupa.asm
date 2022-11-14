@@ -27,16 +27,16 @@ fierqq  dw  ?
 ; extern int CTYP __open(const char *filename, int mode, int *errind);
 
 public __open
-__open proc fnm:ptr, mode:word, errind:ptr
+__open proc filename:ptr, mode:word, errind:ptr
 
 push bx
 push dx
 push ds
 
-if @CodeSize
-lds dx, fnm
+if @DataSize
+lds dx, filename
 else
-mov dx, fnm
+mov dx, filename
 endif
 
 mov al,byte ptr mode
@@ -45,7 +45,7 @@ mov ah, 3dh
 int 21h
 
 jc ___open1
-if @CodeSize
+if @DataSize
 lds bx, errind
 else
 mov bx, errind
@@ -55,7 +55,7 @@ mov word ptr [bx], 0
 jmp short ___open2
 
 ___open1:
-if @CodeSize
+if @DataSize
 lds bx, errind
 else
 mov bx, errind
@@ -70,40 +70,49 @@ ret
 __open endp
 
 
+; extern int CTYP __creat(const char *filename, int mode, int *errind);
+
 public __creat
-__creat proc
-push bp
-mov bp, sp
+__creat proc filename:ptr, mode:word, errind:ptr
 
 push bx
 push dx
 push ds
 
-mov dx,[bp+8]
-mov ds,dx
-mov dx,[bp+6]
-mov cx,[bp+10]
+if @DataSize
+lds dx, filename
+else
+mov dx, filename
+endif
+
+mov cx,mode
 
 mov ah, 3ch
 int 21h
 
 jc ___creat1
-mov dx,[bp+14]
-mov ds,dx
-mov bx,[bp+12]
+
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 0
 jmp short ___creat2
+
 ___creat1:
-mov dx,[bp+14]
-mov ds,dx
-mov bx,[bp+12]
+if @DataSize
+lds bx, errind
+else
+mov bx, errind
+endif
 mov word ptr [bx], 1
+
 ___creat2:
 pop ds
 pop dx
 pop bx
 
-pop bp
 ret
 __creat endp
 
