@@ -12,7 +12,12 @@ extrn main:proc
 endif
 
 
-.code
+_DATA   segment word public 'DATA'
+_DATA   ends
+_BSS    segment word public 'BSS'
+_BSS    ends
+
+_TEXT segment word public 'CODE'
 
 org 0100h
 top:
@@ -103,5 +108,6 @@ mov ah,4ch
 int 21h ; terminate
 __exita endp
 
+_TEXT ends
 
 end top
