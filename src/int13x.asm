@@ -5,9 +5,7 @@
 
 % .model memodel, c
 
-assume cs:_TEXT
-
-_TEXT segment word public 'CODE'
+.code
 
 public int13x
 int13x proc uses ax bx cx dx si di ds es, \
@@ -87,7 +85,5 @@ mov [si + 0], ax ; restore es
 pop ds  ; restore value saved over interrupt (but accessed directly already)
 ret
 int13x endp
-
-_TEXT ends
 
 end
