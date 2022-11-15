@@ -68,7 +68,8 @@ typedef struct {
     int ss;
     int ds;
     int es;
-    void *retaddr;
+    int retoff;
+    int retseg;
 #else
 #error unknown system in setjmp.h
 #endif
