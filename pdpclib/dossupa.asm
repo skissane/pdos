@@ -360,10 +360,10 @@ endif
         mov [bx + 12], ax    ; bp
 
         mov ax, [bp + 2]     ; return address
-        mov [bx + 22], ax    ; return address
+        mov [bx + 14], ax    ; return address
 if @CodeSize
         mov ax, [bp + 4]     ; return address
-        mov [bx + 24], ax    ; return address
+        mov [bx + 16], ax    ; return address
 endif
 
         pop ax               ; bx
@@ -403,10 +403,10 @@ endif
         pop ax               ; position of old return address
 
 if @CodeSize
-        mov ax, [bx + 24]    ; return address
+        mov ax, [bx + 16]    ; return address
         push ax
 endif
-        mov ax, [bx + 22]    ; return address
+        mov ax, [bx + 14]    ; return address
         push ax
 
         mov ax, [bx + 12]    ; bp saved as normal
@@ -423,7 +423,7 @@ endif
         push ax
         mov ax, [bx + 20]    ; es
         mov es, ax
-        mov ax, [bx + 26]    ; return value
+        mov ax, [bx + 22]    ; return value
         pop ds
         pop bx
 
