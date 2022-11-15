@@ -55,7 +55,7 @@ ___longj:
         mov edi, [eax+12]
         mov esi, [eax+16]
 
-        mov eax, [eax+32]    # return value
+        mov eax, [eax+60]    # return value
 
         ret
 
