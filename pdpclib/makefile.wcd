@@ -2,7 +2,7 @@
 # Build with wmake -u -f makefile.wcd or pdmake -f makefile.wcd
 
 CC=wcl
-COPTS=-zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+COPTS=-oneatx -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
 
 pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
