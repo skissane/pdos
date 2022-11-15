@@ -29,6 +29,12 @@ endif
 public __startup
 __startup proc
 
+; eyecatcher
+nop
+nop
+nop
+nop
+
 push cs
 push cs
 pop ds
