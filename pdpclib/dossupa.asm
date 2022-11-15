@@ -331,17 +331,12 @@ __freemem endp
 
 
 public __setj
-__setj proc
-if @CodeSize eq 0
-        mov ax, 0
-        ret
-endif
-        push bp
-        mov bp,sp
+__setj proc jbuf:ptr
+
         push ds
 
-        mov ax, [bp + 6]
-        mov ds, [bp + 8]
+        mov ax, word ptr jbuf
+        mov ds, word ptr jbuf + 2
         push bx
         push bp
         mov bp, sp
@@ -378,22 +373,16 @@ endif
         mov ax, 0
 
         pop ds
-        pop bp
+
         ret
 __setj endp
 
 
 public __longj
-__longj proc
-if @CodeSize
-else
-ret
-endif
-        push bp
-        mov bp, sp
+__longj proc jbuf:ptr
 
-        mov bx, [bp + 6]
-        mov ds, [bp + 8]
+        mov bx, word ptr jbuf
+        mov ds, word ptr jbuf + 2
         mov bp, [bx + 10]
         mov sp, bp
         mov bp, [bx + 12]
@@ -426,7 +415,6 @@ endif
         pop ds
         pop bx
 
-        pop bp
         ret
 __longj endp
 
