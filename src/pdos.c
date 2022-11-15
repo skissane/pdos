@@ -261,6 +261,8 @@ static int stdin_fhandle_index = 0;
 static int stdout_fhandle_index = 1;
 static int stderr_fhandle_index = 2;
 
+static int showret = 0;
+
 static int scrncapDrv = -1;
 static char scrncapBuf[512];
 static unsigned long scrncapSector;
@@ -3913,7 +3915,10 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     entry_point = exeEntry;
     memId += 256;
     ret = callwithpsp(exeEntry, psp, ss, sp);
-    /* printf("ret is %x\n", ret); */
+    if (showret)
+    {
+        printf("return from called program is %d\n", ret);
+    }
     memmgrFreeId(&memmgr, memId);
     memId -= 256;
     entry_point = old_entry_point;
@@ -4193,7 +4198,11 @@ static int fixexe32(unsigned char *entry, unsigned int sp,
     realdata->base_31_24 = (dataStart >> 24) & 0xff;
 
     ret = call32(entry, sp, curTCB);
-    /* printf("ret is %x\n", ret); */
+
+    if (showret)
+    {
+        printf("return from called program is %d\n", ret);
+    }
 
     *realcode = savecode;
     *realdata = savedata;
