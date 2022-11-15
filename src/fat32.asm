@@ -387,7 +387,7 @@ dumpcx endp
 ; but nevermind. Unclear if "align 8" is actually needed. Removed for now
 ; LBA packet for BIOS disk read (needs to be 8-byte aligned)
 lba_packet:
-size       db 010h
+sz         db 010h
 reserved   db 0
 sectors    dw 1
 offst      dw 0  ; 07c00h
