@@ -7,10 +7,10 @@ wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
 wasm -zq -zcm -Dmemodel=tiny lldos.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM protinta.asm
 wasm -zq -zcm -Dmemodel=tiny int13x.asm
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DPDOS32 -I..\pdpclib pload.c protint.c file.c minifat.c bos.c
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DPDOS32 -DNEED_DUMP -I..\pdpclib pdosload.c
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\string.c ..\pdpclib\dossupc.c
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\ctype.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DPDOS32 -I..\pdpclib pload.c protint.c file.c minifat.c bos.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DPDOS32 -DNEED_DUMP -I..\pdpclib pdosload.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\string.c ..\pdpclib\dossupc.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\ctype.c
 if exist watcom.lib del watcom.lib
 wlib -b -q watcom +support.obj
 wlib -b -q watcom +bos.obj

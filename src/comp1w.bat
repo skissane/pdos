@@ -6,8 +6,8 @@ wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
 rem these two files are shared between modules
 wasm -zq -zcm -Dmemodel=tiny support.asm 
 wasm -zq -zcm -Dmemodel=tiny lldos.asm
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DNEED_DUMP -I..\pdpclib pload.c minifat.c bos.c pdosload.c ..\pdpclib\string.c ..\pdpclib\dossupc.c
-wcl -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\ctype.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -DNEED_DUMP -I..\pdpclib pload.c minifat.c bos.c pdosload.c ..\pdpclib\string.c ..\pdpclib\dossupc.c
+wcl -oneatx -ecc -q -w -c -I. -mt -zl -D__MSDOS__ -fpi87 -s -zdp -zu -I..\pdpclib ..\pdpclib\ctype.c
 
 if exist watcom.lib del watcom.lib
 wlib -b -q watcom +support.obj
