@@ -335,8 +335,12 @@ __setj proc jbuf:ptr
 
         push ds
 
+if @DataSize
         mov ax, word ptr jbuf
         mov ds, word ptr jbuf + 2
+else
+        mov ax, jbuf
+endif
         push bx
         push bp
         mov bp, sp
@@ -357,8 +361,10 @@ __setj proc jbuf:ptr
 
         mov ax, [bp + 2]     ; return address
         mov [bx + 14], ax    ; return address
+if @CodeSize
         mov ax, [bp + 4]     ; return address
         mov [bx + 16], ax    ; return address
+endif
 
         pop ax               ; bx
         mov [bx + 0], ax
@@ -381,8 +387,12 @@ __setj endp
 public __longj
 __longj proc jbuf:ptr
 
+if @DataSize
         mov bx, word ptr jbuf
         mov ds, word ptr jbuf + 2
+else
+        mov bx, jbuf
+endif
         mov bp, [bx + 10]
         mov sp, bp
         mov bp, [bx + 12]
@@ -392,8 +402,10 @@ __longj proc jbuf:ptr
         pop ax               ; position of old return address
         pop ax               ; position of old return address
 
+if @CodeSize
         mov ax, [bx + 16]    ; return address
         push ax
+endif
         mov ax, [bx + 14]    ; return address
         push ax
 
