@@ -1144,6 +1144,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
        that this executable regains control. But exit() can be
        called from anywhere. So we need to use setjmp and longjmp.
        Note that the runnum increments for every invocation */
+    rc = 0;
     if (!__genstart)
     {
         /* rc = setjmp(jb); */
