@@ -84,6 +84,14 @@ int setjmp(jmp_buf env);
 #define setjmp(x) __Ysetjmp(x)
 int __Ysetjmp(jmp_buf env);
 
+#elif defined(__MSDOS__)
+#define setjmp(x) __setj(x)
+#if defined(__WATCOMC__)
+int __cdecl __setj(jmp_buf env);
+#else
+int __setj(jmp_buf env);
+#endif
+
 #else
 #define setjmp(x) _setjmp(x)
 int _setjmp(jmp_buf env);
