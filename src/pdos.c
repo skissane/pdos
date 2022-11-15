@@ -6069,14 +6069,24 @@ static char *envModify(char *envPtr, char *name, char *value)
         return NULL;
     }
 #ifndef __32BIT__
-    memmgrSetOwner(&memmgr, newPtr, curPCB->pid);
+    if (curPCB != NULL)
+    {
+        memmgrSetOwner(&memmgr, newPtr, curPCB->pid);
+    }
 #endif
 
     /* Populate new segment */
     envBlockCopyWithMods(envPtr, newPtr, name, value);
 
     /* Free old segment */
-    PosFreeMem(envPtr);
+    if (curPCB != NULL)
+    {
+        PosFreeMem(envPtr);
+    }
+    else
+    {
+        memmgrFree(&memmgr, envPtr);
+    }
 
     /* Return success */
     return newPtr;
