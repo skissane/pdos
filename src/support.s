@@ -254,77 +254,60 @@ _outpd:
         pop     %ebp
         ret
 
-/ setjmp and longjmp are untested under PDOS32 due to the
-/ test environment currently not being available
 
+# Basically copied from linsupa.asm
+
+.globl ___setj
 ___setj:
-        push    %ebp
-        mov     %esp, %ebp
-        mov     12(%ebp), %eax
-        push    %ebx
-        mov     %esp, %ebx
+mov 4(%esp), %eax
+push %ebx
+mov %esp, %ebx
+mov %ebx, 20(%eax) #esp
 
-/ really esp
-        push    %ebx
-        
-        mov     %ecx, 4(%eax)
-        mov     %edx, 8(%eax)
-        mov     %edi, 12(%eax)
-        mov     %esi, 16(%eax)
-        
-        pop     %ebx
-/ really esp
-        mov     %ebx, 20(%eax)
-        mov     0(%ebp), %ebx
-/ really ebp
-        mov     %ebx, 24(%eax)
+mov %ebp, %ebx
+mov %ebx, 24(%eax)
 
-/ return address
-        mov     4(%ebp), %ebx
-        mov     %ebx, 20(%eax)
+mov %ecx, 4(%eax)
+mov %edx, 8(%eax)
+mov %edi, 12(%eax)
+mov %esi, 16(%eax)
 
-        pop     %ebx
-        mov     %ebx, 0(%eax)
-        mov     0, %eax
+mov 4(%esp), %ebx    # return address
+mov %ebx, 28(%eax)   # return address
 
-        pop     %ebp        
-        ret
+pop %ebx
+mov %ebx,0(%eax)
+mov $0, %eax
+
+ret
 
 
+
+.globl ___longj
 ___longj:
-        push    %ebp
-        mov     %esp, %ebp
-        mov     12(%ebp), %eax
-        mov     20(%eax), %ebp
-        mov     %ebp, %esp
+mov 4(%esp), %eax
+mov 20(%eax), %ebp
+mov %ebp, %esp
 
-/ position of old ebx
-        pop     %ebx
-/ position of old ebp
-        pop     %ebx
-/ position of old return address
-        pop     %ebx
+pop %ebx            # position of old ebx
+pop %ebx            # position of old return address
 
-/ return address
-        mov     28(%eax), %ebx
-        push    %ebx
+mov 28(%eax), %ebx  # return address
+push %ebx
 
-/ ebp saved as normal
-        mov     24(%eax), %ebx
-        push    %ebx
-        mov     %esp, %ebp
-        
-        mov     0(%eax), %ebx
-        mov     4(%eax), %ecx
-        mov     8(%eax), %edx
-        mov     12(%eax), %edi
-        mov     16(%eax), %esi
+mov 24(%eax), %ebx
+mov %ebx, %ebp
 
-/ return value
-        mov     32(%eax), %eax
+mov 0(%eax), %ebx
+mov 4(%eax), %ecx
+mov 8(%eax), %edx
+mov 12(%eax), %edi
+mov 16(%eax), %esi
 
-        pop     %ebp
-        ret
+mov 60(%eax), %eax    # return value
+
+ret
+
 
 # From and for SubC
 # internal switch(expr) routine
