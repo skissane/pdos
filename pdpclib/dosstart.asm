@@ -68,7 +68,26 @@ mov ah, 4ah
 int 21h
 
 mov dx,DGROUP
+
+; It appears that in the tiny memory model, you are still required
+; to set ds to the same as cs yourself, presumably because ds is
+; pointing to the PSP while cs is probably pointing to the beginning
+; of the executable. DGROUP may also get the correct value, presumably
+; zero. es is set to ds a bit later. And you need to set ss to that
+; value too
+if @Model eq 1
+push cs
+pop ds
+push cs
+pop ax
+mov ss,ax
+mov  sp, 07c00h ; we should calculate this properly
+; And that null PSP thing needs to be redone
+mov ax, 0
+push ax
+else
 mov ds,dx
+endif
 
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
