@@ -38,10 +38,30 @@ typedef __gnuc_va_list va_list;
 
 #else /* __GNUC__ */
 
+#ifdef __XWATCOMC__
+/* The arguments are on the stack, but references are normally
+   to ds (DGROUP). Small data is a fundamentally flawed model
+   for PDPCLIB, as functions don't know if they are receiving
+   a stack parameter or a data parameter, or even a code
+   parameter if literals are in the code section. As such, memory
+   models small and medium are not supported. Only tiny, compact,
+   large and huge are supported. However, making this a far
+   pointer at least allows you to printf a %d (but not %ld
+   because that goes through a different code path). Also note
+   that tiny memory model doesn't support malloc, so you won't
+   be able to open any files, so you won't be able to do much. */
+typedef char far *va_list;
+#else
 typedef char * va_list;
+#endif
 
+#ifdef __XWATCOMC__
+#define va_start(ap, parmN) ap = (char far *)&parmN + sizeof(parmN)
+#define va_arg(ap, type) *(type far *)(ap += sizeof(type), ap - sizeof(type))
+#else
 #define va_start(ap, parmN) ap = (char *)&parmN + sizeof(parmN)
 #define va_arg(ap, type) *(type *)(ap += sizeof(type), ap - sizeof(type))
+#endif
 #define va_end(ap) ap = (char *)0
 
 #endif
