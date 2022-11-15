@@ -181,7 +181,7 @@ static void fixexe(unsigned long laddr,
         fixs = (fixs << 8) | getabs(entstart + x * 4 + 2);
         fixo = getabs(entstart + x * 4 + 1);
         fixo = (fixo << 8) | getabs(entstart + x * 4);
-        fix = (unsigned long)(progstart + fixo + fixs * 16);
+        fix = (unsigned long)(progstart + fixo + (unsigned long)fixs * 16);
         val = getabs(fix + 1);
         val = (val << 8) | getabs(fix);
         val += relseg;
