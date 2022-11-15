@@ -33,6 +33,12 @@ FAT gfat;
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 
 #ifndef PDOS32
+
+#define LONG_NORM(x) (((((unsigned long)(x) >> 16) \
+                     + (((unsigned long)(x) & 0xffffU) / 16)) << 16) \
+                     | (((unsigned long)(x) & 0xffffU) % 16))
+
+
 static void fixexe(unsigned long laddr, 
                    unsigned int seg, 
                    unsigned int *progentry);
@@ -128,6 +134,7 @@ void pdosload(void)
     fixexe(loads, (unsigned int)start, &progentry);
     start <<= 16;
     start += progentry;
+    start = LONG_NORM(start);
     callfar(start);
 #endif    
     fatTerm(&gfat);
