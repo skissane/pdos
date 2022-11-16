@@ -1,4 +1,5 @@
 # produce pdos.exe
+# Links against pdosgeno.a built with makefile.pgo
 
 CC=gcc386
 CFLAGS=-O2
