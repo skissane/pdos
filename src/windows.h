@@ -90,6 +90,7 @@
 
 #define ENABLE_WINDOW_INPUT                     0x0008
 #define ENABLE_PROCESSED_INPUT                  0x0001
+#define ENABLE_PROCESSED_OUTPUT                 0x0001
 #define ENABLE_LINE_INPUT                       0x0002
 #define ENABLE_ECHO_INPUT                       0x0004
 #define ENABLE_MOUSE_INPUT                      0x0010
