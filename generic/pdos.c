@@ -50,7 +50,7 @@ extern __start(char *p);
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
-static OS os = { __start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
+static OS os = { __start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
@@ -127,6 +127,8 @@ int main(int argc, char **argv)
     os.Xstdin = stdin;
     os.Xstdout = stdout;
     os.Xstderr = stderr;
+    os.prog_name = "";
+    os.prog_parm = "";
 
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)
@@ -142,7 +144,9 @@ int main(int argc, char **argv)
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("welcome to PDOS-generic\n");
     printf("running as %s\n", myname);
-    disk = bios->Xfopen(bios->disk_name, "r+b");
+    printf("aka %s\n", bios->prog_name);
+    printf("with parm of %s\n", bios->prog_parm);
+    disk = bios->Xfopen(bios->prog_parm, "r+b");
     if (disk == NULL)
     {
         printf("can't open hard disk\n");

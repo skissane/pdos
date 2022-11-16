@@ -41,9 +41,12 @@ typedef struct {
        of memory instead of requiring only contiguous memory.
        Only applicable to a BIOS. */
     int mem_rpt;
-    /* the suggested name of the primary disk. Only applicable to
-       BIOSes. Can be NULL on a diskless system */
-    char *disk_name;
+    /* the name of the program being executed. Could be an empty
+       string */
+    char *prog_name;
+    /* The single parameter passed to this program. E.g. a suggested
+       disk name to be opened. Will at least be an empty string */
+    char *prog_parm;
     int (*Xprintf)(const char *format, ...);
     int (**main)(int argc, char **argv);
     void *(*malloc)(size_t size);

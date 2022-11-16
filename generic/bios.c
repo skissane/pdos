@@ -59,7 +59,7 @@ int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
 #endif
 
-static OS bios = { their_start, 0, 0, NULL, printf, 0, malloc, NULL, NULL,
+static OS bios = { their_start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
@@ -123,12 +123,12 @@ int main(int argc, char **argv)
         {
             *p = '\0';
         }
-        prog_name = pgm;
+        bios.prog_name = pgm;
     }
     else
     {
-        bios.disk_name = *(argv + 2);
-        prog_name = argv[1];
+        bios.prog_parm = *(argv + 2);
+        bios.prog_name = argv[1];
     }
     p = calloc(1, 5000000);
     if (p == NULL)
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
         printf("insufficient memory\n");
         return (EXIT_FAILURE);
     }
-    if (exeloadDoload(&entry_point, prog_name, &p) != 0)
+    if (exeloadDoload(&entry_point, bios.prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
         return (EXIT_FAILURE);
