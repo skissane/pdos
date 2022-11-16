@@ -47,6 +47,8 @@ int their_start(char *parm);
 static int getmainargs(int *_Argc,
                        char ***_Argv);
 
+void *PosGetDTA(void);
+
 #if defined(__gnu_linux__) || defined(__ARM__)
 #include <pos.h>
 
@@ -54,7 +56,6 @@ static int dirfile;
 
 static DTA origdta;
 
-void *PosGetDTA(void);
 int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
 #endif
@@ -63,10 +64,11 @@ static OS bios = { their_start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
+  PosGetDTA,
 #if defined(__gnu_linux__) || defined(__ARM__)
-  PosGetDTA, PosFindFirst, PosFindNext,
+  PosFindFirst, PosFindNext,
 #else
-  0, 0, 0,
+  0, 0,
 #endif
   0, 0,
   ctime, time,
@@ -84,9 +86,8 @@ static OS bios = { their_start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
   isalnum, isxdigit, rename, clearerr, _assert, atof,
 };
 
-static char buf[200];
-static char cmd[200];
-static char pgm[200];
+static char buf[400];
+static char cmd[300];
 
 static int (*genstart)(OS *bios);
 
@@ -96,6 +97,10 @@ int main(int argc, char **argv)
     unsigned char *entry_point;
     int rc;
     char *prog_name;
+    int need_usage = 0;
+    int valid = 0;
+    int shell = 0;
+    FILE *scr = NULL;
 
     printf("bios starting\n");
     bios.mem_amt = MEMAMT;
@@ -105,31 +110,93 @@ int main(int argc, char **argv)
     __genstart = 1;
     bios.main = &__genmain;
 
-    if (argc < 3)
+    /* parameters override everything */
+    if (argc > 1)
     {
-        /* should really get this from a config file */
-        printf("please enter a command\n");
-        fgets(cmd, sizeof cmd, stdin);
-        p = strchr(cmd, '\n');
-        if (p != NULL)
+        /* if they've typed in --help or anything, give them usage */
+        if (argv[1][0] == '-')
         {
-            *p = '\0';
+            need_usage = 1;
         }
-        strcpy(pgm, PATH);
-        strncat(pgm, cmd, sizeof pgm);
-        pgm[sizeof pgm - 1] = '\0';
-        p = strchr(pgm, ' ');
-        if (p != NULL)
+        else if (argc == 2)
         {
-            *p = '\0';
+            bios.prog_name = argv[1];
+            bios.prog_parm = "";
+            valid = 1;
         }
-        bios.prog_name = pgm;
+        else if (argc == 3)
+        {
+            bios.prog_name = argv[1];
+            bios.prog_parm = argv[2];
+            valid = 1;
+        }
+        else
+        {
+            need_usage = 1;
+        }
     }
-    else
+    if (!valid && !need_usage)
     {
-        bios.prog_parm = *(argv + 2);
-        bios.prog_name = argv[1];
+        /* an individual command(s) overrides a shell */
+        scr = fopen("biosauto.cmd", "r");
+        if (scr != NULL)
+        {
+            valid = 1;
+        }
+        else
+        {
+            scr = fopen("biosauto.shl", "r");
+            if (scr != NULL)
+            {
+                valid = 1;
+                shell = 1;
+            }
+        }
     }
+    if (!valid && !need_usage)
+    {
+        scr = stdin;
+        printf("enter commands, press enter to exit\n");
+    }
+    do
+    {
+        if (need_usage) break; /* should put this before do */
+        if (scr != NULL)
+        {
+            if (fgets(buf, sizeof buf, scr) == NULL)
+            {
+                break;
+            }
+            p = strchr(buf, '\n');
+            if (p != NULL)
+            {
+                *p = '\0';
+            }
+            if (buf[0] == '\0')
+            {
+                if (scr == stdin)
+                {
+                    break;
+                }
+                continue;
+            }
+            if (buf[0] == '#')
+            {
+                continue;
+            }
+            bios.prog_name = buf;
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                *p = '\0';
+                bios.prog_parm = p + 1;
+            }
+            else
+            {
+                bios.prog_parm = "";
+            }
+        }
+
     p = calloc(1, 5000000);
     if (p == NULL)
     {
@@ -158,15 +225,37 @@ int main(int argc, char **argv)
     rc = 0;
 #endif
     printf("return from called program is %d\n", rc);
-    /* Some programs will have displayed output, and if you
-       terminate immediately, there is no opportunity to see
-       the output. Other programs, or OSes, will have already
-       had the user type poweroff or exit, and the user doesn't
-       need to see another message. But for now we display a
-       message unconditionally. But it should really be in a
-       config file. */
-    printf("press enter to terminate\n");
-    fgets(buf, sizeof buf, stdin);
+    free(p);
+
+        if (scr == NULL)
+        {
+            break;
+        }
+    } while (1);
+
+    if (need_usage)
+    {
+        printf("usage: bios <prog> [single parm]\n");
+        printf("allows execution of non-standard executables\n");
+        printf("if no parameters are given and biosauto.cmd is given,\n");
+        printf("commands are read, executed and there will be a pause\n");
+        printf("otherwise, biosauto.shl is looked for, and there will be\n");
+        printf("no pause, because it is assumed to be a shell\n");
+        return (EXIT_FAILURE);
+    }
+    if (scr == stdin)
+    {
+        /* pause has already been done, effectively */
+    }
+    else if (!shell || (scr == NULL))
+    {
+        printf("press enter to exit\n");
+        fgets(buf, sizeof buf, stdin);
+    }
+    if ((scr != NULL) && (scr != stdin))
+    {
+        fclose(scr);
+    }
     printf("bios exiting\n");
     return (0);
 }
@@ -312,6 +401,13 @@ int PosMakeDir(const char *dname)
 int PosRemoveDir(const char *dname)
 {
     return (__rmdir(dname));
+}
+
+#else
+
+void *PosGetDTA(void)
+{
+    return (NULL);
 }
 
 #endif
