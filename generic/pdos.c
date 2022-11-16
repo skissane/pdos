@@ -96,6 +96,13 @@ static void writeLogical(void *diskptr, unsigned long sector, void *buf);
 static void getDateTime(FAT_DATETIME *ptr);
 
 
+/* The BIOS C library will call this, and then we call our own C library */
+int biosmain(int argc, char **argv)
+{
+     __minstart = 1;
+    return (__start(NULL));
+}
+
 int main(void)
 {
     unsigned char *entry_point;

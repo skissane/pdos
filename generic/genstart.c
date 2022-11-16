@@ -14,10 +14,7 @@
 
 OS *bios;
 
-extern int __minstart;
-
-int __start(char *p);
-
+int biosmain(int argc, char **argv);
 
 /* This name is known to certain versions of "ld" as the entry
 point of an application and there is no particular reason to not
@@ -26,6 +23,6 @@ use it. */
 int __crt0(OS *bios_parm)
 {
     bios = bios_parm;
-    __minstart = 1;
-    return (__start(NULL));
+    *bios->main = biosmain;
+    return (bios->__start(NULL));
 }
