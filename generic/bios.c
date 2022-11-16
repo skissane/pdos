@@ -144,11 +144,13 @@ int main(int argc, char **argv)
     genstart = (void *)entry_point;
     /* printf("first byte of code is %02X\n", *(unsigned char *)entry_point); */
 
+#ifdef NEED_DELAY
     for (rc = 0; rc < 500; rc++)
     {
         printf("please accept a delay before we execute program "
                "in BSS memory\n");
     }
+#endif
 
 #if 1
     rc = genstart(&bios);
