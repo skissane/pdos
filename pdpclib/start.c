@@ -421,6 +421,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #ifdef __WIN32__
+    if (runnum == 1)
+    {
     __stdin->hfile = GetStdHandle(STD_INPUT_HANDLE);
     {
         DWORD dw;
@@ -450,6 +452,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
     __stderr->hfile = GetStdHandle(STD_ERROR_HANDLE);
+    }
 #elif defined(__AMIGA__)
     __stdin->hfile = Input();
     __stdout->hfile = Output();
