@@ -1,4 +1,5 @@
 # This builds a PDOS-generic executable
+# No need to build a library, this is self-contained
 
 CC=gcc386
 COPTS=-S -O2 -U__WIN32__ -DHAVE_DIR -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
