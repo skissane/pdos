@@ -101,8 +101,8 @@ int main(int argc, char **argv)
     int valid = 0;
     int shell = 0;
     FILE *scr = NULL;
+    int quiet = 0;
 
-    printf("bios starting\n");
     bios.mem_amt = MEMAMT;
     bios.Xstdin = stdin;
     bios.Xstdout = stdout;
@@ -113,6 +113,30 @@ int main(int argc, char **argv)
     /* parameters override everything */
     if (argc > 1)
     {
+        if (strcmp(argv[1], "-quiet") == 0)
+        {
+            quiet = 1;
+            argc--;
+            argv++;
+        }
+        if (argc > 1)
+        {
+            if (strcmp(argv[1], "-shell") == 0)
+            {
+                shell = 1;
+                argc--;
+                argv++;
+            }
+        }
+        if (argc > 1)
+        {
+            if (strcmp(argv[1], "-quiet") == 0)
+            {
+                quiet = 1;
+                argc--;
+                argv++;
+            }
+        }
         /* if they've typed in --help or anything, give them usage */
         if (argv[1][0] == '-')
         {
@@ -134,6 +158,10 @@ int main(int argc, char **argv)
         {
             need_usage = 1;
         }
+    }
+    if (!quiet && !need_usage)
+    {
+        printf("bios starting\n");
     }
     if (!valid && !need_usage)
     {
@@ -224,7 +252,10 @@ int main(int argc, char **argv)
 #else
     rc = 0;
 #endif
-    printf("return from called program is %d\n", rc);
+    if (!quiet)
+    {
+        printf("return from called program is %d\n", rc);
+    }
     free(p);
 
         if (scr == NULL)
@@ -235,19 +266,22 @@ int main(int argc, char **argv)
 
     if (need_usage)
     {
-        printf("usage: bios <prog> [single parm]\n");
+        printf("usage: bios [options] <prog> [single parm]\n");
         printf("allows execution of non-standard executables\n");
         printf("if no parameters are given and biosauto.cmd is given,\n");
         printf("commands are read, executed and there will be a pause\n");
         printf("otherwise, biosauto.shl is looked for, and there will be\n");
         printf("no pause, because it is assumed to be a shell\n");
+        printf("valid options are -quiet and -shell\n");
+        printf("e.g. bios -shell pdos.exe uc8086.vhd\n");
+        printf("e.g. bios pcomm.exe\n");
         return (EXIT_FAILURE);
     }
     if (scr == stdin)
     {
         /* pause has already been done, effectively */
     }
-    else if (!shell || (scr == NULL))
+    else if (!shell)
     {
         printf("press enter to exit\n");
         fgets(buf, sizeof buf, stdin);
@@ -256,7 +290,10 @@ int main(int argc, char **argv)
     {
         fclose(scr);
     }
-    printf("bios exiting\n");
+    if (!quiet)
+    {
+        printf("bios exiting\n");
+    }
     return (0);
 }
 
