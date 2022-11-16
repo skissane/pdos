@@ -24,6 +24,7 @@ int main(void)
     char *q;
 
     printf("welcome to pcomm\n");
+    printf("type help for help\n");
     while (1)
     {
         printf("\nenter a command\n");
@@ -33,6 +34,11 @@ int main(void)
         if (strcmp(buf, "exit") == 0)
         {
             break;
+        }
+        else if (strcmp(buf, "help") == 0)
+        {
+            printf("commands that might be available are:\n");
+            printf("exit, type, dir, md, rd, cd, date, time, del, copy\n");
         }
         else if (strncmp(buf, "type", 4) == 0)
         {
@@ -112,6 +118,11 @@ int main(void)
             int ret;
 
             dta = PosGetDTA();
+            if (dta == NULL)
+            {
+                printf("dir unavailable\n");
+                continue;
+            }
             ret = PosFindFirst("*.*", 0x10);
             while (ret == 0)
             {
