@@ -83,6 +83,8 @@ static unsigned char sect[SECTSZ];
 static FAT fat;
 static FATFILE fatfile;
 
+static char *myname = "";
+
 #define MAX_HANDLE 20
 
 static struct {
@@ -97,13 +99,21 @@ static void getDateTime(FAT_DATETIME *ptr);
 
 
 /* The BIOS C library will call this, and then we call our own C library */
+/* Don't rely on the BIOS having a C library capable of breaking down a
+   command line buffer, but there will at least be a program name, possibly
+   an empty string. Our own C library can break it down though. */
 int biosmain(int argc, char **argv)
 {
-     __minstart = 1;
-    return (__start(NULL));
+    if (argc >= 1)
+    {
+        myname = argv[0];
+    }
+    __minstart = 1;
+    /* this parameter won't include a program name */
+    return (__start(NULL /*bios->oneparm*/));
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     unsigned char *entry_point;
     unsigned char *p = NULL;
@@ -130,7 +140,8 @@ int main(void)
     memmgrSupply(&__memmgr, mem_base, bios->mem_amt);
 
     /* printf(CHAR_ESC_STR "[2J"); */
-    printf("hello from PDOS\n");
+    printf("welcome to PDOS-generic\n");
+    printf("running as %s\n", myname);
     disk = bios->Xfopen(bios->disk_name, "r+b");
     if (disk == NULL)
     {
@@ -156,11 +167,13 @@ int main(void)
     }
     pgastart = (void *)entry_point;
 
+#ifdef NEED_DELAY
     for (ret = 0; ret < 500; ret++)
     {
         printf("please accept a delay before we execute pcomm.exe "
                "in BSS memory\n");
     }
+#endif
 
     printf("about to call app\n");
     ret = pgastart(&os);
