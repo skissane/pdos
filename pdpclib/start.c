@@ -448,6 +448,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             dw = stdout_dw;
             dw |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            dw |= ENABLE_PROCESSED_OUTPUT;
             SetConsoleMode(__stdout->hfile, dw);
         }
     }
