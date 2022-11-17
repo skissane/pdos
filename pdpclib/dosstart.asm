@@ -87,6 +87,15 @@ mov ax, 0
 push ax
 else
 mov ds,dx
+
+; small and medium memory models have ds and ss the same so that
+; near pointers can refer to either stack or data and still work
+if @DataSize
+else
+mov ss, dx
+mov sp, 07c00h ; we should calculate this properly
+endif
+
 endif
 
 ; we are responsible for clearing our own BSS
