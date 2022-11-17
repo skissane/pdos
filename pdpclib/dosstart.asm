@@ -69,19 +69,36 @@ int 21h
 
 mov dx,DGROUP
 
+; In tiny, small and medium memory models, you need to set
+; ss to ds (MSDOS will have set them to different values
+; when it loaded the executable).
+
+if @DataSize
+else
+mov bx,ss
+mov ax,ds
+sub bx,ax
+mov cl,4
+shl bx,cl
+
+endif
+
 ; It appears that in the tiny memory model, you are still required
 ; to set ds to the same as cs yourself, presumably because ds is
 ; pointing to the PSP while cs is probably pointing to the beginning
 ; of the executable. DGROUP may also get the correct value, presumably
 ; zero. es is set to ds a bit later. And you need to set ss to that
 ; value too
+
 if @Model eq 1
 push cs
 pop ds
 push cs
 pop ax
-mov ss,ax
-mov  sp, 07c00h ; we should calculate this properly
+mov bp, sp
+sub bp, bx
+mov ss, ax
+mov sp, bp
 ; And that null PSP thing needs to be redone
 mov ax, 0
 push ax
@@ -92,8 +109,13 @@ mov ds,dx
 ; near pointers can refer to either stack or data and still work
 if @DataSize
 else
+mov bp, sp
+sub bp, bx
 mov ss, dx
-mov sp, 07c00h ; we should calculate this properly
+mov sp, bp
+; And that null PSP thing needs to be redone
+mov ax, 0
+push ax
 endif
 
 endif
