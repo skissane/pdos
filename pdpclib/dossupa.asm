@@ -524,8 +524,10 @@ __datetime endp
 
 ifdef WATCOM
 ; divide dx:ax by cx:bx, result in dx:ax
+; remainder in cx:bx I think
 public _U4D
 _U4D proc
+
 push cx
 push bx
 push dx
@@ -538,12 +540,15 @@ call f_lumod@
 mov cx, dx
 mov bx, ax
 call f_ludiv@
+
 ret
 _U4D endp
 endif
 
 
 ; must release stack space in this procedure
+; original value and divisor will be on stack
+; return value in dx:ax
 public f_ludiv@
 f_ludiv@ proc
 push bp
@@ -663,6 +668,8 @@ f_lmod@ endp
 
 
 ; procedure needs to fix up stack
+; original value and divisor will be on stack
+; return in dx:ax
 public f_lumod@
 f_lumod@ proc
 push bp
