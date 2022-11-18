@@ -67,22 +67,6 @@ mov bx, ax
 mov ah, 4ah
 int 21h
 
-mov dx,DGROUP
-
-; In tiny, small and medium memory models, you need to set
-; ss to ds (MSDOS will have set them to different values
-; when it loaded the executable).
-
-if @DataSize
-else
-mov bx,ss
-mov ax,ds
-sub bx,ax
-mov cl,4
-shl bx,cl
-
-endif
-
 ; It appears that in the tiny memory model, you are still required
 ; to set ds to the same as cs yourself, presumably because ds is
 ; pointing to the PSP while cs is probably pointing to the beginning
@@ -91,24 +75,28 @@ endif
 ; value too
 
 if @Model eq 1
-push cs
-pop ds
-push cs
-pop ax
-mov bp, sp
-sub bp, bx
-mov ss, ax
-mov sp, bp
-; And that null PSP thing needs to be redone
-mov ax, 0
-push ax
+mov dx, cs
 else
+mov dx,DGROUP
+endif
+
 mov ds,dx
 
-; small and medium memory models have ds and ss the same so that
+; In tiny, small and medium memory models, you need to set
+; ss to ds (MSDOS will have set them to different values
+; when it loaded the executable).
+; ds and ss are the same so that
 ; near pointers can refer to either stack or data and still work
+
 if @DataSize
 else
+
+mov bx,ss
+mov ax,ds
+sub bx,ax
+mov cl,4
+shl bx,cl
+
 mov bp, sp
 sub bp, bx
 mov ss, dx
@@ -116,9 +104,9 @@ mov sp, bp
 ; And that null PSP thing needs to be redone
 mov ax, 0
 push ax
-endif
 
 endif
+
 
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
