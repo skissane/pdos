@@ -22,8 +22,8 @@ typedef struct {
     unsigned short init_ss;
     unsigned short init_sp;
     unsigned short checksum;
-    unsigned short init_cs;
     unsigned short init_ip;
+    unsigned short init_cs;
     unsigned short reloc_tab_offset;
     unsigned short overlay;
     unsigned short reserved1[4]; /* First set of reserved words. */
