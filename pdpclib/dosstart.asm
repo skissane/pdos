@@ -3,6 +3,24 @@
 ; This program written by Paul Edwards
 ; Released to the public domain
 
+; For an executable, at entry, the CS:IP will be set
+; correctly as specified in the executable header (offset
+; 0x14 - 2 bytes - an offset segment, and 0x16 - 2 bytes,
+; initial IP). DS and ES will both be set to point to the
+; PSP. SS will be set correct as specified in the
+; executable header (offset 0x0e - 2 bytes - an offset
+; segment), and SP will be set to the stack length as
+; specified in the executable header (offset 0x10 - 2 bytes).
+
+; For a COM file, there is no header at all, so the values
+; that are set are - all of CS, DS, ES, SS are set to point
+; to the PSP and the IP is 0x100, ie at the end of the PSP,
+; which means you need both an "org 100h" in your assembler
+; code plus you need to link that object code first. You
+; must also use the tiny memory model and you may use the
+; exe2bin utility or your linker may be able to produce a
+; COM file itself.
+
 % .model memodel, c
 
 extrn __start:proc
