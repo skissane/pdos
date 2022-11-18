@@ -5,8 +5,8 @@
 
 ; For an executable, at entry, the CS:IP will be set
 ; correctly as specified in the executable header (offset
-; 0x14 - 2 bytes - an offset segment, and 0x16 - 2 bytes,
-; initial IP). DS and ES will both be set to point to the
+; 0x14 - 2 bytes - initial IP, and 0x16 - 2 bytes,
+; an offset segment). DS and ES will both be set to point to the
 ; PSP. SS will be set correct as specified in the
 ; executable header (offset 0x0e - 2 bytes - an offset
 ; segment), and SP will be set to the stack length as
