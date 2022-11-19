@@ -2960,12 +2960,23 @@ unsigned int PosMonitor(void)
     int pos2;
 
     printf("current module loaded at %p, entry point %p\n", loadaddr, entry_point);
-    printf("enter a hex address or range, exit to exit\n");
+    printf("enter a hex address or range, exit to exit, help for help\n");
 
     while (1)
     {
         fgets(buf, sizeof buf, stdin);
         if (strcmp(buf, "exit\n") == 0) break;
+        if (strcmp(buf, "help\n") == 0)
+        {
+            printf("zap <addr> <val> - change a byte\n");
+            continue;
+        }
+        else if (strncmp(buf, "zap ", 4) == 0)
+        {
+            sscanf(buf + 4, "%p %i", &p, &c);
+            *p = (char)c;
+            continue;
+        }
         sscanf(buf, "%p", &addr);
         endaddr = addr;
         p = strchr(buf, '-');
@@ -3472,9 +3483,13 @@ void int3(unsigned int *regptrs)
            regptrs[9], regptrs[11], regptrs[10], regptrs[12]);
     printf("module loaded at %p, entry point %p\n", loadaddr, entry_point);
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
+    regptrs[10]--;
+    printf("adjusting to %p\n", MK_FP(regptrs[11], regptrs[10]));
     PosMonitor();
     /* The person running the monitor should have zapped the x'cc' to
        something else before exiting, and then we return to the app */
+    /* If they haven't changed it, we'll just hit the breakpoint again */
+    /* Eventually they will give up */
     return;
 }
 
