@@ -111,6 +111,7 @@ static int ff_search(void);
 
 #ifdef __32BIT__
 int int0(unsigned int *regs);
+int int3(unsigned int *regs);
 int int0E(unsigned int *regs);
 int int20(unsigned int *regs);
 /* INT 25 - Absolute Disk Read */
@@ -3453,6 +3454,27 @@ void int0(unsigned int *regptrs)
     PosMonitor();
     printf("System halting\n");
     for (;;) ;
+    return;
+}
+
+void int3(unsigned int *regptrs)
+{
+    unsigned short ss;
+    unsigned char *chain;
+    unsigned short *retaddr;
+
+    printf("got a breakpoint\n");
+    printf("AX %04X BX %04X CX %04X DX %04X\n",
+           regptrs[8], regptrs[6], regptrs[5], regptrs[4]);
+    printf("SI %04X DI %04X DS %04X ES %04X\n",
+           regptrs[3], regptrs[2], regptrs[1], regptrs[0]);
+    printf("BP %04X CS %04X IP %04X FLAGS %04X\n",
+           regptrs[9], regptrs[11], regptrs[10], regptrs[12]);
+    printf("module loaded at %p, entry point %p\n", loadaddr, entry_point);
+    printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
+    PosMonitor();
+    /* The person running the monitor should have zapped the x'cc' to
+       something else before exiting, and then we return to the app */
     return;
 }
 
