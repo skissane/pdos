@@ -506,7 +506,9 @@ operating system has been split up into the traditional 3 programs,
 IO.SYS, MSDOS.SYS and COMMAND.COM, except they have been renamed to
 PLOAD.COM, PDOS.EXE and PCOMM.EXE respectively. The mainframe
 naming standard is quite similar, but is PLOAD.SYS, PDOS.SYS and
-COMMAND.EXE.
+COMMAND.EXE. And since writing, on the PC MSDOS.SYS has been renamed to
+PDOS.SYS and COMMAND.COM has been renamed to COMMAND.EXE, but IO.SYS
+remains the same.
 
 As far as possible, all code has been written in C, for portability
 between 16 + 32 bit systems, plus portability to other CPUs.  It is
@@ -606,13 +608,14 @@ memory for protected mode applications (code & data)
 a0000
   space for application code
 
-40000
+50000
   64k completely wasted for memory chain control
   blocks, to avoid having to drop the flat memory
   model coding in the memory management class. (16-bit only)
 
-30000
-  unused I suppose (16-bit only)
+40000
+  some unused space here, but the 16-bit MSDOS.SYS finishes
+  above 30000 since we started linking in the C library
 
 30700 (approx.)
   MSDOS.SYS data & stack (32-bit only), then below-the-line memory
