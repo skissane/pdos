@@ -130,6 +130,9 @@ typedef unsigned long fpos_t;
 #define _IOLBF 2
 #define _IONBF 3
 
+
+#ifndef BUFSIZ
+
 /*#define BUFSIZ 409600*/
 /* #define BUFSIZ 8192 */
 /*#define BUFSIZ 5120*/
@@ -147,6 +150,10 @@ typedef unsigned long fpos_t;
 #endif
 /* #define BUFSIZ 10 */
 /* #define BUFSIZ 512 */
+
+#endif
+
+
 #define EOF -1
 #define L_tmpnam FILENAME_MAX
 #define TMP_MAX 25
