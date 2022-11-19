@@ -3,6 +3,8 @@
 
 CC=wcl
 COPTS=-oneatx -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+# Adding -d2 allows you to get source code in the disassembly
+# (wdis -l -s), but you need to switch off optimization (-oneatx)
 
 pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
@@ -23,7 +25,7 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcom +math.obj
   wlib -b -q watcom +dossupc.obj
   wlib -b -q watcom +dossupa.obj
-  wlink File pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart
+  wlink File pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose
 
 .c.obj:
   $(CC) $(COPTS) $<
