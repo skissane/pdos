@@ -173,10 +173,20 @@ static int globrc = 0;
 static jmp_buf jb;
 
 #ifndef __PDPCLIB_DLL
+
+#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
 int main(int argc, char **argv);
+#else
+int dstart(void);
+#endif
 
 int __genstart = 0;
-int (*__genmain)(int argc, char **argv) = main;
+int (*__genmain)(int argc, char **argv)
+#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
+ = main
+#endif
+ ;
+
 #endif
 
 #ifdef __MSDOS__
@@ -1163,7 +1173,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
+#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
             rc = main(argc, argv);
+#else
+            rc = dstart();
+#endif
         }
     }
     else
