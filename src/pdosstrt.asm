@@ -18,9 +18,9 @@ public __psp
 public __envptr
 public __osver
 
-__psp   dd  ?
-__envptr dd ?
-__osver dw ?
+__psp   dd  0
+__envptr dd 0
+__osver dw 0
 
 .code
 
@@ -79,7 +79,12 @@ rep stosb
 ; mangled by Watcom when we can't handle it being mangled,
 ; we call dstart instead, which calls main.
 ;call dstart
+; Now that we're using the C library, let it handle it
+xor ax,ax
+push ax
+push ax
 call __start
+add sp,4
 
 ;call displayc
 
