@@ -5,12 +5,22 @@
 
 % .model memodel, c
 
-extrn dstart:proc
+extrn __start:proc
 
 extrn _end:byte
 extrn _edata:byte
 
 .stack 1000h
+
+.data
+
+public __psp
+public __envptr
+public __osver
+
+__psp   dd  ?
+__envptr dd ?
+__osver dw ?
 
 .code
 
@@ -68,7 +78,8 @@ rep stosb
 ; Because main is effectively a reserved word, and gets
 ; mangled by Watcom when we can't handle it being mangled,
 ; we call dstart instead, which calls main.
-call dstart
+;call dstart
+call __start
 
 ;call displayc
 

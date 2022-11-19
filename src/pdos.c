@@ -194,7 +194,7 @@ static MEMMGR btlmem;
 
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
-#define PDOS16_MEMSTART 0x3000
+#define PDOS16_MEMSTART 0x4000
 #define memmgrAllocate(m,b,i) pdos16MemmgrAllocate(m,b,i)
 #define memmgrFree(m,p) pdos16MemmgrFree(m,p)
 #define memmgrSetOwner(m,p,o) pdos16MemmgrSetOwner(m,p,o)
@@ -916,18 +916,18 @@ void pdosRun(void)
     be able to supply a full 64k to DOS apps, we can't
     have the normal control buffers polluting the space.
     So we redefine everything by dividing by 16.  So in
-    order to supply 0x30000 to 0x90000, ie a size of
-    0x60000, we divide by 16 and only supply 0x6000.
-    We then waste the full 0x30000 to 0x40000 for use
+    order to supply 0x40000 to 0x90000, ie a size of
+    0x50000, we divide by 16 and only supply 0x5000.
+    We then waste the full 0x40000 to 0x50000 for use
     by this dummy memory block.  So we tell memmgr
-    that we are supplying 0x30000 for a length of 0x6000,
+    that we are supplying 0x40000 for a length of 0x5000,
     and it will happily manage the control blocks within
     that, but then before returning to the app, we multiply
     the offset by 16 and add 0x10000.  When freeing
     memory, we do the reverse, ie substract 0x10000 and
     then divide by 16.  Oh, and because we took away so
-    much memory, we only end up supplying 0x5000U. */
-    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x5000U);
+    much memory, we only end up supplying 0x4000U. */
+    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x4000U);
 #endif
 
 #ifdef NOVM
@@ -2734,7 +2734,7 @@ void PosTerminate(int rc)
     return;
 }
 
-#ifndef __32BIT__
+#if 0 /* ndef __32BIT__ */
 void exit(int rc)
 {
     PosTerminate(rc);
@@ -2959,8 +2959,9 @@ unsigned int PosMonitor(void)
     int pos1;
     int pos2;
 
+    printf("current module loaded at %p, entry point %p\n", loadaddr, entry_point);
     printf("enter a hex address or range, 0 to exit\n");
-#ifdef __32BIT__
+
     while (1)
     {
         fgets(buf, sizeof buf, stdin);
@@ -3013,7 +3014,7 @@ unsigned int PosMonitor(void)
             printf("%s\n", prtln);
         }
     }
-#endif
+
     return (0);
 }
 
@@ -3450,7 +3451,8 @@ void int0(unsigned int *regptrs)
     printf("and that caller might have done a near call to %p\n",
            MK_FP(regptrs[11],
                  (unsigned short)(FP_OFF(retaddr) + retaddr[-1])));
-    printf("halting\n");
+    PosMonitor();
+    printf("System halting\n");
     for (;;) ;
     return;
 }
