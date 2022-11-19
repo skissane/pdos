@@ -2954,7 +2954,6 @@ unsigned int PosMonitor(void)
     char *p;
     char prtln[100];
     size_t x;
-    size_t count;
     int c;
     int pos1;
     int pos2;
@@ -2974,15 +2973,14 @@ unsigned int PosMonitor(void)
             sscanf(p + 1, "%p", &endaddr);
         }
 
-        count = endaddr - addr + 1;
         x = 0;
-        while (x != count)
+        do
         {
-            c = addr[x];
+            c = *addr;
             if (x % 16 == 0)
             {
                 memset(prtln, ' ', sizeof prtln);
-                sprintf(prtln, "%p ", addr + x);
+                sprintf(prtln, "%p ", addr);
                 pos1 = 10;
                 pos2 = 47;
             }
@@ -3007,7 +3005,9 @@ unsigned int PosMonitor(void)
                 printf("%s\n", prtln);
             }
             x++;
-        }
+          /* the while condition takes into account segmented memory where
+             the ++ could have caused a wrap back to 0 */
+        } while (addr++ != endaddr);
         if (x % 16 != 0)
         {
             printf("%s\n", prtln);
