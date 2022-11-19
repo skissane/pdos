@@ -10,7 +10,6 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj dossupc.obj dossupa.obj
   if exist watcom.lib del watcom.lib
-  wlib -b -q watcom +dosstart.obj
   wlib -b -q watcom +stdio.obj
   wlib -b -q watcom +string.obj
   wlib -b -q watcom +stdlib.obj
@@ -25,11 +24,20 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcom +math.obj
   wlib -b -q watcom +dossupc.obj
   wlib -b -q watcom +dossupa.obj
-  wlink File pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose
+# To create a COM file, make it "Form dos com" and change the name to .com
+# Stack size has no meaning for .com (the SP will be set by the OS, and the
+# SS will be set to the CS/DS/ES). Also dosstart.obj needs to come first
+# for a COM file, as the IP is always set to 0100H. Also it needs to be
+# built with -mt and memmodel=tiny. If you build a .exe instead of a .com
+# with all of that in place, the utility exe2bin, if available, can be
+# used to convert a .exe into a .com if you are using a linker that
+# can't directly produce a .com file.
+  wlink File dosstart.obj,pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose
 
 .c.obj:
   $(CC) $(COPTS) $<
 
+# Add -DMAKECOM to this if you want to produce a COM file
 dosstart.obj: dosstart.asm
 #  ml -c -Dmemodel=large dosstart.asm
   wasm -zcm -q -DWATCOM -Dmemodel=large dosstart.asm

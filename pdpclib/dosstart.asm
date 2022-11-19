@@ -32,7 +32,9 @@ public __psp
 public __envptr
 public __osver
 
+ifndef MAKECOM
 .stack 1000h
+endif
 
 .data
 
@@ -42,6 +44,10 @@ __envptr dd ?
 __osver dw ?
 
 .code
+
+ifdef MAKECOM
+org 100h
+endif
 
 top:
 
