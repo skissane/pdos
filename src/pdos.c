@@ -2960,11 +2960,12 @@ unsigned int PosMonitor(void)
     int pos2;
 
     printf("current module loaded at %p, entry point %p\n", loadaddr, entry_point);
-    printf("enter a hex address or range, 0 to exit\n");
+    printf("enter a hex address or range, exit to exit\n");
 
     while (1)
     {
         fgets(buf, sizeof buf, stdin);
+        if (strcmp(buf, "exit\n") == 0) break;
         sscanf(buf, "%p", &addr);
         endaddr = addr;
         p = strchr(buf, '-');
@@ -2972,8 +2973,6 @@ unsigned int PosMonitor(void)
         {
             sscanf(p + 1, "%p", &endaddr);
         }
-
-        if ((addr == NULL) && (p == NULL)) break;
 
         count = endaddr - addr + 1;
         x = 0;
@@ -2984,8 +2983,8 @@ unsigned int PosMonitor(void)
             {
                 memset(prtln, ' ', sizeof prtln);
                 sprintf(prtln, "%p ", addr + x);
-                pos1 = 9;
-                pos2 = 46;
+                pos1 = 10;
+                pos2 = 47;
             }
             sprintf(prtln + pos1, "%0.2X", c);
             if (isprint((unsigned char)c))
