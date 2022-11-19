@@ -3493,6 +3493,8 @@ void int1(unsigned int *regptrs)
            regptrs[3], regptrs[2], regptrs[1], regptrs[0]);
     printf("BP %04X CS %04X IP %04X FLAGS %04X\n",
            regptrs[9], regptrs[11], regptrs[10], regptrs[12]);
+    /* there are 10 pushes done, so account for them */
+    printf("SS %04X SP %04X\n", FP_SEG(regptrs), FP_OFF(regptrs) + 10 * 2);
     printf("module loaded at %p, entry point %p\n", loadaddr, entry_point);
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
     p = MK_FP(regptrs[11], regptrs[10]);
@@ -3533,6 +3535,8 @@ void int3(unsigned int *regptrs)
            regptrs[3], regptrs[2], regptrs[1], regptrs[0]);
     printf("BP %04X CS %04X IP %04X FLAGS %04X\n",
            regptrs[9], regptrs[11], regptrs[10], regptrs[12]);
+    /* there are 10 pushes done, so account for them */
+    printf("SS %04X SP %04X\n", FP_SEG(regptrs), FP_OFF(regptrs) + 10 * 2);
     printf("module loaded at %p, entry point %p\n", loadaddr, entry_point);
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
     regptrs[10]--;
