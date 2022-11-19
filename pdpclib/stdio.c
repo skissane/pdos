@@ -4023,6 +4023,7 @@ static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s)
     int cnt = 0;
     char *cptr;
     int *iptr;
+    void **vptr;
     unsigned int *uptr;
     long *lptr;
     unsigned long *luptr;
@@ -4258,6 +4259,10 @@ static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s)
                             else if (modshort) hptr = va_arg(arg, short *);
                             else iptr = va_arg(arg, int *);
                         }
+                        else if (*format == 'p')
+                        {
+                            vptr = va_arg(arg, void **);
+                        }
                         else
                         {
                             if (modlong) luptr = va_arg(arg, unsigned long *);
@@ -4380,6 +4385,10 @@ static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s)
                             else if (modshort) *hptr = (short)lval;
                                 /* h modifier */
                             else *iptr=(int)lval;
+                        }
+                        else if (*format == 'p')
+                        {
+                            *vptr = (void *)x;
                         }
                         else
                         {
