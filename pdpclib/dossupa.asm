@@ -11,6 +11,7 @@
 
 extrn __divide:proc
 extrn __modulo:proc
+extrn __addhp:proc
 
 public fidrqq
 public fiwrqq
@@ -543,6 +544,24 @@ call f_ludiv@
 
 ret
 _U4D endp
+endif
+
+
+ifdef WATCOM
+; increment address dx:ax by cx:bx, normalized result in dx:ax
+public _PIA
+_PIA proc
+
+push cx
+push bx
+push dx
+push ax
+
+call __addhp
+add sp,8
+
+ret
+_PIA endp
 endif
 
 

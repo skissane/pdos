@@ -101,6 +101,25 @@ unsigned long CTYP __modulo(unsigned long x, unsigned long y)
     return (x);
 }
 
+/* dx:ax is actually a far pointer, and the return should be a
+   normalized far pointer */
+unsigned long CTYP __addhp(unsigned int dx,
+                           unsigned int ax,
+                           unsigned int cx,
+                           unsigned int bx)
+{
+    unsigned long first;
+
+    first = (unsigned long)ax + bx;
+    ax = first & 0x0f;
+    first >>= 4;
+    first += dx;
+    first += cx;
+    first <<= 16;
+
+    return (first);
+}
+
 #ifdef __WATCOMC__
 void _cstart(void)
 {
