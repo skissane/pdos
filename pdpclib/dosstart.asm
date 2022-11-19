@@ -116,7 +116,7 @@ mov cl,4
 shl bx,cl
 
 mov bp, sp
-sub bp, bx
+add bp, bx
 mov ss, dx
 mov sp, bp
 ; And that null PSP thing needs to be redone
