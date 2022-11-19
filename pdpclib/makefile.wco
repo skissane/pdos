@@ -1,0 +1,31 @@
+# Produce MSDOS library suitable for use by PDOS/86
+# Build with pdmake -f makefile.wco
+
+CC=wcl
+COPTS=-oneatx -ecc -zp1 -q -w -c -I. -I..\src -ml -zl -D__MSDOS__ -DPDOS86 -DBUFSIZ=512 -fpi87 -s -zdp -zu
+
+pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj pdossupc.obj dossupa.obj
+  if exist watcomo.lib del watcomo.lib
+  wlib -b -q watcomo +stdio.obj
+  wlib -b -q watcomo +string.obj
+  wlib -b -q watcomo +stdlib.obj
+  wlib -b -q watcomo +start.obj
+  wlib -b -q watcomo +time.obj
+  wlib -b -q watcomo +errno.obj
+  wlib -b -q watcomo +assert.obj
+  wlib -b -q watcomo +signal.obj
+  wlib -b -q watcomo +locale.obj
+  wlib -b -q watcomo +ctype.obj
+  wlib -b -q watcomo +setjmp.obj
+  wlib -b -q watcomo +math.obj
+  wlib -b -q watcomo +pdossupc.obj
+  wlib -b -q watcomo +dossupa.obj
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+dossupa.obj: dossupa.asm
+#  ml -c -Dmemodel=large -DWATCOM dossupa.asm
+  wasm -zcm -q -DWATCOM -Dmemodel=large dossupa.asm
