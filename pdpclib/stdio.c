@@ -2689,7 +2689,9 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         if (specifier == 'p')
         {
             lng = 1;
+            lvalue = (long)va_arg(*arg, void *);
         }
+        else
 #endif
         if (lng)
         {
