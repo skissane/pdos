@@ -111,6 +111,7 @@ static int ff_search(void);
 
 #ifdef __32BIT__
 int int0(unsigned int *regs);
+int int1(unsigned int *regs);
 int int3(unsigned int *regs);
 int int0E(unsigned int *regs);
 int int20(unsigned int *regs);
@@ -228,6 +229,9 @@ static unsigned long psector; /* partition sector offset */
 static int attr;
 /* note that on EBCDIC, the alphabet isn't contiguous */
 static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+static unsigned int *lastrp; /* last regptrs */
+static int autotrace = 0;
 
 #define HANDTYPE_FILE 0
 #define HANDTYPE_COMM 1
@@ -2969,6 +2973,12 @@ unsigned int PosMonitor(void)
         if (strcmp(buf, "help\n") == 0)
         {
             printf("zap <addr> <val> - change a byte\n");
+            printf("trace\n");
+            continue;
+        }
+        else if (strcmp(buf, "trace\n") == 0)
+        {
+            lastrp[12] |= 0x100;
             continue;
         }
         else if (strncmp(buf, "zap ", 4) == 0)
@@ -3468,6 +3478,48 @@ void int0(unsigned int *regptrs)
     return;
 }
 
+void int1(unsigned int *regptrs)
+{
+    unsigned short ss;
+    unsigned char *chain;
+    unsigned short *retaddr;
+    char buf[20];
+    unsigned char *p;
+
+    printf("tracing\n");
+    printf("AX %04X BX %04X CX %04X DX %04X\n",
+           regptrs[8], regptrs[6], regptrs[5], regptrs[4]);
+    printf("SI %04X DI %04X DS %04X ES %04X\n",
+           regptrs[3], regptrs[2], regptrs[1], regptrs[0]);
+    printf("BP %04X CS %04X IP %04X FLAGS %04X\n",
+           regptrs[9], regptrs[11], regptrs[10], regptrs[12]);
+    printf("module loaded at %p, entry point %p\n", loadaddr, entry_point);
+    printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
+    p = MK_FP(regptrs[11], regptrs[10]);
+    printf("instruction at that (new) address starts with %x\n", *p);
+    if (!autotrace)
+    {
+        printf("hit enter to continue tracing, or monitor or stop or auto\n");
+        fgets(buf, sizeof buf, stdin);
+        if (strcmp(buf, "monitor\n") == 0)
+        {
+            /* should probably give more shots at monitor */
+            PosMonitor();
+            fgets(buf, sizeof buf, stdin);
+        }
+        if (strcmp(buf, "stop\n") == 0)
+        {
+            return;
+        }
+        if (strcmp(buf, "auto\n") == 0)
+        {
+            autotrace = 1;
+        }
+    }
+    regptrs[12] |= 0x100;
+    return;
+}
+
 void int3(unsigned int *regptrs)
 {
     unsigned short ss;
@@ -3485,6 +3537,7 @@ void int3(unsigned int *regptrs)
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
     regptrs[10]--;
     printf("adjusting to %p\n", MK_FP(regptrs[11], regptrs[10]));
+    lastrp = regptrs;
     PosMonitor();
     /* The person running the monitor should have zapped the x'cc' to
        something else before exiting, and then we return to the app */

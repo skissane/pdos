@@ -7,6 +7,7 @@
 public instint
 
 extrn int0:proc
+extrn int1:proc
 extrn int3:proc
 extrn int20:proc
 extrn int21:proc
@@ -14,6 +15,7 @@ extrn int25:proc
 extrn int26:proc
 
 public handler0
+public handler1
 public handler3
 public handler20
 public handler21
@@ -31,6 +33,10 @@ instint proc uses bx es
         mov es:[0h], bx
         mov bx, seg handler0
         mov es:[02h], bx
+        mov bx, offset handler1
+        mov es:[04h], bx
+        mov bx, seg handler1
+        mov es:[06h], bx
         mov bx, offset handler3
         mov es:[0ch], bx
         mov bx, seg handler3
@@ -109,6 +115,45 @@ notclear0:
         pop bp
         iret
 handler0 endp
+
+handler1 proc
+        push bp
+        push ax
+        push ax   ; dummy, actually cflag storage
+        push bx
+        push cx
+        push dx
+        push si
+        push di
+        push ds
+        push es
+
+        mov dx, DGROUP
+        mov ds, dx
+        mov ax, sp
+        push ss
+        push ax
+        call int1
+        add sp, 4
+
+        pop es
+        pop ds
+        pop di
+        pop si
+        pop dx
+        pop cx
+        pop bx
+        pop ax   ; actually cflag
+
+; Don't alter carry flag for this interrupt
+; There is some redundant code here that should be cleaned up
+        pop ax
+        push bp
+        mov bp, sp
+        pop bp
+        pop bp
+        iret
+handler1 endp
 
 handler3 proc
         push bp
