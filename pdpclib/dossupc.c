@@ -123,6 +123,27 @@ unsigned long CTYP __addhpi(unsigned int dx,
     return (first);
 }
 
+/* dx:ax is a huge pointer to which a long is subtracted, and
+   the return should be a normalized huge pointer */
+unsigned long CTYP __subhpi(unsigned int dx,
+                            unsigned int ax,
+                            unsigned int cx,
+                            unsigned int bx)
+{
+    unsigned long first;
+
+    first = (unsigned long)ax - bx;
+    ax = first & 0x0f;
+
+    first >>= 4;
+    first += dx;
+    first -= ((unsigned long)cx << 12);
+    first <<= 16;
+    first += ax;
+
+    return (first);
+}
+
 /* dx:ax and cx:bx are huge pointers, and the return should be
    the number of bytes between the two */
 unsigned long CTYP __subhphp(unsigned int dx,

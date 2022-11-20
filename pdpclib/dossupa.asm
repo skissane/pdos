@@ -12,6 +12,7 @@
 extrn __divide:proc
 extrn __modulo:proc
 extrn __addhpi:proc
+extrn __subhpi:proc
 extrn __subhphp:proc
 extrn __cmphphp:proc
 
@@ -586,6 +587,31 @@ pop bx
 
 ret
 _PIA endp
+endif
+
+
+ifdef WATCOM
+; decrement address dx:ax by cx:bx, normalized result in dx:ax
+public _PIS
+_PIS proc
+
+; need to preserve these, as Watcom C apparently doesn't
+push bx
+push cx
+
+push bx
+push cx
+push ax
+push dx
+
+call __subhpi
+add sp,8
+
+pop cx
+pop bx
+
+ret
+_PIS endp
 endif
 
 
