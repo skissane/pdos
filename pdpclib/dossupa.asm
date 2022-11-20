@@ -554,10 +554,10 @@ ifdef WATCOM
 public _PIA
 _PIA proc
 
-push cx
 push bx
-push dx
+push cx
 push ax
+push dx
 
 call __addhp
 add sp,8
@@ -572,10 +572,10 @@ ifdef WATCOM
 public _PTS
 _PTS proc
 
-push cx
 push bx
-push dx
+push cx
 push ax
+push dx
 
 call __subhp
 add sp,8
@@ -590,10 +590,10 @@ ifdef WATCOM
 public _PTC
 _PTC proc
 
-push cx
 push bx
-push dx
+push cx
 push ax
+push dx
 
 call __cmphp
 add sp,8
