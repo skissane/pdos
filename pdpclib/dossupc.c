@@ -131,8 +131,8 @@ unsigned long CTYP __subhp(unsigned int dx,
 {
     unsigned long first;
 
-    first = (unsigned long)dx << 4 + ax;
-    first -= (unsigned long)cx << 16;
+    first = ((unsigned long)dx << 4) + ax;
+    first -= (unsigned long)cx << 4;
     first -= bx;
     ax = first & 0x0f;
     first >>= 4;
@@ -152,11 +152,13 @@ int CTYP __cmphp(unsigned int dx,
     unsigned long first;
     unsigned long second;
 
-    first = (unsigned long)dx << 4 + ax;
-    second = (unsigned long)cx << 4 + bx;
-    if (first < second) return (-1);
-    else if (first == second) return (0);
-    return (1);
+    first = ((unsigned long)dx << 4) + ax;
+    second = ((unsigned long)cx << 4) + bx;
+    /* these values may look like they're the wrong way around,
+       but that's because of the cmp instruction being used on return */
+    if (first < second) return (1);
+    else if (first == second) return (2);
+    return (3);
 }
 #endif
 

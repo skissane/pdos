@@ -598,8 +598,10 @@ push ax
 call __cmphp
 add sp,8
 
-; ax will be set to -1, 0 or 1
-cmp ax, 0H
+; ax will be set to 1, 2 or 3
+; so there is no issues with respect to whether a
+; signed or unsigned compare is being done
+cmp ax, 2H
 
 ret
 _PTC endp
