@@ -554,6 +554,10 @@ ifdef WATCOM
 public _PIA
 _PIA proc
 
+; need to preserve these, as Watcom C apparently doesn't
+push bx
+push cx
+
 push bx
 push cx
 push ax
@@ -561,6 +565,9 @@ push dx
 
 call __addhpi
 add sp,8
+
+pop cx
+pop bx
 
 ret
 _PIA endp
@@ -934,8 +941,17 @@ endif
 
 public __brkpoint
 __brkpoint proc
-fred db 0xcc
+int 3 ; this is an x'cc' which will need to be zapped with x'90'
+      ; before you can progress
 ret
 __brkpoint endp
+
+; It is convenient to have a second breakpoint function for now
+public __brkpoint2
+__brkpoint2 proc
+int 3 ; this is an x'cc' which will need to be zapped with x'90'
+      ; before you can progress
+ret
+__brkpoint2 endp
 
 end
