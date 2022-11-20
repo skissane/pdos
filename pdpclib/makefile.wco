@@ -2,7 +2,7 @@
 # Build with pdmake -f makefile.wco
 
 CC=wcl
-COPTS=-oneatx -ecc -zp1 -q -w -c -I. -I..\src -ml -zl -D__MSDOS__ -DPDOS86 -DBUFSIZ=512 -fpi87 -s -zdp -zu
+COPTS=-D__SZ4__ -oneatx -ecc -zp1 -q -w -c -I. -I..\src -mh -zl -D__MSDOS__ -DPDOS86 -DBUFSIZ=512 -fpi87 -s -zdp -zu
 
 pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
@@ -27,5 +27,5 @@ pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
   $(CC) $(COPTS) $<
 
 dossupa.obj: dossupa.asm
-#  ml -c -Dmemodel=large -DWATCOM dossupa.asm
-  wasm -zcm -q -DWATCOM -Dmemodel=large dossupa.asm
+#  ml -c -D__SZ4__ -Dmemodel=huge -DWATCOM dossupa.asm
+  wasm -zcm -q -DWATCOM -D__SZ4__ -Dmemodel=huge dossupa.asm
