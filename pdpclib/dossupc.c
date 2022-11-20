@@ -113,9 +113,10 @@ unsigned long CTYP __addhpi(unsigned int dx,
 
     first = (unsigned long)ax + bx;
     ax = first & 0x0f;
+
     first >>= 4;
     first += dx;
-    first += cx;
+    first += ((unsigned long)cx << 12);
     first <<= 16;
     first += ax;
 
