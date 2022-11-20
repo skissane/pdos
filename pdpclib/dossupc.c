@@ -117,6 +117,7 @@ unsigned long CTYP __addhp(unsigned int dx,
     first += dx;
     first += cx;
     first <<= 16;
+    first += ax;
 
     return (first);
 }
