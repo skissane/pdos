@@ -579,6 +579,10 @@ ifdef WATCOM
 public _PTS
 _PTS proc
 
+; need to preserve these, as Watcom C apparently doesn't
+push bx
+push cx
+
 push bx
 push cx
 push ax
@@ -586,6 +590,9 @@ push dx
 
 call __subhphp
 add sp,8
+
+pop cx
+pop bx
 
 ret
 _PTS endp
@@ -597,6 +604,10 @@ ifdef WATCOM
 public _PTC
 _PTC proc
 
+; need to preserve these, as Watcom C apparently doesn't
+push bx
+push cx
+
 push bx
 push cx
 push ax
@@ -604,6 +615,9 @@ push dx
 
 call __cmphphp
 add sp,8
+
+pop cx
+pop bx
 
 ; ax will be set to 1, 2 or 3
 ; so there is no issues with respect to whether a
