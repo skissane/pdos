@@ -112,8 +112,10 @@ mov ds,dx
 ; ds and ss are the same so that
 ; near pointers can refer to either stack or data and still work
 
-if @DataSize
-else
+; It seems that even compact/large/huge require the same thing -
+; they expect DS=SS and may use near pointers and the stack is
+; in the DGROUP for this reason. I haven't actually observed
+; near pointers being used though.
 
 mov bx,ss
 mov ax,ds
@@ -125,11 +127,10 @@ mov bp, sp
 add bp, bx
 mov ss, dx
 mov sp, bp
-; And that null PSP thing needs to be redone
-mov ax, 0
-push ax
 
-endif
+; Even though we changed the stack, the PSP pointer should
+; still be in the right spot, because we haven't changed
+; what SS:SP is actually pointing to
 
 
 ; we are responsible for clearing our own BSS
