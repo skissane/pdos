@@ -12,6 +12,7 @@
 extrn __divide:proc
 extrn __modulo:proc
 extrn __addhp:proc
+extrn __subhp:proc
 extrn __cmphp:proc
 
 public fidrqq
@@ -563,6 +564,24 @@ add sp,8
 
 ret
 _PIA endp
+endif
+
+
+ifdef WATCOM
+; subtract address dx:ax by cx:bx, normalized result in dx:ax
+public _PTS
+_PTS proc
+
+push cx
+push bx
+push dx
+push ax
+
+call __subhp
+add sp,8
+
+ret
+_PTS endp
 endif
 
 

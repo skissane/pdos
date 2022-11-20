@@ -121,6 +121,26 @@ unsigned long CTYP __addhp(unsigned int dx,
     return (first);
 }
 
+/* dx:ax is actually a far pointer, and the return should be a
+   normalized far pointer */
+unsigned long CTYP __subhp(unsigned int dx,
+                           unsigned int ax,
+                           unsigned int cx,
+                           unsigned int bx)
+{
+    unsigned long first;
+
+    first = (unsigned long)dx << 4 + ax;
+    first -= (unsigned long)cx << 16;
+    first -= bx;
+    ax = first & 0x0f;
+    first >>= 4;
+    first <<= 16;
+    first += ax;
+
+    return (first);
+}
+
 /* dx:ax and cx:bx are far pointers to be compared */
 /* return -1, 0 or 1 */
 int CTYP __cmphp(unsigned int dx,
