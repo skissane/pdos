@@ -1,8 +1,10 @@
 # Produce MSDOS executable using Watcom C
 # Build with wmake -u -f makefile.wcd or pdmake -f makefile.wcd
 
+# Change XXSZ4 to SZ4 (globally) to activate 32-bit size_t
+
 CC=wcl
-COPTS=-oneatx -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+COPTS=-D__XXSZ4__ -oneatx -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
 
@@ -40,8 +42,8 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 # Add -DMAKECOM to this if you want to produce a COM file
 dosstart.obj: dosstart.asm
 #  ml -c -Dmemodel=large dosstart.asm
-  wasm -zcm -q -DWATCOM -Dmemodel=large dosstart.asm
+  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dosstart.asm
 
 dossupa.obj: dossupa.asm
 #  ml -c -Dmemodel=large -DWATCOM dossupa.asm
-  wasm -zcm -q -DWATCOM -Dmemodel=large dossupa.asm
+  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm

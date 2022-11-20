@@ -103,8 +103,9 @@
 #endif
 extern int CTYP __creat(const char *filename, int mode, int *errind);
 extern int CTYP __open(const char *filename, int mode, int *errind);
-extern int CTYP __read(int handle, void *buf, size_t len, int *errind);
-extern int CTYP __write(int handle, const void *buf, size_t len, int *errind);
+extern int CTYP __read(int handle, void *buf, unsigned int len, int *errind);
+extern int CTYP __write(int handle, const void *buf, unsigned int len,
+                        int *errind);
 extern int CTYP __seek(int handle, long offset, int whence);
 extern void CTYP __close(int handle);
 extern void CTYP __remove(const char *filename);

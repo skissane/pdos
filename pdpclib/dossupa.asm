@@ -109,7 +109,7 @@ ret
 __creat endp
 
 
-; extern int CTYP __read(int handle, void *buf, size_t len, int *errind);
+; extern int CTYP __read(int handle, void *buf, unsigned int len, int *errind);
 
 public __read
 __read proc uses bx cx dx ds, \
@@ -150,7 +150,8 @@ ret
 __read endp
 
 
-; extern int CTYP __write(int handle, const void *buf, size_t len, int *errind);
+; extern int CTYP __write(int handle, const void *buf, unsigned int len,
+;                         int *errind);
 
 public __write
 __write proc uses bx cx dx ds, \
@@ -277,7 +278,11 @@ __rename endp
 ; void CTYP __allocmem(size_t size, void **ptr);
 
 public __allocmem
+ifdef __SZ4__
+__allocmem proc uses bx dx ds cx, sz:dword, res:ptr
+else
 __allocmem proc uses bx dx ds, sz:word, res:ptr
+endif
 
 if @DataSize eq 0
 
@@ -290,7 +295,15 @@ ret
 
 else
 
+ifdef __SZ4__
+mov ax, word ptr sz+2
+mov cl, 12
+shl ax, cl
+mov bx, word ptr sz
+else
 mov bx,sz
+mov ax,0
+endif
 
 shr bx,1
 shr bx,1
@@ -298,6 +311,8 @@ shr bx,1
 shr bx,1
 
 add bx,1
+add bx,ax
+
 mov ah, 48h
 int 21h
 
