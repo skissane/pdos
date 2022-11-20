@@ -12,6 +12,7 @@
 extrn __divide:proc
 extrn __modulo:proc
 extrn __addhp:proc
+extrn __cmphp:proc
 
 public fidrqq
 public fiwrqq
@@ -562,6 +563,27 @@ add sp,8
 
 ret
 _PIA endp
+endif
+
+
+ifdef WATCOM
+; compare address dx:ax to cx:bx
+public _PTC
+_PTC proc
+
+push cx
+push bx
+push dx
+push ax
+
+call __cmphp
+add sp,8
+
+; ax will be set to -1, 0 or 1
+cmp ax, 0H
+
+ret
+_PTC endp
 endif
 
 
