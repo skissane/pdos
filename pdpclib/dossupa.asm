@@ -932,4 +932,10 @@ ret
 _CHP endp
 endif
 
+public __brkpoint
+__brkpoint proc
+fred db 0xcc
+ret
+__brkpoint endp
+
 end
