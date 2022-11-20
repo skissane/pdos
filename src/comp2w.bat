@@ -1,13 +1,13 @@
-wasm -zq -zcm -Dmemodel=large -DWATCOM pdosstrt.asm
-wasm -zq -zcm -Dmemodel=large support.asm
-wasm -zq -zcm -Dmemodel=large lldos.asm
-wasm -zq -zcm -Dmemodel=large handlers.asm
-wasm -zq -zcm -Dmemodel=large -DWATCOM ..\pdpclib\dossupa.asm
-wcl -oneatx -zp1 -ecc -q -w -c -ml -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib memmgr.c patmat.c process.c
-wcl -oneatx -zp1 -ecc -q -w -c -ml -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib int21.c log.c helper.c
-wcl -oneatx -zp1 -ecc -q -w -c -ml -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib bos.c fat.c ..\pdpclib\string.c ..\pdpclib\ctype.c ..\pdpclib\dossupc.c
+wasm -zq -zcm -D__SZ4__ -Dmemodel=huge -DWATCOM pdosstrt.asm
+wasm -zq -zcm -D__SZ4__ -Dmemodel=huge support.asm
+wasm -zq -zcm -D__SZ4__ -Dmemodel=huge lldos.asm
+wasm -zq -zcm -D__SZ4__ -Dmemodel=huge handlers.asm
+wasm -zq -zcm -D__SZ4__ -Dmemodel=huge -DWATCOM ..\pdpclib\dossupa.asm
+wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib memmgr.c patmat.c process.c
+wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib int21.c log.c helper.c
+wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib bos.c fat.c ..\pdpclib\string.c ..\pdpclib\ctype.c ..\pdpclib\dossupc.c
 rem bcc -w- to switch off warnings
-wcl -oneatx -zp1 -ecc -q -w -c -ml -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib pdos.c
+wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib pdos.c
 
 if exist os.lib del os.lib
 wlib -b -q os +bos.obj
