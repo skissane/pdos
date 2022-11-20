@@ -921,18 +921,18 @@ void pdosRun(void)
     be able to supply a full 64k to DOS apps, we can't
     have the normal control buffers polluting the space.
     So we redefine everything by dividing by 16.  So in
-    order to supply 0x40000 to 0x90000, ie a size of
-    0x50000, we divide by 16 and only supply 0x5000.
+    order to supply 0x40000 to 0xA0000, ie a size of
+    0x60000, we divide by 16 and only supply 0x6000.
     We then waste the full 0x40000 to 0x50000 for use
     by this dummy memory block.  So we tell memmgr
-    that we are supplying 0x40000 for a length of 0x5000,
+    that we are supplying 0x40000 for a length of 0x6000,
     and it will happily manage the control blocks within
     that, but then before returning to the app, we multiply
     the offset by 16 and add 0x10000.  When freeing
     memory, we do the reverse, ie substract 0x10000 and
     then divide by 16.  Oh, and because we took away so
-    much memory, we only end up supplying 0x4000U. */
-    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x4000U);
+    much memory, we only end up supplying 0x5000U. */
+    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x5000U);
 #endif
 
 #ifdef NOVM
