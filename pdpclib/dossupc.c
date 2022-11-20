@@ -102,12 +102,12 @@ unsigned long CTYP __modulo(unsigned long x, unsigned long y)
 }
 
 #ifdef __WATCOMC__
-/* dx:ax is actually a far pointer, and the return should be a
-   normalized far pointer */
-unsigned long CTYP __addhp(unsigned int dx,
-                           unsigned int ax,
-                           unsigned int cx,
-                           unsigned int bx)
+/* dx:ax is a huge pointer to which a long is added, and
+   the return should be a normalized huge pointer */
+unsigned long CTYP __addhpi(unsigned int dx,
+                            unsigned int ax,
+                            unsigned int cx,
+                            unsigned int bx)
 {
     unsigned long first;
 
@@ -122,40 +122,34 @@ unsigned long CTYP __addhp(unsigned int dx,
     return (first);
 }
 
-/* dx:ax is actually a far pointer, and the return should be a
-   normalized far pointer */
-unsigned long CTYP __subhp(unsigned int dx,
-                           unsigned int ax,
-                           unsigned int cx,
-                           unsigned int bx)
-{
-    unsigned long first;
-
-    first = ((unsigned long)dx << 4) + ax;
-    first -= (unsigned long)cx << 4;
-    first -= bx;
-    ax = first & 0x0f;
-    first >>= 4;
-    first <<= 16;
-    first += ax;
-
-    return (first);
-}
-
-/* dx:ax and cx:bx are far pointers to be compared */
-/* return -1, 0 or 1 */
-int CTYP __cmphp(unsigned int dx,
-                 unsigned int ax,
-                 unsigned int cx,
-                 unsigned int bx)
+/* dx:ax and cx:bx are huge pointers, and the return should be
+   the number of bytes between the two */
+unsigned long CTYP __subhphp(unsigned int dx,
+                             unsigned int ax,
+                             unsigned int cx,
+                             unsigned int bx)
 {
     unsigned long first;
     unsigned long second;
 
     first = ((unsigned long)dx << 4) + ax;
     second = ((unsigned long)cx << 4) + bx;
-    /* these values may look like they're the wrong way around,
-       but that's because of the cmp instruction being used on return */
+    return (first - second);
+}
+
+/* dx:ax and cx:bx are huge pointers to be compared */
+/* return 1, 2 or 3 */
+int CTYP __cmphphp(unsigned int dx,
+                   unsigned int ax,
+                   unsigned int cx,
+                   unsigned int bx)
+{
+    unsigned long first;
+    unsigned long second;
+
+    first = ((unsigned long)dx << 4) + ax;
+    second = ((unsigned long)cx << 4) + bx;
+
     if (first < second) return (1);
     else if (first == second) return (2);
     return (3);

@@ -11,9 +11,9 @@
 
 extrn __divide:proc
 extrn __modulo:proc
-extrn __addhp:proc
-extrn __subhp:proc
-extrn __cmphp:proc
+extrn __addhpi:proc
+extrn __subhphp:proc
+extrn __cmphphp:proc
 
 public fidrqq
 public fiwrqq
@@ -559,7 +559,7 @@ push cx
 push ax
 push dx
 
-call __addhp
+call __addhpi
 add sp,8
 
 ret
@@ -568,7 +568,7 @@ endif
 
 
 ifdef WATCOM
-; subtract address dx:ax by cx:bx, normalized result in dx:ax
+; subtract address dx:ax with address cx:bx, number of bytes in dx:ax
 public _PTS
 _PTS proc
 
@@ -577,7 +577,7 @@ push cx
 push ax
 push dx
 
-call __subhp
+call __subhphp
 add sp,8
 
 ret
@@ -595,7 +595,7 @@ push cx
 push ax
 push dx
 
-call __cmphp
+call __cmphphp
 add sp,8
 
 ; ax will be set to 1, 2 or 3
