@@ -53,7 +53,7 @@ static void int80handler(union REGS *regsin,
                         struct SREGS *sregs)
 {
     void *p;
-    size_t writtenbytes;
+    unsigned int writtenbytes;
 
     switch (regsin->d.eax)
     {

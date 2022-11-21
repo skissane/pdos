@@ -93,14 +93,14 @@ static void int21handler(union REGS *regsin,
     void *p;
     void *q;
     int handle;
-    size_t readbytes;
-    size_t writtenbytes;
+    unsigned int readbytes;
+    unsigned int writtenbytes;
     long newpos;
     int ret;
     int attr;
     void *tempdta;
     unsigned long pid;
-    size_t sz;
+    unsigned int sz;
 
     switch (regsin->h.ah)
     {
