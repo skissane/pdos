@@ -31,18 +31,18 @@ int __creat(const char *filename, int mode, int *errind)
     return (handle);
 }
 
-int __read(int handle, void *buf, size_t len, int *errind)
+int __read(int handle, void *buf, unsigned int len, int *errind)
 {
-    size_t readbytes;
+    unsigned int readbytes;
 
     if (PosReadFile(handle, buf, len, &readbytes)) *errind = 1;
     else *errind = 0;
     return (readbytes);
 }
 
-int __write(int handle, const void *buf, size_t len, int *errind)
+int __write(int handle, const void *buf, unsigned int len, int *errind)
 {
-    size_t writtenbytes;
+    unsigned int writtenbytes;
 
     if (PosWriteFile(handle, buf, len, &writtenbytes)) *errind = 1;
     else *errind = 0;
