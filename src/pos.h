@@ -222,13 +222,13 @@ int PosCloseFile(int handle); /* func 3e */
 
 int PosReadFile(int fh, /* func 3f */
                 void *data,
-                size_t bytes,
-                size_t *readbytes);
+                unsigned int bytes,
+                unsigned int *readbytes);
 
 int PosWriteFile(int handle, /* func 40 */
                  const void *data,
-                 size_t len,
-                 size_t *writtenbytes);
+                 unsigned int len,
+                 unsigned int *writtenbytes);
 
 int PosDeleteFile(const char *fname); /* func 41 */
 
@@ -338,7 +338,9 @@ void PosPowerOff(void); /* func f6.0a */
  * (future versions might make the structure bigger, we know whether client
  * wants old or new version based on the passed size)
  */
-int PosProcessGetInfo(unsigned long pid, PDOS_PROCINFO *info, size_t infoSz);
+int PosProcessGetInfo(unsigned long pid,
+                      PDOS_PROCINFO *info,
+                      unsigned int infoSz);
 
 /* Func F6.0D - Get memory usage stats for given process
  * pid=0 for current process
@@ -349,7 +351,7 @@ void PosClearScreen(void); /* func f6.30 */
 
 void PosMoveCursor(int row, int col); /* func f6.31 */
 
-int PosGetVideoInfo(pos_video_info *info, size_t size); /* func f6.32 */
+int PosGetVideoInfo(pos_video_info *info, unsigned int size); /* func f6.32 */
 
 int PosKeyboardHit(void); /* func f6.33 */
 
