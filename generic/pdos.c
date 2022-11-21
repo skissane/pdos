@@ -273,7 +273,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     return (0);
 }
 
-int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
+int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
 {
     /* printf("got request to read %lu bytes\n", (unsigned long)bytes); */
     if (fh < 3)
@@ -310,7 +310,10 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     return (0);
 }
 
-int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
+int PosWriteFile(int fh,
+                 const void *data,
+                 unsigned int len,
+                 unsigned int *writtenbytes)
 {
     if (fh < 3)
     {
@@ -435,7 +438,7 @@ void *PosGetDTA(void)
 static int ff_search(void)
 {
     DIRENT dirent;
-    size_t readbytes;
+    unsigned int readbytes;
 
     while (1)
     {
