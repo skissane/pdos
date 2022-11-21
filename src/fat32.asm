@@ -288,7 +288,7 @@ mov [lbalow], ax
 mov [offst],bx
 mov [segmnt],es
 mov ah,042h
-mov si,lba_packet
+mov si,offset lba_packet
 mov dl, [BootDisk]  ;Grab our boot disk
 int 013h        ; BIOS LBA read
 
