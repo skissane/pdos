@@ -139,8 +139,8 @@ static int fileCreat(const char *fnm, int attrib, int *handle);
 static int dirCreat(const char *dnm, int attrib);
 static int newFileCreat(const char *fnm, int attrib, int *handle);
 static int fileOpen(const char *fnm, int *handle);
-static int fileWrite(int fno, const void *buf, size_t szbuf,
-                     size_t *writtenbytes);
+static int fileWrite(int fno, const void *buf, unsigned int szbuf,
+                     unsigned int *writtenbytes);
 static int fileDelete(const char *fnm);
 static int dirDelete(const char *dnm);
 static int fileSeek(int fno, long offset, int whence, long *newpos);
@@ -150,7 +150,10 @@ static int opennul(int *handle);
 static int openzero(int *handle);
 static int openscap(int num, int *handle);
 static int fileClose(int fno);
-static int fileRead(int fno, void *buf, size_t szbuf, size_t *readbytes);
+static int fileRead(int fno,
+                    void *buf,
+                    unsigned int szbuf,
+                    unsigned int *readbytes);
 static void accessDisk(int drive);
 void dumplong(unsigned long x);
 void dumpbuf(unsigned char *buf, int len);
@@ -196,7 +199,11 @@ static MEMMGR btlmem;
 
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
+#ifdef __SZ4__
+#define PDOS16_MEMSTART 0x4800
+#else
 #define PDOS16_MEMSTART 0x4000
+#endif
 #define memmgrAllocate(m,b,i) pdos16MemmgrAllocate(m,b,i)
 #define memmgrFree(m,p) pdos16MemmgrFree(m,p)
 #define memmgrSetOwner(m,p,o) pdos16MemmgrSetOwner(m,p,o)
@@ -932,7 +939,14 @@ void pdosRun(void)
     memory, we do the reverse, ie substract 0x10000 and
     then divide by 16.  Oh, and because we took away so
     much memory, we only end up supplying 0x5000U. */
+#ifndef __SZ4__
     memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x5000U);
+#else
+    /* the huge memory model, 32-bit size_t executable is bigger, so we
+       can't reclaim the full extra 64k */
+    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x58000UL);
+#endif
+
 #endif
 
 #ifdef NOVM
@@ -1307,7 +1321,7 @@ void PosTermNoRC(void)
 unsigned int PosDisplayOutput(unsigned int ch)
 {
     unsigned char buf[1];
-    size_t writtenbytes;
+    unsigned int writtenbytes;
 
     buf[0] = ch;
     PosWriteFile(1, buf, 1, &writtenbytes);
@@ -1319,7 +1333,7 @@ unsigned int PosDisplayOutput(unsigned int ch)
 unsigned int PosDirectConsoleOutput(unsigned int ch)
 {
     unsigned char buf[1];
-    size_t writtenbytes;
+    unsigned int writtenbytes;
 
     buf[0] = ch;
     PosWriteFile(1, buf, 1, &writtenbytes);
@@ -1384,7 +1398,7 @@ unsigned int PosGetCharInputNoEcho(void)
 unsigned int PosDisplayString(const char *buf)
 {
     const char *p;
-    size_t writtenbytes;
+    unsigned int writtenbytes;
 
     p = memchr(buf, '$', (size_t)-1);
     if (p == NULL) p = buf;
@@ -1755,7 +1769,7 @@ int PosCloseFile(int fno)
     return (ret);
 }
 
-int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
+int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
 {
     unsigned char *p;
     size_t x = 0;
@@ -2242,7 +2256,10 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
     return (ret);
 }
 
-int PosWriteFile(int fh, const void *data, size_t len, size_t *writtenbytes)
+int PosWriteFile(int fh,
+                 const void *data,
+                 unsigned int len,
+                 unsigned int *writtenbytes)
 {
     unsigned char *p;
     size_t x;
@@ -2619,7 +2636,11 @@ void *PosAllocMemPages(unsigned int pages, unsigned int *maxpages)
     p = pdos16MemmgrAllocPages(&memmgr, pages, memId);
     if (p == NULL && maxpages != NULL)
     {
+#ifdef __SZ4__
+        *maxpages = memmgrMaxSize(&memmgr) / 16;
+#else
         *maxpages = memmgrMaxSize(&memmgr);
+#endif
     }
     if (p && curPCB)
     {
@@ -2631,7 +2652,7 @@ void *PosAllocMemPages(unsigned int pages, unsigned int *maxpages)
 
 static int pdosMemmgrIsBlockPtr(void *ptr)
 {
-#if !defined(__32BIT__) && !defined(__SMALLERC__)
+#if !defined(__32BIT__) && !defined(__SMALLERC__) && !defined(__SZ4__)
     unsigned long abs;
 
     abs = ADDR2ABS(ptr);
@@ -2665,7 +2686,7 @@ static void *translateProcessPtr(void *ptr)
     unsigned long abs;
 #endif
 
-#if defined(__32BIT__) || defined(__SMALLERC__)
+#if defined(__32BIT__) || defined(__SMALLERC__) || defined(__SZ4__)
     prev = (void*)(((char*)ptr)-PDOS_PROCESS_SIZE);
 #else
     abs = ADDR2ABS(ptr);
@@ -3159,7 +3180,7 @@ static void scrunchf(char *dest, char *new)
 
 static int ff_search(void)
 {
-    size_t readbytes;
+    unsigned int readbytes;
     char file[13];
     char *p;
     DIRENT dirent;
@@ -3682,7 +3703,7 @@ void int26(unsigned int *regptrs,
 
 static void loadConfig(void)
 {
-    size_t readbytes;
+    unsigned int readbytes;
     unsigned char buf[512];
     int x;
     int fh;
@@ -3826,7 +3847,7 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     unsigned char *old_entry_point;
     unsigned int maxPages;
     int fno;
-    size_t readbytes;
+    unsigned int readbytes;
     int ret;
     unsigned char *bss;
     int isexe = 0;
@@ -4623,7 +4644,10 @@ static int fileClose(int fno)
     return (0);
 }
 
-static int fileRead(int fno, void *buf, size_t szbuf, size_t *readbytes)
+static int fileRead(int fno,
+                    void *buf,
+                    unsigned int szbuf,
+                    unsigned int *readbytes)
 {
     int ret;
 
@@ -4640,8 +4664,8 @@ static int fileRead(int fno, void *buf, size_t szbuf, size_t *readbytes)
 }
 
 
-static int fileWrite(int fno, const void *buf, size_t szbuf,
-                     size_t *writtenbytes)
+static int fileWrite(int fno, const void *buf, unsigned int szbuf,
+                     unsigned int *writtenbytes)
 {
     int ret;
 
@@ -4710,7 +4734,7 @@ static int dirDelete(const char *dnm)
     int attr;
     int dotcount = 0;
     int fh;
-    size_t readbytes;
+    unsigned int readbytes;
     DIRENT dirent;
 
     p = strchr(dnm, ':');
@@ -5145,6 +5169,7 @@ static void pdos16MemmgrFree(MEMMGR *memmgr, void *ptr)
 {
     unsigned long abs;
 
+#ifndef __SZ4__
     abs = ADDR2ABS(ptr);
     abs -= 0x10000UL;
     abs -= (unsigned long)PDOS16_MEMSTART * 16;
@@ -5156,6 +5181,7 @@ static void pdos16MemmgrFree(MEMMGR *memmgr, void *ptr)
     }
     abs += (unsigned long)PDOS16_MEMSTART * 16;
     ptr = ABS2ADDR(abs);
+#endif
     (memmgrFree)(memmgr, ptr);
     return;
 }
@@ -5171,11 +5197,17 @@ static void *pdos16MemmgrAllocPages(MEMMGR *memmgr, size_t pages, int id)
     {
         pages = 1;
     }
+#ifdef __SZ4__
+    ptr = (memmgrAllocate)(memmgr, pages * 16, id);
+#else
     ptr = (memmgrAllocate)(memmgr, pages, id);
+#endif
     if (ptr == NULL)
     {
         return (ptr);
     }
+
+#ifndef __SZ4__
     abs = ADDR2ABS(ptr);
 
     /* and because we wasted 0x10000 for control blocks, we
@@ -5185,6 +5217,7 @@ static void *pdos16MemmgrAllocPages(MEMMGR *memmgr, size_t pages, int id)
     abs += (unsigned long)PDOS16_MEMSTART * 16;
     abs += 0x10000UL;
     ptr = ABS2ADDR(abs);
+#endif
     ptr = FP_NORM(ptr);
     return (ptr);
 }
@@ -5205,6 +5238,7 @@ static int pdos16MemmgrReallocPages(MEMMGR *memmgr,
     unsigned long abs;
     int ret;
 
+#ifndef __SZ4__
     abs = ADDR2ABS(ptr);
     abs -= 0x10000UL;
     abs -= (unsigned long)PDOS16_MEMSTART * 16;
@@ -5212,6 +5246,9 @@ static int pdos16MemmgrReallocPages(MEMMGR *memmgr,
     abs += (unsigned long)PDOS16_MEMSTART * 16;
     ptr = ABS2ADDR(abs);
     ret = (memmgrRealloc)(memmgr, ptr, newpages);
+#else
+    ret = (memmgrRealloc)(memmgr, ptr, newpages * 16);
+#endif
     return (ret);
 }
 
@@ -5220,12 +5257,14 @@ static void pdos16MemmgrSetOwner(MEMMGR *memmgr, void *ptr,
 {
     unsigned long abs;
 
+#ifndef __SZ4__
     abs = ADDR2ABS(ptr);
     abs -= 0x10000UL;
     abs -= (unsigned long)PDOS16_MEMSTART * 16;
     abs /= 16;
     abs += (unsigned long)PDOS16_MEMSTART * 16;
     ptr = ABS2ADDR(abs);
+#endif
     (memmgrSetOwner)(memmgr, ptr, owner);
     return;
 }
@@ -5458,7 +5497,7 @@ static int formatcwd(const char *input,char *output)
 /* INT 21,AH=0A: Read Buffered Input */
 void PosReadBufferedInput(pos_input_buffer *buf)
 {
-    size_t readBytes;
+    unsigned int readBytes;
     unsigned char cbuf[3]; /* Only 1 byte needed, but protect against any
                               buffer overflow bug in PosReadFile */
 
@@ -5610,7 +5649,7 @@ char *PosGetErrorMessageString(unsigned int errorCode) /* func f6.09 */
 }
 
 /* Func F6.0B - Get info about a process. */
-int PosProcessGetInfo(unsigned long pid, PDOS_PROCINFO *info, size_t infoSz)
+int PosProcessGetInfo(unsigned long pid, PDOS_PROCINFO *info, unsigned int infoSz)
 {
     /* Find the process */
     PDOS_PROCESS *proc = findProc(pid);
@@ -5662,7 +5701,7 @@ void PosMoveCursor(int row, int col) /* func f6.31 */
 }
 #endif
 
-int PosGetVideoInfo(pos_video_info *info, size_t size) /* func f6.32 */
+int PosGetVideoInfo(pos_video_info *info, unsigned int size) /* func f6.32 */
 {
     if (info == NULL || size != sizeof(pos_video_info))
         return POS_ERR_DATA_INVALID;
