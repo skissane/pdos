@@ -11,12 +11,12 @@
 # Links with PDPCLIB created by makefile.wcd.
 
 CC=wcl
-COPTS=-q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Icpplib\include -I..\pdpclib
+COPTS=-q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Icclib -Icclib\include -Icpplib -Icpplib\include -I. -I..\pdpclib
 
 all: clean pdcc.exe
 
-pdcc.exe: main.obj c_ppout.obj inc_path.obj cpplib.lib
-  wlink File main.obj,c_ppout.obj,inc_path.obj Name pdcc.exe Form dos Library cpplib.lib,..\pdpclib\watcom.lib Option quiet
+pdcc.exe: main.obj c_ppout.obj inc_path.obj xmalloc.obj cclib.lib cpplib.lib
+  wlink File main.obj,c_ppout.obj,inc_path.obj Name pdcc.exe Form dos Library cpplib.lib,cclib.lib,..\pdpclib\watcom.lib Option quiet
 
 cpplib.lib: cpplib\core.obj cpplib\directs.obj cpplib\errors.obj \
           cpplib\expr.obj cpplib\files.obj cpplib\chars.obj \
@@ -35,6 +35,14 @@ cpplib.lib: cpplib\core.obj cpplib\directs.obj cpplib\errors.obj \
     wlib -b -q cpplib +macro.obj
     wlib -b -q cpplib +support.obj
     wlib -b -q cpplib +symtab.obj
+    wlib -b -q cpplib +xmalloc.obj
+
+cclib.lib: cclib\cclib.obj cclib\diag.obj cclib\lexer.obj cclib\asgen.obj
+    rm -f cclib.lib
+    wlib -b -q cclib +cclib.obj
+    wlib -b -q cclib +diag.obj
+    wlib -b -q cclib +lexer.obj
+    wlib -b -q cclib +asgen.obj
 
 .c.obj:
   $(CC) $(COPTS) $<
