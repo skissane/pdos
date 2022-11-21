@@ -804,8 +804,8 @@ unsigned int fatOpenFile(FAT *fat, const char *fnm, FATFILE *fatfile)
  * fatReadFile - read from an already-open file.
  */
 
-int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
-                size_t *readbytes)
+int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
+                unsigned int *readbytes)
 {
     size_t bytesRead = 0;
     static unsigned char bbuf[MAXSECTSZ];
@@ -977,8 +977,8 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, size_t szbuf,
  * fatWriteFile - write to an already-open file.
  */
 
-int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf, size_t szbuf,
-                 size_t *writtenbytes)
+int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf,
+                 unsigned int szbuf, unsigned int *writtenbytes)
 {
     static unsigned char bbuf[MAXSECTSZ];
     size_t rem; /* remaining bytes in sector */
