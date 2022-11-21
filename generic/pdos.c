@@ -83,7 +83,11 @@ static unsigned char sect[SECTSZ];
 static FAT fat;
 static FATFILE fatfile;
 
+#ifdef __SUBC__
+static char myname[1];
+#else
 static char *myname = "";
+#endif
 
 #define MAX_HANDLE 20
 
@@ -106,7 +110,9 @@ int biosmain(int argc, char **argv)
 {
     if (argc >= 1)
     {
+#ifndef __SUBC__
         myname = argv[0];
+#endif
     }
     __minstart = 1;
     /* this parameter won't include a program name */

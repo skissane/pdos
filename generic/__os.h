@@ -52,7 +52,11 @@ typedef struct {
     void *(*malloc)(size_t size);
     FILE *Xstdin;
     FILE *Xstdout;
+#ifdef __SUBC__
+    void * (*Xfopen)(const char *filename, const char *mode);
+#else
     FILE *(*Xfopen)(const char *filename, const char *mode);
+#endif
     int (*Xfseek)(FILE *stream, long offset, int whence);
     size_t (*Xfread)(void *ptr, size_t size, size_t nmemb, FILE *stream);
     int (*Xfclose)(FILE *stream);
@@ -97,7 +101,11 @@ typedef struct {
     int (*Xungetc)(int c, FILE *stream);
     int (*Xvsprintf)(char *s, const char *format, va_list arg);
     int (*Xsprintf)(char *s, const char *format, ...);
+#ifdef __SUBC__
+    int (*signal)(int sig, int (*handler)());
+#else
     void (*(*signal)(int sig, void (*func)(int)))(int);
+#endif
     int (*raise)(int sig);
     void *(*Xcalloc)(size_t nmemb, size_t size);
     void *(*Xrealloc)(void *ptr, size_t size);
@@ -106,10 +114,20 @@ typedef struct {
     unsigned long (*Xstrtoul)(const char *nptr, char **endptr, int base);
     void (*Xqsort)(void *a, size_t b, size_t c,
                   int (*f)(const void *d, const void *e));
+#ifdef __SUBC__
+    void *(*Xbsearch)(const void *key, const void *base,
+                     size_t nmemb, size_t size,
+                     int (*compar)());
+#else
     void *(*Xbsearch)(const void *key, const void *base,
                      size_t nmemb, size_t size,
                      int (*compar)(const void *, const void *));
+#endif
+#ifdef __SUBC__
+    void *(*Xlocaltime)();
+#else
     struct tm *(*Xlocaltime)(const time_t *timer);
+#endif
     clock_t (*Xclock)(void);
     char *(*strerror)(int errnum);
     char *(*strrchr)(const char *s, int c);
