@@ -105,7 +105,7 @@ typedef struct {
 } MEMMGRSTATS;
 
 /* What boundary we want the memmgr control block to be a multiple of */
-#define MEMMGR_ALIGN 8
+#define MEMMGR_ALIGN 16
 
 #define MEMMGRN_SZ \
   ((sizeof(MEMMGRN) % MEMMGR_ALIGN == 0) ? \
