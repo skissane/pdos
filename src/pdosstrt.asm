@@ -10,7 +10,9 @@ extrn __start:proc
 extrn _end:byte
 extrn _edata:byte
 
-.stack 1000h
+; Although we don't use this stack, it needs to be at least 200h
+; so that wlink doesn't make it 1000h when it appears in the map
+.stack 200h
 
 .data
 
