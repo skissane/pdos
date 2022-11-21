@@ -605,7 +605,7 @@ int PosCloseFile(int handle)
 #endif
 }
 
-int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
+int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
 {
     union REGS regsin;
     union REGS regsout;
@@ -643,8 +643,8 @@ int PosReadFile(int fh, void *data, size_t bytes, size_t *readbytes)
 
 int PosWriteFile(int handle,
                  const void *data,
-                 size_t len,
-                 size_t *writtenbytes)
+                 unsigned int len,
+                 unsigned int *writtenbytes)
 {
     union REGS regsin;
     union REGS regsout;
@@ -1519,7 +1519,7 @@ void PosProcessGetMemoryStats(unsigned long pid, void *stats) /* func f6.0d */
 }
 
 /* func f6.0c - pos extension to get info about a process */
-int PosProcessGetInfo(unsigned long pid, PDOS_PROCINFO *info, size_t infoSz)
+int PosProcessGetInfo(unsigned long pid, PDOS_PROCINFO *info, unsigned int infoSz)
 {
     union REGS regsin;
     union REGS regsout;
@@ -1629,7 +1629,7 @@ void PosMoveCursor(int row, int col) /* func f6.31 */
     return;
 }
 
-int PosGetVideoInfo(pos_video_info *info, size_t size) /* func f6.32 */
+int PosGetVideoInfo(pos_video_info *info, unsigned int size) /* func f6.32 */
 {
     union REGS regsin;
     union REGS regsout;
