@@ -1,11 +1,12 @@
 # Produces a.out executable.
+# Links against library produced by makefile.pdw
 
 CC=sccwin
 CFLAGS=
 LD=pdld386
 LDFLAGS=
 AS=pdas
-COPTS=-S $(CFLAGS) -I../pdpclib -I../bios -S -D__PDOS386__ -D__NOBIVA__ -DNEED_AOUT
+COPTS=-S $(CFLAGS) -I. -I../pdpclib -I../bios -S -D__PDOS386__ -D__NOBIVA__ -DNEED_AOUT
 
 all: clean bios.exe
 
