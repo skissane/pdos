@@ -1,5 +1,6 @@
 # Produces win32 executable.
 # Build using SubC (not yet working)
+# Required pdpclib built using makefile.pgo
 
 CC=sccwin
 CFLAGS=
