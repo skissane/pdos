@@ -151,7 +151,7 @@ int isProcessPtr(void *ptr)
     PDOS_PROCESS *p;
     if (ptr == NULL)
         return 0;
-#if !defined(__32BIT__) && !defined(__SMALLERC__)
+#if !defined(__32BIT__) && !defined(__SMALLERC__) && !defined(__SZ4__)
     abs = ADDR2ABS(ptr);
     abs -= PDOS_PROCESS_SIZE;
     ptr = FP_NORM(ABS2ADDR(abs));
