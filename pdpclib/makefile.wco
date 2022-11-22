@@ -6,7 +6,7 @@ COPTS=-D__SZ4__ -oneatx -ecc -zp1 -q -w -c -I. -I..\src -mh -zl -D__MSDOS__ -DPD
 
 pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
-       ctype.obj setjmp.obj math.obj pdossupc.obj dossupa.obj
+       ctype.obj setjmp.obj math.obj pdossupc.obj dossupa.obj dossupc.obj
   if exist watcomo.lib del watcomo.lib
   wlib -b -q watcomo +stdio.obj
   wlib -b -q watcomo +string.obj
@@ -22,10 +22,11 @@ pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcomo +math.obj
   wlib -b -q watcomo +pdossupc.obj
   wlib -b -q watcomo +dossupa.obj
+  wlib -b -q watcomo +dossupc.obj
 
 .c.obj:
   $(CC) $(COPTS) $<
 
 dossupa.obj: dossupa.asm
-#  ml -c -D__SZ4__ -Dmemodel=huge -DWATCOM dossupa.asm
-  wasm -zcm -q -DWATCOM -D__SZ4__ -Dmemodel=huge dossupa.asm
+#  ml -c -D__SZ4__ -DPDOS86 -Dmemodel=huge -DWATCOM dossupa.asm
+  wasm -zcm -q -DPDOS86 -DWATCOM -D__SZ4__ -Dmemodel=huge dossupa.asm

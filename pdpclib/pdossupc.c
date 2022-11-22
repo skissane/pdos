@@ -105,7 +105,7 @@ void __allocmem(size_t size, void **ptr)
 {
 #if defined(__32BIT__) || defined(__PDOS386__)
     *ptr = PosAllocMem(size, POS_LOC32);
-#elif defined(__SMALLERC__)
+#elif defined(__SMALLERC__) || defined(PDOS86)
     *ptr = PosAllocMemPages((size >> 4) + (((size % 16) != 0) ? 1 : 0), NULL);
 #else
     *ptr = PosAllocMem(size, POS_LOC20);
@@ -160,6 +160,7 @@ void __main(void)
 }
 #endif
 
+#ifndef PDOS86
 void CTYP __exita(int retcode)
 {
 #ifndef PDOS_RET_EXIT
@@ -167,6 +168,7 @@ void CTYP __exita(int retcode)
 #endif
     return;
 }
+#endif
 
 #if defined(__WATCOMC__) && defined(__32BIT__)
 

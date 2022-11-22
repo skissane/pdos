@@ -28,6 +28,13 @@ fierqq  dw  ?
 
 .code
 
+
+; The PDOS86 OS, when linking with PDPCLIB, uses the application-level
+; routines in pdossupc instead, which do not do interrupts but instead
+; link directly to the OS
+
+ifndef PDOS86
+
 ; extern int CTYP __open(const char *filename, int mode, int *errind);
 
 public __open
@@ -349,6 +356,10 @@ ret
 __freemem endp
 
 
+endif   ; PDOS86
+
+
+
 public __setj
 __setj proc jbuf:ptr
 
@@ -450,6 +461,8 @@ endif
 __longj endp
 
 
+ifndef PDOS86
+
 ; int CTYP __exec(char *cmd, void *env);
 ; full path, parm block
 
@@ -539,6 +552,9 @@ mov [bx + 12], dx
 
 ret
 __datetime endp
+
+
+endif   ; PDOS86
 
 
 ifdef WATCOM
@@ -994,6 +1010,8 @@ ret
 _CHP endp
 endif
 
+public _brkpoint_
+_brkpoint_:
 public __brkpoint
 __brkpoint proc
 int 3 ; this is an x'cc' which will need to be zapped with x'90'
