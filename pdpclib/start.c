@@ -124,6 +124,11 @@ extern void (*__userExit[__NATEXIT])(void);
 
 static int runnum = 0;
 
+int __G_live = 0;
+void *__G_ptr = NULL;
+int __G_one = 1;
+int __G_zero = 0;
+
 #ifdef __gnu_linux__
 
 struct termios {
