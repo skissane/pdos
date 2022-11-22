@@ -4,5 +4,8 @@ rem rem for first instruction
 rem rem tasm -m2 -Dmemodel=tiny pbootsec.asm
 rem tlink -t -x pbootsec,pbootsec.com,,,
 
-wasm -zq -zcm -Dmemodel=tiny pbootsec.asm
-wlink File pbootsec.obj Name pbootsec.com Form dos com Option quiet
+rem wasm -zq -zcm -Dmemodel=tiny pbootsec.asm
+rem wlink File pbootsec.obj Name pbootsec.com Form dos com Option quiet
+
+as86 -Dmemodel=tiny -o pbootsec.o pbootsec.asm
+ld86 -o pbootsec.com --oformat msdos pbootsec.o
