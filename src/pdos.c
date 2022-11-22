@@ -200,6 +200,11 @@ static MEMMGR btlmem;
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
 #ifdef __SZ4__
+/* Currently we load at 10600 plus 0100, the header size (also placed
+in memory) is 13k, the executable is about 200k, which gives us an
+end point of about 43e00 hex. Normally I would bump up the memmgr
+start to 50000, but that doesn't allow the test program to do two
+allocates of about 70k each */
 #define PDOS16_MEMSTART 0x4800
 #else
 #define PDOS16_MEMSTART 0x4000
@@ -2740,7 +2745,11 @@ int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
     ret = pdos16MemmgrReallocPages(&memmgr, ptr, newpages);
     if (ret != 0)
     {
+#ifdef __SZ4__
+        *maxp = memmgrMaxSize(&memmgr) / 16;
+#else
         *maxp = memmgrMaxSize(&memmgr);
+#endif
         ret = 8;
     }
     return (ret);
@@ -3539,6 +3548,7 @@ void int1(unsigned int *regptrs)
         }
         if (strcmp(buf, "stop\n") == 0)
         {
+            regptrs[12] &= ~0x100;
             return;
         }
         if (strcmp(buf, "auto\n") == 0)
@@ -3546,7 +3556,8 @@ void int1(unsigned int *regptrs)
             autotrace = 1;
         }
     }
-    regptrs[12] |= 0x100;
+    /* TF remains set and saved when this interrupt is called */
+    /* regptrs[12] |= 0x100; */
     return;
 }
 
@@ -3912,7 +3923,11 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
        desirable. Or they may add a safety margin. We'll do that
        ourselves */
     extraLen += 3 * 16;
+#ifdef __SZ4__
+    maxPages = memmgrMaxSize(&memmgr) / 16;
+#else
     maxPages = memmgrMaxSize(&memmgr);
+#endif
     if (((unsigned long)maxPages * 16) < (exeLen+extraLen))
     {
         printf("insufficient memory to load program\n");
