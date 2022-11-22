@@ -2730,8 +2730,13 @@ int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
 int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
 {
     int ret;
+    void *oldptr = ptr;
 
     ptr = translateProcessPtr(ptr);
+    if (ptr != oldptr)
+    {
+        newpages += PDOS_PROCESS_SIZE / 16;
+    }
     ret = pdos16MemmgrReallocPages(&memmgr, ptr, newpages);
     if (ret != 0)
     {
@@ -3888,7 +3893,13 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     {
         exeLen = *(unsigned int *)&header[4];
         extraLen = *(unsigned short *)&header[0x0a] * 16UL;
-        exeLen = (exeLen + 1) * 512 - headerLen;
+        exeLen = (exeLen-1) * 512 + *(unsigned short *)&header[2] - headerLen;
+        /* make sure we can divide by 16 later */
+        if ((exeLen % 16) != 0)
+        {
+            exeLen += 16;
+            exeLen = exeLen / 16 * 16;
+        }
     }
     else
     {
@@ -3896,14 +3907,18 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     }
     extraLen += 0x100; /* PSP */
     extraLen += PDOS_PROCESS_SIZE;
-    extraLen += 16; /* for good measure and to allow division by 16 */
+    /* we use the stack before giving it to the program, so they may
+       attempt to resize lower than we gave them, and that's not
+       desirable. Or they may add a safety margin. We'll do that
+       ourselves */
+    extraLen += 3 * 16;
     maxPages = memmgrMaxSize(&memmgr);
     if (((unsigned long)maxPages * 16) < (exeLen+extraLen))
     {
         printf("insufficient memory to load program\n");
         printf("required %lu, available %lu\n",
             exeLen+extraLen, (unsigned long)maxPages * 16);
-        memmgrFree(&memmgr, header);
+        if (header != NULL) memmgrFree(&memmgr, header);
         memmgrFree(&memmgr, envptr);
         return (2);
     }
@@ -4052,6 +4067,7 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     if (curPCB != NULL && curPCB->status == PDOS_PROCSTATUS_CHILDWAIT)
         curPCB->status = PDOS_PROCSTATUS_ACTIVE;
 
+    if (header != NULL) memmgrFree(&memmgr, header);
     /*
      * Don't free all of program's memory if it is a TSR. Only the
      * "un-reserved" portion.
@@ -4059,7 +4075,6 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     if (tsrFlag == 0)
     {
         newProc->status = PDOS_PROCSTATUS_TERMINATED;
-        if (header != NULL) memmgrFree(&memmgr, header);
         memmgrFree(&memmgr, newProc->envBlock);
         removeFromProcessChain(newProc);
         memmgrFree(&memmgr, pcb);
