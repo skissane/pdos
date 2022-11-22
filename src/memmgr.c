@@ -506,7 +506,7 @@ size_t memmgrMaxSize(MEMMGR *memmgr)
         {
             max = p->size;
         }
-        p = p->next;
+        p = p->nextf;
     }
     if (max != 0)
     {
