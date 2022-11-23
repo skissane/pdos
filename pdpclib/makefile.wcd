@@ -4,7 +4,7 @@
 # Change XXSZ4 to SZ4 (globally) to activate 32-bit size_t
 
 CC=wcl
-COPTS=-D__XXSZ4__ -oneatx -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+COPTS=-D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
 
