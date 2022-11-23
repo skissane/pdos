@@ -10,6 +10,4 @@ rem wasm -zq -zcm -Dmemodel=tiny mbr.asm
 rem wlink File mbr.obj Name mbr.com Form dos com Option quiet
 
 as86 -Dmemodel=tiny -o mbr.o mbr.asm
-rem need to use binary format because ld86 will pad a com
-rem to a 16-byte boundary
-ld86 -o mbr.com --oformat binary mbr.o
+ld86 -o mbr.com --oformat msdos mbr.o
