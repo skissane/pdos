@@ -61,7 +61,7 @@ rep movsw           ; Copy mbr to 0x0600
 ;jmp 0:relocated     ; Far jump to copied MBR
 mov ax, 0
 push ax
-mov ax, relocated
+mov ax, offset relocated
 push ax
 retf
 
@@ -78,7 +78,7 @@ add si,16 ; entry_length
 loop test_active
 ; If we get here, no active partition was found,
 ; so output and error message and hang
-mov bp,no_active_partitions
+mov bp, offset no_active_partitions
 jmp fatal_error
 
 ; Found a partition with active bit set
