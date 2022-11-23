@@ -14,14 +14,6 @@ extrn int21:proc
 extrn int25:proc
 extrn int26:proc
 
-public handler0
-public handler1
-public handler3
-public handler20
-public handler21
-public handler25
-public handler26
-
         .code
 
 instint proc uses bx es
