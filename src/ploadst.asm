@@ -12,11 +12,6 @@ extrn dstart:proc
 org 0100h
 top:
 
-ifdef WATCOM
-public cstart_
-cstart_:
-endif
-
 public _startup
 _startup proc
 
@@ -60,6 +55,11 @@ mov sp, 0fffeh
 
 bypass:
 
+; We need to call dstart instead of __start because we're
+; not linking in the C library. And dstart needs to go into
+; the main C code so that it gets the name mangling correct.
+; It can be put into another source file if main is declared
+; with __watcall
 call dstart
 sub sp,2
 mov ax, 0
@@ -93,6 +93,12 @@ pop ax
 mov ah,4ch
 int 21h ; terminate
 _exita endp
+
+ifdef WATCOM
+public cstart_
+cstart_:
+ret
+endif
 
 
 end top
