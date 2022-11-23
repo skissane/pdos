@@ -165,7 +165,7 @@ xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 ; from wasm (which gets treated as an error), and it seems
 ; that alignment is not actually required
 lba_packet:
-size       db 010h
+sz         db 010h
 reserved   db 0
 sectors    dw 1
 offst      dw 07c00h
