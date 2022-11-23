@@ -179,18 +179,18 @@ static jmp_buf jb;
 
 #ifndef __PDPCLIB_DLL
 
-#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
-int main(int argc, char **argv);
+/* Unfortunately Watcom requires us to make main() a watcall,
+   even if everything else is compiled with -ecc */
+#if defined(__WATCOMC__)
+#define MAINTYP __watcall
 #else
-int dstart(void);
+#define MAINTYP
 #endif
 
+int MAINTYP main(int argc, char **argv);
+
 int __genstart = 0;
-int (*__genmain)(int argc, char **argv)
-#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
- = main
-#endif
- ;
+int MAINTYP (*__genmain)(int argc, char **argv) = main;
 
 #endif
 
@@ -1178,11 +1178,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
-#if !(defined(__MSDOS__) && defined(PDOS86) && defined(__WATCOMC__))
             rc = main(argc, argv);
-#else
-            rc = dstart();
-#endif
         }
     }
     else
