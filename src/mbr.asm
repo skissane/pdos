@@ -59,7 +59,7 @@ mov di,0600h
 mov cx,0100h       ; 0x100 words = 512 bytes
 rep movsw           ; Copy mbr to 0x0600
 ;jmp 0:relocated     ; Far jump to copied MBR
-mov ax, 0500h ; fake PSP to support COM file offsets
+mov ax, 050h ; fake PSP to support COM file offsets
 push ax
 mov ax, offset relocated
 push ax
@@ -120,7 +120,7 @@ read_done:
 pop si          ; restore pointer to partition info
 
 ; Check the volume boot record is bootable
-cmp word ptr es:[02dfeh],0aa55h
+cmp word ptr es:[07dfeh],0aa55h
 mov bp,offset invalid_vbr
 jnz fatal_error
 
