@@ -14,41 +14,65 @@ extrn int21:proc
 extrn int25:proc
 extrn int26:proc
 
+.data
+addr0 dd handler0
+addr1 dd handler1
+addr3 dd handler3
+addr20 dd handler20
+addr21 dd handler21
+addr25 dd handler25
+addr26 dd handler26
+
         .code
 
-instint proc uses bx es
+instint proc uses bx es ds
         mov bx, 0
         push bx
         pop es
         cli
-        mov bx, offset handler0
+
+        push ds
+        lds bx, addr0
         mov es:[0h], bx
-        mov bx, seg handler0
-        mov es:[02h], bx
-        mov bx, offset handler1
+        mov es:[02h], ds
+        pop ds
+
+        push ds
+        lds bx, addr1
         mov es:[04h], bx
-        mov bx, seg handler1
-        mov es:[06h], bx
-        mov bx, offset handler3
+        mov es:[06h], ds
+        pop ds
+
+        push ds
+        lds bx, addr3
         mov es:[0ch], bx
-        mov bx, seg handler3
-        mov es:[0eh], bx
-        mov bx, offset handler20
+        mov es:[0eh], ds
+        pop ds
+
+        push ds
+        lds bx, addr20
         mov es:[80h], bx
-        mov bx, seg handler20
-        mov es:[82h], bx
-        mov bx, offset handler21
+        mov es:[82h], ds
+        pop ds
+
+        push ds
+        lds bx, addr21
         mov es:[84h], bx
-        mov bx, seg handler21
-        mov es:[86h], bx
-        mov bx, offset handler25
+        mov es:[86h], ds
+        pop ds
+
+        push ds
+        lds bx, addr25
         mov es:[94h], bx
-        mov bx, seg handler25
-        mov es:[96h], bx
-        mov bx, offset handler26
+        mov es:[96h], ds
+        pop ds
+
+        push ds
+        lds bx, addr26
         mov es:[98h], bx
-        mov bx, seg handler26
-        mov es:[9Ah], bx
+        mov es:[9Ah], ds
+        pop ds
+
         sti
         ret
 instint endp
