@@ -179,7 +179,7 @@ int CTYP __cmphphp(unsigned int dx,
 #endif
 
 #ifdef __WATCOMC__
-void _cstart(void)
+void __watcall _cstart(void)
 {
     return;
 }
