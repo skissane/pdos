@@ -68,8 +68,11 @@ retf
 
 relocated:
 
+push cs
+pop ds
+
 ; Search partitions for one with active bit set
-mov si,07beh   ; partition_table
+mov si, 02beh   ; partition_table
 mov cx,4
 test_active:
 test byte ptr [si],080h
@@ -117,7 +120,7 @@ read_done:
 pop si          ; restore pointer to partition info
 
 ; Check the volume boot record is bootable
-cmp word ptr es:[07dfeh],0aa55h
+cmp word ptr es:[02dfeh],0aa55h
 mov bp,offset invalid_vbr
 jnz fatal_error
 
