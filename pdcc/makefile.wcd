@@ -11,7 +11,7 @@
 # Links with PDPCLIB created by makefile.wcd.
 
 CC=wcl
-COPTS=-q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Icclib -Icclib\include -Icpplib -Icpplib\include -I. -I..\pdpclib
+COPTS=-ecc -q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Icclib -Icclib\include -Icpplib -Icpplib\include -I. -I..\pdpclib
 
 all: clean pdcc.exe
 
