@@ -1,0 +1,16 @@
+# Produces MSDOS executable.
+# Links with PDPCLIB created by makefile.wcd.
+
+CC=wcl
+COPTS=-ecc -q -w -c -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu -Ihashtab -Icpplib\include -I..\pdpclib
+
+all: clean pdar.exe
+
+pdar.exe: pdar.obj
+  wlink File pdar Name pdar.exe Form dos Library ..\pdpclib\watcom.lib Option quiet
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f *.obj pdar.exe
