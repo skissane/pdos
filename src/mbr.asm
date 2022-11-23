@@ -78,20 +78,20 @@ add si,16 ; entry_length
 loop test_active
 ; If we get here, no active partition was found,
 ; so output and error message and hang
-mov bp, offset no_active_partitions
+mov bp,offset no_active_partitions
 jmp fatal_error
 
 ; Found a partition with active bit set
 found_active:
 cmp byte ptr [si+4],0; check partition type, should be non-zero
-mov bp,active_partition_invalid
+mov bp,offset active_partition_invalid
 jz fatal_error
 
 ; Check BIOS LBA extensions exist
 mov ah,041h
 mov bx,055aah
 int 013h
-mov bp,no_lba_extensions
+mov bp,offset no_lba_extensions
 jc fatal_error
 cmp bx,0aa55h
 jnz fatal_error
@@ -105,20 +105,20 @@ mov cx,10        ; ten tries
 push si         ; save pointer to partition info
 try_read:
 mov ah,042h
-mov si,lba_packet
+mov si,offset lba_packet
 int 013h        ; BIOS LBA read (dl already set to disk number)
 jnc read_done
 mov ah,0
 int 013h        ; reset disk system
 loop try_read
-mov bp,read_failure
+mov bp,offset read_failure
 jmp fatal_error
 read_done:
 pop si          ; restore pointer to partition info
 
 ; Check the volume boot record is bootable
 cmp word ptr es:[07dfeh],0aa55h
-mov bp,invalid_vbr
+mov bp,offset invalid_vbr
 jnz fatal_error
 
 ; Jump to the volume boot record
