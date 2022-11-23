@@ -35,7 +35,7 @@
 
 .code
 
-org 0600h
+org 0100h
 
 top:
 
@@ -59,7 +59,7 @@ mov di,0600h
 mov cx,0100h       ; 0x100 words = 512 bytes
 rep movsw           ; Copy mbr to 0x0600
 ;jmp 0:relocated     ; Far jump to copied MBR
-mov ax, 0
+mov ax, 0500h ; fake PSP to support COM file offsets
 push ax
 mov ax, offset relocated
 push ax
@@ -175,7 +175,7 @@ lbahigh    dw 0
 lbapadding dd 0
 
 ; force padding to 440 bytes of code
-org 07b8h
+org 02b8h
 
 ;org 07beh
 ;partition_table:
