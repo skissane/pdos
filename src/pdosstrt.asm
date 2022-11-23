@@ -28,16 +28,6 @@ __osver dw 0
 
 top:
 
-; This is required here, but not in PDPCLIB, because
-; here we are using -ecc, but we can't do that in PDPCLIB
-; because we can't put an intrusive dstart in every main
-; and we can't handle the unusual parameter passing either
-; Here it is void
-ifdef WATCOM
-public cstart_
-cstart_:
-endif
-
 public __startup
 __startup proc
 
@@ -77,11 +67,6 @@ mov al, 0
 rep stosb
 
 
-; Because main is effectively a reserved word, and gets
-; mangled by Watcom when we can't handle it being mangled,
-; we call dstart instead, which calls main.
-;call dstart
-; Now that we're using the C library, let it handle it
 xor ax,ax
 push ax
 push ax
