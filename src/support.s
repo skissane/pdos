@@ -16,6 +16,7 @@
         .globl _outpd
         .globl ___switch
         .globl ___brkpoint
+        .globl ___brkpoint2
 
         .text
 
@@ -335,6 +336,14 @@ no:	loop	next
 
 .globl ___brkpoint
 ___brkpoint:
+# pdas is not generating x'cc' like pdas386 does
+#        int $0x3
+.byte 0xcc
+        ret
+
+
+.globl ___brkpoint2
+___brkpoint2:
 # pdas is not generating x'cc' like pdas386 does
 #        int $0x3
 .byte 0xcc
