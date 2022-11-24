@@ -1396,6 +1396,10 @@ static void int21handler(union REGS *regsin,
             {
                 regsout->x.ax = PosMonitor();
             }
+            else if (regsin->h.al == 0x49)
+            {
+                regsout->x.ax = PosShowret(regsin->x.dx);
+            }
 #endif
 #ifdef __32BIT__
             else if (regsin->h.al == 0x46)
@@ -1409,6 +1413,10 @@ static void int21handler(union REGS *regsin,
             else if (regsin->h.al == 0x48)
             {
                 regsout->d.eax = PosMonitor();
+            }
+            else if (regsin->h.al == 0x49)
+            {
+                regsout->d.eax = PosShowret(regsin->d.edx);
             }
 #endif
             else

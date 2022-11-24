@@ -3075,6 +3075,12 @@ unsigned int PosMonitor(void)
     return (0);
 }
 
+unsigned int PosShowret(int flag)
+{
+    showret = flag;
+    return (0);
+}
+
 void *PosGetStdHandle(unsigned int nStdHandle)
 {
     if (nStdHandle == -10) return ((void *)stdin_fhandle_index);

@@ -2077,6 +2077,36 @@ unsigned int PosMonitor(void)
 }
 
 
+/* F6,49 - show return codes */
+unsigned int PosShowret(int flag)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x49;
+#ifdef __32BIT__
+    regsin.d.edx = flag;
+#else
+    regsin.x.dx = flag;
+#endif
+    int86(0x21,&regsin,&regsout);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,
                                  unsigned int sectors,void *buf)

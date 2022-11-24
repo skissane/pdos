@@ -427,6 +427,9 @@ unsigned int PosSetStdHandle(unsigned int nStdHandle, void *hHandle);
 /* F6,48 - start system monitor */
 unsigned int PosMonitor(void);
 
+/* F6,49 - show return codes */
+unsigned int PosShowret(int flag);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

@@ -205,6 +205,7 @@ CMDPROTO(ren);
 CMDPROTO(save);
 CMDPROTO(scrncap);
 CMDPROTO(set);
+CMDPROTO(showret);
 CMDPROTO(sleep);
 CMDPROTO(time);
 CMDPROTO(type);
@@ -273,6 +274,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(save,"","Saves user input to file"),
     CMDDEF(scrncap,"","Start/stop screen capture"),
     CMDDEF(set,"","Show/modify environment variables"),
+    CMDDEF(showret,"","Show return codes"),
     CMDDEF(sleep,"","Sleep for some seconds"),
     CMDDEF(time,"","Shows the time"),
     CMDDEF(type,"","Reads and displays a text file"),
@@ -1808,6 +1810,12 @@ static void cmd_set_help(void)
     printf("Leave the VALUE blank to delete that environment variable\n");
 }
 
+static void cmd_showret_help(void)
+{
+    printf("SHOWRET [on|off]\n");
+    printf("shows return codes from programs\n");
+}
+
 static void cmd_sleep_help(void)
 {
     printf("SLEEP seconds\n");
@@ -2546,6 +2554,30 @@ static int cmd_set_run(char *arg)
         printf("; %s\n", env);
         env += strlen(env) + 1;
     }
+    return 0;
+}
+
+static int cmd_showret_run(char *arg)
+{
+    int flag;
+
+    CMD_REQUIRES_ARGS(arg);
+    CMD_REQUIRES_GENUINE();
+    arg = stringTrimBoth(arg);
+    if (strcmp(arg, "on") == 0)
+    {
+        flag = 1;
+    }
+    else if (strcmp(arg, "off") == 0)
+    {
+        flag = 0;
+    }
+    else
+    {
+        printf("ERROR: SHOWRET command argument not valid (on/off)\n");
+        return 1;
+    }
+    PosShowret(flag);
     return 0;
 }
 
