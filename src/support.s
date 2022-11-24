@@ -336,15 +336,13 @@ no:	loop	next
 
 .globl ___brkpoint
 ___brkpoint:
-# pdas is not generating x'cc' like pdas386 does
-#        int $0x3
-.byte 0xcc
+# we use int3 instead of "int 3" because pdas doesn't
+# generate the short form otherwise
+        int3
         ret
 
 
 .globl ___brkpoint2
 ___brkpoint2:
-# pdas is not generating x'cc' like pdas386 does
-#        int $0x3
-.byte 0xcc
+        int3
         ret
