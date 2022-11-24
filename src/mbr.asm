@@ -46,8 +46,13 @@ cli
 xor ax,ax
 mov ds,ax
 mov es,ax
+mov ax, 050h
+; we need ss and cs/ds to match later because of the use of bp
+; we could use a different register, but a mismatch of ss and
+; cs/ds may bite someone at a later date
 mov ss,ax
-mov sp,07c00h
+; this is absolute 07c00h
+mov sp,07700h
 
 ; Allow interrupts
 ; See http://forum.osdev.org/viewtopic.php?p=236455#p236455 for more information
