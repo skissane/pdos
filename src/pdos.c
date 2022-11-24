@@ -3315,18 +3315,6 @@ static int ff_search(void)
 }
 
 #ifdef __32BIT__
-/* registers come in as eax, ebx, ecx, edx, esi, edi, cflag */
-int int0E(unsigned int *regs)
-{
-    printf("Page Fault occurred (Protected Mode Exception 0xE)\n");
-    printf("while accessing virtual address 0x%08x\n", readCR2());
-    printf("Error code is %08x\n", regs[8]);
-    printf("System halting\n");
-    for (;;);
-
-    return (0);
-}
-
 int int0(unsigned int *regs)
 {
     unsigned int *oldsp;
@@ -3485,6 +3473,18 @@ int int0D(unsigned int *regs)
         else if (table == 0x2) printf("LDT\n");
         else printf("IDT\n");
     }
+    printf("System halting\n");
+    for (;;);
+
+    return (0);
+}
+
+/* registers come in as eax, ebx, ecx, edx, esi, edi, cflag */
+int int0E(unsigned int *regs)
+{
+    printf("Page Fault occurred (Protected Mode Exception 0xE)\n");
+    printf("while accessing virtual address 0x%08x\n", readCR2());
+    printf("Error code is %08x\n", regs[8]);
     printf("System halting\n");
     for (;;);
 
