@@ -3038,6 +3038,7 @@ unsigned int PosMonitor(void)
             {
                 memset(prtln, ' ', sizeof prtln);
                 sprintf(prtln, "%p ", addr);
+                prtln[strlen(prtln)] = ' ';
                 pos1 = 10;
                 pos2 = 47;
             }
