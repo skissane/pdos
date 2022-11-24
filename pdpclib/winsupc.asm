@@ -10,6 +10,8 @@
 .globl ___longj
 .globl ___chkstk_ms
 .globl ___switch
+.globl ___brkpoint
+.globl ___brkpoint2
 
 ___setj:
         mov eax, [esp+4]
@@ -88,3 +90,12 @@ no:	loop	next
 	lodsd
 	pop	esi
 	jmp	eax
+
+
+___brkpoint:
+        int 3
+        ret
+
+___brkpoint2:
+        int 3
+        ret
