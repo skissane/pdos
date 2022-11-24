@@ -8,6 +8,11 @@ public instint
 
 extrn int0:proc
 extrn int1:proc
+; Warning - int3 is an opcode (short form of int 3) and this
+; may be a reserved word on some assemblers. If this problem
+; ever arises, this code should be changed, perhaps calling
+; all interrupt handlers "inth3" etc instead. Because int03
+; might be reserved too. :-)
 extrn int3:proc
 extrn int20:proc
 extrn int21:proc
