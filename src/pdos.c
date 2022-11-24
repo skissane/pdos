@@ -242,7 +242,7 @@ static int attr;
 /* note that on EBCDIC, the alphabet isn't contiguous */
 static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-static unsigned int *lastrp; /* last regptrs */
+static unsigned int *lastflags;
 static int autotrace = 0;
 
 #define HANDTYPE_FILE 0
@@ -3013,7 +3013,7 @@ unsigned int PosMonitor(void)
         }
         else if (strcmp(buf, "trace\n") == 0)
         {
-            lastrp[12] |= 0x100;
+            *lastflags |= 0x100;
             continue;
         }
         else if (strncmp(buf, "zap ", 4) == 0)
@@ -3367,6 +3367,109 @@ int int0(unsigned int *regs)
     return (0);
 }
 
+int int1(unsigned int *regs)
+{
+    unsigned int *oldsp;
+    unsigned int *ebp;
+    unsigned int *retaddr;
+    char buf[20];
+
+    printf("tracing\n");
+    printf("EAX %08X EBX %08X ECX %08X EDX %08X\n",
+           regs[0], regs[1], regs[2], regs[3]);
+    printf("ESI %08X EDI %08X\n",
+           regs[4], regs[5]);
+    printf("module loaded at %p, entry point %08lX\n", loadaddr, entry_point);
+    printf("regs are at %p\n", regs);
+    oldsp = (unsigned int *)regs[8];
+    printf("old stack starts at %p\n", oldsp);
+    ebp = (unsigned int *)regs[-4];
+    printf("EBP should be %p\n", ebp);
+    printf("interrupt address is %08X\n", oldsp[8]);
+    printf("instruction at that (new) address starts with %x\n",
+           *(unsigned char *)oldsp[8]);
+    printf("flags are %08X\n", oldsp[10]);
+    printf("EBP chain to EBP is %08X\n", ebp[0]);
+    retaddr = (unsigned int *)ebp[1];
+    printf("previous function's return address is %p\n", retaddr);
+    printf("called address was possibly relative %08X\n", retaddr[-1]);
+    printf("which would make it absolute address %08X\n",
+           (char *)retaddr + retaddr[-1]);
+    ebp = (unsigned int *)ebp[0];
+    printf("EBP chain to EBP is %08X\n", ebp[0]);
+    retaddr = (unsigned int *)ebp[1];
+    printf("previous function's return address is %p\n", retaddr);
+    printf("called address was possibly relative %08X\n", retaddr[-1]);
+    printf("which would make it absolute address %08X\n",
+           (char *)retaddr + retaddr[-1]);
+
+    if (!autotrace)
+    {
+        printf("hit enter to continue tracing, or monitor or stop or auto\n");
+        fgets(buf, sizeof buf, stdin);
+        if (strcmp(buf, "monitor\n") == 0)
+        {
+            /* should probably give more shots at monitor */
+            PosMonitor();
+            printf("hit enter to continue tracing, or stop or auto\n");
+            fgets(buf, sizeof buf, stdin);
+        }
+        if (strcmp(buf, "stop\n") == 0)
+        {
+            oldsp[10] &= ~0x100;
+            return;
+        }
+        if (strcmp(buf, "auto\n") == 0)
+        {
+            autotrace = 1;
+        }
+    }
+    return (0);
+}
+
+int int3(unsigned int *regs)
+{
+    unsigned int *oldsp;
+    unsigned int *ebp;
+    unsigned int *retaddr;
+
+    printf("got a breakpoint\n");
+    printf("EAX %08X EBX %08X ECX %08X EDX %08X\n",
+           regs[0], regs[1], regs[2], regs[3]);
+    printf("ESI %08X EDI %08X\n",
+           regs[4], regs[5]);
+    printf("module loaded at %p, entry point %08lX\n", loadaddr, entry_point);
+    printf("regs are at %p\n", regs);
+    oldsp = (unsigned int *)regs[8];
+    printf("old stack starts at %p\n", oldsp);
+    ebp = (unsigned int *)regs[-4];
+    printf("EBP should be %p\n", ebp);
+    printf("interrupt address is %08X\n", oldsp[8]);
+    oldsp[8]--;
+    printf("adjusting to %08X\n", oldsp[8]);
+    printf("flags are %08X\n", oldsp[10]);
+    printf("EBP chain to EBP is %08X\n", ebp[0]);
+    retaddr = (unsigned int *)ebp[1];
+    printf("previous function's return address is %p\n", retaddr);
+    printf("called address was possibly relative %08X\n", retaddr[-1]);
+    printf("which would make it absolute address %08X\n",
+           (char *)retaddr + retaddr[-1]);
+    ebp = (unsigned int *)ebp[0];
+    printf("EBP chain to EBP is %08X\n", ebp[0]);
+    retaddr = (unsigned int *)ebp[1];
+    printf("previous function's return address is %p\n", retaddr);
+    printf("called address was possibly relative %08X\n", retaddr[-1]);
+    printf("which would make it absolute address %08X\n",
+           (char *)retaddr + retaddr[-1]);
+    lastflags = &oldsp[10];
+    PosMonitor();
+    /* The person running the monitor should have zapped the x'cc' to
+       something else before exiting, and then we return to the app */
+    /* If they haven't changed it, we'll just hit the breakpoint again */
+    /* Eventually they will give up */
+    return (0);
+}
+
 int int0D(unsigned int *regs)
 {
     printf("General Protection Fault occurred\n");
@@ -3544,6 +3647,7 @@ void int1(unsigned int *regptrs)
         {
             /* should probably give more shots at monitor */
             PosMonitor();
+            printf("hit enter to continue tracing, or stop or auto\n");
             fgets(buf, sizeof buf, stdin);
         }
         if (strcmp(buf, "stop\n") == 0)
@@ -3582,7 +3686,7 @@ void int3(unsigned int *regptrs)
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
     regptrs[10]--;
     printf("adjusting to %p\n", MK_FP(regptrs[11], regptrs[10]));
-    lastrp = regptrs;
+    lastflags = &regptrs[12];
     PosMonitor();
     /* The person running the monitor should have zapped the x'cc' to
        something else before exiting, and then we return to the app */
@@ -5169,6 +5273,8 @@ int pdosstrt(void)
     doboot = pp->doboot;
     bootBPB = (void *)(pp->bpb);
     protintHandler(0x0, int0);
+    protintHandler(0x1, int1);
+    protintHandler(0x3, int3);
     protintHandler(0x0E, int0E);
     protintHandler(0x20, int20);
     protintHandler(0x21, int21);

@@ -9,6 +9,8 @@
 / symbols defined here that are accessed from elsewhere
         .globl _inthdlr
         .globl _inthdlr_0
+        .globl _inthdlr_1
+        .globl _inthdlr_3
         .globl _inthdlr_8
         .globl _inthdlr_9
         .globl _inthdlr_E
@@ -69,6 +71,24 @@ _inthdlr_0:
         mov    %ax, %ds
         push   intnum
         movl   $0x0, intnum
+        jmp    _inthdlr_q
+_inthdlr_1:
+        push   %eax
+        mov    %ds, %ax
+        push   %eax
+        mov    $0x10, %eax
+        mov    %ax, %ds
+        push   intnum
+        movl   $0x1, intnum
+        jmp    _inthdlr_q
+_inthdlr_3:
+        push   %eax
+        mov    %ds, %ax
+        push   %eax
+        mov    $0x10, %eax
+        mov    %ax, %ds
+        push   intnum
+        movl   $0x3, intnum
         jmp    _inthdlr_q
 _inthdlr_8:
         push   %eax
@@ -385,6 +405,8 @@ level10b:
 
 / This is for interrupts that should not alter
 / the flags, like the timer interrupt
+/ Also for things that specifically manipulate the flags,
+/ such as when tracing.
 
 / by the time we get here, the following things are on the stack:
 / original eax, original ds (stored as doubleword), original intnum

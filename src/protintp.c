@@ -24,6 +24,8 @@ rawprot_parms *rp_parms;
 
 void inthdlr(void);
 void inthdlr_0(void);
+void inthdlr_1(void);
+void inthdlr_3(void);
 void inthdlr_8(void);
 void inthdlr_9(void);
 void inthdlr_E(void);
@@ -164,6 +166,8 @@ unsigned long runprot_p(rawprot_parms *parmlist)
         void (*handler)(void);
     } handlerlist[] = { 
         { 0x0, inthdlr_0 },
+        { 0x1, inthdlr_1 },
+        { 0x3, inthdlr_3 },
         { 0x8, inthdlr_8 },
         { 0x9, inthdlr_9 },
         { 0xE, inthdlr_E },
