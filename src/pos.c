@@ -1472,6 +1472,11 @@ int PosGetMagic(void)
     union REGS regsin;
     union REGS regsout;
 
+    /* On genuine MSDOS, since this is unimplemented, AL will be set
+       to 0, which makes it different from the PDOS magic number which
+       is non-zero in AL. So there will not be a clash. Note that the
+       CF won't be changed on MSDOS, so that can't be used as an
+       indicator. */
     regsin.h.ah = 0xf6;
     regsin.h.al = 6;
     int86(0x21, &regsin, &regsout);
