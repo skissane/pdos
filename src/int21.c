@@ -1422,7 +1422,15 @@ static void int21handler(union REGS *regsin,
             else
             {
                 logUnimplementedCall(0x21, regsin->h.ah, regsin->h.al);
-                regsout->x.cflag = 1;
+                /* high functions, including service 71h subfunctions (whatever
+                   that is) on many versions of DOS, don't alter the carry
+                   flag and instead set AL to 0. You could instead try setting
+                   the CF to 1 with "stc" before calling the INT 21H function,
+                   but PDOS is currently clearing the carry flag at entry to
+                   int 21, so that technique won't work. We should probably
+                   stop doing that, something to look at in future, and for
+                   now begin the migration to al = 0 */
+                regsout->h.al = 0;
             }
             break;
 
