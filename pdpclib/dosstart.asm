@@ -154,18 +154,55 @@ rep stosb
 ; (ie not if you have actually read ISO/IEC 9899:1990)
 ; (I watched the movie version)
 
-mov word ptr __psp, 0
 pop es ; we preserved this right at the start
+
+; Additionally, in small data memory models, the PSP is not
+; actually addressable. In tiny model we could nominally rely
+; on address wraparound, but if tiny is being used to produce
+; a COM file, we'll end up with a NULL pointer, which will
+; only work if there is no test of NULL done. So we simply
+; make a copy of the PSP while we have the chance.
+
+if @DataSize eq 0
+
+; move from ds:si to es:di for a length of cx
+; but it is es that currently has the "from", and ds that
+; has the "to", so we need to swap them
+mov cx, 256
+mov si, 0
+mov di, offset copypsp
+
+; save originals
+push ds
+push es
+
+; ready to swap
+push ds
+push es
+; swap
+pop ds
+pop es
+rep movsb
+
+; restore originals
+pop es
+pop ds
+
+mov word ptr __psp, offset copypsp
+mov word ptr [__psp + 2], ds
+; and set envptr to NULL
+mov word ptr __envptr, 0
+mov word ptr [__envptr + 2], ds
+
+else
+
+mov word ptr __psp, 0
 mov word ptr [__psp + 2], es
-
-; Finally we have preserved the psp somewhere safe
-; But now we actually need to retrieve something (the
-; environment pointer) from the PSP, so we need es to
-; remain pointing to the PSP a bit longer
-
 mov word ptr __envptr, 0
 mov dx, es:[02ch]
 mov word ptr [__envptr + 2], dx
+
+endif
 
 ; And we have now finished using es to address the psp
 ; so we can set it to the same as ds and es, which is
@@ -187,9 +224,7 @@ mov [__osver],ax
 if @DataSize
 push word ptr [__psp + 2]
 endif
-; in small etc memory model, this will be a NULL
-mov ax, 0
-push ax
+push word ptr [__psp]
 
 call __start
 if @DataSize
