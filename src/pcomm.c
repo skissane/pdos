@@ -1383,13 +1383,33 @@ static int doExec(char *b,char *p)
     size_t ln;
     size_t ln2;
     char tempbuf[FILENAME_MAX];
+    char *z;
 
     s = path;
     ln = strlen(p);
 #ifndef __32BIT__
-    cmdt[0] = ln;
-    memcpy(cmdt + 1, p, ln);
-    memcpy(cmdt + ln + 1, "\r", 2);
+    if (ln >= 0x7e)
+    {
+        if (!genuine_pdos)
+        {
+            fprintf(stderr, "command too long for non-genuine PDOS\n");
+            return (1);
+        }
+        /* reconstitute temporarily */
+        z = b + strlen(b);
+        *z = ' ';
+        PosSetEnv("CMDLINE", b);
+        __envptr = PosGetEnvBlock();
+        *z = '\0';
+        cmdt[0] = 0x7f;
+        memcpy(cmdt + 1, p, 0x7e);
+    }
+    else
+    {
+        cmdt[0] = ln;
+        memcpy(cmdt + 1, p, ln);
+        memcpy(cmdt + ln + 1, "\r", 2);
+    }
 #endif
 
     while(*s != '\0')
