@@ -204,6 +204,7 @@ unsigned char *__envptr;
 extern
 #endif
 unsigned short __osver;
+static unsigned char *newcmdline = NULL;
 #endif
 
 #ifdef __VSE__
@@ -391,6 +392,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 #ifdef __MSDOS__
     unsigned char *env;
+    unsigned char *nclsave;
 #endif
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     int parmLen;
@@ -1098,6 +1100,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 
+    nclsave = newcmdline;
+    newcmdline = NULL;
     if (p == NULL)
     {
         p = "";
@@ -1105,8 +1109,45 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     else
     {
         p = p + 0x80;
-        p[*p + 1] = '\0';
-        p++;
+        if (*p == 0x7f)
+        {
+            unsigned char *q;
+
+             /* this is above the limits of the PSP, so CMDLINE
+                potentially has the whole command line, including
+                the command */
+            q = getenv("CMDLINE");
+            if (q != NULL)
+            {
+                q = strchr(q, ' ');
+                if (q != NULL)
+                {
+                    q++;
+                    newcmdline = malloc(strlen(q) + 1);
+                    if (newcmdline != NULL)
+                    {
+                        strcpy(newcmdline, q);
+                        p = newcmdline;
+                    }
+                }
+            }
+            if (newcmdline == NULL)
+            {
+                fprintf(stderr, "command line too long to handle\n");
+                newcmdline = nclsave;
+                if (runnum == 1)
+                {
+                    __exit(EXIT_FAILURE);
+                }
+                runnum--;
+                return(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            p[*p + 1] = '\0';
+            p++;
+        }
     }
 #endif
 #if !defined(__gnu_linux__)
@@ -1196,6 +1237,13 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     globrc = oldglobrc;
     memcpy(&jb, &oldjb, sizeof jb);
 
+#ifdef __MSDOS__
+    if (newcmdline != NULL)
+    {
+        free(newcmdline);
+    }
+    newcmdline = nclsave;
+#endif
     if (runnum == 1)
     {
     __exit(rc);
