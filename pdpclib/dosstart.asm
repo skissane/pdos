@@ -43,6 +43,10 @@ __psp   dd  ?
 __envptr dd ?
 __osver dw ?
 
+if @DataSize eq 0
+copypsp db 256 dup(?)
+endif
+
 .code
 
 ifdef MAKECOM
@@ -63,14 +67,12 @@ nop
 nop
 nop
 
-; push the psp now, ready for calling start
+; ds and es both point to the PSP, and we need ds for other purposes,
+; so es will be used to preserve the PSP, and we won't trust any
+; interrupt to preserve it for us, so we will push it now until we
+; need it.
 
-if @DataSize
-push ds
-endif
-; in small etc memory model, this will be a NULL
-mov ax, 0
-push ax
+push es
 
 ; determine how much memory is needed. The stack pointer points
 ; to the top. Work out what segment that is, then subtract the
@@ -81,8 +83,9 @@ mov cl, 4
 shr ax, cl ; get sp into pages
 mov bx, ss
 add ax, bx
-add ax, 2 ; safety margin because we've done some pushes etc
-mov bx, es
+add ax, 2 ; safety margin in case OS has made use of our stack
+          ; and will get upset if we free it and it gets reused
+mov bx, ds
 sub ax, bx ; subtract the psp segment
 
 ; free initially allocated memory
@@ -96,7 +99,9 @@ int 21h
 ; pointing to the PSP while cs is probably pointing to the beginning
 ; of the executable. DGROUP may also get the correct value, presumably
 ; zero. es is set to ds a bit later. And you need to set ss to that
-; value too
+; value too. Actually, for a COM file (still tiny), DGROUP is unlikely
+; to be valid because there is no relocation information, and in fact,
+; ds will already be set correctly.
 
 if @Model eq 1
 mov dx, cs
@@ -128,11 +133,6 @@ add bp, bx
 mov ss, dx
 mov sp, bp
 
-; Even though we changed the stack, the PSP pointer should
-; still be in the right spot, because we haven't changed
-; what SS:SP is actually pointing to
-
-
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
 ; which can be referenced as _end, and the end of the
@@ -140,29 +140,57 @@ mov sp, bp
 ; We can use rep stos to clear the memory, which initializes
 ; using the byte in al, starting at es:di, for a length of cx
 
-push es
 mov cx, offset DGROUP:_end
 mov di, offset DGROUP:_edata
 sub cx, di
-mov es, dx ; we still have that set from above
+; move ds (data pointer, often DGROUP, into es)
+push ds
+pop es
 mov al, 0
 rep stosb
+
+; The psp and envptr variables are only accessible with a far
+; pointer, nominally not available in small data memory models
+; (ie not if you have actually read ISO/IEC 9899:1990)
+; (I watched the movie version)
+
+mov word ptr __psp, 0
+pop es ; we preserved this right at the start
+mov word ptr [__psp + 2], es
+
+; Finally we have preserved the psp somewhere safe
+; But now we actually need to retrieve something (the
+; environment pointer) from the PSP, so we need es to
+; remain pointing to the PSP a bit longer
+
+mov word ptr __envptr, 0
+mov dx, es:[02ch]
+mov word ptr [__envptr + 2], dx
+
+; And we have now finished using es to address the psp
+; so we can set it to the same as ds and es, which is
+; what is normally expected
+
+push ds
 pop es
+
+; Get the operating system version, which is used in the
+; C code to know if the environment pointer is valid
 
 mov ah,30h
 int 21h
 xchg al,ah
 mov [__osver],ax
 
-mov word ptr __psp, 0
-mov word ptr [__psp + 2], es
-mov word ptr __envptr, 0
-mov dx, es:[02ch]
-mov word ptr [__envptr + 2], dx
-mov dx, ds
-mov es, dx
+; push the psp now, ready for calling start
 
-; we have already pushed the pointer to psp
+if @DataSize
+push word ptr [__psp + 2]
+endif
+; in small etc memory model, this will be a NULL
+mov ax, 0
+push ax
+
 call __start
 if @DataSize
 add sp, 4  ; delete psp from stack
