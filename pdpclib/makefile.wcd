@@ -1,10 +1,23 @@
 # Produce MSDOS executable using Watcom C
-# Build with wmake -u -f makefile.wcd or pdmake -f makefile.wcd
+# Build with pdmake -f makefile.wcd
+# or wmake -z -a -u -f makefile.wcd
 
-# Change XXSZ4 to SZ4 (globally) to activate 32-bit size_t
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=l
+# Choose long form of above name, required by wasm instead of wcl
+MODELA=large
+
+# If you want to produce a COM file, uncommment this, and follow the
+# instructions further down
+#MAKECOM=-DMAKECOM
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+#SZ4=-D__SZ4__
+
+
 
 CC=wcl
-COPTS=-D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+COPTS=$(SZ4) -oneatx -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__MSDOS__ -fpi87 -s -zdp -zu
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
 
@@ -44,11 +57,12 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 .c.obj:
   $(CC) $(COPTS) $<
 
-# Add -DMAKECOM to this if you want to produce a COM file
 dosstart.obj: dosstart.asm
-#  ml -c -Dmemodel=large dosstart.asm
-  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dosstart.asm
+#  as86 -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
+#  ml -c -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
+  wasm -zcm -q -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
 
 dossupa.obj: dossupa.asm
-#  ml -c -Dmemodel=large -DWATCOM dossupa.asm
-  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
+#  as86 -DWATCOM $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
+#  ml -c -DWATCOM $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
+  wasm -zcm -q -DWATCOM $(SZ4) -Dmemodel=$(MODELA) dossupa.asm
