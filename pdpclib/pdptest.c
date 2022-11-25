@@ -49,13 +49,17 @@ int main(int argc, char **argv)
     m1 = malloc(3U*1024*1024*1024);
 #endif
     printf("m1 is %p\n", m1);
-    if (m1 == NULL) return(EXIT_FAILURE);
-    strcpy(m1, "ABCDE");
+    if (m1 != NULL)
+    {
+        strcpy(m1, "ABCDE");
+    }
     printf("allocating 20 bytes\n");
     m2 = malloc(20);
     printf("m2 is %p\n", m2);
-    if (m2 == NULL) return (EXIT_FAILURE);
-    strcpy(m2, "1234");
+    if (m2 != NULL)
+    {
+        strcpy(m2, "1234");
+    }
     printf("stack is around %p\n", &c);
 /*    printf("calling pdptst31\n");
     system("pdptst31");
