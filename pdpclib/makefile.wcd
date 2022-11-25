@@ -1,6 +1,6 @@
 # Produce MSDOS executable using Watcom C
 # Build with pdmake -f makefile.wcd
-# or wmake -z -a -u -f makefile.wcd
+# or wmake -h -e -a -ms -f makefile.wcd
 
 # Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
 MODELC=l
