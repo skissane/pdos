@@ -770,8 +770,8 @@ void pdosRun(void)
 #endif
 #ifdef __32BIT__
     unsigned long memstart;
-    unsigned long memavail;
 #endif
+    unsigned long memavail;
 
 #if (!defined(USING_EXE) && !defined(__32BIT__))
     instint();
@@ -845,14 +845,11 @@ void pdosRun(void)
     the A20 line is disabled, so this way they get at least 1 meg
     they can use. */
     memavail = BosExtendedMemorySize();
-    if (memavail < 4*1024*1024)
+    printf("detected %lu bytes of extended memory\n", memavail);
+    if (memavail < 4L*1024*1024)
     {
         printf("less than 4 MiB available - system halting\n");
         for (;;) ;
-    }
-    else
-    {
-        printf("detected %ld bytes of extended memory\n", memavail);
     }
 #ifdef EXE32
     memavail -= 0x500000; /* room for disk cache */
@@ -944,12 +941,23 @@ void pdosRun(void)
     memory, we do the reverse, ie substract 0x10000 and
     then divide by 16.  Oh, and because we took away so
     much memory, we only end up supplying 0x5000U. */
+
+    memavail = BosGetMemorySize();
+    printf("detected %lu bytes of base memory\n", memavail);
+    /* you can't drown a cat with less than 64k, so bail out */
+    if (memavail < PDOS16_MEMSTART * 16L + 64L * 1024)
+    {
+        printf("which is not enough to drown a cat - system halting\n");
+        for (;;) ;
+    }
 #ifndef __SZ4__
     memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x5000U);
 #else
     /* the huge memory model, 32-bit size_t executable is bigger, so we
        can't reclaim the full extra 64k */
-    memmgrSupply(&memmgr, (char *)MK_FP(PDOS16_MEMSTART,0x0000), 0x58000UL);
+    memmgrSupply(&memmgr,
+                 (char *)MK_FP(PDOS16_MEMSTART,0x0000),
+                 memavail - PDOS16_MEMSTART * 16L);
 #endif
 
 #endif
