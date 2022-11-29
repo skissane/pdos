@@ -23,4 +23,4 @@ rem the order of the following stuff is critical so that the first 3*512
 rem bytes have sufficient stuff to do the rest of the load of itself!!!
 rem it is ploadst, pload, int13x and near that need to be in the first 3*512
 rem and only the first 3 functions of near
-wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map
+wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map,verbose
