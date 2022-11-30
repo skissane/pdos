@@ -244,6 +244,7 @@ static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 static unsigned int *lastflags;
 static int autotrace = 0;
+static unsigned char *storage_watch = NULL;
 
 #define HANDTYPE_FILE 0
 #define HANDTYPE_COMM 1
@@ -3005,6 +3006,7 @@ unsigned int PosMonitor(void)
     int c;
     int pos1;
     int pos2;
+    int drive;
 
     printf("current module loaded at %p, entry point %p\n", loadaddr, entry_point);
     printf("enter a hex address or range, exit to exit, help for help\n");
@@ -3017,17 +3019,35 @@ unsigned int PosMonitor(void)
         {
             printf("zap <addr> <val> - change a byte\n");
             printf("trace\n");
+            printf("sw <addr> - watch an address while tracing\n");
+            printf("scrncap <drive> - begin screen capture to drive\n");
             continue;
         }
         else if (strcmp(buf, "trace\n") == 0)
         {
             *lastflags |= 0x100;
+            printf("tracing activated\n");
+            continue;
+        }
+        else if (strncmp(buf, "scrncap ", 8) == 0)
+        {
+            sscanf(buf + 8, "%x", &drive);
+            printf("screen capture to drive %x\n", drive);
+            PosScrncap(drive);
+            continue;
+        }
+        else if (strncmp(buf, "sw ", 3) == 0)
+        {
+            sscanf(buf + 3, "%p", &p);
+            storage_watch = (unsigned char *)p;
+            printf("will watch storage address %p\n", storage_watch);
             continue;
         }
         else if (strncmp(buf, "zap ", 4) == 0)
         {
             sscanf(buf + 4, "%p %i", &p, &c);
             *p = (char)c;
+            printf("zapped address %p with %02X\n", p, c);
             continue;
         }
         sscanf(buf, "%p", &addr);
@@ -3391,6 +3411,12 @@ int int1(unsigned int *regs)
     printf("interrupt address is %08X\n", oldsp[8]);
     printf("instruction at that (new) address starts with %x\n",
            *(unsigned char *)oldsp[8]);
+    if (storage_watch != NULL)
+    {
+        printf("watched storage address %p is %02X\n",
+               storage_watch,
+               *storage_watch);
+    }
     printf("flags are %08X\n", oldsp[10]);
     printf("EBP chain to EBP is %08X\n", ebp[0]);
     retaddr = (unsigned int *)ebp[1];
@@ -3654,6 +3680,12 @@ void int1(unsigned int *regptrs)
     printf("interrupt address is %p\n", MK_FP(regptrs[11], regptrs[10]));
     p = MK_FP(regptrs[11], regptrs[10]);
     printf("instruction at that (new) address starts with %x\n", *p);
+    if (storage_watch != NULL)
+    {
+        printf("watched storage address %p is %02X\n",
+               storage_watch,
+               *storage_watch);
+    }
     if (!autotrace)
     {
         printf("hit enter to continue tracing, or monitor or stop or auto\n");
