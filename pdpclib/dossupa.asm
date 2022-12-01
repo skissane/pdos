@@ -759,8 +759,11 @@ f_ldiv@ proc
 push bp
 mov bp,sp
 
-; Shouldn't preserve dx - that's part of the return?
-;push dx
+; I don't know why we need to preserve dx. I expected
+; the return value to be a dx:ax pair. Maybe it works
+; in conjunction with the f_lmod call, and the return
+; value is only ax
+push dx
 
 ; Watcom seems to be allowed to trash bx and cx,
 ; and we call a C routine later
@@ -789,7 +792,7 @@ ldiv_fin:
 
 pop cx
 pop bx
-;pop dx
+pop dx
 pop bp
 ret 8
 f_ldiv@ endp
