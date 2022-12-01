@@ -693,7 +693,11 @@ public f_ludiv@
 f_ludiv@ proc
 push bp
 mov bp,sp
+
+; Watcom seems to be allowed to trash bx and cx,
+; and we call a C routine later
 push bx
+push cx
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne ludiv_full
@@ -713,11 +717,14 @@ push word ptr [bp + 10 + @CodeSize * 2]
 push word ptr [bp + 8 + @CodeSize * 2]
 push word ptr [bp + 6 + @CodeSize * 2]
 push word ptr [bp + 4 + @CodeSize * 2]
+
 call __divide
+
 add sp, 8
 
 ludiv_fin:
 
+pop cx
 pop bx
 pop bp
 ret 8
@@ -751,7 +758,14 @@ public f_ldiv@
 f_ldiv@ proc
 push bp
 mov bp,sp
-push dx
+
+; Shouldn't preserve dx - that's part of the return?
+;push dx
+
+; Watcom seems to be allowed to trash bx and cx,
+; and we call a C routine later
+push bx
+push cx
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne ldiv_full
@@ -766,12 +780,16 @@ push word ptr [bp + 10 + @CodeSize * 2]
 push word ptr [bp + 8 + @CodeSize * 2]
 push word ptr [bp + 6 + @CodeSize * 2]
 push word ptr [bp + 4 + @CodeSize * 2]
+
 call __divide
+
 add sp, 8
 
 ldiv_fin:
 
-pop dx
+pop cx
+pop bx
+;pop dx
 pop bp
 ret 8
 f_ldiv@ endp
@@ -781,6 +799,11 @@ public f_lmod@
 f_lmod@ proc
 push bp
 mov bp,sp
+
+; Watcom seems to be allowed to trash bx and cx,
+; and we call a C routine later
+push bx
+push cx
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne lmod_full
@@ -797,11 +820,15 @@ push word ptr [bp + 10 + @CodeSize * 2]
 push word ptr [bp + 8 + @CodeSize * 2]
 push word ptr [bp + 6 + @CodeSize * 2]
 push word ptr [bp + 4 + @CodeSize * 2]
+
 call __modulo
+
 add sp, 8
 
 lmod_fin:
 
+pop cx
+pop bx
 pop bp
 ret 8
 f_lmod@ endp
@@ -814,6 +841,11 @@ public f_lumod@
 f_lumod@ proc
 push bp
 mov bp,sp
+
+; Watcom seems to be allowed to trash bx and cx,
+; and we call a C routine later
+push bx
+push cx
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne lumod_full
@@ -832,11 +864,15 @@ push word ptr [bp + 10 + @CodeSize * 2]
 push word ptr [bp + 8 + @CodeSize * 2]
 push word ptr [bp + 6 + @CodeSize * 2]
 push word ptr [bp + 4 + @CodeSize * 2]
+
 call __modulo
+
 add sp, 8
 
 lumod_fin:
 
+pop cx
+pop bx
 pop bp
 ret 8
 f_lumod@ endp
