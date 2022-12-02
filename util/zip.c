@@ -60,14 +60,6 @@ int main(int argc, char **argv)
         printf("failed to open %s for writing\n", *(argv + 2));
         return (EXIT_FAILURE);
     }
-    fputc(0x50, outf);
-    fputc(0x4b, outf);
-    fputc(0x03, outf);
-    fputc(0x04, outf);
-    /* I don't know what this is, but it seems consistent */
-    fwrite("\x0A\x00\x00\x00\x00\x00\xCB\x4C\x75\x55", 10, 1, outf);
-    /* This doesn't appear to be archive size, but could be a timestamp */
-    fwrite("\x00\x00\x00\x00", 4, 1, outf);
     p = strchr(*(argv + 3), '.');
     if (p == NULL)
     {
@@ -170,6 +162,10 @@ static int dolevel(void)
                 printf("failed to open %s for reading\n", in);
                 exit(EXIT_FAILURE);
             }
+            fwrite("\x50\x4B\x03\x04\x0A\x00\x00\x00", 8, 1, outf);
+            fwrite("\x00\x00\xCB\x4C\x75\x55", 6, 1, outf);
+            /* This is a CRC-32 */
+            fwrite("\x01\x02\x03\x04", 4, 1, outf);
             fseek(fp, 0, SEEK_END);
             offs = ftell(fp);
             /* this needs to be changed */
