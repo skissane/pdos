@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     dta = PosGetDTA();
-    strcpy(from, *(argv + 1));
+    strcpy(from, *(argv + 2));
     dolevel();
     return (0);
 }
@@ -96,5 +96,6 @@ static int dolevel(void)
         }
         ret = PosFindNext();
     }
+    PosRemoveDir(from);
     return (0);
 }
