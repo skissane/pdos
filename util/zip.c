@@ -30,6 +30,8 @@ static int stage = 1;
 
 static long startcd;
 
+static long cdlen;
+
 static short numfiles;
 
 static long logupto; /* logical upto */
@@ -86,12 +88,14 @@ int main(int argc, char **argv)
     logupto = 0;
     stage = 2;
     startcd = ftell(outf);
+    cdlen = 0;
     dolevel();
     fwrite("\x50\x4B\x05\x06\x00\x00\x00\x00", 8, 1, outf);
     /* this needs to change */
     fwrite(&numfiles, 2, 1, outf);
     fwrite(&numfiles, 2, 1, outf);
-    fwrite("\x39\x00\x00\x00", 4, 1, outf);
+    /* this needs to change */
+    fwrite(&cdlen, 4, 1, outf);
     /* this needs to change */
     fwrite(&startcd, 4, 1, outf);
     fwrite("\x00\x00", 2, 1, outf);
@@ -231,6 +235,8 @@ static int dolevel(void)
             logupto += filelen;
             logupto += fnmlen;
             logupto += 30; /* overhead */
+            cdlen += fnmlen;
+            cdlen += 46; /* overhead */
         }
         ret = PosFindNext();
     }
