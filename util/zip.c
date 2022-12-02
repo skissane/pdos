@@ -32,6 +32,8 @@ static long startcd;
 
 static short numfiles;
 
+static long logupto; /* logical upto */
+
 static int dolevel(void);
 
 int main(int argc, char **argv)
@@ -78,8 +80,10 @@ int main(int argc, char **argv)
         strcpy(filespec, *(argv + 3));
     }
     numfiles = 0;
+    logupto = 0;
     dolevel();
     numfiles = 0;
+    logupto = 0;
     stage = 2;
     startcd = ftell(outf);
     dolevel();
@@ -154,7 +158,8 @@ static int dolevel(void)
             char in[FILENAME_MAX];
             char buf[512];
             size_t cnt;
-            long offs;
+            long filelen;
+            long fnmlen;
 
             strcpy(in, from);
             strcat(in, "/");
@@ -184,22 +189,23 @@ static int dolevel(void)
                 fwrite("\x7C\xC7\x8A\x45", 4, 1, outf);
             }
             fseek(fp, 0, SEEK_END);
-            offs = ftell(fp);
+            filelen = ftell(fp);
             /* this needs to be changed */
-            fwrite(&offs, 4, 1, outf);
-            fwrite(&offs, 4, 1, outf);
+            fwrite(&filelen, 4, 1, outf);
+            fwrite(&filelen, 4, 1, outf);
             p = in;
             if (strncmp(in, "./", 2) == 0)
             {
                 p += 2;
             }
-            /* honestly, who writes this shit? */
-            offs = strlen(p);
-            fwrite(&offs, 4, 1, outf);
+            fnmlen = strlen(p);
+            fwrite(&fnmlen, 4, 1, outf);
             if (stage == 2)
             {
                 fwrite("\x00\x00\x00\x00\x00\x00\x20\x00", 8, 1, outf);
-                fwrite("\x00\x00\x00\x00\x00\x00", 6, 1, outf);
+                fwrite("\x00\x00", 2, 1, outf);
+                /* this needs to change */
+                fwrite(&logupto, 4, 1, outf);
             }
             fprintf(outf, "%s", p);
             if(stage == 1)
@@ -222,6 +228,9 @@ static int dolevel(void)
             }
             fclose(fp);
             numfiles++;
+            logupto += filelen;
+            logupto += fnmlen;
+            logupto += 30; /* overhead */
         }
         ret = PosFindNext();
     }
