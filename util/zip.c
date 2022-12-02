@@ -122,7 +122,6 @@ static int dolevel(void)
     p = from + strlen(from);
     strcpy(p, "/");
     strcpy(p + 1, filespec);
-    printf("looking for %s\n", from);
 
     /* shouldn't need to do this - PDOS should allow ./ */
     if (strncmp(from, "./", 2) == 0)
@@ -176,7 +175,16 @@ static int dolevel(void)
             {
                 strcat(in, dta->file_name);
             }
-            printf("%s\n", in);
+            p = in;
+            if (strncmp(in, "./", 2) == 0)
+            {
+                p += 2;
+            }
+            fnmlen = strlen(p);
+            if (stage == 1)
+            {
+                printf("%s\n", p);
+            }
             fp = fopen(in, "rb");
             if (fp == NULL)
             {
@@ -209,12 +217,6 @@ static int dolevel(void)
             /* this needs to be changed */
             fwrite(&filelen, 4, 1, outf);
             fwrite(&filelen, 4, 1, outf);
-            p = in;
-            if (strncmp(in, "./", 2) == 0)
-            {
-                p += 2;
-            }
-            fnmlen = strlen(p);
             fwrite(&fnmlen, 4, 1, outf);
             if (stage == 2)
             {
