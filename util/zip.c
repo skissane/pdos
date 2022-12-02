@@ -192,10 +192,11 @@ static int dolevel(void)
                 {
                     crc32Update(&crc, c);
                 }
-                fputc(crc32Byte1(&crc), outf);
-                fputc(crc32Byte2(&crc), outf);
-                fputc(crc32Byte3(&crc), outf);
+                crc32Finalize(&crc);
                 fputc(crc32Byte4(&crc), outf);
+                fputc(crc32Byte3(&crc), outf);
+                fputc(crc32Byte2(&crc), outf);
+                fputc(crc32Byte1(&crc), outf);
             }
             else if (stage == 2)
             {
