@@ -195,13 +195,9 @@ static int dolevel(void)
             }
             /* honestly, who writes this shit? */
             offs = strlen(p);
-            if (stage == 1)
+            fwrite(&offs, 4, 1, outf);
+            if (stage == 2)
             {
-                fwrite(&offs, 4, 1, outf);
-            }
-            else if (stage == 2)
-            {
-                fwrite("\x0B\x00\x00\x00", 4, 1, outf);
                 fwrite("\x00\x00\x00\x00\x00\x00\x20\x00", 8, 1, outf);
                 fwrite("\x00\x00\x00\x00\x00\x00", 6, 1, outf);
             }
