@@ -26,6 +26,12 @@ static FILE *outf;
 
 static int compress = 0;
 
+static int stage = 1;
+
+static long startcd;
+
+static short numfiles;
+
 static int dolevel(void);
 
 int main(int argc, char **argv)
@@ -71,18 +77,20 @@ int main(int argc, char **argv)
         strcpy(from, ".");
         strcpy(filespec, *(argv + 3));
     }
+    numfiles = 0;
     dolevel();
-    fwrite("\x50\x4B\x01\x02\x1E\x00\x0A\x00", 8, 1, outf);
-    fwrite("\x00\x00\x00\x00\xCB\x4C\x75\x55", 8, 1, outf);
-    fwrite("\x7C\xC7\x8A\x45\xBB\x00\x00\x00", 8, 1, outf);
-    fwrite("\xBB\x00\x00\x00\x0B\x00\x00\x00", 8, 1, outf);
-    fwrite("\x00\x00\x00\x00\x00\x00\x20\x00", 8, 1, outf);
-    fwrite("\x00\x00\x00\x00\x00\x00", 6, 1, outf);
-    /* this is a filename. I made it aaaaaaa.bbb */
-    fwrite("\x61\x61\x61\x61\x61\x61\x61\x2E\x62\x62\x62", 11, 1, outf);
+    numfiles = 0;
+    stage = 2;
+    startcd = ftell(outf);
+    dolevel();
     fwrite("\x50\x4B\x05\x06\x00\x00\x00\x00", 8, 1, outf);
-    fwrite("\x01\x00\x01\x00\x39\x00\x00\x00", 8, 1, outf);
-    fwrite("\xE4\x00\x00\x00\x00\x00", 6, 1, outf);
+    /* this needs to change */
+    fwrite(&numfiles, 2, 1, outf);
+    fwrite(&numfiles, 2, 1, outf);
+    fwrite("\x39\x00\x00\x00", 4, 1, outf);
+    /* this needs to change */
+    fwrite(&startcd, 4, 1, outf);
+    fwrite("\x00\x00", 2, 1, outf);
     if (ferror(outf))
     {
         printf("error on output file\n");
@@ -162,10 +170,19 @@ static int dolevel(void)
                 printf("failed to open %s for reading\n", in);
                 exit(EXIT_FAILURE);
             }
-            fwrite("\x50\x4B\x03\x04\x0A\x00\x00\x00", 8, 1, outf);
-            fwrite("\x00\x00\xCB\x4C\x75\x55", 6, 1, outf);
-            /* This is a CRC-32 */
-            fwrite("\x01\x02\x03\x04", 4, 1, outf);
+            if (stage == 1)
+            {
+                fwrite("\x50\x4B\x03\x04\x0A\x00\x00\x00", 8, 1, outf);
+                fwrite("\x00\x00\xCB\x4C\x75\x55", 6, 1, outf);
+                /* This is a CRC-32 */
+                fwrite("\x01\x02\x03\x04", 4, 1, outf);
+            }
+            else if (stage == 2)
+            {
+                fwrite("\x50\x4B\x01\x02\x1E\x00\x0A\x00", 8, 1, outf);
+                fwrite("\x00\x00\x00\x00\xCB\x4C\x75\x55", 8, 1, outf);
+                fwrite("\x7C\xC7\x8A\x45", 4, 1, outf);
+            }
             fseek(fp, 0, SEEK_END);
             offs = ftell(fp);
             /* this needs to be changed */
@@ -178,11 +195,24 @@ static int dolevel(void)
             }
             /* honestly, who writes this shit? */
             offs = strlen(p);
-            fwrite(&offs, 4, 1, outf);
-            fprintf(outf, "%s", p);
-            while ((cnt = fread(buf, 1, sizeof buf, fp)) > 0)
+            if (stage == 1)
             {
-                fwrite(buf, 1, cnt, outf);
+                fwrite(&offs, 4, 1, outf);
+            }
+            else if (stage == 2)
+            {
+                fwrite("\x0B\x00\x00\x00", 4, 1, outf);
+                fwrite("\x00\x00\x00\x00\x00\x00\x20\x00", 8, 1, outf);
+                fwrite("\x00\x00\x00\x00\x00\x00", 6, 1, outf);
+            }
+            fprintf(outf, "%s", p);
+            if(stage == 1)
+            {
+                rewind(fp);
+                while ((cnt = fread(buf, 1, sizeof buf, fp)) > 0)
+                {
+                    fwrite(buf, 1, cnt, outf);
+                }
             }
             if (ferror(fp))
             {
@@ -195,6 +225,7 @@ static int dolevel(void)
                 exit(EXIT_FAILURE);
             }
             fclose(fp);
+            numfiles++;
         }
         ret = PosFindNext();
     }
