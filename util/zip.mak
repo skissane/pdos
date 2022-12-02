@@ -16,7 +16,7 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -D__WIN32__ -D__NOBIVA__ -D__32BIT__
+COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN32__ -D__NOBIVA__ -D__32BIT__
 
 all: clean zip.exe
 
