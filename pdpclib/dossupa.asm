@@ -1055,6 +1055,7 @@ public __brkpoint
 __brkpoint proc
 int 3 ; this is an x'cc' which will need to be zapped with x'90'
       ; before you can progress
+nop   ; people can zap this to x'cc' too if they want
 ret
 __brkpoint endp
 
@@ -1063,6 +1064,7 @@ public __brkpoint2
 __brkpoint2 proc
 int 3 ; this is an x'cc' which will need to be zapped with x'90'
       ; before you can progress
+nop
 ret
 __brkpoint2 endp
 
