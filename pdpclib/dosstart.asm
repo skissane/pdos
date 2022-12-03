@@ -78,6 +78,16 @@ push es
 ; to the top. Work out what segment that is, then subtract the
 ; starting segment (the PSP), and you have your answer.
 
+; Note that if you don't do this, MSDOS will normally allocate
+; as much memory as possible, according to the maxalloc in the
+; executable header, which linkers normally set to x'ffff'.
+; The minalloc is normally set to just the stack + bss, as both
+; of these are outside the executable proper. But extra memory,
+; if available, can be used as a heap for mallocs. Rather than
+; patch every executable produced by every linker that sets the
+; maxalloc to x'ffff', it is probably better to just do the
+; resizing ourselves at runtime.
+
 mov ax, sp
 mov cl, 4
 shr ax, cl ; get sp into pages
