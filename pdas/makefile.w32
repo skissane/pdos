@@ -1,0 +1,23 @@
+VPATH=src
+CC=gccwin
+CFLAGS=-O2 -masm=intel -ggdb
+LD=ld
+LDFLAGS=
+AS=as --gdwarf2
+COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ -DUSE_COFF_BY_DEFAULT
+
+OBJS=a_out.o as.o assemble.o bytearray.o coff.o cstr.o elf.o error.o expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o
+
+all: clean pdas.exe
+
+pdas.exe: $(OBJS)
+  rm -f pdas.a
+  $(LD) $(LDFLAGS) -o pdas.exe ../pdpclib/w32start.o $(OBJS) ../pdpclib/msvcrt.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o pdas.exe
