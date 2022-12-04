@@ -1262,6 +1262,24 @@ int fatWriteFile(FAT *fat, FATFILE *fatfile, const void *buf,
         if ((fatfile->currpos < fatfile->fileSize) && (tsz == fat->sector_size))
         {
             fatfile->sectorUpto++;
+            if (fatfile->sectorUpto == fat->sectors_per_cluster)
+            {
+                /* We are before the end of file,
+                 * so we find the next cluster. */
+                fatClusterAnalyse(fat, fat->currcluster,
+                          &fatfile->sectorStart, &fatfile->currentCluster);
+                fatfile->sectorUpto = 0;
+                /* We use fatfile->currentCluster as variable for next
+                 * cluster as it needs to be updated, so we do not need
+                 * separate nextCluster variable. */
+                fat->currcluster = fatfile->currentCluster;
+                /* The sectorStart provided by fatClusterAnalyse
+                 * is for the old cluster, so we calculate
+                 * the new startSector ourselves. */
+                fatfile->sectorStart = (fat->currcluster - FIRST_DATA_CLUSTER)
+                * (long)fat->sectors_per_cluster
+                + fat->filestart;
+            }
         }
     }
     /* fileSize contains the size of the entire file and it is changed
