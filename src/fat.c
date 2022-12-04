@@ -44,7 +44,7 @@ static void fatDirSectorSearch(FAT *fat,
 static void fatReadLogical(FAT *fat, unsigned long sector, void *buf);
 static void fatWriteLogical(FAT *fat, unsigned long sector, void *buf);
 static void fatMarkCluster(FAT *fat, unsigned long cluster);
-static unsigned int fatFindFreeCluster(FAT *fat);
+static unsigned long fatFindFreeCluster(FAT *fat);
 static void fatChain(FAT *fat, FATFILE *fatfile);
 static void fatNuke(FAT *fat, unsigned long cluster);
 static void fatPopulateDateTime(FAT *fat, DIRENT *d,
@@ -2238,7 +2238,7 @@ static void fatMarkCluster(FAT *fat, unsigned long cluster)
 
 /* fatFindFreeCluster - get next available free cluster */
 
-static unsigned int fatFindFreeCluster(FAT *fat)
+static unsigned long fatFindFreeCluster(FAT *fat)
 {
     static unsigned char buf[MAXSECTSZ];
     unsigned long fatSector;
