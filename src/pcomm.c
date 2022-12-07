@@ -1119,6 +1119,11 @@ static int cmd_dir_run(char *pattern)
         p = pattern;
     }
     ret = PosFindFirst(p, 0x10);
+    if(ret == 2)
+    {
+        printf("No files found\n");
+        return 1;
+    }
     if (ret != 0 && ret != POS_ERR_NO_MORE_FILES) {
         showError(ret);
         return 1;
