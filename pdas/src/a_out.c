@@ -73,6 +73,20 @@ static int write_struct_nlist (FILE *outfile, struct nlist_internal *nlist_inter
 
 }
 
+static int write_struct_string_table_header (FILE *outfile, struct string_table_header_internal *string_table_header_internal) {
+
+    struct string_table_header_file string_table_header_file;
+
+    COPY(string_table_header, s_size, 4);
+
+    if (fwrite (&string_table_header_file, sizeof (string_table_header_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
+
 #undef COPY
 
 static int output_relocation (FILE *outfile, struct fixup *fixup, unsigned long start_address_of_section) {
@@ -136,6 +150,8 @@ static int output_relocation (FILE *outfile, struct fixup *fixup, unsigned long 
 void write_a_out_file (void) {
 
     struct exec_internal header;
+    struct string_table_header_internal string_table_header = {sizeof (struct string_table_header_file)};
+    
     struct frag *frag;
     
     struct fixup *fixup;
@@ -145,7 +161,6 @@ void write_a_out_file (void) {
     unsigned long symbol_table_size;
     
     FILE *outfile;
-    unsigned int string_table_pos = 4;
     
     memset (&header, 0, sizeof (header));
     header.a_info = 0x00640000LU | OMAGIC;
@@ -159,7 +174,7 @@ void write_a_out_file (void) {
     
     if (fseek (outfile, sizeof (struct exec_file), SEEK_SET)) {
     
-        as_error_at (NULL, 0, "Failed whilst seeking passed header");
+        as_error_at (NULL, 0, "Failed whilst seeking past header");
         return;
     
     }
@@ -260,8 +275,8 @@ void write_a_out_file (void) {
         struct nlist_internal symbol_entry;
         memset (&symbol_entry, 0, sizeof (symbol_entry));
         
-        symbol_entry.n_strx = string_table_pos;
-        string_table_pos += strlen (symbol->name) + 1;
+        symbol_entry.n_strx = string_table_header.s_size;
+        string_table_header.s_size += strlen (symbol->name) + 1;
         
         if (symbol->section == undefined_section) {
             symbol_entry.n_type = N_UNDF;
@@ -296,7 +311,7 @@ void write_a_out_file (void) {
     
     header.a_syms = symbol_table_size;
     
-    if (fwrite (&string_table_pos, sizeof (string_table_pos), 1, outfile) != 1) {
+    if (write_struct_string_table_header (outfile, &string_table_header)) {
     
         as_error_at (NULL, 0, "Failed to write string table!");
         return;

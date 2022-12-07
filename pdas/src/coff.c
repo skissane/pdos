@@ -13,10 +13,109 @@
 
 #include    "as.h"
 #include    "coff.h"
+#include    "bytearray.h"
+
+#define COPY(struct_name, field_name, bytes) \
+ bytearray_write_##bytes##_bytes (struct_name##_file.field_name, struct_name##_internal->field_name, LITTLE_ENDIAN)
+
+static int write_struct_coff_header (FILE *outfile, struct coff_header_internal *coff_header_internal) {
+
+    struct coff_header_file coff_header_file;
+
+    COPY(coff_header, Machine, 2);
+    COPY(coff_header, NumberOfSections, 2);
+    COPY(coff_header, TimeDateStamp, 4);
+    COPY(coff_header, PointerToSymbolTable, 4);
+    COPY(coff_header, NumberOfSymbols, 4);
+    COPY(coff_header, SizeOfOptionalHeader, 2);
+    COPY(coff_header, Characteristics, 2);
+
+    if (fwrite (&coff_header_file, sizeof (coff_header_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
+
+static int write_struct_section_table_entry (FILE *outfile, struct section_table_entry_internal *section_table_entry_internal) {
+
+    struct section_table_entry_file section_table_entry_file;
+
+    memcpy (section_table_entry_file.Name, section_table_entry_internal->Name, sizeof (section_table_entry_file.Name));
+
+    COPY(section_table_entry, VirtualSize, 4);
+    COPY(section_table_entry, VirtualAddress, 4);
+    COPY(section_table_entry, SizeOfRawData, 4);
+    COPY(section_table_entry, PointerToRawData, 4);
+    COPY(section_table_entry, PointerToRelocations, 4);
+    COPY(section_table_entry, PointerToLinenumbers, 4);
+    COPY(section_table_entry, NumberOfRelocations, 2);
+    COPY(section_table_entry, NumberOfLinenumbers, 2);
+    COPY(section_table_entry, Characteristics, 4);
+    
+
+    if (fwrite (&section_table_entry_file, sizeof (section_table_entry_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
+
+static int write_struct_relocation_entry (FILE *outfile, struct relocation_entry_internal *relocation_entry_internal) {
+
+    struct relocation_entry_file relocation_entry_file;
+
+    COPY(relocation_entry, VirtualAddress, 4);
+    COPY(relocation_entry, SymbolTableIndex, 4);
+    COPY(relocation_entry, Type, 2);
+
+    if (fwrite (&relocation_entry_file, sizeof (relocation_entry_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
+
+static int write_struct_symbol_table_entry (FILE *outfile, struct symbol_table_entry_internal *symbol_table_entry_internal) {
+
+    struct symbol_table_entry_file symbol_table_entry_file;
+
+    memcpy (symbol_table_entry_file.Name, symbol_table_entry_internal->Name, sizeof (symbol_table_entry_file.Name));
+
+    COPY(symbol_table_entry, Value, 4);
+    COPY(symbol_table_entry, SectionNumber, 2);
+    COPY(symbol_table_entry, Type, 2);
+    COPY(symbol_table_entry, StorageClass, 1);
+    COPY(symbol_table_entry, NumberOfAuxSymbols, 1);
+
+    if (fwrite (&symbol_table_entry_file, sizeof (symbol_table_entry_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
+
+static int write_struct_string_table_header (FILE *outfile, struct string_table_header_internal *string_table_header_internal) {
+
+    struct string_table_header_file string_table_header_file;
+
+    COPY(string_table_header, StringTableSize, 4);
+
+    if (fwrite (&string_table_header_file, sizeof (string_table_header_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+
+}
 
 static int output_relocation (FILE *outfile, struct fixup *fixup) {
 
-    struct relocation_entry reloc_entry;
+    struct relocation_entry_internal reloc_entry;
     reloc_entry.VirtualAddress = fixup->frag->address + fixup->where;
     
     if (fixup->add_symbol == NULL) {
@@ -71,7 +170,7 @@ static int output_relocation (FILE *outfile, struct fixup *fixup) {
     
     }
     
-    if (fwrite (&reloc_entry, RELOCATION_ENTRY_SIZE, 1, outfile) != 1) {
+    if (write_struct_relocation_entry (outfile, &reloc_entry)) {
         return 1;
     }
     
@@ -79,16 +178,13 @@ static int output_relocation (FILE *outfile, struct fixup *fixup) {
 
 }
 
-#define     NUMBER_OF_SECTIONS          3
-
 void write_coff_file (void) {
 
-    struct coff_header header;
-    struct symbol *symbol;
+    struct coff_header_internal header;
+    struct string_table_header_internal string_table_header = {sizeof (struct string_table_header_file)};
     
     FILE *outfile;
-    unsigned int string_table_size = 4;
-    
+    struct symbol *symbol;
     section_t section;
     
     sections_number (1);
@@ -106,7 +202,10 @@ void write_coff_file (void) {
     header.SizeOfOptionalHeader = 0;
     header.Characteristics = IMAGE_FILE_LINE_NUMS_STRIPPED;
     
-    if (fseek (outfile, (sizeof (header) + sections_get_count () * sizeof (struct section_table_entry)), SEEK_SET)) {
+    if (fseek (outfile,
+               (sizeof (struct coff_header_file)
+                + sections_get_count () * sizeof (struct section_table_entry_file)),
+               SEEK_SET)) {
     
         as_error_at (NULL, 0, "Failed to fseek");
         return;
@@ -115,7 +214,7 @@ void write_coff_file (void) {
     
     for (section = sections; section; section = section_get_next_section (section)) {
     
-        struct section_table_entry *section_header = xmalloc (sizeof (*section_header));
+        struct section_table_entry_internal *section_header = xmalloc (sizeof (*section_header));
         section_set_object_format_dependent_data (section, section_header);
         
         memset (section_header, 0, sizeof (*section_header));
@@ -189,7 +288,7 @@ void write_coff_file (void) {
     
     for (symbol = symbols; symbol; symbol = symbol->next) {
     
-        struct symbol_table_entry sym_tbl_ent;
+        struct symbol_table_entry_internal sym_tbl_ent;
         
         if (symbol->object_format_dependent_data == NULL) {
             
@@ -219,7 +318,7 @@ void write_coff_file (void) {
 
         } else {
 
-            sym_tbl_ent = *(struct symbol_table_entry *)(symbol->object_format_dependent_data);
+            sym_tbl_ent = *(struct symbol_table_entry_internal *)(symbol->object_format_dependent_data);
 
             sym_tbl_ent.Value = symbol_get_value (symbol);
 
@@ -265,17 +364,14 @@ void write_coff_file (void) {
         
             memset (sym_tbl_ent.Name, 0, 4);
             
-            sym_tbl_ent.Name[4] = string_table_size & 0xff;
-            sym_tbl_ent.Name[5] = (string_table_size >> 8) & 0xff;
-            sym_tbl_ent.Name[6] = (string_table_size >> 16) & 0xff;
-            sym_tbl_ent.Name[7] = (string_table_size >> 24) & 0xff;
+            bytearray_write_4_bytes ((unsigned char *) (sym_tbl_ent.Name + 4), string_table_header.StringTableSize, LITTLE_ENDIAN);
             
-            string_table_size += strlen (symbol->name) + 1;
+            string_table_header.StringTableSize += strlen (symbol->name) + 1;
             symbol->write_name_to_string_table = 1;
         
         }
         
-        if (fwrite (&sym_tbl_ent, SYMBOL_TABLE_ENTRY_SIZE, 1, outfile) != 1) {
+        if (write_struct_symbol_table_entry (outfile, &sym_tbl_ent)) {
         
             as_error_at (NULL, 0, "Error writing symbol table!");
             return;
@@ -287,7 +383,7 @@ void write_coff_file (void) {
     
     }
     
-    if (fwrite (&string_table_size, 4, 1, outfile) != 1) {
+    if (write_struct_string_table_header (outfile, &string_table_header)) {
     
         as_error_at (NULL, 0, "Failed to write string table!");
         return;
@@ -311,7 +407,7 @@ void write_coff_file (void) {
     
     for (section = sections; section; section = section_get_next_section (section)) {
     
-        struct section_table_entry *section_header = section_get_object_format_dependent_data (section);
+        struct section_table_entry_internal *section_header = section_get_object_format_dependent_data (section);
         struct fixup *fixup;
         
         section_header->PointerToRelocations = ftell (outfile);
@@ -344,7 +440,7 @@ void write_coff_file (void) {
     
     rewind (outfile);
     
-    if (fwrite (&header, sizeof (header), 1, outfile) != 1) {
+    if (write_struct_coff_header (outfile, &header)) {
     
         as_error_at (NULL, 0, "Failed to write header!");
         return;
@@ -353,11 +449,11 @@ void write_coff_file (void) {
     
     for (section = sections; section; section = section_get_next_section (section)) {
     
-        struct section_table_entry *section_header = section_get_object_format_dependent_data (section);
+        struct section_table_entry_internal *section_header = section_get_object_format_dependent_data (section);
         
-        if (fwrite (section_header, sizeof (*section_header), 1, outfile) != 1) {
+        if (write_struct_section_table_entry (outfile, section_header)) {
         
-            as_error_at (NULL, 0, "Failed to write header!");
+            as_error_at (NULL, 0, "Failed to write section header!");
             return;
         
         }
@@ -446,8 +542,8 @@ static void handler_def (char **pp) {
     ch = get_symbol_name_end (pp);
 
     def_symbol = symbol_make (name);
-    def_symbol->object_format_dependent_data = xmalloc (sizeof (struct symbol_table_entry));
-    memset (def_symbol->object_format_dependent_data, 0, sizeof (struct symbol_table_entry));
+    def_symbol->object_format_dependent_data = xmalloc (sizeof (struct symbol_table_entry_internal));
+    memset (def_symbol->object_format_dependent_data, 0, sizeof (struct symbol_table_entry_internal));
 
     **pp = ch;
 
@@ -457,7 +553,7 @@ static void handler_def (char **pp) {
 
 static void handler_endef (char **pp) {
 
-    struct symbol_table_entry *symbol_table_entry;
+    struct symbol_table_entry_internal *symbol_table_entry;
     struct symbol *existing_symbol;
 
     if (def_symbol == NULL) {
@@ -513,7 +609,7 @@ static void handler_endef (char **pp) {
 
 static void handler_scl (char **pp) {
 
-    struct symbol_table_entry *symbol_table_entry;
+    struct symbol_table_entry_internal *symbol_table_entry;
 
     if (def_symbol == NULL) {
 
@@ -533,7 +629,7 @@ static void handler_scl (char **pp) {
 
 static void handler_type (char **pp) {
 
-    struct symbol_table_entry *symbol_table_entry;
+    struct symbol_table_entry_internal *symbol_table_entry;
 
     if (def_symbol == NULL) {
 

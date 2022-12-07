@@ -8,39 +8,72 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-struct coff_header {
+struct coff_header_internal {
 
     unsigned short Machine;
     unsigned short NumberOfSections;
     
-    unsigned int TimeDateStamp;
-    unsigned int PointerToSymbolTable;
-    unsigned int NumberOfSymbols;
+    unsigned long TimeDateStamp;
+    unsigned long PointerToSymbolTable;
+    unsigned long NumberOfSymbols;
     
     unsigned short SizeOfOptionalHeader;
     unsigned short Characteristics;
 
 };
 
+struct coff_header_file {
+
+    unsigned char Machine[2];
+    unsigned char NumberOfSections[2];
+    
+    unsigned char TimeDateStamp[4];
+    unsigned char PointerToSymbolTable[4];
+    unsigned char NumberOfSymbols[4];
+    
+    unsigned char SizeOfOptionalHeader[2];
+    unsigned char Characteristics[2];
+
+};
+
 #define     IMAGE_FILE_MACHINE_I386                         0x014C
 #define     IMAGE_FILE_LINE_NUMS_STRIPPED                   0x0004
 
-struct section_table_entry {
+struct section_table_entry_internal {
 
     char Name[8];
     
-    unsigned int VirtualSize;
-    unsigned int VirtualAddress;
+    unsigned long VirtualSize;
+    unsigned long VirtualAddress;
     
-    unsigned int SizeOfRawData;
-    unsigned int PointerToRawData;
-    unsigned int PointerToRelocations;
-    unsigned int PointerToLinenumbers;
+    unsigned long SizeOfRawData;
+    unsigned long PointerToRawData;
+    unsigned long PointerToRelocations;
+    unsigned long PointerToLinenumbers;
     
     unsigned short NumberOfRelocations;
     unsigned short NumberOfLinenumbers;
     
-    unsigned int Characteristics;
+    unsigned long Characteristics;
+
+};
+
+struct section_table_entry_file {
+
+    char Name[8];
+    
+    unsigned char VirtualSize[4];
+    unsigned char VirtualAddress[4];
+    
+    unsigned char SizeOfRawData[4];
+    unsigned char PointerToRawData[4];
+    unsigned char PointerToRelocations[4];
+    unsigned char PointerToLinenumbers[4];
+    
+    unsigned char NumberOfRelocations[2];
+    unsigned char NumberOfLinenumbers[2];
+    
+    unsigned char Characteristics[4];
 
 };
 
@@ -52,16 +85,23 @@ struct section_table_entry {
 #define     IMAGE_SCN_MEM_READ                              0x40000000
 #define     IMAGE_SCN_MEM_WRITE                             0x80000000
 
-struct relocation_entry {
+struct relocation_entry_internal {
 
-    unsigned int VirtualAddress;
-    unsigned int SymbolTableIndex;
+    unsigned long VirtualAddress;
+    unsigned long SymbolTableIndex;
     
     unsigned short Type;
 
 };
 
-#define     RELOCATION_ENTRY_SIZE                           10
+struct relocation_entry_file {
+
+    unsigned char VirtualAddress[4];
+    unsigned char SymbolTableIndex[4];
+    
+    unsigned char Type[2];
+
+};
 
 #define     IMAGE_REL_I386_ABSOLUTE                         0x0000
 #define     IMAGE_REL_I386_DIR16                            0x0001
@@ -70,10 +110,10 @@ struct relocation_entry {
 #define     IMAGE_REL_I386_DIR32NB                          0x0007
 #define     IMAGE_REL_I386_REL32                            0x0014
 
-struct symbol_table_entry {
+struct symbol_table_entry_internal {
 
     char Name[8];
-    unsigned int Value;
+    unsigned long Value;
     
     signed short SectionNumber;
     unsigned short Type;
@@ -83,7 +123,18 @@ struct symbol_table_entry {
 
 };
 
-#define     SYMBOL_TABLE_ENTRY_SIZE                         18
+struct symbol_table_entry_file {
+
+    char Name[8];
+    unsigned char Value[4];
+    
+    unsigned char SectionNumber[2];
+    unsigned char Type[2];
+    
+    unsigned char StorageClass[1];
+    unsigned char NumberOfAuxSymbols[1];
+
+};
 
 #define     IMAGE_SYM_UNDEFINED                             0
 #define     IMAGE_SYM_ABSOLUTE                              -1
@@ -96,3 +147,15 @@ struct symbol_table_entry {
 #define     IMAGE_SYM_CLASS_STATIC                          3
 #define     IMAGE_SYM_CLASS_LABEL                           6
 #define     IMAGE_SYM_CLASS_FILE                            103
+
+struct string_table_header_internal {
+
+    unsigned long StringTableSize;
+
+};
+
+struct string_table_header_file {
+
+    unsigned char StringTableSize[4]; /* Including the size of the header itself. */
+
+};

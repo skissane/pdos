@@ -8,8 +8,6 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include <limits.h>
-
 #define     SEGMENT_SIZE                0x10000UL
 
 struct exec_internal {
@@ -104,6 +102,17 @@ struct nlist_file {
 
 /* Next is the string table,
  * starting with 4 bytes length including the field (so minimum is 4). */
+struct string_table_header_internal {
+
+    unsigned long s_size;
+
+};
+
+struct string_table_header_file {
+
+    unsigned char s_size[4]; /* Including the size of the header itself. */
+
+};
 
 #define     N_TXTOFF(e)                 (0x400)
 #define     N_TXTADDR(e)                (SEGMENT_SIZE)
