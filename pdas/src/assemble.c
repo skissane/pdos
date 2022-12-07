@@ -666,6 +666,10 @@ static int att_parse_operand (char *operand_string) {
         
         ret = 0;
         p2 = operand_string + strlen (operand_string);
+
+        if (p2 - operand_string > 1 && p2[-1] == ' ') {
+            p2--;
+        }
         
         base_string = p2 - 1;
         displacement_string_end = p2;
