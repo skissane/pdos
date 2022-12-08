@@ -36,12 +36,16 @@ Executable should be called:
 
 
 typedef struct {
-    char junk1[4];
+    void *junk1;
     int (*print_func)(void *x, void *y);
 } EFI_SIMPLE_TEXT;
 
 typedef struct {
-    char junk1[40];
+    char junk1[24];
+    void *junk2;
+    int junk3;
+    void *junk4;
+    void *junk5;
     void *stdout_handle;
     EFI_SIMPLE_TEXT *simple;
 } EFI_SYSTEM;
