@@ -10,10 +10,13 @@
  *****************************************************************************/
 #include    <stdio.h>
 #include    <string.h>
+#include    <ctype.h>
 
 #include    "as.h"
 #include    "coff.h"
 #include    "bytearray.h"
+
+#define COFF_DEFAULT_SECTION_FLAGS (SECTION_FLAG_LOAD | SECTION_FLAG_DATA)
 
 #define COPY(struct_name, field_name, bytes) \
  bytearray_write_##bytes##_bytes (struct_name##_file.field_name, struct_name##_internal->field_name, LITTLE_ENDIAN)
@@ -108,6 +111,76 @@ static int write_struct_string_table_header (FILE *outfile, struct string_table_
     if (fwrite (&string_table_header_file, sizeof (string_table_header_file), 1, outfile) != 1) {
         return 1;
     }
+
+    return 0;
+
+}
+
+static unsigned long translate_section_flags_to_Characteristics (unsigned int flags) {
+
+    unsigned long Characteristics = 0;
+
+    if (!(flags & SECTION_FLAG_READONLY)) {
+        Characteristics |= IMAGE_SCN_MEM_WRITE;
+    }
+
+    if (flags & SECTION_FLAG_CODE) {
+        Characteristics |= IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
+    }
+
+    if (flags & SECTION_FLAG_DATA) {
+        Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
+    }
+
+    if (flags & SECTION_FLAG_DEBUGGING) {
+        Characteristics |= IMAGE_SCN_LNK_INFO;
+    }
+
+    if (flags & SECTION_FLAG_EXCLUDE) {
+        Characteristics |= IMAGE_SCN_LNK_REMOVE;
+    }
+
+    if (!(flags & SECTION_FLAG_NOREAD)) {
+        Characteristics |= IMAGE_SCN_MEM_READ;
+    }
+
+    if (flags & SECTION_FLAG_SHARED) {
+        Characteristics |= IMAGE_SCN_MEM_SHARED;
+    }
+
+    /* .bss */
+    if ((flags & SECTION_FLAG_ALLOC) && !(flags & SECTION_FLAG_LOAD)) {
+        Characteristics |= IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+    }
+
+    return Characteristics;
+}
+
+static unsigned long translate_alignment_power_to_Characteristics (int alignment_power) {
+
+    switch (alignment_power) {
+
+        case -1:
+
+            /* Nothing is done, the default alignment. */
+            return 0;
+
+        case 0: return IMAGE_SCN_ALIGN_1BYTES;
+        case 1: return IMAGE_SCN_ALIGN_2BYTES;
+        case 2: return IMAGE_SCN_ALIGN_4BYTES;
+        case 3: return IMAGE_SCN_ALIGN_8BYTES;
+        case 4: return IMAGE_SCN_ALIGN_16BYTES;
+        case 5: return IMAGE_SCN_ALIGN_32BYTES;
+        case 6: return IMAGE_SCN_ALIGN_64BYTES;
+        case 7: return IMAGE_SCN_ALIGN_128BYTES;
+        case 8: return IMAGE_SCN_ALIGN_256BYTES;
+        case 9: return IMAGE_SCN_ALIGN_512BYTES;
+
+    }
+
+    as_internal_error_at_source (__FILE__, __LINE__,
+                                 "+++Unsupported section alignment power %i",
+                                 alignment_power);
 
     return 0;
 
@@ -219,19 +292,9 @@ void write_coff_file (void) {
         
         memset (section_header, 0, sizeof (*section_header));
         strcpy (section_header->Name, section_get_name (section));
-        
-        if (section == text_section) {
-            section_header->Characteristics = (IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
-        } else if (section == data_section) {
-            section_header->Characteristics = (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
-        } else if (section == bss_section) {
-            section_header->Characteristics = (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
-        } else if (strcmp (section_get_name (section), ".comment") == 0) {
-            section_header->Characteristics = IMAGE_SCN_LNK_INFO;
-        } else {
-            /* .idata, for example. */
-            section_header->Characteristics = (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
-        }
+
+        section_header->Characteristics = translate_section_flags_to_Characteristics (section_get_flags (section));
+        section_header->Characteristics |= translate_alignment_power_to_Characteristics (section_get_alignment_power (section));
         
         if (section != bss_section) {
         
@@ -485,6 +548,12 @@ static void handler_ident (char **pp) {
     subsection_t saved_subsection = current_subsection;
 
     section_set_by_name (".comment");
+    if (section_get_flags (current_section) == 0) {
+        section_set_flags (current_section,
+                           SECTION_FLAG_READONLY
+                           | SECTION_FLAG_DEBUGGING
+                           | SECTION_FLAG_NOREAD);
+    }
 
     handler_asciz (pp);
 
@@ -496,6 +565,8 @@ static void handler_section (char **pp) {
 
     char *name;
     char ch;
+    unsigned int flags = 0, old_flags;
+    int alignment = -1;
     
     *pp = skip_whitespace(*pp);
     
@@ -514,9 +585,120 @@ static void handler_section (char **pp) {
         if (**pp != '"') {
             section_subsection_set (current_section, (subsection_t) get_result_of_absolute_expression (pp));
         } else {
-            as_internal_error_at_source (__FILE__, __LINE__, "+++handler_section");
+
+            char attribute;
+            int readonly_removed = 0;
+
+            while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
+
+                if (isdigit (attribute)) {
+
+                    alignment = attribute - '0';
+                    continue;
+
+                }
+
+                switch (attribute) {
+
+                    case 'a':
+
+                        /* Should be silently ignored. */
+                        break;
+
+                    case 'b':
+
+                        flags |= SECTION_FLAG_ALLOC;
+                        flags &= ~SECTION_FLAG_LOAD;
+                        as_internal_error_at_source (__FILE__, __LINE__, "+++Creating new BSS sections is not yet supported");
+                        break;
+
+                    case 's':
+
+                        flags |= SECTION_FLAG_SHARED;
+                        /* Fall through. */
+
+                    case 'd':
+
+                        flags |= SECTION_FLAG_DATA;
+                        flags &= ~SECTION_FLAG_READONLY;
+                        break;
+
+                    case 'e':
+
+                        flags |= SECTION_FLAG_EXCLUDE;
+                        break;
+
+                    case 'n':
+
+                        /* +++No idea what should be the difference between 'e' and 'n' for COFF. */
+                        flags |= SECTION_FLAG_EXCLUDE;
+                        break;
+
+                    case 'w':
+
+                        flags &= ~SECTION_FLAG_READONLY;
+                        readonly_removed = 1;
+                        break;
+
+                    case 'r':
+
+                        readonly_removed = 0;
+                        /* Fall through. */
+
+                    case 'x':
+                    
+                        if ((flags & SECTION_FLAG_CODE) || attribute == 'x') {
+                            flags |= SECTION_FLAG_CODE;
+                        } else {
+                            flags |= SECTION_FLAG_DATA;
+                        }
+
+                        if (!readonly_removed) {
+                            flags |= SECTION_FLAG_READONLY;
+                        }
+                        break;
+
+                    case 'y':
+
+                        flags |= SECTION_FLAG_READONLY | SECTION_FLAG_NOREAD;
+                        break;
+
+                    default:
+
+                        as_warn ("unknown section attribute '%c'", attribute);
+                        break;
+
+                }
+
+            }
+
+            if (attribute == '"') {
+                ++*pp;
+            }
+            
         }
     
+    }
+
+    if (alignment >= 0) {
+        section_set_alignment_power (current_section, alignment);
+    }
+
+    old_flags = section_get_flags (current_section);
+    if (old_flags == 0) {
+
+        if (flags == 0) {
+            flags = COFF_DEFAULT_SECTION_FLAGS;
+        }
+
+        section_set_flags (current_section, flags);
+
+    } else if (flags != 0) {
+
+        if (flags ^ old_flags) {
+            as_warn ("Ignoring changed section attributes for %s", section_get_name (current_section));
+        }
+
     }
     
     demand_empty_rest_of_line (pp);

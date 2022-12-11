@@ -20,6 +20,9 @@ struct section {
     struct symbol *symbol;
     struct frag_chain *frag_chain;
     struct section *next;
+
+    unsigned int flags;
+    int alignment_power;
     
     void *object_format_dependent_data;
     unsigned int number;
@@ -108,6 +111,9 @@ static section_t find_or_make_section_by_name (const char *name) {
         
         section->frag_chain = NULL;
         section->next = NULL;
+
+        section->flags = 0;
+        section->alignment_power = -1;
         
         section->object_format_dependent_data = NULL;
         section->number = 0;
@@ -222,8 +228,21 @@ void sections_init (void) {
 #undef CREATE_INTERNAL_SECTION
     
     text_section      = section_set_by_name (".text");
+    section_set_flags (text_section,
+                       SECTION_FLAG_LOAD
+                       | SECTION_FLAG_ALLOC
+                       | SECTION_FLAG_READONLY
+                       | SECTION_FLAG_CODE);
+
     data_section      = section_set_by_name (".data");
+    section_set_flags (data_section,
+                       SECTION_FLAG_LOAD
+                       | SECTION_FLAG_ALLOC
+                       | SECTION_FLAG_DATA);
+    
     bss_section       = section_set_by_name (".bss");
+    section_set_flags (bss_section,
+                       SECTION_FLAG_ALLOC);
     
     /* .text section is the default section. */
     section_set (text_section);
@@ -261,5 +280,29 @@ section_t section_find_by_number (unsigned int number) {
     }
 
     return section;
+
+}
+
+void section_set_flags (section_t section, unsigned int flags) {
+
+    section->flags = flags;
+
+}
+
+unsigned int section_get_flags (section_t section) {
+
+    return section->flags;
+
+}
+
+void section_set_alignment_power (section_t section, int alignment_power) {
+
+    section->alignment_power = alignment_power;
+
+}
+
+int section_get_alignment_power (section_t section) {
+
+    return section->alignment_power;
 
 }
