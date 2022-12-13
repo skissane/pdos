@@ -6,7 +6,7 @@ LDFLAGS=
 AS=aswin
 COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ -DUSE_COFF_BY_DEFAULT
 
-OBJS=a_out.o as.o assemble.o bytearray.o coff.o cstr.o elf.o error.o expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o
+OBJS=a_out.o as.o assemble.o bytearray.o cfi.o coff.o cstr.o elf.o error.o expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o
 
 all: clean pdas.exe
 
