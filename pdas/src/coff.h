@@ -37,7 +37,9 @@ struct coff_header_file {
 };
 
 #define     IMAGE_FILE_MACHINE_I386                         0x014C
+
 #define     IMAGE_FILE_LINE_NUMS_STRIPPED                   0x0004
+#define     IMAGE_FILE_32BIT_MACHINE                        0x0100
 
 struct section_table_entry_internal {
 

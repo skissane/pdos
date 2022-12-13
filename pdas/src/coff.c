@@ -273,7 +273,7 @@ void write_coff_file (void) {
     header.Machine = IMAGE_FILE_MACHINE_I386;
     header.NumberOfSections = sections_get_count ();
     header.SizeOfOptionalHeader = 0;
-    header.Characteristics = IMAGE_FILE_LINE_NUMS_STRIPPED;
+    header.Characteristics = IMAGE_FILE_LINE_NUMS_STRIPPED | IMAGE_FILE_32BIT_MACHINE;
     
     if (fseek (outfile,
                (sizeof (struct coff_header_file)
@@ -291,7 +291,18 @@ void write_coff_file (void) {
         section_set_object_format_dependent_data (section, section_header);
         
         memset (section_header, 0, sizeof (*section_header));
-        strcpy (section_header->Name, section_get_name (section));
+
+        if (strlen (section_get_name (section)) <= 8) {
+            memcpy (section_header->Name, section_get_name (section), strlen (section_get_name (section)));
+        } else {
+        
+            section_header->Name[0] = '/';
+            sprintf (section_header->Name + 1, "%lu", string_table_header.StringTableSize);
+            
+            string_table_header.StringTableSize += strlen (section_get_name (section)) + 1;
+
+        }
+        
 
         section_header->Characteristics = translate_section_flags_to_Characteristics (section_get_flags (section));
         section_header->Characteristics |= translate_alignment_power_to_Characteristics (section_get_alignment_power (section));
@@ -451,6 +462,21 @@ void write_coff_file (void) {
         as_error_at (NULL, 0, "Failed to write string table!");
         return;
     
+    }
+
+    for (section = sections; section; section = section_get_next_section (section)) {
+
+        if (strlen (section_get_name (section)) > 8) {
+
+            if (fwrite (section_get_name (section), strlen (section_get_name (section)) + 1, 1, outfile) != 1) {
+            
+                as_error_at (NULL, 0, "Failed to write string table!");
+                return;
+            
+            }
+        
+        }
+
     }
     
     for (symbol = symbols; symbol; symbol = symbol->next) {

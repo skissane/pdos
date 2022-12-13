@@ -2764,7 +2764,11 @@ void machine_dependent_apply_fixup (struct fixup *fixup, unsigned long value) {
         fixup->done = 1;
     }
     
-    if (state->format == AS_FORMAT_COFF && fixup->pcrel && fixup->add_symbol && symbol_is_undefined (fixup->add_symbol)) {
+    /* Not sure why COFF requires this adjustment. */
+    if (state->format == AS_FORMAT_COFF
+        && fixup->pcrel
+        && fixup->add_symbol
+        && symbol_get_section (fixup->add_symbol) != current_section) {
         value += machine_dependent_pcrel_from (fixup);
     }
     
