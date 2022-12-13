@@ -16,6 +16,7 @@
 
 #include    "as.h"
 #include    "hashtab.h"
+#include    "cfi.h"
 
 static const char *filename;
 static unsigned long line_number;
@@ -665,6 +666,7 @@ void handler_lcomm (char **pp) {
 
     struct expr expr;
     struct symbol *symbol;
+    offset_t alignment = 0;
     
     char *name;
     char *name_end;
@@ -713,10 +715,55 @@ void handler_lcomm (char **pp) {
     
     symbol = symbol_find_or_make (name);
     *name_end = ch;
+
+    *pp = skip_whitespace (*pp);
+    if (**pp == ',') {
+
+        struct expr align_expr;
+        
+        ++*pp;
+
+        alignment = absolute_expression_read_into (pp, &align_expr);
+
+        if (align_expr.type == EXPR_TYPE_ABSENT) {
+
+            as_error ("expected alignment after size");
+            ignore_rest_of_line (pp);
+            return;
+
+        }
+
+        if (alignment < 0) {
+
+            as_warn ("alignment negative; 0 assumed");
+            alignment = 0;
+
+        }
+
+        if (alignment != 0) {
+
+            offset_t i;
+
+            /* Converts to log2. */    
+            for (i = 0; (alignment & 1) == 0; alignment >>= 1, i++);
+            
+            if (alignment != 1) {
+                as_error ("alignment is not a power of 2!");
+            }
+            
+            alignment = i;
+
+        }
+
+    }   
     
     if (symbol_is_undefined (symbol)) {
     
         section_set (bss_section);
+
+        if (alignment) {
+            frag_align (alignment, 0, 0);
+        }
         
         symbol->section = bss_section;
         symbol->frag = current_frag;
@@ -993,6 +1040,9 @@ void process_init (void) {
     
     /* Standard pseudo-ops. */
     install_pseudo_op_table (pseudo_op_table);
+
+    /* CFI pseudo-ops last. */
+    install_pseudo_op_table (cfi_get_pseudo_op_table ());
     
     /* Installs machine dependent line separators. */
     for (p = machine_dependent_get_line_separators (); *p; p++) {
