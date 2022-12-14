@@ -1,0 +1,18 @@
+# This builds EFI executables for the x86_64
+
+CC=gccw64
+AR=arw64
+LD=ldw64
+AS=asw64
+COPTS=-S -O2 -mno-red-zone -fpack-struct -D__WIN32__ -D__NOBIVA__ -I.
+
+pdptest.exe: efistart.o
+  $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) -o $@ $<
