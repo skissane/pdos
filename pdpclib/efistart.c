@@ -32,6 +32,18 @@ Executable should be called:
 
 386test\efi\boot\bootia32.efi
 
+
+For x64 you need:
+
+copy this:
+c:\Program Files\qemu\share\edk2-x86_64-code.fd
+
+qemu-system-x86_64 -drive if=pflash,format=raw,file=edk2-x86_64-code.fd -drive file=fat:rw:x64test
+
+Executable should be called:
+
+x64test\efi\boot\bootx64.efi
+
 */
 
 
