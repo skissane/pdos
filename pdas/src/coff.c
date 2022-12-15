@@ -132,6 +132,10 @@ static unsigned long translate_section_flags_to_Characteristics (unsigned int fl
         Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
     }
 
+    if (flags & SECTION_FLAG_NEVER_LOAD) {
+        Characteristics |= IMAGE_SCN_TYPE_NOLOAD;
+    }
+
     if (flags & SECTION_FLAG_DEBUGGING) {
         Characteristics |= IMAGE_SCN_LNK_INFO;
     }
@@ -614,6 +618,7 @@ static void handler_section (char **pp) {
 
             char attribute;
             int readonly_removed = 0;
+            int load_removed = 0;
 
             while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
 
@@ -635,7 +640,7 @@ static void handler_section (char **pp) {
 
                         flags |= SECTION_FLAG_ALLOC;
                         flags &= ~SECTION_FLAG_LOAD;
-                        as_internal_error_at_source (__FILE__, __LINE__, "+++Creating new BSS sections is not yet supported");
+                        /*as_internal_error_at_source (__FILE__, __LINE__, "+++Creating new BSS sections is not yet supported");*/
                         break;
 
                     case 's':
@@ -646,6 +651,9 @@ static void handler_section (char **pp) {
                     case 'd':
 
                         flags |= SECTION_FLAG_DATA;
+                        if (!load_removed) {
+                            flags |= SECTION_FLAG_LOAD;
+                        }
                         flags &= ~SECTION_FLAG_READONLY;
                         break;
 
@@ -656,8 +664,9 @@ static void handler_section (char **pp) {
 
                     case 'n':
 
-                        /* +++No idea what should be the difference between 'e' and 'n' for COFF. */
-                        flags |= SECTION_FLAG_EXCLUDE;
+                        flags |= SECTION_FLAG_NEVER_LOAD;
+                        flags &= ~SECTION_FLAG_LOAD;
+                        load_removed = 1;
                         break;
 
                     case 'w':
@@ -677,6 +686,10 @@ static void handler_section (char **pp) {
                             flags |= SECTION_FLAG_CODE;
                         } else {
                             flags |= SECTION_FLAG_DATA;
+                        }
+
+                        if (!load_removed) {
+                            flags |= SECTION_FLAG_LOAD;
                         }
 
                         if (!readonly_removed) {

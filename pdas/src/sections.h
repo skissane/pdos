@@ -8,15 +8,16 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#define SECTION_FLAG_ALLOC     (1U << 0)
-#define SECTION_FLAG_LOAD      (1U << 1)
-#define SECTION_FLAG_READONLY  (1U << 2)
-#define SECTION_FLAG_CODE      (1U << 3)
-#define SECTION_FLAG_DATA      (1U << 4)
-#define SECTION_FLAG_DEBUGGING (1U << 5)
-#define SECTION_FLAG_EXCLUDE   (1U << 6)
-#define SECTION_FLAG_NOREAD    (1U << 7)
-#define SECTION_FLAG_SHARED    (1U << 8)
+#define SECTION_FLAG_ALLOC      (1U << 0)
+#define SECTION_FLAG_LOAD       (1U << 1)
+#define SECTION_FLAG_READONLY   (1U << 2)
+#define SECTION_FLAG_CODE       (1U << 3)
+#define SECTION_FLAG_DATA       (1U << 4)
+#define SECTION_FLAG_NEVER_LOAD (1U << 5)
+#define SECTION_FLAG_DEBUGGING  (1U << 6)
+#define SECTION_FLAG_EXCLUDE    (1U << 7)
+#define SECTION_FLAG_NOREAD     (1U << 8)
+#define SECTION_FLAG_SHARED     (1U << 9)
 
 struct frag_chain {
 

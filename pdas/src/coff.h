@@ -79,11 +79,14 @@ struct section_table_entry_file {
 
 };
 
+#define     IMAGE_SCN_TYPE_NOLOAD                           0x00000002
+#define     IMAGE_SCN_TYPE_NO_PAD                           0x00000008 /* Obsolete, means the same as IMAGE_SCN_ALIGN_1BYTES. */
 #define     IMAGE_SCN_CNT_CODE                              0x00000020
 #define     IMAGE_SCN_CNT_INITIALIZED_DATA                  0x00000040
 #define     IMAGE_SCN_CNT_UNINITIALIZED_DATA                0x00000080
 #define     IMAGE_SCN_LNK_INFO                              0x00000200
 #define     IMAGE_SCN_LNK_REMOVE                            0x00000800
+#define     IMAGE_SCN_LNK_COMDAT                            0x00001000
 #define     IMAGE_SCN_ALIGN_1BYTES                          0x00100000
 #define     IMAGE_SCN_ALIGN_2BYTES                          0x00200000
 #define     IMAGE_SCN_ALIGN_4BYTES                          0x00300000
