@@ -4410,6 +4410,7 @@ SNAPALEN EQU   *-SNAPAREA    LENGTH TO GET
 @@SETM24 LA    R14,0(,R14)        Sure hope caller is below the line
          BSM   0,R14              Return in amode 24
          POP   USING
+*
          SPACE 1
          PUSH  USING
          DROP  ,
@@ -4429,6 +4430,34 @@ SNAPALEN EQU   *-SNAPAREA    LENGTH TO GET
 *                                 there is nothing to preserve in the
 *                                 high byte.
          BSM   0,R14              Return in amode 31
+         LTORG ,
+         POP   USING
+*
+         SPACE 1
+         PUSH  USING
+         DROP  ,
+***********************************************************************
+*                                                                     *
+*  SETM64 - Set AMODE to 64                                           *
+*                                                                     *
+***********************************************************************
+* The caller is likely to be using R12 as a base register, so we
+* need to clean that too. As such, we can't use it as the base
+* register here (not conveniently, anyway).
+         ENTRY @@SETM64
+@@SETM64 DS    0H
+         SAVE  (0,11),,@@SETM64
+         LR    R7,R15
+         USING @@SETM64,R7
+         LA    R7,0(,R7)          Clean base register
+         LA    R12,0(,R12)        Clean caller's base register
+         LA    R14,0(,R14)        Clean return address
+         LA    R2,NXT64
+         LA    R2,1(R2)           Set AM64 bit
+         BSM   0,R2
+NXT64    DS    0H
+         LA    R15,0
+         RETURN (0,11),RC=(15)
          LTORG ,
          POP   USING
 *
