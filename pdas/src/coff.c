@@ -10,6 +10,7 @@
  *****************************************************************************/
 #include    <stdio.h>
 #include    <string.h>
+#include    <stdlib.h>
 #include    <ctype.h>
 
 #include    "as.h"
@@ -241,8 +242,19 @@ static int output_relocation (FILE *outfile, struct fixup *fixup) {
             break;
         
         case RELOC_TYPE_RVA:
+
+            if (fixup->size != 4) {
+                as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_RVA", fixup->size);
+            }
         
             reloc_entry.Type = IMAGE_REL_I386_DIR32NB;
+            break;
+
+        default:
+
+            as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                            "output_relocation invalid reloc_type", fixup->reloc_type);
             break;
     
     }
@@ -582,7 +594,11 @@ static void handler_ident (char **pp) {
         section_set_flags (current_section,
                            SECTION_FLAG_READONLY
                            | SECTION_FLAG_DEBUGGING
-                           | SECTION_FLAG_NOREAD);
+                           | SECTION_FLAG_NOREAD
+                           /* It is not clear whether IMAGE_SCN_LNK_INFO should imply IMAGE_SCN_LNK_REMOVE
+                            * or not but at least one linker cannot properly handle .comment section
+                            * without IMAGE_SCN_LNK_REMOVE, so it is explictly added. */
+                           | SECTION_FLAG_EXCLUDE);
     }
 
     handler_asciz (pp);
@@ -813,13 +829,10 @@ static void handler_endef (char **pp) {
 
         /* Merges the new symbol into the old one. */
         if (existing_symbol->object_format_dependent_data) {
-
-            as_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++COFF .endef symbol already exists and was modified using .def before");
-
-        } else {
-            existing_symbol->object_format_dependent_data = def_symbol->object_format_dependent_data;
+            free (existing_symbol->object_format_dependent_data);
         }
+        
+        existing_symbol->object_format_dependent_data = def_symbol->object_format_dependent_data;
         
     }
 
