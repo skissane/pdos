@@ -16,9 +16,13 @@
 *
          GBLC &COMP               Declare compiler switch
 *
-* What system are the compiles being done for?
+* What system are the compiles being done for (for applications)?
 *
          GBLC &ZSYS               Declare variable for system
+*
+* What system are the compiles being done for (for OS use)?
+*
+         GBLC &XSYS               Declare variable for system
 *
 * Will we activate AMODE 64 for z/Arch target?
 *
@@ -40,7 +44,34 @@
 *
 &COMP    SETC 'GCC'               Indicate that this is for GCC
 * &COMP    SETC 'IBMC'            Indicate that this is for IBM C
-&ZSYS    SETC 'ZARCH'    Define either S370, S380, S390 or ZARCH
+* These ZSYS names have obscure meanings. E.g. S390 doesn't mean
+* that it can't run on S370. You normally want S380. ZARCH is for
+* something that doesn't yet exist (OS/390+ with theoretical rules)
+* And the meanings are related to applications, not OS use.
+* Traditionally that distinction was obscured.
+* S370 - don't exceed capabilities of IFOX on MVS 3.8J - no BSM
+*        to be assembled, no LOC=BELOW
+* S380 - Step down only if you are in RM24 (not RM31 or RM32)
+* S390 - Let GETMAIN do LOC=RES for ATL storage
+* ZARCH - step down in either RM24 or RM31
+&ZSYS    SETC 'S380'    Define either S370, S380, S390 or ZARCH
+*
+* For OS use only
+* Some hardware supports BSM, some hardware supports 64-bit PSA
+* There is pretty much no reason to define anything other than
+* ZARCH. 32-bit programming works fine on ZARCH
+&XSYS    SETC 'ZARCH'    Define either S370, S380, S390 or ZARCH
+* An OS can activate AM64 at IPL time, but that is only useful
+* if you had a pure 64-bit environment. If there are any 32-bit
+* programs, activating AM64 needs to be deferred until the OS
+* has set up a mapping of 4-8 GB to 0-4 GB so that negative
+* indexes don't go above 4 GB. If you have an OS that has such
+* mapping, then you can set ZAM64 to YES, which indicates that
+* as soon as the mapping is in place, you will be switching to AM64
+* (so that you can get an effective AM32)
+* Note that S380 is not very useful at the moment (it is for a
+* machine that has a split DAT, but the new concept for S/380 is
+* "separate memory", not yet implemented in Hercules/380).
 &ZAM64   SETC 'NO'      Use AM64 on z/Arch (otherwise AM31)
 &STEPD   SETC 'YES'               Indicate we want to step down
 &OUTM    SETC 'M'                 Indicate move mode
