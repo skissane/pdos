@@ -13,7 +13,9 @@ typedef struct variable {
     char *value;
 } variable;
 
+#define variables_init _Pvinit
 void variables_init (void);
+#define variables_destroy _Pvdest
 void variables_destroy (void);
 
 #define variable_add _Pvadd

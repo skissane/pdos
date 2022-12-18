@@ -97,7 +97,7 @@ void rule_use(rule *r, char *name)
     }
 }
 
-void suffix_rule_use(suffix_rule *s, char *name)
+static void suffix_rule_use(suffix_rule *s, char *name)
 {
     char *lesser_name, *star_name;
     char *p;

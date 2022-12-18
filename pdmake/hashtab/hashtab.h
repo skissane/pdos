@@ -20,19 +20,26 @@ typedef void (*hashtab_free_func_t) (void *);
 
 typedef void *(*hashtab_malloc_func_t) (size_t);
 
+#define hashtab_create_hashtab htch
 struct hashtab *hashtab_create_hashtab (size_t starting_size,
                                         hashtab_hash_element_func_t hash_element_func,
                                         hashtab_elements_equal_func_t elements_equal_func,
                                         hashtab_malloc_func_t malloc_func,
                                         hashtab_free_func_t free_func);
+#define hashtab_find htfind
 const void *hashtab_find (struct hashtab *hashtab, const void *element);
 
+#define hashtab_delete htdel
 void hashtab_delete (struct hashtab *hashtab, const void *element);
+#define hashtab_for_each_element htfee
 void hashtab_for_each_element (struct hashtab *hashtab, void (*element_callback) (void *));
+#define hashtab_destroy_hashtab htdh
 void hashtab_destroy_hashtab (struct hashtab *hashtab);
 
 /* The return value is the element that was not possible to insert into the table. */
+#define hashtab_insert htins
 const void *hashtab_insert (struct hashtab *hashtab, const void *element);
 
 /* Functions that can be used for implementing the hashtab callbacks. */
+#define hashtab_help_default_hash_string hthdhs
 hash_value_t hashtab_help_default_hash_string (const void *p);
