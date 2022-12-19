@@ -1,4 +1,4 @@
-MAINSIZE             200
+MAINSIZE             4096
 
 ARCHMODE             z/Arch
 
@@ -20,8 +20,8 @@ CNSLPORT             3270
 
 #0009      3215-C     / noprompt
 #0009      3215       noprompt
-#0009      3270
-0009      1052       noprompt
+0009      3270
+#0009      1052       noprompt
 #0009      1052-C      / noprompt
 
 # This is the IPL disk and can be any address

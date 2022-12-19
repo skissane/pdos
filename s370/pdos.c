@@ -1031,7 +1031,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 
         pdos->psa->svcopsw[0] = pdos->context->psw1;
         pdos->psa->svcopsw[1] = pdos->context->psw2;
-                       
+
         ret = adisp();  /* dispatch */
         
         /* restore registers and PSW from low memory */
@@ -1708,8 +1708,13 @@ static void pdosProcessSVC(PDOS *pdos)
                 pdos->context->rblinkb;
 
             /* free old context */
+#if defined(ZARCH)
+            memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.atlmem,
+                       pdos->context);
+#else
             memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.btlmem,
                        pdos->context);
+#endif
 
             pdos->context = pdos->aspaces[pdos->curr_aspace].o.curr_rb;
             pdos->context->regs[15] = 0; /* signal success to caller */
@@ -1718,9 +1723,15 @@ static void pdosProcessSVC(PDOS *pdos)
             pdos->context->regs[1] = 
                 (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
 
+#if defined(ZARCH)
+            /* free the memory that was allocated to the executable */
+            memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.atlmem,
+                       pdos->context->next_exe);
+#else
             /* free the memory that was allocated to the executable */
             memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.btlmem,
                        pdos->context->next_exe);
+#endif
 #if REPORT_MEMLEAK
             printf("exited program, total free space is %d\n",
                    memmgrTotSize(&pdos->aspaces[pdos->curr_aspace].o.btlmem));
@@ -2821,8 +2832,13 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     }
 
     /* assume 5 MB max */
+#if defined(ZARCH)
+    raw = memmgrAllocate(&pdos->aspaces[pdos->curr_aspace].o.atlmem,
+                         5 * 1024 * 1024, 0);
+#else
     raw = memmgrAllocate(&pdos->aspaces[pdos->curr_aspace].o.btlmem,
                          5 * 1024 * 1024, 0);
+#endif
     if (raw == NULL)
     {
         printf("insufficient memory to load program\n");
@@ -2892,26 +2908,45 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     {
         if (fixPE(initial, &exeLen, &entry, (int)initial) != 0)
         {
+#if defined(ZARCH)
+            memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.atlmem, raw);
+#else
             memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.btlmem, raw);
+#endif
             return (-1);
         }
         exeLen += 0x1000; /* give some buffer */
         /* unconditionally reduce the 5 MB to something reasonable */
+#if defined(ZARCH)
+        memmgrRealloc(&pdos->aspaces[pdos->curr_aspace].o.atlmem,
+                      raw, exeLen);
+#else
         memmgrRealloc(&pdos->aspaces[pdos->curr_aspace].o.btlmem,
                       raw, exeLen);
+#endif
         /* if we can't adjust down, don't care */
     }
 
     pdos->context->next_exe = raw;
 
     /* get a new RB */
+#if defined(ZARCH)
+    pdos->context = memmgrAllocate(
+        &pdos->aspaces[pdos->curr_aspace].o.atlmem,
+        sizeof *pdos->context, 0);
+#else
     pdos->context = memmgrAllocate(
         &pdos->aspaces[pdos->curr_aspace].o.btlmem,
         sizeof *pdos->context, 0);
+#endif
     if (pdos->context == NULL)
     {
         /* free the memory that was allocated to the executable */
+#if defined(ZARCH)
+        memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.atlmem, raw);
+#else
         memmgrFree(&pdos->aspaces[pdos->curr_aspace].o.btlmem, raw);
+#endif
         ret = -1;
     }
     else

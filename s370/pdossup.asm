@@ -19,7 +19,7 @@ PDOSSUP TITLE 'P D O S S U P  ***  SUPPORT ROUTINE FOR PDOS'
          YREGS
 SUBPOOL  EQU   0
 *
-         AIF ('&ZSYS' NE 'ZARCH').ZVAR64B
+         AIF ('&XSYS' NE 'ZARCH').ZVAR64B
 FLCEINPW EQU   496   A(X'1F0')
 FLCEMNPW EQU   480   A(X'1E0')
 FLCESNPW EQU   448   A(X'1C0')
@@ -29,7 +29,7 @@ FLCESOPW EQU   320   A(X'140')
 *
 *
 *
-         AIF ('&ZSYS' EQ 'S370').AMB24A
+         AIF ('&XSYS' EQ 'S370').AMB24A
 AMBIT    EQU X'80000000'
          AGO .AMB24B
 .AMB24A  ANOP
@@ -67,7 +67,7 @@ INITSYS  DS    0H
 * to set "dummy" values for all of them, to give us
 * visibility into any problem.
 *
-         AIF ('&ZSYS' EQ 'ZARCH').ZSW64
+         AIF ('&XSYS' EQ 'ZARCH').ZSW64
          MVC   FLCINPSW(8),WAITER7
          MVC   FLCMNPSW(8),WAITER1
          MVC   FLCSNPSW(8),WAITER2
@@ -84,7 +84,7 @@ INITSYS  DS    0H
 *
 *
 * Prepare CR6 for interrupts
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').SIO24A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').SIO24A
          LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
 .SIO24A  ANOP
 *
@@ -101,7 +101,7 @@ INITSYS  DS    0H
          LTORG
 *
 *
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').NOT390A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').NOT390A
          DS    0F
 ALLIOINT DC    X'FF000000'
 .NOT390A ANOP
@@ -109,7 +109,7 @@ ALLIOINT DC    X'FF000000'
 *
 *
          DS    0D
-         AIF ('&ZSYS' EQ 'ZARCH').WAIT64A
+         AIF ('&XSYS' EQ 'ZARCH').WAIT64A
 WAITER7  DC    X'000E0000'  machine check, EC, wait
          DC    A(AMBIT+X'00000777')  error 777
 WAITER1  DC    X'000E0000'  machine check, EC, wait
@@ -186,7 +186,7 @@ WRBLOCK  DS    0H
 * and check for a 0 return, and if so, do a BNZ.
 *         LRA   R2,0(R2)     Get real address
          L     R7,20(R1)    Bytes to read
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').WR390B
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR390B
          STCM  R2,B'0111',WRLDCCW+1   This requires BTL buffer
          STH   R7,WRLDCCW+6  Store in WRITE CCW
          AGO   .WR390C
@@ -206,7 +206,7 @@ WRBLOCK  DS    0H
          ST    R3,FLCCAW    Store in CAW
 *
 *
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').WR31B
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR31B
          SIO   0(R10)
 *         TIO   0(R10)
          AGO   .WR24B
@@ -222,7 +222,7 @@ WRBLOCK  DS    0H
          LPSW  WRWTNOER     Wait for an interrupt
          DC    H'0'
 WRCONT   DS    0H           Interrupt will automatically come here
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').WR31H
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR31H
          SH    R7,FLCCSW+6  Subtract residual count to get bytes read
          LR    R15,R7
 * After a successful CCW chain, CSW should be pointing to end
@@ -242,7 +242,7 @@ WRALLFIN DS    0H
          LTORG
 *
 *
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').WR390G
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').WR390G
          DS    0F
 WRIRB    DS    24F
 WRORB    DS    0F
@@ -254,7 +254,7 @@ WRORB    DS    0F
 *
 *
          DS    0D
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').WR390
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR390
 WRSEEK   CCW   7,WRBBCCHH,X'40',6       40 = chain command
 WRSRCH   CCW   X'31',WRCCHHR,X'40',5    40 = chain command
          CCW   8,WRSRCH,0,0
@@ -362,13 +362,13 @@ GOTRET   DS    0H
          ENTRY DREAD
 DREAD    DS    0H
          STM   R0,R15,FLCGRSAV        Save application registers
-         AIF   ('&ZSYS' EQ 'ZARCH').ZRDA
+         AIF   ('&XSYS' EQ 'ZARCH').ZRDA
          ST    R14,SVCOPSW+4
          NI    SVCOPSW+4,X'80'
          AGO   .ZRDB
 .ZRDA    ANOP
          ST    R14,FLCESOPW+12
-         NI    FLCESOPW+12,X'00'
+*         NI    FLCESOPW+12,X'00'
          ST    R14,FLCESOPW+4
          AIF   ('&ZAM64' NE 'YES').STAY24A
          OI    FLCESOPW+4,X'80'
@@ -381,8 +381,8 @@ DREAD    DS    0H
          LM    R0,R15,FLCFLA          Load OS registers
 *
 * We need to return to 31-bit mode, which PDOS may be operating in.
-         AIF   ('&ZSYS' EQ 'S370' OR                                   +
-                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24G
+         AIF   ('&XSYS' EQ 'S370' OR                                   +
+                ('&XSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24G
          CALL  @@SETM31
 .MOD24G  ANOP
          LA    R15,3
@@ -401,13 +401,13 @@ DREAD    DS    0H
          ENTRY DWRITE
 DWRITE   DS    0H
          STM   R0,R15,FLCGRSAV        Save application registers
-         AIF   ('&ZSYS' EQ 'ZARCH').ZWRA
+         AIF   ('&XSYS' EQ 'ZARCH').ZWRA
          ST    R14,SVCOPSW+4
          NI    SVCOPSW+4,X'80'
          AGO   .ZWRB
 .ZWRA    ANOP
          ST    R14,FLCESOPW+12
-         NI    FLCESOPW+12,X'00'
+*         NI    FLCESOPW+12,X'00'
          ST    R14,FLCESOPW+4
          AIF   ('&ZAM64' NE 'YES').STAY24C
          OI    FLCESOPW+4,X'80'
@@ -420,8 +420,8 @@ DWRITE   DS    0H
          LM    R0,R15,FLCFLA          Load OS registers
 *
 * We need to return to 31-bit mode, which PDOS may be operating in.
-         AIF   ('&ZSYS' EQ 'S370' OR                                   +
-                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24D
+         AIF   ('&XSYS' EQ 'S370' OR                                   +
+                ('&XSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24D
          CALL  @@SETM31
 .MOD24D  ANOP
          LA    R15,2
@@ -486,8 +486,8 @@ DEXIT    DS    0H
 *
          L     R2,0(R1)               their exit
          L     R3,4(R1)               actual DCB for them
-         AIF   ('&ZSYS' EQ 'S370' OR                                   +
-                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24E
+         AIF   ('&XSYS' EQ 'S370' OR                                   +
+                ('&XSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24E
          CALL  @@SETM24
 .MOD24E  ANOP
 *
@@ -497,8 +497,8 @@ DEXIT    DS    0H
          BALR  R14,R15
          LM    R0,R12,20(R13)
 *
-         AIF   ('&ZSYS' EQ 'S370' OR                                   +
-                ('&ZSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24F
+         AIF   ('&XSYS' EQ 'S370' OR                                   +
+                ('&XSYS' EQ 'ZARCH' AND '&ZAM64' EQ 'YES')).MOD24F
          CALL  @@SETM31
 .MOD24F  ANOP
 *

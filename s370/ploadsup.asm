@@ -19,7 +19,7 @@ PLOADSUP TITLE 'P L O A D S U P  ***  SUPPORT ROUTINE FOR PLOAD'
          YREGS
 SUBPOOL  EQU   0
 *
-         AIF ('&ZSYS' NE 'ZARCH').ZVAR64B
+         AIF ('&XSYS' NE 'ZARCH').ZVAR64B
 FLCEINPW EQU   496   A(X'1F0')
 FLCEMNPW EQU   480   A(X'1E0')
 FLCESNPW EQU   448   A(X'1C0')
@@ -28,7 +28,7 @@ FLCEPNPW EQU   464   A(X'1D0')
 *
 *
 *
-         AIF ('&ZSYS' EQ 'S370').AMB24A
+         AIF ('&XSYS' EQ 'S370').AMB24A
 AMBIT    EQU X'80000000'
          AGO .AMB24B
 .AMB24A  ANOP
@@ -68,7 +68,7 @@ INITSYS  DS    0H
 * to set "dummy" values for all of them, to give us
 * visibility into any problem.
 *
-         AIF ('&ZSYS' EQ 'ZARCH').ZSW64
+         AIF ('&XSYS' EQ 'ZARCH').ZSW64
          MVC   FLCINPSW(8),WAITER7
          MVC   FLCMNPSW(8),WAITER1
          MVC   FLCSNPSW(8),WAITER2
@@ -83,7 +83,7 @@ INITSYS  DS    0H
 *
 *
 * Prepare CR6 for interrupts
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').SIO24A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').SIO24A
          LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
 .SIO24A  ANOP
 *
@@ -100,7 +100,7 @@ INITSYS  DS    0H
 *
 *
 *
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').NOT390A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').NOT390A
          DS    0F
 ALLIOINT DC    X'FF000000'
 .NOT390A ANOP
@@ -108,7 +108,7 @@ ALLIOINT DC    X'FF000000'
 *
 *
          DS    0D
-         AIF ('&ZSYS' EQ 'ZARCH').WAIT64A
+         AIF ('&XSYS' EQ 'ZARCH').WAIT64A
 WAITER7  DC    X'000E0000'  machine check, EC, wait
          DC    A(AMBIT+X'00000777')  error 777
 WAITER1  DC    X'000E0000'  machine check, EC, wait

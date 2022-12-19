@@ -24,7 +24,7 @@ gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../pdpclib/setjmp.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../pdpclib/signal.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../pdpclib/__memmgr.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pload.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -DZAM31 -S -I . -I ../pdpclib pdos.c
+gccmvs -DUSE_MEMMGR -Os -DZARCH -DXXZAM31 -S -I . -I ../pdpclib pdos.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pdosutil.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pcomm.c
 gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib world.c
