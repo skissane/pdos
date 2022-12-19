@@ -32,7 +32,7 @@ STACKLOC EQU   X'080000'    The stack starts here (0.5 MiB)
 HEAPLOC  EQU   X'100000'    Where malloc etc come from (1 MiB)
 CHUNKSZ  EQU   18452        The executable is split into blocks
 MAXBLKS  EQU   40           Maximum number of blocks to read
-         AIF ('&ZSYS' EQ 'ZARCH').ZVAR64
+         AIF ('&XSYS' EQ 'ZARCH').ZVAR64
 CODESTRT EQU   1024         Start of our real code
 ENTSTRT  EQU   2048         Create a predictable usable entry point
          AGO .ZVAR64B
@@ -52,7 +52,7 @@ FLCEPNPW EQU   464   A(X'1D0')
 *
 *
 *
-         AIF ('&ZSYS' EQ 'S370').AMB24A
+         AIF ('&XSYS' EQ 'S370').AMB24A
 AMBIT    EQU X'80000000'
          AGO .AMB24B
 .AMB24A  ANOP
@@ -104,7 +104,7 @@ POSTIPL  DS    0H
 * case something unexpected happens, to give us some visibility
 * into the problem.
 *
-         AIF ('&ZSYS' EQ 'ZARCH').ZSW64
+         AIF ('&XSYS' EQ 'ZARCH').ZSW64
          MVC   FLCINPSW(8),WAITER4
          MVC   FLCMNPSW(8),WAITER1
          MVC   FLCSNPSW(8),WAITER2
@@ -131,7 +131,7 @@ POSTIPLZ DS    0H
 * Save IPL address in R10
          SLR   R10,R10
          ICM   R10,B'1111',FLCIOA
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').SIO31A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').SIO31A
          LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
 .SIO31A  ANOP
          B     STAGE2
@@ -139,7 +139,7 @@ POSTIPLZ DS    0H
 *
 *
 *
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').NOT390A
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').NOT390A
          DS    0F
 ALLIOINT DC    X'FF000000'
 .NOT390A ANOP
@@ -147,7 +147,7 @@ ALLIOINT DC    X'FF000000'
 *
 *
          DS    0D
-         AIF ('&ZSYS' EQ 'ZARCH').WAIT64A
+         AIF ('&XSYS' EQ 'ZARCH').WAIT64A
 WAITER1  DC    X'000E0000'  machine check, EC, wait
          DC    A(AMBIT+X'00000111')  error 111
 WAITER2  DC    X'000E0000'  machine check, EC, wait
@@ -233,7 +233,7 @@ READBUF  DS    A
 READSIZE DS    F
 SAVEAR2  DS    18F
          DS    0D
-         AIF   ('&ZSYS' EQ 'ZARCH').ZST4
+         AIF   ('&XSYS' EQ 'ZARCH').ZST4
 ST4PSW   DC    A(X'000C0000')
          DC    A(AMBIT+STAGE4)
          AGO   .ZST4A
@@ -410,7 +410,7 @@ RDBLOCK  DS    0H
 * and check for a 0 return, and if so, do a BNZ.
 *         LRA   R2,0(R2)     Get real address
          L     R7,20(R1)    Bytes to read
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').RBC390B
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RBC390B
          STCM  R2,B'0111',RBLDCCW+1   This requires BTL buffer
          STH   R7,RBLDCCW+6  Store in READ CCW
          AGO   .RBC390C
@@ -423,7 +423,7 @@ RDBLOCK  DS    0H
 * something more sophisticated in PDOS than this continual
 * initialization.
 *
-         AIF   ('&ZSYS' EQ 'ZARCH').ZMVNIO
+         AIF   ('&XSYS' EQ 'ZARCH').ZMVNIO
          MVC   FLCINPSW(8),RBNEWIO
          STOSM FLCINPSW,X'00'  Work with DAT on or OFF
          AGO .ZMVNIOA
@@ -437,7 +437,7 @@ RDBLOCK  DS    0H
          ST    R3,FLCCAW    Store in CAW
 *
 *
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').RBSIO3B
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RBSIO3B
          SIO   0(R10)
 *         TIO   0(R10)
          AGO   .RBSIO2B
@@ -453,7 +453,7 @@ RDBLOCK  DS    0H
          LPSW  RBWTNOER     Wait for an interrupt
          DC    H'0'
 RBCONT   DS    0H           Interrupt will automatically come here
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').RBSIO3H
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RBSIO3H
          SH    R7,FLCCSW+6  Subtract residual count to get bytes read
          LR    R15,R7
 * After a successful CCW chain, CSW should be pointing to end
@@ -473,7 +473,7 @@ RBALFINE DS    0H
          LTORG
 *
 *
-         AIF   ('&ZSYS' NE 'S390' AND '&ZSYS' NE 'ZARCH').RBNOT3B
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').RBNOT3B
          DS    0F
 RBIRB    DS    24F
 RBORB    DS    0F
@@ -485,7 +485,7 @@ RBORB    DS    0F
 *
 *
          DS    0D
-         AIF   ('&ZSYS' EQ 'S390' OR '&ZSYS' EQ 'ZARCH').RBC390
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RBC390
 RBSEEK   CCW   7,RBBBCCHH,X'40',6       40 = chain command
 RBSEARCH CCW   X'31',RBCCHHR,X'40',5    40 = chain command
          CCW   8,RBSEARCH,0,0
@@ -515,7 +515,7 @@ RBR      DS    C
 RBWTNOER DC    A(X'060E0000')
          DC    A(AMBIT)  no error
 *
-         AIF   ('&ZSYS' EQ 'ZARCH').RBZNIO
+         AIF   ('&XSYS' EQ 'ZARCH').RBZNIO
 * machine check, EC, DAT off
 RBNEWIO  DC    A(X'000C0000')
          DC    A(AMBIT+RBCONT)  continuation after I/O request

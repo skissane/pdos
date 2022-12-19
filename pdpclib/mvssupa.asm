@@ -3956,9 +3956,12 @@ DSNOK    L     R13,4(,R13)         CHAIN TO PREVIOUS SAVE AREA
 ***********************************************************************
 *-       PARSE MACROS USED TO DESCRIBE THE COMMAND OPERANDS          -*
 ***********************************************************************
+* +++ need to provide a stub and set this VALIDCK properly at runtime
+* Can't use VALIDCK=DSNCHK because it generates an AL3, preventing
+* relocation.
 PCLSTART IKJPARM DSECT=PDL         START DEFINITION
 PCLDSN   IKJPOSIT DSNAME,USID,     PARSE DSN AND APPEND TO PREFIX      X
-               VALIDCK=DSNCHK      VALIDITY CHECK ROUTINE
+               VALIDCK=0     * DSNCHK      VALIDITY CHECK ROUTINE
          IKJENDP ,                 END DEFINITION
 *---------------------------------------------------------------------*
 *-       MAPPING THE PDE BUILT BY PARSE TO DESCRIBE A DSNAME OPERAND -*
@@ -4571,10 +4574,12 @@ IS32     DS    0H
          N     R2,=X'80000000'
          BNZ   RETURNSU No amode switching possible
 * !!! EXCEPTION !!!
-* Don't step down when we are in AM64 so that z/PDOS works
-* (z/Arch model only)
-         AIF   ('&ZSYS' NE 'ZARCH').ZSTEPD
-         B     RETURNSU
+* Don't step down when we are in AM64 AND in RM31
+* space so that z/PDOS works (S/380 model only)
+         AIF   ('&ZSYS' NE 'S380').ZSTEPD
+         LR    R2,R12
+         N     R2,=X'7F000000'
+         BNZ   RETURNSU     Don't switch amodes
 .ZSTEPD  ANOP
 * !!! EXCEPTION !!!
 * Now see if we are running in RM31 space

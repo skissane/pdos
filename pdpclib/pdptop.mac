@@ -72,7 +72,7 @@
 * Note that S380 is not very useful at the moment (it is for a
 * machine that has a split DAT, but the new concept for S/380 is
 * "separate memory", not yet implemented in Hercules/380).
-&ZAM64   SETC 'NO'      Use AM64 on z/Arch (otherwise AM31)
+&ZAM64   SETC 'YES'      Use AM64 on z/Arch (otherwise AM31)
 &STEPD   SETC 'YES'               Indicate we want to step down
 &OUTM    SETC 'M'                 Indicate move mode
 * &OUTM    SETC 'L'               Indicate locate mode
