@@ -246,12 +246,13 @@ old virtual memory map:
 /* mandate maximum address space for z/Arch */
 #if defined(ZARCH)
 #ifndef ZAM31
-#define MAXASIZE 4080 /* 16 less than theoretical maximum */
+#define MAXASIZE 4080 /* 16 less than theoretical maximum of 4096 */
 #else
-/* #define MAXASIZE 2032 */ /* 16 less than theoretical maximum */
+/* #define MAXASIZE 2032 */ /* 16 less than theoretical maximum of 2048 */
 #define MAXASIZE 128
 #endif
 #define MAXANUM 1
+#define PAGES_PER_SEGMENT (1024U * 1024 / 4096)
 #endif
 
 /* trim down storage requirements for S/390 */
@@ -279,8 +280,13 @@ old virtual memory map:
 #define EA_OFFSET 0x01000000 /* where extended addressing starts */
 #define EA_END 0x04000000 /* where extended addressing ends */
 
+#ifdef ZARCH
+#define BTL_PRIVSTART 0xc00000 /* private region starts at 12 MB */
+#define BTL_PRIVLEN 3 /* how many MB to give to private region */
+#else
 #define BTL_PRIVSTART PCOMM_LOAD /* private region starts at 5 MB */
 #define BTL_PRIVLEN 10 /* how many MB to give to private region */
+#endif
 
 #ifndef MAXASIZE
 #if defined(S390)
@@ -595,6 +601,7 @@ https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.ida
 
 typedef unsigned short UINT2;
 typedef unsigned int UINT4;
+typedef unsigned int UINT8[2];
 
 
 /* for CR0: */
@@ -655,8 +662,11 @@ static int cr0 = 0x00900000; /* 1MB, S/370 */
 /* the segment table will thus need 2048 + 16 = approx 8K in size */
 
 typedef UINT4 SEG_ENT370;
+#ifdef ZARCH
+typedef UINT8 SEG_ENTRY;
+#else
 typedef UINT4 SEG_ENTRY;
-
+#endif
 
 /* the S/370 hardware requires a 2-byte integer for page
    table entries. S/370XA requires 4-byte */
@@ -681,8 +691,11 @@ typedef UINT4 SEG_ENTRY;
    equal to 256K */
 
 typedef UINT2 PAGE_ENT370;
+#ifdef ZARCH
+typedef UINT8 PAGE_ENTRY;
+#else
 typedef UINT4 PAGE_ENTRY;
-
+#endif
 
 
 
@@ -717,6 +730,16 @@ typedef struct {
     SEG_ENT370 seg370[S370_MAXMB]; /* needs 64-byte alignment */
     PAGE_ENT370 page370[S370_MAXMB][MAXPAGE]; /* needs 8-byte alignment */
 #endif
+#endif
+
+#if defined(ZARCH)
+    /* segtable needs 4k alignment? */
+    SEG_ENTRY segtable[4096 * 2]; /* we need double the mappings so that
+                                         4-8 GiB gets mapped to 0-4 GiB */
+    PAGE_ENTRY pagetable[4096 * PAGES_PER_SEGMENT];
+    UINT8 region3[4]; /* 4 lots of 2 GB */
+    UINT8 region2[1];
+    UINT8 region1[1];
 #endif
 
     int cregs[NUM_CR];
@@ -964,6 +987,10 @@ int pdosInit(PDOS *pdos)
         }
     }
     printf("Welcome to PDOS!!!\n");
+#if 0
+    printf("PDOS structure is %d bytes\n", sizeof(PDOS));
+    printf("free memory maybe starts at %p\n", malloc(500));
+#endif
 #if 0
     printf("CR0 is %08X\n", cr0);
     printf("PDOS structure is %d bytes\n", sizeof(PDOS));
@@ -1334,11 +1361,11 @@ static void pdosDumpregs(PDOS *pdos)
 
 static void pdosInitAspaces(PDOS *pdos)
 {
-#ifndef ZARCH
     int s;
     int a;
     int p;
 
+#ifndef ZARCH
     /* initialize 370-DAT tables */
 #if (defined(S370) || defined(S380)) && !BTL_XA
     for (a = 0; a < MAXANUM; a++)
@@ -1655,7 +1682,65 @@ static void pdosInitAspaces(PDOS *pdos)
 #endif
 
 #else /* ZARCH */
-        int a = 0;
+
+    /* MAXANUM must be 1 for z/Arch */
+    /* 8196 MB needs to be mapped - the upper 4 GB to the lower 4 GB */
+    for (a = 0; a < MAXANUM; a++)
+    {
+        for (s = 0; s < 4096; s++)
+        {
+            int r = 0;
+
+            pdos->aspaces[a].o.segtable[s][0] = 0;
+            pdos->aspaces[a].o.segtable[s][1] =
+                  0xfU
+                  | (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+            pdos->aspaces[a].o.segtable[4096 + s][0] = 0;
+            pdos->aspaces[a].o.segtable[4096 + s][1] = 
+                  0xfU
+                  | (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+            for (p = 0; p < PAGES_PER_SEGMENT; p++)
+            {
+                /* because the address begins in bit 1, just like
+                   a 31-bit bit address, we just need to shift
+                   20 bits (1 MB) to get the right address. Plus
+                   add in the page number, by shifting 12 bits
+                   for the 4K multiple */
+                pdos->aspaces[a].o.pagetable[s
+                                             * PAGES_PER_SEGMENT
+                                             + p][0] = 0;
+                pdos->aspaces[a].o.pagetable[s
+                                             * PAGES_PER_SEGMENT
+                                             + p][1] = (r << 20) | (p << 12); 
+            }
+        }
+        pdos->aspaces[a].o.region3[0][0] = 0;
+        pdos->aspaces[a].o.region3[0][1] =
+            (unsigned int)&pdos->aspaces[a].o.segtable[0];
+        pdos->aspaces[a].o.region3[1][0] = 0;
+        pdos->aspaces[a].o.region3[1][1] =
+            (unsigned int)&pdos->aspaces[a].o.segtable[2048];
+        pdos->aspaces[a].o.region3[2][0] = 1;
+        pdos->aspaces[a].o.region3[2][1] =
+            (unsigned int)&pdos->aspaces[a].o.segtable[4096];
+        pdos->aspaces[a].o.region3[3][0] = 1;
+        pdos->aspaces[a].o.region3[3][1] =
+            (unsigned int)&pdos->aspaces[a].o.segtable[4096+2048];
+
+        pdos->aspaces[a].o.region2[0][0] = 0;
+        pdos->aspaces[a].o.region2[0][1] =
+            (unsigned int)&pdos->aspaces[a].o.region3[0];
+
+        pdos->aspaces[a].o.region1[0][0] = 0;
+        pdos->aspaces[a].o.region1[0][1] =
+            (unsigned int)&pdos->aspaces[a].o.region2[0];
+
+        pdos->aspaces[a].o.cregs[1] = 
+            /* - 1 because architecture implies 1 extra block of 16 */
+            0
+            | (unsigned int)&pdos->aspaces[a].o.segtable;
+            /* note that the CR1 needs to be 4096-byte aligned, to give
+               12 low zeros */
 
         memmgrDefaults(&pdos->aspaces[a].o.btlmem);
         memmgrInit(&pdos->aspaces[a].o.btlmem);
@@ -1668,7 +1753,9 @@ static void pdosInitAspaces(PDOS *pdos)
         memmgrSupply(&pdos->aspaces[a].o.atlmem,
                      (char *)(S370_MAXMB * 1024U * 1024),
                      (MAXASIZE - S370_MAXMB) * 1024U * 1024);
+    }
 #endif /* ZARCH */
+
     return;
 }
 
