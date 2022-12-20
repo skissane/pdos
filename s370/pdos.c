@@ -1019,7 +1019,6 @@ int pdosInit(PDOS *pdos)
         pdos->aspaces[pdos->curr_aspace].o.curr_rb =
         &pdos->aspaces[pdos->curr_aspace].o.first_rb;
 
-#ifndef ZARCH
     /* Now we set the DAT pointers for our first address space,
        in preparation for switching DAT on. */
     lcreg1(pdos->aspaces[pdos->curr_aspace].o.cregs[1]);
@@ -1027,7 +1026,6 @@ int pdosInit(PDOS *pdos)
     lcreg13(pdos->aspaces[pdos->curr_aspace].o.cregs[13]);
 #endif
     daton();
-#endif
 
     if (pdosLoadPcomm(pdos) != 0)
     {
@@ -1695,10 +1693,12 @@ static void pdosInitAspaces(PDOS *pdos)
         {
             pdos->aspaces[a].o.segtable[s][0] = 0;
             pdos->aspaces[a].o.segtable[s][1] =
-                  (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+                  (unsigned int)
+                  &pdos->aspaces[a].o.pagetable[s * PAGES_PER_SEGMENT][0];
             pdos->aspaces[a].o.segtable[4096 + s][0] = 0;
             pdos->aspaces[a].o.segtable[4096 + s][1] = 
-                  (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+                  (unsigned int)
+                  &pdos->aspaces[a].o.pagetable[s * PAGES_PER_SEGMENT][0];
             for (p = 0; p < PAGES_PER_SEGMENT; p++)
             {
                 pdos->aspaces[a].o.pagetable[s
