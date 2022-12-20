@@ -1722,12 +1722,12 @@ static void pdosInitAspaces(PDOS *pdos)
             | 0x03; /* segment table is max size */
         pdos->aspaces[a].o.region3[2][0] = 0;
         pdos->aspaces[a].o.region3[2][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[4096]
+            (unsigned int)&pdos->aspaces[a].o.segtable[0]
             | (0x1 << 2) /* region 3 indicator */
             | 0x03; /* segment table is max size */
         pdos->aspaces[a].o.region3[3][0] = 0;
         pdos->aspaces[a].o.region3[3][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[4096+2048]
+            (unsigned int)&pdos->aspaces[a].o.segtable[2048]
             | (0x1 << 2) /* region 3 indicator */
             | 0x03; /* segment table is max size */
         /* pad to minimum size */
