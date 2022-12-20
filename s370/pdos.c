@@ -1068,7 +1068,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                pdos->psa->flcgrsav,               
                sizeof pdos->context->regs);
 #ifdef ZARCH
-        pdos->context->psw1 = 0x000C0000U;
+        pdos->context->psw1 = 0x040C0000U;
         pdos->context->psw1 |= (*(unsigned int *)0x140 & 1);
         pdos->context->psw2 = *(unsigned int *)0x14C;
         pdos->context->psw2 |= (*(unsigned int *)0x144 & 0x80000000U);
