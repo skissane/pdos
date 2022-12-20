@@ -199,8 +199,15 @@ WRBLOCK  DS    0H
 * something more sophisticated in PDOS than this continual
 * initialization.
 *
+         AIF   ('&XSYS' EQ 'ZARCH').ZMVNIO
          MVC   FLCINPSW(8),WRNEWIO
          STOSM FLCINPSW,X'00'  Work with DAT on or OFF
+         AGO .ZMVNIOA
+.ZMVNIO  ANOP
+         MVC   FLCEINPW(16),WRNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
+.ZMVNIOA ANOP
+*
 * R3 points to CCW chain
          LA    R3,WRSEEK
          ST    R3,FLCCAW    Store in CAW
@@ -282,8 +289,19 @@ WRR      DS    C
          DS    0D
 WRWTNOER DC    X'060E0000'  I/O, machine check, EC, wait, DAT on
          DC    A(AMBIT)  no error
-WRNEWIO  DC    X'000C0000'  machine check, EC, DAT off
+*
+         AIF   ('&XSYS' EQ 'ZARCH').WRZNIO
+* machine check, EC, DAT off
+WRNEWIO  DC    A(X'000C0000')
          DC    A(AMBIT+WRCONT)  continuation after I/O request
+         AGO   .WRNZIOA
+*
+.WRZNIO  ANOP
+WRNEWIO  DC    A(X'00040000'+AM64BIT)
+         DC    A(AMBIT)
+         DC    A(0)
+         DC    A(WRCONT)  continuation after I/O request
+.WRNZIOA ANOP
 *
          DROP  ,
 *
