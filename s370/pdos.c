@@ -934,7 +934,7 @@ int pdosInit(PDOS *pdos)
         char tbuf[MAXBLKSZ + 2];
         int cnt;
 
-#if DSKDEBUG
+#if 0 /* DSKDEBUG */
         printf("loading to %p from %d, %d, %d\n", tbuf,
                cyl, head, rec);
 #endif
@@ -1271,12 +1271,18 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 #endif
                 cnt = rdblock(pdos->ipldev, cyl, head, rec, 
                               tbuf, len);
+#if DSKDEBUG
+                printf("cnt is %d\n", cnt);
+#endif
                 if (cnt < 0)
                 {
                     rec = 1;
                     head++;
                     cnt = rdblock(pdos->ipldev, cyl, head, rec, 
                                   tbuf, len);
+#if DSKDEBUG
+                    printf("cnt is %d\n", cnt);
+#endif
                     if (cnt < 0)
                     {
                         head = 0;
