@@ -733,13 +733,17 @@ typedef struct {
 #endif
 
 #if defined(ZARCH)
-    /* segtable needs 4k alignment? */
+    /* this requires 4k alignment */
+    UINT8 region1[512]; /* 1 entry plus padding */
+    /* this requires 4k alignment */
+    UINT8 region2[512]; /* 1 entry plus padding */
+    /* this requires 4k alignment */
+    UINT8 region3[512]; /* 4 lots of 2 GB plus padding */
+    /* this requires 4k alignment */
     SEG_ENTRY segtable[4096 * 2]; /* we need double the mappings so that
                                          4-8 GiB gets mapped to 0-4 GiB */
+    /* I think this requires 2k alignment, but will be 4k regardless */
     PAGE_ENTRY pagetable[4096 * PAGES_PER_SEGMENT];
-    UINT8 region3[4]; /* 4 lots of 2 GB */
-    UINT8 region2[1];
-    UINT8 region1[1];
 #endif
 
     int cregs[NUM_CR];
@@ -1689,58 +1693,76 @@ static void pdosInitAspaces(PDOS *pdos)
     {
         for (s = 0; s < 4096; s++)
         {
-            int r = 0;
-
             pdos->aspaces[a].o.segtable[s][0] = 0;
             pdos->aspaces[a].o.segtable[s][1] =
-                  0xfU
-                  | (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+                  (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
             pdos->aspaces[a].o.segtable[4096 + s][0] = 0;
             pdos->aspaces[a].o.segtable[4096 + s][1] = 
-                  0xfU
-                  | (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
+                  (unsigned int)&pdos->aspaces[a].o.pagetable[s][0];
             for (p = 0; p < PAGES_PER_SEGMENT; p++)
             {
-                /* because the address begins in bit 1, just like
-                   a 31-bit bit address, we just need to shift
-                   20 bits (1 MB) to get the right address. Plus
-                   add in the page number, by shifting 12 bits
-                   for the 4K multiple */
                 pdos->aspaces[a].o.pagetable[s
                                              * PAGES_PER_SEGMENT
                                              + p][0] = 0;
                 pdos->aspaces[a].o.pagetable[s
                                              * PAGES_PER_SEGMENT
-                                             + p][1] = (r << 20) | (p << 12); 
+                                             + p][1] =
+                    (s * PAGES_PER_SEGMENT + p) << 12;
             }
         }
         pdos->aspaces[a].o.region3[0][0] = 0;
         pdos->aspaces[a].o.region3[0][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[0];
+            (unsigned int)&pdos->aspaces[a].o.segtable[0]
+            | (0x1 << 2) /* region 3 indicator */
+            | 0x03; /* segment table is max size */
         pdos->aspaces[a].o.region3[1][0] = 0;
         pdos->aspaces[a].o.region3[1][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[2048];
-        pdos->aspaces[a].o.region3[2][0] = 1;
+            (unsigned int)&pdos->aspaces[a].o.segtable[2048]
+            | (0x1 << 2) /* region 3 indicator */
+            | 0x03; /* segment table is max size */
+        pdos->aspaces[a].o.region3[2][0] = 0;
         pdos->aspaces[a].o.region3[2][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[4096];
-        pdos->aspaces[a].o.region3[3][0] = 1;
+            (unsigned int)&pdos->aspaces[a].o.segtable[4096]
+            | (0x1 << 2) /* region 3 indicator */
+            | 0x03; /* segment table is max size */
+        pdos->aspaces[a].o.region3[3][0] = 0;
         pdos->aspaces[a].o.region3[3][1] =
-            (unsigned int)&pdos->aspaces[a].o.segtable[4096+2048];
+            (unsigned int)&pdos->aspaces[a].o.segtable[4096+2048]
+            | (0x1 << 2) /* region 3 indicator */
+            | 0x03; /* segment table is max size */
+        /* pad to minimum size */
+        for (p = 4; p < 512; p++)
+        {
+            pdos->aspaces[a].o.region3[p][0] = 0;
+            pdos->aspaces[a].o.region3[p][1] = 1 << 5; /* region invalid bit */
+        }
 
         pdos->aspaces[a].o.region2[0][0] = 0;
         pdos->aspaces[a].o.region2[0][1] =
-            (unsigned int)&pdos->aspaces[a].o.region3[0];
+            (unsigned int)&pdos->aspaces[a].o.region3[0]
+            | (0x2 << 2); /* region 2 indicator */
+        /* pad to minimum size */
+        for (p = 1; p < 512; p++)
+        {
+            pdos->aspaces[a].o.region2[p][0] = 0;
+            pdos->aspaces[a].o.region2[p][1] = 1 << 5; /* region invalid bit */
+        }
 
         pdos->aspaces[a].o.region1[0][0] = 0;
         pdos->aspaces[a].o.region1[0][1] =
-            (unsigned int)&pdos->aspaces[a].o.region2[0];
+            (unsigned int)&pdos->aspaces[a].o.region2[0]
+            | (0x3 << 2); /* region 1 indicator */
+        /* pad to minimum size */
+        for (p = 1; p < 512; p++)
+        {
+            pdos->aspaces[a].o.region2[p][0] = 0;
+            pdos->aspaces[a].o.region2[p][1] = 1 << 5; /* region invalid bit */
+        }
 
         pdos->aspaces[a].o.cregs[1] = 
-            /* - 1 because architecture implies 1 extra block of 16 */
             0
-            | (unsigned int)&pdos->aspaces[a].o.segtable;
-            /* note that the CR1 needs to be 4096-byte aligned, to give
-               12 low zeros */
+            | (unsigned int)&pdos->aspaces[a].o.region1
+            | (0x03 << 2); /* region 1 indicator */
 
         memmgrDefaults(&pdos->aspaces[a].o.btlmem);
         memmgrInit(&pdos->aspaces[a].o.btlmem);
