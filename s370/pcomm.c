@@ -31,6 +31,7 @@ static void readAutoExec(void);
 static void processInput(void);
 static void putPrompt(void);
 static void dotype(char *file);
+static void docopy(char *p);
 static void dodir(char *pattern);
 static void dohelp(void);
 static void changedir(char *to);
@@ -159,6 +160,10 @@ static void processInput(void)
     {
         dotype(p);
     }
+    else if (ins_strcmp(buf, "copy") == 0)
+    {
+        docopy(p);
+    }
 /* for now, let PDOS handle this */
 /*    else if (ins_strcmp(buf, "dir") == 0)
     {
@@ -275,6 +280,50 @@ static void dotype(char *file)
     {
        printf("file not found: %s\n", file);
     }
+    return;
+}
+
+static void docopy(char *p)
+{
+                FILE *fp;
+                FILE *fq;
+                char *q;
+
+                q = strchr(p, ' ');
+                if (q == NULL)
+                {
+                    printf("two files needed\n");
+                }
+                else
+                {
+                    *q = '\0';
+                    q++;
+                    fp = fopen(p, "rb");
+                    if (fp == NULL)
+                    {
+                        printf("failed to open input file\n");
+                    }
+                    else
+                    {
+                        fq = fopen(q, "wb");
+                        if (fq == NULL)
+                        {
+                            printf("failed to open output file\n");
+                            fclose(fp);
+                        }
+                        else
+                        {
+                            int c;
+
+                            while ((c = fgetc(fp)) != EOF)
+                            {
+                                fputc(c, fq);
+                            }
+                            fclose(fp);
+                            fclose(fq);
+                        }
+                    }
+                }
     return;
 }
 
