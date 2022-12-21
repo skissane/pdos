@@ -20,6 +20,7 @@
 static char buf[200];
 
 static void dofill(char *p);
+static void dofzap(char *p);
 
 int main(void)
 {
@@ -42,6 +43,7 @@ int main(void)
         {
             printf("commands that might be available are:\n");
             printf("exit, type, dir, md, rd, cd, date, time, del, copy\n");
+            printf("fill, fzap\n");
         }
         else if (strncmp(buf, "type", 4) == 0)
         {
@@ -71,6 +73,10 @@ int main(void)
         else if (strncmp(buf, "fill", 4) == 0)
         {
             dofill(buf + 4);
+        }
+        else if (strncmp(buf, "fzap", 4) == 0)
+        {
+            dofzap(buf + 4);
         }
         else if (strncmp(buf, "copy", 4) == 0)
         {
@@ -230,5 +236,48 @@ static void dofill(char *p)
         max--;
     }
     fclose(fq);
+    return;
+}
+
+static void dofzap(char *p)
+{
+    FILE *fu;
+    long offs;
+    int ok = 0;
+    int val;
+    char *fnm;
+
+    if (p != '\0')
+    {
+        fnm = p;
+        p = strchr(p, ' ');
+        if (p != NULL)
+        {
+            *p = '\0';
+            p++;
+            offs = strtol(p, NULL, 0);
+            p = strchr(p, ' ');
+            if (p != NULL)
+            {
+                p++;
+                val = (int)strtol(p, NULL, 0);
+                ok = 1;
+            }
+        }
+    }
+    if (!ok)
+    {
+        printf("usage: fzap <fnm> <offs> <val>\n");
+        return;
+    }
+    fu = fopen(fnm, "r+b");
+    if (fu == NULL)
+    {
+        printf("unable to open file %s\n", fnm);
+        return;
+    }
+    fseek(fu, offs, SEEK_SET);
+    fputc(val, fu);
+    fclose(fu);
     return;
 }
