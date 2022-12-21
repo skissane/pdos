@@ -32,6 +32,7 @@ static void processInput(void);
 static void putPrompt(void);
 static void dotype(char *file);
 static void docopy(char *p);
+static void dofill(char *p);
 static void dodir(char *pattern);
 static void dohelp(void);
 static void changedir(char *to);
@@ -163,6 +164,10 @@ static void processInput(void)
     else if (ins_strcmp(buf, "copy") == 0)
     {
         docopy(p);
+    }
+    else if (ins_strcmp(buf, "fill") == 0)
+    {
+        dofill(p);
     }
 /* for now, let PDOS handle this */
 /*    else if (ins_strcmp(buf, "dir") == 0)
@@ -324,6 +329,45 @@ static void docopy(char *p)
                         }
                     }
                 }
+    return;
+}
+
+static void dofill(char *p)
+{
+    FILE *fq;
+    char *q;
+    unsigned long max = 0;
+    int infinite = 0;
+
+    if (*p == '\0')
+    {
+        printf("enter filename and number of bytes to generate\n");
+        printf("leave number of bytes blank or zero for infinity\n");
+        return;
+    }
+    q = strchr(p, ' ');
+    if (q != NULL)
+    {
+        max = strtoul(q, NULL, 0);
+    }
+    if (max == 0) infinite = 1;
+    fq = fopen(p, "wb");
+    if (fq == NULL)
+    {
+        printf("failed to open %s for output\n", p);
+        return;
+    }
+    while ((max > 0) || infinite)
+    {
+        putc(0x00, fq);
+        if (ferror(fq))
+        {
+            printf("write error\n");
+            break;
+        }
+        max--;
+    }
+    fclose(fq);
     return;
 }
 
