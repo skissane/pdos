@@ -2112,6 +2112,7 @@ static void pdosProcessSVC(PDOS *pdos)
            disk blocks */
         if (memcmp(prog, "DUMPBLK", 7) == 0)
         {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
             *pdos->context->postecb = 
                 pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
                 pdosDumpBlk(pdos, parm);
@@ -2121,6 +2122,7 @@ static void pdosProcessSVC(PDOS *pdos)
         }
         else if (memcmp(prog, "ZAPBLK", 6) == 0)
         {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
             *pdos->context->postecb = 
                 pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
                 pdosZapBlk(pdos, parm);
@@ -2130,6 +2132,7 @@ static void pdosProcessSVC(PDOS *pdos)
         }
         else if (memcmp(prog, "DIR", 3) == 0)
         {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
             pdosDoDIR(pdos, parm);
             *pdos->context->postecb = 0;
             pdos->context->regs[15] = 0;
