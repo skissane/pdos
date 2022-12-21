@@ -26,3 +26,9 @@ int __crt0(OS *os)
     *__os->main = main;
     return (__os->__start(0));
 }
+
+/* needed for Amiga (gccami) */
+void __main(void)
+{
+    return;
+}
