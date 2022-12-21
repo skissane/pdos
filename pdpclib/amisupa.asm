@@ -40,6 +40,8 @@ ___longj:
 #        rts
 
 
+.ifdef AMIGA
+
 # Note that when using the output of fd2pragma you should
 # be careful to get rid of any leading zeroes otherwise they
 # will be treated as octals when you need decimal.
@@ -186,3 +188,5 @@ Rename:
         JSR     -78(A6)
         MOVEM.L (A7)+,D2/A6
         RTS
+
+.endif
