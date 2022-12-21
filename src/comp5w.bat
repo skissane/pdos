@@ -51,10 +51,10 @@ pdas -o protints.o protints.s
 pdas -o pdoss.o pdoss.s
 
 del os.a
-ar386 -r os.a bos.o fat.o exeload.o
-ar386 -r os.a physmem.o vmm.o process.o
-ar386 -r os.a int21.o int80.o log.o helper.o
-ar386 -r os.a memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
+ar r os.a bos.o fat.o exeload.o
+ar r os.a physmem.o vmm.o process.o
+ar r os.a int21.o int80.o log.o helper.o
+ar r os.a memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
 
-ld386 -N -s -e start -o pdos.exe strt32.o pdos.o os.a ../pdpclib/pdos.a
+ld86 -N -s -e start -o pdos.exe strt32.o pdos.o os.a ../pdpclib/pdos.a
 del os.a
