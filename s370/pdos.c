@@ -2847,7 +2847,7 @@ static int pdosZapBlk(PDOS *pdos, char *parm)
     n = sscanf(tbuf, "%x %d %d %d %i %i", &dev, &cyl, &head, &rec, &off, &nval);
     if (n != 6)
     {
-        printf("usage: zapblk dev(x) cyl(d) head(d) rec(d) off(d) nval(d)\n");
+        printf("usage: zapblk dev(x) cyl(d) head(d) rec(d) off(i) nval(i)\n");
         printf("dev of 0 will use IPL device\n");
         return (0);
     }
