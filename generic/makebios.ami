@@ -1,12 +1,23 @@
-# This builds Amiga hunk executables for Amiga OS 68000
+# Produces Amiga hunk executable for Amiga 68020
+# Links against C library produced by makefile.ami
 
-CC=vbccm68k
-COPTS=-D__AMIGA__ -cpu=68020 -fpu=68881 -O=991 -I. -I../amiga -I../bios -I../pdpclib
+CC=gccami
+CFLAGS=-O2
+LD=ldami
+LDFLAGS=
+AS=asami
+AR=arami
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__AMIGA__ -D__NOBIVA__ -DNEED_AMIGA
+
+all: clean bios.exe
 
 bios.exe: bios.o ../bios/exeload.o
-  vlink -bamigahunk -o bios.exe ../pdpclib/amistart.o bios.o ../bios/exeload.o ../pdpclib/pdpclib.lib
+    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/amistart.o bios.o ../bios/exeload.o ../pdpclib/amiga.a
 
 .c.o:
-  $(CC) $(COPTS) -o=$*.s $<
-  vasmm68k_mot -o $*.o -Fhunk $*.s
-  rm -f $*.s
+    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o bios.exe

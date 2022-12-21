@@ -1,12 +1,18 @@
-# This builds a PDOS-generic Amiga hunk
+# This builds a PDOS-generic executable for the Amiga 68020
+# No need to build a library, this is self-contained
 
-CC=vbccm68k
-COPTS=-D__PDOS386__ -D__PDOSGEN__ -cpu=68020 -fpu=68881 -O=991 -I. -I../pdpclib -I../src
+CC=gccami
+COPTS=-S -O2 -U__AMIGA__ -DHAVE_DIR -D__PDOS386__ -D__PDOSGEN__ -D__AMIGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+
+all: clean pcomm.exe
 
 pcomm.exe: ../pdpclib/pgastart.o pcomm.o
-  vlink -bamigahunk -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  rm -f pcomm.exe
+  ldami -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
 
 .c.o:
-  $(CC) $(COPTS) -o=$*.s $<
-  vasmm68k_mot -o $*.o -Fhunk $*.s
+  $(CC) $(COPTS) -o $*.s $<
+  asami -o $@ $*.s
   rm -f $*.s
+clean:
+  rm -f pcomm.exe

@@ -1,12 +1,23 @@
-# This builds Amiga hunk executables for Amiga OS 68000
+# produce pdos.exe
+# Links against pdosgeno.a built with makefile.amg
 
-CC=vbccm68k
-COPTS=-D__PDOS386__ -DNOLIBALLOC -cpu=68020 -fpu=68881 -O=991 -I. -I../bios -I../pdpclib -I../src
+CC=gccami
+CFLAGS=-O2
+LD=ldami
+LDFLAGS=
+AS=asami
+AR=arami
+COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__WIN32__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -DNEED_AMIGA
+
+all: clean pdos.exe
 
 pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
-  vlink -bamigahunk -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.lib
+    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
 
 .c.o:
-  $(CC) $(COPTS) -o=$*.s $<
-  vasmm68k_mot -o $*.o -Fhunk $*.s
-  rm -f $*.s
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o pdos.exe
