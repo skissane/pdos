@@ -9,11 +9,11 @@ COPTS=-S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga
 pdptest.exe: amistart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o amisupa.o
-  rm -f temp.a
-  $(AR) r temp.a stdio.o string.o stdlib.o
-  $(AR) r temp.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r temp.a ctype.o setjmp.o math.o amisupa.o
-  $(LD) -s -nostdlib -o pdptest.exe amistart.o pdptest.o temp.a
+  rm -f amiga.a
+  $(AR) r amiga.a stdio.o string.o stdlib.o
+  $(AR) r amiga.a start.o time.o errno.o assert.o signal.o locale.o
+  $(AR) r amiga.a ctype.o setjmp.o math.o amisupa.o
+  $(LD) -s -nostdlib -o pdptest.exe amistart.o pdptest.o amiga.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
@@ -21,4 +21,4 @@ pdptest.exe: amistart.o pdptest.o stdio.o string.o stdlib.o \
   rm -f $*.s
 
 .asm.o:
-  $(AS) -o $@ $<
+  $(AS) --defsym AMIGA=1 -o $@ $<
