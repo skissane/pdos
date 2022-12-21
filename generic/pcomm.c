@@ -13,10 +13,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include <pos.h>
 
 static char buf[200];
+
+static void dofill(char *p);
 
 int main(void)
 {
@@ -64,6 +67,10 @@ int main(void)
                     printf("file not found\n");
                 }
             }
+        }
+        else if (strncmp(buf, "fill", 4) == 0)
+        {
+            dofill(buf + 4);
         }
         else if (strncmp(buf, "copy", 4) == 0)
         {
@@ -184,4 +191,44 @@ int main(void)
         }
     }
     return (0);
+}
+
+static void dofill(char *p)
+{
+    FILE *fq;
+    char *q;
+    unsigned long max = 0;
+    int infinite = 0;
+
+    if (*p == '\0')
+    {
+        printf("enter filename and number of bytes to generate\n");
+        printf("leave number of bytes blank or zero for infinity\n");
+        return;
+    }
+    p++;
+    q = strchr(p, ' ');
+    if (q != NULL)
+    {
+        max = strtoul(q, NULL, 0);
+    }
+    if (max == 0) infinite = 1;
+    fq = fopen(p, "wb");
+    if (fq == NULL)
+    {
+        printf("failed to open %s for output\n", p);
+        return;
+    }
+    while ((max > 0) || infinite)
+    {
+        putc(0x00, fq);
+        if (ferror(fq))
+        {
+            printf("write error\n");
+            break;
+        }
+        max--;
+    }
+    fclose(fq);
+    return;
 }
