@@ -70,6 +70,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <limits.h>
 
 #include "pdosutil.h"
 
@@ -2730,9 +2731,10 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
     long x = 0L;
     char prtln[100];
     long i;
-    long start = 0;
     int dev;
     int n;
+    int skip = 0;
+    int count = INT_MAX;
 
     tbuf[0] = '\0';
     i = *(short *)parm;
@@ -2742,10 +2744,11 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
         memcpy(tbuf, parm, i);
         tbuf[i] = '\0';
     }
-    n = sscanf(tbuf, "%x %d %d %d", &dev, &cyl, &head, &rec);
-    if (n != 4)
+    n = sscanf(tbuf, "%x %d %d %d %i %i",
+               &dev, &cyl, &head, &rec, &skip, &count);
+    if (n < 4)
     {
-        printf("usage: dumpblk dev(x) cyl(d) head(d) rec(d)\n");
+        printf("usage: dumpblk dev(x) cyl(d) head(d) rec(d) [start] [len]\n");
         printf("dev of 0 will use IPL device\n");
         return (0);
     }
@@ -2758,13 +2761,25 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
     cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ);
     if (cnt > 0)
     {
-        for (i = 0; i < cnt; i++)
+        if (cnt <= skip)
+        {
+            cnt = 0;
+        }
+        else if ((skip + count) > cnt)
+        {
+            cnt = cnt - skip;
+        }
+        else
+        {
+            cnt = count;
+        }
+        for (i = skip; i < skip + cnt; i++)
         {
             c = tbuf[i];
             if (x % 16 == 0)
             {
                 memset(prtln, ' ', sizeof prtln);
-                sprintf(prtln, "%0.6lX   ", start + x);
+                sprintf(prtln, "%0.6lX   ", skip + x);
                 pos1 = 8;
                 pos2 = 45;
             }
