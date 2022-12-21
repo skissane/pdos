@@ -387,6 +387,8 @@ static void dohelp(void)
     printf("SHOWRC - display return code from programs\n");
     printf("EXIT - exit operating system\n");
     printf("ECHO - display provided text\n");
+    printf("COPY - copy a file\n");
+    printf("FILL - create a file with NULs\n");
     printf("anything else will be assumed to be a .EXE program\n");
     return;
 }
