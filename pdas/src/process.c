@@ -55,7 +55,7 @@ static void do_org (section_t section, struct expr *expr, unsigned long fill_val
 
 static section_t get_known_section_expression (char **pp, struct expr *expr) {
 
-    section_t section = expression_read_into (pp, expr);
+    section_t section = machine_dependent_simplified_expression_read_into (pp, expr);
     
     if (expr->type == EXPR_TYPE_INVALID || expr->type == EXPR_TYPE_ABSENT) {
     
@@ -93,7 +93,7 @@ static void handler_constant (char **pp, int size, int is_rva) {
     
     do {
     
-        expression_read_into (pp, &expr);
+        machine_dependent_simplified_expression_read_into (pp, &expr);
         
         if (is_rva) {
         
@@ -398,7 +398,7 @@ static void internal_set (char **pp, struct symbol *symbol) {
 
     struct expr expr;
     
-    expression_read_into (pp, &expr);
+    machine_dependent_simplified_expression_read_into (pp, &expr);
     
     if (expr.type == EXPR_TYPE_INVALID) {
         as_error ("invalid expression");
@@ -860,12 +860,12 @@ static void handler_space (char **pp) {
     struct expr expr, val;
     offset_t repeat;
     
-    expression_read_into (pp, &expr);
+    machine_dependent_simplified_expression_read_into (pp, &expr);
     
     if (**pp == ',') {
     
         ++(*pp);
-        expression_read_into (pp, &val);
+        machine_dependent_simplified_expression_read_into (pp, &val);
         
         if (val.type != EXPR_TYPE_CONSTANT) {
         
