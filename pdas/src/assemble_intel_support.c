@@ -705,8 +705,8 @@ static int intel_parse_operand (char *operand_string) {
                     instruction.imms[instruction.operands] = instruction.disps[instruction.operands];
                     
                     instruction.operands = 1;
-                    operand_exprs[instruction.operands] = *expr;
-                    instruction.imms[instruction.operands] = &operand_exprs[instruction.operands];
+                    operand_exprs[operand_exprs_count] = *expr;
+                    instruction.imms[instruction.operands] = &operand_exprs[operand_exprs_count++];
                     resolve_expression (instruction.imms[instruction.operands]);
 
                     if (!finalize_immediate (instruction.imms[instruction.operands], operand_start)) {
@@ -752,8 +752,8 @@ static int intel_parse_operand (char *operand_string) {
             instruction.types[instruction.operands] |= BASE_INDEX;
         }
 
-        operand_exprs[instruction.operands] = *expr;
-        expr = &operand_exprs[instruction.operands];
+        operand_exprs[operand_exprs_count] = *expr;
+        expr = &operand_exprs[operand_exprs_count++];
         
         resolve_expression (expr);
 
@@ -828,8 +828,8 @@ static int intel_parse_operand (char *operand_string) {
 
     } else {
 
-        operand_exprs[instruction.operands] = *expr;
-        instruction.imms[instruction.operands] = &operand_exprs[instruction.operands];
+        operand_exprs[operand_exprs_count] = *expr;
+        instruction.imms[instruction.operands] = &operand_exprs[operand_exprs_count++];
 
         resolve_expression (instruction.imms[instruction.operands]);
         

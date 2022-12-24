@@ -142,6 +142,7 @@ struct templates {
 
 static struct instruction instruction;
 static struct expr operand_exprs[MAX_OPERANDS];
+static int operand_exprs_count;
 
 static const struct templates *current_templates;
 
@@ -630,7 +631,7 @@ static int att_parse_operand (char *operand_string) {
         
         }
         
-        expr = &operand_exprs[instruction.operands];
+        expr = &operand_exprs[operand_exprs_count++];
         instruction.imms[instruction.operands] = expr;
         
         imm_start = operand_string;
@@ -839,7 +840,7 @@ static int att_parse_operand (char *operand_string) {
                 disp_type = DISP16;
             }
             
-            expr = &operand_exprs[instruction.operands];
+            expr = &operand_exprs[operand_exprs_count++];
             
             {
             
@@ -2359,7 +2360,7 @@ static int process_operands (void) {
                 
                 if (fake_zero_displacement) {
                 
-                    struct expr *expr = &operand_exprs[operand];
+                    struct expr *expr = &operand_exprs[operand_exprs_count++];
                     instruction.disps[operand] = expr;
                     
                     expr->type = EXPR_TYPE_CONSTANT;
@@ -2481,6 +2482,7 @@ char *machine_dependent_assemble_line (char *line) {
 
     memset (&instruction, 0, sizeof (instruction));
     memset (operand_exprs, 0, sizeof (operand_exprs));
+    operand_exprs_count = 0;
     
     line = parse_instruction (line);
     
