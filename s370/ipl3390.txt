@@ -1000,3 +1000,175 @@ The second CCW is:
                         CCHHR (cylinder 0, head 1, record 1)
 
 */
+
+
+/*
+
+Now we are on to code, or rather, an executable (executables
+can contain more than just code):
+
+00DFF0  00000000 00000000 00000000 00000000  ................
+00E000  00000000 01000000 01000000 08000000  ................
+00E010  00000000 00000000 01010048 14000C00  ................
+00E020  00800020 00000000 00000000 00000000  ................
+00E030  00000000 00000000 00000000 00000000  ................
+
+First we have pload.sys, which is an executable that has
+had relocations already applied (thanks to the LOADZERO
+utility), such that all that remains is a binary image
+(so that means it needs to be placed at a specific address
+in memory, and in this case, it is address 0).
+
+The executable in this case starts with a PSW, because a
+PSW needs to be placed at location 0, so that when the IPL
+PSW chain finishes, it loads this new PSW, and then that's
+the end of the IPL process.
+
+Here is the code:
+
+000000                              181 ORIGIN   DS    0D
+000000 000C0000                     182          DC    X'000C0000' EC mode '08' + Machine Check '04' enabled
+000004 80002000                     183          DC    A(AMBIT+POSTIPL) First bit of "normal" memory
+
+So the PSW is pointing to address x'2000' and it will
+be in AM31. Depending on the z/Arch machine, we may
+already be in z/Arch mode, or we may be in ESA/390
+compatibility mode. I'm not sure if ESA/390 mode
+actually allows AM64, so it's safer to use AM31,
+then unconditionally switch to z/Arch mode, which
+presumably annoys some hardware that is already in
+that mode, but it doesn't seem to throw an error.
+And then in that mode we unconditionally switch to
+AM64. At this point the DAT tables aren't yet set up
+to remap the 4 GiB to 8 GiB region to 0 to 4 GiB, so
+you can't run any code that does negative indexing.
+
+You could argue that switching to AM64 should be
+deferred until the C code has established the DAT
+tables, and we should remain in AM31 until then.
+And then let the C code do the switch to AM64.
+
+However, it is nice to get clean addresses in any
+dump (stack chain), and for that you need to get to
+AM64 asap, and negative indexing is normally rare,
+and known not to exist in the initial PDOS C code.
+
+So anyway, you can see the beginning of our executable
+at x'E01D'.
+
+Before that we have:
+
+01 01 00 4814
+
+I've forgotten what that means, and I'm too lazy to read
+the crap I've already written, but the 4814 looks like a
+length of 18452, which is right - my data is split into
+blocks of 18452. Before that, the x'00' is probably the
+key length - we're not using a key. 01 is record, 1 byte
+sounds right, the previous 01 will be 0001, for head 1,
+and before that will be 0000 - cylinder 0.
+
+Now we need an explanation for this:
+
+00E000  00000000 01000000 01000000 08000000  ................
+
+It can't be describing cylinder 0, since we're already up
+to head 1. So it's probably indicating what this entire
+track consists of. That x'08' makes no sense - I only have
+3 records per track. Maybe it could be a mythical record 0.
+Maybe there is a record 0, with a key length of 8, and set
+to x'00'. Let's test that theory.
+
+00E000  00000000 01000000 01000000 08000000  ................
+00E010  00000000 00000000 01010048 14000C00  ................
+
+Don't we normally have a data length after the key length?
+If so, that would account for another 2 bytes. Let's check
+the VOL1.
+
+   0002D0  00000000 00000000 00030400 50E5D6D3  ............&VOL
+   0002E0  F1E5D6D3 F1D7C4D6 E2F0F040 00010000  1VOL1PDOS00 ....
+
+Yeah, 04 followed by 0050. Looks right.
+
+So assuming x'08' is the key length, then x'0000' for data
+length, that has the key starting at x'e00f', which gives us
+8 x'00' and then something else starts at x'e017', and at
+x'e017' we have x'0001' which is exactly what we want - a
+cylinder of 1, which we previously noted (part of the CCHHR).
+
+BTW, Joe tried to explain what the "count" meant, but it went
+above my head, so we'll come back to that another day.
+
+So let's track back from the x'08'. Before that, we should
+have a record 0, which should be 1 byte. So that's x'e00b'.
+
+And before that should be head 1. I don't see that. I instead
+see, at x'e009', x'0000'. Head 0? Backing up before that I see
+a more sensible x'0001' which could be a head number, and before
+that, ie at x'e003', I see a sensible cylinder x'0001'.
+
+So we're missing an explanation for an x'0000'. CCHHR. Is there
+another all-encompassing count field after that? Marking the
+entire track perhaps? But a count of 0 can't be right for that.
+
+Plan B. The x'000008' could be a count of x'0000'. Wait. Let's
+assume that x'e009' is the record number of 0. Then we're
+looking at x'000008', and we're looking for count, key, data.
+I don't see a count in VOL1, so we need to forget about that,
+so a key length of 0. Then data length of x'0008'. Ah, I see
+where I stuffed up. I'm after a cylinder of 0, not 1.
+
+Ok, so let's try again.
+
+00E000  00000000 01000000 01000000 08000000  ................
+00E010  00000000 00000000 01010048 14000C00  ................
+
+after the last x'01' at x'e008' we have record 0, key length 0,
+data length 0008, then from x'e00d' to x'e014' inclusive, we
+have 8 NULs as the data, then from x'e015' we have x'0000',
+a cylinder of 0, and then at x'e017' we have x'0001', a head
+of 1, then at x'e019' the record of 1, and then at x'e01a' we
+have the key length of 0, then data length of x'4814', so yes,
+everything matches. Cool.
+
+So that's interesting. Record 0 exists, and is 8 NUL data characters.
+
+How does that match up with the EOF record which I noticed before?
+
+Above data ends at x'15' (newline), then we have cylinder
+4, head 0, record 2, key length 0, data length 0000,
+EOF of 'FFFF FFFF FFFF FFFF' and then junk from unknown
+source starts at x'340D25'.
+
+So there we have a data length of 0, which is false, because
+we actually have data. But maybe that's not real data. Maybe
+that's a special way of indicating there is no more data. An
+empty block (key and data length both 0), and verified with
+8 x'ff'. And that's sort of hardware-detectable. I guess a bit
+like the Commodore 64 when the floppy disk made that terrible
+noise as the checksum was deliberately falsified as part of
+copyright protection. So there is no sign of checksums here,
+but we instead have a special EOF record. I guess this is an
+image, not real hardware, so e.g. you don't see inter-record
+gaps either. This special mapping needs to be translated into
+some sort of special CCW to generate an EOF. I don't remember
+writing such a CCW, but my mind is like a swiss cheese anyway,
+so that doesn't mean anything. It may happen naturally at the
+end of a track-write sequence. I thought I wrote blocks though?
+Ok, so maybe every time you write a block, the EOF happens
+automatically. And this is just the image representation of that
+for use on a PC etc.
+
+But what then of the record 0 which is actually data? Maybe
+the number 0 (record 0) is specially known. You can't actually
+write that yourself. So this is just what they used. Record 0,
+with data of NULs, is a "start of track" indicator, and then
+a deliberately crappy EOF marks the end. The EOF can't have a
+special number (like 0). Maybe it could have used x'ff', but
+that takes away the ability to actually have 255 blocks. So
+instead they put whatever block number they were already up
+to, e.g. 4, make it invalid (data length 0), and there you
+have it. I'll pencil that in as the working theory.
+
+*/
