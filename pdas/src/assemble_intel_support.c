@@ -14,6 +14,7 @@ static struct {
     enum expr_type operand_modifier;
 
     int is_mem;
+    int is_indirect;
     int has_offset;
 
     int in_offset;
@@ -28,29 +29,30 @@ static struct {
 
 } intel_state;
 
-#define EXPR_TYPE_BYTE_PTR  EXPR_TYPE_MACHINE_DEPENDENT_0
-#define EXPR_TYPE_WORD_PTR  EXPR_TYPE_MACHINE_DEPENDENT_1
-#define EXPR_TYPE_DWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_2
-#define EXPR_TYPE_FWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_3
-#define EXPR_TYPE_QWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_4
+#define EXPR_TYPE_SHORT     EXPR_TYPE_MACHINE_DEPENDENT_0
+#define EXPR_TYPE_OFFSET    EXPR_TYPE_MACHINE_DEPENDENT_1
+#define EXPR_TYPE_FULL_PTR  EXPR_TYPE_MACHINE_DEPENDENT_2
 
-#define EXPR_TYPE_SHORT     EXPR_TYPE_MACHINE_DEPENDENT_5
+#define EXPR_TYPE_NEAR_PTR  EXPR_TYPE_MACHINE_DEPENDENT_3
+#define EXPR_TYPE_FAR_PTR   EXPR_TYPE_MACHINE_DEPENDENT_4
 
-#define EXPR_TYPE_OFFSET    EXPR_TYPE_MACHINE_DEPENDENT_6
-
-#define EXPR_TYPE_FULL_PTR  EXPR_TYPE_MACHINE_DEPENDENT_7
+#define EXPR_TYPE_BYTE_PTR  EXPR_TYPE_MACHINE_DEPENDENT_5
+#define EXPR_TYPE_WORD_PTR  EXPR_TYPE_MACHINE_DEPENDENT_6
+#define EXPR_TYPE_DWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_7
+#define EXPR_TYPE_FWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_8
+#define EXPR_TYPE_QWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_9
 
 struct intel_type {
 
     const char *name;
     enum expr_type expr_type;
-    unsigned int size;
+    unsigned int size[2];
 
 };
 
 static const struct intel_type intel_types[] = {
 
-#define INTEL_TYPE(name, size) { #name, EXPR_TYPE_##name##_PTR, size}
+#define INTEL_TYPE(name, size) { #name, EXPR_TYPE_##name##_PTR, {size, size}}
 
     INTEL_TYPE (BYTE, 1),
     INTEL_TYPE (WORD, 2),
@@ -60,7 +62,9 @@ static const struct intel_type intel_types[] = {
 
 #undef INTEL_TYPE
 
-    {NULL, EXPR_TYPE_INVALID, 0}
+    {"near", EXPR_TYPE_NEAR_PTR, {0xFF02, 0xFF04}},
+    {"far", EXPR_TYPE_FAR_PTR, {0xFF05, 0xFF06}},
+    {NULL, EXPR_TYPE_INVALID, {0, 0}}
 
 };
 
@@ -112,7 +116,7 @@ static int intel_parse_name (struct expr *expr, char *name) {
             expr->type = EXPR_TYPE_CONSTANT;
             expr->add_symbol = NULL;
             expr->op_symbol = NULL;
-            expr->add_number = intel_types[i].size;
+            expr->add_number = intel_types[i].size[(bits == 16) ? 0 : 1];
 
             return 1;
 
@@ -432,12 +436,21 @@ static int intel_simplify_expr (struct expr *expr) {
         case EXPR_TYPE_DWORD_PTR:
         case EXPR_TYPE_FWORD_PTR:
         case EXPR_TYPE_QWORD_PTR:
+        case EXPR_TYPE_NEAR_PTR:
+        case EXPR_TYPE_FAR_PTR:
 
             if (intel_state.operand_modifier == EXPR_TYPE_ABSENT) {
                 intel_state.operand_modifier = expr->type;
             }
 
         ptr_after_setting_operand_modifier:
+            if (symbol_get_value_expression (expr->add_symbol)->type == EXPR_TYPE_REGISTER) {
+
+                as_error ("invalid use of register");
+                return 0;
+
+            }
+            
             if (!intel_simplify_symbol (expr->add_symbol)) {
                 return 0;
             }
@@ -546,7 +559,10 @@ static int intel_parse_operand (char *operand_string) {
                && operand_string > operand_start
                && strrchr (operand_start, ']')
                && skip_whitespace (strrchr (operand_start, ']') + 1) == operand_string) {
+        
         intel_state.is_mem |= 1;
+        intel_state.is_indirect = 1;
+        
     }
 
     if (!ret) {
@@ -619,6 +635,11 @@ static int intel_parse_operand (char *operand_string) {
                     suffix = QWORD_SUFFIX;
                 }
                 break;
+
+            case EXPR_TYPE_FAR_PTR:
+
+                suffix = INTEL_SUFFIX;
+                break;
             
             default:
             
@@ -652,9 +673,57 @@ static int intel_parse_operand (char *operand_string) {
 
             switch (intel_state.operand_modifier) {
 
+                case EXPR_TYPE_NEAR_PTR:
+
+                    if (intel_state.segment) {
+                        is_absolute_jump = 1;
+                    } else {
+                        intel_state.is_mem = 1;
+                    }
+                    break;
+
+                case EXPR_TYPE_FAR_PTR:
                 case EXPR_TYPE_ABSENT:
 
-                    intel_state.is_mem = 1;
+                    if (!intel_state.segment) {
+
+                        intel_state.is_mem = 1;
+                        if (intel_state.operand_modifier == EXPR_TYPE_ABSENT) {
+
+                            if (intel_state.is_indirect) {
+                                is_absolute_jump = 1;
+                            }
+                            break;
+                            
+                        }
+
+                        as_error ("cannot infer the segment part of the operand");
+                        return 1;
+                        
+                    } else if (symbol_get_section (intel_state.segment) == reg_section) {
+                        is_absolute_jump = 1;
+                    } else {
+
+                        /* Something like "jmp 12:34" must be converted into "jmp 12, 34". */
+                        instruction.imms[instruction.operands] = &operand_exprs[operand_exprs_count++];
+                        memset (instruction.imms[instruction.operands], 0, sizeof (*instruction.imms[instruction.operands]));
+                        instruction.imms[instruction.operands]->type = EXPR_TYPE_SYMBOL;
+                        instruction.imms[instruction.operands]->add_symbol = intel_state.segment;
+                        resolve_expression (instruction.imms[instruction.operands]);
+                        
+                        if (finalize_immediate (instruction.imms[instruction.operands], operand_start)) {
+                            return 1;
+                        }
+
+                        instruction.operands++;
+
+                        if (instruction.suffix == INTEL_SUFFIX) {
+                            instruction.suffix = 0;
+                        }
+                        intel_state.segment = NULL;
+                        intel_state.is_mem = 0;
+
+                    }
                     break;
 
                 default:
@@ -764,7 +833,7 @@ static int intel_parse_operand (char *operand_string) {
             instruction.disps[instruction.operands] = expr;
             instruction.disp_operands++;
 
-            if ((bits == 16) ^ !instruction.prefixes[ADDR_PREFIX]) {
+            if ((bits == 16) ^ (!instruction.prefixes[ADDR_PREFIX])) {
                 instruction.types[instruction.operands] |= DISP32;
             } else {
                 instruction.types[instruction.operands] |= DISP16;
