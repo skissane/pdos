@@ -1400,7 +1400,14 @@ So subtract 14 * 56,832 and we have:
 3880B200 00045800 00045800 00000000 08000000
 3880B210 00000000 00FFFFFF FFFFFFFF FF000000
 
-Looks good. I wonder if there is per-cylinder overhead?
+Looks good.
+
+So that means that every empty track looks the same. First
+you have a CCHH, then you have a CCHHR, with R of 0, and
+data length 8, consisting of 8 x'00' and then you have the
+high-water CCHHR etc of a total of 8 x'FF'.
+
+I wonder if there is per-cylinder overhead?
 
 No sign of anything before:
 
