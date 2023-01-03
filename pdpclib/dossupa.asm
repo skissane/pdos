@@ -1068,4 +1068,17 @@ nop
 ret
 __brkpoint2 endp
 
+
+; Display an integer (PDOS/86 extension)
+
+public __dint
+__dint proc uses ax cx, myint:word
+mov cx, myint
+mov ah, 0f6h
+mov al, 0
+int 21h
+ret
+__dint endp
+
+
 end
