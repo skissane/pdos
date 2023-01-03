@@ -1196,4 +1196,176 @@ A BALR. Cool. And what do we have?
 
 Exactly right. The theory appears to be correct.
 
+The next thing of interest is what happens when you hit the
+end of a block. Since this block started at x'e01d', and the
+block is 18452 in size, we should see something starting
+at x'12831'. And indeed we do:
+
+012800  3E582200 00D20320 48C34647 F0C310D2  .....K...C..0C.K
+012810  03D05820 00D203D0 5CC34AD2 03D060C3  .}...K.}*C.K.}-C
+012820  2A4110D0 5858F0C3 2E05EF12 FF4780C0  ...}..0C.......{
+012830  2C000000 01020048 14D203D0 582000D2  .........K.}...K
+012840  03D05CC3 4ED203D0 60C32A41 10D05858  .}*C+K.}-C...}..
+012850  F0C32E05 EF12FF47 70C0E258 20C332D2  0C.......{S..C.K
+
+x'0000' == CC. x'0001' = HH, x'02' = R, x'00' = key length,
+x'4814' = data length, and then we're back into the machine code.
+This can be matched up with the linkage editor map and the
+assembly listings. Let's do that.
+
+ENTRY ADDRESS    13510
+TOTAL LENGTH     1DD58
+****PLOAD     DOES NOT EXIST BUT HAS BEEN ADDED TO DATA SET
+
+That's odd. Why isn't the entry point 0? Oh. It can't be.
+That's where the PSW is. The entry point is meaningless.
+I wonder what it is anyway?
+
+@@MAIN     13510
+
+Ok, fair enough. That will be in sapstart though, which I thought
+was first?
+
+@@CONSDN    23FC
+
+It is indeed first. But it's OK, now I remember how it works.
+The @@MAIN will be in the same object code as MAIN, ie main().
+It (@@MAIN) is automatically produced (with the aid of a copy
+statement) when the main() source file is compiled, and set to
+the entry point, and it simply calls @@CRT0 which will set
+things up (mostly in C code) and come back to this object
+code to call MAIN.
+
+Ok, so back to the task at hand. 18452 is x'4814'.
+
+Which puts us into here:
+
+$PRIVATE     3DE0    89D0
+
+which from the external names is clearly stdio.c.
+
+So we're looking for 4814-3de0 = x'a34', and then we look for
+the stdio listing.
+
+Because of the way assemblies are done, we can't really look
+for a stdio.s etc (if a link was done afterwards, we could
+see that and work backwards), but it's probably better to
+search for the first external reference:
+
+@@DOPERM    3E10
+
+which should correspond to an "ENTRY @@DOPERM".
+
+And indeed, the assembly listing has:
+
+                                    130 * X-var __doperm
+                                    131          ENTRY @@DOPERM
+000030                              132          DS    0F
+
+So looking for x'a34' (by scrolling down, not searching) we have:
+
+000A34 D203 D058 2000 00058 00000  1123          MVC   88(4,13),0(2)
+
+which (6 bytes) exactly matches this:
+
+012830  2C000000 01020048 14D203D0 582000D2  .........K.}...K
+
+And the last D2 above is the start of the next instruction:
+
+000A3A D203 D05C C34E 0005C 00CD0  1124          MVC   92(4,13),=A(@@LC2)
+
+Note that it was just luck that the 18452 boundary didn't
+split an individual instruction.
+
+
+Now let's look what happens at the end of the executable. It is this size:
+TOTAL LENGTH     1DD58
+
+which is 122200, which is approximately 6.6 blocks.
+
+Since we can only fit 3 * 18452 blocks per track, that means that this
+file will be split over 3 tracks. Let's watch that unfold.
+
+We're expecting to see action at x'12839' + x'4814' (18452) = x'1704D'.
+
+017040  00000000 0005C018 B158A0C0 26000000  ......{....{....
+017050  01030048 14D203D0 58B00041 10D05858  .....K.}.....}..
+
+So record 3 is visible, and data starts at x'17055', which takes
+us to x'1b869', which is:
+
+01B860  0450F0D0 0818DF41 F0FFFFFF FFFFFFFF  .&0}....0.......
+01B870  FF000000 00000000 00000000 00000000  ................
+
+not what I was expecting, but does make sense.
+There is a string of 8 x'FF' marking the end of the last block
+on the track. But not end of file. And probably this is just an
+integrity check. It doesn't look like it is actually used as a
+marker, as the CKD is fixed size.
+
+We actually see the next bit of data at:
+
+01BE00  00000000 02000000 02000000 08000000  ................
+01BE10  00000000 00000000 02010048 14F06850  .............0.&
+
+which looks like cylinder 0, head 2, record 0, preceded by
+just cyldiner 0, head 2. What did the previous one look like,
+which would have been cylinder 0, head 1? I guess this is why
+in the CCW you seek to the CCHH before reading a CCHHR, or
+something similar. Anyway, here it is:
+
+00E000  00000000 01000000 01000000 08000000  ................
+00E010  00000000 00000000 01010048 14000C00  ................
+
+That looks like a neat 16-byte multiple. What is it?
+x'1be00'-x'e000' = x'de00' = 56,832. From memory, 27,998 is
+half-track blocking, so 55,996 bytes is the minimum data that
+can be stored on a track. So there is a little less than 1k
+overhead. Seems a bit excessive. Maybe it is to cater for lots
+of little blocks that real 3390 hardware can handle.
+
+Ok, so let's jump straight to the next track, now that we know
+the distance is x'de00'.
+
+x'1be00' + x'de00' = x'29c00', where we have:
+
+029C00  00000000 03000000 03000000 08000000  ................
+029C10  00000000 00000000 0301002C E0000000  ............\...
+
+and this should be not just the last track, but also the last
+block, so we can see that cylinder 0, head 3, record 1, has a
+length of just x'2ce0', 11488. 6 * 18452 + 11488 = 122,200.
+Which is the exact figure from before.
+
+So let's see how it terminates.
+
+Data starts at x'29c1d', add x'2ce0' gives x'2c8fd' where we see:
+
+02C8F0  85FFFFFF FC0001DB D2000000 00000000  e.......K.......
+02C900  03020000 00FFFFFF FFFFFFFF FF000000  ................
+
+CC = x'0000', HH = x'0003', R = x'02', key = x'00', length = x'0000'
+and then data of 8 x'FF'. I think the EOF record is just that length
+of 0, which is sort of invalid, so used as a marker, and then the
+x'ff' that follow are not really part of the EOF record, they are
+just for validation.
+
+No! This is the high-water mark. Otherwise it doesn't know if there
+are more blocks. Let's see again the first track:
+
+01B860  0450F0D0 0818DF41 F0FFFFFF FFFFFFFF  .&0}....0.......
+01B870  FF000000 00000000 00000000 00000000  ................
+
+So what we have here is CC = x'FFFF', HH = x'FFFF', CC = x'FFFF',
+HH = x'FFFF', R = x'00' as the indicator that there is no other
+data on this track. Not totally sure about that R = x'00'.
+Actually, a repeat of CCHH doesn't make sense, so that won't be
+relevant. So it will instead be CC = x'FFFF', HH = x'FFFF',
+R = x'FF', key length = x'FF', data length = x'FFFF', so that
+programs potentially need less exception code. They can read in
+the entire CKD header, expecting it to be there. It is probably
+sufficient to check for a CC of x'FFFF' as that probably won't
+be maxed out. But just in case, probably better to check the
+entire lot to see if there are 8 x'FF'.
+
 */
