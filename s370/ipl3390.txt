@@ -1171,4 +1171,29 @@ instead they put whatever block number they were already up
 to, e.g. 4, make it invalid (data length 0), and there you
 have it. I'll pencil that in as the working theory.
 
+
+Ok, now let's try to find some real genuine glorious S/370
+(or z/Arch) code.
+
+According to this:
+
+000004 80002000                     183          DC    A(AMBIT+POSTIPL) First bit of "normal" memory
+
+it should be at x'2000'.
+
+Since the first bit of code was located at x'e01d', and since
+x'2000' is less than 18452, the maximum block size we use, there
+won't be a record gap, and we should see our code at x'1001d'.
+And what code are we looking for?
+
+002000                              193 POSTIPL  DS    0H
+002000 05C0                         194          BALR  R12,0
+
+A BALR. Cool. And what do we have?
+
+010010  00000000 00000000 00000000 0005C041  ..............{.
+010020  CC000006 C006C041 100001AE 10001241  ....{.{.........
+
+Exactly right. The theory appears to be correct.
+
 */
