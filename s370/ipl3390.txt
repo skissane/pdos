@@ -1368,4 +1368,99 @@ sufficient to check for a CC of x'FFFF' as that probably won't
 be maxed out. But just in case, probably better to check the
 entire lot to see if there are 8 x'FF'.
 
+
+Ok, the next interesting thing is here:
+
+037A00  00000000 04000000 04000000 08000000  ................
+037A10  00000000 00FFFFFF FFFFFFFF FF000000  ................
+
+which looks like cylinder 0, head 4. Ah - so that indicates
+that the track is empty. Probably every track on the disk gets
+those 8 x'ff' set as part of the disk initialization.
+
+Let me check 80% of the way into the disk, where no application
+data should be. Yep, buttfuck nowhere:
+
+2D2E8E00 00037900 03037900 03000000 08000000  ..y...y.........
+2D2E8E10 00000000 00FFFFFF FFFFFFFF FF000000  ................
+
+I wonder where the last of those FFFF is?
+
+388CD600 00045800 0E045800 0E000000 08000000
+388CD610 00000000 00FFFFFF FFFFFFFF FF000000
+
+So that x'E' looks like head 14, which sounds right - I think
+3390 have 15 heads. Which means the cylinder number is x'0458',
+ie 1112, which also sounds right, I think a 3390-1 has 1113
+cylinders.
+
+I wonder what the beginning of an empty cylinder looks like?
+So subtract 14 * 56,832 and we have:
+
+3880B200 00045800 00045800 00000000 08000000
+3880B210 00000000 00FFFFFF FFFFFFFF FF000000
+
+Looks good. I wonder if there is per-cylinder overhead?
+
+No sign of anything before:
+
+3880B1F0 00000000 00000000 00000000 00000000
+
+Let's subtract 15 * 56832 from this position and see what we have.
+
+3873B000 00045700 00045700 00000000 08000000
+3873B010 00000000 00FFFFFF FFFFFFFF FF000000
+
+Ok, so there is no cylinder overhead.
+
+And what does the end of the disk look like?
+
+A cylinder is 15 * 56832 = 852480 bytes. Add that to this:
+
+3880B200 00045800 00045800 00000000 08000000
+
+and we have the exact file size:
+
+21/12/2022  01:21 pm       948,810,752 pdos00.ckd
+
+So there is no overhead at the end of the file.
+
+And let's recheck the beginning. This:
+
+00E000  00000000 01000000 01000000 08000000  ................
+
+minus 56,832 gives:
+
+000200  00000000 00000000 00000000 08000000
+
+(ie cylinder 0, head 0 - the start of the real disk)
+
+and before that we see:
+
+0001F0  00000000 00000000 00000000 00000000
+
+no sign of anything.
+
+So there is basically 500 bytes of overhead at the beginning of
+the disk. Only the first 17 bytes appear to have anything in them.
+
+The first 8 bytes are an obvious ASCII (not EBCDIC) eyecatcher:
+
+   000000  434B445F 50333730 0F000000 00DE0000  CKD_P370........
+   000010  90000000 00000000 00000000 00000000  ................
+
+What I would expect to see is cylinder and head counts. I can see
+a x'DE' - almost certainly x'DE00' - the length of a single track.
+
+There is an x'0F', probably the number of heads, and that's
+probably a 4-byte little-endian value. So what is x'90'? That's
+144. Doesn't ring a bell. They probably just describe the disk
+in terms of heads and track size, and then let the file size
+itself determine how many cylinders there are. x'9000' - 36864 -
+is too big to be a cylinder count too. x'90' could be maximum
+number of records (blocks) allowed in a track. The overhead of
+each block is 8 bytes, so 8 * 144 = 1152 - well within the limits
+of the CKD markup format we are using, but perhaps real hardware
+can't handle more than that many blocks.
+
 */
