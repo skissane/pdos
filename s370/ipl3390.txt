@@ -1535,4 +1535,189 @@ x'd05d1', and is the format 1 dscb for the next file on the disk.
 All these format 4/5/1 (and presumably others) are collectively part
 of what is called the VTOC (volume table of contents).
 
+The VTOC ends with defined (key length 44, data length 96),
+but unused blocks, like this:
+
+0D1280  00000000 00000000 00000100 001A2C00  ................
+0D1290  60000000 00000000 00000000 00000000  -...............
+0D12A0  00000000 00000000 00000000 00000000  ................
+0D12B0  00000000 00000000 00000000 00000000  ................
+0D12C0  00000000 00000000 00000000 00000000  ................
+0D12D0  00000000 00000000 00000000 00000000  ................
+0D12E0  00000000 00000000 00000000 00000000  ................
+0D12F0  00000000 00000000 00000000 00000000  ................
+0D1300  00000000 00000000 00000000 00000000  ................
+0D1310  00000000 00000000 00000000 00000100  ................
+0D1320  001B2C00 60000000 00000000 00000000  ....-...........
+
+So both the key and the data are all NULs. So when you delete a
+file, it is presumably set to NULs, allowing the entry to be reused.
+
+And it can presumably be any format (1, 4, 5 etc). I think these
+things are chained, so can appear anywhere.
+
+And it looks like we can fit x'32' = 50 DSCBs per track.
+
+0D2060  00000000 00000000 00000100 00322C00  ................
+0D2070  60000000 00000000 00000000 00000000  -...............
+0D2080  00000000 00000000 00000000 00000000  ................
+0D2090  00000000 00000000 00000000 00000000  ................
+0D20A0  00000000 00000000 00000000 00000000  ................
+0D20B0  00000000 00000000 00000000 00000000  ................
+0D20C0  00000000 00000000 00000000 00000000  ................
+0D20D0  00000000 00000000 00000000 00000000  ................
+0D20E0  00000000 00000000 00000000 00000000  ................
+0D20F0  00000000 00000000 00000000 00FFFFFF  ................
+0D2100  FFFFFFFF FF000000 00000000 00000000  ................
+
+The VTOC continues onto cylinder 1, head 1, record 1
+
+0DE200  00000100 01000100 01000000 08000000  ................
+0DE210  00000000 00000100 01012C00 60000000  ............-...
+
+And the VTOC ends at cylinder 2, head 14, record x'32':
+
+264660  00000000 00000000 00000200 0E322C00  ................
+264670  60000000 00000000 00000000 00000000  -...............
+264680  00000000 00000000 00000000 00000000  ................
+264690  00000000 00000000 00000000 00000000  ................
+2646A0  00000000 00000000 00000000 00000000  ................
+2646B0  00000000 00000000 00000000 00000000  ................
+2646C0  00000000 00000000 00000000 00000000  ................
+2646D0  00000000 00000000 00000000 00000000  ................
+2646E0  00000000 00000000 00000000 00000000  ................
+2646F0  00000000 00000000 00000000 00FFFFFF  ................
+264700  FFFFFFFF FF000000 00000000 00000000  ................
+
+So that makes it 2 full cylinders. Which correlates to this
+line in the dasdload control file:
+
+SYSVTOC      VTOC             CYL  2
+
+
+After the VTOC comes more-or-less normal files. Nothing is truly
+normal after I've touched it. :-)
+
+So cylinder 3, head 0, record 1 has no key, and a data length of
+the "traditional" (ie I pulled it out of my ass) 18452 byte block
+which you can see at x'27081b':
+
+270800  00000300 00000300 00000000 08000000  ................
+270810  00000000 00000300 00010048 14003800  ................
+270820  0000CA6D 0F020048 000000C0 00000048  ..._.......{....
+270830  14307020 0B00004A 7D023000 1E4B3601  ........'.......
+270840  0B520802 00000000 00000000 00000000  ................
+270850  00000000 00011800 00010000 00FF0000  ................
+270860  008F0B66 44048F90 E8500022 90000000  ........Y&......
+270870  34000000 3D001D01 2C000000 00000000  ................
+
+The data starts with x'0038'. This is actually a RDW, the same as
+you get if you do an FTP of a RECFM=V dataset with the RDW option.
+Note that RECFM=V (as opposed to VB) has a BDW as well (yes, really,
+not a typo). But the BDW are not included in the FTP, or the
+equivalent process that I use (copyfile). The RDW is 4 bytes, so
+there is another 2 x'00' which are not used for RECFM=V (they are
+used for VS if spanning is actually required, but I never put myself
+into that position). The RDW is the length of the record, including
+the RDW itself, which means the next record begins at x'270855'
+and has a RDW record of length x'0118'.
+
+But let's look at the first record of length x'0038'. After the RDW
+comes x'00CA6D0F' which I believe is some sort of IEBCOPY signature.
+That is separately documented in pdosutil.c (with further links to
+documentation), and you can see this line of code referring to the
+magic number:
+
+if ((*len <= 8) || (*((int *)buf + 1) != 0xca6d0f))
+
+Anyway, this combination of using IEBCOPY to unload a load module
+and then FTPing it with the RDW option (or using an equivalent
+process) produces a file that can be transported anywhere, and
+what I call an MVS PE (portable executable).
+
+Note that load modules have associated metadata, such as the
+executable's entry point, which is stored in the PDS directory
+entry (you normally can't store an executable in a sequential
+file). IEBCOPY gathers up all that metadata into a single
+sequential file. And this is where z/PDOS does something
+non-traditional - it allows you to directly execute that
+sequential file, and in fact, PDSes aren't even supported at all.
+
+I didn't do that to annoy people (although that's an added benefit).
+I did it to simplify MVS. IBM could e.g. put an MVS PE into a PDS
+if they wanted to.
+
+Anyway, this appears to be internal IEBCOPY data, naming the
+member name in the PDS that the unload was done from:
+
+270980  FFFFFFFF FF0032D7 C4D6E240 40404000  .......PDOS    .
+
+And here we seem to be into the load module itself, which
+includes its own overhead, to identify symbols and relocation
+data:
+
+270AB0  00070000 00000000 007C7CC3 D9E3F040  .........@@CRT0 
+
+
+The actual program code begins at x'271dcd' with a PSW:
+
+271DC0  00000000 00003400 0B01003D E0000C00  ............\...
+271DD0  00800020 00000000 00000000 00000000  ................
+
+as this is also a standalone program, with sapstart.asm linked
+first, which contains an IPL PSW. But the IPL PSW is not actually
+used in this case. If it was loaded from tape we might do it so
+that the PDOS executable's IPL PSW is actually used. That design
+is still unclear.
+
+We can see a PDPCLIB eyecatcher here:
+
+273F90  C4000000 00000000 04001000 00D7C4D7  D............PDP
+273FA0  C3D3C9C2 5A000000 00000000 00000000  CLIB!...........
+
+If we look at the code:
+
+000000 000C0000                     182          DC    X'000C0000' EC mode '08' + Machine Check '04' enabled
+000004 80002000                     183          DC    A(AMBIT+POSTIPL) First bit of "normal" memory
+
+0021D0 D7C4D7C3D3C9C25A             369          DC    C'PDPCLIB!'
+
+we can add x'271dcd' and x'21d0' and get x'273f9d',
+which is a match.
+
+The PDOS executable continues up to this last block
+(cylinder 3, head 2, record 1 for a length of x'1e78':
+
+28C410  00000000 00000300 0201001E 78000000
+
+bringing it to x'28c41d' + x'1e78' = x'28e295':
+
+28E290  130A0000 00000300 02020000 00FFFFFF
+28E2A0  FFFFFFFF FFB50F3F D0EB1EA1 8D77BEC3
+
+where there is cylinder 3, head 2, record 2, for a length of 0,
+followed by the 8 x'FF'. After that appears to be junk inserted
+by either dasdload or dasdcopy. The non-NUL junk ends here:
+
+291FF0  6628DE04 B98AB17F C5DC914E 14240A57  ......."E.j+....
+292000  E2D20000 00000000 00000000 00000000  SK..............
+292010  00000000 00000000 00000000 00000000  ................
+
+So we are expecting a clean track on cylinder 3, head 3.
+
+29A200  00000300 03000300 03000000 08000000  ................
+29A210  00000000 00FFFFFF FFFFFFFF FF000000  ................
+
+which we do see.
+
+Cylinder 3 is not used for anything else, and we get data again
+on cylinder 4:
+
+340A00  00000400 00000400 00000000 08000000  ................
+340A10  00000000 00000400 00010002 F8D4C1C9  ............8MAI
+340A20  D5E2C9E9 C5404040 40404040 40404040  NSIZE           
+340A30  4040F4F0 F9F61515 C1D9C3C8 D4D6C4C5    4096..ARCHMODE
+340A40  40404040 40404040 40404040 40A961C1               z/A
+340A50  99838815 15C3D7E4 E2C5D9C9 C1D34040  rch..CPUSERIAL  
+
 */
