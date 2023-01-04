@@ -1720,4 +1720,22 @@ on cylinder 4:
 340A40  40404040 40404040 40404040 40A961C1               z/A
 340A50  99838815 15C3D7E4 E2C5D9C9 C1D34040  rch..CPUSERIAL  
 
+That cylinder 4 file is config.sys, and has a length of x'2f8'
+which can be seen at x'340a1b'. It is a RECFM=U EBCDIC file,
+stored in a more sensible, non-traditional format, which is
+using x'15' (NL - newline) separators. You can see two of them
+at x'340a36'. You only need one for a newline terminator, but
+there is a blank line following, so that's another single x'15'.
+
+The config.sys is expected to end before x'340a1d' + x'2f8' = x'340d15',
+which we do in fact see:
+
+340D10  83839284 15000400 00020000 00FFFFFF  cckd............
+340D20  FFFFFFFF FF25B953 CAC4886D AA36AC99  .........Dh_...r
+
+where you can see after the last x'15' there is cylinder 4,
+head 0, record 2 of length 0 (to indicate EOF), followed by
+8 x'ff' (end of track indicator), followed by junk (due to a
+presumed bug).
+
 */
