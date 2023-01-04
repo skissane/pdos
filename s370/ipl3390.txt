@@ -1738,4 +1738,27 @@ head 0, record 2 of length 0 (to indicate EOF), followed by
 8 x'ff' (end of track indicator), followed by junk (due to a
 presumed bug).
 
+Note that we expect to see a pointer from the VTOC to this block.
+
+0D0660  00000000 00000100 00052C00 60C3D6D5  ............-CON
+0D0670  C6C9C74B E2E8E240 40404040 40404040  FIG.SYS         
+0D0680  40404040 40404040 40404040 40404040                  
+0D0690  40404040 40404040 40F1D7C4 D6E2F0F0           1PDOS00
+0D06A0  00017A01 63000000 010000C8 C5D9C3E4  ..:........HERCU
+0D06B0  D3C5E240 40404040 00000000 00000040  LES     ....... 
+0D06C0  00C00048 14000000 000080C0 00000100  .{.........{....
+0D06D0  0002DD44 00008100 00040000 0004000E  ......a.........
+0D06E0  00000000 00000000 00000000 00000000  ................
+0D06F0  00000000 00000000 00000100 00062C00  ................
+0D0700  60C3D6D4 D4C1D5C4 4BC5E7C5 40404040  -COMMAND.EXE    
+
+That 4/0 and 4/E seen at x'D06D8' is probably the allocated
+space for the file (a cylinder and head range). MVS always
+allocates in units of tracks, so a dataset is always expected
+to start at record 1, so there is no need to include that
+explicitly. Note that this format 1 DSCB only includes the
+first few space allocation extents, and the rest (if required)
+are in a DSCB chain that is theoretically infinite, but MVS
+imposes a limit of 16 extents total.
+
 */
