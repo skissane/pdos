@@ -4,31 +4,38 @@
 
 # Change XXSZ4 to SZ4 (globally) to activate 32-bit size_t
 
+# We define SEGHACK because as86, and more to the point, the
+# a.out object file format itself, can't handle the "seg"
+# keyword, so we need a compiler that doesn't generate that.
+# In the meantime there is only a little bit of code that
+# actually causes the generation of seg, and it isn't important,
+# so we can just comment it out.
+
 CC=wcl
-COPTS=-D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
+COPTS=-DSEGHACK -D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -fpi87 -s -zdp -zu
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
 
 pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
-       start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o dossupc.o dossupa.o
+       start.o time.o errno.o assert.o  locale.o \
+       ctype.o setjmp.o math.o dossupc.o dossupa.o signal.o
   rm -f watcom.a
-  pdar386 vcq watcom.a dosstart.o
-  pdar386 vcq watcom.a stdio.o
-  pdar386 vcq watcom.a string.o
-  pdar386 vcq watcom.a stdlib.o
-  pdar386 vcq watcom.a start.o
-  pdar386 vcq watcom.a time.o
-  pdar386 vcq watcom.a errno.o
-  pdar386 vcq watcom.a assert.o
-  pdar386 vcq watcom.a signal.o
-  pdar386 vcq watcom.a locale.o
-  pdar386 vcq watcom.a ctype.o
-  pdar386 vcq watcom.a setjmp.o
-  pdar386 vcq watcom.a math.o
-  pdar386 vcq watcom.a dossupc.o
-  pdar386 vcq watcom.a dossupa.o
-  pdar386 vs watcom.a
+  ar r watcom.a dosstart.o
+  ar r watcom.a stdio.o
+  ar r watcom.a string.o
+  ar r watcom.a stdlib.o
+  ar r watcom.a start.o
+  ar r watcom.a time.o
+  ar r watcom.a errno.o
+  ar r watcom.a assert.o
+  ar r watcom.a locale.o
+  ar r watcom.a ctype.o
+  ar r watcom.a setjmp.o
+  ar r watcom.a math.o
+  ar r watcom.a dossupc.o
+  ar r watcom.a dossupa.o
+  ar r watcom.a signal.o
+  ar s watcom.a
 # To create a COM file, make it "Form dos com" and change the name to .com
 # Stack size has no meaning for .com (the SP will be set by the OS, and the
 # SS will be set to the CS/DS/ES). Also dosstart.obj needs to come first
@@ -41,7 +48,7 @@ pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
 # dosseg option, for some reason, because we need the stack to come last,
 # so that the calculations in dosstart.asm are accurate with regard to
 # releasing memory.
-  ld86 -N --oformat msdos-mz -o pdptest.exe dosstart.o pdptest.o watcom.a
+  ld86 -e ___asmstart -N --oformat msdos-mz -o pdptest.exe dosstart.o pdptest.o watcom.a
 
 .c.o:
   $(CC) $(COPTS) $<
@@ -54,9 +61,9 @@ pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
 dosstart.o: dosstart.asm
 #  ml -c -Dmemodel=large dosstart.asm
 #  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dosstart.asm
-  as86 -DWATCOM -D__XXSZ4__ -Dmemodel=large dosstart.asm
+  as86 -o $@ -DWATCOM -D__XXSZ4__ -Dmemodel=large dosstart.asm
 
 dossupa.o: dossupa.asm
 #  ml -c -Dmemodel=large -DWATCOM dossupa.asm
 #  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
-  as86 -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
+  as86 -o $@ -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
