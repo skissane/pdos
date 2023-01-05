@@ -34,7 +34,9 @@ int main(int argc, char **argv)
     int i;
 
     printf("welcome to pdptest\n");
+#ifndef SEGHACK
     printf("main function is at %p\n", main);
+#endif
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     z = (char *)main;
     printf("first byte of main is %x\n", *z);

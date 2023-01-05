@@ -63,7 +63,9 @@ __PDPCLIB_API__ int raise(int sig)
 
 __PDPCLIB_API__ void __sigdfl(int sig)
 {
+#ifndef SEGHACK
     handlers[sig] = SIG_DFL;
+#endif
     if (sig == SIGABRT)
     {
         exit(EXIT_FAILURE);
