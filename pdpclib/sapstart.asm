@@ -48,6 +48,11 @@ FLCEINPW EQU   496   A(X'1F0')
 FLCEMNPW EQU   480   A(X'1E0')
 FLCESNPW EQU   448   A(X'1C0')
 FLCEPNPW EQU   464   A(X'1D0')
+*
+* And are distinct from the traditional values found here:
+* https://www.ibm.com/docs/en/zos/2.4.0
+* ?topic=information-psa-mapping
+*
 .ZVAR64B ANOP
 *
 *
