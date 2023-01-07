@@ -813,7 +813,8 @@ dasdload or dasdcopy)
    of all-zero, which is never actually used. This field is known as
    "NEWPSW" and later on in the IPL process, the PSW located at
    location 0 is indeed used. But that will only happen after the
-   IPL program is loaded from record 4.
+   IPL program is loaded from record 4 (traditionally) or
+   cylinder 0, head 1, record 1 (in our case).
 */
 
 
