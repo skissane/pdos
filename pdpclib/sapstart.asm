@@ -449,8 +449,9 @@ RDBLOCK  DS    0H
 .RBSIO3B ANOP
          LR    R1,R10       R1 needs to contain subchannel
          LA    R9,RBIRB
-         TSCH  0(R9)        Clear pending interrupts
          LA    R10,RBORB
+         MSCH  0(R10)       Enable subchannel
+         TSCH  0(R9)        Clear pending interrupts
          SSCH  0(R10)
 .RBSIO2B ANOP
 *
