@@ -220,8 +220,9 @@ WRBLOCK  DS    0H
 .WR31B   ANOP
          LR    R1,R10       R1 needs to contain subchannel
          LA    R9,WRIRB
-         TSCH  0(R9)        Clear pending interrupts
          LA    R10,WRORB
+         MSCH  0(R10)
+         TSCH  0(R9)        Clear pending interrupts
          SSCH  0(R10)
 .WR24B   ANOP
 *
