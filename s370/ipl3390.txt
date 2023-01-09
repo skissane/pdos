@@ -1490,6 +1490,8 @@ And then things pick up again on cylinder 1, head 0:
 0D0440  04040404 04040404 04F40001 00001905  .........4......
 0D0450  C3045900 00000080 01000004 59000FE5  C..............V
 0D0460  A2000000 30000032 2D000000 00000000  s...............
+0D0470  00000000 00000000 00000000 00000000  ................
+0D0480  00000000 00008100 00010000 0002000E  ......a.........
 
 So we see a record 0 as usual at the beginning of the track, and
 then at x'd0417' we have x'0000' for the head number followed by
@@ -1497,6 +1499,18 @@ x'01' for record 1, then x'2c' (44) for a key length, and x'0060'
 (96) for a data length. The key is all x'04' (not x'40', space).
 The data starts with x'f4', which I believe is a format-4 DSCB or
 DSCB-4 or somesuch. That could describe space on the volume.
+
+Apparently the first entry of the VTOC includes the size, which
+in our case is 2 cylinders, so maybe it is this 0001/0000
+to 0002/000e:
+
+0D0480  00000000 00008100 00010000 0002000E  ......a.........
+
+ie starting at cylinder 1 head 0 and finishing at cylinder 2, head 14.
+
+I could find out "for sure" by changing the size of the VTOC in
+the dasdload control file and seeing what changes, but haven't
+done so.
 
 Things pick up again at record 2, which is the x'02' seen at
 offset x'd04ad', which is followed by a key of length 44, all
