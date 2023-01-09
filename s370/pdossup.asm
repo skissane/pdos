@@ -185,7 +185,7 @@ WRBLOCK  DS    0H
 * ever required to support both V and R, then LRA could be used,
 * and check for a 0 return, and if so, do a BNZ.
 *         LRA   R2,0(R2)     Get real address
-         L     R7,20(R1)    Bytes to read
+         L     R7,20(R1)    Bytes to write
          AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR390B
          STCM  R2,B'0111',WRLDCCW+1   This requires BTL buffer
          STH   R7,WRLDCCW+6  Store in WRITE CCW
@@ -231,7 +231,7 @@ WRBLOCK  DS    0H
          DC    H'0'
 WRCONT   DS    0H           Interrupt will automatically come here
          AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WR31H
-         SH    R7,FLCCSW+6  Subtract residual count to get bytes read
+         SH    R7,FLCCSW+6  Subtract residual count to get bytes written
          LR    R15,R7
 * After a successful CCW chain, CSW should be pointing to end
          CLC   FLCCSW(4),=A(WRFINCHN)
