@@ -1408,6 +1408,8 @@ you have a CCHH, then you have a CCHHR, with R of 0, and
 data length 8, consisting of 8 x'00' and then you have the
 high-water CCHHR etc of a total of 8 x'FF'.
 
+(ed - I think the first byte - x'00' - might be a BIN number)
+
 I wonder if there is per-cylinder overhead?
 
 No sign of anything before:
@@ -1449,7 +1451,8 @@ and before that we see:
 
 no sign of anything.
 
-So there is basically 500 bytes of overhead at the beginning of
+So there is basically 500 (ed - I think I meant 512) bytes of
+overhead at the beginning of
 the disk. Only the first 17 bytes appear to have anything in them.
 
 The first 8 bytes are an obvious ASCII (not EBCDIC) eyecatcher:
