@@ -199,14 +199,14 @@ WRBLOCK  DS    0H
 * something more sophisticated in PDOS than this continual
 * initialization.
 *
-         AIF   ('&XSYS' EQ 'ZARCH').ZMVNIO
+         AIF   ('&XSYS' EQ 'ZARCH').ZWRNIO
          MVC   FLCINPSW(8),WRNEWIO
          STOSM FLCINPSW,X'00'  Work with DAT on or OFF
-         AGO .ZMVNIOA
-.ZMVNIO  ANOP
+         AGO .ZWRNIOA
+.ZWRNIO  ANOP
          MVC   FLCEINPW(16),WRNEWIO
          STOSM FLCEINPW,X'00'  Work with DAT on or OFF
-.ZMVNIOA ANOP
+.ZWRNIOA ANOP
 *
 * R3 points to CCW chain
          LA    R3,WRSEEK
