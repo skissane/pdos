@@ -833,6 +833,7 @@ static void pdosProcessSVC(PDOS *pdos);
 static void pdosSVC99(PDOS *pdos);
 static int pdosDoDIR(PDOS *pdos, char *parm);
 static void brkyd(int *year, int *month, int *day);
+static int pdosDiskInit(PDOS *pdos, char *parm);
 static int pdosNewF(PDOS *pdos, char *parm);
 static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
@@ -2138,6 +2139,13 @@ static void pdosProcessSVC(PDOS *pdos)
             *pdos->context->postecb = 0;
             pdos->context->regs[15] = 0;
         }
+        else if (memcmp(prog, "DISKINIT", 8) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            pdosDiskInit(pdos, parm);
+            *pdos->context->postecb = 0;
+            pdos->context->regs[15] = 0;
+        }
         else if (memcmp(prog, "MEMTEST", 7) == 0)
         {
             printf("writing 4 bytes to address X'7FFFFFFE'\n");
@@ -2529,6 +2537,64 @@ static void brkyd(int *year, int *month, int *day)
     *year = 1900 + tms.tm_year;
     *month = tms.tm_mon + 1;
     *day = tms.tm_mday;
+}
+
+
+/* do DISKINIT command */
+
+static int pdosDiskInit(PDOS *pdos, char *parm)
+{
+    int cyl;
+    int head;
+    int rec;
+    int len;
+    char tbuf[MAXBLKSZ];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    int dev;
+    int n;
+    int skip = 0;
+    int count = INT_MAX;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%x", &dev);
+    if (n < 1)
+    {
+        printf("usage: diskinit dev(x)\n");
+        return (0);
+    }
+
+    cyl = 0;
+    head = 0;
+    rec = 1;
+    len = 0;
+    memcpy(tbuf, "\x00\x01\x00\x00\x0d\x2c\x00\x60", 8);
+    *(short *)(tbuf + 2) = head;
+    tbuf[4] = rec;
+    tbuf[5] = 0;
+    *(short *)(tbuf + 6) = len;
+    while (cyl < 1113)
+    {
+        *(short *)tbuf = cyl;
+
+        /* record number must be one less when using 0x11 erase */
+        cnt = wrblock(dev, cyl, head, rec - 1,
+                      tbuf, len + 8, 0x11);
+        cyl++;
+    }
+    return (0);
 }
 
 
