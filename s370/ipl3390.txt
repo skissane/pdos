@@ -935,6 +935,10 @@ dasdload or dasdcopy)
    that it has a 4-byte key of "VOL1" and also the first 4
    bytes of the data contain the same "VOL1" string, so when
    you dump the key+data you will see "VOL1" twice.
+
+   I think that "0001 0000 01" starting at x'2ec' is the
+   CCHHR of the VTOC, but haven't experimented with the dasdload
+   control file to confirm.
 */
 
 /*
