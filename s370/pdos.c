@@ -2644,6 +2644,8 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     char fnm[FILENAME_MAX];
     int indev;
     int outdev;
+    int hiteof;
+    int lastkeylen = 0;
 
     tbuf[0] = '\0';
     i = *(short *)parm;
@@ -2662,7 +2664,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     }
     if (strncmp(fnm, "drv", 3) == 0)
     {
-        indev = sscanf(fnm + 3, "%x", &indev);
+        sscanf(fnm + 3, "%x", &indev);
     }
 
     incyl = outcyl = 0;
@@ -2671,7 +2673,20 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     len = 0;
     while (incyl < 1113)
     {
-        cnt = rdblock(indev, incyl, inhead, inrec, tbuf, sizeof tbuf, 0x0e);
+        printf("reading %x %d %d %d\n", indev, incyl, inhead, inrec);
+        /* I think we need to specify one less record */
+        cnt = rdblock(indev, incyl, inhead, inrec - 1, tbuf, sizeof tbuf, 0x1e);
+        /* I think if we are positioned on the last record, it cycles back
+           to the first record rather than giving an error. So if we don't
+           get the record number we wanted, we force it to -1 */
+        if (cnt != -1)
+        {
+            if (tbuf[4] != inrec)
+            {
+                cnt = -1;
+            }
+        }
+        printf("cnt is %d\n", cnt);
 
         if (cnt == -1)
         {
@@ -2685,55 +2700,111 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
             }
             else
             {
-                if (inhead != 0)
+                /* if the beginning of the cylinder is empty, don't attempt
+                   to do another read. we just need to advance and synch */
+                if ((inhead == 0) && (inrec == 1))
+                {
+                    incyl++;
+                    outcyl = incyl;
+                    inhead = outhead = 0;
+                }
+                else
                 {
                     inhead++;
                     inrec = 1;
                     cnt = rdblock(indev, incyl, inhead, inrec, tbuf,
-                                  sizeof tbuf, 0x0e);
-                }
-                if (cnt == -1)
-                {
-                    /* reached end of a cylinder, but could still be processing
-                       a file - haven't hit EOF yet */
-                    inhead = 0;
-                    outhead = 0;
-                    incyl++;
+                                  sizeof tbuf, 0x1e);
+                    if (cnt == -1)
+                    {
+                        /* reached end of a cylinder, but could still be
+                           processing a file - haven't hit EOF yet */
+                        inhead = 0;
+                        incyl++;
+                    }
                 }
             }
         }
-        else if (cnt == 0)
+        else
         {
-            /* hit EOF - write out record then skip to next cylinder */
-            /* output cylinder needs to synch to input */
+            hiteof = 0;
+            if (cnt == 8)
+            {
+                /* hit EOF - write out record then skip to next cylinder */
+                /* output cylinder needs to synch to input */
+                hiteof = 1;
+            }
             *(short *)tbuf = outcyl;
             *(short *)(tbuf + 2) = outhead;
             tbuf[4] = outrec;
             /* key and length should be preserved */
             /* tbuf[5] = 0; */
-            len = *(short *)(tbuf + 6);
+            /* len = *(short *)(tbuf + 6); */
             /* *(short *)(tbuf + 6) = len; */
+            len = cnt;
             /* record number must be one less when using 0x1d write */
-            cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
-                          tbuf, len + 8, 0x1d);
-            if (cnt == -1)
+            printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
+
+            /* if we are transitioning from the VTOC, force an error */
+            if ((tbuf[5] != lastkeylen) && (lastkeylen == 44))
+            {
+                cnt = -1;
+            }
+            /* we certainly can't exceed 255, probably not 254 either, but
+               existing practice seems to be to not exceed 50 */
+            else if (outrec > 50)
+            {
+                cnt = -1;
+            }
+            else
+            {
+                /* remember if we were writing a VTOC block */
+                lastkeylen = tbuf[5];
+                cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                              tbuf, len, 0x1d);
+            }
+            lastkeylen = tbuf[5];
+            printf("cnt is %d\n", cnt);
+            /* sometimes we get a count of -1 on error, sometimes we get 0 */
+            /* The -1 is probably when the seek fails to find the previous
+               record, and the 0 is when it was correctly positioned, but
+               not able to write any data */
+            /* seems more bulletproof to check for the exact count */
+            if (cnt != len)
             {
                 outrec = 1;
+                tbuf[4] = outrec;
                 outhead++;
+                *(short *)(tbuf + 2) = outhead;
+            printf("new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
                 cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
-                              tbuf, len + 8, 0x1d);
-                if (cnt == -1)
+                              tbuf, len, 0x1d);
+                if (cnt != len)
                 {
                     outhead = 0;
+                    *(short *)(tbuf + 2) = outhead;
                     outcyl++;
+                    *(short *)tbuf = outcyl;
+            printf("new new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
                     cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
-                                  tbuf, len + 8, 0x1d);
-                    if (cnt == -1)
+                                  tbuf, len, 0x1d);
+                    if (cnt != len)
                     {
                         printf("write error\n");
                         break;
                     }
                 }
+            }
+            if (hiteof)
+            {
+               incyl++;
+               outcyl = incyl;
+               inhead = outhead = 0;
+               inrec = outrec = 1;
+            }
+            else
+            {
+                inrec++;
+                outrec++;
             }
         }
     }
