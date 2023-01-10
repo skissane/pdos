@@ -2733,6 +2733,16 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 /* output cylinder needs to synch to input */
                 hiteof = 1;
             }
+            /* if we are transitioning from the VTOC, force a synch */
+            if ((tbuf[5] != lastkeylen) && (lastkeylen == 44))
+            {
+                outcyl = incyl;
+                outhead = inhead;
+                outrec = inrec;
+            }
+            /* remember if we were writing a VTOC block */
+            lastkeylen = tbuf[5];
+
             *(short *)tbuf = outcyl;
             *(short *)(tbuf + 2) = outhead;
             tbuf[4] = outrec;
@@ -2744,21 +2754,14 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
             /* record number must be one less when using 0x1d write */
             printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
 
-            /* if we are transitioning from the VTOC, force an error */
-            if ((tbuf[5] != lastkeylen) && (lastkeylen == 44))
-            {
-                cnt = -1;
-            }
             /* we certainly can't exceed 255, probably not 254 either, but
                existing practice seems to be to not exceed 50 */
-            else if (outrec > 50)
+            if (outrec > 50)
             {
                 cnt = -1;
             }
             else
             {
-                /* remember if we were writing a VTOC block */
-                lastkeylen = tbuf[5];
                 cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
                               tbuf, len, 0x1d);
             }
