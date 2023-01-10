@@ -236,6 +236,7 @@ READHEAD DS    F
 READREC  DS    F
 READBUF  DS    A
 READSIZE DS    F
+READCC   DC    A(X'0E')  key + data command code
 SAVEAR2  DS    18F
          DS    0D
          AIF   ('&XSYS' EQ 'ZARCH').ZST4
@@ -389,6 +390,9 @@ SAVER13  DC    F'0'
 *  parameter 4 = record                                              *
 *  parameter 5 = buffer                                              *
 *  parameter 6 = size of buffer                                      *
+*  parameter 7 = command code (normally you want E for key+data      *
+*                but sometimes you want 6 for just data, or 1E       *
+*                for count, key and data                             *
 *                                                                    *
 *  return = length of data read, or -1 on error                      *
 *                                                                    *
@@ -409,6 +413,8 @@ RDBLOCK  DS    0H
          STCM  R2,B'0011',RBHH2
          L     R2,12(R1)    Record
          STC   R2,RBR
+         L     R2,24(R1)    Command code
+         STC   R2,RBLDCCW
          L     R2,16(R1)    Buffer
 * It is a requirement of using this routine that V=R. If it is
 * ever required to support both V and R, then LRA could be used,
