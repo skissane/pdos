@@ -834,6 +834,7 @@ static void pdosSVC99(PDOS *pdos);
 static int pdosDoDIR(PDOS *pdos, char *parm);
 static void brkyd(int *year, int *month, int *day);
 static int pdosDiskInit(PDOS *pdos, char *parm);
+static int pdosFil2Dsk(PDOS *pdos, char *parm);
 static int pdosNewF(PDOS *pdos, char *parm);
 static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
@@ -2146,6 +2147,13 @@ static void pdosProcessSVC(PDOS *pdos)
             *pdos->context->postecb = 0;
             pdos->context->regs[15] = 0;
         }
+        else if (memcmp(prog, "FIL2DSK", 7) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            pdosFil2Dsk(pdos, parm);
+            *pdos->context->postecb = 0;
+            pdos->context->regs[15] = 0;
+        }
         else if (memcmp(prog, "MEMTEST", 7) == 0)
         {
             printf("writing 4 bytes to address X'7FFFFFFE'\n");
@@ -2573,6 +2581,7 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
     if (n < 1)
     {
         printf("usage: diskinit dev(x)\n");
+        printf("e.g. diskinit 10001\n");
         return (0);
     }
 
@@ -2593,6 +2602,140 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
         cnt = wrblock(dev, cyl, head, rec - 1,
                       tbuf, len + 8, 0x11);
         cyl++;
+    }
+    return (0);
+}
+
+
+/* do FIL2DSK command */
+/* The file is meant to be any generic filename, but at the
+   moment we only support special files */
+/* When reading from a disk, if we get any data on a track, then
+   we continue to the next track. If we get an empty track, we
+   skip to the next cylinder. Also if we get an EOF record we skip
+   to the next cylinder. An EOF record has the additional property
+   that it causes the output cylinder to sync to the input
+   cylinder, which will hopefully come in useful when restoring a
+   3390 image to a 3350 - it may just work, if knowledge is embedded
+   of cylinder 0 head 0 and the VTOC and there are appropriate empty
+   cylinders after the VTOC. */
+
+static int pdosFil2Dsk(PDOS *pdos, char *parm)
+{
+    int incyl;
+    int outcyl;
+    int inhead;
+    int outhead;
+    int inrec;
+    int outrec;
+    int len;
+    char tbuf[MAXBLKSZ + 8];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    int dev;
+    int n;
+    int skip = 0;
+    int count = INT_MAX;
+    char fnm[FILENAME_MAX];
+    int indev;
+    int outdev;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%s %x", fnm, &outdev);
+    if (n < 2)
+    {
+        printf("usage: fil2dsk fnm dev(x)\n");
+        printf("e.g. fil2dsk drv10002: 10001\n");
+        return (0);
+    }
+    if (strncmp(fnm, "drv", 3) == 0)
+    {
+        indev = sscanf(fnm + 3, "%x", &indev);
+    }
+
+    incyl = outcyl = 0;
+    inhead = outhead = 0;
+    inrec = outrec = 1;
+    len = 0;
+    while (incyl < 1113)
+    {
+        cnt = rdblock(indev, incyl, inhead, inrec, tbuf, sizeof tbuf);
+
+        if (cnt == -1)
+        {
+            if ((incyl == 0) && (inhead == 0))
+            {
+                /* exception - move onto next track */
+                inhead++;
+                outhead++;
+                inrec = 1;
+                outrec = 1;
+            }
+            else
+            {
+                if (inhead != 0)
+                {
+                    inhead++;
+                    inrec = 1;
+                    cnt = rdblock(indev, incyl, inhead, inrec, tbuf,
+                                  sizeof tbuf);
+                }
+                if (cnt == -1)
+                {
+                    /* reached end of a cylinder, but could still be processing
+                       a file - haven't hit EOF yet */
+                    inhead = 0;
+                    outhead = 0;
+                    incyl++;
+                }
+            }
+        }
+        else if (cnt == 0)
+        {
+            /* hit EOF - write out record then skip to next cylinder */
+            /* output cylinder needs to synch to input */
+            *(short *)tbuf = outcyl;
+            *(short *)(tbuf + 2) = outhead;
+            tbuf[4] = outrec;
+            /* key and length should be preserved */
+            /* tbuf[5] = 0; */
+            len = *(short *)(tbuf + 6);
+            /* *(short *)(tbuf + 6) = len; */
+            /* record number must be one less when using 0x1d write */
+            cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                          tbuf, len + 8, 0x1d);
+            if (cnt == -1)
+            {
+                outrec = 1;
+                outhead++;
+                cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                              tbuf, len + 8, 0x1d);
+                if (cnt == -1)
+                {
+                    outhead = 0;
+                    outcyl++;
+                    cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                                  tbuf, len + 8, 0x1d);
+                    if (cnt == -1)
+                    {
+                        printf("write error\n");
+                        break;
+                    }
+                }
+            }
+        }
     }
     return (0);
 }
