@@ -2646,6 +2646,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     int outdev;
     int hiteof;
     int lastkeylen = 0;
+    int intape = 0;
 
     tbuf[0] = '\0';
     i = *(short *)parm;
@@ -2666,7 +2667,19 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     {
         sscanf(fnm + 3, "%x", &indev);
     }
+    else if (strncmp(fnm, "tap", 3) == 0)
+    {
+        sscanf(fnm + 3, "%x", &intape);
+    }
 
+    if (intape != 0)
+    {
+        cnt = rdtape(intape, tbuf, sizeof tbuf);
+        printf("cnt is %d\n", cnt);
+        printf("first char is %x\n", tbuf[0]);
+        printf("second char is %x\n", tbuf[1]);
+        return (0);
+    }
     incyl = outcyl = 0;
     inhead = outhead = 0;
     inrec = outrec = 1;
