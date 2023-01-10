@@ -64,7 +64,7 @@ int findFile(int ipldev, char *dsn, int *c, int *h, int *r)
     len++; /* force a search for the blank */
     
     /* read VOL1 record which starts on cylinder 0, head 0, record 3 */
-    cnt = rdblock(ipldev, 0, 0, 3, tbuf, MAXBLKSZ);
+    cnt = rdblock(ipldev, 0, 0, 3, tbuf, MAXBLKSZ, 0x0e);
     if (cnt >= 20)
     {
         cyl = head = rec = 0;
@@ -75,7 +75,7 @@ int findFile(int ipldev, char *dsn, int *c, int *h, int *r)
         
         while (errcnt < 4)
         {
-            cnt = rdblock(ipldev, cyl, head, rec, &dscb1, sizeof dscb1);
+            cnt = rdblock(ipldev, cyl, head, rec, &dscb1, sizeof dscb1, 0x0e);
             if (cnt < 0)
             {
                 errcnt++;

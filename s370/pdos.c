@@ -943,7 +943,7 @@ int pdosInit(PDOS *pdos)
 #endif
         /* the chances of anyone having a herc config file more
            than a block in size are like a million gazillion to one */
-        cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ);
+        cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
 #if DSKDEBUG
         printf("cnt is %d\n", cnt);
 #endif
@@ -1273,7 +1273,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                        cyl, head, rec);
 #endif
                 cnt = rdblock(pdos->ipldev, cyl, head, rec, 
-                              tbuf, len);
+                              tbuf, len, 0x0e);
 #if DSKDEBUG
                 printf("cnt is %d\n", cnt);
 #endif
@@ -1282,7 +1282,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                     rec = 1;
                     head++;
                     cnt = rdblock(pdos->ipldev, cyl, head, rec, 
-                                  tbuf, len);
+                                  tbuf, len, 0x0e);
 #if DSKDEBUG
                     printf("cnt is %d\n", cnt);
 #endif
@@ -1291,7 +1291,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                         head = 0;
                         cyl++;
                         cnt = rdblock(pdos->ipldev, cyl, head, rec, 
-                                      tbuf, len);
+                                      tbuf, len, 0x0e);
                     }
                 }
 #if DSKDEBUG
@@ -2456,7 +2456,7 @@ static int pdosDoDIR(PDOS *pdos, char *parm)
     int dev = pdos->curdev;
     
     /* read VOL1 record which starts on cylinder 0, head 0, record 3 */
-    cnt = rdblock(dev, 0, 0, 3, tbuf, MAXBLKSZ);
+    cnt = rdblock(dev, 0, 0, 3, tbuf, MAXBLKSZ, 0x0e);
     if (cnt >= 20)
     {
         split_cchhr(tbuf + 15, &cyl, &head, &rec);
@@ -2466,7 +2466,7 @@ static int pdosDoDIR(PDOS *pdos, char *parm)
         {
             int c, h, r;
             
-            cnt = rdblock(dev, cyl, head, rec, &dscb1, sizeof dscb1);
+            cnt = rdblock(dev, cyl, head, rec, &dscb1, sizeof dscb1, 0x0e);
             if (cnt < 0)
             {
                 errcnt++;
@@ -2671,7 +2671,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     len = 0;
     while (incyl < 1113)
     {
-        cnt = rdblock(indev, incyl, inhead, inrec, tbuf, sizeof tbuf);
+        cnt = rdblock(indev, incyl, inhead, inrec, tbuf, sizeof tbuf, 0x0e);
 
         if (cnt == -1)
         {
@@ -2690,7 +2690,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                     inhead++;
                     inrec = 1;
                     cnt = rdblock(indev, incyl, inhead, inrec, tbuf,
-                                  sizeof tbuf);
+                                  sizeof tbuf, 0x0e);
                 }
                 if (cnt == -1)
                 {
@@ -2872,7 +2872,7 @@ static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
     
     *dirrec = *dirhead = *dircyl = *datacyl = 0;
     /* read VOL1 record which starts on cylinder 0, head 0, record 3 */
-    cnt = rdblock(pdos->ipldev, 0, 0, 3, tbuf, MAXBLKSZ);
+    cnt = rdblock(pdos->ipldev, 0, 0, 3, tbuf, MAXBLKSZ, 0x0e);
     if (cnt >= 20)
     {
         split_cchhr(tbuf + 15, &cyl, &head, &rec);
@@ -2881,7 +2881,7 @@ static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
         while (errcnt < 4)
         {
             cnt = rdblock(pdos->ipldev, cyl, head, rec, &dscb1,
-                          sizeof dscb1);
+                          sizeof dscb1, 0x0e);
             if (cnt < 0)
             {
                 errcnt++;
@@ -2967,7 +2967,7 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
     }
     printf("dumping cylinder %d, head %d, record %d of device %x\n",
            cyl, head, rec, dev);
-    cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ);
+    cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
     if (cnt > 0)
     {
         if (cnt <= skip)
@@ -3067,7 +3067,7 @@ static int pdosZapBlk(PDOS *pdos, char *parm)
     printf("zapping cylinder %d, head %d, record %d, "
            "byte %X of device %x to %0.2X\n",
            cyl, head, rec, off, dev, nval);
-    cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ);
+    cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
     if (cnt > 0)
     {
         if (off >= cnt)
@@ -3118,7 +3118,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     strcat(srchprog, ".EXE "); /* extra space deliberate */
     
     /* read VOL1 record */
-    cnt = rdblock(pdos->ipldev, 0, 0, 3, tbuf, MAXBLKSZ);
+    cnt = rdblock(pdos->ipldev, 0, 0, 3, tbuf, MAXBLKSZ, 0x0e);
     if (cnt >= 20)
     {
         cyl = head = rec = 0;
@@ -3128,7 +3128,8 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         memcpy((char *)&rec + sizeof(int) - 1, tbuf + 19, 1);
         
         while ((cnt =
-               rdblock(pdos->ipldev, cyl, head, rec, &dscb1, sizeof dscb1))
+               rdblock(pdos->ipldev, cyl, head, rec, &dscb1, sizeof dscb1,
+                       0x0e))
                > 0)
         {
             if (cnt >= sizeof dscb1)
@@ -3162,7 +3163,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         return (-1);
     }
     
-    cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ);
+    cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
     if ((cnt > 8) && (*((int *)tbuf + 1) == 0xca6d0f))
     {
         pe = 1;
@@ -3210,7 +3211,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         printf("loading to %p from %d, %d, %d\n", load,
                cyl, i, j);
 #endif
-        cnt = rdblock(pdos->ipldev, cyl, i, j, tbuf, MAXBLKSZ);
+        cnt = rdblock(pdos->ipldev, cyl, i, j, tbuf, MAXBLKSZ, 0x0e);
 #if DSKDEBUG
         printf("cnt is %d\n", cnt);
 #endif

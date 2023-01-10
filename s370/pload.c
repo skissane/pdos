@@ -104,17 +104,17 @@ int main(int argc, char **argv)
 #if 0
         printf("loading to %p from %d, %d, %d\n", load, cyl, head, rec);
 #endif
-        cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ);
+        cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ, 0x0e);
         if (cnt < 0)
         {
             rec = 1;
             head++;
-            cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ);
+            cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ, 0x0e);
             if (cnt < 0)
             {
                 head = 0;
                 cyl++;
-                cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ);
+                cnt = rdblock(ipldev, cyl, head, rec, load, CHUNKSZ, 0x0e);
             }
         }
         if (cnt <= 0) break; /* reached EOF or error */
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     }
 #if 0
     printf("about to read first block of PDOS\n");
-    rdblock(ipldev, cyl, head, rec, buf, sizeof buf);
+    rdblock(ipldev, cyl, head, rec, buf, sizeof buf, 0x0e);
     printf("got %x %x %x %x\n", buf[0], buf[1], buf[2], buf[3]);
     printf("and %x %x %x %x\n", buf[4], buf[5], buf[6], buf[7]);
 #endif
