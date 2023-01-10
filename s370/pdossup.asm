@@ -267,14 +267,14 @@ WRSEEK   CCW   7,WRBBCCHH,X'40',6       40 = chain command
 WRSRCH   CCW   X'31',WRCCHHR,X'40',5    40 = chain command
          CCW   8,WRSRCH,0,0
 * X'1D' = write count, key and data
-WRLDCCW  CCW   X'1D',0,X'20',32767     20 = ignore length issues
+WRLDCCW  CCW   X'1D',0,X'00',32767     not 20 = ignore length issues
          AGO   .WR390F
 .WR390   ANOP
 WRSEEK   CCW1  7,WRBBCCHH,X'40',6       40 = chain command
 WRSRCH   CCW1  X'31',WRCCHHR,X'40',5    40 = chain command
          CCW1  8,WRSRCH,0,0
 * X'1D' = write count, key and data
-WRLDCCW  CCW1  X'1D',0,X'20',32767     20 = ignore length issues
+WRLDCCW  CCW1  X'1D',0,X'00',32767     not 20 = ignore length issues
 .WR390F  ANOP
 WRFINCHN EQU   *
          DS    0H
