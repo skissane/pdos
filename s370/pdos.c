@@ -2629,7 +2629,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     int inrec;
     int outrec;
     int len;
-    char tbuf[MAXBLKSZ + 8];
+    char tbuf[MAXBLKSZ];
     long cnt = -1;
     int lastcnt = 0;
     int ret;
