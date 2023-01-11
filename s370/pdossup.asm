@@ -739,11 +739,11 @@ RTORB    DS    0F
          DS    0D
          AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RTC390
 * X'6' = read data
-RTLDCCW  CCW   X'6',0,X'20',32767      20 = ignore length issues
+RTLDCCW  CCW   X'2',0,X'20',32767      20 = ignore length issues
          AGO   .RTC390F
 .RTC390  ANOP
 * X'6' = read data
-RTLDCCW  CCW1  X'6',0,X'20',32767     20 = ignore length issues
+RTLDCCW  CCW1  X'2',0,X'20',32767     20 = ignore length issues
 .RTC390F ANOP
 RTFINCHN EQU   *
          DS    0H
