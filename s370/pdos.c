@@ -2784,7 +2784,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                     {
                         outcyl = incyl;
                         outhead = inhead;
-                        outrec = inrec;
+                        outrec = 1;
                     }
                     /* remember if we were writing a VTOC block */
                     lastkeylen = cchhr_kl_dl.kl;
