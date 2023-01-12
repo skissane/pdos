@@ -2734,6 +2734,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 incyl++;
                 outcyl = incyl;
                 outhead = 0;
+                outrec = 1;
                 hiteof = 0;
             }
             if (!fin && !hiteof)
