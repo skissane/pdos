@@ -3122,6 +3122,8 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
 #endif
             p = onetrack + 1;
             cchhr_kl_dl.hh = inhead;
+            memcpy(p, &cchhr_kl_dl, 4);
+            p + 4;
             cchhr_kl_dl.r = 0;
             cchhr_kl_dl.kl = 0;
             cchhr_kl_dl.dl = 8;
