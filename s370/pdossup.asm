@@ -738,11 +738,11 @@ RTORB    DS    0F
 *
          DS    0D
          AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RTC390
-* X'6' = read data
+* X'2' = read data
 RTLDCCW  CCW   X'2',0,X'20',32767      20 = ignore length issues
          AGO   .RTC390F
 .RTC390  ANOP
-* X'6' = read data
+* X'2' = read data
 RTLDCCW  CCW1  X'2',0,X'20',32767     20 = ignore length issues
 .RTC390F ANOP
 RTFINCHN EQU   *
@@ -764,6 +764,139 @@ RTNEWIO  DC    A(X'00040000'+AM64BIT)
          DC    A(0)
          DC    A(RTCONT)  continuation after I/O request
 .RTNZIOA ANOP
+*
+         DROP  ,
+*
+*
+*
+**********************************************************************
+*                                                                    *
+*  WRTAPE - write a block to tape                                    *
+*                                                                    *
+*  parameter 1 = device                                              *
+*  parameter 2 = buffer                                              *
+*  parameter 3 = size of buffer                                      *
+*                                                                    *
+*  return = length of data written, or -1 on error                   *
+*                                                                    *
+**********************************************************************
+         ENTRY WRTAPE
+WRTAPE   DS    0H
+         SAVE  (14,12),,WRTAPE
+         LR    R12,R15
+         USING WRTAPE,R12
+         USING PSA,R0
+*
+         L     R10,0(R1)    Device number
+         L     R2,4(R1)    Buffer
+* It is a requirement of using this routine that V=R. If it is
+* ever required to support both V and R, then LRA could be used,
+* and check for a 0 return, and if so, do a BNZ.
+*         LRA   R2,0(R2)     Get real address
+         L     R7,8(R1)    Bytes to write
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WTC390B
+         STCM  R2,B'0111',WTLDCCW+1   This requires BTL buffer
+         STH   R7,WTLDCCW+6  Store in WRITE CCW
+         AGO   .WTC390C
+.WTC390B ANOP
+         ST    R2,WTLDCCW+4
+         STH   R7,WTLDCCW+2
+.WTC390C ANOP
+*
+* Interrupt needs to point to CONT now. Again, I would hope for
+* something more sophisticated in PDOS than this continual
+* initialization.
+*
+         AIF   ('&XSYS' EQ 'ZARCH').ZWTNIO
+         MVC   FLCINPSW(8),WTNEWIO
+         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
+         AGO .ZWTNIOA
+.ZWTNIO  ANOP
+         MVC   FLCEINPW(16),WTNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
+.ZWTNIOA ANOP
+*
+* R3 points to CCW chain
+         LA    R3,WTLDCCW
+         ST    R3,FLCCAW    Store in CAW
+*
+*
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WTSIO3B
+         SIO   0(R10)
+*         TIO   0(R10)
+         AGO   .WTSIO2B
+.WTSIO3B ANOP
+         LR    R1,R10       R1 needs to contain subchannel
+         LA    R9,WTIRB
+         LA    R10,WTORB
+         MSCH  0(R10)       Enable subchannel
+         TSCH  0(R9)        Clear pending interrupts
+         SSCH  0(R10)
+.WTSIO2B ANOP
+*
+*
+         LPSW  WTWTNOER     Wait for an interrupt
+         DC    H'0'
+WTCONT   DS    0H           Interrupt will automatically come here
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WTSIO3H
+         SH    R7,FLCCSW+6  Subtract residual count to get bytes read
+         LR    R15,R7
+* After a successful CCW chain, CSW should be pointing to end
+         CLC   FLCCSW(4),=A(WTFINCHN)
+         BE    WTALFINE
+         AGO   .WTSIO2H
+.WTSIO3H ANOP
+         TSCH  0(R9)
+         SH    R7,10(R9)
+         LR    R15,R7
+         CLC   4(4,R9),=A(WTFINCHN)
+         BE    WTALFINE
+.WTSIO2H ANOP
+         L     R15,=F'-1'   error return
+WTALFINE DS    0H
+         RETURN (14,12),RC=(15)
+         LTORG
+*
+*
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').WTNOT3B
+         DS    0F
+WTIRB    DS    24F
+WTORB    DS    0F
+         DC    F'0'
+         DC    X'0080FF00'  Logical-Path Mask (enable all?) + format-1
+         DC    A(WTLDCCW)
+         DC    5F'0'
+.WTNOT3B ANOP
+*
+*
+         DS    0D
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WTC390
+* X'1' = write data
+WTLDCCW  CCW   X'1',0,X'20',32767      20 = ignore length issues
+         AGO   .WTC390F
+.WTC390  ANOP
+* X'1' = write data
+WTLDCCW  CCW1  X'1',0,X'20',32767     20 = ignore length issues
+.WTC390F ANOP
+WTFINCHN EQU   *
+         DS    0H
+         DS    0D
+* I/O, machine check, EC, wait, DAT on
+WTWTNOER DC    A(X'060E0000')
+         DC    A(AMBIT)  no error
+*
+         AIF   ('&XSYS' EQ 'ZARCH').WTZNIO
+* machine check, EC, DAT off
+WTNEWIO  DC    A(X'000C0000')
+         DC    A(AMBIT+WTCONT)  continuation after I/O request
+         AGO   .WTNZIOA
+*
+.WTZNIO  ANOP
+WTNEWIO  DC    A(X'00040000'+AM64BIT)
+         DC    A(AMBIT)
+         DC    A(0)
+         DC    A(WTCONT)  continuation after I/O request
+.WTNZIOA ANOP
 *
          DROP  ,
 *
