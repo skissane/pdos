@@ -97,7 +97,7 @@ hetinit -n tapes/out.het
 set HERCULES_RC=auto_ipl.rc
 hercules -f pdos.cnf >hercules.log
 
-hetget -n -b out.het out.dat 1 U 0 18452
+hetget -n -b tapes/out.het tapes/out.dat 1 U 0 18452
 
 rem create package suitable for "shipping"
 
