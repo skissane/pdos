@@ -2723,14 +2723,18 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 }
                 memcpy(onetrack + minilen, inbuf, cnt);
                 minilen += cnt;
-                if (hiteof && (inhead == tracks_per_cylinder))
-                {
-                    inhead = 0;
-                    incyl++;
-                    outcyl = incyl;
-                    outhead = 0;
-                    hiteof = 0;
-                }
+            }
+            if (hiteof)
+            {
+                inhead++;
+            }
+            if (hiteof && (inhead == tracks_per_cylinder))
+            {
+                inhead = 0;
+                incyl++;
+                outcyl = incyl;
+                outhead = 0;
+                hiteof = 0;
             }
             if (!fin && !hiteof)
             {
