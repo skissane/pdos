@@ -2724,7 +2724,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 memcpy(onetrack + minilen, inbuf, cnt);
                 minilen += cnt;
             }
-            printf("got new track, head %d\n", inhead);
             if (hiteof)
             {
                 inhead++;
@@ -2752,7 +2751,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 while (1)
                 {
                     memcpy(&cchhr_kl_dl, p, sizeof cchhr_kl_dl);
-                    printf("cc is %d, hh is %d, r is %d\n", cchhr_kl_dl.cc, cchhr_kl_dl.hh, cchhr_kl_dl.r);
                     if (cchhr_kl_dl.cc == 0xffff)
                     {
                         /* end of track. clean up and continue */
