@@ -2711,7 +2711,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 cnt = rdtape(intape, inbuf, sizeof inbuf);
                 if ((cnt + minilen) >= sizeof onetrack)
                 {
-                    memcpy(onetrack + minilen, inbuf, cnt - sizeof onetrack);
+                    memcpy(onetrack + minilen,
+                           inbuf,
+                           sizeof onetrack - minilen);
                     break;
                 }
                 if (cnt <= 0)
@@ -2843,9 +2845,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 }
             }
         }
-        printf("cnt is %d\n", cnt);
-        printf("first char is %x\n", tbuf[0]);
-        printf("second char is %x\n", tbuf[1]);
         return (0);
     }
     len = 0;
