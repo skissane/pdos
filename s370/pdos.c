@@ -2724,18 +2724,24 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 memcpy(onetrack + minilen, inbuf, cnt);
                 minilen += cnt;
             }
+            printf("got new track, head %d\n", inhead);
             if (hiteof)
             {
                 inhead++;
-            }
-            if (hiteof && (inhead == tracks_per_cylinder))
-            {
-                inhead = 0;
-                incyl++;
-                outcyl = incyl;
-                outhead = 0;
-                outrec = 1;
-                hiteof = 0;
+                if (inhead == tracks_per_cylinder)
+                {
+                    inhead = 0;
+                    incyl++;
+                    outcyl = incyl;
+                    outhead = 0;
+                    outrec = 1;
+                    hiteof = 0;
+                }
+                memcpy(onetrack,
+                       inbuf + (sizeof onetrack - minilen),
+                       cnt - (sizeof onetrack - minilen));
+                minilen = cnt - (sizeof onetrack - minilen);
+                continue;
             }
             if (!fin && !hiteof)
             {
@@ -2746,6 +2752,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 while (1)
                 {
                     memcpy(&cchhr_kl_dl, p, sizeof cchhr_kl_dl);
+                    printf("cc is %d, hh is %d, r is %d\n", cchhr_kl_dl.cc, cchhr_kl_dl.hh, cchhr_kl_dl.r);
                     if (cchhr_kl_dl.cc == 0xffff)
                     {
                         /* end of track. clean up and continue */
@@ -2758,13 +2765,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                             /* exception - move onto next track */
                             outhead++;
                             outrec = 1;
-                        }
-                        inhead++;
-                        if (inhead == tracks_per_cylinder)
-                        {
-                            incyl++;
-                            inhead = 0;
-                            inrec = 1; /* this isn't used */
                         }
                         break;
                     }
@@ -2846,6 +2846,10 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                             }
                         }
                     }
+                    if (hiteof)
+                    {
+                        break;
+                    }
                     /* we can't skip tracks here when EOF */
                     if (!hiteof)
                     {
@@ -2853,6 +2857,27 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                         outrec++;
                     }
                     p += sizeof cchhr_kl_dl + cchhr_kl_dl.kl + cchhr_kl_dl.dl;
+                }
+                if (hiteof)
+                {
+                    /* end of track. clean up and continue */
+                    memcpy(onetrack,
+                           inbuf + (sizeof onetrack - minilen),
+                           cnt - (sizeof onetrack - minilen));
+                    minilen = cnt - (sizeof onetrack - minilen);
+                }
+                inhead++;
+                if (inhead == tracks_per_cylinder)
+                {
+                    inhead = 0;
+                    incyl++;
+                    if (hiteof)
+                    {
+                        hiteof = 0;
+                        outcyl = incyl;
+                        outhead = 0;
+                        outrec = 1;
+                    }
                 }
             }
         }
