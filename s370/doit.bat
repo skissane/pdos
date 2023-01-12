@@ -92,10 +92,12 @@ copy pdos00.cckd %MVS380%\dasd\pdos00.199
 rem Try out the new version of PDOS, and remember to manually do the
 rem mvsunzip pdpi.zip
 
+hetinit -n tapes/out.het
 
 set HERCULES_RC=auto_ipl.rc
 hercules -f pdos.cnf >hercules.log
 
+hetget -n -b out.het out.dat 1 U 0 18452
 
 rem create package suitable for "shipping"
 
