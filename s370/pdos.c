@@ -3141,6 +3141,10 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
                    back to the first record rather than giving an error. So if
                    we don't get the record number we wanted, we force it to
                    -1 */
+                /* Or maybe that is a misdiagnosis. We are getting a count of
+                   0 on the first record not found, so need to check for 0 or
+                   negative a bit later */
+                printf("cnt is %d\n", cnt);
                 if (cnt != -1)
                 {
                     if (tbuf[4] != inrec)
@@ -3148,7 +3152,7 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
                         cnt = -1;
                     }
                 }
-                if (cnt == -1)
+                if (cnt <= 0)
                 {
                     int x;
 
