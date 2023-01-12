@@ -2748,6 +2748,12 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                                inbuf + minilen + cnt,
                                cnt - (sizeof onetrack - minilen));
                         minilen = cnt - (sizeof onetrack - minilen);
+                        if ((incyl == 0) && (inhead == 0))
+                        {
+                            /* exception - move onto next track */
+                            outhead++;
+                            outrec = 1;
+                        }
                         inhead++;
                         if (inhead == tracks_per_cylinder)
                         {
