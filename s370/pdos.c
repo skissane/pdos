@@ -835,6 +835,7 @@ static int pdosDoDIR(PDOS *pdos, char *parm);
 static void brkyd(int *year, int *month, int *day);
 static int pdosDiskInit(PDOS *pdos, char *parm);
 static int pdosFil2Dsk(PDOS *pdos, char *parm);
+static int pdosDsk2Fil(PDOS *pdos, char *parm);
 static int pdosNewF(PDOS *pdos, char *parm);
 static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
@@ -2154,6 +2155,13 @@ static void pdosProcessSVC(PDOS *pdos)
             *pdos->context->postecb = 0;
             pdos->context->regs[15] = 0;
         }
+        else if (memcmp(prog, "DSK2FIL", 7) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            pdosDsk2Fil(pdos, parm);
+            *pdos->context->postecb = 0;
+            pdos->context->regs[15] = 0;
+        }
         else if (memcmp(prog, "MEMTEST", 7) == 0)
         {
             printf("writing 4 bytes to address X'7FFFFFFE'\n");
@@ -2671,6 +2679,417 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     {
         sscanf(fnm + 3, "%x", &intape);
     }
+
+    if (intape != 0)
+    {
+        char onetrack[0xde00];
+        char inbuf[MAXBLKSZ];
+        int tracks_per_cylinder;
+        int fin;
+        char *p;
+        struct {
+            unsigned short cc;
+            unsigned short hh;
+            unsigned char r;
+            unsigned char kl;
+            unsigned short dl;
+        } cchhr_kl_dl;
+        int minilen;
+
+        cnt = rdtape(intape, inbuf, sizeof inbuf);
+        if (cnt < 0x200)
+        {
+            printf("initial block needs to be at least 512 bytes\n");
+            printf("because I'm lazy - no technical reason\n");
+            return (0);
+        }
+        tracks_per_cylinder = inbuf[8];
+        if (tracks_per_cylinder != 15)
+        {
+            printf("I doubt that this is a 3390 disk image\n");
+            return (0);
+        }
+        minilen = cnt - 0x200;
+        memcpy(onetrack, inbuf + 0x200, minilen);
+        fin = 0;
+        while (!fin)
+        {
+            while (1)
+            {
+                cnt = rdtape(intape, inbuf, sizeof inbuf);
+                if ((cnt + minilen) >= sizeof onetrack)
+                {
+                    memcpy(onetrack + minilen,
+                           inbuf,
+                           sizeof onetrack - minilen);
+                    break;
+                }
+                if (cnt <= 0)
+                {
+                    fin = 1;
+                    break;
+                }
+                memcpy(onetrack + minilen, inbuf, cnt);
+                minilen += cnt;
+            }
+            if (hiteof)
+            {
+                inhead++;
+                if (inhead == tracks_per_cylinder)
+                {
+                    inhead = 0;
+                    incyl++;
+                    outcyl = incyl;
+                    outhead = 0;
+                    outrec = 1;
+                    hiteof = 0;
+                }
+                memcpy(onetrack,
+                       inbuf + (sizeof onetrack - minilen),
+                       cnt - (sizeof onetrack - minilen));
+                minilen = cnt - (sizeof onetrack - minilen);
+                continue;
+            }
+            if (!fin && !hiteof)
+            {
+                int outcnt;
+
+                /* we have a track. assume record 0 exists, and skip it */
+                p = onetrack + 0x15;
+                while (1)
+                {
+                    memcpy(&cchhr_kl_dl, p, sizeof cchhr_kl_dl);
+                    if (cchhr_kl_dl.cc == 0xffff)
+                    {
+                        /* end of track. clean up and continue */
+                        memcpy(onetrack,
+                               inbuf + (sizeof onetrack - minilen),
+                               cnt - (sizeof onetrack - minilen));
+                        minilen = cnt - (sizeof onetrack - minilen);
+                        if ((incyl == 0) && (inhead == 0))
+                        {
+                            /* exception - move onto next track */
+                            outhead++;
+                            outrec = 1;
+                        }
+                        break;
+                    }
+                    hiteof = 0;
+                    outcnt = sizeof(cchhr_kl_dl)
+                             + cchhr_kl_dl.kl
+                             + cchhr_kl_dl.dl;
+                    if (outcnt == 8)
+                    {
+                        /* hit EOF - write out record then skip to next
+                           cylinder */
+                        /* output cylinder needs to synch to input */
+                        hiteof = 1;
+                    }
+                    /* if we are transitioning from the VTOC, force a synch */
+                    if ((cchhr_kl_dl.kl != lastkeylen) && (lastkeylen == 44))
+                    {
+                        outcyl = incyl;
+                        outhead = inhead;
+                        outrec = 1;
+                    }
+                    /* remember if we were writing a VTOC block */
+                    lastkeylen = cchhr_kl_dl.kl;
+
+                    *(short *)tbuf = outcyl;
+                    *(short *)(tbuf + 2) = outhead;
+                    tbuf[4] = outrec;
+                    tbuf[5] = cchhr_kl_dl.kl;
+                    *(short *)(tbuf + 6) = cchhr_kl_dl.dl;
+                    memcpy(tbuf + 8,
+                           p + sizeof(cchhr_kl_dl),
+                           cchhr_kl_dl.kl + cchhr_kl_dl.dl);
+                    len = outcnt;
+            /* record number must be one less when using 0x1d write */
+            printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
+
+                    /* we certainly can't exceed 255, probably not 254 either,
+                       but existing practice seems to be to not exceed 50 (for
+                       3390 - other disks are different, but similar) */
+                    if (outrec > 50)
+                    {
+                        outcnt = -1;
+                    }
+                    else
+                    {
+                        outcnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                                         tbuf, len, 0x1d);
+                    }
+                    printf("outcnt is %d\n", outcnt);
+                    /* sometimes we get a count of -1 on error, sometimes
+                       we get 0 */
+                    /* The -1 is probably when the seek fails to find the
+                       previous record, and the 0 is when it was correctly
+                       positioned, but not able to write any data */
+                    /* seems more bulletproof to check for the exact count */
+                    if (outcnt != len)
+                    {
+                        outrec = 1;
+                        tbuf[4] = outrec;
+                        outhead++;
+                        *(short *)(tbuf + 2) = outhead;
+        printf("new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+                        outcnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                                         tbuf, len, 0x1d);
+                        if (outcnt != len)
+                        {
+                            outhead = 0;
+                            *(short *)(tbuf + 2) = outhead;
+                            outcyl++;
+                            *(short *)tbuf = outcyl;
+            printf("new new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+                            outcnt = wrblock(outdev, outcyl, outhead,
+                                             outrec - 1, tbuf, len, 0x1d);
+                            if (outcnt != len)
+                            {
+                                printf("write error\n");
+                                fin = 1;
+                                break;
+                            }
+                        }
+                    }
+                    if (hiteof)
+                    {
+                        break;
+                    }
+                    /* we can't skip tracks here when EOF */
+                    if (!hiteof)
+                    {
+                        inrec++; /* this isn't used */
+                        outrec++;
+                    }
+                    p += sizeof cchhr_kl_dl + cchhr_kl_dl.kl + cchhr_kl_dl.dl;
+                }
+                if (hiteof)
+                {
+                    /* end of track. clean up and continue */
+                    memcpy(onetrack,
+                           inbuf + (sizeof onetrack - minilen),
+                           cnt - (sizeof onetrack - minilen));
+                    minilen = cnt - (sizeof onetrack - minilen);
+                }
+                inhead++;
+                if (inhead == tracks_per_cylinder)
+                {
+                    inhead = 0;
+                    incyl++;
+                    if (hiteof)
+                    {
+                        hiteof = 0;
+                        outcyl = incyl;
+                        outhead = 0;
+                        outrec = 1;
+                    }
+                }
+            }
+        }
+        return (0);
+    }
+    len = 0;
+    while (incyl < 1113)
+    {
+        printf("reading %x %d %d %d\n", indev, incyl, inhead, inrec);
+        /* I think we need to specify one less record */
+        cnt = rdblock(indev, incyl, inhead, inrec - 1, tbuf, sizeof tbuf, 0x1e);
+        /* I think if we are positioned on the last record, it cycles back
+           to the first record rather than giving an error. So if we don't
+           get the record number we wanted, we force it to -1 */
+        if (cnt != -1)
+        {
+            if (tbuf[4] != inrec)
+            {
+                cnt = -1;
+            }
+        }
+        printf("cnt is %d\n", cnt);
+
+        if (cnt == -1)
+        {
+            if ((incyl == 0) && (inhead == 0))
+            {
+                /* exception - move onto next track */
+                inhead++;
+                outhead++;
+                inrec = 1;
+                outrec = 1;
+            }
+            else
+            {
+                /* if the beginning of the cylinder is empty, don't attempt
+                   to do another read. we just need to advance and synch */
+                if ((inhead == 0) && (inrec == 1))
+                {
+                    incyl++;
+                    outcyl = incyl;
+                    inhead = outhead = 0;
+                }
+                else
+                {
+                    inhead++;
+                    inrec = 1;
+                    cnt = rdblock(indev, incyl, inhead, inrec, tbuf,
+                                  sizeof tbuf, 0x1e);
+                    if (cnt == -1)
+                    {
+                        /* reached end of a cylinder, but could still be
+                           processing a file - haven't hit EOF yet */
+                        inhead = 0;
+                        incyl++;
+                    }
+                }
+            }
+        }
+        else
+        {
+            hiteof = 0;
+            if (cnt == 8)
+            {
+                /* hit EOF - write out record then skip to next cylinder */
+                /* output cylinder needs to synch to input */
+                hiteof = 1;
+            }
+            /* if we are transitioning from the VTOC, force a synch */
+            if ((tbuf[5] != lastkeylen) && (lastkeylen == 44))
+            {
+                outcyl = incyl;
+                outhead = inhead;
+                outrec = inrec;
+            }
+            /* remember if we were writing a VTOC block */
+            lastkeylen = tbuf[5];
+
+            *(short *)tbuf = outcyl;
+            *(short *)(tbuf + 2) = outhead;
+            tbuf[4] = outrec;
+            /* key and length should be preserved */
+            /* tbuf[5] = 0; */
+            /* len = *(short *)(tbuf + 6); */
+            /* *(short *)(tbuf + 6) = len; */
+            len = cnt;
+            /* record number must be one less when using 0x1d write */
+            printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
+
+            /* we certainly can't exceed 255, probably not 254 either, but
+               existing practice seems to be to not exceed 50 */
+            if (outrec > 50)
+            {
+                cnt = -1;
+            }
+            else
+            {
+                cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                              tbuf, len, 0x1d);
+            }
+            lastkeylen = tbuf[5];
+            printf("cnt is %d\n", cnt);
+            /* sometimes we get a count of -1 on error, sometimes we get 0 */
+            /* The -1 is probably when the seek fails to find the previous
+               record, and the 0 is when it was correctly positioned, but
+               not able to write any data */
+            /* seems more bulletproof to check for the exact count */
+            if (cnt != len)
+            {
+                outrec = 1;
+                tbuf[4] = outrec;
+                outhead++;
+                *(short *)(tbuf + 2) = outhead;
+            printf("new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+                cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                              tbuf, len, 0x1d);
+                if (cnt != len)
+                {
+                    outhead = 0;
+                    *(short *)(tbuf + 2) = outhead;
+                    outcyl++;
+                    *(short *)tbuf = outcyl;
+            printf("new new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+                    cnt = wrblock(outdev, outcyl, outhead, outrec - 1,
+                                  tbuf, len, 0x1d);
+                    if (cnt != len)
+                    {
+                        printf("write error\n");
+                        break;
+                    }
+                }
+            }
+            if (hiteof)
+            {
+               incyl++;
+               outcyl = incyl;
+               inhead = outhead = 0;
+               inrec = outrec = 1;
+            }
+            else
+            {
+                inrec++;
+                outrec++;
+            }
+        }
+    }
+    return (0);
+}
+
+
+/* do DSK2FIL command */
+/* The file is meant to be any generic filename, but at the
+   moment we only support special files */
+
+static int pdosDsk2Fil(PDOS *pdos, char *parm)
+{
+    int incyl = 0;
+    int outcyl = 0;
+    int inhead = 0;
+    int outhead = 0;
+    int inrec = 1;
+    int outrec = 1;
+    int len;
+    char tbuf[MAXBLKSZ];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    int dev;
+    int n;
+    int skip = 0;
+    int count = INT_MAX;
+    char fnm[FILENAME_MAX];
+    int indev;
+    int outdev;
+    int hiteof;
+    int lastkeylen = 0;
+    int intape = 0;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%x %s", &indev, fnm);
+    if (n < 2)
+    {
+        printf("usage: dsk2fil dev(x) fnm\n");
+        printf("e.g. dsk2fil 10001 tap10004:\n");
+        return (0);
+    }
+    if (strncmp(fnm, "tap", 3) == 0)
+    {
+        sscanf(fnm + 3, "%x", &outdev);
+    }
+
+    memcpy(tbuf, "ED", 2);
+    cnt = wrtape(outdev, tbuf, 2);
+    printf("cnt is %d\n", cnt);
+    return (0);
 
     if (intape != 0)
     {
