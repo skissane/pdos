@@ -2898,6 +2898,10 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
         /* I think if we are positioned on the last record, it cycles back
            to the first record rather than giving an error. So if we don't
            get the record number we wanted, we force it to -1 */
+        /* I think -1 is for a failed seek to the previous record, and 0 is
+           what we get if the actual record we want is not found, so we need
+           to check for 0 or negative later. Actually we should probably
+           be checking to make sure we got at least 8 bytes */
         if (cnt != -1)
         {
             if (tbuf[4] != inrec)
@@ -2907,7 +2911,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
         }
         printf("cnt is %d\n", cnt);
 
-        if (cnt == -1)
+        if (cnt <= 0)
         {
             if ((incyl == 0) && (inhead == 0))
             {
