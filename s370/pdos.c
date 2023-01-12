@@ -2745,7 +2745,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                     {
                         /* end of track. clean up and continue */
                         memcpy(onetrack,
-                               inbuf + minilen + cnt,
+                               inbuf + (sizeof onetrack - minilen),
                                cnt - (sizeof onetrack - minilen));
                         minilen = cnt - (sizeof onetrack - minilen);
                         if ((incyl == 0) && (inhead == 0))
