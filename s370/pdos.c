@@ -2606,9 +2606,13 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
     {
         *(short *)tbuf = cyl;
 
-        /* record number must be one less when using 0x11 erase */
-        cnt = wrblock(dev, cyl, head, rec - 1,
-                      tbuf, len + 8, 0x11);
+        for (head = 0; head < 15; head++)
+        {
+            *(short *)(tbuf + 2) = head;
+            /* record number must be one less when using 0x11 erase */
+            cnt = wrblock(dev, cyl, head, rec - 1,
+                          tbuf, len + 8, 0x11);
+        }
         cyl++;
     }
     return (0);
