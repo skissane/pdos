@@ -3899,6 +3899,13 @@ GETEOFFK ST    R2,WKDSN            SAVE THE POINTER TO THE DSNAME
          USING PPL,R5              ESTABLISH ADDRESSABILITY TO THE PPL
          MVC   PPLUPT,CPPLUPT      PUT IN THE UPT ADDRESS FROM CPPL
          MVC   PPLECT,CPPLECT      PUT IN THE ECT ADDRESS FROM CPPL
+* When running under TSO there is a DSNCHK routine that needs to
+* be below the line. Until we figure out how to do this properly,
+* this code is forcing the module to reside BTL:
+         L     R1,=A(PCLSTART)
+         L     R14,=A(DSNCHK)
+         STCM  R14,B'0111',13(R1)
+* End of DSNCHK problematic code
          LA    R1,WKCBUF           GET THE ADDRESS OF THE NEW BUFFER
          ST    R1,PPLCBUF          PUT IN THE BUFFER ADDRESS
 *                                  FROM THE CPPL
