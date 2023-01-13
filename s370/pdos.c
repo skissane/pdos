@@ -2736,6 +2736,17 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 memcpy(onetrack + minilen, inbuf, cnt);
                 minilen += cnt;
             }
+            if (fin) break;
+            /* don't abandon EOF processing if we have empty cylinders */
+            if (hiteof
+                && (inhead == 0)
+                && (memcmp(onetrack + 21, "\xFF\xFF", 2) != 0))
+            {
+                hiteof = 0;
+                outcyl = incyl;
+                outhead = 0;
+                outrec = 1;
+            }
             if (hiteof)
             {
                 inhead++;
@@ -2743,10 +2754,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 {
                     inhead = 0;
                     incyl++;
-                    outcyl = incyl;
-                    outhead = 0;
-                    outrec = 1;
-                    hiteof = 0;
                 }
                 memcpy(onetrack,
                        inbuf + (sizeof onetrack - minilen),
@@ -2881,13 +2888,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 {
                     inhead = 0;
                     incyl++;
-                    if (hiteof)
-                    {
-                        hiteof = 0;
-                        outcyl = incyl;
-                        outhead = 0;
-                        outrec = 1;
-                    }
                 }
             }
         }
