@@ -82,6 +82,20 @@ int main(int argc, char **argv)
     i = fread(buf + 4, 1, 18452, fp);
     *(short *)buf = i + 4;
     fwrite(buf, 1, i + 4, fq);
+    fclose(fp);
+
+    fp = fopen("COMMAND.EXE", "rb");
+    if (fp == NULL)
+    {
+        printf("failed to open COMMAND.EXE for reading\n");
+        return (EXIT_FAILURE);
+    }
+    while ((i = fread(buf + 4, 1, 18452, fp)) > 0)
+    {
+        *(short *)buf = i + 4;
+        fwrite(buf, 1, i + 4, fq);
+    }
+    fclose(fp);
 
     if (ferror(fq))
     {
