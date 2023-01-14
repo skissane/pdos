@@ -90,6 +90,9 @@ ORIGIN   DS    0D
 *
          DC    (CODESTRT-*+ORIGIN)X'00'
 *
+* Tape handler entry point for IPLing from tape
+         DC    A(TAPEPIPL)
+*
 * Start of our own, somewhat normal, code. Registers are not
 * defined at this point, so we need to create our own base
 * register.
@@ -251,6 +254,23 @@ ST4PSW   DC    A(X'000C0000'+AM64BIT)
 *
 WAITSERR DC    X'000E0000'  EC mode + Machine Check enabled + wait
          DC    A(AMBIT+X'00000444')  Severe error
+*
+* When IPLing from tape, we will use this routine instead
+TAPEPIPL DS    0H
+         BALR  R12,0
+         LA    R12,0(R12)
+         BCTR  R12,0
+         BCTR  R12,0
+         USING TAPEPIPL,R12
+         S     R12,=A(TAPEPIPL-POSTIPL)
+         USING POSTIPL,R12
+         USING PSA,R0
+         LA    R6,6
+TTLOOP   B     TTLOOP
+         LTORG
+*
+*
+*
 * At this point, we are in a "normal" post-IPL status,
 * with our bootloader loaded, and interrupts disabled,
 * and low memory should be considered to be in an
