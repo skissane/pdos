@@ -3862,6 +3862,37 @@ GETESTRT ST    R1,8(,R13)          PUT THE ADDRESS OF THE NEW SAVE
 *                                  SAVE AREA INTO THE NEW SAVE AREA
          LDVAL R4,24(,R13)         GET THE PARM FROM THE ORIGINAL R1
          LR    R13,R1              POINT TO ITS OWN SAVE AREA
+*
+*
+* We need a once-off initialization to get the stub BTL
+*
+         L     R2,GETEINIT
+         LTR   R2,R2
+         BNZ   DONEGEI
+* First we just put the routine in, which is all we need if
+* the module happens to reside BTL
+         L     R2,=A(PCLSTART)
+         LA    R14,DSNCHK
+         STCM  R14,B'0111',13(R2)
+*
+         AIF   ('&ZSYS' EQ 'S370').NODSNS  Only S/380+90 needs a stub
+* Note that module may be above 2 GiB on an AM32 system
+         TM    @DSNCHK,X'FF'     Loaded above the line?
+         BZ    EXBTLDSN              No; previous store is sufficient
+*
+         LA    R0,DSNCLEN
+         GETMAIN RU,LV=(0),LOC=BELOW
+         MVC   0(DSNCLEN,R1),DSNCSTB
+*
+         STCM  R1,B'0111',13(R2)
+*
+EXBTLDSN DS    0H
+.NODSNS  ANOP  ,                  Only S/380 etc needs a stub
+*
+         L     R2,=F'1'
+         ST    R2,GETEINIT
+DONEGEI  DS    0H
+*
 ***********************************************************************
 *-       GET THE DSNAME FROM PARM AND FILL IN A NEW BUFFER           -*
 ***********************************************************************
@@ -3899,13 +3930,6 @@ GETEOFFK ST    R2,WKDSN            SAVE THE POINTER TO THE DSNAME
          USING PPL,R5              ESTABLISH ADDRESSABILITY TO THE PPL
          MVC   PPLUPT,CPPLUPT      PUT IN THE UPT ADDRESS FROM CPPL
          MVC   PPLECT,CPPLECT      PUT IN THE ECT ADDRESS FROM CPPL
-* When running under TSO there is a DSNCHK routine that needs to
-* be below the line. Until we figure out how to do this properly,
-* this code is forcing the module to reside BTL:
-         L     R1,=A(PCLSTART)
-         L     R14,=A(DSNCHK)
-         STCM  R14,B'0111',13(R1)
-* End of DSNCHK problematic code
          LA    R1,WKCBUF           GET THE ADDRESS OF THE NEW BUFFER
          ST    R1,PPLCBUF          PUT IN THE BUFFER ADDRESS
 *                                  FROM THE CPPL
@@ -3928,7 +3952,62 @@ GETEOFFK ST    R2,WKDSN            SAVE THE POINTER TO THE DSNAME
 GETEEND  L     R15,WKDSN           RETURN THE NULL-TERMINATED DSNAME
          L     R13,4(,R13)         CHAIN TO PREVIOUS SAVE AREA
          RETURN (14,12),RC=(15)    RETURN TO THE CALLER
+*
+GETEINIT DC    F'0'
+*
          DROP  ,                   FREE REGISTERS
+*
+         AIF   ('&ZSYS' EQ 'S370').NODSNS2  Only S/380+90 needs a stub
+***********************************************************************
+*                                                                     *
+*    DSNCSTB - 24 bit stub                                            *
+*    This code is not directly executed. It is copied below the line  *
+*    It is only needed when the program resides above the line.       *
+*                                                                     *
+***********************************************************************
+         PUSH  USING
+         DROP  ,
+*
+         DS    0A            ENSURE MATCHING ALIGNMENT
+DSNCSTB  SAVE  (14,12),,DSNCSTB    SAVE CALLER'S REGISTERS
+         LR    R12,R15             ESTABLISH ADDRESSABILITY WITHIN
+         USING DSNCSTB,R12   DECLARE BASE
+         CNOP  0,4                 FORCE FULLWORD ALIGNMENT
+         BAL   R2,DSNCSTRT         BR AROUND STATIC SAVE AREA
+         DS    18F                 SAVE AREA
+DSNCSTRT ST    R2,8(,R13)          PUT THE ADDRESS OF THE NEW SAVE
+*                                  AREA INTO THE CALLER'S SAVE AREA
+         ST    R13,4(,R2)          PUT THE ADDRESS OF THE CALLER'S
+*                                  SAVE AREA INTO THE NEW SAVE AREA
+         LR    R13,R2              POINT TO ITS OWN SAVE AREA
+*
+         LA    R13,0(,R13)         Clean R13
+         LA    R1,0(,R1)           Clean R1
+*
+         BSM   R14,0         Save caller's AMODE
+         LR    R11,R14            Preserve OS return address
+* Do the mode transition here so that we can have clean
+* addresses, essential for AM32/64 (not 31)
+         LA    R5,DSNCNEXT
+         O     R5,DSNCBOA
+         BSM   R0,R5
+DSNCNEXT DS    0H
+         L     R15,@DSNCHK   Load 31/32-bit routine address
+         BALR  R14,R15            Call the open exit in AM31
+         L     R13,4(,R13)        CHAIN TO PREVIOUS SAVE AREA
+         LR    R14,R11            Restore OS return address
+         LM    R0,R12,20(R13)
+         BSM   0,R14              Return to OS in original mode
+@DSNCHK  DC    A(DSNCHK)     AM31/32 main routine address
+DSNCBOA  DC    A(0)
+         LTORG
+DSNCLEN  EQU   *-DSNCSTB
+         POP   USING
+         SPACE 2
+.NODSNS2 ANOP  ,                  Only S/380 etc needs a stub
+*
+*
+*
 ***********************************************************************
 *-       DSNCHK - IKJPOSIT VALIDITY CHECKING ROUTINE                 -*
 *-                                                                   -*
@@ -3963,9 +4042,8 @@ DSNOK    L     R13,4(,R13)         CHAIN TO PREVIOUS SAVE AREA
 ***********************************************************************
 *-       PARSE MACROS USED TO DESCRIBE THE COMMAND OPERANDS          -*
 ***********************************************************************
-* +++ need to provide a stub and set this VALIDCK properly at runtime
 * Can't use VALIDCK=DSNCHK because it generates an AL3, preventing
-* relocation.
+* relocation when RMODE ANY.
 PCLSTART IKJPARM DSECT=PDL         START DEFINITION
 PCLDSN   IKJPOSIT DSNAME,USID,     PARSE DSN AND APPEND TO PREFIX      X
                VALIDCK=0     * DSNCHK      VALIDITY CHECK ROUTINE
@@ -4604,6 +4682,8 @@ COMM3164 DS    0H
          LA    R2,0
          BSM   R2,0
          ST    R2,NEEDBOA this will be suitable for ORing
+         L     R3,=A(DSNCBOA) the DSN check stub needs this too
+         ST    R2,0(,R3)
          OI    NEEDBF,NEEDBANY  set flag to say we need BSM switching
          B     RETURNSU
 *
