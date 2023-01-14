@@ -344,11 +344,12 @@ TDOTESTS DS    0H
 *
          A     R5,=A(CHUNKSZ)
          LA    R4,1(R4)
-* Ideally we want to read up until we have a short block, or
-* an I/O error, but it's simpler to just force-read up to a
-* set maximum.
-         C     R4,=A(MAXBLKS)  R4=Maximum blocks to read
-         BH    TSTAGE3
+* We want to read up until we have a short block, or
+* an I/O error.
+         C     R15,=F'18452'
+         BNE   TSTAGE3
+*         C     R4,=A(MAXBLKS)  R4=Maximum blocks to read
+*         BH    TSTAGE3
          B     TSTAGE2B
 TSTAGE3  DS    0H
 * Go back to the original state, with I/O disabled, so that we
