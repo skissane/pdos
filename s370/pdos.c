@@ -3604,6 +3604,8 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     int pe = 0;
     int exeLen;
 
+    if (!__istape)
+    {
     /* try to find the load module's location */
     
     /* +++ replace this 8 with some constant */
@@ -3657,8 +3659,12 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         printf("executable %s not found!\n", srchprog);
         return (-1);
     }
-    
     cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
+    }
+    else
+    {
+        cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
+    }
     if ((cnt > 8) && (*((int *)tbuf + 1) == 0xca6d0f))
     {
         pe = 1;
@@ -3696,6 +3702,11 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     /* should store old context first */
     i = head;
     j = rec;
+    if (__istape)
+    {
+        memcpy(load, tbuf, cnt);
+        load += cnt;
+    }
     /* Note that we read until we get EOF (a zero-length block). */
     /* +++ note that we need a security check in here to ensure
        that people don't leave out an EOF to read the next guy's
@@ -3706,7 +3717,14 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         printf("loading to %p from %d, %d, %d\n", load,
                cyl, i, j);
 #endif
+        if (!__istape)
+        {
         cnt = rdblock(pdos->ipldev, cyl, i, j, tbuf, MAXBLKSZ, 0x0e);
+        }
+        else
+        {
+            cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
+        }
 #if DSKDEBUG
         printf("cnt is %d\n", cnt);
 #endif
@@ -3739,6 +3757,8 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         memcpy(load, tbuf, cnt);
         load += cnt;
         j++;
+        printf("istape is %d, cnt is %d\n", __istape, cnt);
+        if (__istape && (cnt != 18452)) break;
     }
 
     exeLen = load - initial;    
