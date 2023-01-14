@@ -71,6 +71,18 @@ int main(int argc, char **argv)
         fwrite(buf, 1, i + 4, fq);
     }
     fclose(fp);
+
+    fp = fopen("CONFIG.SYS", "rb");
+    if (fp == NULL)
+    {
+        printf("failed to open CONFIG.SYS for reading\n");
+        return (EXIT_FAILURE);
+    }
+
+    i = fread(buf + 4, 1, 18452, fp);
+    *(short *)buf = i + 4;
+    fwrite(buf, 1, i + 4, fq);
+
     if (ferror(fq))
     {
         printf("write error\n");
