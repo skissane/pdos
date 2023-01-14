@@ -261,8 +261,10 @@ TAPEPIPL DS    0H
          LA    R12,0(R12)
          BCTR  R12,0
          BCTR  R12,0
+         DROP  R12
          USING TAPEPIPL,R12
          S     R12,=A(TAPEPIPL-POSTIPL)
+         DROP  R12
          USING POSTIPL,R12
          USING PSA,R0
          LA    R6,6
