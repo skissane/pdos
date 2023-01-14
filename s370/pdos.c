@@ -3757,7 +3757,6 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         memcpy(load, tbuf, cnt);
         load += cnt;
         j++;
-        printf("istape is %d, cnt is %d\n", __istape, cnt);
         if (__istape && (cnt != 18452)) break;
     }
 
