@@ -14,6 +14,14 @@
 #include <string.h>
 #include <stdlib.h>
 
+static char ccw[24+4] =
+    "\x00\x1c\x00\x00" /* RDW length 28 */
+    "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* IPL PSW - not used */
+    "\x02\x00\x00\x00" /* first CCW - read to address 0 */
+    "\x20\x00\x48\x14" /* first CCW - ignore length errors, length 18452 */
+    "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* 2nd CCW - not used */
+    ;
+
 int main(int argc, char **argv)
 {
     int i;
@@ -42,12 +50,21 @@ int main(int argc, char **argv)
         printf("failed to open tape %s\n", *(argv + 1));
         return (EXIT_FAILURE);
     }
-    fp = fopen("PDOS.SYS", "rb");
+    fp = fopen("PDOS.IMG", "rb");
     if (fp == NULL)
     {
-        printf("failed to open PDOS.SYS for reading\n");
+        printf("failed to open PDOS.IMG for reading\n");
         return (EXIT_FAILURE);
     }
+
+    fwrite(ccw, 1, sizeof ccw, fq);
+
+    i = fread(buf + 4, 1, 18452, fp);
+    *(short *)buf = i + 4;
+    /* set the IPL PSW to point to where it is located */
+    *(int *)(buf + 4 + 4) = *(int *)(buf + 4 + 8192);
+    fwrite(buf, 1, i + 4, fq);
+
     while ((i = fread(buf + 4, 1, 18452, fp)) > 0)
     {
         *(short *)buf = i + 4;
