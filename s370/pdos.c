@@ -942,15 +942,15 @@ int pdosInit(PDOS *pdos)
 #endif
     if (__istape)
     {
-        __consdn = 0x10000;
-        cons_type = 3215;
+        /* __consdn = 0x10000;
+        cons_type = 3215; */
     }
     else if (findFile(pdos->ipldev, "CONFIG.SYS", &cyl, &head, &rec) != 0)
     {
         printf("config.sys missing\n");
         return (0);
     }
-    if (__consdn == 0)
+    if (__consdn == 0 || __istape)
     {
         char tbuf[MAXBLKSZ + 2];
         int cnt;
@@ -961,12 +961,14 @@ int pdosInit(PDOS *pdos)
 #endif
         /* the chances of anyone having a herc config file more
            than a block in size are like a million gazillion to one */
+        if (__istape) cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
+        else
         cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
 #if DSKDEBUG
         printf("cnt is %d\n", cnt);
 #endif
         /* find out which device console really is */
-        if (cnt > 0)
+        if ((__consdn == 0) && (cnt > 0))
         {
             char *p;
             char *q;
