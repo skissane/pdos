@@ -6,6 +6,7 @@ CONFIG.SYS   SEQ config.sys   CYL  1 1 0 PS U 0 18452
 COMMAND.EXE  SEQ pcomm.exe    CYL  1 1 0 PS U 0 18452
 AUTOEXEC.BAT SEQ autoexec.bat CYL  1 1 0 PS U 0 18452
 WORLD.EXE    SEQ world.exe    CYL  1 1 0 PS U 0 18452
+MKIPLTAP.EXE SEQ mkipltap.exe CYL  1 1 0 PS U 0 18452
 BBS.EXE      SEQ bbs.exe      CYL  1 1 0 PS U 0 18452
 PDPNNTP.EXE  SEQ pdpnntp.exe  CYL  1 1 0 PS U 0 18452
 WTOWORLD.EXE SEQ wtoworld.exe CYL  1 1 0 PS U 0 18452
