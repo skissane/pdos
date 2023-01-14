@@ -267,8 +267,100 @@ TAPEPIPL DS    0H
          DROP  R12
          USING POSTIPL,R12
          USING PSA,R0
-         LA    R6,6
-TTLOOP   B     TTLOOP
+*         LA    R6,6
+*TTLOOP   B     TTLOOP
+*
+*
+*
+* this code was copied from above, and should instead be put
+* into a subroutine.
+*
+*
+* At this point, since it is post-IPL, all further interrupts
+* will occur to one of 4 locations (instead of location 0, the
+* IPL newpsw). Although we are only expecting, and only need,
+* the I/O interrupts, we set "dummy" values for the others in
+* case something unexpected happens, to give us some visibility
+* into the problem.
+*
+         AIF ('&XSYS' EQ 'ZARCH').TSW64
+         MVC   FLCINPSW(8),WAITER4
+         MVC   FLCMNPSW(8),WAITER1
+         MVC   FLCSNPSW(8),WAITER2
+         MVC   FLCPNPSW(8),WAITER3
+         AGO .TSW64B
+.TSW64   ANOP
+*
+* Activate z/Arch (code taken from UDOS)
+*
+         LA    R1,1   Magic number for z/Arch
+         SIGP  R1,0,18   Ignore any error from this
+* Adding 1 will activate AM64
+         LA    R2,TPIPLZ+1
+         AIF ('&ZAM64' NE 'YES').TNOBSM
+         BSM   R0,R2
+.TNOBSM  ANOP
+TPIPLZ   DS    0H
+         MVC   FLCEINPW(16),WAITER4
+         MVC   FLCEMNPW(16),WAITER1
+         MVC   FLCESNPW(16),WAITER2
+         MVC   FLCEPNPW(16),WAITER3
+.TSW64B  ANOP
+* Save IPL address in R10
+         SLR   R10,R10
+         ICM   R10,B'1111',FLCIOA
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').TSIO31A
+         LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
+.TSIO31A ANOP
+         B     TSTAGE2
+         LTORG
+*
+*
+* end of copied code
+*
+*
+TSTAGE2  DS    0H
+         LA    R1,TPARMLST
+         LA    R13,SAVEAR2
+         ST    R10,TRDDEV
+         L     R8,=A(CHUNKSZ)
+         ST    R8,TRDSIZE
+         LA    R4,1         R4 = Number of blocks read so far
+         L     R5,=A(CHUNKSZ) Current address
+TSTAGE2B DS    0H
+         ST    R5,TRDBUF
+         L     R15,=A(RDTAPE)
+         BALR  R14,R15
+         LTR   R15,R15
+         BM    TFRSTERR
+         B     TDOTESTS
+TFRSTERR DS    0H
+         L     R15,=A(RDTAPE)
+         BALR  R14,R15
+TDOTESTS DS    0H
+         LTR   R15,R15
+         BZ    TSTAGE3
+         BM    TSTAGE3
+*
+         A     R5,=A(CHUNKSZ)
+         LA    R4,1(R4)
+* Ideally we want to read up until we have a short block, or
+* an I/O error, but it's simpler to just force-read up to a
+* set maximum.
+         C     R4,=A(MAXBLKS)  R4=Maximum blocks to read
+         BH    TSTAGE3
+         B     TSTAGE2B
+TSTAGE3  DS    0H
+* Go back to the original state, with I/O disabled, so that we
+* don't get any more noise unless explicitly requested
+*FFLOOP   B     FFLOOP
+         LA    R4,1
+         ST    R4,@@ISTAPE
+         LPSW  ST4PSW
+TPARMLST DS    0F
+TRDDEV   DS    F
+TRDBUF   DS    A
+TRDSIZE  DS    F
          LTORG
 *
 *
@@ -297,6 +389,8 @@ STAGE4   DS    0H
 * If they're dumb enough to return, load an error wait state
          LPSW  WAITSERR
          LTORG
+         ENTRY @@ISTAPE
+@@ISTAPE DC    F'0'
 PRMPTR   DC    A(SAPBLK)
 SAPBLK   DS    0F
 SAPDUM   DC    F'0'
