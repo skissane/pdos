@@ -139,6 +139,7 @@ int machine_dependent_parse_name (char **pp, struct expr *expr, char *name, char
 void machine_dependent_parse_operand (char **pp, struct expr *expr);
 
 section_t machine_dependent_simplified_expression_read_into (char **pp, struct expr *expr);
+void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size);
 
 /* coff.c */
 struct pseudo_op_entry *coff_get_pseudo_op_table (void);

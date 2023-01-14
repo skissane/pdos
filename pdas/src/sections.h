@@ -26,6 +26,8 @@ struct frag_chain {
     
     struct fixup *first_fixup;
     struct fixup *last_fixup;
+
+    struct cfi_frag_chain_data *cfi_frag_chain_data;
     
     subsection_t subsection;
     struct frag_chain *next;

@@ -72,6 +72,7 @@ static void subsection_set (subsection_t subsection) {
         
         new_frag_chain->last_frag  = new_frag_chain->first_frag  = frag_alloc ();
         new_frag_chain->last_fixup = new_frag_chain->first_fixup = NULL;
+        new_frag_chain->cfi_frag_chain_data = NULL;
         new_frag_chain->subsection = subsection;
         
         *p_next = new_frag_chain;

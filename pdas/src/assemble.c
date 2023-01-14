@@ -297,7 +297,7 @@ void machine_dependent_init (void) {
 
 }
 
-static void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size) {
+void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size) {
     
     unsigned long i;
     

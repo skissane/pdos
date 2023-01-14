@@ -101,6 +101,10 @@ struct symbol *symbol_temp_new_now (void) {
     return symbol_create (FAKE_LABEL_NAME, current_section, current_frag->fixed_size, current_frag);
 }
 
+struct symbol *symbol_temp_make (void) {
+    return symbol_make (FAKE_LABEL_NAME);
+}
+
 section_t symbol_get_section (struct symbol *symbol) {
     return symbol->section;
 }
@@ -783,4 +787,12 @@ void symbol_set_value (struct symbol *symbol, value_t value) {
 
 void symbol_set_value_expression (struct symbol *symbol, struct expr *expr) {
     symbol->value = *expr;
+}
+
+void symbol_set_value_now (struct symbol *symbol) {
+
+    symbol_set_section (symbol, current_section);
+    symbol_set_frag (symbol, current_frag);
+    symbol_set_value (symbol, current_frag->fixed_size);
+    
 }

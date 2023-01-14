@@ -45,6 +45,7 @@ struct symbol *symbol_find_or_make (const char *name);
 struct symbol *symbol_label (const char *name);
 struct symbol *symbol_make (const char *name);
 struct symbol *symbol_temp_new_now (void);
+struct symbol *symbol_temp_make (void);
 
 section_t symbol_get_section (struct symbol *symbol);
 char *symbol_get_name (struct symbol *symbol);
@@ -71,3 +72,4 @@ void symbol_set_section (struct symbol *symbol, section_t section);
 void symbol_set_symbol_table_index (struct symbol *symbol, unsigned long index);
 void symbol_set_value (struct symbol *symbol, value_t value);
 void symbol_set_value_expression (struct symbol *symbol, struct expr *expr);
+void symbol_set_value_now (struct symbol *symbol);

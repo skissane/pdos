@@ -15,6 +15,7 @@
 
 #include    "as.h"
 #include    "libas.h"
+#include    "cfi.h"
 
 struct as_state *state;
 const char *program_name = 0;
@@ -77,6 +78,8 @@ int main (int argc, char **argv) {
         }
     
     }
+
+    cfi_finish ();
     
     write_object_file ();
     
