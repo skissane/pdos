@@ -389,6 +389,9 @@ static void dohelp(void)
     printf("ECHO - display provided text\n");
     printf("COPY - copy a file\n");
     printf("FILL - create a file with NULs\n");
+    printf("DISKINIT - initialize a disk (3390-1)\n");
+    printf("FIL2DSK - restore a file to disk\n");
+    printf("DSK2FIL - dump a disk to a file\n");
     printf("anything else will be assumed to be a .EXE program\n");
     return;
 }
