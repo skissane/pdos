@@ -496,7 +496,12 @@ typedef struct {
 typedef struct {
     char unused1a[5];
     char dcbfdad[8];
-    char unused1b[19];
+    char unused1b[3];
+    /* this vtape is non-standard (ie different from MVS) */
+    int  vtape; /* device number if this a RECFM=V tape to be auto-converted */
+    int  used3; /* set to 1 by something */
+    int  used2; /* set to 0x4000 by something */
+    int  used1; /* set to 1 by something */
     int  eodad;
     union
     {
@@ -508,6 +513,10 @@ typedef struct {
         char dcboflgs;
         int dcbgetput; /* offset 48+1 */
     } u1;
+    /* what these unusual (+1) offsets mean is that the value is an
+       AL3 so you need to ignore the first byte - the members are
+       not misaligned - no packing is required because they are
+       naturally aligned */
     int dcbcheck; /* offset 52+1 */
     char unused3[6];
     short dcbblksi;
@@ -859,6 +868,8 @@ int __consrd(int len, char *buf);
 int __c3270r(int len, char *buf);
 int __conswr(int len, char *buf, int cr);
 
+static int ins_strncmp(char *one, char *two, size_t len);
+
 int main(int argc, char **argv)
 {
     PDOS *pdos;
@@ -1124,8 +1135,19 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 #if 0
             printf("got a request to write block %p, len %d\n", buf, len);
 #endif
-            if (memcmp(dcb->dcbfdad,
-                       "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
+            if (dcb->vtape != 0)
+            {
+                int cnt;
+
+                if (len > 8)
+                {
+                    cnt = wrtape(dcb->vtape, buf + 8, len - 8);
+                    printf("wrote %d bytes to %x\n", cnt, dcb->vtape);
+                }
+            }
+            /* not a disk, must be terminal */
+            else if (memcmp(dcb->dcbfdad,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
             {
                 /* assume RECFM=U, with caller providing NL */            
                 /* although this was specified to be a unit record
@@ -1996,7 +2018,12 @@ static void pdosProcessSVC(PDOS *pdos)
 #if 0
             printf("must be dataset name %s\n", lastds);
 #endif
-            if (findFile(pdos->ipldev, lastds, &cyl, &head, &rec) == 0)
+            if ((strchr(lastds, ':') != NULL)
+                && (ins_strncmp(lastds, "tav", 3) == 0))
+            {
+                gendcb->vtape = strtoul(lastds + 3, NULL, 16);
+            }
+            else if (findFile(pdos->ipldev, lastds, &cyl, &head, &rec) == 0)
             {
                 rec = 0; /* so that we can do increments */
                 join_cchhr(gendcb->dcbfdad + 3, cyl, head, rec);
@@ -2013,9 +2040,19 @@ static void pdosProcessSVC(PDOS *pdos)
         /* we only support RECFM=U files currently */
         /* for non-SYS files we should really get this info from
            the VTOC */
-        gendcb->u2.dcbrecfm |= DCBRECU;
-        gendcb->dcblrecl = 0;
-        gendcb->dcbblksi = 18452;
+        /* except for tav files, whcih are RECFM=V */
+        if (gendcb->vtape != 0)
+        {
+            gendcb->u2.dcbrecfm |= DCBRECV;
+            gendcb->dcblrecl = 18452 + 4;
+            gendcb->dcbblksi = 18452 + 4 * 2;
+        }
+        else
+        {
+            gendcb->u2.dcbrecfm |= DCBRECU;
+            gendcb->dcblrecl = 0;
+            gendcb->dcbblksi = 18452;
+        }
     }
     else if (svc == 22) /* open */
     {
@@ -2392,7 +2429,15 @@ static void pdosSVC99(PDOS *pdos)
             if (((int)*svc99tu & 0x80000000) != 0) break;
             svc99tu++;
         }
-        if (new == -1)
+
+        /* we will auto-handle tav tapes */
+        if ((strchr(lastds, ':') != NULL)
+            && (ins_strncmp(lastds, "tav", 3) == 0))
+        {
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[0] = 0;
+        }
+        else if (new == -1)
         {
             pdos->context->regs[15] = 12;
             pdos->context->regs[0] = 12;
@@ -3927,6 +3972,24 @@ static int cprintf(char *format, ...)
     return (len);
 }
 
+static int ins_strncmp(char *one, char *two, size_t len)
+{
+    size_t x = 0;
+
+    if (len == 0) return (0);
+    while ((x < len) && (toupper(*one) == toupper(*two)))
+    {
+        if (*one == '\0')
+        {
+            return (0);
+        }
+        one++;
+        two++;
+        x++;
+    }
+    if (x == len) return (0);
+    return (toupper(*one) - toupper(*two));
+}
 
 
 #if 0
