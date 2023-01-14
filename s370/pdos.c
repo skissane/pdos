@@ -830,6 +830,7 @@ void trkclc(void);
 void datoff(void);
 void daton(void);
 extern int __consdn;
+extern int __istape;
 
 int pdosRun(PDOS *pdos);
 void pdosDefaults(PDOS *pdos);
@@ -939,7 +940,12 @@ int pdosInit(PDOS *pdos)
 #ifndef ZARCH
     lcreg0(cr0);
 #endif
-    if (findFile(pdos->ipldev, "CONFIG.SYS", &cyl, &head, &rec) != 0)
+    if (__istape)
+    {
+        __consdn = 0x10000;
+        cons_type = 3215;
+    }
+    else if (findFile(pdos->ipldev, "CONFIG.SYS", &cyl, &head, &rec) != 0)
     {
         printf("config.sys missing\n");
         return (0);
