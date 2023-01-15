@@ -2726,6 +2726,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     {
         printf("usage: fil2dsk fnm dev(x)\n");
         printf("e.g. fil2dsk drv10002: 10001\n");
+        printf("(for disk to disk copy)\n");
+        printf("e.g. fil2dsk tap10003: 10001\n");
+        printf("(for tape to disk copy)\n");
         return (0);
     }
     if (strncmp(fnm, "drv", 3) == 0)
