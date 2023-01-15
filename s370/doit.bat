@@ -86,21 +86,22 @@ zip -0X -j pdpi.zip ..\pdpclib\*.h
 
 rem build DASD. Put a copy into MVS/380 area for no particular reason
 
-del pdos00.cckd
-dasdload -bz2 ctl.txt pdos00.cckd
-rem dasdload ctl.txt pdos00.cckd
-copy pdos00.cckd %MVS380%\dasd\pdos00.199
+del pdos00.ckd
+dasdload ctl.txt pdos00.ckd
+rem dasdload -bz2 ctl.txt pdos00.cckd
+rem copy pdos00.cckd %MVS380%\dasd\pdos00.199
 
+rem dasdinit -bz2 scratch.cckd 3390 SC3390
 
 rem Try out the new version of PDOS, and remember to manually do the
 rem mvsunzip pdpi.zip
 
-hetinit -n tapes/out.het
+hetinit -d -n tapes/out.aws
 
 set HERCULES_RC=auto_ipl.rc
 hercules -f pdos.cnf >hercules.log
 
-hetget -n -b tapes/out.het tapes/out.dat 1 U 0 18452
+hetget -n -b tapes/out.aws tapes/out.dat 1 U 0 18452
 
 rem create package suitable for "shipping"
 
