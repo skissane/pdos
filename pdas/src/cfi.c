@@ -206,10 +206,15 @@ static void output_cfi_instruction (struct cfi_instruction_data *cfi_instruction
                 
             } else {
 
-                as_internal_error_at_source_at (__FILE__, __LINE__,
-                                                NULL, 0,
-                                                "+++DW_CFA_advance_loc across multiple frags",
-                                                cfi_instruction->instruction);
+                struct expr expr_s;
+
+                expr_s.type = EXPR_TYPE_SUBTRACT;
+                expr_s.add_symbol = cfi_instruction->u.ll.label2;
+                expr_s.op_symbol = cfi_instruction->u.ll.label1;
+                expr_s.add_number = 0;
+
+                frag_alloc_space (5);
+                frag_set_as_variant (RELAX_TYPE_CFI, 0, make_expr_symbol (&expr_s), 0, current_frag->fixed_size);
 
             }
             break;
@@ -511,6 +516,85 @@ void cfi_finish (void) {
 
     }
 
+}
+
+int cfi_estimate_size_before_relax (struct frag *frag) {
+
+    value_t delta;
+    int ret;
+
+    delta = symbol_resolve_value (frag->symbol) / DEFAULT_CODE_ALIGNMENT_FACTOR;
+
+    if (delta == 0) {
+        ret = 0;
+    } else if (delta <= 0x3F) {
+        ret = 1;
+    } else if (delta <= 0XFF) {
+        ret = 2;
+    } else if (delta <= 0xFFFF) {
+        ret = 3;
+    } else {
+        ret = 5;
+    }
+
+    frag->relax_subtype = ret;
+
+    return ret;
+
+}
+
+int cfi_relax_frag (struct frag *frag) {
+
+    int old_size;
+
+    old_size = frag->relax_subtype;
+
+    return cfi_estimate_size_before_relax (frag) - old_size;
+
+}
+
+void cfi_finish_frag (struct frag *frag) {
+
+    value_t delta;
+    unsigned char *write_pos;
+
+    delta = symbol_resolve_value (frag->symbol) / DEFAULT_CODE_ALIGNMENT_FACTOR;
+    write_pos = frag->buf + frag->opcode_offset_in_buf;
+
+    switch (frag->relax_subtype) {
+
+        case 0:
+
+            /* Nothing needs to be done. */
+            break;
+
+        case 1:
+
+            write_pos[0] = DW_CFA_advance_loc + delta;
+            break;
+
+        case 2:
+
+            write_pos[0] = DW_CFA_advance_loc1;
+            machine_dependent_number_to_chars (write_pos + 1, delta, 1);
+            break;
+
+        case 3:
+
+            write_pos[0] = DW_CFA_advance_loc2;
+            machine_dependent_number_to_chars (write_pos + 1, delta, 2);
+            break;
+
+        case 5:
+
+            write_pos[0] = DW_CFA_advance_loc4;
+            machine_dependent_number_to_chars (write_pos + 1, delta, 4);
+            break;
+
+    }
+
+    frag->fixed_size += frag->relax_subtype;
+        
 }
 
 static void handler_cfi_startproc (char **pp) {

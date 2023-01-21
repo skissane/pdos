@@ -88,3 +88,6 @@ struct fde {
 struct pseudo_op_entry *cfi_get_pseudo_op_table (void);
 
 void cfi_finish (void);
+int cfi_estimate_size_before_relax (struct frag *frag);
+int cfi_relax_frag (struct frag *frag);
+void cfi_finish_frag (struct frag *frag);

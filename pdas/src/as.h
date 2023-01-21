@@ -62,6 +62,7 @@ typedef enum {
     RELAX_TYPE_ALIGN_CODE,
     RELAX_TYPE_ORG,
     RELAX_TYPE_SPACE,
+    RELAX_TYPE_CFI,
     RELAX_TYPE_MACHINE_DEPENDENT
 
 } relax_type_t;

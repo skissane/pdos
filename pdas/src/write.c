@@ -11,6 +11,7 @@
 #include    <stddef.h>
 
 #include    "as.h"
+#include    "cfi.h"
 
 static struct fixup *fixup_new_internal (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, long add_number, int pcrel, reloc_type_t reloc_type) {
 
@@ -91,6 +92,11 @@ static void relax_section (section_t section) {
             case RELAX_TYPE_ORG:
             case RELAX_TYPE_SPACE:
             
+                break;
+
+            case RELAX_TYPE_CFI:
+
+                address += cfi_estimate_size_before_relax (frag);
                 break;
             
             case RELAX_TYPE_MACHINE_DEPENDENT:
@@ -221,6 +227,11 @@ static void relax_section (section_t section) {
                     }
                     
                     break;
+
+                case RELAX_TYPE_CFI:
+
+                    growth = cfi_relax_frag (frag);
+                    break;
                 
                 case RELAX_TYPE_MACHINE_DEPENDENT:
                 
@@ -298,7 +309,14 @@ static void finish_frags_after_relaxation (section_t section) {
                 
                 break;
             
-            } case RELAX_TYPE_MACHINE_DEPENDENT:
+            }
+
+            case RELAX_TYPE_CFI:
+
+                cfi_finish_frag (frag);
+                break;
+
+            case RELAX_TYPE_MACHINE_DEPENDENT:
             
                 machine_dependent_finish_frag (frag);
                 break;
