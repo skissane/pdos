@@ -38,7 +38,6 @@ int main(int argc, char **argv)
     }
 
     negotiate(sf);
-    fseek(sf, 0, SEEK_CUR);
     interact(sf);
 
     fclose(sf);
@@ -96,14 +95,30 @@ static void expect(FILE *sf, unsigned char *buf, size_t buflen)
 
 static void interact(FILE *sf)
 {
-    int c;
+    int c = 0;
 
-    while (1)
+    while (c != EOF)
     {
-        c = fgetc(sf);
-        if ((c == EOF) || (c == XON)) break;
-        fputc(c, stdout);
-        fflush(stdout);
+        fseek(sf, 0, SEEK_CUR);
+        while (1)
+        {
+            c = fgetc(sf);
+            if ((c == EOF) || (c == XON)) break;
+            fputc(c, stdout);
+            fflush(stdout);
+        }
+        if (c == XON)
+        {
+            fseek(sf, 0, SEEK_CUR);
+            c = fgetc(stdin);
+            /* in case of synchronization issues, pressing ctrl-Q allows
+               reversion to reading from serial port */
+            if ((c != EOF) && (c != XON))
+            {
+                fputc(c, sf);
+                fflush(sf);
+            }
+        }
     }
     return;
 }
