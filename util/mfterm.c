@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void expect(FILE *sf, unsigned char *buf, size_t buflen);
+
 int main(int argc, char **argv)
 {
     FILE *sf;
@@ -31,12 +33,25 @@ int main(int argc, char **argv)
         printf("failed to open serial file\n");
         return (EXIT_FAILURE);
     }
-    c = fgetc(sf);
-    printf("c is %x\n", c);
-    c = fgetc(sf);
-    printf("c is %x\n", c);
-    c = fgetc(sf);
-    printf("c is %x\n", c);
+    expect(sf, "\xff\xfd\x18", 3);
     fclose(sf);
     return (0);
+}
+
+static void expect(FILE *sf, unsigned char *buf, size_t buflen)
+{
+    int c;
+    size_t x;
+
+    for (x = 0; x < buflen; x++)
+    {
+        c = fgetc(sf);
+        printf("c is ... %x\n", c);
+        if (c != buf[x])
+        {
+            printf("got %x, expected %x\n", c, buf[x]);
+            exit(EXIT_FAILURE);
+        }
+    }
+    return;
 }
