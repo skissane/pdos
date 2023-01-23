@@ -20,16 +20,13 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN
 
 all: clean mfterm.exe
 
-mfterm.exe: mfterm.o ../src/pos.o ../src/support.o
-    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/w32start.o mfterm.o ../src/pos.o ../src/support.o ../pdpclib/msvcrt.a
+mfterm.exe: mfterm.o
+    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/w32start.o mfterm.o ../pdpclib/msvcrt.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
-
-.s.o:
-    $(AS) -o $@ $<
 
 clean:
     rm -f *.o
