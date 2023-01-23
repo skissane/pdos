@@ -16,12 +16,12 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN32__ -D__NOBIVA__ -D__32BIT__
+COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN32__ -D__NOBIVA__ -D__32BIT__ -D__STATIC__
 
 all: clean mfterm.exe
 
 mfterm.exe: mfterm.o
-    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/w32start.o mfterm.o ../pdpclib/msvcrt.a
+    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/p32start.o mfterm.o ../../pdos/pdpclib/pdpwin32.a ../../pdos/src/kernel32.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
