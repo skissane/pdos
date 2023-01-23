@@ -13,12 +13,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define XON 0x11
+
+static void negotiate(FILE *sf);
+static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
 
 int main(int argc, char **argv)
 {
     FILE *sf;
-    int c;
 
     if (argc != 2)
     {
@@ -33,6 +36,17 @@ int main(int argc, char **argv)
         printf("failed to open serial file\n");
         return (EXIT_FAILURE);
     }
+
+    negotiate(sf);
+    fseek(sf, 0, SEEK_CUR);
+    interact(sf);
+
+    fclose(sf);
+    return (0);
+}
+
+static void negotiate(FILE *sf)
+{
     /* IAC DO TERM_TYPE */
     expect(sf, "\xff\xfd\x18", 3);
 
@@ -51,11 +65,15 @@ int main(int argc, char **argv)
     fwrite("\xff\xfa\x18\x00" "ANSI" "\xff\xf0", 1, 10, sf);
 
     fseek(sf, 0, SEEK_CUR);
-    /* IAC WILL ECHO_OPTION */
+    /* IAC WILL ECHO */
     expect(sf, "\xff\xfb\x01", 3);
 
-    fclose(sf);
-    return (0);
+    fseek(sf, 0, SEEK_CUR);
+    printf("writing\n");
+    /* IAC DO ECHO */
+    fwrite("\xff\xfd\x01", 1, 3, sf);
+
+    return;
 }
 
 static void expect(FILE *sf, unsigned char *buf, size_t buflen)
@@ -72,6 +90,20 @@ static void expect(FILE *sf, unsigned char *buf, size_t buflen)
             printf("got %x, expected %x\n", c, buf[x]);
             exit(EXIT_FAILURE);
         }
+    }
+    return;
+}
+
+static void interact(FILE *sf)
+{
+    int c;
+
+    while (1)
+    {
+        c = fgetc(sf);
+        if ((c == EOF) || (c == XON)) break;
+        fputc(c, stdout);
+        fflush(stdout);
     }
     return;
 }
