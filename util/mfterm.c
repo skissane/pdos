@@ -33,7 +33,27 @@ int main(int argc, char **argv)
         printf("failed to open serial file\n");
         return (EXIT_FAILURE);
     }
+    /* IAC DO TERM_TYPE */
     expect(sf, "\xff\xfd\x18", 3);
+
+    fseek(sf, 0, SEEK_CUR);
+    printf("writing\n");
+    /* IAC WILL TERM_TYPE */
+    fwrite("\xff\xfb\x18", 1, 3, sf);
+
+    fseek(sf, 0, SEEK_CUR);
+    /* IAC SB TERM_TYPE SEND IAC SE */
+    expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
+
+    fseek(sf, 0, SEEK_CUR);
+    printf("writing\n");
+    /* IAC SB TERM_TYPE IS (ANSI) IAC SE */
+    fwrite("\xff\xfa\x18\x00" "ANSI" "\xff\xf0", 1, 10, sf);
+
+    fseek(sf, 0, SEEK_CUR);
+    /* IAC WILL ECHO_OPTION */
+    expect(sf, "\xff\xfb\x01", 3);
+
     fclose(sf);
     return (0);
 }
