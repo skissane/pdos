@@ -38,7 +38,9 @@ int main(int argc, char **argv)
     }
 
     negotiate(sf);
+    setvbuf(stdin, NULL, _IONBF, 0);
     interact(sf);
+    setvbuf(stdin, NULL, _IOLBF, 0);
 
     fclose(sf);
     return (0);
