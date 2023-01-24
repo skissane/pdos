@@ -10,10 +10,66 @@
 /*                                                                   */
 /*********************************************************************/
 
+#if 0
+
+Here is a list of control characters. 6 will need to be
+requisitioned to support Vietnamese. VISCII used a set of
+6 characters that interferes with my use of micro-emacs etc.
+
+ctrl-B is common between ASCII and EBCDIC so we will reserve
+that for future use, and the other 6 "AVAILABLE" can be used
+for Vietnamese.
+
+I would have used ctrl-B as the menu/mode switch character
+here, but there is already prior art to use ctrl-], which is
+0x1d, and also common between ASCII and EBCDIC.
+
+0 - ctrl-@ - used by C etc.
+1 - ctrl-A - used by micro-emacs
+2 - ctrl-B - AVAILABLE
+3 - ctrl-C - used to break programs
+4 - ctrl-D - used to indicate EOF in Unix
+5 - ctrl-E - used by micro-emacs
+6 - ctrl-F - ACK - may be AVAILABLE
+7 - ctrl-G - used by micro-emacs and to beep
+8 - ctrl-H - used as backspace
+9 - ctrl-I - tab
+A - ctrl-J - newline
+B - ctrl-K - used by micro-emacs
+C - ctrl-L - used by micro-emacs
+D - ctrl-M - carriage return
+E - ctrl-N - AVAILABLE
+F - ctrl-O - AVAILABLE
+10 - ctrl-P - AVAILABLE
+11 - ctrl-Q - used for XON
+12 - ctrl-R - formfeed, AVAILABLE
+13 - ctrl-S - XOFF and used by micro-emacs
+14 - ctrl-T - AVAILABLE
+15 - ctrl-U - NAK - may be AVAILABLE
+16 - ctrl-V - used by micro-emacs, but if page-down works can be made available
+17 - ctrl-W - used by nano - may be AVAILABLE
+18 - ctrl-X - used by micro-emacs
+19 - ctrl-Y - used by micro-emacs
+1A - ctrl-Z - used for EOF by MSDOS
+1B - ctrl-[ - ESC
+1C - ctrl-\ - used by Unix to kill process
+1D - ctrl-] - used by Telnet to get prompt
+1E - ctrl-^ - AVAILABLE
+1F - ctrl-_ - AVAILABLE
+
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #define XON 0x11
+#define MENU 0x1d
+
+static int noisy = 0;
+static int card = 0;
+
+static char cardbuf[80];
 
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
@@ -28,6 +84,7 @@ int main(int argc, char **argv)
         printf("usage: mfterm <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
         printf("e.g. mfterm com1:\n");
+        printf("ctrl-] gets menu when keyboard is active\n");
         return (EXIT_FAILURE);
     }
     sf = fopen(*(argv + 1), "r+b");
@@ -112,13 +169,39 @@ static void interact(FILE *sf)
         if (c == XON)
         {
             fseek(sf, 0, SEEK_CUR);
+            if (card)
+            {
+                fwrite(cardbuf, 1, sizeof cardbuf, sf);
+                continue;
+            }
             c = fgetc(stdin);
-            /* in case of synchronization issues, pressing ctrl-Q allows
-               reversion to reading from serial port */
-            if ((c != EOF) && (c != XON))
+            /* ctrl-] brings up a menu */
+            if ((c != EOF) && (c != MENU))
             {
                 fputc(c, sf);
                 fflush(sf);
+            }
+            if (c == MENU)
+            {
+                char buf[50];
+
+                printf("menu - options are noisy, quiet, card\n");
+#if 0
+                setvbuf(stdin, NULL, _IOLBF, 0);
+                fgets(buf, sizeof buf, stdin);
+                setvbuf(stdin, NULL, _IONBF, 0);
+                if (strcmp(buf, "noisy\n") == 0) noisy = 1;
+                if (strcmp(buf, "quiet\n") == 0) noisy = 0;
+                if (strcmp(buf, "card\n") == 0) card = 1;
+#endif
+                card = 1;
+                if (card)
+                {
+                    fseek(sf, 0, SEEK_CUR);
+                    fwrite(cardbuf, 1, sizeof cardbuf, sf);
+                    card = 0;
+                    continue;
+                }
             }
         }
     }
