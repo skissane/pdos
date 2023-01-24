@@ -112,6 +112,7 @@ POSTIPL  DS    0H
          S     R12,=A(POSTIPL-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
+         LA    R13,COMMSAVE
          USING PSA,R0
 *
 * At this point, since it is post-IPL, all further interrupts
@@ -195,6 +196,8 @@ WAITER4  DC    A(X'00060000'+AM64BIT)
 .WAIT64B ANOP
          DS    0D
 *
+COMMSAVE DC    18F'0'
+*
 STAGE2   DS    0H
          LA    R1,PARMLST2
          LA    R13,SAVEAR2
@@ -275,6 +278,7 @@ TAPEPIPL DS    0H
          S     R12,=A(TAPEPIPL-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
+         LA    R13,COMMSAVE
          USING PSA,R0
 *         LA    R6,6
 *TTLOOP   B     TTLOOP
@@ -387,6 +391,7 @@ CARDPIPL DS    0H
          S     R12,=A(CARDPIPL-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
+         LA    R13,COMMSAVE
          USING PSA,R0
 *         LA    R6,6
 *TTLOOP   B     TTLOOP
