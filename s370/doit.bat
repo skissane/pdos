@@ -28,9 +28,10 @@ gccmvs -DUSE_MEMMGR -Os -DZARCH -DXXZAM31 -S -I . -I ../pdpclib pdos.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pdosutil.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pcomm.c
 gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib world.c
-gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib mkipltap.c
-gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib bbs.c
-gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
+gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib mkipltap.c
+gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib mkiplcrd.c
+gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib bbs.c
+gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
 
 sleep 1
 
@@ -59,6 +60,7 @@ copy pcomm.txt pcomm.exe
 copy pcommin.txt autoexec.bat
 copy world.txt world.exe
 copy mkipltap.txt mkipltap.exe
+copy mkiplcrd.txt mkiplcrd.exe
 copy bbs.txt bbs.exe
 copy pdpnntp.txt pdpnntp.exe
 copy sample.txt sample.c
@@ -112,6 +114,6 @@ zip -9X pdospkg wtoworld.exe diff.exe uemacs.exe edlin.exe hercauto.zip
 zip -9X pdospkg ctl.txt pdos00.cckd pdos.cnf auto*.rc termherc*.rc
 zip -9X pdospkg runpdos.bat pdos.bat pdpi.zip pdpnntp.exe mkipltap.exe
 zip -9X pdospkg gcc.exe mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
-zip -9X pdospkg pdmake.exe antitwit.txt pdos.img
+zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe
 
 rem Simply unzip the package into c:\pdos or whatever and it's done
