@@ -197,6 +197,18 @@ static void interact(FILE *sf)
                 card = 1;
                 if (card)
                 {
+                    if (cardbuf[8] == '\0')
+                    {
+                        cardbuf[8] = 0x02;
+                        cardbuf[12] = 0x20;
+                        cardbuf[14] = 0x48;
+                        cardbuf[15] = 0x14;
+                    }
+                    else if (cardbuf[8] == 0x02)
+                    {
+                        cardbuf[1] = 0x0c;
+                        cardbuf[7] = 0x4;
+                    }
                     fseek(sf, 0, SEEK_CUR);
                     fwrite(cardbuf, 1, sizeof cardbuf, sf);
                     card = 0;
