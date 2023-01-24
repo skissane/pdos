@@ -498,11 +498,18 @@ typedef struct {
     char dcbfdad[8];
     char unused1b[3];
     /* this vtape is non-standard (ie different from MVS) */
+    /* MVS appears to use it for TRBAL, but mvssupa.asm doesn't */
     int  vtape; /* device number if this a RECFM=V tape to be auto-converted */
+    /* looks like this is dcbbufno - set to 1 buffer */
+    /* I don't see the code in mvssupa.asm */
     int  used3; /* set to 1 by something */
+    /* dcbdsorg - 0x4000 is PS - physical sequential */
     int  used2; /* set to 0x4000 by something */
+    /* address of old deb is 1??? offset x'1c' */
     int  used1; /* set to 1 by something */
     int  eodad;
+    /* offset x'24' has both dcbrecfm in first byte, and exit list
+       as an address */
     union
     {
         char dcbrecfm;
@@ -518,9 +525,14 @@ typedef struct {
        not misaligned - no packing is required because they are
        naturally aligned */
     int dcbcheck; /* offset 52+1 */
+    /* x'38' has synad, x'3c' has TCAM flags, x'3e' is blocksize */
     char unused3[6];
     short dcbblksi;
-    char unused4[18];
+    /* x'40' seems to be internal use. also x'44', x'48', x'4c' */
+    /* so we will try using x'40' for generic device */
+    int gendev;
+    char unused4[14];
+    /* x'52' is lrecl */
     short dcblrecl;
     int dcbnotepoint; /* offset 84+1 */
 } DCB;
@@ -1153,6 +1165,13 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                     printf("wrote %d bytes to %x\n", cnt, dcb->vtape);
                 }
             }
+            else if (dcb->gendev != 0)
+            {
+                int cnt;
+
+                cnt = wrtape(dcb->gendev, buf, len);
+                printf("wrote %d bytes to %x\n", cnt, dcb->gendev);
+            }
             /* not a disk, must be terminal */
             else if (memcmp(dcb->dcbfdad,
                             "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
@@ -1248,8 +1267,13 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 #if 0
             printf("dcb read is for lrecl %d\n", dcb->dcblrecl);
 #endif
-            if (memcmp(dcb->dcbfdad,
-                       "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
+            if (dcb->gendev != 0)
+            {
+                cnt = rdtape(dcb->gendev, buf, len);
+                printf("read %d bytes from %x\n", cnt, dcb->gendev);
+            }
+            else if (memcmp(dcb->dcbfdad,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
             {
                 if (cons_type == 3270)
                 {
@@ -2031,6 +2055,21 @@ static void pdosProcessSVC(PDOS *pdos)
             {
                 gendcb->vtape = strtoul(lastds + 3, NULL, 16);
             }
+            else if ((strchr(lastds, ':') != NULL)
+                && (ins_strncmp(lastds, "dev", 3) == 0))
+            {
+                gendcb->gendev = strtoul(lastds + 3, NULL, 16);
+            }
+            else if ((strchr(lastds, ':') != NULL)
+                && (ins_strncmp(lastds, "crd", 3) == 0))
+            {
+                gendcb->gendev = strtoul(lastds + 3, NULL, 16);
+            }
+            else if ((strchr(lastds, ':') != NULL)
+                && (ins_strncmp(lastds, "tap", 3) == 0))
+            {
+                gendcb->gendev = strtoul(lastds + 3, NULL, 16);
+            }
             else if (findFile(pdos->ipldev, lastds, &cyl, &head, &rec) == 0)
             {
                 rec = 0; /* so that we can do increments */
@@ -2048,12 +2087,19 @@ static void pdosProcessSVC(PDOS *pdos)
         /* we only support RECFM=U files currently */
         /* for non-SYS files we should really get this info from
            the VTOC */
-        /* except for tav files, whcih are RECFM=V */
+        /* except for tav files, which are RECFM=V */
         if (gendcb->vtape != 0)
         {
             gendcb->u2.dcbrecfm |= DCBRECV;
             gendcb->dcblrecl = 18452 + 4;
             gendcb->dcbblksi = 18452 + 4 * 2;
+        }
+        /* and cards are F80 */
+        else if (ins_strncmp(lastds, "crd", 3) == 0)
+        {
+            gendcb->u2.dcbrecfm |= DCBRECF;
+            gendcb->dcblrecl = 80;
+            gendcb->dcbblksi = 80;
         }
         else
         {
