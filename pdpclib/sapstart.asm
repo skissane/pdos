@@ -31,6 +31,7 @@ SAPSTART TITLE 'S A P S T A R T  ***  STARTUP ROUTINE FOR C'
 STACKLOC EQU   X'080000'    The stack starts here (0.5 MiB)
 HEAPLOC  EQU   X'100000'    Where malloc etc come from (1 MiB)
 CHUNKSZ  EQU   18452        The executable is split into blocks
+CCHUNKSZ EQU   18432        Card data is a multiple of 72
 MAXBLKS  EQU   40           Maximum number of blocks to read
          AIF ('&XSYS' EQ 'ZARCH').ZVAR64
 CODESTRT EQU   1024         Start of our real code
@@ -90,8 +91,13 @@ ORIGIN   DS    0D
 *
          DC    (CODESTRT-*+ORIGIN)X'00'
 *
+POSTPSA  DS    0H
+*
 * Tape handler entry point for IPLing from tape
          DC    A(TAPEPIPL)
+* Card handler entry point for IPLing from cards
+         DC    A(CARDPIPL)
+CMAXBLKS DC    F'0'   max number of cards to read
 *
 * Start of our own, somewhat normal, code. Registers are not
 * defined at this point, so we need to create our own base
@@ -103,6 +109,9 @@ POSTIPL  DS    0H
          BCTR  R12,0
          BCTR  R12,0
          USING POSTIPL,R12
+         S     R12,=A(POSTIPL-POSTPSA)
+         DROP  R12
+         USING POSTPSA,R12
          USING PSA,R0
 *
 * At this point, since it is post-IPL, all further interrupts
@@ -263,9 +272,9 @@ TAPEPIPL DS    0H
          BCTR  R12,0
          DROP  R12
          USING TAPEPIPL,R12
-         S     R12,=A(TAPEPIPL-POSTIPL)
+         S     R12,=A(TAPEPIPL-POSTPSA)
          DROP  R12
-         USING POSTIPL,R12
+         USING POSTPSA,R12
          USING PSA,R0
 *         LA    R6,6
 *TTLOOP   B     TTLOOP
@@ -366,6 +375,115 @@ TRDSIZE  DS    F
 *
 *
 *
+*
+* When IPLing from card, we will use this routine instead
+CARDPIPL DS    0H
+         BALR  R12,0
+         LA    R12,0(R12)
+         BCTR  R12,0
+         BCTR  R12,0
+         DROP  R12
+         USING CARDPIPL,R12
+         S     R12,=A(CARDPIPL-POSTPSA)
+         DROP  R12
+         USING POSTPSA,R12
+         USING PSA,R0
+*         LA    R6,6
+*TTLOOP   B     TTLOOP
+*
+*
+*
+* this code was copied from above, and should instead be put
+* into a subroutine.
+*
+*
+* At this point, since it is post-IPL, all further interrupts
+* will occur to one of 4 locations (instead of location 0, the
+* IPL newpsw). Although we are only expecting, and only need,
+* the I/O interrupts, we set "dummy" values for the others in
+* case something unexpected happens, to give us some visibility
+* into the problem.
+*
+         AIF ('&XSYS' EQ 'ZARCH').CSW64
+         MVC   FLCINPSW(8),WAITER4
+         MVC   FLCMNPSW(8),WAITER1
+         MVC   FLCSNPSW(8),WAITER2
+         MVC   FLCPNPSW(8),WAITER3
+         AGO .CSW64B
+.CSW64   ANOP
+*
+* Activate z/Arch (code taken from UDOS)
+*
+         LA    R1,1   Magic number for z/Arch
+         SIGP  R1,0,18   Ignore any error from this
+* Adding 1 will activate AM64
+         LA    R2,CPIPLZ+1
+         AIF ('&ZAM64' NE 'YES').CNOBSM
+         BSM   R0,R2
+.CNOBSM  ANOP
+CPIPLZ   DS    0H
+         MVC   FLCEINPW(16),WAITER4
+         MVC   FLCEMNPW(16),WAITER1
+         MVC   FLCESNPW(16),WAITER2
+         MVC   FLCEPNPW(16),WAITER3
+.CSW64B  ANOP
+* Save IPL address in R10
+         SLR   R10,R10
+         ICM   R10,B'1111',FLCIOA
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').CSIO31A
+         LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
+.CSIO31A ANOP
+         B     CSTAGE2
+         LTORG
+*
+*
+* end of copied code
+*
+*
+* We share the tape read routine and parameters
+CSTAGE2  DS    0H
+         LA    R1,TPARMLST
+         LA    R13,SAVEAR2
+         ST    R10,TRDDEV
+         L     R8,=F'80'
+         ST    R8,TRDSIZE
+         LA    R4,0         R4 = Number of blocks read so far
+         L     R5,=A(CCHUNKSZ) Current address
+CSTAGE2B DS    0H
+         ST    R5,TRDBUF
+         L     R15,=A(RDTAPE)
+         BALR  R14,R15
+         LTR   R15,R15
+         BM    CFRSTERR
+         B     CDOTESTS
+CFRSTERR DS    0H
+         L     R15,=A(RDTAPE)
+         BALR  R14,R15
+CDOTESTS DS    0H
+         LTR   R15,R15
+         BZ    CSTAGE3
+         BM    CSTAGE3
+*
+         A     R5,=F'72'    we ignore the sequence numbers
+         LA    R4,1(R4)
+* We want to read up until we have a short block, or
+* an I/O error.
+         C     R15,=F'80'
+         BNE   CSTAGE3
+         C     R4,=A(CMAXBLKS)  R4=Maximum blocks to read
+         BH    CSTAGE3
+         B     CSTAGE2B
+CSTAGE3  DS    0H
+* Go back to the original state, with I/O disabled, so that we
+* don't get any more noise unless explicitly requested
+*FFLOOP   B     FFLOOP
+         LA    R4,1
+         ST    R4,@@ISCARD
+         LPSW  ST4PSW
+         LTORG
+*
+*
+*
 * At this point, we are in a "normal" post-IPL status,
 * with our bootloader loaded, and interrupts disabled,
 * and low memory should be considered to be in an
@@ -392,6 +510,8 @@ STAGE4   DS    0H
          LTORG
          ENTRY @@ISTAPE
 @@ISTAPE DC    F'0'
+         ENTRY @@ISCARD
+@@ISCARD DC    F'0'
 PRMPTR   DC    A(SAPBLK)
 SAPBLK   DS    0F
 SAPDUM   DC    F'0'
