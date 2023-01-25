@@ -15,6 +15,29 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* sapstart is expecting that 18432 bytes will have been loaded
+   before it gets control (when dealing with cards). This is
+   256 cards with usable data (72 bytes). We'll call the cards
+   that load these cards the IPL4 CCW chain.
+
+   In order to read 256 cards, ie 256 CCWs, you need 256/9 = 28.x = 29
+   cards containing CCWs. We'll call the cards that load these cards
+   the IPL3 CCW chain.
+
+   In order to read those 29 cards you need 29/9 = 3.x = 4 cards.
+   We'll call the card that loads these cards the IPL2 CCW chain.
+
+   In order to read those 4 cards, you need 1 card, which is the
+   only card loaded by the IPL1 CCW chain (which normally only
+   has 2 CCWs).
+
+   IPL2+3+4 are simply loaded consecutively (with allowance for
+   the last card in each IPL chain not having a full set of CCWs),
+   so no TIC is required, and the last CCW simply needs to stop chaining.
+*/
+
+
+
 static char ccw[24] =
     "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* IPL PSW - not used */
     "\x02\x00\x00\x00" /* first CCW - read to address 0 */
