@@ -3730,7 +3730,11 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     {
         cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
     }
-    if ((cnt > 8) && (*((int *)tbuf + 1) == 0xca6d0f))
+    if (__iscard)
+    {
+        pe = 1;
+    }
+    else if ((cnt > 8) && (*((int *)tbuf + 1) == 0xca6d0f))
     {
         pe = 1;
     }
