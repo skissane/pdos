@@ -247,7 +247,9 @@ int main(int argc, char **argv)
     printf("imgsize is %ld\n", imgsize);
     rewind(fp);
     /* PDOS will need to know the image size to know when to stop reading */
+    memset(buf, '\0', 72);
     *(int *)buf = imgsize;
+    writecard(buf, fq);
     memset(buf, '\0', 72);
     while ((i = fread(buf, 1, 72, fp)) > 0)
     {
