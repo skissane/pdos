@@ -97,6 +97,7 @@ int main(int argc, char **argv)
     currlevellen = 72; /* this is too low, and will be detected */
     while (1)
     {
+        printf("currlevellen is %d\n", currlevellen);
         if (currlevellen == CCHUNKSZ)
         {
             loadaddr = LOADLOC;
@@ -151,6 +152,7 @@ int main(int argc, char **argv)
             minicard[i * 8 + 7] = 0x50;
             i++;
             z += 72;
+            loadaddr += 72;
             if (i == 9)
             {
                 writecard(minicard, fq);
