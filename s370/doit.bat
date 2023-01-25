@@ -83,6 +83,7 @@ del hercauto.zip
 zip -0X hercauto hercauto.bat
 
 rem copy some header files so that we can do simple compiles
+del pdpi.zip
 zip -0X -j pdpi.zip ..\pdpclib\*.h
 
 
