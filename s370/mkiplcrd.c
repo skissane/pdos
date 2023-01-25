@@ -65,9 +65,8 @@ int main(int argc, char **argv)
     FILE *fp;
     char *buf;
     long imgsize;
-    int level;
-    int numlevels;
-    long levellen;
+    long currlevellen;
+    long higherlen;
 
     if (argc <= 1)
     {
@@ -84,9 +83,12 @@ int main(int argc, char **argv)
     fq = fopen(*(argv + 1), "wb");
     if (fq == NULL)
     {
-        printf("failed to open tape %s\n", *(argv + 1));
+        printf("failed to open output file %s\n", *(argv + 1));
         return (EXIT_FAILURE);
     }
+
+    fwrite(ipl1, 1, sizeof ipl1, fq);
+
     loadaddr = CCWLOC + 72;
     currlevellen = 72; /* this is too low, and will be detected */
     while (1)
@@ -172,18 +174,21 @@ int main(int argc, char **argv)
     imgsize = ftell(fp);
     printf("imgsize is %ld\n", imgsize);
     rewind(fp);
-#if 0
-    fwrite(ccw, 1, sizeof ccw, fq);
 
-    i = fread(buf, 1, 18432, fp);
+    i = fread(buf, 1, CCHUNKSZ, fp);
     /* set the IPL PSW to point to where it is located */
     *(int *)(buf + 4) = *(int *)(buf + 8 + 8192);
-    fwrite(buf, 1, i + 4, fq);
-
-    while ((i = fread(buf + 4, 1, 18452, fp)) > 0)
+    /* set number of cards to read */
+    *(int *)(buf + 12 + 8192) = (imgsize - CCHUNKSZ) / 72;
+    for (i = 0; i < CCHUNKSZ; i += 72)
     {
-        *(short *)buf = i + 4;
-        fwrite(buf, 1, i + 4, fq);
+        writecard(buf + i * 72, fq);
+    }
+
+    while ((i = fread(buf, 1, 72, fp)) > 0)
+    {
+        writecard(buf, fq);
+        memset(buf, '\0', 72);
     }
     fclose(fp);
 
@@ -194,9 +199,12 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
 
-    i = fread(buf + 4, 1, 18452, fp);
-    *(short *)buf = i + 4;
-    fwrite(buf, 1, i + 4, fq);
+    memset(buf, '\0', 72);
+    while ((i = fread(buf, 1, 72, fp)) > 0)
+    {
+        writecard(buf, fq);
+        memset(buf, '\0', 72);
+    }
     fclose(fp);
 
     fp = fopen("COMMAND.EXE", "rb");
@@ -205,10 +213,11 @@ int main(int argc, char **argv)
         printf("failed to open COMMAND.EXE for reading\n");
         return (EXIT_FAILURE);
     }
-    while ((i = fread(buf + 4, 1, 18452, fp)) > 0)
+    memset(buf, '\0', 72);
+    while ((i = fread(buf, 1, 72, fp)) > 0)
     {
-        *(short *)buf = i + 4;
-        fwrite(buf, 1, i + 4, fq);
+        writecard(buf, fq);
+        memset(buf, '\0', 72);
     }
     fclose(fp);
 
