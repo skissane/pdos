@@ -113,6 +113,7 @@ int main(int argc, char **argv)
                    of usable data */
                 rem = higherlen % (9 * 72);
                 q = higherlen / (9 * 72);
+                q *= 72;
                 if (rem != 0)
                 {
                     /* we are dealing with bytes, and we need another
