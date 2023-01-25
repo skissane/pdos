@@ -37,12 +37,19 @@
 */
 
 
+/* where data (last set of CCWs) is supposed to be loaded */
+#define LOADLOC 0
+/* sapstart is expecting this much to be loaded - multiple of 72 */
+#define CCHUNKSZ 18432
+/* load the CCWs at the 1 MiB location */
+#define CCWLOC 0x100000
+
 
 static char ccw[24] =
     "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* IPL PSW - not used */
-    "\x02\x00\x00\x00" /* first CCW - read to address 0 */
-    "\x20\x00\x48\x14" /* first CCW - ignore length errors, length 18452 */
-    "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* 2nd CCW - not used */
+    "\x02\x10\x00\x00" /* first CCW - read to address 1 MiB */
+    "\x60\x00\x00\x50" /* first CCW - ignore length errors, chain, length 80 */
+    "\x08\x10\x00\x00" "\x00\x00\x00\x00" /* 2nd CCW - TIC (jump) to 1 MiB */
     ;
 
 int main(int argc, char **argv)
@@ -52,6 +59,9 @@ int main(int argc, char **argv)
     FILE *fp;
     char *buf;
     long imgsize;
+    int level;
+    int numlevels;
+    long levellen;
 
     if (argc <= 1)
     {
@@ -70,6 +80,101 @@ int main(int argc, char **argv)
     {
         printf("failed to open tape %s\n", *(argv + 1));
         return (EXIT_FAILURE);
+    }
+    numlevels = 0;
+    levellen = CCHUNKSZ;
+    while (levellen > 72)
+    {
+        int rem;
+
+        /* there are 9 CCWs that can fit into a card. Each
+           of those CCWs represent the ability to read 72 bytes
+           of usable data */
+        rem = levellen % (9 * 72);
+        levellen /= (9 * 72);
+        if (rem != 0)
+        {
+            /* we are dealing with bytes, and we need another full card */
+            levellen += 72;
+        }
+        numlevels++;
+    }
+    /* IPL1 has already 
+    for (level = 2; level < numlevels; level++)
+    {
+    }
+    loadaddr = CCWLOC + 72;
+    currlevellen = 72; /* this is too low, and will be adjusted */
+    while (1)
+    {
+        if (currlevellen == CCHUNKSZ)
+        {
+            loadaddr = LOADLOC;
+        }
+        else
+        {
+            /* we need to know higher level length */
+            higherlen = CCHUNKSZ;
+            while (1)
+            {
+                /* there are 9 CCWs that can fit into a card. Each
+                   of those CCWs represent the ability to read 72 bytes
+                   of usable data */
+                rem = higherlen % (9 * 72);
+                q = higherlen / (9 * 72);
+                q2 = q;
+                if (rem != 0)
+                {
+                    /* we are dealing with bytes, and we need another
+                       full card */
+                    q2 += 72;
+                }
+                if (q2 == currlevellen) break;
+                higherlen = q2;
+            }
+        }
+        numlevels++;
+    }
+        }
+        z = 0;
+        i = 0;
+        while (z < currlevellen)
+        {
+            if (i == 0)
+            {
+                memset(minicard, '\0', sizeof minicard);
+            }
+            if ((currlevellen == CCHUNKSZ) && (z == (currlevellen - 72)))
+            {
+                /* stop chaining */
+                minicard[i * 8 + 4] = 0x20;
+            }
+            else
+            {
+                minicard[i * 8 + 4] = 0x60;
+            }
+            minicard[i * 8 + 0] = 0x02;
+            minicard[i * 8 + 1] = (loadaddr >> 16) & 0xff;
+            minicard[i * 8 + 2] = (loadaddr >> 8) & 0xff;
+            minicard[i * 8 + 3] = loadaddr & 0xff;
+            minicard[i * 8 + 7] = 0x50;
+            i++;
+            z += 72;
+            if (i == 9)
+            {
+                writecard(minicard);
+                i = 0;
+            }
+        }
+        if (i != 0)
+        {
+            writecard(minicard);
+        }
+        if (currlevellen == CCHUNKSZ)
+        {
+            break;
+        }
+        currlevellen = higherlen;
     }
     fp = fopen("PDOS.IMG", "rb");
     if (fp == NULL)
