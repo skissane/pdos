@@ -34,3 +34,5 @@ CNSLPORT             3270
 01c1      3420       tapes/pctomf_bin.tdf
 01c2      3420       tapes/out.aws
 01c3      3420       tapes/ipltap.aws
+# card reader
+01d1   3505 tapes/iplcrd.dat
