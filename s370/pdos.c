@@ -3786,7 +3786,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         printf("loading to %p from %d, %d, %d\n", load,
                cyl, i, j);
 #endif
-        if (!__istape)
+        if (!__istape && !__iscard)
         {
         cnt = rdblock(pdos->ipldev, cyl, i, j, tbuf, MAXBLKSZ, 0x0e);
         }
