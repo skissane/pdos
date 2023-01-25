@@ -183,7 +183,8 @@ int main(int argc, char **argv)
     /* set the IPL PSW to point to where it is located */
     *(int *)(buf + 4) = *(int *)(buf + 8 + 8192);
     /* set number of cards to read */
-    *(int *)(buf + 12 + 8192) = (imgsize - CCHUNKSZ) / 72;
+    /* 2 extra - one in case partial data, one as an eyecatcher */
+    *(int *)(buf + 12 + 8192) = (imgsize - CCHUNKSZ) / 72 + 2;
     for (i = 0; i < CCHUNKSZ; i += 72)
     {
         writecard(buf + i * 72, fq);
@@ -194,6 +195,8 @@ int main(int argc, char **argv)
         writecard(buf, fq);
         memset(buf, '\0', 72);
     }
+    if (imgsize % 72 == 0) writecard(buf, fq);
+    writecard(buf, fq);
     fclose(fp);
 
     fp = fopen("CONFIG.SYS", "rb");
@@ -209,6 +212,8 @@ int main(int argc, char **argv)
         writecard(buf, fq);
         memset(buf, '\0', 72);
     }
+    /* this will be used to detect EOF - a record starting with x'00' */
+    writecard(buf, fq);
     fclose(fp);
 
     fp = fopen("COMMAND.EXE", "rb");
@@ -217,6 +222,12 @@ int main(int argc, char **argv)
         printf("failed to open COMMAND.EXE for reading\n");
         return (EXIT_FAILURE);
     }
+    fseek(fp, 0, SEEK_END);
+    imgsize = ftell(fp);
+    printf("imgsize is %ld\n", imgsize);
+    rewind(fp);
+    /* PDOS will need to know the image size to know when to stop reading */
+    *(int *)buf = imgsize;
     memset(buf, '\0', 72);
     while ((i = fread(buf, 1, 72, fp)) > 0)
     {
