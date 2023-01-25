@@ -201,10 +201,10 @@ int main(int argc, char **argv)
 
     i = fread(buf, 1, CCHUNKSZ, fp);
     /* set the IPL PSW to point to where it is located */
-    *(int *)(buf + 4) = *(int *)(buf + 8 + 8192);
+    *(int *)(buf + 4) = *(int *)(buf + 4 + 8192);
     /* set number of cards to read */
     /* 2 extra - one in case partial data, one as an eyecatcher */
-    *(int *)(buf + 12 + 8192) = (imgsize - CCHUNKSZ) / 72 + 2;
+    *(int *)(buf + 8 + 8192) = (imgsize - CCHUNKSZ) / 72 + 2;
     for (i = 0; i < CCHUNKSZ; i += 72)
     {
         writecard(buf + i * 72, fq);
