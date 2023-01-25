@@ -173,6 +173,7 @@ int main(int argc, char **argv)
             for (; i < 9; i++)
             {
                 minicard[i * 8 + 0] = 0x03; /* control - noop? */
+                minicard[i * 8 + 4] = 0x40; /* chain */
             }
             writecard(minicard, fq);
         }
