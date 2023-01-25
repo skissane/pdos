@@ -67,6 +67,10 @@ int main(int argc, char **argv)
     long imgsize;
     long currlevellen;
     long higherlen;
+    long loadaddr;
+    int rem;
+    long q;
+    long z;
 
     if (argc <= 1)
     {
@@ -227,7 +231,6 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     fclose(fq);
-#endif
     printf("finished writing output file\n");
     return (EXIT_SUCCESS);
 }
