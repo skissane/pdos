@@ -207,7 +207,7 @@ int main(int argc, char **argv)
     *(int *)(buf + 8 + 8192) = (imgsize - CCHUNKSZ) / 72 + 2;
     for (i = 0; i < CCHUNKSZ; i += 72)
     {
-        writecard(buf + i * 72, fq);
+        writecard(buf + i, fq);
     }
 
     while ((i = fread(buf, 1, 72, fp)) > 0)
