@@ -45,12 +45,18 @@
 #define CCWLOC 0x100000
 
 
-static char ccw[24] =
+static char ipl1[24] =
     "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* IPL PSW - not used */
     "\x02\x10\x00\x00" /* first CCW - read to address 1 MiB */
     "\x60\x00\x00\x50" /* first CCW - ignore length errors, chain, length 80 */
     "\x08\x10\x00\x00" "\x00\x00\x00\x00" /* 2nd CCW - TIC (jump) to 1 MiB */
     ;
+
+static char minicard[72];
+
+static int linectr = 1;
+
+static void writecard(char *minicard, FILE *fq);
 
 int main(int argc, char **argv)
 {
@@ -81,30 +87,8 @@ int main(int argc, char **argv)
         printf("failed to open tape %s\n", *(argv + 1));
         return (EXIT_FAILURE);
     }
-    numlevels = 0;
-    levellen = CCHUNKSZ;
-    while (levellen > 72)
-    {
-        int rem;
-
-        /* there are 9 CCWs that can fit into a card. Each
-           of those CCWs represent the ability to read 72 bytes
-           of usable data */
-        rem = levellen % (9 * 72);
-        levellen /= (9 * 72);
-        if (rem != 0)
-        {
-            /* we are dealing with bytes, and we need another full card */
-            levellen += 72;
-        }
-        numlevels++;
-    }
-    /* IPL1 has already 
-    for (level = 2; level < numlevels; level++)
-    {
-    }
     loadaddr = CCWLOC + 72;
-    currlevellen = 72; /* this is too low, and will be adjusted */
+    currlevellen = 72; /* this is too low, and will be detected */
     while (1)
     {
         if (currlevellen == CCHUNKSZ)
@@ -122,19 +106,20 @@ int main(int argc, char **argv)
                    of usable data */
                 rem = higherlen % (9 * 72);
                 q = higherlen / (9 * 72);
-                q2 = q;
                 if (rem != 0)
                 {
                     /* we are dealing with bytes, and we need another
                        full card */
-                    q2 += 72;
+                    q += 72;
                 }
-                if (q2 == currlevellen) break;
-                higherlen = q2;
+                if (q == currlevellen) break;
+                higherlen = q;
             }
-        }
-        numlevels++;
-    }
+            if (currlevellen == 72)
+            {
+                currlevellen = higherlen;
+                continue;
+            }
         }
         z = 0;
         i = 0;
@@ -162,13 +147,13 @@ int main(int argc, char **argv)
             z += 72;
             if (i == 9)
             {
-                writecard(minicard);
+                writecard(minicard, fq);
                 i = 0;
             }
         }
         if (i != 0)
         {
-            writecard(minicard);
+            writecard(minicard, fq);
         }
         if (currlevellen == CCHUNKSZ)
         {
@@ -236,4 +221,16 @@ int main(int argc, char **argv)
 #endif
     printf("finished writing output file\n");
     return (EXIT_SUCCESS);
+}
+
+static void writecard(char *minicard, FILE *fq)
+{
+    char seq[20];
+    char card[80];
+
+    sprintf(seq, "%08d", linectr++);
+    memcpy(card, minicard, 72);
+    memcpy(card + 72, seq, 8);
+    fwrite(card, 1, sizeof card, fq);
+    return;
 }
