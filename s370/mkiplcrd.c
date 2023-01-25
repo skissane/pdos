@@ -45,7 +45,7 @@
 #define CCWLOC 0x100000
 
 
-static char ipl1[24] =
+static char ipl1[72] =
     "\x00\x00\x00\x00" "\x00\x00\x00\x00" /* IPL PSW - not used */
     "\x02\x10\x00\x00" /* first CCW - read to address 1 MiB */
     "\x60\x00\x00\x50" /* first CCW - ignore length errors, chain, length 80 */
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
 
-    fwrite(ipl1, 1, sizeof ipl1, fq);
+    writecard(ipl1, fq);
 
     loadaddr = CCWLOC + 72;
     currlevellen = 72; /* this is too low, and will be detected */
