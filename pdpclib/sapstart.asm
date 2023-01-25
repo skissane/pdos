@@ -476,7 +476,7 @@ CDOTESTS DS    0H
          C     R15,=F'80'
          BNE   CSTAGE3
          C     R4,CMAXBLKS  R4=Maximum blocks to read
-         BH    CSTAGE3
+         BNL   CSTAGE3
          B     CSTAGE2B
 CSTAGE3  DS    0H
 * Go back to the original state, with I/O disabled, so that we
