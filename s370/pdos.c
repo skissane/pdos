@@ -843,6 +843,7 @@ void datoff(void);
 void daton(void);
 extern int __consdn;
 extern int __istape;
+extern int __iscard;
 
 int pdosRun(PDOS *pdos);
 void pdosDefaults(PDOS *pdos);
@@ -952,7 +953,7 @@ int pdosInit(PDOS *pdos)
 #ifndef ZARCH
     lcreg0(cr0);
 #endif
-    if (__istape)
+    if (__istape || __iscard)
     {
         /* __consdn = 0x10000;
         cons_type = 3215; */
@@ -962,7 +963,7 @@ int pdosInit(PDOS *pdos)
         printf("config.sys missing\n");
         return (0);
     }
-    if (__consdn == 0 || __istape)
+    if (__consdn == 0 || __istape || __iscard)
     {
         char tbuf[MAXBLKSZ + 2];
         int cnt;
@@ -974,6 +975,20 @@ int pdosInit(PDOS *pdos)
         /* the chances of anyone having a herc config file more
            than a block in size are like a million gazillion to one */
         if (__istape) cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
+        else if (__iscard)
+        {
+            cnt = 0;
+            while (1)
+            {
+                rdtape(pdos->ipldev, tbuf + cnt, 80);
+                if (tbuf[cnt] == '\0')
+                {
+                    cnt = strlen(tbuf);
+                    break;
+                }
+                cnt += 72;
+            }
+        }
         else
         cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
 #if DSKDEBUG
@@ -3652,8 +3667,9 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     DSCB1 dscb1;
     int pe = 0;
     int exeLen;
+    int imgsize;
 
-    if (!__istape)
+    if (!__istape && !__iscard)
     {
     /* try to find the load module's location */
     
@@ -3756,6 +3772,10 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         memcpy(load, tbuf, cnt);
         load += cnt;
     }
+    else if (__iscard)
+    {
+        imgsize = *(int *)tbuf;
+    }
     /* Note that we read until we get EOF (a zero-length block). */
     /* +++ note that we need a security check in here to ensure
        that people don't leave out an EOF to read the next guy's
@@ -3773,6 +3793,10 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         else
         {
             cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
+            if (__iscard && (cnt >= 80))
+            {
+                cnt = 72;
+            }
         }
 #if DSKDEBUG
         printf("cnt is %d\n", cnt);
@@ -3807,6 +3831,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         load += cnt;
         j++;
         if (__istape && (cnt != 18452)) break;
+        if (__iscard && (cnt >= imgsize)) break;
     }
 
     exeLen = load - initial;    
