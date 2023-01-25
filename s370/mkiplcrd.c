@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     long currlevellen;
     long higherlen;
     long loadaddr;
+    long startload;
     int rem;
     long q;
     long z;
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
     currlevellen = 72; /* this is too low, and will be detected */
     while (1)
     {
+        startload = loadaddr;
         printf("currlevellen is %d\n", currlevellen);
         if (currlevellen == CCHUNKSZ)
         {
@@ -170,11 +172,13 @@ int main(int argc, char **argv)
                noop even exists, and if it exists, whether it can be
                chained. And if it isn't chained, whether it will run on
                to the next CCW anyway. We'll start with unchained noop */
-            for (; i < 9; i++)
-            {
-                minicard[i * 8 + 0] = 0x03; /* control - noop? */
-                minicard[i * 8 + 4] = 0x40; /* chain */
-            }
+            /* control (0x03) with or without chain, does not execute
+               successfully enough to run on to the next ccw, so switching
+               to tic */
+            minicard[i * 8 + 0] = 0x08;
+            minicard[i * 8 + 1] = (startload >> 16) & 0xff;
+            minicard[i * 8 + 2] = (startload >> 8) & 0xff;
+            minicard[i * 8 + 3] = startload & 0xff;
             writecard(minicard, fq);
         }
         if (currlevellen == CCHUNKSZ)
