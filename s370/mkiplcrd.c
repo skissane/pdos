@@ -162,6 +162,18 @@ int main(int argc, char **argv)
         }
         if (i != 0)
         {
+            /* original design had this unused portion of the card
+               being overlaid. but that requires more complicated code -
+               keeping track of the higher level remainder. Neatest
+               thing is probably to put a single TIC, but getting the
+               address correct might be difficult. It is unclear whether
+               noop even exists, and if it exists, whether it can be
+               chained. And if it isn't chained, whether it will run on
+               to the next CCW anyway. We'll start with unchained noop */
+            for (; i < 9; i++)
+            {
+                minicard[i * 8 + 0] = 0x03; /* control - noop? */
+            }
             writecard(minicard, fq);
         }
         if (currlevellen == CCHUNKSZ)
