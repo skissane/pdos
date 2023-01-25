@@ -475,7 +475,7 @@ CDOTESTS DS    0H
 * an I/O error.
          C     R15,=F'80'
          BNE   CSTAGE3
-         C     R4,=A(CMAXBLKS)  R4=Maximum blocks to read
+         C     R4,CMAXBLKS  R4=Maximum blocks to read
          BH    CSTAGE3
          B     CSTAGE2B
 CSTAGE3  DS    0H
