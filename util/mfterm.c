@@ -109,7 +109,7 @@ static void negotiate(FILE *sf)
     expect(sf, "\xff\xfd\x18", 3);
 
     fseek(sf, 0, SEEK_CUR);
-    printf("writing\n");
+    /* printf("writing\n"); */
     /* IAC WILL TERM_TYPE */
     fwrite("\xff\xfb\x18", 1, 3, sf);
 
@@ -118,7 +118,7 @@ static void negotiate(FILE *sf)
     expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
 
     fseek(sf, 0, SEEK_CUR);
-    printf("writing\n");
+    /* printf("writing\n"); */
     /* IAC SB TERM_TYPE IS (ANSI) IAC SE */
     fwrite("\xff\xfa\x18\x00" "ANSI" "\xff\xf0", 1, 10, sf);
 
@@ -127,7 +127,7 @@ static void negotiate(FILE *sf)
     expect(sf, "\xff\xfb\x01", 3);
 
     fseek(sf, 0, SEEK_CUR);
-    printf("writing\n");
+    /* printf("writing\n"); */
     /* IAC DO ECHO */
     fwrite("\xff\xfd\x01", 1, 3, sf);
 
@@ -142,7 +142,7 @@ static void expect(FILE *sf, unsigned char *buf, size_t buflen)
     for (x = 0; x < buflen; x++)
     {
         c = fgetc(sf);
-        printf("c is ... %x\n", c);
+        /* printf("c is ... %x\n", c); */
         if (c != buf[x])
         {
             printf("got %x, expected %x\n", c, buf[x]);
