@@ -791,8 +791,15 @@ dasdload or dasdcopy)
    GA-22-7000-10 S/370 Principles of Operation available here:
    http://www.bitsavers.org/
    pdf/ibm/370/princOps/GA22-7000-10_370_Principles_of_Operation_Sep87.pdf
-   
-      
+
+   Note that after IPL, you can, if you wish, use format 1
+   CCWs, which allow a 31 (and possibly 32?) bit address.
+   To use format 1 you need to set bit 8 of word 1 of the ORB
+   which is documented on pages 15-24 here:
+   http://publibfp.dhe.ibm.com/epubs/pdf/a227832d.pdf
+   Note that format 0 and 1 CCWs are the same size and you
+   can't automatically detect which format is being used.
+
    Record 1 of an IPLable DASD consists of 24 bytes, plus a
    4-byte key of "IPL1".
 
