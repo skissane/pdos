@@ -383,6 +383,7 @@ static void dohelp(void)
     printf("TYPE - display contents of a file\n");
     printf("DUMPBLK - dump a block on disk\n");
     printf("ZAPBLK - zap a block on disk\n");
+    printf("NEWBLK - create a block on disk\n");
     printf("DIR - display directory\n");
     printf("SHOWRC - display return code from programs\n");
     printf("EXIT - exit operating system\n");
