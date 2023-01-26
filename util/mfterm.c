@@ -155,6 +155,7 @@ static void expect(FILE *sf, unsigned char *buf, size_t buflen)
 static void interact(FILE *sf)
 {
     int c = 0;
+    FILE *cf = NULL;
 
     while (c != EOF)
     {
@@ -171,8 +172,18 @@ static void interact(FILE *sf)
             fseek(sf, 0, SEEK_CUR);
             if (card)
             {
-                fwrite(cardbuf, 1, sizeof cardbuf, sf);
-                continue;
+                fread(cardbuf, 1, sizeof cardbuf, cf);
+                if (feof(cf))
+                {
+                    printf("finished IPL, returning to keyboard\n");
+                    fclose(cf);
+                    card = 1;
+                }
+                else
+                {
+                    fwrite(cardbuf, 1, sizeof cardbuf, sf);
+                    continue;
+                }
             }
             c = fgetc(stdin);
             /* ctrl-] brings up a menu */
@@ -197,21 +208,17 @@ static void interact(FILE *sf)
                 card = 1;
                 if (card)
                 {
-                    if (cardbuf[8] == '\0')
+                    cf = fopen("iplcrd.dat", "rb");
+                    if (cf == NULL)
                     {
-                        cardbuf[8] = 0x02;
-                        cardbuf[12] = 0x20;
-                        cardbuf[14] = 0x48;
-                        cardbuf[15] = 0x14;
+                        printf("failed to open iplcrd.dat\n");
+                        card = 0;
+                        c = fgetc(stdin);
+                        continue;
                     }
-                    else if (cardbuf[8] == 0x02)
-                    {
-                        cardbuf[1] = 0x0c;
-                        cardbuf[7] = 0x4;
-                    }
+                    fread(cardbuf, 1, sizeof cardbuf, cf);
                     fseek(sf, 0, SEEK_CUR);
                     fwrite(cardbuf, 1, sizeof cardbuf, sf);
-                    card = 0;
                     continue;
                 }
             }
