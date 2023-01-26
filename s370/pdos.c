@@ -3835,7 +3835,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         load += cnt;
         j++;
         if (__istape && (cnt != 18452)) break;
-        if (__iscard && (cnt >= imgsize)) break;
+        if (__iscard && ((load - initial) >= imgsize)) break;
     }
 
     exeLen = load - initial;    
