@@ -177,7 +177,7 @@ static void interact(FILE *sf)
                 {
                     printf("finished IPL, returning to keyboard\n");
                     fclose(cf);
-                    card = 1;
+                    card = 0;
                 }
                 else
                 {
