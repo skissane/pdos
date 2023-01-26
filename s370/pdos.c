@@ -864,6 +864,7 @@ static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
 static int pdosDumpBlk(PDOS *pdos, char *parm);
 static int pdosZapBlk(PDOS *pdos, char *parm);
+static int pdosNewBlk(PDOS *pdos, char *parm);
 static int pdosLoadExe(PDOS *pdos, char *prog, char *parm);
 static int pdosDumpMem(PDOS *pdos, void *buf, int cnt);
 #if 0
@@ -2238,6 +2239,16 @@ static void pdosProcessSVC(PDOS *pdos)
                 pdosZapBlk(pdos, parm);
             pdos->context->regs[15] = 0;
             pdos->context->regs[1] = 
+                (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
+        }
+        else if (memcmp(prog, "NEWBLK", 6) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            *pdos->context->postecb =
+                pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
+                pdosNewBlk(pdos, parm);
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[1] =
                 (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
         }
         else if (memcmp(prog, "DIR", 3) == 0)
@@ -3640,6 +3651,71 @@ static int pdosZapBlk(PDOS *pdos, char *parm)
         }
     }
     
+    return (cnt);
+}
+
+
+/* new block */
+
+static int pdosNewBlk(PDOS *pdos, char *parm)
+{
+    int cyl;
+    int head;
+    int rec;
+    char tbuf[MAXBLKSZ];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret = 0;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    long start = 0;
+    int keylen;
+    int datalen;
+    int dev;
+    int n;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%x %d %d %d %i %i",
+               &dev, &cyl, &head, &rec, &keylen, &datalen);
+    if (n != 6)
+    {
+        printf("usage: newblk dev(x) cyl(d) head(d) rec(d)"
+               " keylen(i) datalen(i)\n");
+        printf("dev of 0 will use IPL device\n");
+        return (0);
+    }
+    if (dev == 0)
+    {
+        dev = pdos->ipldev;
+    }
+    printf("creating on cylinder %d, head %d, record %d, "
+           "of device %x empty block of key length %d and data length %d\n",
+           cyl, head, rec, dev, keylen, datalen);
+    cnt = keylen + datalen + 8;
+    if (cnt > sizeof tbuf)
+    {
+        printf("too big - %d vs %d\n", cnt, sizeof tbuf);
+        return (0);
+    }
+    memset(tbuf, '\0', cnt);
+    *(short *)tbuf = cyl;
+    *(short *)(tbuf + 2) = head;
+    tbuf[4] = rec;
+    tbuf[5] = keylen;
+    *(short *)(tbuf + 6) = datalen;
+    /* rec must be one less when doing destructive write */
+    cnt = wrblock(dev, cyl, head, rec - 1, tbuf, cnt, 0x1d);
+    printf("cnt is %d, includes 8 bytes of markup\n", cnt);
+
     return (cnt);
 }
 
