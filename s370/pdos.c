@@ -960,17 +960,21 @@ int pdosInit(PDOS *pdos)
     if (__consdn == 0)
     {
         sscanf((char *)pdos->iplregs, "%x %d", &__consdn, &cons_type);
-#if defined(S390) || defined(ZARCH)
-        if ((__consdn != 0) && (__consdn < 0x10000))
-        {
-            __consdn = getssid(__consdn);
-        }
-#endif
-        if (cons_type == 0)
-        {
-            cons_type = 3270;
-        }
     }
+
+/* cover the case where they have zapped a device number
+   and convert it to SSID */
+#if defined(S390) || defined(ZARCH)
+    if ((__consdn != 0) && (__consdn < 0x10000))
+    {
+        __consdn = getssid(__consdn);
+    }
+#endif
+    if (cons_type == 0)
+    {
+        cons_type = 3270;
+    }
+
     pdos->curdev = pdos->ipldev;
 #ifndef ZARCH
     lcreg0(cr0);
