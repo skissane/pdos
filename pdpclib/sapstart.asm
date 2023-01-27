@@ -105,11 +105,12 @@ CMAXBLKS DC    F'0'   max number of cards to read
 *
 POSTIPL  DS    0H
          BALR  R12,0
+POSTIPL2 DS    0H
          LA    R12,0(R12)
-         BCTR  R12,0
-         BCTR  R12,0
-         USING POSTIPL,R12
-         S     R12,=A(POSTIPL-POSTPSA)
+*         BCTR  R12,0
+*         BCTR  R12,0
+         USING POSTIPL2,R12
+         S     R12,=A(POSTIPL2-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
          LA    R13,COMMSAVE
