@@ -94,9 +94,9 @@ ORIGIN   DS    0D
 POSTPSA  DS    0H
 *
 * Tape handler entry point for IPLing from tape
-         DC    A(TAPEPIPL)
+         DC    A(TAPEIPL)
 * Card handler entry point for IPLing from cards
-         DC    A(CARDPIPL)
+         DC    A(CARDIPL)
 CMAXBLKS DC    F'0'   max number of cards to read
 *
 * Start of our own, somewhat normal, code. Registers are not
@@ -270,14 +270,16 @@ WAITSERR DC    X'000E0000'  EC mode + Machine Check enabled + wait
          DC    A(AMBIT+X'00000444')  Severe error
 *
 * When IPLing from tape, we will use this routine instead
-TAPEPIPL DS    0H
+TAPEIPL  DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
          BALR  R12,0
+TAPEIPL2 DS    0H
          LA    R12,0(R12)
-         BCTR  R12,0
-         BCTR  R12,0
-         DROP  R12
-         USING TAPEPIPL,R12
-         S     R12,=A(TAPEPIPL-POSTPSA)
+*         BCTR  R12,0
+*         BCTR  R12,0
+         USING TAPEIPL2,R12
+         S     R12,=A(TAPEIPL2-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
          LA    R13,COMMSAVE
@@ -383,14 +385,16 @@ TRDSIZE  DS    F
 *
 *
 * When IPLing from card, we will use this routine instead
-CARDPIPL DS    0H
+CARDIPL  DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
          BALR  R12,0
+CARDIPL2 DS    0H
          LA    R12,0(R12)
-         BCTR  R12,0
-         BCTR  R12,0
-         DROP  R12
-         USING CARDPIPL,R12
-         S     R12,=A(CARDPIPL-POSTPSA)
+*         BCTR  R12,0
+*         BCTR  R12,0
+         USING CARDIPL2,R12
+         S     R12,=A(CARDIPL2-POSTPSA)
          DROP  R12
          USING POSTPSA,R12
          LA    R13,COMMSAVE
