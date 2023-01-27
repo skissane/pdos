@@ -883,6 +883,8 @@ int __consrd(int len, char *buf);
 int __c3270r(int len, char *buf);
 int __conswr(int len, char *buf, int cr);
 
+static int getssid(int devnum);
+
 static int ins_strncmp(char *one, char *two, size_t len);
 
 int main(int argc, char **argv)
@@ -1042,6 +1044,13 @@ int pdosInit(PDOS *pdos)
         }
     }
     printf("Welcome to PDOS!!!\n");
+#if 0
+    printf("IPL device is %x\n", pdos->ipldev);
+    printf("IPL device is %x\n", getdevn(pdos->ipldev));
+    printf("terminal 9 is %x\n", getssid(0x9));
+    printf("card 1d1 is %x\n", getssid(0x1d1));
+    printf("non-exists 333 is %x\n", getssid(0x333));
+#endif
 #if 0
     printf("PDOS structure is %d bytes\n", sizeof(PDOS));
     printf("free memory maybe starts at %p\n", malloc(500));
@@ -4151,6 +4160,25 @@ static int cprintf(char *format, ...)
         }
     }
     return (len);
+}
+
+static int getssid(int devnum)
+{
+    int ssid = 0x10000;
+    int tempdn;
+
+    while (1)
+    {
+        tempdn = getdevn(ssid);
+        if (tempdn == 0)
+        {
+            ssid = 0;
+            break;
+        }
+        if (tempdn == devnum) break;
+        ssid++;
+    }
+    return (ssid);
 }
 
 static int ins_strncmp(char *one, char *two, size_t len)
