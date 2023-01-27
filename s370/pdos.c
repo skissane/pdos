@@ -2106,6 +2106,12 @@ static void pdosProcessSVC(PDOS *pdos)
                 && (ins_strncmp(lastds, "tav", 3) == 0))
             {
                 gendcb->vtape = strtoul(lastds + 3, NULL, 16);
+#if defined(S390) || defined(ZARCH)
+                if ((gendcb->vtape != 0) && (gendcb->vtape < 0x10000))
+                {
+                    gendcb->vtape = getssid(gendcb->vtape);
+                }
+#endif
             }
             else if ((strchr(lastds, ':') != NULL)
                 && (ins_strncmp(lastds, "dev", 3) == 0))
@@ -2135,6 +2141,12 @@ static void pdosProcessSVC(PDOS *pdos)
                 pdos->context->regs[15] = 12; /* +++ find out
                     something sensible, and then go no further */
             }
+#if defined(S390) || defined(ZARCH)
+            if ((gendcb->gendev != 0) && (gendcb->gendev < 0x10000))
+            {
+                gendcb->gendev = getssid(gendcb->gendev);
+            }
+#endif
         }
         /* we only support RECFM=U files currently */
         /* for non-SYS files we should really get this info from
@@ -2754,6 +2766,13 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
         return (0);
     }
 
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
+
     cyl = 0;
     head = 0;
     rec = 1;
@@ -2842,10 +2861,22 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     if (strncmp(fnm, "drv", 3) == 0)
     {
         sscanf(fnm + 3, "%x", &indev);
+#if defined(S390) || defined(ZARCH)
+        if ((indev != 0) && (indev < 0x10000))
+        {
+            indev = getssid(indev);
+        }
+#endif
     }
     else if (strncmp(fnm, "tap", 3) == 0)
     {
         sscanf(fnm + 3, "%x", &intape);
+#if defined(S390) || defined(ZARCH)
+        if ((intape != 0) && (intape < 0x10000))
+        {
+            intape = getssid(intape);
+        }
+#endif
     }
 
     if (intape != 0)
@@ -3263,9 +3294,21 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
         printf("e.g. dsk2fil 10001 tap10004:\n");
         return (0);
     }
+#if defined(S390) || defined(ZARCH)
+    if ((indev != 0) && (indev < 0x10000))
+    {
+        indev = getssid(indev);
+    }
+#endif
     if (strncmp(fnm, "tap", 3) == 0)
     {
         sscanf(fnm + 3, "%x", &outdev);
+#if defined(S390) || defined(ZARCH)
+        if ((outdev != 0) && (outdev < 0x10000))
+        {
+            outdev = getssid(outdev);
+        }
+#endif
     }
 
     memset(header, '\0', sizeof header);
@@ -3571,6 +3614,12 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
     {
         dev = pdos->ipldev;
     }
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
     printf("dumping cylinder %d, head %d, record %d of device %x\n",
            cyl, head, rec, dev);
     cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
@@ -3670,6 +3719,12 @@ static int pdosZapBlk(PDOS *pdos, char *parm)
     {
         dev = pdos->ipldev;
     }
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
     printf("zapping cylinder %d, head %d, record %d, "
            "byte %X of device %x to %0.2X\n",
            cyl, head, rec, off, dev, nval);
@@ -3733,6 +3788,12 @@ static int pdosNewBlk(PDOS *pdos, char *parm)
     {
         dev = pdos->ipldev;
     }
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
     printf("creating on cylinder %d, head %d, record %d, "
            "of device %x empty block of key length %d and data length %d\n",
            cyl, head, rec, dev, keylen, datalen);
