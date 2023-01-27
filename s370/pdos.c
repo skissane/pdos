@@ -960,7 +960,7 @@ int pdosInit(PDOS *pdos)
     if (__consdn == 0)
     {
         sscanf((char *)pdos->iplregs, "%x %d", &__consdn, &cons_type);
-#ifdef ZARCH
+#if defined(S390) || defined(ZARCH)
         if ((__consdn != 0) && (__consdn < 0x10000))
         {
             __consdn = getssid(__consdn);
@@ -1037,10 +1037,9 @@ int pdosInit(PDOS *pdos)
                         || (strstr(p, "3270") != NULL)
                         || (strstr(p, "1052") != NULL))
                     {
-#if defined(S390) || defined(ZARCH)
-                        __consdn = 0x10000 + ctr;
-#else
                         sscanf(p, "%x", &__consdn);
+#if defined(S390) || defined(ZARCH)
+                        __consdn = getssid(__consdn);
 #endif
                         if (strstr(p, "3215") != NULL)
                         {
