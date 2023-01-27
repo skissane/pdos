@@ -104,6 +104,8 @@ CMAXBLKS DC    F'0'   max number of cards to read
 * register.
 *
 POSTIPL  DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
          BALR  R12,0
 POSTIPL2 DS    0H
          LA    R12,0(R12)
@@ -114,7 +116,6 @@ POSTIPL2 DS    0H
          DROP  R12
          USING POSTPSA,R12
          LA    R13,COMMSAVE
-         USING PSA,R0
 *
 * At this point, since it is post-IPL, all further interrupts
 * will occur to one of 4 locations (instead of location 0, the
