@@ -29,6 +29,10 @@ an IPL parm, e.g. on Hercules you might go:
 
 ipl 1b9 parm 019 3215
 
+If there is no override, and device 9 doesn't exist, it will
+make a final attempt to use SSID x'10000' which will probably
+work if your console is at least the lowest device number.
+
 
 Run PDOS like this:
 
