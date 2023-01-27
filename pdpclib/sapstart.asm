@@ -695,7 +695,8 @@ RDBLOCK  DS    0H
 *         TIO   0(R10)
          AGO   .RBSIO2B
 .RBSIO3B ANOP
-         LR    R1,R10       R1 needs to contain subchannel
+* R1 needs to contain subsystem identification word (aka SSID)
+         LR    R1,R10       R10 already has SSID
          LA    R9,RBIRB
          LA    R10,RBORB
          MSCH  0(R10)       Enable subchannel
