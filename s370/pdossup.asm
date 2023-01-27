@@ -322,6 +322,11 @@ ADISP    DS    0H
          USING ADISP,R12
          USING PSA,R0
 *
+* Note that we are using FLCFLA instead of FLCCRSAV because
+* on z/Arch the FLCCRSAV has been commandeered to support
+* 16-byte PSWs. FLCCRSAV was meant for control registers anyway
+*        STM   R0,R15,FLCCRSAV        Save our OS registers
+*
          STM   R0,R15,FLCFLA        Save our OS registers
          LM    R0,R15,FLCGRSAV        Load application registers
          LPSW  SVCOPSW                App returns to old PSW
