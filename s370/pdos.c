@@ -819,6 +819,7 @@ typedef struct {
     int exitcode;
     int shutdown;
     int ipldev;
+    int iplregs[17]; /* 16 registers plus an extra for NUL-terminator */
     int curdev;
     int curr_aspace; /* current address space */
 } PDOS;
@@ -952,6 +953,10 @@ int pdosInit(PDOS *pdos)
     int rec;
 
     pdos->ipldev = initsys();
+    /* The registers as they were at IPL time are stored at FLCGRSAV
+       by sapstart */
+    memcpy(pdos->iplregs, (int *)0x180, 16 * 4);
+    pdos->iplregs[16] = 0; /* effective NUL-terminator */
     pdos->curdev = pdos->ipldev;
 #ifndef ZARCH
     lcreg0(cr0);
@@ -1045,6 +1050,7 @@ int pdosInit(PDOS *pdos)
     }
     printf("Welcome to PDOS!!!\n");
 #if 0
+    printf("IPL string is %s\n", pdos->iplregs);
     printf("IPL device is %x\n", pdos->ipldev);
     printf("IPL device is %x\n", getdevn(pdos->ipldev));
     printf("terminal 9 is %x\n", getssid(0x9));
