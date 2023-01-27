@@ -17,13 +17,18 @@ http://www.hercules-390.eu/
 
 But I use the one available from:
 
-http://mvs380.sourceforge.net
+http://pdos.org
 
-You will need to zap the console device number to
-whatever device your 3270 appears as (subchannel id),
-typically x'00010000' (see zapcons.bat). Otherwise
-it will guess that exact number based on the pdos.cnf
-that became config.sys.
+
+PDOS needs to know the console to write to. It will read
+the config.sys to determine this, which by default has
+device 9 as a 3270 as the first device, so this will be
+selected. If you wish to use a different device, you can
+override the device number and optionally device type via
+an IPL parm, e.g. on Hercules you might go:
+
+ipl 1b9 parm 019 3215
+
 
 Run PDOS like this:
 
@@ -33,7 +38,7 @@ then attach a 3270 emulator
 
 then do "ipl 1b9".
 
-You can also try it on real hardware.
+It also runs on real hardware.
 
 You can instead IPL from tape, by doing:
 
