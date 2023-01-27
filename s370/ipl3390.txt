@@ -1791,3 +1791,21 @@ are in a DSCB chain that is theoretically infinite, but MVS
 imposes a limit of 16 extents total.
 
 */
+
+/*
+
+Another thing to note is that at the end of the IPL process,
+the SSID (subsystem identification word) of the IPL device is
+stored here:
+
+0000B8                             3144+FLCIOA   DS    0A -           I/O ADDRESS
+
+So it will contain something like x'10002'.
+
+Note that on a S/370 and earlier machine, that location will
+have the device number (previously known as the CUU address -
+I think because the C represents the channel number, and the
+UU is a unit within that channel) instead, ie something
+like x'1b9'.
+
+*/
