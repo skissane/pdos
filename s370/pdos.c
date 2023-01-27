@@ -957,6 +957,20 @@ int pdosInit(PDOS *pdos)
        by sapstart */
     memcpy(pdos->iplregs, (int *)0x180, 16 * 4);
     pdos->iplregs[16] = 0; /* effective NUL-terminator */
+    if (__consdn == 0)
+    {
+        sscanf((char *)pdos->iplregs, "%x %d", &__consdn, &cons_type);
+#ifdef ZARCH
+        if ((__consdn != 0) && (__consdn < 0x10000))
+        {
+            __consdn = getssid(__consdn);
+        }
+#endif
+        if (cons_type == 0)
+        {
+            cons_type = 3270;
+        }
+    }
     pdos->curdev = pdos->ipldev;
 #ifndef ZARCH
     lcreg0(cr0);
