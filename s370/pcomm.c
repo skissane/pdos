@@ -33,6 +33,7 @@ static void putPrompt(void);
 static void dotype(char *file);
 static void docopy(char *p);
 static void dofill(char *p);
+static void domemdump(char *p);
 static void dodir(char *pattern);
 static void dohelp(void);
 static void changedir(char *to);
@@ -168,6 +169,10 @@ static void processInput(void)
     else if (ins_strcmp(buf, "fill") == 0)
     {
         dofill(p);
+    }
+    else if (ins_strcmp(buf, "memdump") == 0)
+    {
+        domemdump(p);
     }
 /* for now, let PDOS handle this */
 /*    else if (ins_strcmp(buf, "dir") == 0)
@@ -371,6 +376,74 @@ static void dofill(char *p)
     return;
 }
 
+static void domemdump(char *p)
+{
+    unsigned char *addr;
+    unsigned char *endaddr;
+    char prtln[100];
+    size_t x;
+    int c;
+    int pos1;
+    int pos2;
+
+    if (*p == '\0')
+    {
+        printf("usage: memdump address or memdump address1-address2\n");
+        return;
+    }
+
+        sscanf(p, "%p", &addr);
+        endaddr = addr;
+        p = strchr(p, '-');
+        if (p != NULL)
+        {
+            sscanf(p + 1, "%p", &endaddr);
+        }
+
+        x = 0;
+        do
+        {
+            c = *addr;
+            if (x % 16 == 0)
+            {
+                memset(prtln, ' ', sizeof prtln);
+                sprintf(prtln, "%p ", addr);
+                prtln[strlen(prtln)] = ' ';
+                pos1 = 10;
+                pos2 = 47;
+            }
+            sprintf(prtln + pos1, "%0.2X", c);
+            if (isprint((unsigned char)c))
+            {
+                sprintf(prtln + pos2, "%c", c);
+            }
+            else
+            {
+                sprintf(prtln + pos2, ".");
+            }
+            pos1 += 2;
+            *(prtln + pos1) = ' ';
+            pos2++;
+            if (x % 4 == 3)
+            {
+                *(prtln + pos1++) = ' ';
+            }
+            if (x % 16 == 15)
+            {
+                printf("%s\n", prtln);
+            }
+            x++;
+          /* the while condition takes into account segmented memory where
+             the ++ could have caused a wrap back to 0 */
+        } while (addr++ != endaddr);
+        if (x % 16 != 0)
+        {
+            printf("%s\n", prtln);
+        }
+
+    return;
+}
+
 static void dodir(char *pattern)
 {
     return;
@@ -393,6 +466,8 @@ static void dohelp(void)
     printf("DISKINIT - initialize a disk (3390-1)\n");
     printf("FIL2DSK - restore a file to disk\n");
     printf("DSK2FIL - dump a disk to a file\n");
+    printf("MEMDUMP - display memory\n");
+    printf("MEMTEST - test writing to memory either side of 2 GiB\n");
     printf("anything else will be assumed to be a .EXE program\n");
     return;
 }
