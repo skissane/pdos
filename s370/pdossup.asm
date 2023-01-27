@@ -638,6 +638,37 @@ CURRMASK DS    C
 *
 **********************************************************************
 *                                                                    *
+*  GETDEVN - get device number from an SSID                          *
+*                                                                    *
+*  parameter 1 = SSID                                                *
+*                                                                    *
+*  returns either device number or 0 if error                        *
+*                                                                    *
+**********************************************************************
+         ENTRY GETDEVN
+GETDEVN  DS    0H
+         SAVE  (14,12),,GETDEVN
+         LR    R12,R15
+         USING GETDEVN,R12
+*
+         L     R1,0(R1)    Get parameter one into R1
+* R1 needs to contain subsystem identification word (aka SSID)
+         LA    R15,0
+         STSCH DNSCHIB
+         BNZ   DNRET
+         ICM   R15,B'0011',DNSCHIB+6
+*
+DNRET    DS    0H
+         RETURN (14,12),RC=(15)
+         LTORG
+* SCHIB (Subchannel-Information Block) seems to be 13 fullwords
+DNSCHIB  DS    13F
+         DROP  ,
+*
+*
+*
+**********************************************************************
+*                                                                    *
 *  WRTAPE - write a block to tape                                    *
 *                                                                    *
 *  parameter 1 = device                                              *
