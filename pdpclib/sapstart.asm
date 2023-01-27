@@ -699,6 +699,9 @@ RDBLOCK  DS    0H
          LR    R1,R10       R10 already has SSID
          LA    R9,RBIRB
          LA    R10,RBORB
+* MSCH is supposed to be pointing to a SCHIB, not a
+* ORB, but I think this is working anyway because most stuff
+* in the SCHIB is ignored.
          MSCH  0(R10)       Enable subchannel
          TSCH  0(R9)        Clear pending interrupts
          SSCH  0(R10)
