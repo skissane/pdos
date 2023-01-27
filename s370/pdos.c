@@ -1044,6 +1044,10 @@ int pdosInit(PDOS *pdos)
                         sscanf(p, "%x", &__consdn);
 #if defined(S390) || defined(ZARCH)
                         __consdn = getssid(__consdn);
+                        if (__consdn == 0)
+                        {
+                            __consdn = 0x10000;
+                        }
 #endif
                         if (strstr(p, "3215") != NULL)
                         {
