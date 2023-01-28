@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     if (argc <= 1)
     {
         printf("usage: mkiplcrd <output file>\n");
-        printf("e.g. mkiplcrd dev10004:\n");
+        printf("e.g. mkiplcrd dev1c2:\n");
         return (EXIT_FAILURE);
     }
     buf = malloc(18432);

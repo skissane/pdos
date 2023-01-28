@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     if (argc <= 1)
     {
         printf("usage: mkipltap <vtape>\n");
-        printf("e.g. mkipltap tav10004:\n");
+        printf("e.g. mkipltap tav1c2:\n");
         printf("note - must be tav not tap\n");
         printf("tav auto-converts V to U\n");
         return (EXIT_FAILURE);
