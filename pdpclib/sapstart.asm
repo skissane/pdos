@@ -417,10 +417,6 @@ ST4PSW   DC    A(X'000C0000'+AM64BIT)
 * block to the startup routine, with various bits of information
 * for it to interpret.
 STAGE4   DS    0H
-         BALR  R12,0
-         BCTR  R12,0
-         BCTR  R12,0
-         USING STAGE4,R12
 * Since our program is less than 0.5 MB, set the stack at
 * location 0.5 MB. Note that the other thing to worry about
 * is the heap, which is set here, and returned in the sapsupa 
