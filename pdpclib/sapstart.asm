@@ -294,10 +294,6 @@ DOTESTS  DS    0H
          C     R4,=A(MAXBLKS)  R4=Maximum blocks to read
          BH    STAGE3
          B     STAGE2B
-STAGE3   DS    0H
-* Go back to the original state, with I/O disabled, so that we
-* don't get any more noise unless explicitly requested
-         LPSW  ST4PSW
 PARMLST2 DS    0F
 READDEV  DS    F
 READCYL  DS    F
@@ -307,16 +303,6 @@ READBUF  DS    A
 READSIZE DS    F
 READCC   DC    A(X'0E')  key + data command code
 SAVEAR2  DS    18F
-         DS    0D
-         AIF   ('&XSYS' EQ 'ZARCH').ZST4
-ST4PSW   DC    A(X'000C0000')
-         DC    A(AMBIT+STAGE4)
-         AGO   .ZST4A
-*
-.ZST4    ANOP
-ST4PSW   DC    A(X'000C0000'+AM64BIT)
-         DC    A(AMBIT+STAGE4)
-.ZST4A   ANOP
 *
 *
 *
@@ -345,22 +331,18 @@ TFRSTERR DS    0H
          BALR  R14,R15
 TDOTESTS DS    0H
          LTR   R15,R15
-         BZ    TSTAGE3
-         BM    TSTAGE3
+         BZ    STAGE3
+         BM    STAGE3
 *
          A     R5,=A(CHUNKSZ)
          LA    R4,1(R4)
 * We want to read up until we have a short block, or
 * an I/O error.
          C     R15,=F'18452'
-         BNE   TSTAGE3
+         BNE   STAGE3
 *         C     R4,=A(MAXBLKS)  R4=Maximum blocks to read
-*         BH    TSTAGE3
+*         BH    STAGE3
          B     TSTAGE2B
-TSTAGE3  DS    0H
-* Go back to the original state, with I/O disabled, so that we
-* don't get any more noise unless explicitly requested
-         LPSW  ST4PSW
 TPARMLST DS    0F
 TRDDEV   DS    F
 TRDBUF   DS    A
@@ -395,23 +377,36 @@ CFRSTERR DS    0H
          BALR  R14,R15
 CDOTESTS DS    0H
          LTR   R15,R15
-         BZ    CSTAGE3
-         BM    CSTAGE3
+         BZ    STAGE3
+         BM    STAGE3
 *
          A     R5,=F'72'    we ignore the sequence numbers
          LA    R4,1(R4)
 * We want to read up until we have a short block, or
 * an I/O error.
          C     R15,=F'80'
-         BNE   CSTAGE3
+         BNE   STAGE3
          CR    R4,R6   R6 = CMAXBLKS = Maximum blocks to read
-         BNL   CSTAGE3
+         BNL   STAGE3
          B     CSTAGE2B
-CSTAGE3  DS    0H
+         LTORG
+*
+*
+*
+STAGE3   DS    0H
 * Go back to the original state, with I/O disabled, so that we
 * don't get any more noise unless explicitly requested
          LPSW  ST4PSW
-         LTORG
+         DS    0D
+         AIF   ('&XSYS' EQ 'ZARCH').ZST4
+ST4PSW   DC    A(X'000C0000')
+         DC    A(AMBIT+STAGE4)
+         AGO   .ZST4A
+*
+.ZST4    ANOP
+ST4PSW   DC    A(X'000C0000'+AM64BIT)
+         DC    A(AMBIT+STAGE4)
+.ZST4A   ANOP
 *
 *
 *
