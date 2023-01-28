@@ -52,15 +52,15 @@ If you IPL from tape, you don't need to have a disk
 available, but if you do, you can experiment like this:
 
 ipl 1c3
-dumpblk 10001 0 0 3
+dumpblk 1b1 0 0 3
 (to see if there is a VOL1 label)
-diskinit 10001
+diskinit 1b1
 (initialize the disk)
-dumpblk 10001 0 0 3
+dumpblk 1b1 0 0 3
 (the label should be gone now, it's a blank disk)
-fil2dsk tap10003: 10001
+fil2dsk tap1c1: 1b1
 (restores a 3390 disk image from tape to disk)
-dumpblk 10001 0 0 3
+dumpblk 1b1 0 0 3
 (you should now see a VOL1 label)
 shutdown and
 ipl 1b1
@@ -110,7 +110,7 @@ Then when Hercules starts:
 copy out.aws while it is still empty
 startterm
 ipl 1b9
-mkipltap tav10004:
+mkipltap tav1c2:
 (note - it needs to be tav, not tap, because mkipltap writes
 RDWs, and z/PDOS needs to know to convert those into RECFM=U
 blocks)
@@ -122,7 +122,7 @@ manually inspect the pdos00.ckd to make sure zapcons.bat is accurate
 scratch.cckd was copied from a previous run of doit.bat
 
 You can create an AWS tape with the disk image by:
-dsk2fil 10002 tap10004:
+dsk2fil 1b9 tap1c2:
 
-But you don't need to do that, because tap10003 points to
+But you don't need to do that, because tap1c1: points to
 the actual disk image already, making it a valid tape.

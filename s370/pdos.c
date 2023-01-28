@@ -2762,7 +2762,7 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
     if (n < 1)
     {
         printf("usage: diskinit dev(x)\n");
-        printf("e.g. diskinit 10001\n");
+        printf("e.g. diskinit 1b1\n");
         return (0);
     }
 
@@ -2852,9 +2852,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
     if (n < 2)
     {
         printf("usage: fil2dsk fnm dev(x)\n");
-        printf("e.g. fil2dsk drv10002: 10001\n");
+        printf("e.g. fil2dsk drv1b9: 1b1\n");
         printf("(for disk to disk copy)\n");
-        printf("e.g. fil2dsk tap10003: 10001\n");
+        printf("e.g. fil2dsk tap1c1: 1b1\n");
         printf("(for tape to disk copy)\n");
         return (0);
     }
@@ -3291,7 +3291,7 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
     if (n < 2)
     {
         printf("usage: dsk2fil dev(x) fnm\n");
-        printf("e.g. dsk2fil 10001 tap10004:\n");
+        printf("e.g. dsk2fil 1b1 tap1c2:\n");
         return (0);
     }
 #if defined(S390) || defined(ZARCH)
