@@ -107,15 +107,57 @@ POSTIPL  DS    0H
          USING PSA,R0
          STM    R0,R15,FLCGRSAV
          BALR  R12,0
-POSTIPL2 DS    0H
+         USING *,R12
          LA    R12,0(R12)
-*         BCTR  R12,0
-*         BCTR  R12,0
-         USING POSTIPL2,R12
-         S     R12,=A(POSTIPL2-POSTPSA)
-         DROP  R12
-         USING POSTPSA,R12
+         L     R15,=A(COMMCONT)
+         BR    R15
+         LTORG
+         DROP  ,
+*
+*
+*
+* When IPLing from tape, this is the entry point instead
+*
+TAPEIPL  DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
+         BALR  R12,0
+         USING *,R12
+         LA    R12,0(R12)
+         LA    R4,1
+         L     R5,=A(@@ISTAPE)
+         ST    R4,0(R5)
+         L     R15,=A(COMMCONT)
+         BR    R15
+         LTORG
+         DROP  ,
+*
+*
+*
+* When IPLing from card, this is the entry point instead
+*
+CARDIPL  DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
+         BALR  R12,0
+         USING *,R12
+         LA    R12,0(R12)
+         LA    R4,1
+         L     R5,=A(@@ISCARD)
+         ST    R4,0(R5)
+         L     R15,=A(COMMCONT)
+         BR    R15
+         LTORG
+         DROP  ,
+*
+*
+*
+COMMCONT DS    0H
+         LR    R12,R15
+         USING COMMCONT,R12
          LA    R13,COMMSAVE
+*
+         USING PSA,R0
 *
 * At this point, since it is post-IPL, all further interrupts
 * will occur to one of 4 locations (instead of location 0, the
@@ -201,6 +243,16 @@ WAITER4  DC    A(X'00060000'+AM64BIT)
 COMMSAVE DC    18F'0'
 *
 STAGE2   DS    0H
+         L     R5,=A(@@ISTAPE)
+         L     R4,0(R5)
+         LTR   R4,R4
+         BNZ   TSTAGE2
+*
+         L     R5,=A(@@ISCARD)
+         L     R4,0(R5)
+         LTR   R4,R4
+         BNZ   CSTAGE2
+*
          LA    R1,PARMLST2
          LA    R13,SAVEAR2
          ST    R10,READDEV
@@ -266,75 +318,12 @@ ST4PSW   DC    A(X'000C0000'+AM64BIT)
          DC    A(AMBIT+STAGE4)
 .ZST4A   ANOP
 *
-WAITSERR DC    X'000E0000'  EC mode + Machine Check enabled + wait
-         DC    A(AMBIT+X'00000444')  Severe error
-*
-* When IPLing from tape, we will use this routine instead
-TAPEIPL  DS    0H
-         USING PSA,R0
-         STM    R0,R15,FLCGRSAV
-         BALR  R12,0
-TAPEIPL2 DS    0H
-         LA    R12,0(R12)
-*         BCTR  R12,0
-*         BCTR  R12,0
-         USING TAPEIPL2,R12
-         S     R12,=A(TAPEIPL2-POSTPSA)
-         DROP  R12
-         USING POSTPSA,R12
-         LA    R13,COMMSAVE
-         USING PSA,R0
-*         LA    R6,6
-*TTLOOP   B     TTLOOP
 *
 *
 *
-* this code was copied from above, and should instead be put
-* into a subroutine.
 *
 *
-* At this point, since it is post-IPL, all further interrupts
-* will occur to one of 4 locations (instead of location 0, the
-* IPL newpsw). Although we are only expecting, and only need,
-* the I/O interrupts, we set "dummy" values for the others in
-* case something unexpected happens, to give us some visibility
-* into the problem.
-*
-         AIF ('&XSYS' EQ 'ZARCH').TSW64
-         MVC   FLCINPSW(8),WAITER4
-         MVC   FLCMNPSW(8),WAITER1
-         MVC   FLCSNPSW(8),WAITER2
-         MVC   FLCPNPSW(8),WAITER3
-         AGO .TSW64B
-.TSW64   ANOP
-*
-* Activate z/Arch (code taken from UDOS)
-*
-         LA    R1,1   Magic number for z/Arch
-         SIGP  R1,0,18   Ignore any error from this
-* Adding 1 will activate AM64
-         LA    R2,TPIPLZ+1
-         AIF ('&ZAM64' NE 'YES').TNOBSM
-         BSM   R0,R2
-.TNOBSM  ANOP
-TPIPLZ   DS    0H
-         MVC   FLCEINPW(16),WAITER4
-         MVC   FLCEMNPW(16),WAITER1
-         MVC   FLCESNPW(16),WAITER2
-         MVC   FLCEPNPW(16),WAITER3
-.TSW64B  ANOP
-* Save IPL address in R10
-         SLR   R10,R10
-         ICM   R10,B'1111',FLCIOA
-         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').TSIO31A
-         LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
-.TSIO31A ANOP
-         B     TSTAGE2
-         LTORG
-*
-*
-* end of copied code
-*
+* Read the rest of the standalone program from tape
 *
 TSTAGE2  DS    0H
          LA    R1,TPARMLST
@@ -371,9 +360,6 @@ TDOTESTS DS    0H
 TSTAGE3  DS    0H
 * Go back to the original state, with I/O disabled, so that we
 * don't get any more noise unless explicitly requested
-*FFLOOP   B     FFLOOP
-         LA    R4,1
-         ST    R4,@@ISTAPE
          LPSW  ST4PSW
 TPARMLST DS    0F
 TRDDEV   DS    F
@@ -384,74 +370,9 @@ TRDSIZE  DS    F
 *
 *
 *
-* When IPLing from card, we will use this routine instead
-CARDIPL  DS    0H
-         USING PSA,R0
-         STM    R0,R15,FLCGRSAV
-         BALR  R12,0
-CARDIPL2 DS    0H
-         LA    R12,0(R12)
-*         BCTR  R12,0
-*         BCTR  R12,0
-         USING CARDIPL2,R12
-         S     R12,=A(CARDIPL2-POSTPSA)
-         DROP  R12
-         USING POSTPSA,R12
-         LA    R13,COMMSAVE
-         USING PSA,R0
-*         LA    R6,6
-*TTLOOP   B     TTLOOP
 *
 *
-*
-* this code was copied from above, and should instead be put
-* into a subroutine.
-*
-*
-* At this point, since it is post-IPL, all further interrupts
-* will occur to one of 4 locations (instead of location 0, the
-* IPL newpsw). Although we are only expecting, and only need,
-* the I/O interrupts, we set "dummy" values for the others in
-* case something unexpected happens, to give us some visibility
-* into the problem.
-*
-         AIF ('&XSYS' EQ 'ZARCH').CSW64
-         MVC   FLCINPSW(8),WAITER4
-         MVC   FLCMNPSW(8),WAITER1
-         MVC   FLCSNPSW(8),WAITER2
-         MVC   FLCPNPSW(8),WAITER3
-         AGO .CSW64B
-.CSW64   ANOP
-*
-* Activate z/Arch (code taken from UDOS)
-*
-         LA    R1,1   Magic number for z/Arch
-         SIGP  R1,0,18   Ignore any error from this
-* Adding 1 will activate AM64
-         LA    R2,CPIPLZ+1
-         AIF ('&ZAM64' NE 'YES').CNOBSM
-         BSM   R0,R2
-.CNOBSM  ANOP
-CPIPLZ   DS    0H
-         MVC   FLCEINPW(16),WAITER4
-         MVC   FLCEMNPW(16),WAITER1
-         MVC   FLCESNPW(16),WAITER2
-         MVC   FLCEPNPW(16),WAITER3
-.CSW64B  ANOP
-* Save IPL address in R10
-         SLR   R10,R10
-         ICM   R10,B'1111',FLCIOA
-         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').CSIO31A
-         LCTL  6,6,ALLIOINT CR6 needs to enable all interrupts
-.CSIO31A ANOP
-         B     CSTAGE2
-         LTORG
-*
-*
-* end of copied code
-*
-*
-* We share the tape read routine and parameters
+* Cards share the tape read routine and parameters
 CSTAGE2  DS    0H
          LA    R1,TPARMLST
          LA    R13,SAVEAR2
@@ -460,6 +381,8 @@ CSTAGE2  DS    0H
          ST    R8,TRDSIZE
          LA    R4,0         R4 = Number of blocks read so far
          L     R5,=A(CCHUNKSZ) Current address
+         L     R6,=A(CMAXBLKS)
+         L     R6,0(R6)
 CSTAGE2B DS    0H
          ST    R5,TRDBUF
          L     R15,=A(RDTAPE)
@@ -481,15 +404,12 @@ CDOTESTS DS    0H
 * an I/O error.
          C     R15,=F'80'
          BNE   CSTAGE3
-         C     R4,CMAXBLKS  R4=Maximum blocks to read
+         CR    R4,R6   R6 = CMAXBLKS = Maximum blocks to read
          BNL   CSTAGE3
          B     CSTAGE2B
 CSTAGE3  DS    0H
 * Go back to the original state, with I/O disabled, so that we
 * don't get any more noise unless explicitly requested
-*FFLOOP   B     FFLOOP
-         LA    R4,1
-         ST    R4,@@ISCARD
          LPSW  ST4PSW
          LTORG
 *
@@ -502,6 +422,10 @@ CSTAGE3  DS    0H
 * block to the startup routine, with various bits of information
 * for it to interpret.
 STAGE4   DS    0H
+         BALR  R12,0
+         BCTR  R12,0
+         BCTR  R12,0
+         USING STAGE4,R12
 * Since our program is less than 0.5 MB, set the stack at
 * location 0.5 MB. Note that the other thing to worry about
 * is the heap, which is set here, and returned in the sapsupa 
@@ -519,6 +443,10 @@ STAGE4   DS    0H
 * If they're dumb enough to return, load an error wait state
          LPSW  WAITSERR
          LTORG
+         DS    0D
+WAITSERR DC    X'000E0000'  EC mode + Machine Check enabled + wait
+         DC    A(AMBIT+X'00000444')  Severe error
+*
          ENTRY @@ISTAPE
 @@ISTAPE DC    F'0'
          ENTRY @@ISCARD
