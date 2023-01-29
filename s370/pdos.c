@@ -831,6 +831,7 @@ static IOB geniob; /* +++ move this somewhere */
 static char lastds[FILENAME_MAX]; /* needs to be in TIOT */
 static int memid = 256; /* this really belongs in the address space */
 static int cons_type = 3270; /* do we have a 1052 or 3215? */
+static char *ramdisk = NULL;
 
 void gotret(void);
 int adisp(void);
@@ -866,6 +867,7 @@ static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
 static int pdosDumpBlk(PDOS *pdos, char *parm);
 static int pdosZapBlk(PDOS *pdos, char *parm);
 static int pdosNewBlk(PDOS *pdos, char *parm);
+static int pdosRamDisk(PDOS *pdos, char *parm);
 static int pdosLoadExe(PDOS *pdos, char *prog, char *parm);
 static int pdosDumpMem(PDOS *pdos, void *buf, int cnt);
 #if 0
@@ -2295,6 +2297,16 @@ static void pdosProcessSVC(PDOS *pdos)
             *pdos->context->postecb =
                 pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
                 pdosNewBlk(pdos, parm);
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[1] =
+                (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
+        }
+        else if (memcmp(prog, "RAMDISK", 7) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            *pdos->context->postecb =
+                pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
+                pdosRamDisk(pdos, parm);
             pdos->context->regs[15] = 0;
             pdos->context->regs[1] =
                 (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
@@ -3814,6 +3826,47 @@ static int pdosNewBlk(PDOS *pdos, char *parm)
     printf("cnt is %d, includes 8 bytes of markup\n", cnt);
 
     return (cnt);
+}
+
+
+/* Create a ramdisk */
+
+static int pdosRamDisk(PDOS *pdos, char *parm)
+{
+    int cyl;
+    int head;
+    char *p;
+
+#if defined(ZARCH)
+    ramdisk = memmgrAllocate(&pdos->aspaces[pdos->curr_aspace].o.atlmem,
+                             948810752L, 0);
+#endif
+    if (ramdisk == NULL)
+    {
+        printf("insufficient memory\n");
+        return (-1);
+    }
+    p = ramdisk;
+    memcpy(p, "\x43\x4B\x44\x5F\x50\x33\x37\x30"
+              "\x0F\x00\x00\x00\x00\xDE\x00\x00\x90", 0x11);
+
+    p = ramdisk + 0x200;
+    for (cyl = 0; cyl < 1113; cyl++)
+    {
+        for (head = 0; head < 15; head++)
+        {
+            *(short *)(p + 1) = cyl;
+            *(short *)(p + 3) = head;
+            *(short *)(p + 5) = cyl;
+            *(short *)(p + 7) = head;
+            *(char *)(p + 0xc) = 8;
+            memcpy(p + 0x15, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 8);
+            p += 0xde00;
+        }
+    }
+    pdos->ipldev = 0x20000;
+    printf("ramdisk initialized and known as device 20000\n");
+    return (0);
 }
 
 
