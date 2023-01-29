@@ -831,7 +831,7 @@ static IOB geniob; /* +++ move this somewhere */
 static char lastds[FILENAME_MAX]; /* needs to be in TIOT */
 static int memid = 256; /* this really belongs in the address space */
 static int cons_type = 3270; /* do we have a 1052 or 3215? */
-static char *ramdisk = NULL;
+static unsigned char *ramdisk = NULL;
 
 void gotret(void);
 int adisp(void);
@@ -4346,7 +4346,7 @@ static int int_wrblock(int dev, int cyl, int head, int rec,
     {
         return ((wrblock)(dev, cyl, head, rec, buf, len, cmd));
     }
-    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * head * cyl + 0x15;
+    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * 15 * cyl + 0x15;
     start = p;
     curr = 0; /* currently positioned after record 0 */
     while (curr < rec)
@@ -4389,7 +4389,7 @@ int int_rdblock(int dev, int cyl, int head, int rec,
     {
         return ((rdblock)(dev, cyl, head, rec, buf, len, cmd));
     }
-    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * head * cyl + 0x15;
+    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * 15 * cyl + 0x15;
     start = p;
     curr = 0; /* currently positioned after record 0 */
     while (curr < (rec - 1))
