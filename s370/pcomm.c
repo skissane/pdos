@@ -457,6 +457,7 @@ static void dohelp(void)
     printf("DUMPBLK - dump a block on disk\n");
     printf("ZAPBLK - zap a block on disk\n");
     printf("NEWBLK - create a block on disk\n");
+    printf("RAMDISK - create a ramdisk (but lose IPL disk)\n");
     printf("DIR - display directory\n");
     printf("SHOWRC - display return code from programs\n");
     printf("EXIT - exit operating system\n");
