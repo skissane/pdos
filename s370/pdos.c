@@ -4349,7 +4349,7 @@ static int int_wrblock(int dev, int cyl, int head, int rec,
     p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * head * cyl + 0x15;
     start = p;
     curr = 0; /* currently positioned after record 0 */
-    while (rec < curr)
+    while (curr < rec)
     {
         /* if we've reached the end of the track, it's an error */
         if (*(unsigned short *)p == 0xffff)
@@ -4357,6 +4357,7 @@ static int int_wrblock(int dev, int cyl, int head, int rec,
             return (-1);
         }
         p += p[5] + *(unsigned short *)(p + 6) + 8;
+        curr++;
     }
     /* this algorithm is probably wrong, but probably good enough */
     if ((p + len) > (start + (18452 + 8) * 3))
@@ -4379,11 +4380,39 @@ static int int_wrblock(int dev, int cyl, int head, int rec,
 int int_rdblock(int dev, int cyl, int head, int rec,
                 void *buf, int len, int cmd)
 {
+    unsigned char *p;
+    int curr;
+    unsigned char *start;
+    int len2;
+
     if (dev != 0x20000)
     {
         return ((rdblock)(dev, cyl, head, rec, buf, len, cmd));
     }
-    return (-1);
+    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * head * cyl + 0x15;
+    start = p;
+    curr = 0; /* currently positioned after record 0 */
+    while (curr < (rec - 1))
+    {
+        /* if we've reached the end of the track, it's an error */
+        if (*(unsigned short *)p == 0xffff)
+        {
+            return (-1);
+        }
+        p += p[5] + *(unsigned short *)(p + 6) + 8;
+        curr++;
+    }
+    /* we should be positioned correctly. If not, it's an error */
+    if (*(short *)p != cyl) return (-1);
+    if (*(short *)(p + 2) != head) return (-1);
+    if (*(short *)(p + 4) != rec) return (-1);
+    len2 = p[5] + *(unsigned short *)(p + 6);
+    if (len2 > len)
+    {
+        len2 = len;
+    }
+    memcpy(buf, p + 8, len2);
+    return (len2);
 }
 
 static int ins_strncmp(char *one, char *two, size_t len)
