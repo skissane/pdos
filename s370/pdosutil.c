@@ -18,6 +18,12 @@
 
 #define MAXBLKSZ 32767
 
+int int_rdblock(int dev, int cyl, int head, int rec,
+                void *buf, int len, int cmd);
+
+#define rdblock(dev, cyl, head, rec, buf, len, cmd) \
+    int_rdblock(dev, cyl, head, rec, buf, len, cmd)
+
 
 /* find a file on disk */
 /* 0 = success, else negative return code */
