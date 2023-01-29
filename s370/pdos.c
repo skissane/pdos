@@ -4392,6 +4392,7 @@ int int_rdblock(int dev, int cyl, int head, int rec,
     p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * 15 * cyl + 0x15;
     start = p;
     curr = 0; /* currently positioned after record 0 */
+    if (cmd == 0x1e) rec++; /* bit of a kludge */
     while (curr < (rec - 1))
     {
         /* if we've reached the end of the track, it's an error */
@@ -4407,11 +4408,17 @@ int int_rdblock(int dev, int cyl, int head, int rec,
     if (*(short *)(p + 2) != head) return (-1);
     if (*(unsigned char *)(p + 4) != rec) return (-1);
     len2 = p[5] + *(unsigned short *)(p + 6);
+    p += 8;
+    if (cmd == 0x1e)
+    {
+        len2 += 8;
+        p -= 8;
+    }
     if (len2 > len)
     {
         len2 = len;
     }
-    memcpy(buf, p + 8, len2);
+    memcpy(buf, p, len2);
     return (len2);
 }
 
