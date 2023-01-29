@@ -33,6 +33,9 @@
 #include "pdosutil.h"
 
 
+int rdblock(int dev, int cyl, int head, int rec, void *buf, int len, int cmd);
+
+
 static char buf[40000];
 
 #define CHUNKSZ 18452
@@ -137,4 +140,14 @@ int main(int argc, char **argv)
     printf("and %x %x %x %x\n", buf[4], buf[5], buf[6], buf[7]);
 #endif
     return (0);
+}
+
+int int_rdblock(int dev, int cyl, int head, int rec,
+                void *buf, int len, int cmd)
+{
+    if (dev != 0x20000)
+    {
+        return ((rdblock)(dev, cyl, head, rec, buf, len, cmd));
+    }
+    return (-1);
 }
