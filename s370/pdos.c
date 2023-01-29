@@ -4405,7 +4405,7 @@ int int_rdblock(int dev, int cyl, int head, int rec,
     /* we should be positioned correctly. If not, it's an error */
     if (*(short *)p != cyl) return (-1);
     if (*(short *)(p + 2) != head) return (-1);
-    if (*(short *)(p + 4) != rec) return (-1);
+    if (*(unsigned char *)(p + 4) != rec) return (-1);
     len2 = p[5] + *(unsigned short *)(p + 6);
     if (len2 > len)
     {
