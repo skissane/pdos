@@ -4338,7 +4338,6 @@ static int getssid(int devnum)
 static int int_wrblock(int dev, int cyl, int head, int rec,
                        void *buf, int len, int cmd)
 {
-    printf("internal write to %x\n", dev);
     if (dev != 0x20000)
     {
         return ((wrblock)(dev, cyl, head, rec, buf, len, cmd));
