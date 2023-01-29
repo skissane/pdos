@@ -846,6 +846,8 @@ void daton(void);
 extern int __consdn;
 extern int __istape;
 extern int __iscard;
+int wrblock(int dev, int cyl, int head, int rec, void *buf, int len, int cmd);
+int rdblock(int dev, int cyl, int head, int rec, void *buf, int len, int cmd);
 
 int pdosRun(PDOS *pdos);
 void pdosDefaults(PDOS *pdos);
@@ -888,7 +890,18 @@ int __conswr(int len, char *buf, int cr);
 
 static int getssid(int devnum);
 
+static int int_wrblock(int dev, int cyl, int head, int rec,
+                       void *buf, int len, int cmd);
+int int_rdblock(int dev, int cyl, int head, int rec,
+                void *buf, int len, int cmd);
+
 static int ins_strncmp(char *one, char *two, size_t len);
+
+#define wrblock(dev, cyl, head, rec, buf, len, cmd) \
+    int_wrblock(dev, cyl, head, rec, buf, len, cmd)
+
+#define rdblock(dev, cyl, head, rec, buf, len, cmd) \
+    int_rdblock(dev, cyl, head, rec, buf, len, cmd)
 
 int main(int argc, char **argv)
 {
@@ -3864,7 +3877,7 @@ static int pdosRamDisk(PDOS *pdos, char *parm)
             p += 0xde00;
         }
     }
-    pdos->ipldev = 0x20000;
+    pdos->ipldev = pdos->curdev = 0x20000;
     printf("ramdisk initialized and known as device 20000\n");
     return (0);
 }
@@ -4320,6 +4333,35 @@ static int getssid(int devnum)
         ssid++;
     }
     return (ssid);
+}
+
+static int int_wrblock(int dev, int cyl, int head, int rec,
+                       void *buf, int len, int cmd)
+{
+    printf("internal write to %x\n", dev);
+    if (dev != 0x20000)
+    {
+        return ((wrblock)(dev, cyl, head, rec, buf, len, cmd));
+    }
+    return (-1);
+}
+
+/* instead of defining this internal rdblock in two places
+   (the other place pload.c) we could instead rename the
+   assembler routine to say ARDBLOCK and then define rdblock
+   as a C function in pdosutil. But at the moment that will
+   lose the ability to do printf. Even at the moment, you
+   can only do printf if you override the console device
+   number and type with an IPL parameter */
+
+int int_rdblock(int dev, int cyl, int head, int rec,
+                void *buf, int len, int cmd)
+{
+    if (dev != 0x20000)
+    {
+        return ((rdblock)(dev, cyl, head, rec, buf, len, cmd));
+    }
+    return (-1);
 }
 
 static int ins_strncmp(char *one, char *two, size_t len)
