@@ -4338,11 +4338,34 @@ static int getssid(int devnum)
 static int int_wrblock(int dev, int cyl, int head, int rec,
                        void *buf, int len, int cmd)
 {
+    unsigned char *p;
+    int curr;
+    unsigned char *start;
+
     if (dev != 0x20000)
     {
         return ((wrblock)(dev, cyl, head, rec, buf, len, cmd));
     }
-    return (-1);
+    p = ramdisk + 0x200 + 0xde00 * head + 0xde00 * head * cyl + 0x15;
+    start = p;
+    curr = 0; /* currently positioned after record 0 */
+    while (rec < curr)
+    {
+        /* if we've reached the end of the track, it's an error */
+        if (*(unsigned short *)p == 0xffff)
+        {
+            return (-1);
+        }
+        p += p[5] + *(unsigned short *)(p + 6) + 8;
+    }
+    /* this algorithm is probably wrong, but probably good enough */
+    if ((p + len) > (start + (18452 + 8) * 3))
+    {
+        return (-1);
+    }
+    memcpy(p, buf, len);
+    memcpy(p + len, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 8);
+    return (len);
 }
 
 /* instead of defining this internal rdblock in two places
