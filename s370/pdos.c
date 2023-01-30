@@ -2616,6 +2616,27 @@ static void pdosSVC99(PDOS *pdos)
             pdos->context->regs[15] = 0;
             pdos->context->regs[0] = 0;
         }
+        /* and normal tapes */
+        else if ((strchr(lastds, ':') != NULL)
+                 && (ins_strncmp(lastds, "tap", 3) == 0))
+        {
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[0] = 0;
+        }
+        /* and cards */
+        else if ((strchr(lastds, ':') != NULL)
+                 && (ins_strncmp(lastds, "crd", 3) == 0))
+        {
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[0] = 0;
+        }
+        /* and generic devices */
+        else if ((strchr(lastds, ':') != NULL)
+                 && (ins_strncmp(lastds, "dev", 3) == 0))
+        {
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[0] = 0;
+        }
         else if (new == -1)
         {
             pdos->context->regs[15] = 12;
