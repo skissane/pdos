@@ -33,6 +33,7 @@ static void putPrompt(void);
 static void dotype(char *file);
 static void docopy(char *p);
 static void dofill(char *p);
+static void mkiplmem(char *p);
 static void domemdump(char *p);
 static void dodir(char *pattern);
 static void dohelp(void);
@@ -169,6 +170,10 @@ static void processInput(void)
     else if (ins_strcmp(buf, "fill") == 0)
     {
         dofill(p);
+    }
+    else if (ins_strcmp(buf, "mkiplmem") == 0)
+    {
+        mkiplmem(p);
     }
     else if (ins_strcmp(buf, "memdump") == 0)
     {
@@ -376,6 +381,53 @@ static void dofill(char *p)
     return;
 }
 
+static void mkiplmem(char *p)
+{
+    FILE *fp;
+    FILE *fq;
+    char buf[18452];
+    size_t cnt;
+
+    if (*p == '\0')
+    {
+        printf("usage: mkiplmem <output file>\n");
+        printf("produce a pdos.img suitable for direct memory load\n");
+        printf("e.g. mkiplmem dev1c2:\n");
+        return;
+    }
+    fp = fopen("pdos.img", "rb");
+    if (fp == NULL)
+    {
+        printf("can't open pdos.img for reading\n");
+        return;
+    }
+    fq = fopen(p, "wb");
+    if (fq == NULL)
+    {
+        printf("can't open %s for writing\n", p);
+        fclose(fp);
+        return;
+    }
+    cnt = fread(buf, 1, sizeof buf, fp);
+    *(int *)(buf + 4) = *(int *)(buf + 8192 + 12);
+    while (cnt != 0)
+    {
+        fwrite(buf, 1, cnt, fq);
+        cnt = fread(buf, 1, sizeof buf, fp);
+    }
+    if (ferror(fp))
+    {
+        printf("read error\n");
+    }
+    if (ferror(fq))
+    {
+        printf("write error\n");
+    }
+    fclose(fp);
+    fclose(fq);
+    return;
+}
+
 static void domemdump(char *p)
 {
     unsigned char *addr;
@@ -467,6 +519,7 @@ static void dohelp(void)
     printf("DISKINIT - initialize a disk (3390-1)\n");
     printf("FIL2DSK - restore a file to disk\n");
     printf("DSK2FIL - dump a disk to a file\n");
+    printf("MKIPLMEM - make a pdos.img suitable for direct memory load\n");
     printf("MEMDUMP - display memory\n");
     printf("MEMTEST - test writing to memory either side of 2 GiB\n");
     printf("anything else will be assumed to be a .EXE program\n");
