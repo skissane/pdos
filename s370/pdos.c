@@ -846,6 +846,7 @@ void daton(void);
 extern int __consdn;
 extern int __istape;
 extern int __iscard;
+extern int __ismem;
 int wrblock(int dev, int cyl, int head, int rec, void *buf, int len, int cmd);
 int rdblock(int dev, int cyl, int head, int rec, void *buf, int len, int cmd);
 
@@ -990,11 +991,18 @@ int pdosInit(PDOS *pdos)
         cons_type = 3270;
     }
 
+    if (__ismem)
+    {
+        /* IPL device will be ramdisk */
+        pdos->ipldev = 0x20000;
+        /* which should already be loaded at the 3 GiB location */
+        ramdisk = (char *)(3UL * 1024 * 1024 * 1024);
+    }
     pdos->curdev = pdos->ipldev;
 #ifndef ZARCH
     lcreg0(cr0);
 #endif
-    if (__istape || __iscard)
+    if (__istape || __iscard || __ismem)
     {
         /* __consdn = 0x10000;
         cons_type = 3215; */
@@ -1004,7 +1012,7 @@ int pdosInit(PDOS *pdos)
         printf("config.sys missing\n");
         return (0);
     }
-    if (__consdn == 0 || __istape || __iscard)
+    if (__consdn == 0 || __istape || __iscard || __ismem)
     {
         char tbuf[MAXBLKSZ + 2];
         int cnt;
@@ -1029,6 +1037,13 @@ int pdosInit(PDOS *pdos)
                 }
                 cnt += 72;
             }
+        }
+        else if (__ismem)
+        {
+            /* config.sys should be loaded at 1 GiB location */
+            char *configloc = (char *)(1 * 1024 * 1024 * 1024);
+
+            memcpy(tbuf, configloc, strlen(configloc) + 1);
         }
         else
         cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
@@ -1903,9 +1918,20 @@ static void pdosInitAspaces(PDOS *pdos)
 
         memmgrDefaults(&pdos->aspaces[a].o.atlmem);
         memmgrInit(&pdos->aspaces[a].o.atlmem);
-        memmgrSupply(&pdos->aspaces[a].o.atlmem,
-                     (char *)(S370_MAXMB * 1024U * 1024),
-                     (MAXASIZE - S370_MAXMB) * 1024U * 1024);
+        if (__ismem)
+        {
+            /* 1024 MB less memory available because of the
+               ramdisk at the 3 GiB location */
+            memmgrSupply(&pdos->aspaces[a].o.atlmem,
+                         (char *)(S370_MAXMB * 1024U * 1024),
+                         (MAXASIZE - S370_MAXMB - 1024) * 1024U * 1024);
+        }
+        else
+        {
+            memmgrSupply(&pdos->aspaces[a].o.atlmem,
+                         (char *)(S370_MAXMB * 1024U * 1024),
+                         (MAXASIZE - S370_MAXMB) * 1024U * 1024);
+        }
     }
 #endif /* ZARCH */
 
@@ -3908,7 +3934,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     int exeLen;
     int imgsize;
 
-    if (!__istape && !__iscard)
+    if (!__istape && !__iscard && !__ismem)
     {
     /* try to find the load module's location */
     
@@ -3969,7 +3995,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     {
         cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
     }
-    if (__iscard)
+    if (__iscard || __ismem)
     {
         pe = 1;
     }
@@ -4018,6 +4044,16 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     else if (__iscard)
     {
         imgsize = *(int *)tbuf;
+    }
+    else if (__ismem)
+    {
+        /* command.exe should be at the 2 GiB location */
+        char *memloc = (char *)(2UL * 1024 * 1024 * 1024);
+
+        /* assume 1 MiB in size */
+        memcpy(load, memloc, 1 * 1024 * 1024);
+        load += 1 * 1024 * 1024;
+        cnt = 0;
     }
     /* Note that we read until we get EOF (a zero-length block). */
     /* +++ note that we need a security check in here to ensure
