@@ -99,6 +99,9 @@ POSTPSA  DS    0H
          DC    A(CARDIPL)
 CMAXBLKS DC    F'0'   max number of cards to read
 *
+* Entry point for loading directly into memory from DVD etc
+         DC    A(MEMIPL)
+*
 * Start of our own, somewhat normal, code. Registers are not
 * defined at this point, so we need to create our own base
 * register.
@@ -144,6 +147,24 @@ CARDIPL  DS    0H
          LA    R12,0(R12)
          LA    R4,1
          L     R5,=A(@@ISCARD)
+         ST    R4,0(R5)
+         L     R15,=A(COMMCONT)
+         BR    R15
+         LTORG
+         DROP  ,
+*
+*
+*
+* When IPLing from DVD/ftp etc, this is the entry point instead
+*
+MEMIPL   DS    0H
+         USING PSA,R0
+         STM    R0,R15,FLCGRSAV
+         BALR  R12,0
+         USING *,R12
+         LA    R12,0(R12)
+         LA    R4,1
+         L     R5,=A(@@ISMEM)
          ST    R4,0(R5)
          L     R15,=A(COMMCONT)
          BR    R15
@@ -252,6 +273,13 @@ STAGE2   DS    0H
          L     R4,0(R5)
          LTR   R4,R4
          BNZ   CSTAGE2
+*
+* Direct load into memory does not need anything further to be
+* done - we can go directly to STAGE3
+         L     R5,=A(@@ISMEM)
+         L     R4,0(R5)
+         LTR   R4,R4
+         BNZ   STAGE3
 *
          LA    R1,PARMLST2
          LA    R13,SAVEAR2
@@ -442,6 +470,8 @@ WAITSERR DC    X'000E0000'  EC mode + Machine Check enabled + wait
 @@ISTAPE DC    F'0'
          ENTRY @@ISCARD
 @@ISCARD DC    F'0'
+         ENTRY @@ISMEM
+@@ISMEM  DC    F'0'
 PRMPTR   DC    A(SAPBLK)
 SAPBLK   DS    0F
 SAPDUM   DC    F'0'
