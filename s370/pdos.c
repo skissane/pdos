@@ -3954,8 +3954,9 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     int pe = 0;
     int exeLen;
     int imgsize;
+    static int first = 1; /* first executable, ie command.exe */
 
-    if (!__istape && !__iscard && !__ismem)
+    if (!first || (!__istape && !__iscard && !__ismem))
     {
     /* try to find the load module's location */
     
@@ -4057,6 +4058,8 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     /* should store old context first */
     i = head;
     j = rec;
+    if (first)
+    {
     if (__istape)
     {
         memcpy(load, tbuf, cnt);
@@ -4076,6 +4079,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         load += 1 * 1024 * 1024;
         cnt = 0;
     }
+    }
     /* Note that we read until we get EOF (a zero-length block). */
     /* +++ note that we need a security check in here to ensure
        that people don't leave out an EOF to read the next guy's
@@ -4086,7 +4090,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         printf("loading to %p from %d, %d, %d\n", load,
                cyl, i, j);
 #endif
-        if (!__istape && !__iscard)
+        if (!first || (!__istape && !__iscard))
         {
         cnt = rdblock(pdos->ipldev, cyl, i, j, tbuf, MAXBLKSZ, 0x0e);
         }
@@ -4130,8 +4134,11 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
         memcpy(load, tbuf, cnt);
         load += cnt;
         j++;
+        if (first)
+        {
         if (__istape && (cnt != 18452)) break;
         if (__iscard && ((load - initial) >= imgsize)) break;
+        }
     }
 
     exeLen = load - initial;    
@@ -4208,6 +4215,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
 #if 0
         printf("finished loading executable\n");
 #endif
+        first = 0;
     }
     return (ret);
 }
