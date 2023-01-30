@@ -3991,7 +3991,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     }
     cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
     }
-    else
+    else if (!__ismem)
     {
         cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
     }
