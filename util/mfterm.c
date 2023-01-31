@@ -213,6 +213,7 @@ static void interact(FILE *sf)
     int c = 0;
     FILE *cf = NULL;
     int cnt;
+    int keybcode = 0;
 
     while (c != EOF)
     {
@@ -247,6 +248,11 @@ static void interact(FILE *sf)
                    command, added by Hercules, not PDOS. That's what the
                    +1 is about */
                 /* ignore first 6+1 characters */
+                if (cnt == 2)
+                {
+                    keybcode = c;
+                    printf("keyboard code is %x\n", c);
+                }
                 if (cnt <= (6+1)) continue;
                 /* ignore stuff after actual data */
                 if (cnt > (1766+1)) continue;
