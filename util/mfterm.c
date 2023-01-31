@@ -275,6 +275,7 @@ static void interact(FILE *sf)
                     if (c == 0xef)
                     {
                         cnt = 0;
+                        ign3275 = 0;
                         /* if the keyboard is unlocked, we need to type
                            something */
                         if (keybcode == 0xc3)
