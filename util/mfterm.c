@@ -74,6 +74,8 @@ static int termtype = 1052; /* ASCII ANSI */
 
 static char cardbuf[80];
 
+static char keybbuf[300];
+
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
@@ -114,9 +116,15 @@ int main(int argc, char **argv)
     }
 
     negotiate(sf);
-    setvbuf(stdin, NULL, _IONBF, 0);
+    if (termtype != 3270)
+    {
+        setvbuf(stdin, NULL, _IONBF, 0);
+    }
     interact(sf);
-    setvbuf(stdin, NULL, _IOLBF, 0);
+    if (termtype != 3270)
+    {
+        setvbuf(stdin, NULL, _IOLBF, 0);
+    }
 
     fclose(sf);
     return (0);
@@ -239,6 +247,14 @@ static void interact(FILE *sf)
                     if (c == 0xef)
                     {
                         cnt = 0;
+                        /* if the keyboard is unlocked, we need to type
+                           something */
+                        if (keybcode == 0xc3)
+                        {
+                            c = XON;
+                            printf("time for keyboard\n");
+                            break;
+                        }
                         continue;
                     }
                     /* ignore any IAC commands */
@@ -282,6 +298,29 @@ static void interact(FILE *sf)
                     continue;
                 }
             }
+            if (termtype == 3270)
+            {
+                char *p;
+                char fixed[6] = "\x7d\x5b\xe2\x11\x5b\x61";
+
+                printf("type something\n");
+                fgets(keybbuf, sizeof keybbuf, stdin);
+                printf("you typed x%sx\n", keybbuf);
+                p = strchr(keybbuf, '\n');
+                if (p != NULL)
+                {
+                    *p = '\0';
+                }
+                /* I need 6 characters */
+                /* that e2 changes */
+                /* but I don't think I need that change */
+                /* fixed[2] = 0xe1 + strlen(keybbuf); */
+                fwrite(fixed, 1, 6, sf);
+                fwrite(keybbuf, 1, strlen(keybbuf), sf);
+                /* i suspect i need this too */
+                fwrite("\xff\xef", 1, 2, sf);
+                continue;
+            }
             c = fgetc(stdin);
             /* ctrl-] brings up a menu */
             if ((c != EOF) && (c != MENU))
@@ -291,16 +330,14 @@ static void interact(FILE *sf)
             }
             if (c == MENU)
             {
-                char buf[50];
-
                 printf("menu - options are noisy, quiet, card\n");
 #if 0
                 setvbuf(stdin, NULL, _IOLBF, 0);
-                fgets(buf, sizeof buf, stdin);
+                fgets(keybbuf, sizeof keybbuf, stdin);
                 setvbuf(stdin, NULL, _IONBF, 0);
-                if (strcmp(buf, "noisy\n") == 0) noisy = 1;
-                if (strcmp(buf, "quiet\n") == 0) noisy = 0;
-                if (strcmp(buf, "card\n") == 0) card = 1;
+                if (strcmp(keybbuf, "noisy\n") == 0) noisy = 1;
+                if (strcmp(keybbuf, "quiet\n") == 0) noisy = 0;
+                if (strcmp(keybbuf, "card\n") == 0) card = 1;
 #endif
                 card = 1;
                 if (card)
