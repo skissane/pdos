@@ -98,6 +98,7 @@ int main(int argc, char **argv)
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
         printf("e.g. mfterm [-3270|-3275|-1057] com1:\n");
         printf("1057 is an EBCDIC ANSI terminal\n");
+        printf("3275 is an EBCDIC ANSI stream on top of a 3270 data stream\n");
         printf("ctrl-] gets menu when keyboard is active\n");
         return (EXIT_FAILURE);
     }
