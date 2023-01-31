@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     {
         printf("usage: mfterm <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
-        printf("e.g. mfterm [-3270|-1057] com1:\n");
+        printf("e.g. mfterm [-3270|-3275|-1057] com1:\n");
         printf("1057 is an EBCDIC ANSI terminal\n");
         printf("ctrl-] gets menu when keyboard is active\n");
         return (EXIT_FAILURE);
@@ -107,7 +107,11 @@ int main(int argc, char **argv)
         {
             termtype = 3270;
         }
-        if (strcmp(argv[x], "-1057") == 0)
+        else if (strcmp(argv[x], "-3275") == 0)
+        {
+            termtype = 3275;
+        }
+        else if (strcmp(argv[x], "-1057") == 0)
         {
             termtype = 1057;
         }
@@ -158,7 +162,7 @@ static void negotiate(FILE *sf)
     /* printf("writing\n"); */
     /* IAC SB TERM_TYPE IS (ANSI) IAC SE */
     fwrite("\xff\xfa\x18\x00", 1, 4, sf);
-    if (termtype == 3270)
+    if ((termtype == 3270) || (termtype == 3275))
     {
         printf("writing IBM-3270\n");
         fwrite("IBM-3270", 1, 8, sf);
@@ -181,7 +185,7 @@ static void negotiate(FILE *sf)
     fwrite("\xff\xfd\x01", 1, 3, sf);
     }
 
-    if (termtype == 3270)
+    if ((termtype == 3270) || (termtype == 3275))
     {
         fseek(sf, 0, SEEK_CUR);
         /* do eor and will eor */
@@ -232,11 +236,14 @@ static void interact(FILE *sf)
     FILE *cf = NULL;
     int cnt;
     int keybcode = 0;
+    int ign3275;
+    static char *hex = "0123456789ABCDEF";
 
     while (c != EOF)
     {
         fseek(sf, 0, SEEK_CUR);
         cnt = 0;
+        ign3275 = 0;
         while (1)
         {
             c = fgetc(sf);
@@ -259,7 +266,7 @@ static void interact(FILE *sf)
                 }
                 fflush(stdout);
             }
-            else if (termtype == 3270)
+            else if ((termtype == 3270) || (termtype == 3275))
             {
                 if (c == IAC)
                 {
@@ -294,10 +301,50 @@ static void interact(FILE *sf)
                 /* ignore stuff after actual data */
                 if (cnt > (1766+1)) continue;
                 c = febc(c);
-                if (c != 0)
+                if (termtype == 3275)
                 {
+                    char *p;
+                    int newc;
+
+                    if (ign3275) continue;
+                    if (c == 0)
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
+                    p = strchr(hex, c);
+                    if (p == NULL)
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
+                    newc = (p - hex) * 16;
+                    c = fgetc(sf);
+                    cnt++;
+                    c = febc(c);
+                    if (c == 0)
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
+                    p = strchr(hex, c);
+                    if (p == NULL)
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
+                    newc += (p - hex);
+                    c = newc;
                     fputc(c, stdout);
                     fflush(stdout);
+                }
+                else
+                {
+                    if (c != 0)
+                    {
+                        fputc(c, stdout);
+                        fflush(stdout);
+                    }
                 }
             }
         }
@@ -359,6 +406,18 @@ static void interact(FILE *sf)
                     {
                         fputc(c, sf);
                     }
+                }
+                else if (termtype == 3275)
+                {
+                    char fixed[6] = "\x7d\x5b\xe2\x11\x5b\x61";
+
+                    fwrite(fixed, 1, 6, sf);
+                    fputc(tebc(hex[(c >> 4) & 0xf]), sf);
+                    fputc(tebc(hex[c & 0xf]), sf);
+                    fputc(tebc('X'), sf);
+                    fputc(tebc('X'), sf);
+                    fwrite("\xff\xef", 1, 2, sf);
+                    continue;
                 }
                 else
                 {
