@@ -634,6 +634,32 @@ int tebc(int local)
     case '}'  : return (0xd0);
     case '~'  : return (0xa1);
     case 0x1b : return (0x27); /* ESC character */
+    case 1    : return (1); /* ctrl-A */
+    case 2    : return (2); /* ctrl-B */
+    case 3    : return (3); /* ctrl-C */
+    case 4    : return (0x37); /* ctrl-D */
+    case 5    : return (0x2d); /* ctrl-E */
+    case 6    : return (0x2e); /* ctrl-F */
+    case 7    : return (0x2f); /* ctrl-G */
+    case 8    : return (0x16); /* ctrl-H */
+    case 9    : return (0x05); /* ctrl-I */
+    /* case 0x0A : return (0x15); */ /* ctrl-J */
+    case 0x0B : return (0x0B); /* ctrl-K */
+    case 0x0C : return (0x0C); /* ctrl-L */
+    case 0x0D : return (0x0D); /* ctrl-M */
+    case 0x0E : return (0x0E); /* ctrl-N */
+    case 0x0F : return (0x0F); /* ctrl-O */
+    case 0x10 : return (0x10); /* ctrl-P */
+    case 0x11 : return (0x11); /* ctrl-Q */
+    case 0x12 : return (0x12); /* ctrl-R */
+    case 0x13 : return (0x13); /* ctrl-S */
+    case 0x14 : return (0x3C); /* ctrl-T */
+    case 0x15 : return (0x3D); /* ctrl-U */
+    case 0x16 : return (0x32); /* ctrl-V */
+    case 0x17 : return (0x26); /* ctrl-W */
+    case 0x18 : return (0x18); /* ctrl-X */
+    case 0x19 : return (0x19); /* ctrl-Y */
+    case 0x1A : return (0x3F); /* ctrl-Z */
     default   : return (0);
   }
 }
