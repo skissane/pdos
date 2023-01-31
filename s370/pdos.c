@@ -4379,6 +4379,12 @@ static void write3270(char *buf, size_t lenbuf, int cr)
                 intbuf[6 + x * 2 + 0] = hex[(c >> 4) & 0xf];
                 intbuf[6 + x * 2 + 1] = hex[c & 0xf];
             }
+            if (cr)
+            {
+                intbuf[6 + x * 2 + 0] = '1';
+                intbuf[6 + x * 2 + 1] = '5';
+                x++;
+            }
             intbuf[6 + x * 2 + 0] = 'X';
             intbuf[6 + x * 2 + 1] = 'X';
             __conswr(sizeof intbuf, intbuf, 0);
