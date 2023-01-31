@@ -4381,6 +4381,7 @@ static void write3270(char *buf, size_t lenbuf, int cr)
             }
             intbuf[6 + x * 2 + 0] = 'X';
             intbuf[6 + x * 2 + 1] = 'X';
+            __conswr(sizeof intbuf, intbuf, 0);
             return;
         }
         first = 0;
