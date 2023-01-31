@@ -832,6 +832,7 @@ static char lastds[FILENAME_MAX]; /* needs to be in TIOT */
 static int memid = 256; /* this really belongs in the address space */
 static int cons_type = 3270; /* do we have a 1052 or 3215? */
 static unsigned char *ramdisk = NULL;
+static char intbuf[6+22*80+7]; /* buffer used for 3270 writes */
 
 void gotret(void);
 int adisp(void);
@@ -1359,9 +1360,20 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
             {
                 if (cons_type == 3270)
                 {
+                    intbuf[0] = 0xc3; /* unlock keyboard */
+                    __conswr(sizeof intbuf, intbuf, 0);
+                    intbuf[0] = 0x41; /* lock keyboard for next time */
                     cnt = __c3270r(300, tbuf);
                     if (cnt >= 6)
                     {
+#if 0
+                        int x;
+
+                        for (x = 0; x < cnt; x++)
+                        {
+                            printf("got %x %d\n", tbuf[x], x);
+                        }
+#endif
                         memmove(tbuf, tbuf + 6, cnt - 6);
                         cnt -= 6;
                     }
@@ -4313,7 +4325,6 @@ static void join_cchhr(char *cchhr, int cyl, int head, int rec)
 
 static void write3270(char *buf, size_t lenbuf, int cr)
 {
-    static char intbuf[6+22*80+7];
     static int first = 1;
     static int lineupto = 0;
 
@@ -4321,7 +4332,9 @@ static void write3270(char *buf, size_t lenbuf, int cr)
     {
         first = 0;
         memset(intbuf, ' ', sizeof intbuf);
-        memcpy(intbuf, "\xc3\x11\x5d\x7f\x1d\xf0", 6);
+        /* normally C3 is used to unlock the keyboard, but we lock it
+           instead, with 41, and do an unlock before a read */
+        memcpy(intbuf, "\x41\x11\x5d\x7f\x1d\xf0", 6);
         memcpy(intbuf + 6 + 22 * 80, "\x1d\x00\x13\x3c\x5d\x7f\x00", 7);
     }
     memset(intbuf + 6 + lineupto * 80, ' ', 80);
