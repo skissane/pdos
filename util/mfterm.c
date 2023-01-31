@@ -281,7 +281,7 @@ static void interact(FILE *sf)
                         if (keybcode == 0xc3)
                         {
                             c = XON;
-                            printf("time for keyboard\n");
+                            /* printf("time for keyboard\n"); */
                             break;
                         }
                         continue;
@@ -296,7 +296,7 @@ static void interact(FILE *sf)
                 if (cnt == 2)
                 {
                     keybcode = c;
-                    printf("keyboard code is %x\n", c);
+                    /* printf("keyboard code is %x\n", c); */
                 }
                 if (cnt <= (6+1)) continue;
                 /* ignore stuff after actual data */
