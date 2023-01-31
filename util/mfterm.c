@@ -306,6 +306,12 @@ static void interact(FILE *sf)
                     char *p;
                     int newc;
 
+                    /* if (c != ' ') printf("myc is %x\n", c); */
+                    if (c == 'X')
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
                     if (ign3275) continue;
                     if (c == 0)
                     {
@@ -320,6 +326,7 @@ static void interact(FILE *sf)
                     }
                     newc = (p - hex) * 16;
                     c = fgetc(sf);
+                    if (c == EOF) break;
                     cnt++;
                     c = febc(c);
                     if (c == 0)
@@ -335,6 +342,12 @@ static void interact(FILE *sf)
                     }
                     newc += (p - hex);
                     c = newc;
+                    c = febc(c);
+                    if (c == 0)
+                    {
+                        ign3275 = 1;
+                        continue;
+                    }
                     fputc(c, stdout);
                     fflush(stdout);
                 }
