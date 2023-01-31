@@ -2244,7 +2244,7 @@ static void pdosProcessSVC(PDOS *pdos)
         {
             gendcb->u2.dcbrecfm |= DCBRECU;
             gendcb->dcblrecl = 0;
-            gendcb->dcbblksi = 900; /* will be double this when hex */
+            gendcb->dcbblksi = 800; /* will be double this when hex */
         }
         else
         {
@@ -4369,9 +4369,9 @@ static void write3270(char *buf, size_t lenbuf, int cr)
             int c;
             int x;
 
-            if (lenbuf > 900)
+            if (lenbuf > 800)
             {
-                lenbuf = 900;
+                lenbuf = 800;
             }
             for (x = 0; x < lenbuf; x++)
             {
