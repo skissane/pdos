@@ -70,6 +70,10 @@ F - ctrl-O - AVAILABLE
 
 static int noisy = 0;
 static int card = 0;
+/* 1057 = EBCDIC ANSI */
+/* 3270 = normal 3270 */
+/* 3275 = 3270 with EBCDIC ANSI embedded as hex */
+/* the extra 5 is for 'E' - the 5th letter of the alphabet */
 static int termtype = 1052; /* ASCII ANSI */
 
 static char cardbuf[80];
@@ -92,7 +96,8 @@ int main(int argc, char **argv)
     {
         printf("usage: mfterm <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
-        printf("e.g. mfterm [-3270] com1:\n");
+        printf("e.g. mfterm [-3270|-1057] com1:\n");
+        printf("1057 is an EBCDIC ANSI terminal\n");
         printf("ctrl-] gets menu when keyboard is active\n");
         return (EXIT_FAILURE);
     }
@@ -101,6 +106,10 @@ int main(int argc, char **argv)
         if (strcmp(argv[x], "-3270") == 0)
         {
             termtype = 3270;
+        }
+        if (strcmp(argv[x], "-1057") == 0)
+        {
+            termtype = 1057;
         }
         else
         {
@@ -160,7 +169,7 @@ static void negotiate(FILE *sf)
     }
     fwrite("\xff\xf0", 1, 2, sf);
 
-    if (termtype == 1052)
+    if ((termtype == 1052) || (termtype == 1057))
     {
     fseek(sf, 0, SEEK_CUR);
     /* IAC WILL ECHO */
@@ -233,10 +242,21 @@ static void interact(FILE *sf)
             c = fgetc(sf);
             cnt++;
             /* printf("ccc is %x %d\n", c, cnt++); */
-            if (termtype == 1052)
+            if ((termtype == 1052) || (termtype == 1057))
             {
                 if ((c == EOF) || (c == XON)) break;
-                fputc(c, stdout);
+                if (termtype == 1057)
+                {
+                    c = febc(c);
+                    if (c != 0)
+                    {
+                        fputc(c, stdout);
+                    }
+                }
+                else
+                {
+                    fputc(c, stdout);
+                }
                 fflush(stdout);
             }
             else if (termtype == 3270)
@@ -332,7 +352,18 @@ static void interact(FILE *sf)
             /* ctrl-] brings up a menu */
             if ((c != EOF) && (c != MENU))
             {
-                fputc(c, sf);
+                if (termtype == 1057)
+                {
+                    c = tebc(c);
+                    if (c != 0)
+                    {
+                        fputc(c, sf);
+                    }
+                }
+                else
+                {
+                    fputc(c, sf);
+                }
                 fflush(sf);
             }
             if (c == MENU)
@@ -483,6 +514,7 @@ int febc(int ebc)
     case 0x4f : return('|');
     case 0xd0 : return('}');
     case 0xa1 : return('~');
+    case 0x27 : return(0x1b); /* ESC character */
     default   : return(0);
   }
 }
@@ -601,6 +633,7 @@ int tebc(int local)
     case '|'  : return (0x4f);
     case '}'  : return (0xd0);
     case '~'  : return (0xa1);
+    case 0x1b : return (0x27); /* ESC character */
     default   : return (0);
   }
 }
