@@ -1070,6 +1070,7 @@ int pdosInit(PDOS *pdos)
                 {
                     if ((strstr(p, "3215") != NULL)
                         || (strstr(p, "3270") != NULL)
+                        || (strstr(p, "3275") != NULL)
                         || (strstr(p, "1052") != NULL))
                     {
                         sscanf(p, "%x", &__consdn);
@@ -1087,6 +1088,10 @@ int pdosInit(PDOS *pdos)
                         else if (strstr(p, "3270") != NULL)
                         {
                             cons_type = 3270;
+                        }
+                        else if (strstr(p, "3275") != NULL)
+                        {
+                            cons_type = 3275;
                         }
                         else
                         {
@@ -1358,9 +1363,10 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
             else if (memcmp(dcb->dcbfdad,
                             "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
             {
-                if (cons_type == 3270)
+                if ((cons_type == 3270) || (cons_type == 3275))
                 {
                     intbuf[0] = 0xc3; /* unlock keyboard */
+                    memcpy(intbuf + 6, "XX", 2);
                     __conswr(sizeof intbuf, intbuf, 0);
                     intbuf[0] = 0x41; /* lock keyboard for next time */
                     cnt = __c3270r(300, tbuf);
@@ -1376,6 +1382,18 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 #endif
                         memmove(tbuf, tbuf + 6, cnt - 6);
                         cnt -= 6;
+                        if (cons_type == 3275)
+                        {
+                            int x;
+                            static char mini[3] = "";
+
+                            cnt /= 2;
+                            for (x = 0; x < cnt; x++)
+                            {
+                                memcpy(mini, tbuf + x * 2, 2);
+                                tbuf[x] = strtoul(mini, NULL, 16);
+                            }
+                        }
                     }
                 }
                 else
@@ -1403,6 +1421,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                     printf("unable to read from keyboard - system halted\n");
                     for (;;) ;
                 }
+                /* 3275 doesn't have an extra newline */
                 if ((cnt >= 0) && ((cons_type == 3215) || (cons_type == 3270)))
                 {
                     tbuf[cnt++] = '\n';
@@ -2217,6 +2236,15 @@ static void pdosProcessSVC(PDOS *pdos)
             gendcb->u2.dcbrecfm |= DCBRECF;
             gendcb->dcblrecl = 80;
             gendcb->dcbblksi = 80;
+        }
+        /* and restrict the size of sysprint on a 3275 so that we
+           don't overflow a 3270 screen size */
+        else if ((ins_strncmp(lastds, "sysprint", 8) == 0)
+                 && (cons_type == 3275))
+        {
+            gendcb->u2.dcbrecfm |= DCBRECU;
+            gendcb->dcblrecl = 0;
+            gendcb->dcbblksi = 900; /* will be double this when hex */
         }
         else
         {
@@ -4327,15 +4355,35 @@ static void write3270(char *buf, size_t lenbuf, int cr)
 {
     static int first = 1;
     static int lineupto = 0;
+    static char *hex = "0123456789ABCDEF";
 
     if (first)
     {
-        first = 0;
         memset(intbuf, ' ', sizeof intbuf);
         /* normally C3 is used to unlock the keyboard, but we lock it
            instead, with 41, and do an unlock before a read */
         memcpy(intbuf, "\x41\x11\x5d\x7f\x1d\xf0", 6);
         memcpy(intbuf + 6 + 22 * 80, "\x1d\x00\x13\x3c\x5d\x7f\x00", 7);
+        if (cons_type == 3275)
+        {
+            int c;
+            int x;
+
+            if (lenbuf > 900)
+            {
+                lenbuf = 900;
+            }
+            for (x = 0; x < lenbuf; x++)
+            {
+                c = buf[x];
+                intbuf[6 + x * 2 + 0] = hex[(c >> 4) & 0xf];
+                intbuf[6 + x * 2 + 1] = hex[c & 0xf];
+            }
+            intbuf[6 + x * 2 + 0] = 'X';
+            intbuf[6 + x * 2 + 1] = 'X';
+            return;
+        }
+        first = 0;
     }
     memset(intbuf + 6 + lineupto * 80, ' ', 80);
     memcpy(intbuf + 6 + lineupto * 80, buf, lenbuf);
@@ -4376,7 +4424,7 @@ static int cprintf(char *format, ...)
         {
             cr = 1; /* assembler needs to do with CR */
         }
-        if (cons_type == 3270)
+        if ((cons_type == 3270) || (cons_type == 3275))
         {
             write3270(p, q - p, cr);
         }
