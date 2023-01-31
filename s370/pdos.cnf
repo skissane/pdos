@@ -22,6 +22,7 @@ CNSLPORT             3270
 #0009      3215       noprompt
 0009      3270
 #0009      1052       noprompt
+# 1052 + ebcdic creates what mfterm calls a 1057
 #0009      1052       ebcdic noprompt
 #0009      1052-C      / noprompt
 
