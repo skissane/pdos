@@ -426,6 +426,7 @@ static void interact(FILE *sf)
                     char fixed[6] = "\x7d\x5b\xe2\x11\x5b\x61";
 
                     fwrite(fixed, 1, 6, sf);
+                    c = tebc(c);
                     fputc(tebc(hex[(c >> 4) & 0xf]), sf);
                     fputc(tebc(hex[c & 0xf]), sf);
                     fputc(tebc('X'), sf);
