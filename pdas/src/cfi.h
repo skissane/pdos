@@ -39,6 +39,8 @@
 #define DW_CFA_lo_user            0x1c
 #define DW_CFA_hi_user            0x3f
 
+/* Fake instructions outside of the range of allowed instructions. */
+#define INTERNAL_CFI_rel_offset 0x100
 
 struct cfi_instruction_data {
 
@@ -66,10 +68,19 @@ struct cfi_instruction_data {
 
 };
 
+struct cfa_save {
+
+    struct cfa_save *next;
+    offset_t cfa_offset;
+
+};
+
 struct cfi_frag_chain_data {
     
     struct fde *fde;
     struct symbol *last_address;
+    offset_t current_cfa_offset;
+    struct cfa_save *cfa_save_stack;
 
 };
 

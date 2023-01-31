@@ -106,6 +106,14 @@ static struct cfi_instruction_data *alloc_cfi_instruction_data (void) {
 
 }
 
+static void cfi_add_CFA_instruction (int instruction) {
+
+    struct cfi_instruction_data *cfi_instruction_data = alloc_cfi_instruction_data ();
+
+    cfi_instruction_data->instruction = instruction;
+
+}
+
 static void cfi_add_CFA_instruction_reg (int instruction, unsigned int reg) {
 
     struct cfi_instruction_data *cfi_instruction_data = alloc_cfi_instruction_data ();
@@ -158,9 +166,40 @@ void cfi_add_CFA_restore (unsigned int reg) {
 
 }
 
+void cfi_add_CFA_remember_state (void) {
+
+    struct cfa_save *cfa_save = xmalloc (sizeof (*cfa_save));
+
+    cfa_save->next = current_frag_chain->cfi_frag_chain_data->cfa_save_stack;
+    cfa_save->cfa_offset = current_frag_chain->cfi_frag_chain_data->current_cfa_offset;
+    current_frag_chain->cfi_frag_chain_data->cfa_save_stack = cfa_save;
+
+    cfi_add_CFA_instruction (DW_CFA_remember_state);
+
+}
+
+void cfi_add_CFA_restore_state (void) {
+
+    cfi_add_CFA_instruction (DW_CFA_restore_state);
+
+    if (current_frag_chain->cfi_frag_chain_data->cfa_save_stack) {
+
+        struct cfa_save *cfa_save = current_frag_chain->cfi_frag_chain_data->cfa_save_stack;
+
+        current_frag_chain->cfi_frag_chain_data->cfa_save_stack = cfa_save->next;
+        current_frag_chain->cfi_frag_chain_data->current_cfa_offset = cfa_save->cfa_offset;
+        free (cfa_save);
+
+    } else {
+        as_error ("CFI state restore without previous remember");
+    }
+
+}
+
 void cfi_add_CFA_def_cfa (unsigned int reg, offset_t offset) {
 
     cfi_add_CFA_instruction_reg_offset (DW_CFA_def_cfa, reg, offset);
+    current_frag_chain->cfi_frag_chain_data->current_cfa_offset = offset;
 
 }
 
@@ -173,6 +212,7 @@ void cfi_add_CFA_def_cfa_register (unsigned int reg) {
 void cfi_add_CFA_def_cfa_offset (offset_t offset) {
 
     cfi_add_CFA_instruction_offset (DW_CFA_def_cfa_offset, offset);
+    current_frag_chain->cfi_frag_chain_data->current_cfa_offset = offset;
 
 }
 
@@ -228,6 +268,12 @@ static void output_cfi_instruction (struct cfi_instruction_data *cfi_instruction
         case DW_CFA_restore:
 
             frag_append_1_char (DW_CFA_restore + cfi_instruction->u.reg);
+            break;
+
+        case DW_CFA_remember_state:
+        case DW_CFA_restore_state:
+
+            frag_append_1_char (cfi_instruction->instruction);
             break;
 
         case DW_CFA_def_cfa:
@@ -620,6 +666,8 @@ static void handler_cfi_startproc (char **pp) {
 
     fde->start_address = symbol_temp_new_now ();
     current_frag_chain->cfi_frag_chain_data->last_address = fde->start_address;
+    current_frag_chain->cfi_frag_chain_data->current_cfa_offset = 0;
+    current_frag_chain->cfi_frag_chain_data->cfa_save_stack = NULL;
 
     fde->last_data_p = &(fde->data);
 
@@ -684,6 +732,14 @@ static void handler_cfi_instruction (char **pp, int instruction) {
     offset_t offset;
     unsigned int reg;
 
+    if (current_frag_chain->cfi_frag_chain_data == NULL) {
+
+        as_error ("CFI instruction used without previous .cfi_startproc");
+        ignore_rest_of_line (pp);
+        return;
+        
+    }
+
     if (symbol_get_frag (current_frag_chain->cfi_frag_chain_data->last_address) != current_frag
         || symbol_get_value (current_frag_chain->cfi_frag_chain_data->last_address) != current_frag->fixed_size) {
         cfi_add_DW_CFA_advance_loc (symbol_temp_new_now ());
@@ -699,10 +755,28 @@ static void handler_cfi_instruction (char **pp, int instruction) {
             cfi_add_CFA_offset (reg, offset);
             break;
 
+        case INTERNAL_CFI_rel_offset:
+
+            reg = cfi_parse_reg (pp);
+            cfi_parse_separator (pp);
+            offset = get_result_of_absolute_expression (pp);
+            cfi_add_CFA_offset (reg, offset - current_frag_chain->cfi_frag_chain_data->current_cfa_offset);
+            break;
+
         case DW_CFA_restore:
 
             reg = cfi_parse_reg (pp);
             cfi_add_CFA_restore (reg);
+            break;
+
+        case DW_CFA_remember_state:
+
+            cfi_add_CFA_remember_state ();
+            break;
+
+        case DW_CFA_restore_state:
+
+            cfi_add_CFA_restore_state ();
             break;
 
         case DW_CFA_def_cfa:
@@ -755,9 +829,27 @@ static void handler_cfi_offset (char **pp) {
 
 }
 
+static void handler_cfi_rel_offset (char **pp) {
+
+    handler_cfi_instruction (pp, INTERNAL_CFI_rel_offset);
+
+}
+
 static void handler_cfi_restore (char **pp) {
 
     handler_cfi_instruction (pp, DW_CFA_restore);
+
+}
+
+static void handler_cfi_remember_state (char **pp) {
+
+    handler_cfi_instruction (pp, DW_CFA_remember_state);
+
+}
+
+static void handler_cfi_restore_state (char **pp) {
+
+    handler_cfi_instruction (pp, DW_CFA_restore_state);
 
 }
 
@@ -777,13 +869,13 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "cfi_adjust_cfa_offset", &handler_cfi_dummy  },
     { "cfi_offset",            &handler_cfi_offset  },
     { "cfi_val_offset",        &handler_cfi_dummy  },
-    { "cfi_rel_offset",        &handler_cfi_dummy  },
+    { "cfi_rel_offset",        &handler_cfi_rel_offset  },
     { "cfi_register",          &handler_cfi_dummy  },
     { "cfi_restore",           &handler_cfi_restore  },
     { "cfi_undefined",         &handler_cfi_dummy  },
     { "cfi_same_value",        &handler_cfi_dummy  },
-    { "cfi_remember_state",    &handler_cfi_dummy  },
-    { "cfi_restore_state",     &handler_cfi_dummy  },
+    { "cfi_remember_state",    &handler_cfi_remember_state  },
+    { "cfi_restore_state",     &handler_cfi_restore_state  },
     { "cfi_return_column",     &handler_cfi_dummy  },
     { "cfi_signal_frame",      &handler_cfi_dummy  },
     { "cfi_window_save",       &handler_cfi_dummy  },
