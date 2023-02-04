@@ -80,6 +80,8 @@ static char cardbuf[80];
 
 static char keybbuf[300];
 
+static char luname[50] = "";
+
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
@@ -94,9 +96,9 @@ int main(int argc, char **argv)
 
     if (argc < 2)
     {
-        printf("usage: mfterm <serial file>\n");
+        printf("usage: mfterm [-lu=xxx] [-3270|-3275|-1057] <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
-        printf("e.g. mfterm [-3270|-3275|-1057] com1:\n");
+        printf("e.g. mfterm com1:\n");
         printf("1057 is an EBCDIC ANSI terminal\n");
         printf("3275 is an EBCDIC ANSI stream on top of a 3270 data stream\n");
         printf("ctrl-] gets menu when keyboard is active\n");
@@ -104,6 +106,11 @@ int main(int argc, char **argv)
     }
     if (argc > 2)
     {
+        if (strncmp(argv[x], "-lu=", 4) == 0)
+        {
+            strcpy(luname, argv[x] + 4);
+            x++;
+        }
         if (strcmp(argv[x], "-3270") == 0)
         {
             termtype = 3270;
@@ -122,6 +129,10 @@ int main(int argc, char **argv)
             return (EXIT_FAILURE);
         }
         x++;
+    }
+    if (x > (argc - 1))
+    {
+        x--;
     }
     sf = fopen(*(argv + x), "r+b");
     if (sf == NULL)
@@ -167,6 +178,11 @@ static void negotiate(FILE *sf)
     {
         printf("writing IBM-3270\n");
         fwrite("IBM-3270", 1, 8, sf);
+        if (strcmp(luname, "") != 0)
+        {
+            fputc('@', sf);
+            fwrite(luname, 1, strlen(luname), sf);
+        }
     }
     else
     {
