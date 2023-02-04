@@ -200,13 +200,26 @@ static void negotiate(FILE *sf)
         fwrite("\xff\xfb\x00" "\xff\xfd\x00", 6, 1, sf);
         fseek(sf, 0, SEEK_CUR);
         {
-            int x;
+            int x = 0;
+            int c;
 
-            for (x = 0; x < 1019; x++)
+            while (1)
             {
-                fgetc(sf);
+                c = fgetc(sf);
+                if (c == EOF) break;
+                if (c == IAC)
+                {
+                    x++;
+                    c = fgetc(sf);
+                    if (c == 0xef)
+                    {
+                        x++;
+                        printf("read and discarded %d bytes of logo data\n", x);
+                        break;
+                    }
+                }
+                x++;
             }
-            printf("read and discarded 1019 bytes of logo\n");
         }
     }
 
