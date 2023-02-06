@@ -1970,7 +1970,7 @@ static char *parse_instruction (char *line) {
         if (line == p2) {
         
             as_error ("expecting mnemonic; got nothing");
-            return (line);
+            goto end;
         
         }
         
@@ -1981,7 +1981,8 @@ static char *parse_instruction (char *line) {
             if ((current_templates->start->opcode_modifier & (SIZE16 | SIZE32)) && (((current_templates->start->opcode_modifier & SIZE32) != 0) ^ (bits == 16))) {
             
                 as_error ("redundant %s prefix", current_templates->name);
-                return (line);
+                current_templates = NULL;
+                goto end;
             
             }
             
@@ -1989,7 +1990,8 @@ static char *parse_instruction (char *line) {
             
                 case 0:
                 
-                    return (line);
+                    current_templates = NULL;
+                    goto end;
                 
                 case 2:
                 
@@ -2059,7 +2061,7 @@ static char *parse_instruction (char *line) {
             default:
             
                 as_error ("no such instruction '%s'", line);
-                return (line);
+                goto end;
         
         }
         
@@ -2068,7 +2070,7 @@ static char *parse_instruction (char *line) {
         if (current_templates == NULL) {
         
             as_error ("no such instruction '%s'", line);
-            return (line);
+            goto end;
         
         }
     
@@ -2079,12 +2081,13 @@ static char *parse_instruction (char *line) {
         if (!(current_templates->start->opcode_modifier & IS_STRING)) {
         
             as_error ("expecting string instruction after '%s'", expecting_string_instruction);
-            return (line);
+            goto end;
         
         }
     
     }
-    
+
+end:
     *p2 = saved_ch;
     line = p2;
     
