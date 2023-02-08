@@ -123,6 +123,10 @@ int main(int argc, char **argv)
         {
             termtype = 1057;
         }
+        else if (strcmp(argv[x], "-1052") == 0)
+        {
+            termtype = 1052;
+        }
         else
         {
             printf("unknown argument %s\n", argv[x]);
