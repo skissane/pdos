@@ -81,6 +81,8 @@ typedef     unsigned long               address_t;
 typedef     signed long                 offset_t;
 typedef     unsigned long               value_t;
 
+typedef     unsigned long               flag_int;
+
 #include    "frags.h"
 #include    "expr.h"
 #include    "symbols.h"

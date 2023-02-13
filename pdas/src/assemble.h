@@ -130,7 +130,20 @@ struct template {
     
 #define     IMPLICIT_REGISTER           (SHIFT_COUNT | ACC)
     
-    int minimum_cpu;
+    flag_int cpu_flags;
+
+#define     CPU_186                     (1U << 0)
+#define     CPU_286                     (1U << 1)
+#define     CPU_386                     (1U << 2)
+#define     CPU_486                     (1U << 3)
+#define     CPU_686                     (1U << 4)
+
+#define     CPU_8087                    (1U << 7)
+#define     CPU_287                     (1U << 8)
+#define     CPU_387                     (1U << 9)
+#define     CPU_687                     (1U << 10)
+
+#define     CPU_CMOV                    (1U << 12)
 
 };
 
@@ -169,6 +182,8 @@ struct sib_byte {
 #define     BWL_SUF                     (NO_SSUF | NO_QSUF | NO_INTELSUF)
 #define     SL_SUF                      (NO_BSUF | NO_WSUF | NO_QSUF | NO_INTELSUF)
 
+#define     CPU_FP                      (CPU_8087 | CPU_287 | CPU_387)  
+
 /*
  * All instructions with the exact same name must be together without any other instructions mixed in
  * for the code searching the template table to work properly.
@@ -184,44 +199,44 @@ static const struct template template_table[] = {
     /* Move instructions for segment registers. */
     { "mov", 2, 0x8C, NONE, WL_SUF | MODRM, { SEGMENT1, WORD_REG | INV_MEM, 0 }, 0 },
     { "mov", 2, 0x8C, NONE, W_SUF | MODRM | IGNORE_SIZE, { SEGMENT1, ANY_MEM, 0 }, 0 },
-    { "mov", 2, 0x8C, NONE, WL_SUF | MODRM, { SEGMENT2, WORD_REG | INV_MEM, 0 }, 3 },
-    { "mov", 2, 0x8C, NONE, W_SUF | MODRM | IGNORE_SIZE, { SEGMENT2, ANY_MEM, 0 }, 3 },
+    { "mov", 2, 0x8C, NONE, WL_SUF | MODRM, { SEGMENT2, WORD_REG | INV_MEM, 0 }, CPU_386 },
+    { "mov", 2, 0x8C, NONE, W_SUF | MODRM | IGNORE_SIZE, { SEGMENT2, ANY_MEM, 0 }, CPU_386 },
     { "mov", 2, 0x8E, NONE, WL_SUF | MODRM | IGNORE_SIZE, { WORD_REG | INV_MEM, SEGMENT1, 0 }, 0 },
     { "mov", 2, 0x8E, NONE, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT1, 0 }, 0 },
-    { "mov", 2, 0x8E, NONE, WL_SUF | MODRM | IGNORE_SIZE, { WORD_REG | INV_MEM, SEGMENT2, 0 }, 3 },
-    { "mov", 2, 0x8E, NONE, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT2, 0 }, 3 },
+    { "mov", 2, 0x8E, NONE, WL_SUF | MODRM | IGNORE_SIZE, { WORD_REG | INV_MEM, SEGMENT2, 0 }, CPU_386 },
+    { "mov", 2, 0x8E, NONE, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT2, 0 }, CPU_386 },
     
     /* Move instructions for control, debug and test registers. */
-    { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, 3 },
-    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, 3 },
-    { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, 3 },
+    { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, CPU_386 },
+    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, CPU_386 },
+    { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 },
     
     /* Move with sign extend. */
     /* "movsbl" and "movsbw" are not unified into "movsb" to prevent conflict with "movs". */
-    { "movsbl", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG32, 0 }, 3 },
-    { "movsbw", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG16, 0 }, 3 },
-    { "movswl", 2, 0x0FBF, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, 3 },
+    { "movsbl", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG32, 0 }, CPU_386 },
+    { "movsbw", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG16, 0 }, CPU_386 },
+    { "movswl", 2, 0x0FBF, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, CPU_386 },
     
     /* Alternative syntax. */
-    { "movsx", 2, 0x0FBE, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, 3 },
+    { "movsx", 2, 0x0FBE, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
     
     /* Move with zero extend. */
-    { "movzb", 2, 0x0FB6, NONE, WL_SUF | MODRM, { REG8 | ANY_MEM, WORD_REG, 0 }, 3 },
-    { "movzwl", 2, 0x0FB7, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, 3 },
+    { "movzb", 2, 0x0FB6, NONE, WL_SUF | MODRM, { REG8 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "movzwl", 2, 0x0FB7, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, CPU_386 },
     
     /* Alternative syntax. */
-    { "movzx", 2, 0x0FB6, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, 3 },
+    { "movzx", 2, 0x0FB6, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
     
     /* Push instructions. */
     { "push", 1, 0x50, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
     { "push", 1, 0xFF, 6, WL_SUF | DEFAULT_SIZE | MODRM, { WORD_REG | ANY_MEM, 0, 0 }, 0 },
-    { "push", 1, 0x6A, NONE, WL_SUF | DEFAULT_SIZE, { IMM8S, 0, 0 }, 1 },
-    { "push", 1, 0x68, NONE, WL_SUF | DEFAULT_SIZE, { IMM16 | IMM32, 0, 0 }, 1 },
+    { "push", 1, 0x6A, NONE, WL_SUF | DEFAULT_SIZE, { IMM8S, 0, 0 }, CPU_186 },
+    { "push", 1, 0x68, NONE, WL_SUF | DEFAULT_SIZE, { IMM16 | IMM32, 0, 0 }, CPU_186 },
     
     { "push", 1, 0x06, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, 0},
     { "push", 1, 0x0FA0, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, 3},
     
-    { "pusha", 0, 0x60, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 1 },
+    { "pusha", 0, 0x60, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
     
     /* Pop instructions. */
     { "pop", 1, 0x58, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
@@ -230,9 +245,9 @@ static const struct template template_table[] = {
 #define     POP_SEGMENT_SHORT           0x07
     
     { "pop", 1, 0x07, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, 0 },
-    { "pop", 1, 0x0FA1, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, 3 },
+    { "pop", 1, 0x0FA1, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, CPU_386 },
     
-    { "popa", 0, 0x61, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 1 },
+    { "popa", 0, 0x61, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
     
     /* Exchange instructions. */
     { "xchg", 2, 0x90, NONE, WL_SUF | SHORT_FORM, { WORD_REG, ACC, 0 }, 0 },
@@ -257,9 +272,9 @@ static const struct template template_table[] = {
     /* Load far pointer from memory. */
     { "lds", 2, 0xC5, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 0 },
     { "les", 2, 0xC4, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 0 },
-    { "lfs", 2, 0x0FB4, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 3 },
-    { "lgs", 2, 0x0FB5, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 3 },
-    { "lss", 2, 0x0FB2, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 3 },
+    { "lfs", 2, 0x0FB4, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "lgs", 2, 0x0FB5, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "lss", 2, 0x0FB2, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, CPU_386 },
     
     /* Flags register instructions. */
     { "cmc", 0, 0xF5, NONE, NO_SUF, { 0, 0, 0 }, 0 },
@@ -269,7 +284,7 @@ static const struct template template_table[] = {
     { "sti", 0, 0xFB, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "cld", 0, 0xFC, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "std", 0, 0xFD, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "clts", 0, 0x0F06, NONE, NO_SUF, { 0, 0, 0 }, 2 },
+    { "clts", 0, 0x0F06, NONE, NO_SUF, { 0, 0, 0 }, CPU_286 },
     { "lahf", 0, 0x9F, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "sahf", 0, 0x9E, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "pushf", 0, 0x9C, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
@@ -348,22 +363,22 @@ static const struct template template_table[] = {
     { "cbw", 0, 0x98, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cwde", 0, 0x98, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 0 },
     { "cwd", 0, 0x99, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
-    { "cdq", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 3 },
+    { "cdq", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, CPU_386 },
     
     /* Other naming. */
     { "cbtw", 0, 0x98, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cwtl", 0, 0x98, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 0 },
     { "cwtd", 0, 0x99, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
-    { "cltd", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 3 },
+    { "cltd", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, CPU_386 },
     
     { "mul", 1, 0xF6, 4, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
     { "imul", 1, 0xF6, 5, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
-    { "imul", 2, 0x0FAF, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, 3 },
-    { "imul", 3, 0x6B, NONE, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, WORD_REG }, 1 },
-    { "imul", 3, 0x69, NONE, WL_SUF | MODRM, { IMM16 | IMM32, WORD_REG | ANY_MEM, WORD_REG }, 1 },
-    { "imul", 2, 0x6B, NONE, WL_SUF | MODRM | REG_DUPLICATION, { IMM8S, WORD_REG, 0 }, 1 },
-    { "imul", 2, 0x69, NONE, WL_SUF | MODRM | REG_DUPLICATION, { IMM16 | IMM32, WORD_REG, 0 }, 1 },
+    { "imul", 2, 0x0FAF, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "imul", 3, 0x6B, NONE, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, WORD_REG }, CPU_186 },
+    { "imul", 3, 0x69, NONE, WL_SUF | MODRM, { IMM16 | IMM32, WORD_REG | ANY_MEM, WORD_REG }, CPU_186 },
+    { "imul", 2, 0x6B, NONE, WL_SUF | MODRM | REG_DUPLICATION, { IMM8S, WORD_REG, 0 }, CPU_186 },
+    { "imul", 2, 0x69, NONE, WL_SUF | MODRM | REG_DUPLICATION, { IMM16 | IMM32, WORD_REG, 0 }, CPU_186 },
     
     { "div", 1, 0xF6, 6, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     { "div", 2, 0xF6, 6, BWL_SUF | W | MODRM, { REG | ANY_MEM, ACC, 0 }, 0 },
@@ -371,45 +386,45 @@ static const struct template template_table[] = {
     { "idiv", 1, 0xF6, 7, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     { "idiv", 2, 0xF6, 7, BWL_SUF | W | MODRM, { REG | ANY_MEM, ACC, 0 }, 0 },
     
-    { "rol", 2, 0xC0, 0, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "rol", 2, 0xC0, 0, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "rol", 2, 0xD2, 0, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "rol", 1, 0xD0, 0, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "ror", 2, 0xC0, 1, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "ror", 2, 0xC0, 1, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "ror", 2, 0xD2, 1, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "ror", 1, 0xD0, 1, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "rcl", 2, 0xC0, 2, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "rcl", 2, 0xC0, 2, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "rcl", 2, 0xD2, 2, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "rcl", 1, 0xD0, 2, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "rcr", 2, 0xC0, 3, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "rcr", 2, 0xC0, 3, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "rcr", 2, 0xD2, 3, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "rcr", 1, 0xD0, 3, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "sal", 2, 0xC0, 4, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "sal", 2, 0xC0, 4, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "sal", 2, 0xD2, 4, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "sal", 1, 0xD0, 4, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "shl", 2, 0xC0, 4, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "shl", 2, 0xC0, 4, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "shl", 2, 0xD2, 4, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "shl", 1, 0xD0, 4, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "shr", 2, 0xC0, 5, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "shr", 2, 0xC0, 5, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "shr", 2, 0xD2, 5, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "shr", 1, 0xD0, 5, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "sar", 2, 0xC0, 7, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, 1 },
+    { "sar", 2, 0xC0, 7, BWL_SUF | W | MODRM, { IMM8, REG | ANY_MEM, 0 }, CPU_186 },
     { "sar", 2, 0xD2, 7, BWL_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM, 0 }, 0 },
     { "sar", 1, 0xD0, 7, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "shld", 3, 0x0FA4, NONE, WL_SUF | MODRM, { IMM8, WORD_REG, WORD_REG | ANY_MEM }, 3 },
-    { "shld", 3, 0x0FA5, NONE, WL_SUF | MODRM, { SHIFT_COUNT, WORD_REG, WORD_REG | ANY_MEM }, 3 },
-    { "shld", 2, 0x0FA5, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
+    { "shld", 3, 0x0FA4, NONE, WL_SUF | MODRM, { IMM8, WORD_REG, WORD_REG | ANY_MEM }, CPU_386 },
+    { "shld", 3, 0x0FA5, NONE, WL_SUF | MODRM, { SHIFT_COUNT, WORD_REG, WORD_REG | ANY_MEM }, CPU_386 },
+    { "shld", 2, 0x0FA5, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
     
-    { "shrd", 3, 0x0FAC, NONE, WL_SUF | MODRM, { IMM8, WORD_REG, WORD_REG | ANY_MEM }, 3 },
-    { "shrd", 3, 0x0FAD, NONE, WL_SUF | MODRM, { SHIFT_COUNT, WORD_REG, WORD_REG | ANY_MEM }, 3 },
-    { "shrd", 2, 0x0FAD, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
+    { "shrd", 3, 0x0FAC, NONE, WL_SUF | MODRM, { IMM8, WORD_REG, WORD_REG | ANY_MEM }, CPU_386 },
+    { "shrd", 3, 0x0FAD, NONE, WL_SUF | MODRM, { SHIFT_COUNT, WORD_REG, WORD_REG | ANY_MEM }, CPU_386 },
+    { "shrd", 2, 0x0FAD, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
     
     /* Program control transfer instructions. */
     { "call", 1, 0xE8, NONE, WL_SUF | DEFAULT_SIZE | CALL, { DISP16 | DISP32, 0, 0 }, 0 },
@@ -438,8 +453,8 @@ static const struct template template_table[] = {
     { "retf", 1, 0xCA, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
     { "lret", 0, 0xCB, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
     { "lret", 1, 0xCA, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
-    { "enter", 2, 0xC8, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, IMM8, 0 }, 1 },
-    { "leave", 0, 0xC9, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 1 },
+    { "enter", 2, 0xC8, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, IMM8, 0 }, CPU_186 },
+    { "leave", 0, 0xC9, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
     
     /* Conditional jumps. */
     { "jo", 1, 0x70, NONE, NO_SUF | JUMP, { DISP, 0, 0 }, 0 },
@@ -484,42 +499,42 @@ static const struct template template_table[] = {
     { "loopne", 1, 0xE0, NONE, WL_SUF | JUMPBYTE, { DISP, 0, 0 }, 0 },
     
     /* Set byte on flag instructions. */
-    { "seto", 1, 0x0F90, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setno", 1, 0x0F91, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setb", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setc", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnae", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnb", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnc", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setae", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "sete", 1, 0x0F94, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setz", 1, 0x0F94, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setne", 1, 0x0F95, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnz", 1, 0x0F95, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setbe", 1, 0x0F96, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setna", 1, 0x0F96, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnbe", 1, 0x0F97, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "seta", 1, 0x0F97, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "sets", 1, 0x0F98, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setns", 1, 0x0F99, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setp", 1, 0x0F9A, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setpe", 1, 0x0F9A, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnp", 1, 0x0F9B, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setpo", 1, 0x0F9B, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setl", 1, 0x0F9C, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnge", 1, 0x0F9C, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnl", 1, 0x0F9D, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setge", 1, 0x0F9D, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setle", 1, 0x0F9E, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setng", 1, 0x0F9E, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setnle", 1, 0x0F9F, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
-    { "setg", 1, 0x0F9F, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, 3 },
+    { "seto", 1, 0x0F90, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setno", 1, 0x0F91, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setb", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setc", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnae", 1, 0x0F92, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnb", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnc", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setae", 1, 0x0F93, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "sete", 1, 0x0F94, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setz", 1, 0x0F94, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setne", 1, 0x0F95, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnz", 1, 0x0F95, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setbe", 1, 0x0F96, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setna", 1, 0x0F96, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnbe", 1, 0x0F97, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "seta", 1, 0x0F97, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "sets", 1, 0x0F98, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setns", 1, 0x0F99, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setp", 1, 0x0F9A, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setpe", 1, 0x0F9A, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnp", 1, 0x0F9B, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setpo", 1, 0x0F9B, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setl", 1, 0x0F9C, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnge", 1, 0x0F9C, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnl", 1, 0x0F9D, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setge", 1, 0x0F9D, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setle", 1, 0x0F9E, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setng", 1, 0x0F9E, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setnle", 1, 0x0F9F, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
+    { "setg", 1, 0x0F9F, 0, B_SUF | MODRM, { REG8 | ANY_MEM, 0, 0 }, CPU_386 },
     
     /* String manipulation instructions. */
     { "cmps", 0, 0xA6, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 0 },
     { "scmp", 0, 0xA6, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 0 },
-    { "ins", 0, 0x6C, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 1 },
-    { "outs", 0, 0x6E, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 1 },
+    { "ins", 0, 0x6C, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, CPU_186 },
+    { "outs", 0, 0x6E, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, CPU_186 },
     { "lods", 0, 0xAC, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 0 },
     { "slod", 0, 0xAC, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 0 },
     { "movs", 0, 0xA4, NONE, BWL_SUF | W | IS_STRING, { 0, 0, 0 }, 0 },
@@ -531,16 +546,16 @@ static const struct template template_table[] = {
     { "xlat", 0, 0xD7, NONE, B_SUF | IS_STRING, { 0, 0, 0 }, 0 },
     
     /* Bit manipulation instructions. */
-    { "bsf", 2, 0x0FBC, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, 3 },
-    { "bsr", 2, 0x0FBD, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, 3 },
-    { "bt", 2, 0x0FA3, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "bt", 2, 0x0FBA, 4, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "btc", 2, 0x0FBB, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "btc", 2, 0x0FBA, 7, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "btr", 2, 0x0FB3, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "btr", 2, 0x0FBA, 6, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "bts", 2, 0x0FAB, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, 3 },
-    { "bts", 2, 0x0FBA, 5, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, 3 },
+    { "bsf", 2, 0x0FBC, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "bsr", 2, 0x0FBD, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "bt", 2, 0x0FA3, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "bt", 2, 0x0FBA, 4, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "btc", 2, 0x0FBB, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "btc", 2, 0x0FBA, 7, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "btr", 2, 0x0FB3, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "btr", 2, 0x0FBA, 6, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "bts", 2, 0x0FAB, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
+    { "bts", 2, 0x0FBA, 5, WL_SUF | MODRM, { IMM8, WORD_REG | ANY_MEM, 0 }, CPU_386 },
     
     /* Interrupts. */
 #define     INT_OPCODE            0xCD
@@ -550,225 +565,231 @@ static const struct template template_table[] = {
     { "into", 0, 0xCE, NONE, 0, { 0, 0, 0 }, 0 },
     { "iret", 0, 0xCF, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
     
-    { "rsm", 0, 0x0FAA, NONE, 0, { 0, 0, 0 }, 3 },
-    { "bound", 2, 0x62, NONE, 0, { WORD_REG, ANY_MEM, 0 }, 1 },
+    { "rsm", 0, 0x0FAA, NONE, 0, { 0, 0, 0 }, CPU_386 },
+    { "bound", 2, 0x62, NONE, 0, { WORD_REG, ANY_MEM, 0 }, CPU_186 },
     
     { "hlt", 0, 0xF4, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "nop", 0, 0x90, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     
     /* Protection control. */
-    { "arpl", 2, 0x63, NONE, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM, 0 }, 2 },
-    { "lar", 2, 0x0F02, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, 2 },
-    { "lgdt", 1, 0x0F01, 2, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, 2 },
-    { "lidt", 1, 0x0F01, 3, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, 2 },
-    { "lldt", 1, 0x0F00, 2, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, 2 },
-    { "lmsw", 1, 0x0F01, 6, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, 2 },
-    { "lsl", 2, 0x0F03, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, 2 },
-    { "ltr", 1, 0x0F00, 3, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, 2 },
+    { "arpl", 2, 0x63, NONE, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM, 0 }, CPU_286 },
+    { "lar", 2, 0x0F02, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_286 },
+    { "lgdt", 1, 0x0F01, 2, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "lidt", 1, 0x0F01, 3, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "lldt", 1, 0x0F00, 2, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, CPU_286 },
+    { "lmsw", 1, 0x0F01, 6, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, CPU_286 },
+    { "lsl", 2, 0x0F03, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_286 },
+    { "ltr", 1, 0x0F00, 3, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, CPU_286 },
     
-    { "sgdt", 1, 0x0F01, 0, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, 2 },
-    { "sidt", 1, 0x0F01, 1, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, 2 },
-    { "sldt", 1, 0x0F00, 0, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, 2 },
-    { "sldt", 1, 0x0F00, 0, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, 2 },
-    { "smsw", 1, 0x0F01, 4, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, 2 },
-    { "smsw", 1, 0x0F01, 4, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, 2 },
-    { "str", 1, 0x0F00, 1, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, 2 },
-    { "str", 1, 0x0F00, 1, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, 2 },
+    { "sgdt", 1, 0x0F01, 0, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "sidt", 1, 0x0F01, 1, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "sldt", 1, 0x0F00, 0, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, CPU_286 },
+    { "sldt", 1, 0x0F00, 0, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "smsw", 1, 0x0F01, 4, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, CPU_286 },
+    { "smsw", 1, 0x0F01, 4, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, CPU_286 },
+    { "str", 1, 0x0F00, 1, WL_SUF | MODRM, { WORD_REG | INV_MEM, 0, 0 }, CPU_286 },
+    { "str", 1, 0x0F00, 1, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, 0, 0 }, CPU_286 },
     
-    { "verr", 1, 0x0F00, 4, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, 2 },
-    { "verw", 1, 0x0F00, 5, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, 2 },
+    { "verr", 1, 0x0F00, 4, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, CPU_286 },
+    { "verw", 1, 0x0F00, 5, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM, 0, 0 }, CPU_286 },
     
     /* Floating point instructions. */
     /* Load. */
-    { "fld", 1, 0xD9C0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fld", 1, 0xD9, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fld", 1, 0xDB, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fild", 1, 0xDF, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fild", 1, 0xDF, 5, Q_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fildll", 1, 0xDF, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fldt", 1, 0xDB, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fbld", 1, 0xDF, 4, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fld", 1, 0xD9C0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fld", 1, 0xD9, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fld", 1, 0xDB, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fild", 1, 0xDF, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fild", 1, 0xDF, 5, Q_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fildll", 1, 0xDF, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fldt", 1, 0xDB, 5, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fbld", 1, 0xDF, 4, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
     /* Store without pop. */
-    { "fst", 1, 0xDDD0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fst", 1, 0xD9, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fist", 1, 0xDF, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fst", 1, 0xDDD0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fst", 1, 0xD9, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fist", 1, 0xDF, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
     /* Store with pop. */
-    { "fstp", 1, 0xDDD8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fstp", 1, 0xD9, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fstp", 1, 0xDB, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fistp", 1, 0xDF, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fistp", 1, 0xDF, 7, Q_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fistpll", 1, 0xDF, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fstpt", 1, 0xDB, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fbstp", 1, 0xDF, 6, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fstp", 1, 0xDDD8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fstp", 1, 0xD9, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fstp", 1, 0xDB, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fistp", 1, 0xDF, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fistp", 1, 0xDF, 7, Q_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fistpll", 1, 0xDF, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fstpt", 1, 0xDB, 7, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fbstp", 1, 0xDF, 6, NO_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
     /* Exchange of %st(0) with %st(x). */
-    { "fxch", 1, 0xD9C8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
+    { "fxch", 1, 0xD9C8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
     /* Exchange of %st(0) with %st(1). */
-    { "fxch", 0, 0xD9C9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fxch", 0, 0xD9C9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Comparison without pop. */
-    { "fcom", 1, 0xD8D0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fcom", 0, 0xD8D1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fcom", 1, 0xD8, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "ficom", 1, 0xDE, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fcom", 1, 0xD8D0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fcom", 0, 0xD8D1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fcom", 1, 0xD8, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "ficom", 1, 0xDE, 2, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
     /* Comparison with pop. */
-    { "fcomp", 1, 0xD8D8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fcomp", 0, 0xD8D9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fcomp", 1, 0xD8, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "ficomp", 1, 0xDE, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fcompp", 0, 0xDED9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fcomp", 1, 0xD8D8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fcomp", 0, 0xD8D9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fcomp", 1, 0xD8, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "ficomp", 1, 0xDE, 3, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fcompp", 0, 0xDED9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Unordered comparison. */
-    { "fucom", 1, 0xDDE0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 3 },
-    { "fucom", 0, 0xDDE1, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "fucomp", 1, 0xDDE8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 3 },
-    { "fucomp", 0, 0xDDE9, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "fucompp", 0, 0xDAE9, NONE, NO_SUF, { 0, 0, 0 }, 3 },
+    { "fucom", 1, 0xDDE0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_387 },
+    { "fucom", 0, 0xDDE1, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "fucomp", 1, 0xDDE8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_387 },
+    { "fucomp", 0, 0xDDE9, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "fucompp", 0, 0xDAE9, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
     
-    { "ftst", 0, 0xD9E4, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fxam", 0, 0xD9E5, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "ftst", 0, 0xD9E4, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fxam", 0, 0xD9E5, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Load constant. */
-    { "fld1", 0, 0xD9E8, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldl2t", 0, 0xD9E9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldl2e", 0, 0xD9EA, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldpi", 0, 0xD9EB, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldlg2", 0, 0xD9EC, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldln2", 0, 0xD9ED, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fldz", 0, 0xD9EE, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fld1", 0, 0xD9E8, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldl2t", 0, 0xD9E9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldl2e", 0, 0xD9EA, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldpi", 0, 0xD9EB, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldlg2", 0, 0xD9EC, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldln2", 0, 0xD9ED, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fldz", 0, 0xD9EE, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Arithmetic floating point instructions. */
     /* Add. */
-    { "fadd", 2, 0xD8C0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fadd", 1, 0xD8C0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fadd", 1, 0xD8, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fiadd", 1, 0xDE, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fadd", 2, 0xD8C0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fadd", 1, 0xD8C0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fadd", 1, 0xD8, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fiadd", 1, 0xDE, 0, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "faddp", 2, 0xDEC0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "faddp", 1, 0xDEC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "faddp", 0, 0xDEC1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "faddp", 2, 0xDEC0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "faddp", 1, 0xDEC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "faddp", 0, 0xDEC1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Subtract. */
-    { "fsub", 2, 0xD8E0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fsub", 1, 0xD8E0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fsub", 1, 0xD8, 4, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fisub", 1, 0xDE, 4, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fsub", 2, 0xD8E0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fsub", 1, 0xD8E0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fsub", 1, 0xD8, 4, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fisub", 1, 0xDE, 4, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fsubp", 2, 0xDEE0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "fsubp", 1, 0xDEE0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fsubp", 0, 0xDEE1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fsubp", 2, 0xDEE0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "fsubp", 1, 0xDEE0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fsubp", 0, 0xDEE1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Subtract reverse. */
-    { "fsubr", 2, 0xD8E8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fsubr", 1, 0xD8E8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fsubr", 1, 0xD8, 5, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fisubr", 1, 0xDE, 5, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fsubr", 2, 0xD8E8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fsubr", 1, 0xD8E8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fsubr", 1, 0xD8, 5, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fisubr", 1, 0xDE, 5, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fsubrp", 2, 0xDEE8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "fsubrp", 1, 0xDEE8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fsubrp", 0, 0xDEE9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fsubrp", 2, 0xDEE8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "fsubrp", 1, 0xDEE8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fsubrp", 0, 0xDEE9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Multiply. */
-    { "fmul", 2, 0xD8C8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fmul", 1, 0xD8C8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fmul", 1, 0xD8, 1, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fimul", 1, 0xDE, 1, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fmul", 2, 0xD8C8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fmul", 1, 0xD8C8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fmul", 1, 0xD8, 1, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fimul", 1, 0xDE, 1, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fmulp", 2, 0xDEC8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "fmulp", 1, 0xDEC8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fmulp", 0, 0xDEC9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fmulp", 2, 0xDEC8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "fmulp", 1, 0xDEC8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fmulp", 0, 0xDEC9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Divide. */
-    { "fdiv", 2, 0xD8F0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fdiv", 1, 0xD8F0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fdiv", 1, 0xD8, 6, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fidiv", 1, 0xDE, 6, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fdiv", 2, 0xD8F0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fdiv", 1, 0xD8F0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fdiv", 1, 0xD8, 6, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fidiv", 1, 0xDE, 6, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fdivp", 2, 0xDEF0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "fdivp", 1, 0xDEF0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fdivp", 0, 0xDEF1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fdivp", 2, 0xDEF0, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "fdivp", 1, 0xDEF0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fdivp", 0, 0xDEF1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Divide reverse. */
-    { "fdivr", 2, 0xD8F8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, 0 },
-    { "fdivr", 1, 0xD8F8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fdivr", 1, 0xD8, 7, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fidivr", 1, 0xDE, 7, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fdivr", 2, 0xD8F8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC, 0 }, CPU_FP },
+    { "fdivr", 1, 0xD8F8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fdivr", 1, 0xD8, 7, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fidivr", 1, 0xDE, 7, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fdivrp", 2, 0xDEF8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, 0 },
-    { "fdivrp", 1, 0xDEF8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "fdivrp", 0, 0xDEF9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fdivrp", 2, 0xDEF8, NONE, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG, 0 }, CPU_FP },
+    { "fdivrp", 1, 0xDEF8, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "fdivrp", 0, 0xDEF9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Other operations. */
-    { "f2xm1", 0, 0xD9F0, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fyl2x", 0, 0xD9F1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fptan", 0, 0xD9F2, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fpatan", 0, 0xD9F3, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fxtract", 0, 0xD9F4, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fprem1", 0, 0xD9F5, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "fdecstp", 0, 0xD9F6, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fincstp", 0, 0xD9F7, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fprem", 0, 0xD9F8, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fyl2xp1", 0, 0xD9F9, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fsqrt", 0, 0xD9FA, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fsincos", 0, 0xD9FB, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "frndint", 0, 0xD9FC, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fscale", 0, 0xD9FD, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fsin", 0, 0xD9FE, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "fcos", 0, 0xD9FF, NONE, NO_SUF, { 0, 0, 0 }, 3 },
-    { "fchs", 0, 0xD9E0, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fabs", 0, 0xD9E1, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "f2xm1", 0, 0xD9F0, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fyl2x", 0, 0xD9F1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fptan", 0, 0xD9F2, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fpatan", 0, 0xD9F3, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fxtract", 0, 0xD9F4, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fprem1", 0, 0xD9F5, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "fdecstp", 0, 0xD9F6, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fincstp", 0, 0xD9F7, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fprem", 0, 0xD9F8, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fyl2xp1", 0, 0xD9F9, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fsqrt", 0, 0xD9FA, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fsincos", 0, 0xD9FB, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "frndint", 0, 0xD9FC, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fscale", 0, 0xD9FD, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fsin", 0, 0xD9FE, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "fcos", 0, 0xD9FF, NONE, NO_SUF, { 0, 0, 0 }, CPU_387 },
+    { "fchs", 0, 0xD9E0, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fabs", 0, 0xD9E1, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Processor control instructions. */
-    { "fninit", 0, 0xDBE3, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "finit", 0, 0xDBE3, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, 0 },
-    { "fldcw", 1, 0xD9, 5, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fnstcw", 1, 0xD9, 7, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fstcw", 1, 0xD9, 7, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fninit", 0, 0xDBE3, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "finit", 0, 0xDBE3, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, CPU_FP },
+    { "fldcw", 1, 0xD9, 5, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fnstcw", 1, 0xD9, 7, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fstcw", 1, 0xD9, 7, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
     
-    { "fnstsw", 1, 0xDFE0, NONE, NO_SUF | IGNORE_SIZE, { ACC, 0, 0 }, 0 },
-    { "fnstsw", 1, 0xDD, 7, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fnstsw", 0, 0xDFE0, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fnstsw", 1, 0xDFE0, NONE, NO_SUF | IGNORE_SIZE, { ACC, 0, 0 }, CPU_287 | CPU_387 },
+    { "fnstsw", 1, 0xDD, 7, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fnstsw", 0, 0xDFE0, NONE, NO_SUF, { 0, 0, 0 }, CPU_287 | CPU_387 },
     
-    { "fstsw", 1, 0xDFE0, NONE, NO_SUF | ADD_FWAIT | IGNORE_SIZE, { ACC, 0, 0 }, 0 },
-    { "fstsw", 1, 0xDD, 7, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fstsw", 0, 0xDFE0, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, 0 },
+    { "fstsw", 1, 0xDFE0, NONE, NO_SUF | ADD_FWAIT | IGNORE_SIZE, { ACC, 0, 0 }, CPU_287 | CPU_387 },
+    { "fstsw", 1, 0xDD, 7, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fstsw", 0, 0xDFE0, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, CPU_287 | CPU_387 },
     
-    { "fnclex", 0, 0xDBE2, NONE, NO_SUF, { 0, 0, 0 }, 0 },
-    { "fclex", 0, 0xDBE2, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, 0 },
+    { "fnclex", 0, 0xDBE2, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
+    { "fclex", 0, 0xDBE2, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, CPU_FP },
     
-    { "fnstenv", 1, 0xD9, 6, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fstenv", 1, 0xD9, 6, SL_SUF | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fldenv", 1, 0xD9, 4, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fnsave", 1, 0xDD, 6, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "fsave", 1, 0xDD, 6, SL_SUF | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, 0 },
-    { "frstor", 1, 0xDD, 4, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, 0 },
+    { "fnstenv", 1, 0xD9, 6, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fstenv", 1, 0xD9, 6, SL_SUF | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fldenv", 1, 0xD9, 4, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fnsave", 1, 0xDD, 6, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "fsave", 1, 0xDD, 6, SL_SUF | ADD_FWAIT | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+    { "frstor", 1, 0xDD, 4, SL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_FP },
+
+    /* 8087 only. */
+    { "fneni", 0, 0xDBE0, NONE, NO_SUF, { 0, 0, 0 }, CPU_8087 },
+    { "feni", 0, 0xDBE0, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, CPU_8087 },
+    { "fndisi", 0, 0xDBE1, NONE, NO_SUF, { 0, 0, 0 }, CPU_8087 },
+    { "fdisi", 0, 0xDBE1, NONE, NO_SUF | ADD_FWAIT, { 0, 0, 0 }, CPU_8087 },
     
-    { "ffree", 1, 0xDDC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 0 },
-    { "ffreep", 1, 0xDFC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, 6 },
-    { "fnop", 0, 0xD9D0, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "ffree", 1, 0xDDC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_FP },
+    { "ffreep", 1, 0xDFC0, NONE, NO_SUF | SHORT_FORM, { FLOAT_REG, 0, 0 }, CPU_687 },
+    { "fnop", 0, 0xD9D0, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
 #define     FWAIT_OPCODE                0x9B
     
-    { "fwait", 0, 0x9B, NONE, NO_SUF, { 0, 0, 0 }, 0 },
+    { "fwait", 0, 0x9B, NONE, NO_SUF, { 0, 0, 0 }, CPU_FP },
     
     /* Opcode prefixes. They are allowed as separate instructions too. */
 #define     ADDR_PREFIX_OPCODE          0x67
     
-    { "addr16", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "addr32", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "aword", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "adword", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
+    { "addr16", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "addr32", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "aword", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "adword", 0, 0x67, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
     
 #define     DATA_PREFIX_OPCODE          0x66
     
-    { "data16", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "data32", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "word", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
-    { "dword", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, 3 },
+    { "data16", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "data32", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "word", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE16 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
+    { "dword", 0, 0x66, NONE, NO_SUF | IS_PREFIX | SIZE32 | IGNORE_SIZE, { 0, 0, 0 }, CPU_386 },
     
 #define     CS_PREFIX_OPCODE            0x2E
     { "cs", 0, 0x2E, NONE, NO_SUF | IS_PREFIX, { 0, 0, 0 }, 0 },
@@ -793,10 +814,10 @@ static const struct template template_table[] = {
     { "repz", 0, 0xF3, NONE, NO_SUF | IS_PREFIX, { 0, 0, 0 }, 0 },
 
     /* i486 extensions. */
-    { "bswap", 1, 0x0FC8, NONE, L_SUF | SHORT_FORM, { REG32, 0, 0 }, 4 },
+    { "bswap", 1, 0x0FC8, NONE, L_SUF | SHORT_FORM, { REG32, 0, 0 }, CPU_486 },
 
     /* i686 extensions. */
-#define CMOVcc(name, opcode) { name, 2, opcode, NONE, WL_SUF | MODRM, {REG16 | REG32 | ANY_MEM, REG16 | REG32, 0}, 6}
+#define CMOVcc(name, opcode) { name, 2, opcode, NONE, WL_SUF | MODRM, {REG16 | REG32 | ANY_MEM, REG16 | REG32, 0}, CPU_CMOV}
     CMOVcc ("cmovo", 0x0F40),
     CMOVcc ("cmovno", 0x0F41),
     CMOVcc ("cmovb", 0x0F42),
@@ -942,5 +963,51 @@ static const unsigned char segment_prefixes[] = {
     DS_PREFIX_OPCODE,
     FS_PREFIX_OPCODE,
     GS_PREFIX_OPCODE
+
+};
+
+struct cpu_arch_entry {
+
+    const char *name;
+    flag_int cpu_flags;
+
+};
+
+#define CPU_I186_FLAGS (CPU_186)
+#define CPU_I286_FLAGS (CPU_I186_FLAGS | CPU_286)
+#define CPU_I386_FLAGS (CPU_I286_FLAGS | CPU_386)
+/* i486 is the first CPU with a FPU integrated. */
+#define CPU_I486_FLAGS (CPU_I386_FLAGS | CPU_486 | CPU_387)
+#define CPU_I686_FLAGS (CPU_I486_FLAGS | CPU_686 | CPU_687 | CPU_CMOV)
+
+static const struct cpu_arch_entry cpu_archs[] = {
+
+    {"i8086", 0},
+    {"i186", CPU_I186_FLAGS},
+    {"i286", CPU_I286_FLAGS},
+    {"i386", CPU_I386_FLAGS},
+    {"i486", CPU_I486_FLAGS},
+    {"i686", CPU_I686_FLAGS}
+
+};
+
+static const struct cpu_arch_entry cpu_extensions[] = {
+
+    {"8087", CPU_8087},
+    {"287", CPU_287},
+    {"387", CPU_387},
+    {"687", CPU_387 | CPU_687},
+    {"cmov", CPU_CMOV}
+
+};
+
+static const struct cpu_arch_entry cpu_no_extensions[] = {
+
+    {"no87", CPU_8087 | CPU_287 | CPU_387 | CPU_687},
+    {"no8087", CPU_8087},
+    {"no287", CPU_287},
+    {"no387", CPU_387},
+    {"no687", CPU_687},
+    {"nocmov", CPU_CMOV}
 
 };

@@ -20,7 +20,13 @@
 
 #include    "options.h"
 
-static int cpu_level = 3;
+#define DEFAULT_CPU_ARCH_FLAGS (~0LU)
+#define DEFAULT_CPU_ARCH_NAME "ALL"
+
+static flag_int cpu_arch_flags = DEFAULT_CPU_ARCH_FLAGS;
+static char *cpu_arch_name = NULL;
+static char *cpu_extensions_name = NULL;
+
 static int bits = 0;
 
 /**
@@ -283,7 +289,7 @@ void machine_dependent_init (void) {
     
     }
 
-    if (cpu_level < 3) {
+    if (!(cpu_arch_flags & CPU_386)) {
 
         if (bits > 16) {
             _error ("option '--32' conflicts with the used '-march=' option (32 bit mode is not supported on CPUs before i386)");
@@ -375,7 +381,7 @@ static int add_prefix (unsigned char prefix) {
 
 static int check_reg (const struct reg_entry *reg) {
 
-    if (cpu_level < 3 && (reg->type & (REG32 | SEGMENT2 | CONTROL | DEBUG))) {
+    if (!(cpu_arch_flags & CPU_386) && (reg->type & (REG32 | SEGMENT2 | CONTROL | DEBUG))) {
         return 0;
     }
     
@@ -430,7 +436,7 @@ static const struct reg_entry *parse_register (const char *reg_string, char **en
     
     if (reg == reg_st0) {
     
-        if (cpu_level < 2) {
+        if ((cpu_arch_flags & (CPU_8087 | CPU_287 | CPU_387)) == 0) {
             return NULL;
         }
         
@@ -467,7 +473,11 @@ static const struct reg_entry *parse_register (const char *reg_string, char **en
         return reg;
     }
 
-    as_error ("register %%%s cannot be used here", reg->name);
+    if (intel_syntax) {
+        as_error ("register %s cannot be used here", reg->name);
+    } else {
+        as_error ("register %%%s cannot be used here", reg->name);
+    }
     
     return &bad_register;
 
@@ -925,15 +935,25 @@ static int match_template (void) {
     
     }
     
-    for (template = current_templates->start ; template < current_templates->end; template++) {
+    for (template = current_templates->start; template < current_templates->end; template++) {
     
         unsigned int operand_type_overlap0, operand_type_overlap1, operand_type_overlap2;
         
         if (instruction.operands != template->operands) {
             continue;
         }
+
+        if (template->cpu_flags && (template->cpu_flags & cpu_arch_flags) == 0) {
+            continue;
+        }
         
         if (template->opcode_modifier & suffix_check) {
+            continue;
+        }
+
+        if (instruction.suffix == DWORD_SUFFIX
+            && !(cpu_arch_flags & CPU_386)
+            && !(template->opcode_modifier & IGNORE_SIZE)) {
             continue;
         }
         
@@ -1732,7 +1752,7 @@ static void output_jump (void) {
     
         if (instruction.template.base_opcode == PC_RELATIVE_JUMP) {
             relax_subtype = ENCODE_RELAX_SUBTYPE (RELAX_SUBTYPE_UNCONDITIONAL_JUMP, RELAX_SUBTYPE_SHORT_JUMP);
-        } else if (cpu_level >= 3) {
+        } else if (cpu_arch_flags & CPU_386) {
             relax_subtype = ENCODE_RELAX_SUBTYPE (RELAX_SUBTYPE_CONDITIONAL_JUMP, RELAX_SUBTYPE_SHORT_JUMP);
         } else {
             relax_subtype = ENCODE_RELAX_SUBTYPE (RELAX_SUBTYPE_CONDITIONAL_JUMP86, RELAX_SUBTYPE_SHORT_JUMP);
@@ -1946,6 +1966,7 @@ static int intel_float_suffix_translation (const char *mnemonic) {
 
 static char *parse_instruction (char *line) {
 
+    const struct template *template;
     const char *expecting_string_instruction = NULL;
     
     char *p2;
@@ -2086,6 +2107,20 @@ static char *parse_instruction (char *line) {
         }
     
     }
+
+    for (template = current_templates->start; template < current_templates->end; template++) {
+
+        if (template->cpu_flags == 0 || (template->cpu_flags & cpu_arch_flags)) {
+            goto end;
+        }
+
+    }
+
+    as_error ("'%s' is not supported on '%s%s'",
+              current_templates->name,
+              cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
+              cpu_extensions_name ? cpu_extensions_name : "");
+    current_templates = NULL;
 
 end:
     *p2 = saved_ch;
@@ -2517,17 +2552,6 @@ char *machine_dependent_assemble_line (char *line) {
     
     }
     
-    if (cpu_level < 3) {
-    
-        if (instruction.suffix == DWORD_SUFFIX || instruction.template.minimum_cpu > cpu_level) {
-        
-            as_error ("no instruction for cpu level %d", cpu_level);
-            goto skip;
-        
-        }
-    
-    }
-    
     if (instruction.template.operand_types[0] & IMPLICIT_REGISTER) {
         instruction.reg_operands--;
     }
@@ -2874,9 +2898,11 @@ static void handler_code32 (char **pp) {
 
     (void) pp;
     
-    if (cpu_level < 3) {
+    if (!(cpu_arch_flags & CPU_386)) {
     
-        as_error (".code32 not supported for cpu level %d", cpu_level);
+        as_error (".code32 not supported on '%s%s'",
+                  cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
+                  cpu_extensions_name ? cpu_extensions_name : "");
         return;
     
     }
@@ -3082,7 +3108,59 @@ const struct as_option *machine_dependent_get_options (void) {
 
 void machine_dependent_print_help (void) {
 
-    fprintf (stderr, "    -march=CPU            CPU is one of: i8086, i80186, i80286, i386, i486, i586, i686\n");
+    int i, cols;
+
+    fprintf (stderr, "    -march=CPU[+EXTENSION]\n");
+    fprintf (stderr, "                          Generate code for CPU and EXTENSION. CPU is one of:\n");
+    fprintf (stderr, "                          ");
+    for (i = 0, cols = 0; i < ARRAY_SIZE (cpu_archs); i++) {
+
+        if (cols + strlen (cpu_archs[i].name) > strlen ("Generate code for CPU and EXTENSION. CPU is one of:")) {
+            
+            fprintf (stderr, "\n");
+            fprintf (stderr, "                          ");
+            cols = 0;
+            
+        }
+
+        cols += fprintf (stderr, " %s%s", cpu_archs[i].name, (i + 1 != ARRAY_SIZE (cpu_archs)) ? "," : "");
+        
+    }
+    fprintf (stderr, "\n");
+
+    fprintf (stderr, "                          EXTENSION is combination of:\n");
+    fprintf (stderr, "                          ");
+    for (i = 0, cols = 0; i < ARRAY_SIZE (cpu_extensions); i++) {
+
+        if (cols + strlen (cpu_extensions[i].name) > strlen ("Generate code for CPU and EXTENSION. CPU is one of:")) {
+            
+            fprintf (stderr, "\n");
+            fprintf (stderr, "                          ");
+            cols = 0;
+            
+        }
+
+        cols += fprintf (stderr, " %s,", cpu_extensions[i].name);
+        
+    }
+
+    for (i = 0; i < ARRAY_SIZE (cpu_no_extensions); i++) {
+
+        if (cols + strlen (cpu_no_extensions[i].name) > strlen ("Generate code for CPU and EXTENSION. CPU is one of:")) {
+            
+            fprintf (stderr, "\n");
+            fprintf (stderr, "                          ");
+            cols = 0;
+            
+        }
+
+        cols += fprintf (stderr, " %s%s",
+                         cpu_no_extensions[i].name,
+                         (i + 1 != ARRAY_SIZE (cpu_no_extensions)) ? "," : "");
+        
+    }
+    fprintf (stderr, "\n");
+    
     fprintf (stderr, "    -msyntax=[att|intel]  Use AT&T/Intel syntax (default: att)\n");
     fprintf (stderr, "    --16/--32             Generate 16-bit/32-bit code\n");
 
@@ -3107,55 +3185,105 @@ void machine_dependent_handle_option (const struct as_option *popt, const char *
 
         case AS_OPTION_MARCH: {
         
-            int new_cpu_level = 0;
+            char *arg, *orig_arg;
+            char *next;
             
             if (*optarg == '=') {
                 ++optarg;
             }
-            
-            if (*optarg == 'I' || *optarg == 'i') {
-                ++optarg;
-            }
-            
-            if (strcmp (optarg, "") == 0) {
-                optarg = "(null)";
-            }
-            
-            if (strncmp ("80", optarg, 2) == 0) {
 
-                optarg += 2;
-            
-                if (strcmp (optarg, "86") == 0) {
-                
-                    cpu_level = new_cpu_level;
-                    break;
-                
+            arg = orig_arg = xstrdup (optarg);
+            if (cpu_extensions_name == NULL) {
+                cpu_extensions_name = xstrdup ("");
+            }
+
+            if (*arg == '+') {
+                ++arg;
+            }
+
+            while (1) {
+
+                int i;
+                char saved_c;
+
+                next = strchr (arg, '+');
+                if (next == NULL) {
+                    next = arg + strlen (arg);
                 }
-            
-            }
-            
-            new_cpu_level = atoi (optarg);
-            
-            switch (new_cpu_level) {
-            
-                case 186:
-                case 286:
-                case 386:
-                case 486:
-                case 586:
-                case 686:
+
+                saved_c = *next;
+                *next = '\0';
+
+                for (i = 0; i < ARRAY_SIZE (cpu_archs); i++) {
+
+                    if (strcmp (arg, cpu_archs[i].name) == 0) {
+
+                        cpu_arch_flags = cpu_archs[i].cpu_flags;
+                        free (cpu_arch_name);
+                        cpu_arch_name = xstrdup (arg);
+                        free (cpu_extensions_name);
+                        cpu_extensions_name = xstrdup ("");
+                        break;
+
+                    }
+
+                }
+
+                if (i == ARRAY_SIZE (cpu_archs)) {
+
+                    for (i = 0; i < ARRAY_SIZE (cpu_extensions); i++) {
+
+                        if (strcmp (arg, cpu_extensions[i].name) == 0) {
+
+                            cpu_arch_flags |= cpu_extensions[i].cpu_flags;
+                            cpu_extensions_name = xrealloc (cpu_extensions_name,
+                                                            strlen (cpu_extensions_name) + 1
+                                                            + 1 + strlen (cpu_extensions[i].name));
+                            strcat (cpu_extensions_name, ".");
+                            strcat (cpu_extensions_name, cpu_extensions[i].name);
+                            break;
+
+                        }
+
+                    }
+
+                    if (i == ARRAY_SIZE (cpu_extensions)) {
+
+                        for (i = 0; i < ARRAY_SIZE (cpu_no_extensions); i++) {
+
+                            if (strcmp (arg, cpu_no_extensions[i].name) == 0) {
+
+                                cpu_arch_flags &= ~cpu_no_extensions[i].cpu_flags;
+                                cpu_extensions_name = xrealloc (cpu_extensions_name,
+                                                            strlen (cpu_extensions_name) + 1
+                                                            + 1 + strlen (cpu_no_extensions[i].name));
+                                strcat (cpu_extensions_name, ".");
+                                strcat (cpu_extensions_name, cpu_no_extensions[i].name);
+                                break;
+
+                            }
+
+                        }
+
+                        if (i == ARRAY_SIZE (cpu_no_extensions)) {
+                            as_fatal_error_at (NULL, 0, "invalid -march= option: '%s'", optarg);
+                        }
+
+                    }
+
+                }
                 
-                    new_cpu_level /= 100;
+                if (saved_c == '\0') {
                     break;
-                
-                default:
-                
-                    _error ("unreognized CPU '%s' specified", optarg);
-                    break;
-            
+                }
+
+                *next = saved_c;
+                arg = next + 1;
+
             }
-            
-            cpu_level = new_cpu_level;
+
+            free (orig_arg);
+
             break;
         
         }
