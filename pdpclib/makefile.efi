@@ -3,16 +3,20 @@
 CC=gccwin
 AR=arwin
 LD=ldwin
-AS=aswin
+AS=pdas -O coff
 COPTS=-S -O2 -D__WIN32__ -D__NOBIVA__ -I.
 
-pdptest.exe: efistart.o
-  $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
+TARGET=bootia32.efi
+OBJS=efistart.o
+
+$(TARGET): clean $(OBJS)
+  $(LD) -s -subsystem efi -e _efimain -nostdlib -o $(TARGET) $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $*.o $*.s
   rm -f $*.s
 
-.asm.o:
-  $(AS) -o $@ $<
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
