@@ -1,11 +1,74 @@
-/*********************************************************************/
-/*                                                                   */
-/*  This Program Written by Paul Edwards.                            */
-/*  Released to the Public Domain                                    */
-/*                                                                   */
-/*  startup code for EFI applications                                */
-/*                                                                   */
-/*********************************************************************/
+/******************************************************************************
+ * @file            efitest.c
+ *
+ * Released to the public domain.
+ *
+ * Anyone and anything may copy, edit, publish, use, compile, sell and
+ * distribute this work and all its parts in any form for any purpose,
+ * commercial and non-commercial, without any restrictions, without
+ * complying with any conditions and by any means.
+ *****************************************************************************/
+#include "efi.h"
+
+EFI_SYSTEM_TABLE *gST;
+
+static EFI_STATUS print_string (char *str) {
+
+    EFI_STATUS Status = EFI_SUCCESS;
+    CHAR16 onechar[2] = {0, '\0'};
+
+    while (*str) {
+
+        if (*str == '\n') {
+            
+            onechar[0] = '\r';
+            if ((Status = gST->ConOut->OutputString (gST->ConOut, onechar))) {
+                return Status;
+            }
+
+        }
+
+        onechar[0] = *str;
+        if ((Status = gST->ConOut->OutputString (gST->ConOut, onechar))) {
+            return Status;
+        }
+        str++;
+
+    }
+
+    return Status;
+
+}
+
+EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+{
+
+    EFI_STATUS Status;
+    UINTN Index;
+    UINT64 dummy_watchdog_code = {0xFFFFFFFFLU, 0xFFFFFFFFLU};
+
+    gST = SystemTable;
+
+    gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0);
+
+    if ((Status = print_string ("Hello, world!\n"))) {
+        return Status;
+    }
+
+    if ((Status = print_string("Press any key to exit\n"))) {
+        return Status;
+    }
+    
+    if ((Status = gST->BootServices->WaitForEvent (1, &gST->ConIn->WaitForKey, &Index))) {
+        return Status;
+    }
+
+    Status = gST->ConIn->Reset (gST->ConIn, 0);
+
+    return Status;
+}
+
+
 
 /*
 
@@ -46,55 +109,3 @@ x64test\efi\boot\bootx64.efi
 
 */
 
-
-typedef struct {
-    void *junk1;
-    int (*print_func)(void *x, void *y);
-} EFI_SIMPLE_TEXT;
-
-typedef struct {
-    char junk1[24];
-    void *junk2;
-    int junk3;
-    void *junk4;
-    void *junk5;
-    void *stdout_handle;
-    EFI_SIMPLE_TEXT *simple;
-} EFI_SYSTEM;
-
-
-static EFI_SYSTEM *system;
-
-static int print_string(char *str);
-
-int efimain(int junk, EFI_SYSTEM *sys)
-{
-    system = sys;
-
-    print_string("hello, world\n");
-
-    print_string("looping now\n");
-
-    for (;;) ;
-
-    return (0);
-}
-
-static int print_string(char *str)
-{
-    static char onechar[4];
-    int x = 0;
-
-    while (str[x] != '\0')
-    {
-        if (str[x] == '\n')
-        {
-            onechar[0] = '\r';
-            system->simple->print_func(system->simple, onechar);
-        }
-        onechar[0] = str[x];
-        system->simple->print_func(system->simple, onechar);
-        x++;
-    }
-    return (x);
-}
