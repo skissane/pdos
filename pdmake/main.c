@@ -323,7 +323,7 @@ const char *os_name = "Unix";
 int main(int argc, char **argv)
 {
     int i;
-    char *name = "Makefile";
+    int use_default_makefile = 1;
     char *goal = NULL;
 
     variables_init ();
@@ -351,12 +351,8 @@ int main(int argc, char **argv)
                             printf("option requires an argument -- f\n");
                             goto end;
                         }
-                        name = argv[i];
                     }
-                    else
-                    {
-                        name = argv[i] + 2;
-                    }
+                    use_default_makefile = 0;
                     break;
 
                 case 'h':
@@ -388,7 +384,7 @@ int main(int argc, char **argv)
                             printf("option `--file' requires an argument\n");
                             goto end;
                         }
-                        name = argv[i];
+                        use_default_makefile = 0;
                     }
                     else if (strcmp("help", argv[i] + 2) == 0)
                     {
@@ -420,13 +416,43 @@ int main(int argc, char **argv)
         }
     }
 
-    read_makefile(name);
+    if (use_default_makefile) {
+        read_makefile ("Makefile");
+    } else {
+
+        for (i = 1; i < argc; i++) {
+
+            if (argv[i][0] == '-' && argv[i][1] == 'f') {
+
+                char *name;
+
+                if (argv[i][2] == '\0')
+                {
+                    i++;
+                    name = argv[i];
+                }
+                else
+                {
+                    name = argv[i] + 2;
+                }
+
+                read_makefile (name);
+
+            } else if (strcmp ("-file", argv[i] + 1) == 0) {
+
+                i++;
+                read_makefile (argv[i]);
+
+            }
+        }
+
+    }
 
     if (goal == NULL) goal = default_goal_var->value;
 
     /* No goal is set, so there is nothing to do. */
     if (strcmp(goal, "") == 0) goto end;
-    
+
     rule_search_and_build(goal);
 
 end:
