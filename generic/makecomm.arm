@@ -15,7 +15,7 @@ pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
   rm -f $*.s
 
 .asm.o:
-  asarm -o $@ $<
+  asarm --defsym LINUX=0 -o $@ $<
 
 clean:
   rm -f pcomm.exe
