@@ -319,9 +319,11 @@ ___main:
 
         .globl  __udivsi3
         .globl  ___udivsi3
+        .globl  __aeabi_uidiv
         .align  2
 __udivsi3:
 ___udivsi3:
+__aeabi_uidiv:
         rsb     r2,r1,#0
         mov     r1,#0
         adds    r0,r0,r0
@@ -386,10 +388,24 @@ ___modsi3:
 
         .globl  __umodsi3
         .globl  ___umodsi3
+        .globl  __aeabi_uidivmod
         .align  2
 __umodsi3:
 ___umodsi3:
+__aeabi_uidivmod:
         stmfd   sp!,{lr}
         bl      ___udivsi3
         mov     r0,r1
         ldmia   sp!,{pc}
+
+
+# Not sure what this is
+        .globl __aeabi_memcpy4
+__aeabi_memcpy4:
+        mov    pc, lr
+
+
+# Not sure what this is
+        .globl __aeabi_memcpy
+__aeabi_memcpy:
+        mov    pc, lr
