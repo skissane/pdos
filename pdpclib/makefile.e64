@@ -1,18 +1,22 @@
-# This builds EFI executables for the x86_64
+# This builds EFI executables for x86_64
 
-CC=gccw64
+CC=x86_64-w64-mingw32-gcc
 AR=arw64
 LD=ldw64
 AS=asw64
-COPTS=-S -O2 -mno-red-zone -fpack-struct -D__WIN32__ -D__NOBIVA__ -I.
+COPTS=-S -O2 -mno-red-zone -D__WIN32__ -D__NOBIVA__ -I.
 
-pdptest.exe: efistart.o
-  $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
+TARGET=bootx64.efi
+OBJS=efistart.o
+
+$(TARGET): clean $(OBJS)
+  $(LD) -s -subsystem efi -e efimain -nostdlib -o $(TARGET) $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $*.o $*.s
   rm -f $*.s
 
-.asm.o:
-  $(AS) -o $@ $<
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
