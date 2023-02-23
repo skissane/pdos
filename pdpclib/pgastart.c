@@ -27,8 +27,10 @@ int __crt0(OS *os)
     return (__os->__start(0));
 }
 
+#ifdef __AMIGA__
 /* needed for Amiga (gccami) */
 void __main(void)
 {
     return;
 }
+#endif
