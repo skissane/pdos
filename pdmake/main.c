@@ -78,8 +78,8 @@ void rule_use(rule *r, char *name)
     p = strrchr(star_name, '.');
     if (p) *p = '\0';
 
-    variable_change("@", xstrdup(name));
-    variable_change("*", star_name);
+    variable_change ("@", xstrdup (name), VAR_ORIGIN_AUTOMATIC);
+    variable_change ("*", star_name, VAR_ORIGIN_AUTOMATIC);
 
     p = r->cmds->text;
     q = strchr(p, '\n');
@@ -117,8 +117,8 @@ static void suffix_rule_use(suffix_rule *s, char *name)
     p = strrchr(star_name, '.');
     if (p) *p = '\0';
 
-    variable_change("<", lesser_name);
-    variable_change("*", star_name);
+    variable_change("<", lesser_name, VAR_ORIGIN_AUTOMATIC);
+    variable_change("*", star_name, VAR_ORIGIN_AUTOMATIC);
 
     p = s->cmds->text;
     q = strchr(p, '\n');
@@ -220,7 +220,7 @@ void rule_search_and_build(char *name)
          * of the current target.
          * This means that the name should not be modified
          * by the search for target. */
-        variable_change("@", xstrdup(duplicated_name));
+        variable_change ("@", xstrdup (duplicated_name), VAR_ORIGIN_AUTOMATIC);
         for (s = suffix_rules; s; s = s->next)
         {
             if (strcmp(suffix, s->second) == 0)
@@ -291,7 +291,7 @@ void rule_search_and_build(char *name)
 
 void help(void)
 {
-    printf("Usage: pdmake [options] [target]...\n");
+    printf("Usage: pdmake [options] [variable=value] [target]...\n");
     printf("Options:\n");
     printf("  -B, --always-make           "
            "Make everything regardless of timestamps.\n");
@@ -329,8 +329,8 @@ int main(int argc, char **argv)
     variables_init ();
     rules_init ();
     
-    default_goal_var = variable_add(xstrdup(".DEFAULT_GOAL"), xstrdup(""));
-    variable_add(xstrdup("OS"), xstrdup(os_name));
+    default_goal_var = variable_add (xstrdup (".DEFAULT_GOAL"), xstrdup (""), VAR_ORIGIN_FILE);
+    variable_add (xstrdup ("OS"), xstrdup (os_name), VAR_ORIGIN_FILE);
 
     for (i = 1; i < argc; i++)
     {
@@ -412,7 +412,16 @@ int main(int argc, char **argv)
         }
         else
         {
-            goal = argv[i];
+            if (strchr (argv[i], '=')) {
+
+                char *temp = xstrdup (argv[i]);
+
+                parse_var_line (temp, VAR_ORIGIN_COMMAND_LINE);
+                free (temp);
+
+            } else {
+                goal = argv[i];
+            }
         }
     }
 

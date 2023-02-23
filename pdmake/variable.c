@@ -69,14 +69,20 @@ void variables_destroy (void)
     hashtab_destroy_hashtab (variables_hashtab);
 }
 
-variable *variable_add(char *name, char *value)
+variable *variable_add(char *name, char *value, enum variable_origin origin)
 {
     variable *var = xmalloc(sizeof(*var));
 
     var->name = name;
     var->value = value;
+    var->origin = origin;
 
-    hashtab_insert (variables_hashtab, var);
+    if (hashtab_insert (variables_hashtab, var)) {
+
+        fprintf(stderr, "failed to insert variable '%s' into hashtab\n", var->name);
+        exit(EXIT_FAILURE);
+
+    }
 
     return (var);
 }
@@ -96,14 +102,33 @@ variable *variable_find(char *name)
     return (var);
 }
 
-void variable_change(char *name, char *value)
+void variable_change(char *name, char *value, enum variable_origin origin)
 {
     variable *var = variable_find(name);
-    if (var == NULL) var = variable_add(xstrdup(name), value);
+    if (var == NULL) variable_add(xstrdup(name), value, origin);
     else
     {
+        switch (origin) {
+
+            case VAR_ORIGIN_AUTOMATIC:
+            case VAR_ORIGIN_COMMAND_LINE:
+            
+                /* Overrides everything. */
+                break;
+
+            case VAR_ORIGIN_FILE:
+
+                if (var->origin == VAR_ORIGIN_FILE) {
+                    break;
+                }
+
+                return;
+
+        }
+        
         free(var->value);
         var->value = value;
+        var->origin = origin;
     }
 }
 
@@ -297,7 +322,7 @@ char *variable_expand_line(char *line)
     return (line);
 }
 
-void parse_var_line(char *line)
+void parse_var_line(char *line, enum variable_origin origin)
 {
     char *equals_sign = strchr(line, '=');
     variable *var;
@@ -344,5 +369,5 @@ void parse_var_line(char *line)
         return;
     }
 
-    variable_add(xstrdup(line), xstrdup(p + 1));
+    variable_change (line, xstrdup(p + 1), origin);
 }

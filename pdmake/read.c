@@ -247,7 +247,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
         if (strchr(p, '='))
         {
             record_waiting_files();
-            parse_var_line(p);
+            parse_var_line (p, VAR_ORIGIN_FILE);
             continue;
         }
 

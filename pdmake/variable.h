@@ -8,9 +8,16 @@
  * and by any means.
  */
 
+enum variable_origin {
+    VAR_ORIGIN_AUTOMATIC,
+    VAR_ORIGIN_COMMAND_LINE,
+    VAR_ORIGIN_FILE
+};    
+
 typedef struct variable {
     char *name;
     char *value;
+    enum variable_origin origin;
 } variable;
 
 #define variables_init _Pvinit
@@ -19,14 +26,14 @@ void variables_init (void);
 void variables_destroy (void);
 
 #define variable_add _Pvadd
-variable *variable_add(char *name, char *value);
+variable *variable_add(char *name, char *value, enum variable_origin origin);
 #define variable_find _Pvfind
 variable *variable_find(char *name);
 #define variable_change _Pvxchg
-void variable_change(char *name, char *value);
+void variable_change(char *name, char *value, enum variable_origin origin);
 
 #define variable_expand_line _Pvxplin
 char *variable_expand_line(char *line);
 
 #define parse_var_line _Ppvrlin
-void parse_var_line(char *line);
+void parse_var_line(char *line, enum variable_origin origin);
