@@ -19,6 +19,7 @@
 
         .globl  __Ysetjmp
         .globl  ___Ysetjmp
+        .type  __Ysetjmp, %function
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
@@ -44,6 +45,7 @@ ___Ysetjmp:
 
         .globl  longjmp
         .globl  _longjmp
+        .type longjmp, %function
         .align  2
 longjmp:
 _longjmp:
@@ -69,11 +71,12 @@ _longjmp:
         ldr     r10,[r1,#36]
         mov     pc,lr
 
-.ifdef LINUX
+.if LINUX
 # void _exita(int rc);
 
         .globl  __exita
         .globl  ___exita
+        .type  __exita, %function
         .align  2
 __exita:
 ___exita:
@@ -87,6 +90,7 @@ ___exita:
 
         .globl  __write
         .globl  ___write
+        .type  __write, %function
         .align  2
 __write:
 ___write:
@@ -102,6 +106,7 @@ wrtok:  ldmia   sp!,{pc}
 
         .globl  __read
         .globl  ___read
+        .type  __read, %function
         .align  2
 __read:
 ___read:
@@ -117,6 +122,7 @@ redok:  ldmia   sp!,{pc}
 
         .globl  __seek
         .globl  ___seek
+        .type  __seek, %function
         .align  2
 __seek:
 ___seek:
@@ -133,6 +139,7 @@ lskok:
 
         .globl  __creat
         .globl  ___creat
+        .type  __creat, %function
         .align  2
 __creat:
 ___creat:
@@ -148,6 +155,7 @@ crtok:  ldmia   sp!,{pc}
 
         .globl  __open
         .globl  ___open
+        .type  __open, %function
         .align  2
 __open:
 ___open:
@@ -163,6 +171,7 @@ opnok:  ldmia   sp!,{pc}
 
         .globl  __close
         .globl  ___close
+        .type  __close, %function
         .align  2
 __close:
 ___close:
@@ -176,6 +185,7 @@ clsok:  ldmia   sp!,{pc}
 
         .globl  __remove
         .globl  ___remove
+        .type  __remove, %function
         .align  2
 __remove:
 ___remove:
@@ -189,6 +199,7 @@ unlok:  ldmia   sp!,{pc}
 
         .globl  __rename
         .globl  ___rename
+        .type  __rename, %function
         .align  2
 __rename:
 ___rename:
@@ -203,6 +214,7 @@ renok:  ldmia   sp!,{pc}
 
         .globl  __time
         .globl  ___time
+        .type  __time, %function
         .align  2
 __time:
 ___time:
@@ -220,6 +232,7 @@ timok:  ldr     r0,[sp]
 
         .globl  __mprotect
         .globl  ___mprotect
+        .type  __mprotect, %function
         .align  2
 __mprotect:
 ___mprotect:
@@ -235,6 +248,7 @@ mpok:   ldmia   sp!,{pc}
 
         .globl  __getdents
         .globl  ___getdents
+        .type  __getdents, %function
         .align  2
 __getdents:
 ___getdents:
@@ -250,6 +264,7 @@ gdok:   ldmia   sp!,{pc}
 
         .globl  __ioctl
         .globl  ___ioctl
+        .type  __ioctl, %function
         .align  2
 __ioctl:
 ___ioctl:
@@ -265,6 +280,7 @@ iocok:  ldmia   sp!,{pc}
 
         .globl  __chdir
         .globl  ___chdir
+        .type  __chdir, %function
         .align  2
 __chdir:
 ___chdir:
@@ -278,6 +294,7 @@ cdok:  ldmia   sp!,{pc}
 
         .globl  __mkdir
         .globl  ___mkdir
+        .type  __mkdir, %function
         .align  2
 __mkdir:
 ___mkdir:
@@ -292,6 +309,7 @@ mdok:  ldmia   sp!,{pc}
 
         .globl  __rmdir
         .globl  ___rmdir
+        .type  __rmdir, %function
         .align  2
 __rmdir:
 ___rmdir:
@@ -319,7 +337,9 @@ ___main:
 
         .globl  __udivsi3
         .globl  ___udivsi3
+        .type  __udivsi3, %function
         .globl  __aeabi_uidiv
+        .type  __aeabi_uidiv, %function
         .align  2
 __udivsi3:
 ___udivsi3:
@@ -340,6 +360,7 @@ __aeabi_uidiv:
 
         .globl  __divsi3
         .globl  ___divsi3
+        .type  __divsi3, %function
         .align  2
 __divsi3:
 ___divsi3:
@@ -370,6 +391,7 @@ divz:   mov     r0,#8           @ SIGFPE
 
         .globl  __modsi3
         .globl  ___modsi3
+        .type  __modsi3, %function
         .align  2
 __modsi3:
 ___modsi3:
@@ -388,7 +410,9 @@ ___modsi3:
 
         .globl  __umodsi3
         .globl  ___umodsi3
+        .type  __umodsi3, %function
         .globl  __aeabi_uidivmod
+        .type  __aeabi_uidivmod, %function
         .align  2
 __umodsi3:
 ___umodsi3:
@@ -401,11 +425,13 @@ __aeabi_uidivmod:
 
 # Not sure what this is
         .globl __aeabi_memcpy4
+        .type __aeabi_memcpy4, %function
 __aeabi_memcpy4:
         mov    pc, lr
 
 
 # Not sure what this is
         .globl __aeabi_memcpy
+        .type __aeabi_memcpy, %function
 __aeabi_memcpy:
         mov    pc, lr
