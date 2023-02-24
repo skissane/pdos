@@ -1,16 +1,16 @@
 # This builds EFI executables for x86_64
 
 CC=x86_64-w64-mingw32-gcc
-AR=arw64
-LD=ldw64
-AS=asw64
+AR=x86_64-w64-mingw32-ar
+LD=x86_64-w64-mingw32-ld
+AS=x86_64-w64-mingw32-as
 COPTS=-S -O2 -mno-red-zone -D__WIN32__ -D__NOBIVA__ -I.
 
 TARGET=bootx64.efi
 OBJS=efistart.o
 
 $(TARGET): clean $(OBJS)
-  $(LD) -s -subsystem efi -e efimain -nostdlib -o $(TARGET) $(OBJS)
+  $(LD) -s -subsystem 10 -e efimain -nostdlib -o $(TARGET) $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
