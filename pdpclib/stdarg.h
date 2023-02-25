@@ -16,10 +16,16 @@
 /* don't use builtins on MVS until they have been implemented */
 /* don't use on EMX either */
 /* and they haven't been implemented in PDOS/386 either */
-#if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
+#if 0
+if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
     && !defined(__VSE__) && !defined(__EMX__) && !defined(__PDOS386__) \
     && !defined(__gnu_linux__) && !defined(__NOBIVA__) \
     && !defined(__ARM__)
+#endif
+
+/* Try only using builtins for GCC 4.x and above, which
+   appears to cover clang too */
+#if defined (__GNUC__) && __GNUC__ > 3
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
