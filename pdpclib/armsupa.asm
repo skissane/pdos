@@ -361,9 +361,12 @@ __aeabi_uidiv:
         .globl  __divsi3
         .globl  ___divsi3
         .type  __divsi3, %function
+        .globl  __aeabi_idiv
+        .type  __aeabi_idiv, %function
         .align  2
 __divsi3:
 ___divsi3:
+__aeabi_idiv:
         stmfd   sp!,{lr}
         eor     r3,r0,r1        @ r3 = sign
 #       asr     r3,r3,#31
@@ -392,9 +395,12 @@ divz:   mov     r0,#8           @ SIGFPE
         .globl  __modsi3
         .globl  ___modsi3
         .type  __modsi3, %function
+        .globl  __aeabi_idivmod
+        .type  __aeabi_idivmod, %function
         .align  2
 __modsi3:
 ___modsi3:
+__aeabi_idivmod:
         stmfd   sp!,{r4,lr}
 #        asr     r4,r0,#31               @ r4 = sign
         mov     r4,r0,asr#31
