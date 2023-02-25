@@ -423,15 +423,23 @@ __aeabi_uidivmod:
         ldmia   sp!,{pc}
 
 
-# Not sure what this is
-        .globl __aeabi_memcpy4
-        .type __aeabi_memcpy4, %function
-__aeabi_memcpy4:
-        mov    pc, lr
+# This is a call to memcpy where the parameters are
+# 4-byte aligned, but we don't care about that.
+# Commented out for now because it is no longer being called.
+#        .globl __aeabi_memcpy4
+#        .type __aeabi_memcpy4, %function
+#__aeabi_memcpy4:
+#        str    lr, [sp, #-4]!
+#        ldr    lr, [sp], #4
+#        b      _memcpy
 
 
-# Not sure what this is
-        .globl __aeabi_memcpy
-        .type __aeabi_memcpy, %function
-__aeabi_memcpy:
-        mov    pc, lr
+# This is a memcpy call, but it doesn't need to provide a
+# return value. We don't care about that.
+# Commented out for now as it is no longer being called.
+#        .globl __aeabi_memcpy
+#        .type __aeabi_memcpy, %function
+#__aeabi_memcpy:
+#        str    lr, [sp, #-4]!
+#        ldr    lr, [sp], #4
+#        b      _memcpy
