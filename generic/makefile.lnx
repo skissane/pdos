@@ -6,7 +6,7 @@ LD=ld
 LDFLAGS=
 AS=as
 AR=ar
-COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__gnu_linux__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__
+COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src -U__gnu_linux__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -DNEED_AOUT
 
 all: clean pdos
 
