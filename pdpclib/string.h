@@ -91,7 +91,7 @@ void * _Builtin __memmove(void *s1, const void *s2, size_t n);
 #define __GNUC__ 0
 #endif
 
-#if defined (__GNUC__) && __GNUC__ >= 3
+#if defined (__GNUC__) && __GNUC__ >= 3 && !defined(__ARM__)
 #define memcpy(s1,s2,n) (__builtin_memcpy((s1),(s2),(n)))
 #define memcmp(s1,s2,n) (__builtin_memcmp((s1),(s2),(n)))
 #endif
