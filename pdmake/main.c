@@ -332,6 +332,8 @@ int main(int argc, char **argv)
     default_goal_var = variable_add (xstrdup (".DEFAULT_GOAL"), xstrdup (""), VAR_ORIGIN_FILE);
     variable_add (xstrdup ("OS"), xstrdup (os_name), VAR_ORIGIN_FILE);
 
+    variable_add (xstrdup ("MAKE"), xstrdup (argv[0]), VAR_ORIGIN_FILE);
+
     for (i = 1; i < argc; i++)
     {
         if (argv[i][0] == '-')
