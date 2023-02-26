@@ -170,8 +170,10 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     EFI_GUID shell_guid = EFI_SHELL_PROTOCOL_GUID;
     EFI_SHELL_PROTOCOL *shell_protocol;
+#if 0
     CHAR16 message[] = {'S','h','e','l','l',' ','t','e','s','t','\r','\n','\0'};
     UINTN message_size = sizeof (message);
+#endif
 
     __gST = SystemTable;
     __gBS = __gST->BootServices;
@@ -182,7 +184,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __gBS->HandleProtocol (ImageHandle, &li_guid, (void **)&li_protocol);
     __gBS->HandleProtocol (li_protocol->ParentHandle, &shell_guid, (void **)&shell_protocol);
 
+#if 0
     shell_protocol->WriteFile (sp_protocol->StdOut, &message_size, message);
+#endif
 
     __start();
 
