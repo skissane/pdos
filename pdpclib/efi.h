@@ -9,8 +9,13 @@
  * complying with any conditions and by any means.
  *****************************************************************************/
 typedef unsigned char BOOLEAN;
+#ifdef __64BIT__
+typedef long long INTN;
+typedef unsigned long long UINTN;
+#else
 typedef int INTN;
 typedef unsigned int UINTN;
+#endif
 
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
