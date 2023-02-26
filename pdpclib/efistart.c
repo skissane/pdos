@@ -17,6 +17,8 @@
 EFI_SYSTEM_TABLE *__gST;
 EFI_BOOT_SERVICES *__gBS;
 
+
+
 #if 0
 
 #define return_Status_if_fail(func) do { if ((Status = (func))) { return Status; }} while (0)
@@ -91,6 +93,8 @@ static EFI_STATUS file_test (EFI_HANDLE ImageHandle) {
     char content[] = "This is a test file created by efistart.c.\n";
     UINTN bytes_to_write = sizeof (content) - 1;
 
+    return_Status_if_fail (print_string ("Opening volume\n"));
+
     return_Status_if_fail (obtain_Root (ImageHandle, &Root));
 
     return_Status_if_fail (print_string ("Opening file\n"));
@@ -105,11 +109,47 @@ static EFI_STATUS file_test (EFI_HANDLE ImageHandle) {
 
     return_Status_if_fail (new_file->Close (new_file));
 
+    return_Status_if_fail (print_string ("Closing volume\n"));
+
+    return_Status_if_fail (Root->Close (Root));
+
+    return Status;
+
+}
+
+static EFI_STATUS block_test (EFI_HANDLE ImageHandle) {
+    
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
+    EFI_BLOCK_IO_PROTOCOL *bio_protocol;
+    void *buffer;
+    EFI_LBA LBA = {1, 0};
+
+    return_Status_if_fail (gBS->HandleProtocol (ImageHandle, &li_guid, (void **)&li_protocol));
+    return_Status_if_fail (print_string ("Obtaining block IO protocol\n"));
+    return_Status_if_fail (gBS->HandleProtocol (li_protocol->DeviceHandle, &block_io_guid, (void **)&bio_protocol));
+
+    return_Status_if_fail (print_string ("Allocating buffer with size of a block\n"));
+    return_Status_if_fail (gBS->AllocPool (EfiLoaderData, bio_protocol->Media->BlockSize, &buffer));
+
+    return_Status_if_fail (print_string ("Reading a block at LBA 1\n"));
+    return_Status_if_fail (bio_protocol->ReadBlocks (bio_protocol,
+                                                     bio_protocol->Media->MediaId,
+                                                     LBA,
+                                                     bio_protocol->Media->BlockSize,
+                                                     buffer));
+
+    return_Status_if_fail (print_string ("Freeing buffer\n"));
+    return_Status_if_fail (gBS->FreePool (buffer));
+
     return Status;
 
 }
 
 #endif
+
 
 
 int __start(void);
@@ -134,6 +174,8 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __start();
 
     return (EFI_SUCCESS);
+}
+
 
 #if 0
     if ((Status = print_string ("Hello, world!\n"))) {
@@ -142,9 +184,19 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     wait_for_input ();
     
+    return_Status_if_fail (print_string ("\nFile test started\n"));
     if ((Status2 = file_test (ImageHandle))) {
         
         return_Status_if_fail (print_string ("File test FAILED\n"));
+        wait_for_input ();
+        return Status2;
+        
+    }
+
+    return_Status_if_fail (print_string ("\nBlock test started\n"));
+    if ((Status2 = block_test (ImageHandle))) {
+        
+        return_Status_if_fail (print_string ("Block test FAILED\n"));
         wait_for_input ();
         return Status2;
         
@@ -161,9 +213,8 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Status = gST->ConIn->Reset (gST->ConIn, 0);
 
     return Status;
-#endif
 }
-
+#endif
 
 
 /*
@@ -204,4 +255,3 @@ Executable should be called:
 x64test\efi\boot\bootx64.efi
 
 */
-

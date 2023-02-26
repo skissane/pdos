@@ -40,6 +40,7 @@ typedef struct {
 typedef UINTN EFI_STATUS;
 typedef void * EFI_HANDLE;
 typedef void * EFI_EVENT;
+typedef UINT64 EFI_LBA;
 
 #define IN
 #define OUT
@@ -328,6 +329,55 @@ typedef struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL {
     UINT64 Revision;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_OPEN_VOLUME OpenVolume;
 } EFI_SIMPLE_FILE_SYSTEM_PROTOCOL;
+
+#define EFI_BLOCK_IO_PROTOCOL_GUID \
+ {0x964e5b21,0x6459,0x11d2,{0x8e,0x39,0x00,0xa0,0xc9,0x69,0x72,0x3b}}
+#define EFI_BLOCK_IO_PROTOCOL_REVISION2 0x00020001
+#define EFI_BLOCK_IO_PROTOCOL_REVISION3 0x0002001f
+
+typedef struct {
+    UINT32 MediaId;
+    BOOLEAN RemovableMedia;
+    BOOLEAN MediaPresent;
+    BOOLEAN LogicalPartition;
+    BOOLEAN ReadOnly;
+    BOOLEAN WriteCaching;
+    UINT32 BlockSize;
+    UINT32 IoAlign;
+    EFI_LBA LastBlock;
+
+    /* Added with revision 2. */
+    EFI_LBA LowestAlignedLba;
+    UINT32 LogicalBlocksPerPhysicalBlock;
+
+    /* Added with revision 3. */
+    UINT32 OptimalTransferLengthGranularity;
+} EFI_BLOCK_MEDIA;
+
+struct _EFI_BLOCK_IO_PROTOCOL;
+
+typedef EFI_STATUS (EFIAPI *EFI_BLOCK_RESET) (IN struct _EFI_BLOCK_IO_PROTOCOL *This,
+                                              IN BOOLEAN ExtendedVerification);
+typedef EFI_STATUS (EFIAPI *EFI_BLOCK_READ) (IN struct _EFI_BLOCK_IO_PROTOCOL *This,
+                                             IN UINT32 MediaId,
+                                             IN EFI_LBA LBA,
+                                             IN UINTN BufferSize,
+                                             OUT void *Buffer);
+typedef EFI_STATUS (EFIAPI *EFI_BLOCK_WRITE) (IN struct _EFI_BLOCK_IO_PROTOCOL *This,
+                                              IN UINT32 MediaId,
+                                              IN EFI_LBA LBA,
+                                              IN UINTN BufferSize,
+                                              IN void *Buffer);
+typedef EFI_STATUS (EFIAPI *EFI_BLOCK_FLUSH) (IN struct _EFI_BLOCK_IO_PROTOCOL *This);
+
+typedef struct _EFI_BLOCK_IO_PROTOCOL {
+    UINT64 Revision;
+    EFI_BLOCK_MEDIA *Media;
+    EFI_BLOCK_RESET Reset;
+    EFI_BLOCK_READ ReadBlocks;
+    EFI_BLOCK_WRITE WriteBlocks;
+    EFI_BLOCK_FLUSH FlushBlocks;
+} EFI_BLOCK_IO_PROTOCOL;
 
 
 extern EFI_SYSTEM_TABLE *__gST;
