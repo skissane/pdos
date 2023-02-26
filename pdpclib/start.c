@@ -256,6 +256,10 @@ struct ExecBase *SysBase;
 void *DOSBase;
 #endif
 
+#if defined(__EFI__)
+#include "efi.h"
+#endif
+
 #if defined(__PDOS386__)
 #include <support.h>
 #include <pos.h>
@@ -366,6 +370,8 @@ int __start(char *p, char *pgmname, int tso)
 int __start(int argc, char **argv)
 #elif defined(__AMIGA__)
 int __start(unsigned long cmdlen, char *p, void *pdosbase)
+#elif defined(__EFI__)
+int __start(void)
 #elif defined(__SMALLERC__)
 __PDPCLIB_API__ int CTYP __start(char *p, unsigned short osver)
 #else
@@ -374,6 +380,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 {
 #ifdef __CMS__
     char *p;
+#endif
+#ifdef __EFI__
+    char *p = "";
 #endif
     int x;
     int oldglobrc = globrc;

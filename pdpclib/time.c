@@ -127,7 +127,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #ifdef __WIN32__
     SYSTEMTIME dt;
 #endif
-#if defined(__MSDOS__) || defined(__AMIGA__)
+#if defined(__MSDOS__) || defined(__AMIGA__) || defined(__EFI__)
     struct {
         int year;
         int month;

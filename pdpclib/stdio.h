@@ -24,7 +24,7 @@
     || defined(__SZ4__))
 typedef unsigned long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
-    || defined(__WIN32__) || defined(__AMIGA__))
+    || defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__))
 typedef unsigned int size_t;
 #endif
 #endif
@@ -65,7 +65,7 @@ typedef struct
     int hfile; /* dos file handle */
 #elif defined(__WIN32__) || defined(__AMIGA__)
     void *hfile;
-#elif defined(__gnu_linux__) || defined(__ARM__)
+#elif defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
     int hfile;
 #endif
 #if (defined(__MVS__) || defined(__CMS__) || defined(__VSE__))

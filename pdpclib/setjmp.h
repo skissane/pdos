@@ -46,7 +46,7 @@ typedef struct {
     int r9;
     int r10;
 #elif defined(__WIN32__) || defined(__32BIT__) || defined(__OS2__) \
-    || defined(__PDOS386__) || defined(__gnu_linux__)
+    || defined(__PDOS386__) || defined(__gnu_linux__) || defined(__EFI__)
     int ebx;
     int ecx;
     int edx;

@@ -116,6 +116,10 @@ extern void CTYP __rename(const char *old, const char *newnam);
 #include <clib/dos_protos.h>
 #endif
 
+#ifdef __EFI__
+#include "efi.h"
+#endif
+
 #ifdef __OS2__
 #include <os2.h>
 #endif
@@ -2088,6 +2092,10 @@ static void iwrite(FILE *stream,
     size_t tempWritten;
     int errind;
 #endif
+#ifdef __EFI__
+    size_t tempWritten;
+    static CHAR16 onechar[2] = {0, '\0'};
+#endif
 
 #ifdef __AMIGA__
     tempWritten = Write(stream->hfile, ptr, towrite);
@@ -2126,6 +2134,19 @@ static void iwrite(FILE *stream,
         stream->errorInd = 1;
         tempWritten = 0;
         errno = 1;
+    }
+#endif
+#ifdef __EFI__
+    for (tempWritten = 0; tempWritten < towrite; tempWritten++)
+    {
+        onechar[0] = *((unsigned char *)ptr + tempWritten);
+        if (onechar[0] == '\n')
+        {
+            onechar[0] = '\r';
+            __gST->ConOut->OutputString(__gST->ConOut, onechar);
+            onechar[0] = '\n';
+        }
+        __gST->ConOut->OutputString(__gST->ConOut, onechar);
     }
 #endif
     *actualWritten = tempWritten;
