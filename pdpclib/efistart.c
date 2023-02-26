@@ -150,8 +150,6 @@ static EFI_STATUS block_test (EFI_HANDLE ImageHandle) {
 
 #endif
 
-
-
 int __start(void);
 
 void __exita(int status)
@@ -165,11 +163,26 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_STATUS Status, Status2;
     UINTN Index;
     UINT64 dummy_watchdog_code = {0xFFFFFFFFLU, 0xFFFFFFFFLU};
+    
+    EFI_GUID sp_guid = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
+    EFI_SHELL_PARAMETERS_PROTOCOL *sp_protocol;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID shell_guid = EFI_SHELL_PROTOCOL_GUID;
+    EFI_SHELL_PROTOCOL *shell_protocol;
+    CHAR16 message[] = {'S','h','e','l','l',' ','t','e','s','t','\r','\n','\0'};
+    UINTN message_size = sizeof (message);
 
     __gST = SystemTable;
     __gBS = __gST->BootServices;
 
     __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0);
+
+    __gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol);
+    __gBS->HandleProtocol (ImageHandle, &li_guid, (void **)&li_protocol);
+    __gBS->HandleProtocol (li_protocol->ParentHandle, &shell_guid, (void **)&shell_protocol);
+
+    shell_protocol->WriteFile (sp_protocol->StdOut, &message_size, message);
 
     __start();
 

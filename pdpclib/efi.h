@@ -380,5 +380,88 @@ typedef struct _EFI_BLOCK_IO_PROTOCOL {
 } EFI_BLOCK_IO_PROTOCOL;
 
 
+/* UEFI Shell */
+typedef void *SHELL_FILE_HANDLE;
+
+#define EFI_SHELL_PROTOCOL_GUID \
+ {0x6302d008,0x7f9b,0x4f30,{0x87,0xac,0x60,0xc9,0xfe,0xf5,0xda,0x4e}}
+
+#define EFI_SHELL_MAJOR_VERSION 2
+#define EFI_SHELL_MINOR_VERSION 2
+
+typedef EFI_STATUS (EFIAPI *EFI_SHELL_READ_FILE) (IN SHELL_FILE_HANDLE FileHandle,
+                                                  IN OUT UINTN *BufferSize,
+                                                  OUT void *Buffer);
+typedef EFI_STATUS (EFIAPI *EFI_SHELL_WRITE_FILE) (IN SHELL_FILE_HANDLE FileHandle,
+                                                   IN OUT UINTN *BufferSize,
+                                                   IN void *Buffer);
+
+typedef struct _EFI_SHELL_PROTOCOL {
+    void *Execute;
+    void *GetEnv;
+    void *SetEnv;
+    void *GetAlias;
+    void *SetAlias;
+    void *GetHelpText;
+    void *GetDevicePathFromMap;
+    void *GetMapFromDevicePath;
+    void *GetDevicePathFromFilePath;
+    void *GetFilePathFromDevicePath;
+    void *SetMap;
+
+    void *GetCurDir;
+    void *SetCurDir;
+    void *OpenFileList;
+    void *FreeFileList;
+    void *RemoveDupInFileList;
+
+    void *BatchIsActive;
+    void *IsRootShell;
+    void *EnablePageBreak;
+    void *DisablePageBreak;
+    void *GetPageBreak;
+    void *GetDeviceName;
+
+    void *GetFileInfo;
+    void *SetFileInfo;
+    void *OpenFileByName;
+    void *CloseFile;
+    void *CreateFile;
+    EFI_SHELL_READ_FILE ReadFile;
+    EFI_SHELL_WRITE_FILE WriteFile;
+    void *DeleteFile;
+    void *DeleteFileByName;
+    void *GetFilePosition;
+    void *SetFilePosition;
+    void *FlushFile;
+    void *FindFiles;
+    void *FindFilesInDir;
+    void *GetFileSize;
+
+    void *OpenRoot;
+    void *OpenRootByHandle;
+
+    EFI_EVENT ExecutionBreak;
+    UINT32 MajorVersion;
+    UINT32 MinorVersion;
+    void *RegisterGuidName;
+    void *GetGuidName;
+    void *GetGuidFromName;
+    /* Added with Shell 2.1. */
+    void *GetEnvEx;
+} EFI_SHELL_PROTOCOL;
+
+#define EFI_SHELL_PARAMETERS_PROTOCOL_GUID \
+ {0x752f3136,0x4e16,0x4fdc,{0xa2,0x2a,0xe5,0xf4,0x68,0x12,0xf4,0xca}}
+
+typedef struct _EFI_SHELL_PARAMETERS_PROTOCOL {
+    CHAR16 **Argv;
+    UINTN Argc;
+    SHELL_FILE_HANDLE StdIn;
+    SHELL_FILE_HANDLE StdOut;
+    SHELL_FILE_HANDLE StdErr;
+} EFI_SHELL_PARAMETERS_PROTOCOL;
+
+
 extern EFI_SYSTEM_TABLE *__gST;
 extern EFI_BOOT_SERVICES *__gBS;
