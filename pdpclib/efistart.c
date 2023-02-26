@@ -14,8 +14,10 @@
 #define NULL ((void *)0)
 #endif
 
-EFI_SYSTEM_TABLE *gST;
-EFI_BOOT_SERVICES *gBS;
+EFI_SYSTEM_TABLE *__gST;
+EFI_BOOT_SERVICES *__gBS;
+
+#if 0
 
 #define return_Status_if_fail(func) do { if ((Status = (func))) { return Status; }} while (0)
 
@@ -107,6 +109,16 @@ static EFI_STATUS file_test (EFI_HANDLE ImageHandle) {
 
 }
 
+#endif
+
+
+int __start(void);
+
+void __exita(int status)
+{
+    return;
+}
+
 EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
 
@@ -114,11 +126,16 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     UINTN Index;
     UINT64 dummy_watchdog_code = {0xFFFFFFFFLU, 0xFFFFFFFFLU};
 
-    gST = SystemTable;
-    gBS = gST->BootServices;
+    __gST = SystemTable;
+    __gBS = __gST->BootServices;
 
-    gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0);
+    __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0);
 
+    __start();
+
+    return (EFI_SUCCESS);
+
+#if 0
     if ((Status = print_string ("Hello, world!\n"))) {
         return Status;
     }
@@ -144,6 +161,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Status = gST->ConIn->Reset (gST->ConIn, 0);
 
     return Status;
+#endif
 }
 
 
