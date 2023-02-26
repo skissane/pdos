@@ -34,6 +34,10 @@
 #include <clib/exec_protos.h>
 #endif
 
+#ifdef __EFI__
+#include "efi.h"
+#endif
+
 #ifdef __OS2__
 #define INCL_DOSMISC
 #define INCL_DOSPROCESS
@@ -105,6 +109,14 @@ __PDPCLIB_API__ void *malloc(size_t size)
     size_t *x;
 
     x = AllocMem(size + sizeof(size_t), 0);
+    if (x == NULL) return (NULL);
+    *x = size;
+    return (x + 1);
+#endif
+#ifdef __EFI__
+    size_t *x = NULL;
+
+    __gBS->AllocPool(EfiLoaderData, size + sizeof(size_t), (void *)&x);
     if (x == NULL) return (NULL);
     *x = size;
     return (x + 1);
@@ -315,6 +327,13 @@ __PDPCLIB_API__ void free(void *ptr)
     {
         ptr = (char *)ptr - sizeof(size_t);
         FreeMem(ptr, *(size_t *)ptr + sizeof(size_t));
+    }
+#endif
+#ifdef __EFI__
+    if (ptr != NULL)
+    {
+        ptr = (char *)ptr - sizeof(size_t);
+        __gBS->FreePool(ptr);
     }
 #endif
 #ifdef __OS2__
