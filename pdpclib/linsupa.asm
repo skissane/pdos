@@ -358,3 +358,28 @@ pop %ecx
 pop %ebx
 pop %ebp
 ret
+
+
+.globl ___mprotect
+___mprotect:
+.globl __mprotect
+__mprotect:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+# function code 125 = mprotet
+movl $125, %eax
+# start
+movl 8(%ebp), %ebx
+# len
+movl 12(%ebp), %ecx
+# prot
+movl 16(%ebp), %edx
+int $0x80
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
