@@ -7,6 +7,7 @@
 
 /* malloc calls get this */
 static char membuf[31000000];
+static char *newmembuf = membuf;
 
 extern int __start(int argc, char **argv);
 extern int __exita(int rc);
@@ -30,7 +31,22 @@ int _start(char *p)
 #ifdef NEED_MPROTECT
     /* make malloced memory executable */
     /* most environments already make the memory executable */
-    __mprotect(membuf, sizeof membuf, PROT_READ | PROT_WRITE | PROT_EXEC);
+    /* but some certainly don't */
+    /* there doesn't appear to be a syscall to get the page size to
+       ensure page alignment (as required), and I read that some
+       environments have 4k page sizes but mprotect requires 16k
+       alignment. So for now we'll just go with 16k */
+    size_t blksize = 16 * 1024;
+    size_t numblks;
+
+    newmembuf = membuf + blksize; /* could waste memory here */
+    newmembuf = newmembuf - (unsigned int)newmembuf % blksize;
+    numblks = sizeof membuf / blksize;
+    numblks -= 2; /* if already aligned, we wasted an extra block */
+    rc = __mprotect(newmembuf,
+                    numblks * blksize,
+                    PROT_READ | PROT_WRITE | PROT_EXEC);
+    if (rc != 0) return (rc);
 #endif
 
     /* I don't know what the official rules for ARM are, but
@@ -54,7 +70,7 @@ int _start(char *p)
 
 void *__allocmem(size_t size)
 {
-    return (membuf);
+    return (newmembuf);
 }
 
 
