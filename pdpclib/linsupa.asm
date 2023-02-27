@@ -369,7 +369,7 @@ mov %esp, %ebp
 push %ebx
 push %ecx
 push %edx
-# function code 125 = mprotet
+# function code 125 = mprotect
 movl $125, %eax
 # start
 movl 8(%ebp), %ebx
