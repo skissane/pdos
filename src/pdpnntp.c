@@ -10,6 +10,20 @@
 /*                                                                   */
 /*********************************************************************/
 
+
+#if 0
+
+For example, do this:
+
+qemu-system-i386 -drive file=pdos.vhd,index=0,media=disk,format=raw -serial tcp:news.eternal-september.org:119
+
+Then do:
+
+pdpnntp com1: username password
+
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
