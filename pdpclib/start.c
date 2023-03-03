@@ -479,7 +479,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stdin->hfile = Input();
     __stdout->hfile = Output();
     __stderr->hfile = Output();
-#else
+#elif !defined(__EFI__) /* EFI will leave everything as NULL */
     __stdin->hfile = 0;
     __stdout->hfile = 1;
     __stderr->hfile = 2;
