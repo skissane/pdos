@@ -118,6 +118,7 @@ extern void CTYP __rename(const char *old, const char *newnam);
 
 #ifdef __EFI__
 #include "efi.h"
+EFI_FILE_PROTOCOL *__EfiRoot = NULL;
 #endif
 
 #ifdef __OS2__
@@ -762,7 +763,6 @@ static void osfopen(void)
         errno = Status; return; }} while (0)
 
     int mode;
-    static EFI_FILE_PROTOCOL *Root = NULL;
     EFI_STATUS Status = EFI_SUCCESS;
     static EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
@@ -775,11 +775,11 @@ static void osfopen(void)
     CHAR16 file_name[FILENAME_MAX];
     int x;
 
-    if (Root == NULL)
+    if (__EfiRoot == NULL)
     {
         return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
         return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
-        return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &Root));
+        return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &__EfiRoot));
     }
 
     if ((modeType == 1) || (modeType == 4)
@@ -810,11 +810,11 @@ static void osfopen(void)
 
     if (mode)
     {
-        return_Status_if_fail (Root->Open (Root, &new_file, file_name, OpenModeWrite, Attributes));
+        return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeWrite, Attributes));
     }
     else
     {
-        return_Status_if_fail (Root->Open (Root, &new_file, file_name, OpenModeRead, Attributes));
+        return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes));
     }
     if (new_file == NULL)
     {

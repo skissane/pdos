@@ -258,6 +258,7 @@ void *DOSBase;
 
 #if defined(__EFI__)
 #include "efi.h"
+extern EFI_FILE_PROTOCOL *__EfiRoot;
 #endif
 
 #if defined(__PDOS386__)
@@ -1343,6 +1344,10 @@ __PDPCLIB_API__ void _c_exit(void)
 #if defined(__WIN32__)
     SetConsoleMode(__stdin->hfile, stdin_dw);
     SetConsoleMode(__stdout->hfile, stdout_dw);
+#endif
+
+#if defined(__EFI__)
+    __EfiRoot->Close(__EfiRoot);
 #endif
 
 #if defined(__PDOS386__)
