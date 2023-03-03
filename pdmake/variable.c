@@ -165,161 +165,127 @@ static char *variable_suffix_replace(char *body,
     return new_body;
 }
 
-#define expect_char(t, s, c) \
-    t = strchr(s, c); \
-    if (t == NULL) { fprintf(stderr, "Expected '%c'\n", c); return (line); }
-
-#define expect_token(t, s, delim) \
-    t = strtok(s, delim); \
-    if (t == NULL) { fprintf(stderr, "Expected '" delim "'\n"); return (line); }
-
-char *variable_expand_line(char *line)
+char *variable_expand_line (char *line)
 {
     size_t pos = 0;
-    while (line[pos])
-    {
-        if (line[pos] == '$')
-        {
-            char *new, *replacement = "", *alloc_repl = NULL;
-            char *p, *t;
+    
+    while (line[pos]) {
+        
+        if (line[pos] == '$') {
+            
+            char *new, *replacement = "";
+            char *p_after_variable;
             variable *var = NULL;
-            char name[2] = {0, 0};
+            char *alloc_replacement = NULL;
 
-            if (line[pos + 1] == '$')
-            {
+            if (line[pos + 1] == '$') {
                 pos += 2;
                 continue;
             }
 
-            if (line[pos + 1] == '(')
-            {
-                char *body = line + pos + 2;
-                char *q = body, *s;
-                char *cmd, *cmd_body;
+            if (line[pos + 1] == '(' || line[pos + 1] == '{') {
                 
-                size_t cmd_len = 0;
-                while (isalpha(*q)) {
+                char *body = line + pos + 2;
+                char *q = body;
+                char *content;
+                
+                int paren_inbalance = 1;
+                char opening_paren = line[pos + 1];
+                
+                while (paren_inbalance) {
+
+                    if (*q == opening_paren) {
+                        paren_inbalance++;
+                    } else if (*q == ')' && opening_paren == '(') {
+                        paren_inbalance--;
+                    } else if (*q == '}' && opening_paren == '{') {
+                        paren_inbalance--;
+                    } else if (*q == '\0') {
+                        fprintf(stderr, "unterminated variable reference. Stop.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    
                     q++;
-                    cmd_len++;
+                    
                 }
+                q--;
+                p_after_variable = q + 1;
+                content = variable_expand_line (xstrndup (body, q - body));
 
-                cmd = xstrndup(body, cmd_len);
-                cmd_body = xstrndup(body + cmd_len, strlen(body));
-                cmd_body = variable_expand_line(cmd_body);
+                /*
+                 * Content is one of the following:
+                 * 1. Function call in the form (function and its arguments)
+                 * 2. Suffix replacement in the form (variable_name : from = to)
+                 * 3. Just variable name: (variable_name).
+                 */
 
-                /*printf("ACMD=%s\n", cmd_body);*/
-                t = p = strrchr(cmd_body, ')');
-                if (t == NULL)
-                {
-                    fprintf(stderr, "Expected '%c'\n", ')');
-                    return (line);
-                }
-                *t = '\0';
-                /*printf("CMDB=%s\n", cmd_body);*/
+                /* Currently no functions are supported. */
+                
+                if ((q = strchr (content, '='))) {
 
-                s = cmd_body;
-                while (isspace(*s)) s++;
-                if (!strcmp(cmd, "subst"))
-                {
-                    char *from_s, *to_s, *to_repl;
-                    char *token;
-                    expect_token(token, s, ",");
-                    from_s = xstrdup(token);
-                    expect_token(token, NULL, ",");
-                    to_s = xstrdup(token);
-                    expect_token(token, NULL, ",");
-                    to_repl = xstrdup(token);
-                    alloc_repl = variable_suffix_replace(to_repl, from_s, to_s);
-                    free(from_s);
-                    free(to_s);
-                    free(to_repl);
-                }
-                else
-                {
-                    char *p2 = strchr (body, ')');
+                    char *colon = strchr (content, ':');
 
-                    /* Take in account suffix replacements of the form:
-                    * $(VAR:src=dst) */
-                    p = strchr(body, ':');
-                    /*printf("[%s -> %s]\n", p, line + pos);*/
-                    /* The second condition prevents "$(TARGET): something"
-                     * from being wrongly detected as suffix replacement. */
-                    if (p != NULL && (!p2 || p < p2))
-                    {
-                        variable *src_var;
-                        char *s1, *s2;
-                        /* TODO: This could be done more efficiently :^) */
-                        char *varname = xstrdup(body);
-                        char *equals_sign = strchr(p, '=');
-                        if (equals_sign == NULL)
-                        {
-                            fprintf(stderr, "+++Invalid suffix replacement!\n");
-                            return (line);
-                        }
-                        expect_char(t, varname, ':');
-                        *t = '\0';
+                    if (colon && colon != content && colon < q) {
 
-                        p++; /* Skip colon ':' */
-                        s1 = xstrdup(p);
-                        expect_char(t, s1, '=');
-                        *t = '\0';
-                        s2 = xstrdup(equals_sign + 1);
-                        expect_char(t, s2, ')');
-                        *t = '\0';
-                        /*printf("REPL=%s,SRC=%s,DST=%s\n", varname, s1, s2);*/
+                        char *from, *to, *p;
 
-                        src_var = variable_find(varname);
-                        free(varname);
-
-                        alloc_repl = variable_suffix_replace(src_var->value, s1, s2);
-                        /*printf("VAR=%s\n", alloc_repl);*/
-                        free(s1);
-                        free(s2);
-
-                        p = strrchr(body, ')');
+                        for (p = colon; p != content && isspace (p[-1]); p--) {}
                         *p = '\0';
-                    }
-                    else
-                    {
-                        p = p2;
-                        if (p == NULL)
-                        {
-                            fprintf(stderr, "+++Invalid variable usage!\n");
-                            return (line);
-                        }
 
+                        var = variable_find (content);
+
+                        for (from = colon + 1; isspace (*from); from++) {}
+                        for (p = q; p != from && isspace (p[-1]); p--) {}
                         *p = '\0';
-                        p++;
+
+                        for (to = q + 1; isspace (*to); to++) {}
+                        for (p = to + strlen (to); p != to && isspace (p[-1]); p--) {}
+                        *p = '\0';
+
+                        /* If from is empty, variable value should be used as is and suffix replacement should be ignored. */
+                        if (*from && var) {
+                            alloc_replacement = variable_suffix_replace (var->value, from, to);
+                        }
                         
-                        var = variable_find(line + pos + 2);
                     }
-                }
 
-                free(cmd_body);
-                free(cmd);
-            }
-            else
-            {
-                p = line + pos + 2;
+                    /* Otherwise it is just a bad variable name and should result in "" replacement. */
+                    
+                } else {
+                    var = variable_find (content);
+                }
+                
+                free (content);
+                
+            } else {
+
+                char name[2] = {0, 0};
+                
+                p_after_variable = line + pos + 2;
                 name[0] = line[pos + 1];
-                var = variable_find(name);
+                var = variable_find (name);
+                
             }
 
             if (var) replacement = var->value;
-            if (alloc_repl) replacement = alloc_repl;
+            if (alloc_replacement) replacement = alloc_replacement;
 
-            new = xmalloc(pos + strlen(replacement) + strlen(p) + 1);
-            memcpy(new, line, pos);
-            memcpy(new + pos, replacement, strlen(replacement));
-            memcpy(new + pos + strlen(replacement), p, strlen(p) + 1);
-            free(line);
+            new = xmalloc (pos + strlen (replacement) + strlen (p_after_variable) + 1);
+            memcpy (new, line, pos);
+            memcpy (new + pos, replacement, strlen (replacement));
+            memcpy (new + pos + strlen (replacement), p_after_variable, strlen (p_after_variable) + 1);
+            free (line);
             line = new;
-            if (alloc_repl) free(alloc_repl);
+
+            free (alloc_replacement);
             continue;
+            
         }
+        
         pos++;
     }
-    return (line);
+    
+    return line;
 }
 
 void parse_var_line(char *line, enum variable_origin origin)
