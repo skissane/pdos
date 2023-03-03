@@ -14,6 +14,7 @@
 #define NULL ((void *)0)
 #endif
 
+EFI_HANDLE *__gIH;
 EFI_SYSTEM_TABLE *__gST;
 EFI_BOOT_SERVICES *__gBS;
 
@@ -177,6 +178,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     UINTN message_size = sizeof (message);
 #endif
 
+    __gIH = ImageHandle;
     __gST = SystemTable;
     __gBS = __gST->BootServices;
 
