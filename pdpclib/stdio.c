@@ -1644,6 +1644,12 @@ __PDPCLIB_API__ int fclose(FILE *stream)
 #ifdef __AMIGA__
     Close(stream->hfile);
 #endif
+#ifdef __EFI__
+    if (stream->hfile != NULL)
+    {
+        ((EFI_FILE_PROTOCOL *)(stream->hfile))->Close(stream->hfile);
+    }
+#endif
 #ifdef __OS2__
     rc = DosClose(stream->hfile);
 #endif
