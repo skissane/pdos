@@ -2189,6 +2189,7 @@ static void iwrite(FILE *stream,
 #ifdef __EFI__
     size_t tempWritten;
     static CHAR16 onechar[2] = {0, '\0'};
+    EFI_STATUS Status;
 #endif
 
 #ifdef __AMIGA__
@@ -2231,16 +2232,33 @@ static void iwrite(FILE *stream,
     }
 #endif
 #ifdef __EFI__
-    for (tempWritten = 0; tempWritten < towrite; tempWritten++)
+    if (stream->hfile == NULL)
     {
-        onechar[0] = *((unsigned char *)ptr + tempWritten);
-        if (onechar[0] == '\n')
+        for (tempWritten = 0; tempWritten < towrite; tempWritten++)
         {
-            onechar[0] = '\r';
+            onechar[0] = *((unsigned char *)ptr + tempWritten);
+            if (onechar[0] == '\n')
+            {
+                onechar[0] = '\r';
+                __gST->ConOut->OutputString(__gST->ConOut, onechar);
+                onechar[0] = '\n';
+            }
             __gST->ConOut->OutputString(__gST->ConOut, onechar);
-            onechar[0] = '\n';
         }
-        __gST->ConOut->OutputString(__gST->ConOut, onechar);
+    }
+    else
+    {
+        tempWritten = towrite;
+        Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Write(stream->hfile, &tempWritten, ptr);
+        if (Status != EFI_SUCCESS)
+        {
+            *actualWritten = 0;
+            stream->errorInd = 1;
+        }
+        else
+        {
+            *actualWritten = tempWritten;
+        }
     }
 #endif
     *actualWritten = tempWritten;
