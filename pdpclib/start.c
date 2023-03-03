@@ -366,12 +366,10 @@ int __start(char *plist, char *pgmname, char **eplist)
 int __start(char *p, char *pgmname, char *ep)
 #elif defined(__MVS__)
 int __start(char *p, char *pgmname, int tso)
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__) || defined(__EFI__)
 int __start(int argc, char **argv)
 #elif defined(__AMIGA__)
 int __start(unsigned long cmdlen, char *p, void *pdosbase)
-#elif defined(__EFI__)
-int __start(void)
 #elif defined(__SMALLERC__)
 __PDPCLIB_API__ int CTYP __start(char *p, unsigned short osver)
 #else
@@ -381,13 +379,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #ifdef __CMS__
     char *p;
 #endif
-#ifdef __EFI__
-    char *p = "";
-#endif
     int x;
     int oldglobrc = globrc;
     jmp_buf oldjb;
-#if !defined(__gnu_linux__)
+#if !defined(__gnu_linux__) && !defined(__EFI__)
     int argc;
     static char *argv[MAXPARMS + 1];
 #endif
@@ -1159,7 +1154,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 #endif
-#if !defined(__gnu_linux__)
+#if !defined(__gnu_linux__) && !defined(__EFI__)
     while (*p == ' ')
     {
         p++;
