@@ -287,7 +287,7 @@ typedef EFI_STATUS (EFIAPI *EFI_FILE_READ) (IN struct _EFI_FILE_PROTOCOL *This,
                                             OUT void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_WRITE) (IN struct _EFI_FILE_PROTOCOL *This,
                                              IN OUT UINTN *BufferSize,
-                                             IN void *Buffer);
+                                             IN const void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
                                                     OUT UINT64 *Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
