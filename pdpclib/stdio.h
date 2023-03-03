@@ -63,9 +63,9 @@ typedef struct
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
     || defined(__SMALLERC__))
     int hfile; /* dos file handle */
-#elif defined(__WIN32__) || defined(__AMIGA__)
+#elif defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__)
     void *hfile;
-#elif defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
+#elif defined(__gnu_linux__) || defined(__ARM__)
     int hfile;
 #endif
 #if (defined(__MVS__) || defined(__CMS__) || defined(__VSE__))
