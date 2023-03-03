@@ -754,6 +754,77 @@ static void osfopen(void)
         errno = 1;
     }
 #endif
+
+
+#ifdef __EFI__
+
+#define return_Status_if_fail(func) do { if ((Status = (func))) { err = 1; \
+        errno = Status; return; }} while (0)
+
+    int mode;
+    static EFI_FILE_PROTOCOL *Root = NULL;
+    EFI_STATUS Status = EFI_SUCCESS;
+    static EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    static EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
+    UINT64 OpenModeWrite = {0x3, 0x80000000}; /* Read+Write+Create */
+    EFI_FILE_PROTOCOL *new_file;
+    static UINT64 Attributes = {0, 0};
+    CHAR16 file_name[FILENAME_MAX];
+    int x;
+
+    if (Root == NULL)
+    {
+        return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+        return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+        return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &Root));
+    }
+
+    if ((modeType == 1) || (modeType == 4)
+        || (modeType == 7) || (modeType == 10))
+    {
+        mode = 0; /* read */
+    }
+    else if ((modeType == 2) || (modeType == 5)
+             || (modeType == 8) || (modeType == 11))
+    {
+        mode = 1; /* write */
+    }
+    else
+    {
+        mode = 2; /* append or otherwise unsupported */
+        /* because we don't have append mode implemented
+           at the moment on AMIGA, just return with an
+           error immediately */
+        err = 1;
+        errno = 2;
+        return;
+    }
+
+    x = 0;
+    do {
+        file_name[x] = (CHAR16)fnm[x];
+    } while (fnm[x++] != 0);
+
+    if (mode)
+    {
+        return_Status_if_fail (Root->Open (Root, &new_file, file_name, OpenModeWrite, Attributes));
+    }
+    else
+    {
+        return_Status_if_fail (Root->Open (Root, &new_file, file_name, OpenModeRead, Attributes));
+    }
+    if (new_file == NULL)
+    {
+        err = 1;
+        errno = 1;
+    }
+    myfile->hfile = new_file;
+#endif
+
+
 #ifdef __OS2__
     APIRET rc;
     ULONG  action;
@@ -1688,6 +1759,10 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __AMIGA__
     long tempRead;
 #endif
+#ifdef __EFI__
+    UINTN tempRead;
+    EFI_STATUS Status;
+#endif
 #ifdef __OS2__
     APIRET rc;
     ULONG tempRead;
@@ -1704,6 +1779,19 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __AMIGA__
     tempRead = Read(stream->hfile, ptr, toread);
     if (tempRead == -1)
+    {
+        *actualRead = 0;
+        stream->errorInd = 1;
+    }
+    else
+    {
+        *actualRead = tempRead;
+    }
+#endif
+#ifdef __EFI__
+    tempRead = toread;
+    Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Read(stream->hfile, &tempRead, ptr);
+    if (Status != EFI_SUCCESS)
     {
         *actualRead = 0;
         stream->errorInd = 1;
