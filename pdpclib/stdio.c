@@ -3645,6 +3645,10 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 #ifdef __AMIGA__
     long retpos;
 #endif
+#ifdef __EFI__
+    UINT64 Position;
+    EFI_STATUS Status;
+#endif
 #ifdef __OS2__
     ULONG retpos;
     APIRET rc;
@@ -3707,6 +3711,25 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 #ifdef __AMIGA__
         retpos = Seek(stream->hfile, newpos, OFFSET_BEGINNING);
         if (retpos == -1)
+        {
+            return (-1);
+        }
+        stream->endbuf = stream->fbuf + stream->szfbuf;
+        if (stream->mode == __READ_MODE)
+        {
+            stream->upto = stream->endbuf;
+            stream->bufStartR = newpos - stream->szfbuf;
+        }
+        else
+        {
+            stream->upto = stream->fbuf;
+            stream->bufStartR = newpos;
+        }
+#endif
+#ifdef __EFI__
+        Position.a = newpos;
+        Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, Position);
+        if (Status != EFI_SUCCESS)
         {
             return (-1);
         }
