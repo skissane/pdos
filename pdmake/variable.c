@@ -69,43 +69,42 @@ void variables_destroy (void)
     hashtab_destroy_hashtab (variables_hashtab);
 }
 
-variable *variable_add(char *name, char *value, enum variable_origin origin)
+variable *variable_add (char *name, char *value, enum variable_origin origin)
 {
-    variable *var = xmalloc(sizeof(*var));
+    variable *var = xmalloc (sizeof (*var));
 
     var->name = name;
     var->value = value;
+    var->flavor = VAR_FLAVOR_RECURSIVELY_EXPANDED;
     var->origin = origin;
 
     if (hashtab_insert (variables_hashtab, var)) {
-
         fprintf(stderr, "failed to insert variable '%s' into hashtab\n", var->name);
         exit(EXIT_FAILURE);
-
     }
 
-    return (var);
+    return var;
 }
 
-variable *variable_find(char *name)
+variable *variable_find (char *name)
 {
     variable *var;
 
     var = find_variable_internal (name);
 
-    if (var && !doing_inference_rule_commands && var->name[0] == '<' && var->name[1] == '\0')
-    {
-        fprintf(stderr, "\"$<\" is not valid outside of inference rules, exiting\n");
-        exit(EXIT_FAILURE);
+    if (var && !doing_inference_rule_commands && var->name[0] == '<' && var->name[1] == '\0') {
+        fprintf (stderr, "\"$<\" is not valid outside of inference rules, exiting\n");
+        exit (EXIT_FAILURE);
     }
 
-    return (var);
+    return var;
 }
 
-void variable_change(char *name, char *value, enum variable_origin origin)
+variable *variable_change (char *name, char *value, enum variable_origin origin)
 {
-    variable *var = variable_find(name);
-    if (var == NULL) variable_add(xstrdup(name), value, origin);
+    variable *var = variable_find (name);
+    
+    if (var == NULL) return variable_add (xstrdup (name), value, origin);
     else
     {
         switch (origin) {
@@ -122,13 +121,16 @@ void variable_change(char *name, char *value, enum variable_origin origin)
                     break;
                 }
 
-                return;
+                free (value);
+                return NULL;
 
         }
         
         free(var->value);
         var->value = value;
         var->origin = origin;
+
+        return var;
     }
 }
 
@@ -179,11 +181,12 @@ char *variable_expand_line (char *line)
             char *alloc_replacement = NULL;
 
             if (line[pos + 1] == '$') {
-                pos += 2;
-                continue;
-            }
 
-            if (line[pos + 1] == '(' || line[pos + 1] == '{') {
+                /* "$$" is used to escape '$'. */
+                p_after_variable = line + pos + 2;
+                pos += 1;
+                
+            } else if (line[pos + 1] == '(' || line[pos + 1] == '{') {
                 
                 char *body = line + pos + 2;
                 char *q = body;
@@ -229,9 +232,12 @@ char *variable_expand_line (char *line)
 
                         char *from, *to, *p;
 
-                        for (p = colon; p != content && isspace (p[-1]); p--) {}
-                        *p = '\0';
-
+                        /*
+                         * Whitespace before the colon must not be stripped
+                         * as variable names can contain trailing whitespace.
+                         * ("ABC  $(nothing) = something")
+                         */
+                        *colon = '\0';
                         var = variable_find (content);
 
                         for (from = colon + 1; isspace (*from); from++) {}
@@ -257,7 +263,7 @@ char *variable_expand_line (char *line)
                 
                 free (content);
                 
-            } else {
+            } else if (line[pos + 1]) {
 
                 char name[2] = {0, 0};
                 
@@ -265,6 +271,9 @@ char *variable_expand_line (char *line)
                 name[0] = line[pos + 1];
                 var = variable_find (name);
                 
+            } else {
+                /* '$' at the end of line should be treated as a bad variable name, not an error. */
+                p_after_variable = line + pos + 1;
             }
 
             if (var) replacement = var->value;
@@ -277,6 +286,11 @@ char *variable_expand_line (char *line)
             free (line);
             line = new;
 
+            /* Simply expanded variables should be only copied without trying to expand the value. */
+            if (!alloc_replacement && var && var->flavor == VAR_FLAVOR_SIMPLY_EXPANDED) {
+                pos += strlen (replacement);
+            }
+
             free (alloc_replacement);
             continue;
             
@@ -288,12 +302,18 @@ char *variable_expand_line (char *line)
     return line;
 }
 
-void parse_var_line(char *line, enum variable_origin origin)
+void parse_var_line (char *line, enum variable_origin origin)
 {
-    char *equals_sign = strchr(line, '=');
+    enum {
+        VAR_ASSIGN,
+        VAR_CONDITIONAL_ASSIGN,
+        VAR_APPEND,
+        VAR_SHELL
+    } opt = VAR_ASSIGN;
+    enum variable_flavor flavor = VAR_FLAVOR_RECURSIVELY_EXPANDED;
     variable *var;
-    int opt = 0;
-    int expand = 0;
+    char *var_name, *new_value;
+    char *equals_sign = strchr (line, '=');
     char *p;
 
     if (equals_sign == NULL)
@@ -303,37 +323,125 @@ void parse_var_line(char *line, enum variable_origin origin)
     }
 
     p = equals_sign;
-    /* Overrideable ?= assignment */
-    if (p[-1] == '?')
-    {
-        opt = 1;
-    }
-    /* "Expand on define instead of usage", however we won't for now and it
-     * shouldn't cause any issues */
-    else if (p[-1] == ':')
-    {
-        expand = 1;
-    }
 
+    switch (p - line) {
+
+        default:
+            if (p[-1] == ':' && p[-2] == ':' && p[-3] == ':') {
+                flavor = VAR_FLAVOR_IMMEDIATELY_EXPANDED;
+                p -= 3;
+                break;
+            }
+            /* Fall through */
+
+        case 2:
+            if (p[-1] == ':' && p[-2] == ':') {
+                flavor = VAR_FLAVOR_SIMPLY_EXPANDED;
+                p -= 2;
+                break;
+            }
+            /* Fall through */
+
+        case 1:
+            if (p[-1] == ':') {
+                flavor = VAR_FLAVOR_SIMPLY_EXPANDED;
+                p--;
+                break;
+            }
+            if (p[-1] == '?') {
+                opt = VAR_CONDITIONAL_ASSIGN;
+                p--;
+                break;
+            }
+            if (p[-1] == '+') {
+                opt = VAR_APPEND;
+                p--;
+                break;
+            }
+            if (p[-1] == '!') {
+                opt = VAR_SHELL;
+                p--;
+                break;
+            }
+            break;
+
+        case 0:
+            break;
+
+    }
+    
     /* Any <blank> characters immediately
      * before the equals sign must be ignored. */
-    for ( ;
-         (p > line) && isspace(p[-1]);
-         p--) ;
-    *p = '\0';
+    for (; p > line && isspace (p[-1]); p--) {}
+
+    var_name = variable_expand_line (xstrndup (line, p - line));
+
+    if (*var_name == '\0') {
+        fprintf(stderr, "empty variable name. Stop.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* ?= assignment only takes effect when the variable isn't set yet */
+    var = variable_find (var_name);
+    if (opt == VAR_CONDITIONAL_ASSIGN && var) {
+        free (var_name);
+        return;
+    }
 
     /* Any <blank> characters immediately
      * after the equals sign must be ignored. */
     for (p = equals_sign;
-         isspace(p[1]);
+         isspace (p[1]);
          p++) ;
-    
-    /* ?= assignment only takes effect when the variable isn't set yet */
-    var = variable_find(p + 1);
-    if (opt && var)
-    {
-        return;
+
+    new_value = xstrdup (p + 1);
+
+    if (opt == VAR_ASSIGN || opt == VAR_CONDITIONAL_ASSIGN) {
+        switch (flavor) {
+
+            case VAR_FLAVOR_RECURSIVELY_EXPANDED:
+                /* Nothing needs to be done about the value for this type. */
+                break;
+
+            case VAR_FLAVOR_SIMPLY_EXPANDED:
+                new_value = variable_expand_line (new_value);
+                break;
+
+            case VAR_FLAVOR_IMMEDIATELY_EXPANDED:
+                new_value = variable_expand_line (new_value);
+                {
+                    size_t dollar_count;
+                    char *temp, *p2;
+
+                    for (dollar_count = 0, p = new_value; *p; p++) {
+                        if (*p == '$') dollar_count++;
+                    }
+
+                    temp = xmalloc (strlen (new_value) + 1 + dollar_count);
+                    for (p = new_value, p2 = temp; *p; p++, p2++) {
+                        *p2 = *p;
+                        if (*p == '$') {
+                            p2[1] = '$';
+                            p2++;
+                        }
+                    }
+                    *p2 = '\0';
+                    free (new_value);
+                    new_value = temp;
+                }
+                break;
+
+        }
+    } else if (opt == VAR_APPEND) {
+        fprintf(stderr, "+++internal error: += not supported yet. Stop.\n");
+        exit(EXIT_FAILURE);
+    } else if (opt == VAR_SHELL) {
+        fprintf(stderr, "+++internal error: != not supported yet. Stop.\n");
+        exit(EXIT_FAILURE);
     }
 
-    variable_change (line, xstrdup(p + 1), origin);
+    if ((var = variable_change (var_name, new_value, origin))) {
+        var->flavor = flavor;
+    }
+    free (var_name);
 }

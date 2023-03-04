@@ -8,6 +8,12 @@
  * and by any means.
  */
 
+enum variable_flavor {
+    VAR_FLAVOR_RECURSIVELY_EXPANDED,
+    VAR_FLAVOR_SIMPLY_EXPANDED,
+    VAR_FLAVOR_IMMEDIATELY_EXPANDED
+};
+
 enum variable_origin {
     VAR_ORIGIN_AUTOMATIC,
     VAR_ORIGIN_COMMAND_LINE,
@@ -17,6 +23,7 @@ enum variable_origin {
 typedef struct variable {
     char *name;
     char *value;
+    enum variable_flavor flavor;
     enum variable_origin origin;
 } variable;
 
@@ -26,11 +33,11 @@ void variables_init (void);
 void variables_destroy (void);
 
 #define variable_add _Pvadd
-variable *variable_add(char *name, char *value, enum variable_origin origin);
+variable *variable_add (char *name, char *value, enum variable_origin origin);
 #define variable_find _Pvfind
-variable *variable_find(char *name);
+variable *variable_find (char *name);
 #define variable_change _Pvxchg
-void variable_change(char *name, char *value, enum variable_origin origin);
+variable *variable_change (char *name, char *value, enum variable_origin origin);
 
 #define variable_expand_line _Pvxplin
 char *variable_expand_line(char *line);
