@@ -248,7 +248,7 @@ static void dofzap(char *p)
     int val;
     char *fnm;
 
-    if (p != '\0')
+    if (*p != '\0')
     {
         fnm = p;
         p = strchr(p, ' ');
