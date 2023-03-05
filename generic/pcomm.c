@@ -250,6 +250,7 @@ static void dofzap(char *p)
 
     if (*p != '\0')
     {
+        p++;
         fnm = p;
         p = strchr(p, ' ');
         if (p != NULL)
