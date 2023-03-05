@@ -9,4 +9,6 @@
  */
 
 #define read_makefile _Prmkfile
-void read_makefile(const char *filename);
+void read_makefile (const char *filename);
+#define read_memory_makefile _Prmemmk
+void read_memory_makefile (char *memory);

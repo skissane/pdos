@@ -14,12 +14,56 @@
 #include <ctype.h>
 
 #include "variable.h"
+#include "read.h"
 #include "xmalloc.h"
 #include "hashtab.h"
 
 extern int doing_inference_rule_commands;
 
+struct built_in_function {
+    const char *name;
+    char *(*function) (char *input);
+};
+
+static char *function_eval (char *input)
+{
+    read_memory_makefile (input);
+
+    /* The result of eval must always be an empty string. */
+    return NULL;
+}
+
+static struct built_in_function built_in_functions[] = {
+    {"eval", &function_eval},
+    {NULL, NULL}
+};
+
+static struct hashtab *built_in_functions_hashtab = NULL;
 static struct hashtab *variables_hashtab = NULL;
+
+static hash_value_t hash_built_in_function (const void *p)
+{
+    const struct built_in_function *function = (const struct built_in_function *) p;
+    
+    return hashtab_help_default_hash_string (function->name);
+}
+
+static int equal_built_in_function (const void *p1, const void *p2)
+{
+    const struct built_in_function *function1 = (const struct built_in_function *) p1;
+    const struct built_in_function *function2 = (const struct built_in_function *) p2;
+    
+    return strcmp (function1->name, function2->name) == 0;
+}
+
+static struct built_in_function *find_built_in_function (const char *name)
+{
+    struct built_in_function fake = {NULL, NULL};
+
+    fake.name = name;
+
+    return (struct built_in_function *) hashtab_find (built_in_functions_hashtab, &fake);
+}
 
 static hash_value_t hash_variable (const void *p)
 {
@@ -56,6 +100,20 @@ static void free_variable_internal (void *p)
 
 void variables_init (void)
 {
+    struct built_in_function *function;
+
+    built_in_functions_hashtab = hashtab_create_hashtab (0,
+                                                         &hash_built_in_function,
+                                                         &equal_built_in_function,
+                                                         &xmalloc,
+                                                         &free);
+    for (function = built_in_functions; function->name; function++) {
+        if (hashtab_insert (built_in_functions_hashtab, function)) {
+            fprintf(stderr, "failed to insert built-in function '%s' into hashtab\n", function->name);
+            exit(EXIT_FAILURE);
+        }
+    }
+
     variables_hashtab = hashtab_create_hashtab (0,
                                                 &hash_variable,
                                                 &equal_variable,
@@ -67,6 +125,7 @@ void variables_destroy (void)
 {
     hashtab_for_each_element (variables_hashtab, &free_variable_internal);
     hashtab_destroy_hashtab (variables_hashtab);
+    hashtab_destroy_hashtab (built_in_functions_hashtab);
 }
 
 variable *variable_add (char *name, char *value, enum variable_origin origin)
@@ -191,6 +250,7 @@ char *variable_expand_line (char *line)
                 char *body = line + pos + 2;
                 char *q = body;
                 char *content;
+                struct built_in_function *function;
                 
                 int paren_inbalance = 1;
                 char opening_paren = line[pos + 1];
@@ -222,9 +282,24 @@ char *variable_expand_line (char *line)
                  * 3. Just variable name: (variable_name).
                  */
 
-                /* Currently no functions are supported. */
+                {
+                    char saved_c;
+
+                    for (q = content; *q && !isspace (*q); q++) {}
+                    saved_c = *q;
+                    *q = '\0';
+
+                    function = find_built_in_function (content);
+                    
+                    *q = saved_c;
+                }
                 
-                if ((q = strchr (content, '='))) {
+                if (function) {
+                    
+                    for (; isspace (*q); q++) {}
+                    alloc_replacement = function->function (q);
+                    
+                } else if ((q = strchr (content, '='))) {
 
                     char *colon = strchr (content, ':');
 

@@ -27,35 +27,57 @@ struct linebuf {
     char *start;
     size_t size;
     FILE *f;
+    char *memory;
 };
 
-static long read_line(struct linebuf *lbuf)
+static char *memory_fgets (char *str, int num, char **source_p)
+{
+    char *source = *source_p;
+    char *p = strchr (source, '\n');
+
+    if (source[0] == '\0') return NULL;
+
+    if (p && p - source < num - 1) {
+        memcpy (str, source, p - source + 1);
+        str[p - source + 1] = '\0';
+        *source_p += p - source + 1;
+        return str;
+    }
+
+    if (strlen (source) > num - 1) {
+        memcpy (str, source, num - 1);
+        str[num - 1] = '\0';
+        *source_p += num - 1;
+        return str;
+    }
+
+    strcpy (str, source);
+    *source_p += strlen (source);
+    return str;
+}
+
+static long read_line (struct linebuf *lbuf)
 {
     long lines_read = 0;
     char *p = lbuf->start;
     char *end = lbuf->start + lbuf->size;
 
-    while (fgets(p, end - p, lbuf->f))
-    {
+    while (lbuf->f ? fgets (p, end - p, lbuf->f) : memory_fgets (p, end - p, &(lbuf->memory))) {
+        
         size_t offset;
 
-        p += strlen(p);
+        p += strlen (p);
         offset = p - lbuf->start;
 
         lines_read++;
 
-        if (offset >= 2)
-        {
-            if ((p[-1] == '\n') && (p[-2] != '\\'))
-            {
+        if (offset >= 2) {
+            if ((p[-1] == '\n') && (p[-2] != '\\')) {
                 p[-1] = '\0';
                 break;
             }
-        }
-        else if (offset >= 1)
-        {
-            if (p[-1] == '\n')
-            {
+        } else if (offset >= 1) {
+            if (p[-1] == '\n') {
                 p[-1] = '\0';
                 break;
             }
@@ -64,13 +86,14 @@ static long read_line(struct linebuf *lbuf)
         if (end - p >= 80) continue;
 
         lbuf->size *= 2;
-        lbuf->start = xrealloc(lbuf->start, lbuf->size);
+        lbuf->start = xrealloc (lbuf->start, lbuf->size);
 
         p = lbuf->start + offset;
         end = lbuf->start + lbuf->size;
+        
     }
     
-    return (lines_read);
+    return lines_read;
 }
 
 static void remove_backslash_newlines(char *line)
@@ -370,4 +393,18 @@ void read_makefile (const char *filename)
 
     free (lbuf.start);
     fclose (lbuf.f);
+}
+
+void read_memory_makefile (char *memory)
+{
+    struct linebuf lbuf;
+
+    lbuf.f = NULL;
+    lbuf.memory = memory;
+    lbuf.size = 256;
+    lbuf.start = xmalloc(lbuf.size);
+
+    read_lbuf (&lbuf, 1);
+
+    free (lbuf.start);
 }
