@@ -216,6 +216,7 @@ static void dofill(char *p)
     q = strchr(p, ' ');
     if (q != NULL)
     {
+        *q++ = '\0';
         max = strtoul(q, NULL, 0);
     }
     if (max == 0) infinite = 1;
