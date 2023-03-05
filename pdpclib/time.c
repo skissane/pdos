@@ -173,7 +173,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #elif defined(__ARM__)
     tt = __time();
 #elif defined(__gnu_linux__)
-    tt = __time(NULL);
+    __time(&tt);
 #elif !defined(__WIN32__) && !defined(__AMIGA__)
 
     {
