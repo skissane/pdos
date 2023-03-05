@@ -32,12 +32,13 @@ struct linebuf {
 static long read_line(struct linebuf *lbuf)
 {
     long lines_read = 0;
-    size_t offset;
     char *p = lbuf->start;
     char *end = lbuf->start + lbuf->size;
 
     while (fgets(p, end - p, lbuf->f))
     {
+        size_t offset;
+
         p += strlen(p);
         offset = p - lbuf->start;
 
@@ -330,22 +331,43 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
     free(commands);
 }
 
-void read_makefile(const char *filename)
+void read_makefile (const char *filename)
 {
     struct linebuf lbuf;
+    struct variable *makefile_list;
+    char *new_value;
 
-    lbuf.f = fopen(filename, "r");
-    if (lbuf.f == NULL)
-    {
-        printf("Unable to open %s: %s\n", filename, strerror(errno));
+    lbuf.f = fopen (filename, "r");
+    if (lbuf.f == NULL) {
+        printf ("Unable to open %s: %s\n", filename, strerror(errno));
         return;
     }
 
     lbuf.size = 256;
     lbuf.start = xmalloc(lbuf.size);
 
-    read_lbuf(&lbuf, 1);
+    makefile_list = variable_find ("MAKEFILE_LIST");
+    if (makefile_list) {
 
-    free(lbuf.start);
-    fclose(lbuf.f);
+        size_t old_len = strlen (makefile_list->value);
+        
+        new_value = xmalloc (old_len + 1 + strlen (filename) + 1);
+        memcpy (new_value, makefile_list->value, old_len);
+        new_value[old_len] = ' ';
+        strcpy (new_value + old_len + 1, filename);
+        variable_change ("MAKEFILE_LIST", new_value, VAR_ORIGIN_FILE);
+        
+    } else {
+        
+        new_value = xmalloc (1 + strlen (filename) + 1);
+        new_value[0] = ' ';
+        strcpy (new_value + 1, filename);
+        variable_change ("MAKEFILE_LIST", new_value, VAR_ORIGIN_FILE);
+        
+    }
+
+    read_lbuf (&lbuf, 1);
+
+    free (lbuf.start);
+    fclose (lbuf.f);
 }
