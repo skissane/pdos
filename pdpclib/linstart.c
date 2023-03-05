@@ -60,6 +60,21 @@ int _start(char *p)
     rc = __start(*(int *)(&p + 6), &p + 7);
 #endif
 
+/* Note that a problem with this stack manipulation was found when
+   built with clang with optimization on. clang correctly determines
+   that it is undefined behavior (this sort of stack manipulation is),
+   but instead of doing what the programmer clearly intended to do
+   (ie the result you get without optimization), it decides to silently
+   drop the first parameter and pass whatever rubbish is on the stack
+   as argc. And they don't see anything wrong with that!
+   https://github.com/llvm/llvm-project/issues/61112
+   I don't consider my code to be wrong (although it is obviously not
+   portable - I'm writing a C library, not a C program), so if you wish
+   to use clang, then switch off optimization. Otherwise use a better
+   compiler, not one "supported" by jackasses on the internet who have
+   no concept of the spirit of C.
+*/
+
 #else
     rc = __start(*(int *)(&p - 1), &p);
 #endif
