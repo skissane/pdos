@@ -19,7 +19,7 @@ pdosgeno.a: stdio.o string.o stdlib.o \
         rm -f $*.s
 
 .asm.o:
-        asarm -o $@ $<
+        asarm --defsym LINUX=0 -o $@ $<
 
 clean:
         rm -f pdosgeno.a
