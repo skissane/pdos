@@ -265,17 +265,52 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
         p = clean;
 
         /* Skip blank lines */
-        while (isspace(*p)) p++;
+        while (isspace (*p)) p++;
         if (*p == '\0') continue;
 
-        if (strchr(p, '='))
+        if (strncmp (p, "include", 7) == 0 && (isspace (p[7]) || p[7] == '\0')) {
+
+            char *q;
+
+            p += 7;
+
+            /* All trailing whitespace should be stripped first. */
+            for (q = p + strlen (p); q > p && isspace (q[-1]); q--) {}
+            *q = '\0';
+
+            p = line = variable_expand_line (xstrdup (p));
+
+            while (1) {
+
+                char saved_c;
+
+                for (; isspace (*p); p++) {}
+
+                for (q = p; *q && !isspace (*q); q++) {}
+
+                if (q == p) break;
+
+                saved_c = *q;
+                *q = '\0';
+
+                read_makefile (p);
+                *q = saved_c;
+                p = q;
+                
+            }
+
+            free (line);
+            continue;
+            
+        }
+
+        if (strchr (p, '='))
         {
-            record_waiting_files();
+            record_waiting_files ();
             parse_var_line (p, VAR_ORIGIN_FILE);
             continue;
         }
 
-        /* +++Check for "include"! */
         {
             char *semicolonp, *commentp;
 
@@ -299,19 +334,26 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
             {
                 char *colon;
 
-                line = variable_expand_line(xstrdup(line));
-                colon = strchr(line, ':');
-                if (colon == NULL)
-                {
-                    fprintf(stderr, "Missing ':' in rule line!\n");
+                line = variable_expand_line (xstrdup (line));
+                colon = strchr (line, ':');
+                if (colon == NULL) {
+                    
+                    for (p = line; isspace (*p); p++) {}
+                    
+                    /* Empty lines created by variable expansion should be ignored. */
+                    if (*p) {
+                        fprintf(stderr, "Missing ':' in rule line!\n");
+                    }
+                    free (line);
                     continue;
+                    
                 }
 
                 *colon = '\0';
-                filenames = parse_nameseq(line, sizeof (*filenames));
+                filenames = parse_nameseq (line, sizeof (*filenames));
 
-                depstr = xstrdup(colon + 1);
-                free(line);
+                depstr = xstrdup (colon + 1);
+                free (line);
             }
 
             if (semicolonp)
