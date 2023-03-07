@@ -68,6 +68,10 @@ typedef struct
 #elif defined(__gnu_linux__) || defined(__ARM__)
     int hfile;
 #endif
+#if defined(__EFIBIOS__)
+    int block;
+    unsigned long sector;
+#endif
 #if (defined(__MVS__) || defined(__CMS__) || defined(__VSE__))
     void *hfile;
     void *asmbuf;

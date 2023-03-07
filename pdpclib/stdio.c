@@ -119,6 +119,9 @@ extern void CTYP __rename(const char *old, const char *newnam);
 #ifdef __EFI__
 #include "efi.h"
 EFI_FILE_PROTOCOL *__EfiRoot = NULL;
+#ifdef __EFIBIOS__
+static EFI_BLOCK_IO_PROTOCOL *bio_protocol = NULL;
+#endif
 #endif
 
 #ifdef __OS2__
@@ -774,12 +777,16 @@ static void osfopen(void)
     static UINT64 Attributes = {0, 0};
     CHAR16 file_name[FILENAME_MAX];
     int x;
+    static EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
 
     if (__EfiRoot == NULL)
     {
         return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
         return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
         return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &__EfiRoot));
+#ifdef __EFIBIOS__
+        return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &block_io_guid, (void **)&bio_protocol));
+#endif
     }
 
     if ((modeType == 1) || (modeType == 4)
@@ -796,13 +803,23 @@ static void osfopen(void)
     {
         mode = 2; /* append or otherwise unsupported */
         /* because we don't have append mode implemented
-           at the moment on AMIGA, just return with an
+           at the moment, just return with an
            error immediately */
         err = 1;
         errno = 2;
         return;
     }
 
+#ifdef __EFIBIOS__
+    myfile->block = 0;
+    if (strcmp(fnm, "!BOOT") == 0)
+    {
+        myfile->block = 1;
+        myfile->sector = 0;
+    }
+#endif
+    else
+    {
     x = 0;
     do {
         file_name[x] = (CHAR16)fnm[x];
@@ -822,6 +839,11 @@ static void osfopen(void)
         errno = 1;
     }
     myfile->hfile = new_file;
+
+#ifdef __EFIBIOS__
+    }
+#endif
+
 #endif
 
 
@@ -1768,6 +1790,9 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __EFI__
     UINTN tempRead;
     EFI_STATUS Status;
+#ifdef __EFIBIOS__
+    static EFI_LBA LBA = {1, 0};
+#endif
 #endif
 #ifdef __OS2__
     APIRET rc;
@@ -1795,6 +1820,34 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
 #endif
 #ifdef __EFI__
+#ifdef __EFIBIOS__
+    if (stream->block)
+    {
+        tempRead = toread;
+        if (tempRead != bio_protocol->Media->BlockSize)
+        {
+            printf("sector size mismatch - freezing\n");
+            for (;;) ;
+        }
+        LBA.a = stream->sector;
+        Status = bio_protocol->ReadBlocks (bio_protocol,
+                                           bio_protocol->Media->MediaId,
+                                           LBA,
+                                           bio_protocol->Media->BlockSize,
+                                           ptr);
+        if (Status != EFI_SUCCESS)
+        {
+            *actualRead = 0;
+            stream->errorInd = 1;
+        }
+        else
+        {
+            *actualRead = tempRead;
+        }
+    }
+    else
+    {
+#endif
     tempRead = toread;
     Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Read(stream->hfile, &tempRead, ptr);
     if (Status != EFI_SUCCESS)
@@ -1806,7 +1859,14 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     {
         *actualRead = tempRead;
     }
+
+#ifdef __EFIBIOS__
+    }
 #endif
+
+#endif
+
+
 #ifdef __OS2__
     rc = DosRead(stream->hfile, ptr, toread, &tempRead);
     if (rc != 0)
@@ -3727,6 +3787,14 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         }
 #endif
 #ifdef __EFI__
+#ifdef __EFIBIOS__
+        if (stream->block)
+        {
+            stream->sector = newpos / 512;
+        }
+        else
+        {
+#endif
         Position.a = newpos;
         Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, Position);
         if (Status != EFI_SUCCESS)
@@ -3744,7 +3812,14 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
             stream->upto = stream->fbuf;
             stream->bufStartR = newpos;
         }
+
+#ifdef __EFIBIOS__
+        }
 #endif
+
+#endif
+
+
 #ifdef __OS2__
         rc = DosSetFilePtr(stream->hfile, newpos, FILE_BEGIN, &retpos);
         if ((rc != 0) || (retpos != newpos))
