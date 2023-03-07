@@ -1824,9 +1824,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     if (stream->block)
     {
         tempRead = toread;
-        if (tempRead != bio_protocol->Media->BlockSize)
+        if (tempRead < bio_protocol->Media->BlockSize)
         {
             printf("sector size mismatch - freezing\n");
+            printf("attempting to read %d\n", tempRead);
+            printf("but sector is %d\n", (int)bio_protocol->Media->BlockSize);
             for (;;) ;
         }
         LBA.a = stream->sector;
