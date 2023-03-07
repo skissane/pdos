@@ -1,0 +1,23 @@
+# Produces EFI executable.
+# We link with the library produced by makefile.efb
+
+CC=gccwin
+CFLAGS=-O2
+LD=ldwin
+LDFLAGS=
+AS=aswin
+AR=arwin
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -U__WIN32__ -D__EFI__ -D__EFIBIOS__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT
+
+all: clean bios.exe
+
+bios.exe: bios.o ../bios/exeload.o
+    $(LD) $(LDFLAGS) -s -o bios.exe -s -subsystem efi -e _efimain -nostdlib ../pdpclib/efistart.o bios.o ../bios/exeload.o ../pdpclib/pdpefi.a
+
+.c.o:
+    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o bios.exe
