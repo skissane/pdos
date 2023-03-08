@@ -1,0 +1,31 @@
+# This builds EFI executables for x86_64
+# using Visual Studio
+# Note that with Visual Studio it appears to be
+# mandatory to use unsigned long long as size_t
+# I don't have a modern 64-bit assembler, so I can't
+# have a proper setjmp implementation yet.
+
+CC=cl
+AR=lib
+LD=link
+AS=ml
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I.
+
+TARGET=pdptest.efi
+OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
+    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supc.o
+
+$(TARGET): clean pdptest.o $(OBJS)
+  rm -f pdpefi.a
+  $(AR) -out:pdpefi.a -nologo $(OBJS)
+  $(LD) -nologo -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION pdptest.o $(OBJS)
+
+.c.o:
+  $(CC) $(COPTS) -Fo$*.o $<
+
+.asm.o:
+  $(AS) -c -coff -nologo -Fo$@ $<
+
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
