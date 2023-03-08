@@ -3803,6 +3803,9 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         {
             return (-1);
         }
+#ifdef __EFIBIOS__
+        }
+#endif
         stream->endbuf = stream->fbuf + stream->szfbuf;
         if (stream->mode == __READ_MODE)
         {
@@ -3814,11 +3817,6 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
             stream->upto = stream->fbuf;
             stream->bufStartR = newpos;
         }
-
-#ifdef __EFIBIOS__
-        }
-#endif
-
 #endif
 
 
