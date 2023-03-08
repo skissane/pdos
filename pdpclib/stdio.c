@@ -1868,13 +1868,26 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             {
                 c = '\n';
             }
-            printf("%c", c);
-            fflush(stdout);
+            if ((c != '\b') || (tempRead > 0))
+            {
+                printf("%c", c);
+                fflush(stdout);
+            }
             *(((char *)ptr) + tempRead) = c;
             if (c == '\n')
             {
                 tempRead++;
                 break;
+            }
+            if (c == '\b')
+            {
+                if (tempRead > 0)
+                {
+                    /* delete the backspace, unless we only have a backspace */
+                    tempRead--;
+                }
+                tempRead--; /* account for the previous character
+                               - may go negative */
             }
         }
         if (!stream->errorInd)
