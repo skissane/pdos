@@ -18,7 +18,7 @@ OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
   $(AR) -out:pdpefi.a -nologo $(OBJS)
-  $(LD) -nologo -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION pdptest.o $(OBJS)
+  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION pdptest.o $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -Fo$*.o $<
