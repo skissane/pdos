@@ -1,5 +1,7 @@
 # Produces EFI executable.
 # We link with the library produced by makefile.efb
+# And we still use makefile.w32 and makecomm.w32
+# which are still a.out
 
 CC=gccwin
 CFLAGS=-O2
