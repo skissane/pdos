@@ -151,28 +151,62 @@ int main(int argc, char **argv)
     printf("welcome to PDOS-generic\n");
     printf("running as %s\n", myname);
     printf("aka %s\n", bios->prog_name);
+    printf("before printing parm\n");
     printf("with parm of %s\n", bios->prog_parm);
+    printf("about to open\n");
+    /* for (;;) ; */
     disk = bios->Xfopen(bios->prog_parm, "r+b");
     if (disk == NULL)
     {
         printf("can't open hard disk\n");
         return (EXIT_FAILURE);
     }
+    printf("done open\n");
+    {
+    /* we should be able to do this, but for now, we'll read
+       an entire sector to unburden the C library */
+#if 0
     bios->Xfseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
+    printf("done seek\n");
     bios->Xfread(lbabuf, 1, 4, disk);
+    printf("done read\n");
+#else
+    bios->Xfseek(disk, 0, BIOS_SEEK_SET);
+    bios->Xfread(sect, 1, 512, disk);
+    /* this is not ideal as the MBR code could contain this */
+    /* this is to support drives with just a single VBR, no MBR */
+    /* EFI effectively gives us this, and in addition, we need
+       to squelch the hidden sectors */
+    if ((memcmp(sect + 0x52, "FAT32", 5) == 0)
+        || (memcmp(sect + 0x36, "FAT12", 5) == 0)
+        || (memcmp(sect + 0x36, "FAT16", 5) == 0))
+    {
+        memcpy(lbabuf, "\x00\x00\x00\x00", 4);
+        memcpy(sect + 11 + 17, "\x00\x00\x00\x00", 4);
+    }
+    else
+    {
+         memcpy(lbabuf, sect + 0x1be + 0x8, 4);
+    }
+#endif
+    }
     lba = ((unsigned long)lbabuf[3] << 24)
            | ((unsigned long)lbabuf[2] << 16)
            | (lbabuf[1] << 8)
            | lbabuf[0];
     printf("lba is %lx\n", lba);
-    bios->Xfseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
-    bios->Xfread(sect, SECTSZ, 1, disk);
+    if (lba != 0)
+    {
+        bios->Xfseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
+        bios->Xfread(sect, SECTSZ, 1, disk);
+    }
     printf("fat type is %.5s\n", &sect[0x36]);
     fatDefaults(&fat);
     fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
     if (exeloadDoload(&entry_point, ":pcomm.exe", &p) != 0)
     {
         printf("failed to load program\n");
+        for (;;) ;
         return (EXIT_FAILURE);
     }
     pgastart = (void *)entry_point;
