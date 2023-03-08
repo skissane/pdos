@@ -1347,7 +1347,10 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 #if defined(__EFI__)
-    __EfiRoot->Close(__EfiRoot);
+    if (__EfiRoot != NULL)
+    {
+        __EfiRoot->Close(__EfiRoot);
+    }
 #endif
 
 #if defined(__PDOS386__)
