@@ -1,0 +1,18 @@
+# This builds a PDOS-generic executable
+# No need to build a library, this is self-contained
+
+CC=cl
+LD=link
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__EFI__ -DHAVE_DIR -D__PDOSGEN__ -U__WIN32__ -I. -I../pdpclib -I../src
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+  rm -f pcomm.exe
+  $(LD) -nologo -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+  $(CC) $(COPTS) -Fo$*.o $<
+
+clean:
+  rm -f pcomm.exe
