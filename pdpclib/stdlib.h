@@ -20,6 +20,8 @@
     || defined(__ARM__)|| defined(__gnu_linux__) || defined(__PDOS386__) \
     || defined(__SZ4__))
 typedef unsigned long size_t;
+#elif defined(__64BIT__) && defined(__EFI__)
+typedef unsigned long long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
     || defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__))
 typedef unsigned int size_t;
