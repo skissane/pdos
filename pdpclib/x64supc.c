@@ -2,9 +2,9 @@
 /* released to the public domain */
 /* x64supc - support routines for x64 */
 
-void __setj(void)
+int __setj(void)
 {
-    return;
+    return (0);
 }
 
 void __longj(void)
