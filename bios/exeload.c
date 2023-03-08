@@ -2108,6 +2108,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
         }
     }
 
+#ifndef NO_DLLENTRY
     /* Entry point is optional for DLLs. */
     if (optional_hdr->AddressOfEntryPoint)
     {
@@ -2125,6 +2126,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
             return (20);
         }
     }
+#endif
 
     /* Frees memory not needed by the DLL. */
     free(section_table);
