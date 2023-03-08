@@ -9,7 +9,7 @@ all: clean pcomm.exe
 
 pcomm.exe: ../pdpclib/pgastart.o pcomm.o
   rm -f pcomm.exe
-  $(LD) -nologo -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  $(LD) -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
 
 .c.o:
   $(CC) $(COPTS) -Fo$*.o $<
