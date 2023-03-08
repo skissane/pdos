@@ -51,7 +51,11 @@ typedef char * va_list;
 #define va_arg(ap, type) *(type far *)(ap += sizeof(type), ap - sizeof(type))
 #else
 #define va_start(ap, parmN) ap = (char *)&parmN + sizeof(parmN)
+#ifdef __64BIT__
+#define va_arg(ap, type) *(type *)(ap += 8, ap - 8)
+#else
 #define va_arg(ap, type) *(type *)(ap += sizeof(type), ap - sizeof(type))
+#endif
 #endif
 #define va_end(ap) ap = (char *)0
 
