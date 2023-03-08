@@ -11,7 +11,7 @@ TARGET=bios.exe
 OBJS=../bios/exeload.o
 
 $(TARGET): clean bios.o $(OBJS)
-  $(LD) -nologo -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
 
 .c.o:
   $(CC) $(COPTS) -Fo$*.o $<
