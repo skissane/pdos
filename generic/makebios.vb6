@@ -1,0 +1,21 @@
+# Produces EFI executable.
+# We link with the library produced by makefile.vb6
+# And we use makefile.w64 and makecomm.w64
+# which are PE
+
+CC=cl
+LD=link
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I../pdpclib -I../bios -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY
+
+TARGET=bios.exe
+OBJS=../bios/exeload.o
+
+$(TARGET): clean bios.o $(OBJS)
+  $(LD) -nologo -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+
+.c.o:
+  $(CC) $(COPTS) -Fo$*.o $<
+
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
