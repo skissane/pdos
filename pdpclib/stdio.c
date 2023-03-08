@@ -1850,18 +1850,36 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     {
     if (stream->hfile == NULL)
     {
-        static int done = 0;
+        UINTN Index;
+        EFI_INPUT_KEY input;
+        char c;
 
-        if (done)
+        for (tempRead = 0; tempRead < toread; tempRead++)
         {
-            printf("you have asked for input too many times\n");
-            for (;;) ;
+            if ((__gST->BootServices->WaitForEvent (1, &__gST->ConIn->WaitForKey, &Index) != EFI_SUCCESS)
+                || (__gST->ConIn->ReadKeyStroke (__gST->ConIn, &input) != EFI_SUCCESS))
+            {
+                *actualRead = 0;
+                stream->errorInd = 1;
+                break;
+            }
+            c = input.UnicodeChar;
+            if (c == '\r')
+            {
+                c = '\n';
+            }
+            printf("%c", c);
+            fflush(stdout);
+            *(((char *)ptr) + tempRead) = c;
+            if (c == '\n')
+            {
+                tempRead++;
+                break;
+            }
         }
-        else
+        if (!stream->errorInd)
         {
-            memcpy(ptr, "dir\n", 4);
-            *actualRead = 4;
-            done = 1;
+            *actualRead = tempRead;
         }
     }
     else
