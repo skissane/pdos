@@ -130,7 +130,7 @@ ___seek:
 #        ldr     r2,[sp,#12]     @ how
 #        ldr     r1,[sp,#8]      @ off_t
 #        ldr     r0,[sp,#4]      @ fd
-        mov     r7,#19
+        mov     r7,#19     @ SYS_lseek
         swi     0
 lskok:  
         ldmia   sp!,{pc}
