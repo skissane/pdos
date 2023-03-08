@@ -1821,9 +1821,9 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #endif
 #ifdef __EFI__
 #ifdef __EFIBIOS__
+    tempRead = toread;
     if (stream->block)
     {
-        tempRead = toread;
         if (tempRead < bio_protocol->Media->BlockSize)
         {
             printf("sector size mismatch - freezing\n");
@@ -1850,7 +1850,24 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     else
     {
 #endif
-    tempRead = toread;
+    if (stream->hfile == NULL)
+    {
+        static int done = 0;
+
+        if (done)
+        {
+            printf("you have asked for input too many times\n");
+            for (;;) ;
+        }
+        else
+        {
+            memcpy(ptr, "dir\n", 4);
+            *actualRead = 4;
+            done = 1;
+        }
+    }
+    else
+    {
     Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Read(stream->hfile, &tempRead, ptr);
     if (Status != EFI_SUCCESS)
     {
@@ -1860,6 +1877,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     else
     {
         *actualRead = tempRead;
+    }
     }
 
 #ifdef __EFIBIOS__
