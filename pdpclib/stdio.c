@@ -817,8 +817,8 @@ static void osfopen(void)
         myfile->block = 1;
         myfile->sector = 0;
     }
-#endif
     else
+#endif
     {
     x = 0;
     do {
@@ -840,9 +840,7 @@ static void osfopen(void)
     }
     myfile->hfile = new_file;
 
-#ifdef __EFIBIOS__
     }
-#endif
 
 #endif
 
@@ -1848,8 +1846,8 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         }
     }
     else
-    {
 #endif
+    {
     if (stream->hfile == NULL)
     {
         static int done = 0;
@@ -1879,10 +1877,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         *actualRead = tempRead;
     }
     }
-
-#ifdef __EFIBIOS__
     }
-#endif
 
 #endif
 
