@@ -9,6 +9,9 @@
  */
 
 #define read_makefile _Prmkfile
-void read_makefile (const char *filename);
+int read_makefile (const char *filename);
 #define read_memory_makefile _Prmemmk
 void read_memory_makefile (char *memory);
+
+void include_dir_add (const char *name);
+void include_dirs_destroy (void);

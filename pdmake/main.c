@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "variable.h"
 #include "read.h"
@@ -301,7 +302,10 @@ void help(void)
            "Print this message and exit.\n");
     printf("  -i, --ignore-errors         "
            "Ignore errors from commands.\n");
-    printf("  -n, --dry_run               "
+    printf("  -I DIRECTORY, --include-dir DIRECTORY\n"
+           "                              "
+           "Search DIRECTORY for included makefiles.\n");
+    printf("  -n, --dry-run               "
            "Run no commands, only print them.\n");
     printf("  -s, --silent, --quiet       "
            "Do not print commands.\n");
@@ -320,7 +324,7 @@ const char *os_name = "Linux";
 const char *os_name = "Unix";
 #endif
 
-int main(int argc, char **argv)
+int main( int argc, char **argv)
 {
     int i;
     int use_default_makefile = 1;
@@ -334,23 +338,21 @@ int main(int argc, char **argv)
 
     variable_add (xstrdup ("MAKE"), xstrdup (argv[0]), VAR_ORIGIN_FILE);
 
-    for (i = 1; i < argc; i++)
-    {
-        if (argv[i][0] == '-')
-        {
-            switch (argv[i][1])
-            {
+    for (i = 1; i < argc; i++) {
+        
+        if (argv[i][0] == '-') {
+            
+            switch (argv[i][1]) {
+                
                 case 'B':
-                    printf("Rebuilding everything, regardless of timestamps.\n");
+                    printf ("Rebuilding everything, regardless of timestamps.\n");
                     break;
 
                 case 'f':
-                    if (argv[i][2] == '\0')
-                    {
+                    if (argv[i][2] == '\0') {
                         i++;
-                        if (i == argc)
-                        {
-                            printf("option requires an argument -- f\n");
+                        if (i == argc) {
+                            printf ("option requires an argument -- f\n");
                             goto end;
                         }
                     }
@@ -358,12 +360,32 @@ int main(int argc, char **argv)
                     break;
 
                 case 'h':
-                    help();
+                    help ();
                     goto end;
 
                 case 'i':
                     ignore_errors = 1;
                     break;
+
+                case 'I': {
+                    char *name;
+                    
+                    if (argv[i][2] == '\0') {
+                        i++;
+                        if (i == argc) {
+                            printf ("option requires an argument -- I\n");
+                            goto end;
+                        }
+                        name = argv[i];
+                    } else {
+                        name = argv[i] + 2;
+                    }
+                    
+                    if (name[0] == '-' && name[1] == '\0') include_dirs_destroy ();
+                    else include_dir_add (name);
+                    
+                    break;
+                }
 
                 case 'n':
                     dry_run = 1;
@@ -374,46 +396,52 @@ int main(int argc, char **argv)
                     break;
 
                 case '-':
-                    if (strcmp("always-make", argv[i] + 2) == 0)
-                    {
-                        printf("Rebuilding everything, regardless of timestamps.\n");
-                    }
-                    else if (strcmp("file", argv[i] + 2) == 0)
-                    {
+                    if (strcmp ("always-make", argv[i] + 2) == 0) {
+                        
+                        printf ("Rebuilding everything, regardless of timestamps.\n");
+                        
+                    } else if (strcmp("file", argv[i] + 2) == 0) {
+                        
                         i++;
                         if (i == argc)
                         {
-                            printf("option `--file' requires an argument\n");
+                            printf ("option `--file' requires an argument\n");
                             goto end;
                         }
                         use_default_makefile = 0;
-                    }
-                    else if (strcmp("help", argv[i] + 2) == 0)
-                    {
-                        help();
+                        
+                    } else if (strcmp ("help", argv[i] + 2) == 0) {
+                        
+                        help ();
                         goto end;
-                    }
-                    else if (strcmp("ignore-errors", argv[i] + 2) == 0)
-                    {
+                        
+                    } else if (strcmp ("ignore-errors", argv[i] + 2) == 0) {
+                        
                         ignore_errors = 1;
-                    }
-                    else if (strcmp("dry_run", argv[i] + 2) == 0)
-                    {
+                        
+                    } else if (strcmp ("include-dir", argv[i] + 2) == 0) {
+
+                        i++;
+                        if (argv[i][0] == '-' && argv[i][1] == '\0') include_dirs_destroy ();
+                        else include_dir_add (argv[i]);
+
+                    } else if (strcmp ("dry-run", argv[i] + 2) == 0) {
+                        
                         dry_run = 1;
-                    }
-                    else if ((strcmp("silent", argv[i] + 2) == 0)
-                             || (strcmp("quiet", argv[i] + 2) == 0))
-                    {
+                        
+                    } else if ((strcmp ("silent", argv[i] + 2) == 0)
+                               || (strcmp ("quiet", argv[i] + 2) == 0)) {
+                        
                         silent = 1;
-                    }
-                    else printf("Unknown switch! Use -h for help.\n");
+                        
+                    } else printf ("Unknown switch! Use -h for help.\n");
                     break;
 
-                default: printf("Unknown switch! Use -h for help.\n"); break;
+                default: printf ("Unknown switch! Use -h for help.\n"); break;
+                
             }
-        }
-        else
-        {
+            
+        } else {
             if (strchr (argv[i], '=')) {
 
                 char *temp = xstrdup (argv[i]);
@@ -428,7 +456,9 @@ int main(int argc, char **argv)
     }
 
     if (use_default_makefile) {
-        read_makefile ("Makefile");
+        if (read_makefile ("Makefile")) {
+            printf ("Unable to open %s: %s\n", "Makefile", strerror(errno));
+        }
     } else {
 
         for (i = 1; i < argc; i++) {
@@ -447,12 +477,16 @@ int main(int argc, char **argv)
                     name = argv[i] + 2;
                 }
 
-                read_makefile (name);
+                if (read_makefile (name)) {
+                    printf ("Unable to open %s: %s\n", name, strerror(errno));
+                }
 
-            } else if (strcmp ("-file", argv[i] + 1) == 0) {
+            } else if (argv[i][0] == '-' && strcmp ("-file", argv[i] + 1) == 0) {
 
                 i++;
-                read_makefile (argv[i]);
+                if (read_makefile (argv[i])) {
+                    printf ("Unable to open %s: %s\n", argv[i], strerror(errno));
+                }
 
             }
         }
@@ -462,11 +496,12 @@ int main(int argc, char **argv)
     if (goal == NULL) goal = default_goal_var->value;
 
     /* No goal is set, so there is nothing to do. */
-    if (strcmp(goal, "") == 0) goto end;
+    if (strcmp (goal, "") == 0) goto end;
 
-    rule_search_and_build(goal);
+    rule_search_and_build (goal);
 
 end:
+    include_dirs_destroy ();
     rules_destroy ();
     variables_destroy ();
     

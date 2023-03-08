@@ -23,6 +23,16 @@
 
 extern variable *default_goal_var;
 
+struct include_dir {
+    const char *name;
+    struct include_dir *next;
+};
+
+static struct include_dir *include_dirs = NULL;
+static struct include_dir **last_include_dir_p = &include_dirs;
+
+static void include_makefile (const char *filename);
+
 struct linebuf {
     char *start;
     size_t size;
@@ -293,7 +303,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
                 saved_c = *q;
                 *q = '\0';
 
-                read_makefile (p);
+                include_makefile (p);
                 *q = saved_c;
                 p = q;
                 
@@ -396,7 +406,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
     free(commands);
 }
 
-void read_makefile (const char *filename)
+int read_makefile (const char *filename)
 {
     struct linebuf lbuf;
     struct variable *makefile_list;
@@ -404,8 +414,7 @@ void read_makefile (const char *filename)
 
     lbuf.f = fopen (filename, "r");
     if (lbuf.f == NULL) {
-        printf ("Unable to open %s: %s\n", filename, strerror(errno));
-        return;
+        return 1;
     }
 
     lbuf.size = 256;
@@ -435,6 +444,8 @@ void read_makefile (const char *filename)
 
     free (lbuf.start);
     fclose (lbuf.f);
+
+    return 0;
 }
 
 void read_memory_makefile (char *memory)
@@ -449,4 +460,51 @@ void read_memory_makefile (char *memory)
     read_lbuf (&lbuf, 1);
 
     free (lbuf.start);
+}
+
+void include_dir_add (const char *name)
+{
+    struct include_dir *idir = xmalloc (sizeof (*idir));
+
+    idir->name = name;
+    idir->next = NULL;
+    *last_include_dir_p = idir;
+    last_include_dir_p = &idir->next;
+}
+
+void include_dirs_destroy (void)
+{
+    struct include_dir *idir;
+
+    for (idir = include_dirs; idir; idir = include_dirs) {
+        include_dirs = idir->next;
+        free (idir);
+    }
+
+    last_include_dir_p = &include_dirs;
+}
+
+static void include_makefile (const char *filename)
+{
+    struct include_dir *idir;
+
+    if (read_makefile (filename) == 0) return;
+
+    for (idir = include_dirs; idir; idir = idir->next) {
+        char *new_name = xmalloc (strlen (idir->name) + 1 + strlen (filename) + 1);
+
+        strcpy (new_name, idir->name);
+        strcat (new_name, "/");
+        strcat (new_name, filename);
+
+        if (read_makefile (new_name) == 0) {
+            free (new_name);
+            return;
+        }
+
+        free (new_name);
+    }
+
+    fprintf (stderr, "Unable to include %s: %s. Stop.\n", filename, strerror(errno));
+    exit(EXIT_FAILURE);
 }
