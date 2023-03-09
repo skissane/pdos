@@ -8,12 +8,12 @@
 CC=cl
 AR=lib
 LD=link
-AS=ml
+AS=ml64
 COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I.
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
-    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supc.o
+    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supa.o
 
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
@@ -24,7 +24,7 @@ $(TARGET): clean pdptest.o $(OBJS)
   $(CC) $(COPTS) -Fo$*.o $<
 
 .asm.o:
-  $(AS) -c -coff -nologo -Fo$@ $<
+  $(AS) -c -nologo -Fo$@ $<
 
 clean:
   rm -f *.o
