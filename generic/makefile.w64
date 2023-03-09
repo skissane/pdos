@@ -3,7 +3,7 @@
 
 CC=cl
 LD=link
-COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../pdpclib -I../bios -I../src -DNEED_MZ -DNO_DLLENTRY
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../pdpclib -I../bios -I../src -DNEED_MZ -DNO_DLLENTRY -DTARGET_64BIT
 
 all: clean pdos.exe
 
