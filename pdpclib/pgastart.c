@@ -27,7 +27,7 @@ int __crt0(OS *os)
     return (__os->__start(0));
 }
 
-#ifdef __AMIGA__
+#if defined(__AMIGA__) || defined(NEED_UNDMAIN)
 /* needed for Amiga (gccami) */
 void __main(void)
 {
