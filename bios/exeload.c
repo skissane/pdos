@@ -1672,6 +1672,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                             *(unsigned char **)rel_target -= image_diff;
                         else *(unsigned char **)rel_target += image_diff;
                     }
+#if TARGET_64BIT
+                    else if (rel_type == IMAGE_REL_BASED_DIR64)
+                    {
+                        if (lower_exeStart)
+                            *(unsigned char **)rel_target -= image_diff;
+                        else *(unsigned char **)rel_target += image_diff;
+                    }
+#endif
                     else
                     {
                         printf("Unknown PE relocation type: %u\n",
