@@ -8,7 +8,7 @@ COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
-    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supa.o
+    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supc.o
 
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
