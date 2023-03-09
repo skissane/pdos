@@ -3,7 +3,7 @@
 
 CC=cl
 LD=link
-COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__EFI__ -DHAVE_DIR -D__PDOSGEN__ -U__WIN32__ -I. -I../pdpclib -I../src
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__PDOS386__ -DHAVE_DIR -D__PDOSGEN__ -U__WIN32__ -I. -I../pdpclib -I../src
 
 all: clean pcomm.exe
 
