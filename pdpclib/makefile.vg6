@@ -3,7 +3,7 @@
 
 CC=cl
 AR=lib
-COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../src
+COPTS=-c -nologo -GS- -Za -u -X -DNOUNDMAIN -D__MSC__ -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../src
 
 all: clean pdosgeno.a
 
