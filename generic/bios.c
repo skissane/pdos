@@ -36,7 +36,7 @@ extern int (*__genmain)(int argc, char **argv);
 
 #define MEMAMT 24*1000*1000
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
 extern int __start(int argc, char **argv);
 #else
 extern int __start(char *p);
@@ -301,9 +301,10 @@ int main(int argc, char **argv)
 
 int their_start(char *parm)
 {
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
     int argc;
     char **argv;
+
     getmainargs(&argc, &argv);
     __start(argc, argv);
 #else
