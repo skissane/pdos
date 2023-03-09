@@ -20,13 +20,13 @@ typedef unsigned int clock_t;
 
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
-#if (defined(__OS2__) || defined(__32BIT__) || defined(__MVS__) \
+#if defined(__64BIT__)
+typedef unsigned long long size_t;
+#elif (defined(__OS2__) || defined(__32BIT__) || defined(__MVS__) \
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__) \
     || defined(__ARM__) || defined(__gnu_linux__) || defined(__PDOS386__) \
     || defined(__SZ4__))
 typedef unsigned long size_t;
-#elif defined(__64BIT__) && defined(__EFI__)
-typedef unsigned long long size_t;
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
     || defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__))
 typedef unsigned int size_t;
