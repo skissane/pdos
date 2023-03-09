@@ -143,8 +143,11 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     /* C library will have done this already */
-    /* memmgrDefaults(&__memmgr);
-    memmgrInit(&__memmgr); */
+    /* for some implementations maybe? */
+#ifndef DONT_MM
+    memmgrDefaults(&__memmgr);
+    memmgrInit(&__memmgr);
+#endif
     memmgrSupply(&__memmgr, mem_base, bios->mem_amt);
 
     /* printf(CHAR_ESC_STR "[2J"); */
@@ -224,7 +227,9 @@ int main(int argc, char **argv)
     printf("return from app is %d\n", ret);
     /* we need to rely on the C library to do the termination when it
        has finished closing files */
-    /* memmgrTerm(&__memmgr); */
+#ifndef DONT_MM
+    memmgrTerm(&__memmgr);
+#endif
     return (0);
 }
 
