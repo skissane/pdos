@@ -301,15 +301,18 @@ int main(int argc, char **argv)
 
 int their_start(char *parm)
 {
+    int rc;
+
 #if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
     int argc;
     char **argv;
 
     getmainargs(&argc, &argv);
-    __start(argc, argv);
+    rc = __start(argc, argv);
 #else
-    __start(parm);
+    rc = __start(parm);
 #endif
+    return (rc);
 }
 
 
