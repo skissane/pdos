@@ -1,0 +1,29 @@
+# This builds the PDOS-generic OS library
+# for 64-bit using mingw64
+
+CC=x86_64-w64-mingw32-gcc
+AR=x86_64-w64-mingw32-ar
+LD=x86_64-w64-mingw32-ld
+AS=x86_64-w64-mingw32-as
+COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../src -fno-common -ansi -Wno-builtin-declaration-mismatch
+
+all: clean pdosgeno.a
+
+OBJS=stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o x64supc.o pdossupc.o
+
+pdosgeno.a: $(OBJS)
+  rm -f pdosgeno.a
+  $(AR) r pdosgeno.a $(OBJS)
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f pdosgeno.a
