@@ -1,0 +1,23 @@
+# This builds a PDOS-generic executable
+# No need to build a library, this is self-contained
+
+CC=x86_64-w64-mingw32-gcc
+AS=x86_64-w64-mingw32-as
+AR=x86_64-w64-mingw32-ar
+LD=x86_64-w64-mingw32-ld
+COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__PDOS386__ -DHAVE_DIR -D__PDOSGEN__ -U__WIN32__ \
+    -I. -I../pdpclib -I../src -DNEED_UNDMAIN \
+    -fno-common -ansi -Wno-builtin-declaration-mismatch
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+    $(LD) -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o pcomm.exe
