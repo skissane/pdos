@@ -13,3 +13,8 @@ void __longj(void)
 }
 
 int _fltused = 0;
+
+void __main(void)
+{
+    return;
+}
