@@ -1350,6 +1350,7 @@ __PDPCLIB_API__ void _c_exit(void)
     if (__EfiRoot != NULL)
     {
         __EfiRoot->Close(__EfiRoot);
+        __EfiRoot = NULL;
     }
 #endif
 
