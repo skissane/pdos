@@ -1,0 +1,24 @@
+# produce pdos.exe
+# Links against pdosgeno.a built with makefile.pg6
+
+CC=x86_64-w64-mingw32-gcc
+AS=x86_64-w64-mingw32-as
+AR=x86_64-w64-mingw32-ar
+LD=x86_64-w64-mingw32-ld
+COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ \
+    -I. -I../pdpclib -I../bios -I../src \
+    -fno-common -ansi -Wno-builtin-declaration-mismatch \
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY
+
+all: clean pdos.exe
+
+pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
+    $(LD) -s -e __crt0 -nostdlib -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o pdos.exe
