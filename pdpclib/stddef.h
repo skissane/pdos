@@ -13,7 +13,12 @@
 #ifndef __STDDEF_INCLUDED
 #define __STDDEF_INCLUDED
 
+#if defined(__64BIT__)
+typedef long long ptrdiff_t;
+#else
 typedef int ptrdiff_t;
+#endif
+
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
 #if defined(__64BIT__)
