@@ -14,7 +14,9 @@
 #define __SETJMP_INCLUDED
 
 typedef struct {
-#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#if defined(__64BIT__)
+    int regs[200];
+#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     int regs[15];
 #elif defined(__AMIGA__)
     long a0;
@@ -78,6 +80,10 @@ void longjmp(jmp_buf env, int val);
 
 #ifdef __MSC__
 int setjmp(jmp_buf env);
+
+#elif defined(__EFI__)
+#define setjmp(x) __setj(x)
+int __setj(jmp_buf env);
 
 #elif defined(__ARM__) || defined(__ARMGEN__)
 /* it appears that gcc has _setjmp as a known keyword which
