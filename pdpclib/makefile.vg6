@@ -1,0 +1,22 @@
+# This builds the PDOS-generic OS library
+# for 64-bit using Visual Studio
+
+CC=cl
+AR=lib
+COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ -D__PDOS386__ -DNOLIBALLOC -U__WIN32__ -I. -I../src
+
+all: clean pdosgeno.a
+
+OBJS=stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o x64supc.o pdossupc.o
+
+pdosgeno.a: $(OBJS)
+  rm -f pdosgeno.a
+  $(AR) -out:pdosgeno.a -nologo $(OBJS)
+
+.c.o:
+  $(CC) $(COPTS) -Fo$*.o $<
+
+clean:
+  rm -f pdosgeno.a
