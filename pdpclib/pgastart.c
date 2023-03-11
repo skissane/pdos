@@ -34,3 +34,11 @@ void __main(void)
     return;
 }
 #endif
+
+#if defined(NEED_EXIT)
+void exit(int x)
+{
+    __os->Xexit(x);
+    return;
+}
+#endif
