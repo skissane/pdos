@@ -1251,7 +1251,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
     if (runnum == 1)
     {
+#if !defined(__64BIT__)
     __exit(rc);
+#endif
     }
     runnum--;
     return (rc);
