@@ -22,6 +22,10 @@
 extern int CTYP __setj(jmp_buf env);
 extern int CTYP __longj(void *);
 
+#ifdef __64BIT__
+#undef setjmp
+#endif
+
 #ifdef __MSC__
 __PDPCLIB_API__ int setjmp(jmp_buf env)
 #else
