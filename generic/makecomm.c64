@@ -16,6 +16,7 @@ pcomm.exe: ../pdpclib/pgastart.o pcomm.o
 .c.o:
   pdcc -E $(PP) -o $*.i $<
   $(CC) $(COPTS) -out:$*.o $*.i
+  rm -f $*.i
 
 clean:
   rm -f pcomm.exe
