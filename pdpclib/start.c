@@ -1281,6 +1281,10 @@ void __exit(int status)
        so that we don't get called again */
     runnum--;
     /* and we can't go through another longjmp either */
+    /* really? 64 bit needs a longjmp. */
+#ifdef __64BIT__
+    longjmp(jb, status);
+#endif
     return;
     }
     globrc = status;
