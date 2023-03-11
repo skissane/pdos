@@ -116,8 +116,11 @@ __PDPCLIB_API__ void *malloc(size_t size)
 #ifdef __EFI__
     size_t *x = NULL;
 
-    __gBS->AllocPool(EfiLoaderData, size + sizeof(size_t), (void *)&x);
-    if (x == NULL) return (NULL);
+    if (__gBS->AllocPool(EfiLoaderData, size + sizeof(size_t), (void **)&x)
+        != EFI_SUCCESS)
+    {
+        return (NULL);
+    }
     *x = size;
     return (x + 1);
 #endif
