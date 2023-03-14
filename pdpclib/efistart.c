@@ -133,7 +133,7 @@ static EFI_STATUS block_test (EFI_HANDLE ImageHandle) {
     return_Status_if_fail (gBS->HandleProtocol (li_protocol->DeviceHandle, &block_io_guid, (void **)&bio_protocol));
 
     return_Status_if_fail (print_string ("Allocating buffer with size of a block\n"));
-    return_Status_if_fail (gBS->AllocPool (EfiLoaderData, bio_protocol->Media->BlockSize, &buffer));
+    return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, bio_protocol->Media->BlockSize, &buffer));
 
     return_Status_if_fail (print_string ("Reading a block at LBA 1\n"));
     return_Status_if_fail (bio_protocol->ReadBlocks (bio_protocol,

@@ -165,7 +165,7 @@ typedef struct {
     void *AllocatePages;
     void *FreePages;
     void *GetMemoryMap;
-    EFI_ALLOCATE_POOL AllocPool;
+    EFI_ALLOCATE_POOL AllocatePool;
     EFI_FREE_POOL FreePool;
 
     void *CreateEvent;
