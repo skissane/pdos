@@ -249,6 +249,7 @@ int main(int argc, char **argv)
     }
 #endif
 
+    printf("about to execute program\n");
 #if 1
     rc = genstart(&bios);
 #else
