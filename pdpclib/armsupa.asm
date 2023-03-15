@@ -94,13 +94,13 @@ ___exita:
         .align  2
 __write:
 ___write:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r2,[sp,#12]     @ len
 #        ldr     r1,[sp,#8]      @ buf
 #        ldr     r0,[sp,#4]      @ fd
         mov     r7,#4           @ SYS_write
         swi     0
-wrtok:  ldmia   sp!,{pc}
+wrtok:  ldmia   sp!,{r7,pc}
 
 # int ___read(int fd, void *buf, int len);
 
@@ -110,13 +110,13 @@ wrtok:  ldmia   sp!,{pc}
         .align  2
 __read:
 ___read:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r2,[sp,#12]     @ len
 #        ldr     r1,[sp,#8]      @ buf
 #        ldr     r0,[sp,#4]      @ fd
         mov     r7,#3           @ SYS_read
         swi     0
-redok:  ldmia   sp!,{pc}
+redok:  ldmia   sp!,{r7,pc}
 
 # int ___seek(int fd, int pos, int how);
 
@@ -143,13 +143,13 @@ lskok:
         .align  2
 __creat:
 ___creat:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r1,[sp,#8]      @ mode
         mov     r1,#0x1A4       @ 0644
 #        ldr     r0,[sp,#4]      @ path
         mov     r7,#8           @ SYS_creat
         swi     0
-crtok:  ldmia   sp!,{pc}
+crtok:  ldmia   sp!,{r7,pc}
 
 # int _open(char *path, int flags);
 
@@ -159,13 +159,13 @@ crtok:  ldmia   sp!,{pc}
         .align  2
 __open:
 ___open:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        mov     r2,#0x1A4       @ 0644
 #        ldr     r1,[sp,#8]      @ flags
 #        ldr     r0,[sp,#4]      @ path
         mov     r7,#5           @ SYS_open
         swi     0
-opnok:  ldmia   sp!,{pc}
+opnok:  ldmia   sp!,{r7,pc}
 
 # int _close(int fd);
 
@@ -175,11 +175,11 @@ opnok:  ldmia   sp!,{pc}
         .align  2
 __close:
 ___close:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r0,[sp,#4]      @ fd
         mov     r7,#6           @ SYS_close
         swi     0
-clsok:  ldmia   sp!,{pc}
+clsok:  ldmia   sp!,{r7,pc}
 
 # int ___remove(char *path);
 
@@ -189,11 +189,11 @@ clsok:  ldmia   sp!,{pc}
         .align  2
 __remove:
 ___remove:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r0,[sp,#4]      @ path
         mov     r7,#10          @ SYS_unlink
         swi     0
-unlok:  ldmia   sp!,{pc}
+unlok:  ldmia   sp!,{r7,pc}
 
 # int ___rename(char *old, char *new);
 
@@ -203,12 +203,12 @@ unlok:  ldmia   sp!,{pc}
         .align  2
 __rename:
 ___rename:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r1,[sp,#8]      @ new
 #        ldr     r0,[sp,#4]      @ old
         mov     r7,#0x26        @ SYS_rename
         swi     0
-renok:  ldmia   sp!,{pc}
+renok:  ldmia   sp!,{r7,pc}
 
 # int __time(void);
 
@@ -218,7 +218,7 @@ renok:  ldmia   sp!,{pc}
         .align  2
 __time:
 ___time:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
         sub     sp,sp,#16       @ struct timespec
         mov     r1,sp
         mov     r0,#0           @ CLOCK_REALTIME
@@ -226,7 +226,7 @@ ___time:
         swi     0
 timok:  ldr     r0,[sp]
         add     sp,sp,#16
-        ldmia   sp!,{pc}
+        ldmia   sp!,{r7,pc}
 
 # int ___mprotect(const void *buf, size_t len, int prot);
 
@@ -236,13 +236,13 @@ timok:  ldr     r0,[sp]
         .align  2
 __mprotect:
 ___mprotect:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r2,[sp,#12]     @ prot
 #        ldr     r1,[sp,#8]      @ len
 #        ldr     r0,[sp,#4]      @ buf
         mov     r7,#125          @ SYS_mprotect
         swi     0
-mpok:   ldmia   sp!,{pc}
+mpok:   ldmia   sp!,{r7,pc}
 
 # int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
 
@@ -252,13 +252,13 @@ mpok:   ldmia   sp!,{pc}
         .align  2
 __getdents:
 ___getdents:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r2,[sp,#12]     @ count
 #        ldr     r1,[sp,#8]      @ dirent
 #        ldr     r0,[sp,#4]      @ fd
         mov     r7,#141          @ SYS_getdents
         swi     0
-gdok:   ldmia   sp!,{pc}
+gdok:   ldmia   sp!,{r7,pc}
 
 # int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
@@ -268,13 +268,13 @@ gdok:   ldmia   sp!,{pc}
         .align  2
 __ioctl:
 ___ioctl:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r2,[sp,#12]     @ arg
 #        ldr     r1,[sp,#8]      @ cmd
 #        ldr     r0,[sp,#4]      @ fd
         mov     r7,#54           @ SYS_ioctl
         swi     0
-iocok:  ldmia   sp!,{pc}
+iocok:  ldmia   sp!,{r7,pc}
 
 # int ___chdir(const char *filename);
 
@@ -284,11 +284,11 @@ iocok:  ldmia   sp!,{pc}
         .align  2
 __chdir:
 ___chdir:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r0,[sp,#4]      @ filename
         mov     r7,#12           @ SYS_chdir
         swi     0
-cdok:  ldmia   sp!,{pc}
+cdok:  ldmia   sp!,{r7,pc}
 
 # int ___mkdir(const char *pathname, unsigned int mode);
 
@@ -298,12 +298,12 @@ cdok:  ldmia   sp!,{pc}
         .align  2
 __mkdir:
 ___mkdir:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r1,[sp,#8]      @ mode
 #        ldr     r0,[sp,#4]      @ pathname
         mov     r7,#39           @ SYS_mkdir
         swi     0
-mdok:  ldmia   sp!,{pc}
+mdok:  ldmia   sp!,{r7,pc}
 
 # int ___rmdir(const char *pathname);
 
@@ -313,11 +313,11 @@ mdok:  ldmia   sp!,{pc}
         .align  2
 __rmdir:
 ___rmdir:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r7,lr}
 #        ldr     r0,[sp,#4]      @ pathname
         mov     r7,#40           @ SYS_rmdir
         swi     0
-rdok:  ldmia   sp!,{pc}
+rdok:  ldmia   sp!,{r7,pc}
 
 .endif
 
