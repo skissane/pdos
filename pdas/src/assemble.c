@@ -124,6 +124,8 @@ struct instruction {
     const struct reg_entry *index_reg;
     
     unsigned int log2_scale_factor;
+
+    unsigned char rex;
     
     unsigned int prefixes[MAX_PREFIXES];
     int prefix_count;
@@ -322,54 +324,66 @@ static int add_prefix (unsigned char prefix) {
     int ret = 1;
     unsigned int prefix_type;
 
-    switch (prefix) {
-    
-        case CS_PREFIX_OPCODE:
-        case DS_PREFIX_OPCODE:
-        case ES_PREFIX_OPCODE:
-        case FS_PREFIX_OPCODE:
-        case GS_PREFIX_OPCODE:
-        case SS_PREFIX_OPCODE:
+    if (bits == 64
+        && prefix >= REX_PREFIX_OPCODE
+        && prefix < REX_PREFIX_OPCODE + 16) {
         
-            prefix_type = SEGMENT_PREFIX;
-            break;
-        
-        case REPNE_PREFIX_OPCODE:
-        case REPE_PREFIX_OPCODE:
-        
-            prefix_type = REP_PREFIX;
-            
-            ret = 2;
-            break;
-        
-        case FWAIT_OPCODE:
-        
-            prefix_type = FWAIT_PREFIX;
-            break;
-        
-        case ADDR_PREFIX_OPCODE:
-        
-            prefix_type = ADDR_PREFIX;
-            break;
-        
-        case DATA_PREFIX_OPCODE:
-        
-            prefix_type = DATA_PREFIX;
-            break;
+        prefix_type = REX_PREFIX;
 
-        default:
+        if (instruction.prefixes[prefix_type] & prefix & ~REX_PREFIX_OPCODE) ret = 0;
         
-            as_internal_error_at_source (__FILE__, __LINE__, "add_prefix invalid case %i", prefix);
-            break;
+    } else {
+
+        switch (prefix) {
+        
+            case CS_PREFIX_OPCODE:
+            case DS_PREFIX_OPCODE:
+            case ES_PREFIX_OPCODE:
+            case FS_PREFIX_OPCODE:
+            case GS_PREFIX_OPCODE:
+            case SS_PREFIX_OPCODE:
+            
+                prefix_type = SEGMENT_PREFIX;
+                break;
+            
+            case REPNE_PREFIX_OPCODE:
+            case REPE_PREFIX_OPCODE:
+            
+                prefix_type = REP_PREFIX;
+                
+                ret = 2;
+                break;
+            
+            case FWAIT_OPCODE:
+            
+                prefix_type = FWAIT_PREFIX;
+                break;
+            
+            case ADDR_PREFIX_OPCODE:
+            
+                prefix_type = ADDR_PREFIX;
+                break;
+            
+            case DATA_PREFIX_OPCODE:
+            
+                prefix_type = DATA_PREFIX;
+                break;
+
+            default:
+            
+                as_internal_error_at_source (__FILE__, __LINE__, "add_prefix invalid case %i", prefix);
+                break;
+        
+        }
     
+        if (instruction.prefixes[prefix_type]) ret = 0;
+
     }
-    
-    if (instruction.prefixes[prefix_type]) { ret = 0; }
     
     if (ret) {
     
         instruction.prefix_count++;
-        instruction.prefixes[prefix_type] = prefix;
+        instruction.prefixes[prefix_type] |= prefix;
     
     } else {
         as_error ("same type of prefix used twice");
@@ -382,6 +396,10 @@ static int add_prefix (unsigned char prefix) {
 static int check_reg (const struct reg_entry *reg) {
 
     if (!(cpu_arch_flags & CPU_386) && (reg->type & (REG32 | SEGMENT2 | CONTROL | DEBUG))) {
+        return 0;
+    }
+
+    if ((reg->type & (REG64 | REG_REX)) && bits != 64) {
         return 0;
     }
     
@@ -501,7 +519,14 @@ static int fits_in_unsigned_word (long number) {
 
 static int base_index_check (char *operand_string) {
 
-    if (bits == 32) {
+    if (bits == 64) {
+
+        if ((instruction.base_reg && !(instruction.base_reg->type & REG64))
+            || (instruction.index_reg && (!(instruction.index_reg->type & BASE_INDEX) || !(instruction.index_reg->type & REG64)))) {
+            goto bad;
+        }
+
+    } else if (bits == 32) {
     
         if ((instruction.base_reg && !(instruction.base_reg->type & REG32))
             || (instruction.index_reg && (!(instruction.index_reg->type & BASE_INDEX) || !(instruction.index_reg->type & REG32)))) {
@@ -892,152 +917,6 @@ static int att_parse_operand (char *operand_string) {
 
 }
 
-#define MATCH(overlap, operand_type)    (((overlap) & ~JUMP_ABSOLUTE) && (((operand_type) & (BASE_INDEX | JUMP_ABSOLUTE)) == ((overlap) & (BASE_INDEX | JUMP_ABSOLUTE))))
-
-static int match_template (void) {
-
-    const struct template *template;
-    
-    unsigned int found_reverse_match = 0;
-    unsigned int suffix_check = 0;
-    
-    switch (instruction.suffix) {
-    
-        case BYTE_SUFFIX:
-        
-            suffix_check = NO_BSUF;
-            break;
-        
-        case WORD_SUFFIX:
-        
-            suffix_check = NO_WSUF;
-            break;
-        
-        case SHORT_SUFFIX:
-        
-            suffix_check = NO_SSUF;
-            break;
-        
-        case DWORD_SUFFIX:
-        
-            suffix_check = NO_LSUF;
-            break;
-        
-        case QWORD_SUFFIX:
-        
-            suffix_check = NO_QSUF;
-            break;
-        
-        case INTEL_SUFFIX:
-        
-            suffix_check = NO_INTELSUF;
-            break;
-    
-    }
-    
-    for (template = current_templates->start; template < current_templates->end; template++) {
-    
-        unsigned int operand_type_overlap0, operand_type_overlap1, operand_type_overlap2;
-        
-        if (instruction.operands != template->operands) {
-            continue;
-        }
-
-        if (template->cpu_flags && (template->cpu_flags & cpu_arch_flags) == 0) {
-            continue;
-        }
-        
-        if (template->opcode_modifier & suffix_check) {
-            continue;
-        }
-
-        if (instruction.suffix == DWORD_SUFFIX
-            && !(cpu_arch_flags & CPU_386)
-            && !(template->opcode_modifier & IGNORE_SIZE)) {
-            continue;
-        }
-        
-        if (instruction.operands == 0) {
-            break;
-        }
-        
-        operand_type_overlap0 = instruction.types[0] & template->operand_types[0];
-        
-        switch (template->operands) {
-        
-            case 1:
-            
-                if (!MATCH (operand_type_overlap0, instruction.types[0])) {
-                    continue;
-                }
-                
-                if (operand_type_overlap0 == 0) {
-                    continue;
-                }
-                
-                break;
-            
-            case 2:
-            case 3:
-            
-                operand_type_overlap1 = instruction.types[1] & template->operand_types[1];
-                
-                if (!MATCH (operand_type_overlap0, instruction.types[0]) || !MATCH (operand_type_overlap1, instruction.types[1])) {
-                
-                    if ((template->opcode_modifier & (D | FLOAT_D)) == 0) {
-                        continue;
-                    }
-                    
-                    operand_type_overlap0 = instruction.types[0] & template->operand_types[1];
-                    operand_type_overlap1 = instruction.types[1] & template->operand_types[0];
-                    
-                    if (!MATCH (operand_type_overlap0, instruction.types[0]) || !MATCH (operand_type_overlap1, instruction.types[1])) {
-                        continue;
-                    }
-                    
-                    found_reverse_match = template->opcode_modifier & (D | FLOAT_D);
-                
-                } else if (instruction.operands == 3) {
-                
-                    operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
-                    
-                    if (!MATCH (operand_type_overlap2, instruction.types[2])) {
-                        continue;
-                    }
-                
-                }
-                
-                break;
-        
-        }
-        
-        break;
-    
-    }
-    
-    if (template == current_templates->end) {
-    
-        /* No match was found. */
-        as_error ("operands invalid for '%s'", current_templates->name);
-        return 1;
-    
-    }
-    
-    instruction.template = *template;
-    
-    if (found_reverse_match) {
-    
-        instruction.template.base_opcode |= found_reverse_match;
-        
-        instruction.template.operand_types[0] = template->operand_types[1];
-        instruction.template.operand_types[1] = template->operand_types[0];
-    
-    }
-    
-    return 0;
-
-}
-
 unsigned int smallest_imm_type (long number) {
 
     if (fits_in_signed_byte (number)) {
@@ -1412,7 +1291,10 @@ static int process_suffix (void) {
                     && !(instruction.template.operand_types[op] & SHIFT_COUNT)
                     && !(instruction.template.operand_types[op] & PORT)) {
                 
-                    instruction.suffix = ((instruction.types[op] & REG8) ? BYTE_SUFFIX : (instruction.types[op] & REG16) ? WORD_SUFFIX : DWORD_SUFFIX);
+                    instruction.suffix = ((instruction.types[op] & REG8) ? BYTE_SUFFIX
+                                          : (instruction.types[op] & REG16) ? WORD_SUFFIX
+                                          : (instruction.types[op] & REG32) ? DWORD_SUFFIX
+                                          : QWORD_SUFFIX);
                     break;
                 
                 }
@@ -1460,7 +1342,7 @@ static int process_suffix (void) {
         instruction.operands = saved_operands;
     
     } else if ((instruction.template.opcode_modifier & DEFAULT_SIZE) && !instruction.suffix) {
-        instruction.suffix = (bits == 32) ? DWORD_SUFFIX : WORD_SUFFIX;
+        instruction.suffix = (bits == 64) ? QWORD_SUFFIX : (bits == 32) ? DWORD_SUFFIX : WORD_SUFFIX;
     } else if (!instruction.suffix
                && ((instruction.template.operand_types[0] & JUMP_ABSOLUTE)
                    || (instruction.template.opcode_modifier & JUMPBYTE)
@@ -1606,6 +1488,13 @@ static int process_suffix (void) {
                     return 1;
                 }
             
+            }
+
+            /* 64 bit operands are wanted, so REX_W is used. */
+            if (instruction.suffix == QWORD_SUFFIX
+                && bits == 64
+                && (instruction.template.opcode_modifier & NO_REX_W) == 0) {
+                instruction.rex |= REX_W;
             }
             
             break;
@@ -2231,6 +2120,155 @@ static int parse_operands (char **p_line) {
     
 }
 
+#define MATCH(overlap, operand_type)    (((overlap) & ~JUMP_ABSOLUTE) && (((operand_type) & (BASE_INDEX | JUMP_ABSOLUTE)) == ((overlap) & (BASE_INDEX | JUMP_ABSOLUTE))))
+
+static int match_template (void) {
+
+    const struct template *template;
+    
+    unsigned int found_reverse_match = 0;
+    unsigned int suffix_check = 0;
+    
+    switch (instruction.suffix) {
+    
+        case BYTE_SUFFIX:
+        
+            suffix_check = NO_BSUF;
+            break;
+        
+        case WORD_SUFFIX:
+        
+            suffix_check = NO_WSUF;
+            break;
+        
+        case SHORT_SUFFIX:
+        
+            suffix_check = NO_SSUF;
+            break;
+        
+        case DWORD_SUFFIX:
+        
+            suffix_check = NO_LSUF;
+            break;
+        
+        case QWORD_SUFFIX:
+        
+            suffix_check = NO_QSUF;
+            break;
+        
+        case INTEL_SUFFIX:
+        
+            suffix_check = NO_INTELSUF;
+            break;
+    
+    }
+    
+    for (template = current_templates->start; template < current_templates->end; template++) {
+    
+        unsigned int operand_type_overlap0, operand_type_overlap1, operand_type_overlap2;
+        
+        if (instruction.operands != template->operands) {
+            continue;
+        }
+
+        if (template->cpu_flags && (template->cpu_flags & cpu_arch_flags) == 0) {
+            continue;
+        }
+        
+        if (template->opcode_modifier & suffix_check) {
+            continue;
+        }
+
+        if (((instruction.suffix == QWORD_SUFFIX
+             && bits != 64)
+             ||(instruction.suffix == DWORD_SUFFIX
+                && !(cpu_arch_flags & CPU_386)))
+            && !(template->opcode_modifier & IGNORE_SIZE)
+            && !intel_float_suffix_translation (template->name)) {
+            continue;
+        }
+        
+        if (instruction.operands == 0) {
+            break;
+        }
+        
+        operand_type_overlap0 = instruction.types[0] & template->operand_types[0];
+        
+        switch (template->operands) {
+        
+            case 1:
+            
+                if (!MATCH (operand_type_overlap0, instruction.types[0])) {
+                    continue;
+                }
+                
+                if (operand_type_overlap0 == 0) {
+                    continue;
+                }
+                
+                break;
+            
+            case 2:
+            case 3:
+            
+                operand_type_overlap1 = instruction.types[1] & template->operand_types[1];
+                
+                if (!MATCH (operand_type_overlap0, instruction.types[0]) || !MATCH (operand_type_overlap1, instruction.types[1])) {
+                
+                    if ((template->opcode_modifier & (D | FLOAT_D)) == 0) {
+                        continue;
+                    }
+                    
+                    operand_type_overlap0 = instruction.types[0] & template->operand_types[1];
+                    operand_type_overlap1 = instruction.types[1] & template->operand_types[0];
+                    
+                    if (!MATCH (operand_type_overlap0, instruction.types[0]) || !MATCH (operand_type_overlap1, instruction.types[1])) {
+                        continue;
+                    }
+                    
+                    found_reverse_match = template->opcode_modifier & (D | FLOAT_D);
+                
+                } else if (instruction.operands == 3) {
+                
+                    operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
+                    
+                    if (!MATCH (operand_type_overlap2, instruction.types[2])) {
+                        continue;
+                    }
+                
+                }
+                
+                break;
+        
+        }
+        
+        break;
+    
+    }
+    
+    if (template == current_templates->end) {
+    
+        /* No match was found. */
+        as_error ("operands invalid for '%s'", current_templates->name);
+        return 1;
+    
+    }
+    
+    instruction.template = *template;
+    
+    if (found_reverse_match) {
+    
+        instruction.template.base_opcode |= found_reverse_match;
+        
+        instruction.template.operand_types[0] = template->operand_types[1];
+        instruction.template.operand_types[1] = template->operand_types[0];
+    
+    }
+    
+    return 0;
+
+}
+
 static int process_operands (void) {
 
     if (instruction.template.opcode_modifier & REG_DUPLICATION) {
@@ -2247,6 +2285,7 @@ static int process_operands (void) {
     
         int operand = (instruction.types[0] & (REG | FLOAT_REG)) ? 0 : 1;
         instruction.template.base_opcode |= instruction.regs[operand]->number;
+        if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_B;
     
     }
     
@@ -2265,11 +2304,15 @@ static int process_operands (void) {
             
                 instruction.modrm.regmem = instruction.regs[source]->number;
                 instruction.modrm.reg = instruction.regs[dest]->number;
+                if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_R;
+                if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_B;
             
             } else {
             
                 instruction.modrm.regmem = instruction.regs[dest]->number;
                 instruction.modrm.reg = instruction.regs[source]->number;
+                if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_B;
+                if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_R;
             
             }
         
@@ -2320,6 +2363,8 @@ static int process_operands (void) {
                         
                         instruction.types[operand] &= ~DISP;
                         instruction.types[operand] |= DISP32;
+
+                        if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
                     
                     }
                 
@@ -2372,6 +2417,7 @@ static int process_operands (void) {
                     }
                     
                     instruction.modrm.regmem = instruction.base_reg->number;
+                    if (instruction.base_reg->type & REG_REX) instruction.rex |= REX_B;
                     
                     instruction.sib.base = instruction.base_reg->number;
                     instruction.sib.scale = instruction.log2_scale_factor;
@@ -2387,6 +2433,7 @@ static int process_operands (void) {
                     
                         instruction.sib.index = instruction.index_reg->number;
                         instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
+                        if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
                     
                     } else {
                         instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
@@ -2424,8 +2471,10 @@ static int process_operands (void) {
                 
                 if (instruction.template.extension_opcode != NONE) {
                     instruction.modrm.regmem = instruction.regs[operand]->number;
+                    if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_B;
                 } else {
                     instruction.modrm.reg = instruction.regs[operand]->number;
+                    if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_R;
                 }
                 
                 if (instruction.mem_operands == 0) {
@@ -2576,6 +2625,8 @@ char *machine_dependent_assemble_line (char *line) {
         instruction.operands = 0;
 
     }
+    
+    if (instruction.rex) add_prefix (REX_PREFIX_OPCODE | instruction.rex);        
     
     if (instruction.template.opcode_modifier & JUMP) {
         output_jump ();
@@ -2911,6 +2962,14 @@ static void handler_code32 (char **pp) {
 
 }
 
+static void handler_code64 (char **pp) {
+
+    (void) pp;
+    as_warn ("64 bit support is unfinished and for testing only");
+    bits = 64;
+
+}
+
 static void set_syntax (char **pp, int set_intel_syntax);
 
 static void handler_att_syntax (char **pp) {
@@ -2927,6 +2986,7 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "intel_syntax",   &handler_intel_syntax   },
     { "code16",         &handler_code16         },
     { "code32",         &handler_code32         },
+    { "code64",         &handler_code64         },
     { 0,                0                       }
 
 };

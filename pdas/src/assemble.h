@@ -29,7 +29,8 @@
 #define     ADDR_PREFIX                 0x02
 #define     DATA_PREFIX                 0x03
 #define     SEGMENT_PREFIX              0x04
-#define     MAX_PREFIXES                0x05
+#define     REX_PREFIX                  0x05
+#define     MAX_PREFIXES                0x06
 
 #define     MODRM_REGMEM_TWO_BYTE_ADDRESSING                0x04
 #define     SIB_BASE_NO_BASE_REGISTER                       0x05
@@ -53,7 +54,7 @@ struct template {
     
 #define     NONE                        0x0000FFFF
     
-    unsigned int opcode_modifier;
+    flag_int opcode_modifier;
 
 #define     W                           0x00000001
 #define     D                           0x00000002
@@ -83,74 +84,80 @@ struct template {
     
 #define     FLOAT_MF                    0x00080000
 #define     ADD_FWAIT                   0x00100000
+
+#define     NO_REX_W                    0x00200000
     
-    unsigned int operand_types[MAX_OPERANDS];
+    flag_int operand_types[MAX_OPERANDS];
     
-#define     REG8                        0x00000001
-#define     REG16                       0x00000002
-#define     REG32                       0x00000004
+#define     REG8                        (1LU << 0)
+#define     REG16                       (1LU << 1)
+#define     REG32                       (1LU << 2)
+#define     REG64                       (1LU << 3)
     
-#define     REG                         (REG8 | REG16 | REG32)
-#define     WORD_REG                    (REG16 | REG32)
+#define     REG                         (REG8 | REG16 | REG32 | REG64)
+#define     WORD_REG                    (REG16 | REG32 | REG64)
     
-#define     SEGMENT1                    0x00000008
-#define     SEGMENT2                    0x00020000
-#define     CONTROL                     0x00000010
-#define     DEBUG                       0x00100000
-#define     TEST                        0x00200000
-#define     FLOAT_REG                   0x00400000
-#define     FLOAT_ACC                   0x00800000
+#define     SEGMENT1                    (1LU << 4)
+#define     SEGMENT2                    (1LU << 5)
+#define     CONTROL                     (1LU << 6)
+#define     DEBUG                       (1LU << 7)
+#define     TEST                        (1LU << 8)
+#define     FLOAT_REG                   (1LU << 9)
+#define     FLOAT_ACC                   (1LU << 10)
     
-#define     IMM8                        0x00000020
-#define     IMM8S                       0x00000040
-#define     IMM16                       0x00000080
-#define     IMM32                       0x00000100
+#define     IMM8                        (1LU << 11)
+#define     IMM8S                       (1LU << 12)
+#define     IMM16                       (1LU << 13)
+#define     IMM32                       (1LU << 14)
     
 #define     IMM                         (IMM8 | IMM8S | IMM16 | IMM32)
 #define     ENCODABLEIMM                (IMM8 | IMM16 | IMM32)
     
-#define     DISP8                       0x00000200
-#define     DISP16                      0x00000400
-#define     DISP32                      0x00000800
+#define     DISP8                       (1LU << 15)
+#define     DISP16                      (1LU << 16)
+#define     DISP32                      (1LU << 17)
     
 #define     DISP                        (DISP8 | DISP16 | DISP32)
-#define     BASE_INDEX                  0x00001000
+#define     BASE_INDEX                  (1LU << 18)
     
 /*
  * INV_MEM is for instruction with modrm where general register
  * encoding is allowed only in modrm.regmem (control register move).
  * */
-#define     INV_MEM                     0x00040000
+#define     INV_MEM                     (1LU << 19)
 #define     ANY_MEM                     (DISP8 | DISP16 | DISP32 | BASE_INDEX | INV_MEM)
     
-#define     ACC                         0x00002000
-#define     PORT                        0x00004000
-#define     SHIFT_COUNT                 0x00008000
-#define     JUMP_ABSOLUTE               0x00010000
+#define     ACC                         (1LU << 20)
+#define     PORT                        (1LU << 21)
+#define     SHIFT_COUNT                 (1LU << 22)
+#define     JUMP_ABSOLUTE               (1LU << 23)
+
+#define     REG_REX                     (1LU << 24)
     
 #define     IMPLICIT_REGISTER           (SHIFT_COUNT | ACC)
     
     flag_int cpu_flags;
 
-#define     CPU_186                     (1U << 0)
-#define     CPU_286                     (1U << 1)
-#define     CPU_386                     (1U << 2)
-#define     CPU_486                     (1U << 3)
-#define     CPU_686                     (1U << 4)
+#define     CPU_186                     (1LU << 0)
+#define     CPU_286                     (1LU << 1)
+#define     CPU_386                     (1LU << 2)
+#define     CPU_486                     (1LU << 3)
+#define     CPU_686                     (1LU << 4)
 
-#define     CPU_8087                    (1U << 7)
-#define     CPU_287                     (1U << 8)
-#define     CPU_387                     (1U << 9)
-#define     CPU_687                     (1U << 10)
+#define     CPU_8087                    (1LU << 7)
+#define     CPU_287                     (1LU << 8)
+#define     CPU_387                     (1LU << 9)
+#define     CPU_687                     (1LU << 10)
 
-#define     CPU_CMOV                    (1U << 12)
+#define     CPU_CMOV                    (1LU << 12)
 
 };
 
 struct reg_entry {
 
     const char *name;
-    unsigned int type, number;
+    flag_int type;
+    unsigned int number;
 
 };
 
@@ -179,8 +186,10 @@ struct sib_byte {
 
 #define     BW_SUF                      (NO_SSUF | NO_LSUF | NO_QSUF | NO_INTELSUF)
 #define     WL_SUF                      (NO_BSUF | NO_SSUF | NO_QSUF | NO_INTELSUF)
-#define     BWL_SUF                     (NO_SSUF | NO_QSUF | NO_INTELSUF)
 #define     SL_SUF                      (NO_BSUF | NO_WSUF | NO_QSUF | NO_INTELSUF)
+#define     BWL_SUF                     (NO_SSUF | NO_QSUF | NO_INTELSUF)
+#define     WLQ_SUF                     (NO_BSUF | NO_SSUF | NO_INTELSUF)
+#define     BWLQ_SUF                    (NO_SSUF | NO_INTELSUF)
 
 #define     CPU_FP                      (CPU_8087 | CPU_287 | CPU_387)  
 
@@ -192,7 +201,7 @@ static const struct template template_table[] = {
 
     /* Move instructions. */
     { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32, ACC, 0 }, 0 },
-    { "mov", 2, 0x88, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "mov", 2, 0x88, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
     { "mov", 2, 0xB0, NONE, BWL_SUF | W | SHORT_FORM, { ENCODABLEIMM, REG8 | REG16 | REG32, 0 }, 0 },
     { "mov", 2, 0xC6, NONE, BWL_SUF | D | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
@@ -332,8 +341,8 @@ static const struct template template_table[] = {
     { "or", 2, 0x0C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
     { "or", 2, 0x80, 1, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "xor", 2, 0x30, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "xor", 2, 0x83, 6, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "xor", 2, 0x30, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "xor", 2, 0x83, 6, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
     { "xor", 2, 0x34, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
     { "xor", 2, 0x80, 6, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
@@ -447,8 +456,8 @@ static const struct template template_table[] = {
     { "ljmp", 2, 0xEA, NONE, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
     { "ljmp", 1, 0xFF, 5, WL_SUF | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     
-    { "ret", 0, 0xC3, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
-    { "ret", 1, 0xC2, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
+    { "ret", 0, 0xC3, NONE, WL_SUF | DEFAULT_SIZE | NO_REX_W, { 0, 0, 0 }, 0 },
+    { "ret", 1, 0xC2, NONE, WL_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16, 0, 0 }, 0 },
     { "retf", 0, 0xCB, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
     { "retf", 1, 0xCA, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
     { "lret", 0, 0xCB, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
@@ -813,6 +822,12 @@ static const struct template template_table[] = {
     { "repe", 0, 0xF3, NONE, NO_SUF | IS_PREFIX, { 0, 0, 0 }, 0 },
     { "repz", 0, 0xF3, NONE, NO_SUF | IS_PREFIX, { 0, 0, 0 }, 0 },
 
+#define     REX_PREFIX_OPCODE         0x40
+#define     REX_B                     0x1
+#define     REX_X                     0x2
+#define     REX_R                     0x4
+#define     REX_W                     0x8
+
     /* i486 extensions. */
     { "bswap", 1, 0x0FC8, NONE, L_SUF | SHORT_FORM, { REG32, 0, 0 }, CPU_486 },
 
@@ -888,6 +903,24 @@ static const struct reg_entry reg_table[] = {
     { "ebp", REG32 | BASE_INDEX, 5 },
     { "esi", REG32 | BASE_INDEX, 6 },
     { "edi", REG32 | BASE_INDEX, 7 },
+
+    /* 64 bit registers. */
+    { "rax", REG64 | BASE_INDEX | ACC, 0 },
+    { "rcx", REG64 | BASE_INDEX, 1 },
+    { "rdx", REG64 | BASE_INDEX, 2 },
+    { "rbx", REG64 | BASE_INDEX, 3 },
+    { "rsp", REG64, 4 },
+    { "rbp", REG64 | BASE_INDEX, 5 },
+    { "rsi", REG64 | BASE_INDEX, 6 },
+    { "rdi", REG64 | BASE_INDEX, 7 },
+    { "r8", REG64 | BASE_INDEX | REG_REX, 0 },
+    { "r9", REG64 | BASE_INDEX | REG_REX, 1 },
+    { "r10", REG64 | BASE_INDEX | REG_REX, 2 },
+    { "r11", REG64 | BASE_INDEX | REG_REX, 3 },
+    { "r12", REG64 | BASE_INDEX | REG_REX, 4 },
+    { "r13", REG64 | BASE_INDEX | REG_REX, 5 },
+    { "r14", REG64 | BASE_INDEX | REG_REX, 6 },
+    { "r15", REG64 | BASE_INDEX | REG_REX, 7 },
     
     /* Segment registers. */
     { "es", SEGMENT1, 0 },
