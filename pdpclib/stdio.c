@@ -262,11 +262,11 @@ static const char *fnm;
 static const char *modus;
 static int modeType;
 
-__PDPCLIB_API__ FILE **__gtin()
+__PDPCLIB_API__ FILE **__gtin(void)
     { return(&__stdin_ptr); }
-__PDPCLIB_API__ FILE **__gtout()
+__PDPCLIB_API__ FILE **__gtout(void)
     { return(&__stdout_ptr); }
-__PDPCLIB_API__ FILE **__gterr()
+__PDPCLIB_API__ FILE **__gterr(void)
     { return(&__stderr_ptr); }
 
 #if defined(__WIN32__) && !defined(__STATIC__)
