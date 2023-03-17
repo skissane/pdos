@@ -2,7 +2,7 @@
 # You must have built PDPCLIB with makefile.erm first
 
 CC=gccarm
-CFLAGS=-O0 -D__UNOPT__ -DNEED_DELAY
+CFLAGS=-O0 -D__UNOPT__
 LD=lderm
 LDFLAGS=-e __start
 AS=aserm
