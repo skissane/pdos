@@ -2,7 +2,7 @@
 # You must have built pdpclib with makefile.arg first
 
 CC=gccarm
-CFLAGS=-O0 -D__UNOPT__ -DNEED_DELAY
+CFLAGS=-O0 -D__UNOPT__
 LD=ldarm
 LDFLAGS=
 AS=asarm
