@@ -17,7 +17,7 @@ pdptest.exe: pgastart.o pdptest.o string.o armsupa.o
   rm -f $*.s
 
 .asm.o:
-  $(AS) -o $@ $<
+  $(AS) --defsym LINUX=0 -o $@ $<
 
 clean:
   rm -f pdptest.exe
