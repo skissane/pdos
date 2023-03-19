@@ -36,6 +36,7 @@ struct coff_header_file {
 
 };
 
+#define     IMAGE_FILE_MACHINE_AMD64                        0x8664
 #define     IMAGE_FILE_MACHINE_I386                         0x014C
 
 #define     IMAGE_FILE_LINE_NUMS_STRIPPED                   0x0004

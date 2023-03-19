@@ -147,6 +147,7 @@ void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, 
 /* coff.c */
 struct pseudo_op_entry *coff_get_pseudo_op_table (void);
 void write_coff_file (void);
+void coff_x86_set_bits (int bits);
 
 /* elf.c */
 struct pseudo_op_entry *elf_get_pseudo_op_table (void);

@@ -303,6 +303,8 @@ void machine_dependent_init (void) {
         bits = 32;
     }
 
+    if (state->format == AS_FORMAT_COFF) coff_x86_set_bits (bits);
+
 }
 
 void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size) {
@@ -3147,6 +3149,7 @@ enum option_index {
     AS_OPTION_IGNORED = 0,
     AS_OPTION_BITS16,
     AS_OPTION_BITS32,
+    AS_OPTION_BITS64,
     AS_OPTION_MARCH,
     AS_OPTION_SYNTAX
 
@@ -3156,6 +3159,7 @@ static const struct as_option options[] = {
 
     { "-16",        AS_OPTION_BITS16,       AS_OPTION_NO_ARG            },
     { "-32",        AS_OPTION_BITS32,       AS_OPTION_NO_ARG            },
+    { "-64",        AS_OPTION_BITS64,       AS_OPTION_NO_ARG            },
     { "march",      AS_OPTION_MARCH,        AS_OPTION_HAS_ARG           },
     { "msyntax",    AS_OPTION_SYNTAX,       AS_OPTION_HAS_ARG           },
     { NULL,         0,                      0                           }
@@ -3222,7 +3226,7 @@ void machine_dependent_print_help (void) {
     fprintf (stderr, "\n");
     
     fprintf (stderr, "    -msyntax=[att|intel]  Use AT&T/Intel syntax (default: att)\n");
-    fprintf (stderr, "    --16/--32             Generate 16-bit/32-bit code\n");
+    fprintf (stderr, "    --16/--32/--64        Generate 16-bit/32-bit/64-bit object\n");
 
 }
 
@@ -3241,6 +3245,12 @@ void machine_dependent_handle_option (const struct as_option *popt, const char *
         case AS_OPTION_BITS32:
 
             bits = 32;
+            break;
+
+        case AS_OPTION_BITS64:
+
+            bits = 64;
+            as_warn_at (NULL, 0, "64 bit support is unfinished and for testing only");
             break;
 
         case AS_OPTION_MARCH: {

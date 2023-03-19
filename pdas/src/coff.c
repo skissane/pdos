@@ -19,6 +19,8 @@
 
 #define COFF_DEFAULT_SECTION_FLAGS (SECTION_FLAG_LOAD | SECTION_FLAG_DATA)
 
+static unsigned short target_Machine;
+
 #define COPY(struct_name, field_name, bytes) \
  bytearray_write_##bytes##_bytes (struct_name##_file.field_name, struct_name##_internal->field_name, LITTLE_ENDIAN)
 
@@ -286,10 +288,11 @@ void write_coff_file (void) {
     
     }
     
-    header.Machine = IMAGE_FILE_MACHINE_I386;
+    header.Machine = target_Machine;
     header.NumberOfSections = sections_get_count ();
     header.SizeOfOptionalHeader = 0;
-    header.Characteristics = IMAGE_FILE_LINE_NUMS_STRIPPED | IMAGE_FILE_32BIT_MACHINE;
+    header.Characteristics = IMAGE_FILE_LINE_NUMS_STRIPPED;
+    if (target_Machine == IMAGE_FILE_MACHINE_I386) header.Characteristics |= IMAGE_FILE_32BIT_MACHINE;
     
     if (fseek (outfile,
                (sizeof (struct coff_header_file)
@@ -896,4 +899,10 @@ static struct pseudo_op_entry pseudo_op_table[] = {
 
 struct pseudo_op_entry *coff_get_pseudo_op_table (void) {
     return pseudo_op_table;
+}
+
+void coff_x86_set_bits (int bits)
+{
+    if (bits == 64) target_Machine = IMAGE_FILE_MACHINE_AMD64;
+    else target_Machine = IMAGE_FILE_MACHINE_I386;
 }
