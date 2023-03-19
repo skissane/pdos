@@ -47,5 +47,6 @@ __main:
 .data
 
 .globl _fltused
+.p2align 2
 _fltused:
 .space 4
