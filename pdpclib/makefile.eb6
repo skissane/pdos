@@ -22,7 +22,8 @@ $(TARGET): clean pdptest.o $(OBJS)
   rm -f $*.s
 
 .asm.o:
-  pdas -O coff --64 -o $@ $<
+  $(AS) -o $@ $<
+#  pdas -O coff --64 -o $@ $<
 
 clean:
   rm -f *.o
