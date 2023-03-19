@@ -9,7 +9,7 @@ COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
-    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supc.o
+    assert.o signal.o locale.o ctype.o setjmp.o math.o x64supb.o
 
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
@@ -22,7 +22,7 @@ $(TARGET): clean pdptest.o $(OBJS)
   rm -f $*.s
 
 .asm.o:
-  $(AS) -o $@ $<
+  pdas -O coff --64 -o $@ $<
 
 clean:
   rm -f *.o
