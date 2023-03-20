@@ -249,6 +249,27 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 }
 #endif
 
+#if 0
+    printf ("Testing EFI AllocatePages\n");
+    {
+        /* force allocation to be done below 2 GiB */
+        EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
+        UINTN num_pages = 5;
+
+        if (__gBS->AllocatePages (AllocateMaxAddress, EfiLoaderData, num_pages, &mem)) {
+            printf ("failed to allocate pages\n");
+            return (EXIT_FAILURE);
+        }
+        printf ("successfully allocate pages at address 0x%08x%08x\n", mem.b, mem.a);
+        memset ((void *)(mem.a), '\0', num_pages * 4096);
+        printf ("success memset\n");
+        if (__gBS->FreePages (mem, num_pages)) {
+            printf ("failed to free pages\n");
+            return (EXIT_FAILURE);
+        }
+        printf ("success freeing\n");
+    }
+#endif
 
 /*
 
