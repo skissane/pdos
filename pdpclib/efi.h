@@ -110,6 +110,13 @@ typedef struct {
 } EFI_TABLE_HEADER;
 
 typedef enum {
+    AllocateAnyPages,
+    AllocateMaxAddress,
+    AllocateAddress,
+    MaxAllocateAddress
+} EFI_ALLOCATE_TYPE;
+
+typedef enum {
     EfiReservedMemoryType,
     EfiLoaderCode,
     EfiLoaderData, /* Should be used for most allocations. */
@@ -128,6 +135,14 @@ typedef enum {
     EfiUnacceptedMemoryType,
     EfiMaxMemoryType
 } EFI_MEMORY_TYPE;
+
+typedef UINT64 EFI_PHYSICAL_ADDRESS;
+
+typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_PAGES) (IN EFI_ALLOCATE_TYPE Type,
+                                                 IN EFI_MEMORY_TYPE MemoryType,
+                                                 IN UINTN Pages,
+                                                 IN OUT EFI_PHYSICAL_ADDRESS *Memory);
+typedef EFI_STATUS (EFIAPI *EFI_FREE_PAGES) (IN EFI_PHYSICAL_ADDRESS Memory, IN UINTN Pages);
 
 typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_POOL) (IN EFI_MEMORY_TYPE PoolType, IN UINTN Size, OUT void **Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FREE_POOL) (IN void *Buffer);
@@ -162,8 +177,8 @@ typedef struct {
     void *RaiseTPL;
     void *RestoreTPL;
 
-    void *AllocatePages;
-    void *FreePages;
+    EFI_ALLOCATE_PAGES AllocatePages;
+    EFI_FREE_PAGES FreePages;
     void *GetMemoryMap;
     EFI_ALLOCATE_POOL AllocatePool;
     EFI_FREE_POOL FreePool;
