@@ -15,7 +15,7 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r pdperm.a stdio.o string.o stdlib.o
   $(AR) r pdperm.a start.o time.o errno.o assert.o signal.o locale.o
   $(AR) r pdperm.a ctype.o math.o armsupa.o __memmgr.o
-  $(LD) -e __start -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
+  $(LD) --emit-relocs -e __start -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
   echo $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
 
 .c.o:
