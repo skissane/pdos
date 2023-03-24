@@ -157,6 +157,8 @@ static const struct templates *current_templates;
 static struct hashtab *templates_hashtab;
 static struct hashtab *reg_entry_hashtab;
 
+static void set_bits (int new_bits, int cause_fatal_error);
+
 /* Prototypes for functions from assemble_intel_support.c. */
 static int intel_parse_name (struct expr *expr, char *name);
 static int intel_parse_operand (char *operand_string);
@@ -291,17 +293,12 @@ void machine_dependent_init (void) {
     
     }
 
-    if (!(cpu_arch_flags & CPU_386)) {
-
-        if (bits > 16) {
-            _error ("option '--32' conflicts with the used '-march=' option (32 bit mode is not supported on CPUs before i386)");
-        }
-        
-        bits = 16;
-        
-    } else if (bits == 0) {
-        bits = 32;
+    if (bits == 0) {
+        if (!(cpu_arch_flags & CPU_386)) bits = 16;
+        else bits = 32;
     }
+
+    set_bits (bits, 1);
 
     if (state->format == AS_FORMAT_COFF) coff_x86_set_bits (bits);
 
@@ -315,6 +312,25 @@ void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, 
         p[i] = (number >> (8 * i)) & 0xff;
     }
 
+}
+
+#define CPU_FLAGS_ARCH_MATCH (1U << 0)
+#define CPU_FLAGS_64BIT_MATCH (1U << 1)
+#define CPU_FLAGS_PERFECT_MATCH (CPU_FLAGS_ARCH_MATCH | CPU_FLAGS_64BIT_MATCH)
+
+static int cpu_flags_match (const struct template *template)
+{
+    flag_int cpu_flags = template->cpu_flags;
+    int match = CPU_FLAGS_64BIT_MATCH;
+
+    if ((bits == 64 && (template->cpu_flags & CPU_NO64))
+        || (bits != 64 && (template->cpu_flags & CPU_64))) match = 0;
+
+    cpu_flags &= ~(CPU_NO64 | CPU_64);
+
+    if (!cpu_flags || (cpu_flags & cpu_arch_flags)) match |= CPU_FLAGS_ARCH_MATCH;
+
+    return match;
 }
 
 /**
@@ -441,7 +457,7 @@ static const struct reg_entry *parse_register (const char *reg_string, char **en
     /* If registers without prefix are allowed, it is necessary to check if the string
      * is really a register and not an identifier here
      * ("ax_var" must not be interpreted as register "ax" in this case).
-     * This does not apply if prefixes are mandatory.*/
+     * This does not apply if prefixes are mandatory. */
     if (allow_no_prefix_reg && is_name_part ((int) *p)) {
         return NULL;
     }
@@ -1184,26 +1200,14 @@ static int check_byte_reg (void) {
     
     for (op = instruction.operands; --op >= 0; ) {
     
-        if (instruction.types[op] & REG8) {
-            continue;
-        }
+        if (!(instruction.types[op] & REG)) continue;
         
-        if ((instruction.types[op] & WORD_REG) && (instruction.regs[op]->number < 4)) {
+        if (instruction.types[op] & REG8) continue;
         
-            if (!(instruction.template.operand_types[op] & PORT)) {
-                as_warn ("using '%%%s' instead of '%%%s' due to '%c' suffix", (instruction.regs[op] - ((instruction.types[op] & REG16) ? 8 : 16))->name, instruction.regs[op]->name, instruction.suffix);
-            }
-            
-            continue;
+        if ((instruction.template.operand_types[op] & PORT) && (instruction.types[op] & WORD_REG)) continue;
         
-        }
-        
-        if (instruction.types[op] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST | FLOAT_REG)) {
-        
-            as_error ("'%%%s' not allowed with '%s%c'.", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
-            return 1;
-        
-        }
+        as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
+        return 1;
     
     }
     
@@ -1216,16 +1220,19 @@ static int check_word_reg (void) {
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
+
+        if (!(instruction.types[op] & REG)) continue;
     
         if ((instruction.types[op] & REG8) && (instruction.template.operand_types[op] & (REG16 | REG32 | ACC))) {
         
-            as_error ("'%%%s' not allowed with '%s%c'.", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
+            as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
             return 1;
         
         }
         
-        if ((instruction.types[op] & REG32) && (instruction.template.operand_types[op] & (REG16 | ACC))) {
-            as_warn ("using '%%%s' instead of '%%%s' due to '%c' suffix", (instruction.regs[op]-8)->name, instruction.regs[op]->name, instruction.suffix);
+        if ((instruction.types[op] & (REG32 | REG64)) && (instruction.template.operand_types[op] & (REG16 | ACC))) {
+            as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
+            return 1;
         }
     
     }
@@ -1239,16 +1246,45 @@ static int check_dword_reg (void) {
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
+
+        if (!(instruction.types[op] & REG)) continue;
     
         if ((instruction.types[op] & REG8) && (instruction.template.operand_types[op] & (REG16 | REG32 | ACC))) {
         
-            as_error ("'%%%s' not allowed with '%s%c'.", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
+            as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
             return 1;
         
         }
         
-        if ((instruction.types[op] & REG16) && (instruction.template.operand_types[op] & (REG32 | ACC))) {
-            as_warn ("using '%%%s' instead of '%%%s' due to '%c' suffix", (instruction.regs[op]+8)->name, instruction.regs[op]->name, instruction.suffix);
+        if ((instruction.types[op] & (REG16 | REG64)) && (instruction.template.operand_types[op] & (REG32 | ACC))) {
+            as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
+            return 1;
+        }
+    
+    }
+    
+    return 0;
+
+}
+
+static int check_qword_reg (void) {
+
+    int op;
+    
+    for (op = instruction.operands; --op >= 0; ) {
+
+        if (!(instruction.types[op] & REG)) continue;
+    
+        if ((instruction.types[op] & REG8) && (instruction.template.operand_types[op] & (REG16 | REG32 | ACC))) {
+        
+            as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
+            return 1;
+        
+        }
+        
+        if ((instruction.types[op] & (REG16 | REG32)) && (instruction.template.operand_types[op] & (REG64 | ACC))) {
+            as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
+            return 1;
         }
     
     }
@@ -1327,6 +1363,11 @@ static int process_suffix (void) {
                 case DWORD_SUFFIX:
                 
                     ret = check_dword_reg ();
+                    break;
+
+                case QWORD_SUFFIX:
+                
+                    ret = check_qword_reg ();
                     break;
 
                 default:
@@ -1862,6 +1903,8 @@ static char *parse_instruction (char *line) {
     
     char *p2;
     char saved_ch;
+
+    int match;
     
     current_templates = NULL;
     
@@ -1999,18 +2042,25 @@ static char *parse_instruction (char *line) {
     
     }
 
+    match = 0;
     for (template = current_templates->start; template < current_templates->end; template++) {
 
-        if (template->cpu_flags == 0 || (template->cpu_flags & cpu_arch_flags)) {
-            goto end;
-        }
+        match |= cpu_flags_match (template);
+        if (match == CPU_FLAGS_PERFECT_MATCH) goto end;
 
     }
 
-    as_error ("'%s' is not supported on '%s%s'",
-              current_templates->name,
-              cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
-              cpu_extensions_name ? cpu_extensions_name : "");
+    if (!(match & CPU_FLAGS_64BIT_MATCH)) {
+        as_error ((bits == 64)
+                  ? "'%s' is not supported in 64-bit mode"
+                  : "'%s' is supported only in 64-bit mode",
+                  current_templates->name);
+    } else {
+        as_error ("'%s' is not supported on '%s%s'",
+                  current_templates->name,
+                  cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
+                  cpu_extensions_name ? cpu_extensions_name : "");
+    }
     current_templates = NULL;
 
 end:
@@ -2122,14 +2172,22 @@ static int parse_operands (char **p_line) {
     
 }
 
+enum x86_error {
+    x86_error_number_of_operands_mismatch,
+    x86_error_unsupported,
+    x86_error_operand_type_mismatch,
+    x86_error_invalid_instruction_suffix
+};    
+
 #define MATCH(overlap, operand_type)    (((overlap) & ~JUMP_ABSOLUTE) && (((operand_type) & (BASE_INDEX | JUMP_ABSOLUTE)) == ((overlap) & (BASE_INDEX | JUMP_ABSOLUTE))))
 
 static int match_template (void) {
 
     const struct template *template;
+    enum x86_error matching_error;
     
     unsigned int found_reverse_match = 0;
-    unsigned int suffix_check = 0;
+    flag_int suffix_check = 0;
     
     switch (instruction.suffix) {
     
@@ -2165,18 +2223,22 @@ static int match_template (void) {
     
     }
     
+    matching_error = x86_error_number_of_operands_mismatch;
+    
     for (template = current_templates->start; template < current_templates->end; template++) {
     
-        unsigned int operand_type_overlap0, operand_type_overlap1, operand_type_overlap2;
+        flag_int operand_type_overlap0, operand_type_overlap1;
         
         if (instruction.operands != template->operands) {
             continue;
         }
-
-        if (template->cpu_flags && (template->cpu_flags & cpu_arch_flags) == 0) {
+        
+        matching_error = x86_error_unsupported;
+        if (cpu_flags_match (template) != CPU_FLAGS_PERFECT_MATCH) {
             continue;
         }
-        
+
+        matching_error = x86_error_invalid_instruction_suffix;
         if (template->opcode_modifier & suffix_check) {
             continue;
         }
@@ -2193,6 +2255,8 @@ static int match_template (void) {
         if (instruction.operands == 0) {
             break;
         }
+
+        matching_error = x86_error_operand_type_mismatch;
         
         operand_type_overlap0 = instruction.types[0] & template->operand_types[0];
         
@@ -2232,7 +2296,7 @@ static int match_template (void) {
                 
                 } else if (instruction.operands == 3) {
                 
-                    operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
+                    flag_int operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
                     
                     if (!MATCH (operand_type_overlap2, instruction.types[2])) {
                         continue;
@@ -2249,9 +2313,39 @@ static int match_template (void) {
     }
     
     if (template == current_templates->end) {
-    
+
         /* No match was found. */
-        as_error ("operands invalid for '%s'", current_templates->name);
+
+        const char *error_msg;
+
+        switch (matching_error) {
+
+            case x86_error_number_of_operands_mismatch:
+                error_msg = "number of operands mismatch";
+                break;
+
+            case x86_error_unsupported:
+                as_error ("unsupported instruction '%s' on '%s%s'",
+                          current_templates->name,
+                          cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
+                          cpu_extensions_name ? cpu_extensions_name : "");
+                return 1;
+
+            case x86_error_invalid_instruction_suffix:
+                error_msg = "invalid instruction suffix";
+                break;
+
+            case x86_error_operand_type_mismatch:
+                error_msg = "operands invalid";
+                break;
+
+            default:
+                as_internal_error_at_source (__FILE__, __LINE__, "match_template invalid case %i", matching_error);
+                break;
+
+        }
+
+        as_error ("%s for '%s'", error_msg, current_templates->name);
         return 1;
     
     }
@@ -2343,7 +2437,16 @@ static int process_operands (void) {
                     
                     if (instruction.index_reg == NULL) {
                     
-                        if ((bits == 16) ^ (instruction.prefixes[ADDR_PREFIX] != 0)) {
+                        if (bits == 64) {
+                            
+                            /* In 64 bit mode default addressing is %rip relative addressing
+                             * instead of absolute addresing. */
+                            instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
+                            instruction.sib.base = SIB_BASE_NO_BASE_REGISTER;
+                            instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
+                            instruction.types[operand] = DISP32;
+                            
+                        } else if ((bits == 16) ^ (instruction.prefixes[ADDR_PREFIX] != 0)) {
                         
                             instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER_16;
                             instruction.types[operand] = DISP16;
@@ -2940,36 +3043,59 @@ void machine_dependent_finish_frag (struct frag *frag) {
 
 }
 
-static void handler_code16 (char **pp) {
-
-    (void) pp;
-    bits = 16;
-
-}
-
-static void handler_code32 (char **pp) {
-
-    (void) pp;
-    
-    if (!(cpu_arch_flags & CPU_386)) {
-    
-        as_error (".code32 not supported on '%s%s'",
-                  cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
-                  cpu_extensions_name ? cpu_extensions_name : "");
+static void set_bits (int new_bits, int cause_fatal_error)
+{
+    if (new_bits == 64 && !(cpu_arch_flags & CPU_LONG_MODE)) {
+        if (cause_fatal_error) {
+            as_fatal_error_at (NULL, 0,
+                               "64bit mode not supported on '%s'",
+                               cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME);
+        } else {
+            as_error ("64bit mode not supported on '%s'",
+                      cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME);
+        }
         return;
-    
     }
-    
-    bits = 32;
+    if (new_bits == 32 && !(cpu_arch_flags & CPU_386)) {
+        if (cause_fatal_error) {
+            as_fatal_error_at (NULL, 0,
+                               "32bit mode not supported on '%s'",
+                               cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME);
+        } else {
+            as_error ("32bit mode not supported on '%s'",
+                      cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME);
+        }
+        return;
+    }
 
+    bits = new_bits;
+
+    if (bits == 64) {
+        as_warn ("64 bit support is unfinished and for testing only");
+        cpu_arch_flags &= ~CPU_NO64;
+        cpu_arch_flags |= CPU_64;
+    } else {
+        cpu_arch_flags &= ~CPU_64;
+        cpu_arch_flags |= CPU_NO64;
+    }
 }
 
-static void handler_code64 (char **pp) {
-
+static void handler_code16 (char **pp)
+{
     (void) pp;
-    as_warn ("64 bit support is unfinished and for testing only");
-    bits = 64;
+    set_bits (16, 0);
+}
 
+static void handler_code32 (char **pp)
+{
+    (void) pp;
+    set_bits (32, 0);
+}
+
+static void handler_code64 (char **pp)
+{
+    (void) pp;
+    set_bits (64, 0);
 }
 
 static void set_syntax (char **pp, int set_intel_syntax);

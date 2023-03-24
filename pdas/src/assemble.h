@@ -151,6 +151,11 @@ struct template {
 
 #define     CPU_CMOV                    (1LU << 12)
 
+#define     CPU_LONG_MODE               (1LU << 13)
+
+#define     CPU_NO64                    (1LU << 14)
+#define     CPU_64                      (1LU << 15)
+
 };
 
 struct reg_entry {
@@ -186,6 +191,7 @@ struct sib_byte {
 
 #define     BW_SUF                      (NO_SSUF | NO_LSUF | NO_QSUF | NO_INTELSUF)
 #define     WL_SUF                      (NO_BSUF | NO_SSUF | NO_QSUF | NO_INTELSUF)
+#define     WQ_SUF                      (NO_BSUF | NO_SSUF | NO_LSUF | NO_INTELSUF)
 #define     SL_SUF                      (NO_BSUF | NO_WSUF | NO_QSUF | NO_INTELSUF)
 #define     BWL_SUF                     (NO_SSUF | NO_QSUF | NO_INTELSUF)
 #define     WLQ_SUF                     (NO_BSUF | NO_SSUF | NO_INTELSUF)
@@ -237,26 +243,38 @@ static const struct template template_table[] = {
     { "movzx", 2, 0x0FB6, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
     
     /* Push instructions. */
-    { "push", 1, 0x50, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
-    { "push", 1, 0xFF, 6, WL_SUF | DEFAULT_SIZE | MODRM, { WORD_REG | ANY_MEM, 0, 0 }, 0 },
-    { "push", 1, 0x6A, NONE, WL_SUF | DEFAULT_SIZE, { IMM8S, 0, 0 }, CPU_186 },
-    { "push", 1, 0x68, NONE, WL_SUF | DEFAULT_SIZE, { IMM16 | IMM32, 0, 0 }, CPU_186 },
+    { "push", 1, 0x50, NONE, WL_SUF | SHORT_FORM, { REG16 | REG32, 0, 0 }, CPU_NO64 },
+    { "push", 1, 0xFF, 6, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM, 0, 0 }, CPU_NO64 },
+    { "push", 1, 0x6A, NONE, WL_SUF | DEFAULT_SIZE, { IMM8S, 0, 0 }, CPU_186 | CPU_NO64 },
+    { "push", 1, 0x68, NONE, WL_SUF | DEFAULT_SIZE, { IMM16 | IMM32, 0, 0 }, CPU_186 | CPU_NO64 },
     
-    { "push", 1, 0x06, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, 0},
-    { "push", 1, 0x0FA0, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, 3},
+    { "push", 1, 0x06, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, CPU_NO64 },
+    { "push", 1, 0x0FA0, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, CPU_386 | CPU_NO64 },
+
+    { "push", 1, 0x50, NONE, WQ_SUF | SHORT_FORM | NO_REX_W, { REG16 | REG64, 0, 0 }, CPU_64 },
+    { "push", 1, 0xFF, 6, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM, 0, 0 }, CPU_64 },
+    { "push", 1, 0x6A, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM8S, 0, 0 }, CPU_64 },
+    { "push", 1, 0x68, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16 | IMM32, 0, 0 }, CPU_64 },
+
+    { "push", 1, 0x0FA0, NONE, WQ_SUF | DEFAULT_SIZE | SEGSHORTFORM | NO_REX_W, { SEGMENT2, 0, 0 }, CPU_64 },
     
-    { "pusha", 0, 0x60, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
+    { "pusha", 0, 0x60, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 | CPU_NO64 },
     
     /* Pop instructions. */
-    { "pop", 1, 0x58, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
-    { "pop", 1, 0x8F, NONE, WL_SUF | DEFAULT_SIZE | MODRM, { WORD_REG | ANY_MEM, 0, 0 }, 0 },
+    { "pop", 1, 0x58, NONE, WL_SUF | SHORT_FORM, { REG16 | REG32, 0, 0 }, CPU_NO64 },
+    { "pop", 1, 0x8F, 0, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM, 0, 0 }, CPU_NO64 },
     
 #define     POP_SEGMENT_SHORT           0x07
     
-    { "pop", 1, 0x07, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, 0 },
-    { "pop", 1, 0x0FA1, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, CPU_386 },
+    { "pop", 1, 0x07, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1, 0, 0 }, CPU_NO64 },
+    { "pop", 1, 0x0FA1, NONE, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2, 0, 0 }, CPU_386 | CPU_NO64 },
+
+    { "pop", 1, 0x58, NONE, WQ_SUF | SHORT_FORM | NO_REX_W, { REG16 | REG64, 0, 0 }, CPU_64 },
+    { "pop", 1, 0x8F, 0, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM, 0, 0 }, CPU_64 },
+
+    { "pop", 1, 0x0FA1, NONE, WQ_SUF | DEFAULT_SIZE | SEGSHORTFORM | NO_REX_W, { SEGMENT2, 0, 0 }, CPU_64 },
     
-    { "popa", 0, 0x61, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
+    { "popa", 0, 0x61, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 | CPU_NO64 },
     
     /* Exchange instructions. */
     { "xchg", 2, 0x90, NONE, WL_SUF | SHORT_FORM, { WORD_REG, ACC, 0 }, 0 },
@@ -305,7 +323,7 @@ static const struct template template_table[] = {
     { "add", 2, 0x04, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
     { "add", 2, 0x80, 0, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "inc", 1, 0x40, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
+    { "inc", 1, 0x40, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, CPU_NO64 },
     { "inc", 1, 0xFE, 0, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
     { "sub", 2, 0x28, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
@@ -313,7 +331,7 @@ static const struct template template_table[] = {
     { "sub", 2, 0x2C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
     { "sub", 2, 0x80, 5, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "dec", 1, 0x48, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, 0 },
+    { "dec", 1, 0x48, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, CPU_NO64 },
     { "dec", 1, 0xFE, 1, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
     { "sbb", 2, 0x18, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
@@ -346,7 +364,7 @@ static const struct template template_table[] = {
     { "xor", 2, 0x34, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
     { "xor", 2, 0x80, 6, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "clr", 1, 0x30, NONE, BWL_SUF | W | MODRM | REG_DUPLICATION, { REG, 0, 0 }, 0 },
+    { "clr", 1, 0x30, NONE, BWLQ_SUF | W | MODRM | REG_DUPLICATION, { REG, 0, 0 }, 0 },
     
     { "adc", 2, 0x10, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
     { "adc", 2, 0x83, 2, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
@@ -456,14 +474,19 @@ static const struct template template_table[] = {
     { "ljmp", 2, 0xEA, NONE, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
     { "ljmp", 1, 0xFF, 5, WL_SUF | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     
-    { "ret", 0, 0xC3, NONE, WL_SUF | DEFAULT_SIZE | NO_REX_W, { 0, 0, 0 }, 0 },
-    { "ret", 1, 0xC2, NONE, WL_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16, 0, 0 }, 0 },
-    { "retf", 0, 0xCB, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
-    { "retf", 1, 0xCA, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
-    { "lret", 0, 0xCB, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
-    { "lret", 1, 0xCA, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
-    { "enter", 2, 0xC8, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, IMM8, 0 }, CPU_186 },
-    { "leave", 0, 0xC9, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 },
+    { "ret", 0, 0xC3, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_NO64 },
+    { "ret", 1, 0xC2, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, CPU_NO64 },
+    { "ret", 0, 0xC3, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { 0, 0, 0 }, CPU_64 },
+    { "ret", 1, 0xC2, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16, 0, 0 }, CPU_64 },
+    { "retf", 0, 0xCB, NONE, WLQ_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
+    { "retf", 1, 0xCA, NONE, WLQ_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
+    { "lret", 0, 0xCB, NONE, WLQ_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
+    { "lret", 1, 0xCA, NONE, WLQ_SUF | DEFAULT_SIZE, { IMM16, 0, 0 }, 0 },
+    
+    { "enter", 2, 0xC8, NONE, WL_SUF | DEFAULT_SIZE, { IMM16, IMM8, 0 }, CPU_186 | CPU_NO64 },
+    { "enter", 2, 0xC8, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16, IMM8, 0 }, CPU_64 },
+    { "leave", 0, 0xC9, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, CPU_186 | CPU_NO64 },
+    { "leave", 0, 0xC9, NONE, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { 0, 0, 0 }, CPU_64 },
     
     /* Conditional jumps. */
     { "jo", 1, 0x70, NONE, NO_SUF | JUMP, { DISP, 0, 0 }, 0 },
@@ -1006,6 +1029,9 @@ struct cpu_arch_entry {
 
 };
 
+#define CPU_GENERIC32_FLAGS (CPU_186 | CPU_286 | CPU_386)
+#define CPU_GENERIC64_FLAGS (CPU_I686_FLAGS | CPU_LONG_MODE)
+
 #define CPU_I186_FLAGS (CPU_186)
 #define CPU_I286_FLAGS (CPU_I186_FLAGS | CPU_286)
 #define CPU_I386_FLAGS (CPU_I286_FLAGS | CPU_386)
@@ -1015,6 +1041,8 @@ struct cpu_arch_entry {
 
 static const struct cpu_arch_entry cpu_archs[] = {
 
+    {"generic32", CPU_GENERIC32_FLAGS},
+    {"generic64", CPU_GENERIC64_FLAGS},
     {"i8086", 0},
     {"i186", CPU_I186_FLAGS},
     {"i286", CPU_I286_FLAGS},
