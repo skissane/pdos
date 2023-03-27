@@ -127,7 +127,6 @@ int main(int argc, char **argv)
     unsigned char lbabuf[4];
     void *mem_base;
 
-    __minstart = 0;
     __genstart = 1;
     os.main = &__genmain;
     os.Xstdin = stdin;
