@@ -7,7 +7,12 @@ LD=ldarm
 LDFLAGS=
 AS=asarm
 AR=ararm
-COPTS=-S $(CFLAGS) -fno-common -mapcs-32 -ansi -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -DNEED_AOUT
+# Testing on an old ARM Samsung Chromebook showed that a delay
+# (NEED_DELAY) was able to overcome a coredump when PDOS
+# attempted to execute pcomm. No other environment has been
+# confirmed to need this. An 'X' was added so that it has no
+# effect, which is normally what is desired.
+COPTS=-S $(CFLAGS) -fno-common -mapcs-32 -ansi -I. -I../bios -I../pdpclib -I../src -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -DNEED_AOUT -DXNEED_DELAY
 
 all: clean pdos.exe
 
