@@ -141,6 +141,7 @@ int main(int argc, char **argv)
     }
     /* C library will have done this already */
     /* for some implementations maybe? */
+    /* no, I don't think any implementations will do this */
 #ifndef DONT_MM
     memmgrDefaults(&__memmgr);
     memmgrInit(&__memmgr);
@@ -150,6 +151,13 @@ int main(int argc, char **argv)
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("welcome to PDOS-generic\n");
     printf("running as %s\n", argv[0]);
+    if (argc < 2)
+    {
+        printf("must provide disk name as a parameter\n");
+        printf("this might change in the future\n");
+        bios->free(mem_base);
+        return (EXIT_FAILURE);
+    }
     printf("before printing parm\n");
     printf("argv1 is %s\n", argv[1]);
     printf("about to open\n");
