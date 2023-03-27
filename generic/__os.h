@@ -31,6 +31,9 @@ typedef struct {
     /* a BIOS may not have this, as it implies the existence of a
        complete C library, not typical for a real BIOS. Even an OS
        won't necessarily have this. */
+    /* Change of plan - the C library will exist, even if "start" is
+       just a few lines of code, that doesn't do parameters, but
+       simply calls main */
     int (*__start)(char *p);
     /* a BIOS will typically have a block of memory it expects you
        to malloc. This is the size. A BIOS may or may not allow
