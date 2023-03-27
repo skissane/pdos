@@ -62,7 +62,10 @@ int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
 #endif
 
-static OS bios = { their_start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
+static char buf[400];
+static char cmd[400];
+
+static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
@@ -87,9 +90,6 @@ static OS bios = { their_start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
   strcspn, memchr, ftell, abs, setlocale, perror, rewind, strncat, sscanf,
   isalnum, isxdigit, rename, clearerr, _assert, atof,
 };
-
-static char buf[400];
-static char cmd[300];
 
 static int (*genstart)(OS *bios);
 
@@ -146,14 +146,16 @@ int main(int argc, char **argv)
         }
         else if (argc == 2)
         {
-            bios.prog_name = argv[1];
-            bios.prog_parm = "";
+            prog_name = argv[1];
+            strcpy(cmd, argv[1]);
             valid = 1;
         }
         else if (argc == 3)
         {
-            bios.prog_name = argv[1];
-            bios.prog_parm = argv[2];
+            prog_name = argv[1];
+            strcpy(cmd, argv[1]);
+            strcat(cmd, " ");
+            strcat(cmd, argv[2]);
             valid = 1;
         }
         else
@@ -214,16 +216,12 @@ int main(int argc, char **argv)
             {
                 continue;
             }
-            bios.prog_name = buf;
+            strcpy(cmd, buf);
+            prog_name = buf;
             p = strchr(buf, ' ');
             if (p != NULL)
             {
                 *p = '\0';
-                bios.prog_parm = p + 1;
-            }
-            else
-            {
-                bios.prog_parm = "";
             }
         }
 
@@ -233,7 +231,7 @@ int main(int argc, char **argv)
         printf("insufficient memory\n");
         return (EXIT_FAILURE);
     }
-    if (exeloadDoload(&entry_point, bios.prog_name, &p) != 0)
+    if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
         return (EXIT_FAILURE);
@@ -265,6 +263,7 @@ int main(int argc, char **argv)
         {
             break;
         }
+    printf("enter another command, enter to exit\n");
     } while (1);
 
     if (need_usage)
@@ -311,7 +310,7 @@ int their_start(char *parm)
     getmainargs(&argc, &argv);
     rc = __start(argc, argv);
 #else
-    rc = __start(parm);
+    rc = __start(cmd);
 #endif
     return (rc);
 }

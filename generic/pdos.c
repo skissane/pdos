@@ -50,7 +50,9 @@ extern __start(char *p);
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
-static OS os = { __start, 0, 0, NULL, NULL, printf, 0, malloc, NULL, NULL,
+char mycmdline[400];
+
+static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
@@ -114,9 +116,7 @@ int biosmain(int argc, char **argv)
         myname = argv[0];
 #endif
     }
-    __minstart = 1;
-    /* this parameter won't include a program name */
-    return (__start(NULL /*bios->oneparm*/));
+    return (__start(0));
 }
 
 int main(int argc, char **argv)
@@ -133,8 +133,6 @@ int main(int argc, char **argv)
     os.Xstdin = stdin;
     os.Xstdout = stdout;
     os.Xstderr = stderr;
-    os.prog_name = "";
-    os.prog_parm = "";
 
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)
@@ -152,13 +150,12 @@ int main(int argc, char **argv)
 
     /* printf(CHAR_ESC_STR "[2J"); */
     printf("welcome to PDOS-generic\n");
-    printf("running as %s\n", myname);
-    printf("aka %s\n", bios->prog_name);
+    printf("running as %s\n", argv[0]);
     printf("before printing parm\n");
-    printf("with parm of %s\n", bios->prog_parm);
+    printf("argv1 is %s\n", argv[1]);
     printf("about to open\n");
     /* for (;;) ; */
-    disk = bios->Xfopen(bios->prog_parm, "r+b");
+    disk = bios->Xfopen(argv[1], "r+b");
     if (disk == NULL)
     {
         printf("can't open hard disk\n");
@@ -464,10 +461,7 @@ void PosTerminate(int rc)
 
 char *PosGetCommandLine(void)
 {
-    static char buf[10];
-
-    strcpy(buf, "a b");
-    return (buf);
+    return (mycmdline);
 }
 
 void *PosGetEnvBlock(void)

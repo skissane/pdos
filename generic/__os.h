@@ -44,12 +44,8 @@ typedef struct {
        of memory instead of requiring only contiguous memory.
        Only applicable to a BIOS. */
     int mem_rpt;
-    /* the name of the program being executed. Could be an empty
-       string */
-    char *prog_name;
-    /* The single parameter passed to this program. E.g. a suggested
-       disk name to be opened. Will at least be an empty string */
-    char *prog_parm;
+    /* the command line, including program name */
+    char *cmd_line;
     int (*Xprintf)(const char *format, ...);
     int (**main)(int argc, char **argv);
     void *(*malloc)(size_t size);
