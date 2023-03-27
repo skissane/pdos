@@ -55,8 +55,17 @@ int _start(char *p)
 #ifdef __ARM__
 
 #if defined(__UNOPT__)
-    rc = __start(*(int *)(&p + 5), &p + 6);
+    /* these hardcoded numbers are dependent on the number of
+       stack parameters defined above */
+#ifdef NEED_MPROTECT
+    rc = __start(*(int *)(&p + 7), &p + 8);
 #else
+    rc = __start(*(int *)(&p + 5), &p + 6);
+#endif
+
+#else
+    /* the optimized version doesn't appear to be dependent on
+       the number of stack parameters defined above */
     rc = __start(*(int *)(&p + 6), &p + 7);
 #endif
 
