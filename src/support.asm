@@ -178,6 +178,12 @@ int 0B1h
 jmp fintry
 notB1:
 
+cmp intnum, 0BEh
+jne notBE
+int 0BEh
+jmp fintry
+notBE:
+
 fintry:
 
 pop bp
