@@ -290,7 +290,16 @@ _inthdlr_B1:
         push   intnum
         movl   $0xB1, intnum
         jmp    _inthdlr_q
-        
+_inthdlr_BE:
+        push   %eax
+        mov    %ds, %ax
+        push   %eax
+        mov    $0x10, %eax
+        mov    %ax, %ds
+        push   intnum
+        movl   $0xBE, intnum
+        jmp    _inthdlr_q
+
 / by the time we get here, the following things are on the stack:
 / original eax, original ds (stored as doubleword), original intnum
 
