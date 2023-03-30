@@ -4,15 +4,15 @@
 ; Released to the public domain
 
 .386
-.model flat
+.model flat, c
 
 .code
 
-public ___setj
-public ___longj
+public __setj
+public __longj
 public ___chkstk_ms
 
-___setj:
+__setj proc
         mov eax, [esp+4]
         push ebx
         mov ebx, esp
@@ -34,9 +34,9 @@ ___setj:
         mov eax, 0
 
         ret
+__setj endp
 
-
-___longj:
+__longj proc
         mov eax, [esp+4]
         mov ebp, [eax+20]
         mov esp, ebp
@@ -59,7 +59,7 @@ ___longj:
         mov eax, [eax+32]    ; return value
 
         ret
-
+__longj endp
 
 ; For compiling with GCC 4 we don't want to
 ; have to link the GCC library in
