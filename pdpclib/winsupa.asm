@@ -10,7 +10,7 @@
 
 public __setj
 public __longj
-public ___chkstk_ms
+public __chkstk_ms
 
 __setj proc
         mov eax, [esp+4]
@@ -63,8 +63,8 @@ __longj endp
 
 ; For compiling with GCC 4 we don't want to
 ; have to link the GCC library in
-___chkstk_ms:
+__chkstk_ms proc
         ret
-
+__chkstk_ms endp
 
 end
