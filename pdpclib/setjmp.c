@@ -22,7 +22,7 @@
 extern int CTYP __setj(jmp_buf env);
 extern int CTYP __longj(void *);
 
-#ifdef __64BIT__
+#ifdef __MSC__
 #undef setjmp
 #endif
 

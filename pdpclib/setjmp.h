@@ -82,12 +82,9 @@ typedef struct {
 
 void longjmp(jmp_buf env, int val);
 
-#if defined(__64BIT__)
+#if defined(__MSC__)
 #define setjmp(x) __setj(x)
 int __setj(jmp_buf env);
-
-#elif defined(__MSC__)
-int setjmp(jmp_buf env);
 
 #elif defined(__EFI__)
 #define setjmp(x) __setj(x)
