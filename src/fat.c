@@ -111,6 +111,10 @@ int fatInit(FAT *fat,
         return (-1);
     }
     fat->sectors_per_cluster = bpb[2];
+    if (fat->sectors_per_cluster == 0)
+    {
+        return (-1);
+    }
     fat->bytes_per_cluster = fat->sector_size * fat->sectors_per_cluster;
     /* Reserved sectors before FATs. 2 bytes.
      * FATs are located right after them. */
