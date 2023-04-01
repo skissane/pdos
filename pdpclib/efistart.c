@@ -163,7 +163,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     EFI_STATUS Status, Status2;
     UINTN Index;
-    UINT64 dummy_watchdog_code = {0xFFFFFFFFLU, 0xFFFFFFFFLU};
+    UINT64 dummy_watchdog_code = {0, 0};
     char *argv[2] = { "prog", NULL };
     EFI_GUID sp_guid = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
     EFI_SHELL_PARAMETERS_PROTOCOL *sp_protocol;
