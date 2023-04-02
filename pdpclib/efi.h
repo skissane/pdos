@@ -137,17 +137,32 @@ typedef enum {
 } EFI_MEMORY_TYPE;
 
 typedef UINT64 EFI_PHYSICAL_ADDRESS;
+typedef UINT64 EFI_VIRTUAL_ADDRESS;
+
+typedef struct {
+    UINT32 Type;
+    EFI_PHYSICAL_ADDRESS PhysicalStart;
+    EFI_VIRTUAL_ADDRESS VirtualStart;
+    UINT64 NumberOfPages;
+    UINT64 Attribute;
+} EFI_MEMORY_DESCRIPTOR;
 
 typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_PAGES) (IN EFI_ALLOCATE_TYPE Type,
                                                  IN EFI_MEMORY_TYPE MemoryType,
                                                  IN UINTN Pages,
                                                  IN OUT EFI_PHYSICAL_ADDRESS *Memory);
 typedef EFI_STATUS (EFIAPI *EFI_FREE_PAGES) (IN EFI_PHYSICAL_ADDRESS Memory, IN UINTN Pages);
-
+typedef EFI_STATUS (EFIAPI *EFI_GET_MEMORY_MAP) (IN OUT UINTN *MemoryMapSize,
+                                                 OUT EFI_MEMORY_DESCRIPTOR *MemoryMap,
+                                                 OUT UINTN *MapKey,
+                                                 OUT UINTN *DescriptorSize,
+                                                 OUT UINT32 *DescriptorVersion);
 typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_POOL) (IN EFI_MEMORY_TYPE PoolType, IN UINTN Size, OUT void **Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FREE_POOL) (IN void *Buffer);
 
 typedef EFI_STATUS (EFIAPI *EFI_WAIT_FOR_EVENT) (IN UINTN NumberOfEvents, IN EFI_EVENT *Event, OUT UINTN *Index);
+
+typedef EFI_STATUS (EFIAPI *EFI_EXIT_BOOT_SERVICES) (IN EFI_HANDLE ImageHandle, IN UINTN MapKey);
 
 typedef EFI_STATUS (EFIAPI *EFI_SET_WATCHDOG_TIMER) (IN UINTN Timeout, IN UINT64 WatchdogCode, IN UINTN DataSize, IN CHAR16 *WatchdogData);
 
@@ -179,7 +194,7 @@ typedef struct {
 
     EFI_ALLOCATE_PAGES AllocatePages;
     EFI_FREE_PAGES FreePages;
-    void *GetMemoryMap;
+    EFI_GET_MEMORY_MAP GetMemoryMap;
     EFI_ALLOCATE_POOL AllocatePool;
     EFI_FREE_POOL FreePool;
 
@@ -194,6 +209,7 @@ typedef struct {
     void *ReinstallProtocolInterface;
     void *UninstallProtocolInterface;
     EFI_HANDLE_PROTOCOL HandleProtocol;
+    void *Reserved;
     void *RegisterProtocolNotify;
     void *LocateHandle;
     void *LocateDevicePath;
@@ -203,7 +219,7 @@ typedef struct {
     void *StartImage;
     void *Exit;
     void *UnloadImage;
-    void *ExitBootServices;
+    EFI_EXIT_BOOT_SERVICES ExitBootServices;
 
     void *GetNextMonotonicCount;
     void *Stall;
