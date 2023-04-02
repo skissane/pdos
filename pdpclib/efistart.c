@@ -18,9 +18,7 @@ EFI_HANDLE *__gIH;
 EFI_SYSTEM_TABLE *__gST;
 EFI_BOOT_SERVICES *__gBS;
 
-
-
-#if 0
+#define gST __gST
 
 #define return_Status_if_fail(func) do { if ((Status = (func))) { return Status; }} while (0)
 
@@ -66,6 +64,8 @@ static EFI_STATUS wait_for_input (void) {
     return Status;
 
 }
+
+#if 0
 
 static EFI_STATUS obtain_Root (EFI_HANDLE ImageHandle, EFI_FILE_PROTOCOL **Root) {
 
@@ -182,7 +182,30 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __gST = SystemTable;
     __gBS = __gST->BootServices;
 
-    __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0);
+    if ((Status = __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0))) {
+
+        switch (Status & 0xff) {
+
+            case EFI_INVALID_PARAMETER:
+                print_string ("SetWatchdogTimer EFI_INVALID_PARAMETER\n");
+                break;
+
+            case EFI_UNSUPPORTED:
+                print_string ("SetWatchdogTimer EFI_UNSUPPORTED\n");
+                break;
+
+            case EFI_DEVICE_ERROR:
+                print_string ("SetWatchdogTimer EFI_DEVICE_ERROR\n");
+                break;
+
+            default:
+                print_string ("SetWatchdogTimer other error\n");
+                break;
+
+        }
+
+        wait_for_input ();
+    }
 
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)
     {
