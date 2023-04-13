@@ -14,6 +14,8 @@
         .globl _outp
         .globl _outpw
         .globl _outpd
+        .globl _hltintgo
+        .globl _hltinthit
         .globl ___switch
         .globl ___brkpoint
         .globl ___brkpoint2
@@ -254,6 +256,26 @@ _outpd:
         outl    %eax, %dx
         pop     %edx
         pop     %ebp
+        ret
+
+
+/ enable interrupts and then halt until interrupt hit
+_hltintgo:
+        sti
+hloop:
+/ I believe hlt will be interrupted by other interrupts, like
+/ the timer interrupt, so we need to do it in a loop
+        hlt
+        jmp     hloop
+_hltinthit:
+/ remove return address, segment and flags from the stack as we
+/ do not intend to return to the jmp following the hlt instruction
+/ that was likely interrupted
+        add     %esp, 12
+/ note that interrupts will be disabled again (I think) by virtue
+/ of the fact that an interrupt occurred. The caller would have
+/ disabled interrupts already, so we are returning to the same
+/ disabled state.
         ret
 
 
