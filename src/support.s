@@ -261,11 +261,12 @@ _outpd:
 
 / enable interrupts and then halt until interrupt hit
 _hltintgo:
-        sti
 hloop:
 / I believe hlt will be interrupted by other interrupts, like
 / the timer interrupt, so we need to do it in a loop
+        sti
         hlt
+        cli
         jmp     hloop
 _hltinthit:
 / remove return address, segment and flags from the stack as we
