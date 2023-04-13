@@ -2430,6 +2430,7 @@ static void writecomm(int port, int ch)
     uartEnableGPO2(&uart);
 
     uartEnableTBE(&uart);
+    uartEnableModem(&uart);
     intdesc1 = (0x8 << 16) | (intaddr & 0xffff);
     intdesc2 = (intaddr & 0xffff0000)
                | (1 << 15)
