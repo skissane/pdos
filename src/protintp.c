@@ -219,6 +219,10 @@ unsigned long runprot_p(rawprot_parms *parmlist)
     {    
         intaddr = (unsigned long)handlerlist[x].handler;
         intdesc1 = (0x8 << 16) | (intaddr & 0xffff);
+        intdesc2 = (intaddr & 0xffff0000)
+                   | (1 << 15)
+                   | (0 << 13)
+                   | (0x0e << 8);
         *((unsigned long *)intloc + handlerlist[x].number * 2) = intdesc1;
         *((unsigned long *)intloc + handlerlist[x].number * 2 + 1) = intdesc2;
     }
