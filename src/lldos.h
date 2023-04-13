@@ -13,8 +13,13 @@
 #ifndef LLDOS_INCLUDED
 #define LLDOS_INCLUDED
 
+#ifdef __32BIT__
+#define PWRITEB(x, y) outp(x, y)
+#define PREADB(x) inp(x)
+#else
 #define PWRITEB(x, y) wportb(x, y)
 #define PREADB(x) rportb(x)
+#endif
 #define INTSTOP() disable()
 #define INTALLOW() enable()
 

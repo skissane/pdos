@@ -25,6 +25,7 @@
 #include "fat.h"
 #include "support.h"
 #include "lldos.h"
+#include "uart.h"
 #include "memmgr.h"
 #include "patmat.h"
 #include "unused.h"
@@ -191,6 +192,7 @@ static char *envModify(char *envPtr, char *name, char *value);
 static void getDateTime(FAT_DATETIME *ptr);
 static int isDriveValid(int drive);
 static int ins_strcmp(const char *one, const char *two);
+static void writecomm(int port, int ch);
 
 static MEMMGR memmgr;
 #ifdef __32BIT__
@@ -2306,6 +2308,9 @@ int PosWriteFile(int fh,
         port = fhandle[fh].comm - 1;
         for (x = 0; x < len; x++)
         {
+#ifdef __32BIT__
+            writecomm(port, buf[x]);
+#else
             int status;
 
             status = BosSerialWriteChar(port, buf[x]);
@@ -2313,6 +2318,7 @@ int PosWriteFile(int fh,
             {
                 printf("status writing to serial port is %x\n", status);
             }
+#endif
         }
         *writtenbytes = x;
         ret = 0;
@@ -2389,6 +2395,18 @@ int PosWriteFile(int fh,
     }
     return (ret);
 }
+
+#ifdef __32BIT__
+static void writecomm(int port, int ch)
+{
+    UART uart;
+
+    uartInit(&uart);
+    uartAddress(&uart, 0x3f8);
+    uartTxCh(&uart, ch);
+    uartReset(&uart);
+}
+#endif
 
 /* To delete a given file with fname as its filename */
 int PosDeleteFile(const char *name)

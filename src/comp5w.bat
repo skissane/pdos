@@ -13,6 +13,7 @@ gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__3
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib int80.c
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib log.c
 gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib helper.c
+gcc386 -S -O2 -ansi -DNOVM -DNEED_AOUT -DNEED_MZ -fno-common -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib uart.c
 
 as386 -o pdos.o pdos.s
 del pdos.s
@@ -44,6 +45,8 @@ as386 -o log.o log.s
 del log.s
 as386 -o helper.o helper.s
 del helper.s
+as386 -o uart.o uart.s
+del uart.s
 
 pdas -o strt32.o strt32.s
 pdas -o support.o support.s
@@ -53,7 +56,7 @@ pdas -o pdoss.o pdoss.s
 del os.a
 ar r os.a bos.o fat.o exeload.o
 ar r os.a physmem.o vmm.o process.o
-ar r os.a int21.o int80.o log.o helper.o
+ar r os.a int21.o int80.o log.o helper.o uart.o
 ar r os.a memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
 
 ld86 -N -s -e start -o pdos.exe strt32.o pdos.o os.a ../pdpclib/pdos.a
