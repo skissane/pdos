@@ -21,6 +21,7 @@
 unsigned long dorealint;
 unsigned long (*runreal_p)(unsigned long func, unsigned short *regs);
 rawprot_parms *rp_parms;
+int *G_intloc;
 
 void inthdlr(void);
 void inthdlr_0(void);
@@ -193,6 +194,7 @@ unsigned long runprot_p(rawprot_parms *parmlist)
         { 0xFF, 0 } };
 
     intloc = (void *)(parmlist->intloc);
+    G_intloc = (void *)intloc;
     runparm = (runprot_parms *)parmlist->userparm;
     intbuffer = (void *)(runparm->intbuffer);
     dorealint = runparm->dorealint;
