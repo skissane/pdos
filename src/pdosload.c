@@ -395,6 +395,9 @@ static void picRemap(int master_offset, int slave_offset)
     wportb(PIC2_DATA, 2);
 
     /* Sets the 8086 mode (ICW4). */
+    /* this is as opposed to 8080 (8-bit), and doesn't interfere with the
+       80386 PM32 use of a separate set of interrupt vectors, as
+       far as I know */
     wportb(PIC1_DATA, ICW4_8086_MODE);
     wportb(PIC2_DATA, ICW4_8086_MODE);
 
