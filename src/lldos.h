@@ -48,4 +48,10 @@ int DOSPREF getabs(long address);
 void DOSPREF putabs(long address, unsigned ch);
 void DOSPREF poweroff(void);
 
+#ifdef __32BIT__
+void hltintgo(void);
+void hltinthit(void);
+#endif
+
+
 #endif
