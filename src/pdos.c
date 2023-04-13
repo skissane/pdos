@@ -199,6 +199,10 @@ static MEMMGR memmgr;
 static MEMMGR btlmem;
 #endif
 
+#ifdef __32BIT__
+extern int *G_intloc;
+#endif
+
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
 #ifdef __SZ4__
@@ -2400,10 +2404,46 @@ int PosWriteFile(int fh,
 static void writecomm(int port, int ch)
 {
     UART uart;
+    unsigned long old1;
+    unsigned long old2;
+    unsigned long intdesc1;
+    unsigned long intdesc2;
+    unsigned long intaddr;
+    int xch;
+    int intno = 4;
+    int imr = 0x21;
 
     uartInit(&uart);
     uartAddress(&uart, 0x3f8);
+    uartDisableInts(&uart);
+    /* IRQs 0-7 are at 0xb0 instead of 8 now */
+    /* we are using IRQ 4 for COM1 */
+    old1 = G_intloc[(intno + 0xb0) * 2];
+    old2 = G_intloc[(intno + 0xb0) * 2 + 1];
+    intaddr = (unsigned long)hltinthit;
+
+    /* we are interested in this interrupt */
+    xch = PREADB(imr);
+    xch &= ~(1 << (intno % 8));
+    PWRITEB(imr, xch);
+
+    uartEnableGPO2(&uart);
+
+    uartEnableTBE(&uart);
+    intdesc1 = (0x8 << 16) | (intaddr & 0xffff);
+    intdesc2 = (intaddr & 0xffff0000)
+               | (1 << 15)
+               | (0 << 13)
+               | (0x0e << 8);
+    disable();
+    G_intloc[(intno + 0xb0) * 2] = intdesc1;
+    G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
     uartTxCh(&uart, ch);
+    hltintgo();
+    G_intloc[(intno + 0xb0) * 2] = old1;
+    G_intloc[(intno + 0xb0) * 2 + 1] = old2;
+    enable();
+    PosReboot();
     uartReset(&uart);
 }
 #endif
