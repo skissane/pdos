@@ -2411,10 +2411,13 @@ static void writecomm(int port, int ch)
     unsigned long intaddr;
     int xch;
     int intno = 4;
+    int a8259 = 0x20;
     int imr = 0x21;
+    int id;
 
     uartInit(&uart);
     uartAddress(&uart, 0x3f8);
+    PREADB(a8259); /* we don't use the result of this */
     uartDisableInts(&uart);
     /* IRQs 0-7 are at 0xb0 instead of 8 now */
     /* we are using IRQ 4 for COM1 */
@@ -2430,8 +2433,10 @@ static void writecomm(int port, int ch)
     uartEnableGPO2(&uart);
 
     uartEnableTBE(&uart);
-    uartRaiseDTR(&uart);
-    uartRaiseRTS(&uart);
+    /* uartEnableModem(&uart); */
+    /* uartRaiseDTR(&uart); */
+    /* uartRaiseRTS(&uart); */
+    /* uartCTS(&uart); */
     intdesc1 = (0x8 << 16) | (intaddr & 0xffff);
     intdesc2 = (intaddr & 0xffff0000)
                | (1 << 15)
@@ -2442,12 +2447,27 @@ static void writecomm(int port, int ch)
     G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
     uartTxCh(&uart, ch);
     hltintgo();
+    enable();
+    do
+    {
+        id = uartGetIntType(&uart);
+        printf("id is %d\n", id);
+    } while (id != UART_NO_PENDING);
+    PWRITEB(0x20, 0x20);
+    uartDisableInts(&uart);
+    uartDisableGPO2(&uart);
+
+    xch = PREADB(imr);
+    xch |= (1 << (intno % 8));
+    PWRITEB(imr, xch);
+
+    uartReset(&uart);
+    uartTerm(&uart);
+
+    disable();
     G_intloc[(intno + 0xb0) * 2] = old1;
     G_intloc[(intno + 0xb0) * 2 + 1] = old2;
     enable();
-    PosReboot();
-    PWRITEB(0x20, 0x20);
-    uartReset(&uart);
 }
 #endif
 
