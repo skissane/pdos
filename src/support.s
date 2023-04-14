@@ -272,7 +272,7 @@ _hltinthit:
 / remove return address, segment and flags from the stack as we
 / do not intend to return to the jmp following the hlt instruction
 / that was likely interrupted
-        add     %esp, 12
+        add     $12, %esp
 / note that interrupts will be disabled again (I think) by virtue
 / of the fact that an interrupt occurred. The caller would have
 / disabled interrupts already, so we are returning to the same
