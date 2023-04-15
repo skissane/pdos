@@ -2451,7 +2451,6 @@ static void writecomm(int port, int ch)
     do
     {
         id = uartGetIntType(&uart);
-        printf("id is %d\n", id);
     } while (id != UART_NO_PENDING);
     PWRITEB(0x20, 0x20);
     uartDisableInts(&uart);
