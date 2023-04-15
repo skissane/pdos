@@ -2433,6 +2433,13 @@ static void writecomm(int port, int ch)
     disable();
     uartEnableGPO2(&uart);
 
+    /* for some reason just enabling the interrupt causes
+       an interrupt. But transmitting a character doesn't
+       necessarily generate an interrupt for some reason.
+       But by disabling the interrupts while both enabling
+       TBE and sending a character, we 'guarantee' that we
+       will receive an interrupt from at least one of those
+       so that the hlt instruction will be interrupted. */
     uartEnableTBE(&uart);
     /* uartEnableModem(&uart); */
     /* uartRaiseDTR(&uart); */
