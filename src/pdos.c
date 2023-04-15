@@ -2430,6 +2430,7 @@ static void writecomm(int port, int ch)
     xch &= ~(1 << (intno % 8));
     PWRITEB(imr, xch);
 
+    disable();
     uartEnableGPO2(&uart);
 
     uartEnableTBE(&uart);
@@ -2442,7 +2443,6 @@ static void writecomm(int port, int ch)
                | (1 << 15)
                | (0 << 13)
                | (0x0e << 8);
-    disable();
     G_intloc[(intno + 0xb0) * 2] = intdesc1;
     G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
     uartTxCh(&uart, ch);
