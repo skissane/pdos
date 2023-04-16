@@ -2430,17 +2430,8 @@ static void writecomm(int port, int ch)
     xch &= ~(1 << (intno % 8));
     PWRITEB(imr, xch);
 
-    disable();
     uartEnableGPO2(&uart);
 
-    /* for some reason just enabling the interrupt causes
-       an interrupt. But transmitting a character doesn't
-       necessarily generate an interrupt for some reason.
-       But by disabling the interrupts while both enabling
-       TBE and sending a character, we 'guarantee' that we
-       will receive an interrupt from at least one of those
-       so that the hlt instruction will be interrupted. */
-    uartEnableTBE(&uart);
     /* uartEnableModem(&uart); */
     /* uartRaiseDTR(&uart); */
     /* uartRaiseRTS(&uart); */
@@ -2450,8 +2441,25 @@ static void writecomm(int port, int ch)
                | (1 << 15)
                | (0 << 13)
                | (0x0e << 8);
+    disable();
     G_intloc[(intno + 0xb0) * 2] = intdesc1;
     G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
+    /* for some reason just enabling the interrupt causes
+       an interrupt. But transmitting a character doesn't
+       necessarily generate an interrupt for some reason.
+       But by disabling the interrupts while both enabling
+       TBE and sending a character, we 'guarantee' that we
+       will receive an interrupt from at least one of those
+       so that the hlt instruction will be interrupted. */
+    uartEnableTBE(&uart);
+    hltintgo();
+    enable();
+    do
+    {
+        id = uartGetIntType(&uart);
+    } while (id != UART_NO_PENDING);
+    PWRITEB(0x20, 0x20);
+    disable();
     uartTxCh(&uart, ch);
     hltintgo();
     enable();
