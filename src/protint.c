@@ -74,8 +74,9 @@ descptr idtinfo = { 0x7ff };
    interrupts.  We allow room for 256 interrupts. */
 descptr ridtinfo = { 0x3ff, 0L };
 
-/* interrupt number, 6 registers, cflag, flags, 4 segment registers */
-static unsigned short intbuffer[1 + 6 + 1 + 1 + 4];
+/* interrupt number, 6 registers, cflag, flags, 4 segment registers,
+   4 high halves of eax, ebx, ecx, edx */
+static unsigned short intbuffer[1 + 6 + 1 + 1 + 4 + 4];
 
 static unsigned long mycbase;
 static unsigned long mydbase;
@@ -418,14 +419,17 @@ unsigned long realsub(unsigned long func, unsigned long parm)
 static unsigned long dorealint(unsigned long parm)
 {
     unsigned short *genshort;
+    unsigned short savehigh[4];
     
     unused(parm);
     genshort = intbuffer;
+    gethigh(savehigh);
     sethigh(genshort + 1 + 12);
     int86x(*genshort, 
            (union REGS *)(genshort + 1),
            (union REGS *)(genshort + 1),
            (struct SREGS *)(genshort + 1 + 8));
     gethigh(genshort + 1 + 12);
+    sethigh(savehigh);
     return (0);
 }
