@@ -30,6 +30,8 @@ public runreal
 public newstack
 public rtop_stage2
 public protget32
+public sethigh
+public gethigh
 
 .data
 ; used for initial protected mode jump
@@ -231,6 +233,92 @@ endif
 endif
         ret
 protget32 endp
+
+
+; Set the high halves of registers eax to edx so that BIOS
+; routines that use them work
+; We shouldn't need this change in regsin but Open Watcom
+; seems to have a bug, triggered by the 386. jwasm and masm
+; don't have the bug
+if @DataSize
+sethigh proc uses ax bx cx dx si ds, regsin:ptr
+else
+sethigh proc uses ax bx cx dx si ds, regsin:word
+endif
+
+if @DataSize
+  lds si, regsin
+else
+  mov si, regsin
+endif
+
+  mov bx, 0
+
+  mov ax, word ptr [si + 6]
+  push bx
+  push ax
+  pop edx
+
+  mov ax, word ptr [si + 4]
+  push bx
+  push ax
+  pop ecx
+
+  mov ax, word ptr [si + 2]
+  push bx
+  push ax
+  pop ebx
+
+  mov ax, word ptr [si + 0]
+  push bx
+  push ax
+  pop eax
+
+  ret
+
+sethigh endp
+
+
+; Get the high halves of registers eax to edx so that BIOS
+; routines that use them work
+if @DataSize
+gethigh proc uses ax bx si ds, regsin:ptr
+else
+gethigh proc uses ax bx si ds, regsin:word
+endif
+
+if @DataSize
+  lds si, regsin
+else
+  mov si, regsin
+endif
+
+  push eax
+  pop bx ; ignored
+  pop ax
+  mov word ptr [si + 0], ax
+
+  push ebx
+  pop bx ; ignored
+  pop ax
+  mov word ptr [si + 2], ax
+
+  push ecx
+  pop bx ; ignored
+  pop ax
+  mov word ptr [si + 4], ax
+
+  push edx
+  pop bx ; ignored
+  pop ax
+  mov word ptr [si + 6], ax
+
+  ret
+
+gethigh endp
+
+
+
 
 
 _TEXT32 segment dword use32 public 'CODE'

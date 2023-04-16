@@ -67,9 +67,11 @@ static struct {
    registers in protected mode, we use the upper 16 bits of esi
    for ds, and the upper 16 bits of edi for es, when translating
    to real mode */
+/* also note that we provide extra room for the high halves of eax,
+   ebx, ecx and edx, to both set and obtain the high 16-bits. */
 void gotint(int intno, unsigned int *save)
 {
-    unsigned short newregs[12];
+    unsigned short newregs[12+4];
     unsigned short *ssave;
     int x;
 
@@ -121,15 +123,23 @@ void gotint(int intno, unsigned int *save)
     newregs[9] = 0;                       /*  */
     newregs[10] = 0;                       /*  */
     newregs[11] = (unsigned short)(save[4] >> 16); /* ds = top esi */
+    newregs[12 + 0] = (unsigned short)(save[0] >> 16); /* top eax */
+    newregs[12 + 1] = (unsigned short)(save[1] >> 16); /* top ebx */
+    newregs[12 + 2] = (unsigned short)(save[2] >> 16); /* top ecx */
+    newregs[12 + 3] = (unsigned short)(save[3] >> 16); /* top edx */
     *intbuffer = intno;
     memcpy(intbuffer + 1, newregs, sizeof newregs);
     runreal_p(dorealint, 0);
     memcpy(newregs, intbuffer + 1, sizeof newregs);
     ssave = (unsigned short *)save;
     ssave[0*2] = newregs[0]; /* ax */
+    ssave[0*2 + 1] = newregs[12 + 0]; /* high eax */
     ssave[1*2] = newregs[1]; /* bx */
+    ssave[1*2 + 1] = newregs[12 + 1]; /* high ebx */
     ssave[2*2] = newregs[2]; /* cx */
+    ssave[2*2 + 1] = newregs[12 + 2]; /* high ecx */
     ssave[3*2] = newregs[3]; /* dx */
+    ssave[3*2 + 1] = newregs[12 + 3]; /* high edx */
     ssave[4*2] = newregs[4]; /* si */
     ssave[4*2 + 1] = newregs[11]; /* ds */
     ssave[5*2] = newregs[5]; /* di */

@@ -421,9 +421,11 @@ static unsigned long dorealint(unsigned long parm)
     
     unused(parm);
     genshort = intbuffer;
+    sethigh(genshort + 1 + 12);
     int86x(*genshort, 
            (union REGS *)(genshort + 1),
            (union REGS *)(genshort + 1),
-           (struct SREGS *)(genshort + 9));
+           (struct SREGS *)(genshort + 1 + 8));
+    gethigh(genshort + 1 + 12);
     return (0);
 }
