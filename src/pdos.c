@@ -858,9 +858,11 @@ void pdosRun(void)
         printf("less than 4 MiB available - system halting\n");
         for (;;) ;
     }
-    {
-    printf("map is %08X\n", BosSystemMemoryMap(transferbuf, 20, 0));
-    }
+#if 0
+    printf("map return is %x\n", BosSystemMemoryMap(transferbuf, 20, 0));
+    printf("first block %08X %08X\n", *(int *)(transferbuf + 8),
+           *(int *)(transferbuf + 12));
+#endif
 #ifdef EXE32
     memavail -= 0x500000; /* room for disk cache */
     memmgrSupply(&memmgr, (void *)0x700000, memavail);
