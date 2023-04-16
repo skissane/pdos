@@ -844,6 +844,40 @@ long BosExtendedMemorySize(void)
     }
 }
 
+/* because this BIOS call uses 32-bit registers, we only support it
+   for PDOS/386 currently */
+#ifdef __32BIT__
+unsigned int BosSystemMemoryMap(unsigned char *buf,
+                                int szbuf,
+                                unsigned int contval)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+
+    regsin.d.eax = 0;
+    regsin.h.ah = 0xe8;
+    regsin.h.al = 0x20;
+    regsin.d.edx = 0x534d4150;
+    regsin.d.ebx = contval;
+    regsin.d.ecx = szbuf;
+#ifdef __32BIT__
+    sregs.es = (((unsigned long)buf) >> 4) & 0xffffU;
+    regsin.d.edi = (sregs.es << 16) | (((unsigned long)buf) & 0xf);
+#endif
+    int86x(0x15 + BIOS_INT_OFFSET, &regsin, &regsout, &sregs);
+
+    if (regsout.x.cflag)
+    {
+        return (regsout.h.ah);
+    }
+    else
+    {
+        return (regsout.d.eax); /* just checking */
+    }
+}
+#endif
+
 /* BosReadKeyboardCharacter - BIOS Int 16h Function 00h */
 /*
     Input: None.
