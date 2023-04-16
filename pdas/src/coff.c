@@ -360,7 +360,8 @@ void write_coff_file (void) {
             struct frag *frag;
             
             section_set (section);
-            section_header->VirtualSize = 0;
+            section_header->PointerToRawData = 0;
+            section_header->SizeOfRawData = 0;
             
             for (frag = current_frag_chain->first_frag; frag; frag = frag->next) {
             
@@ -368,7 +369,7 @@ void write_coff_file (void) {
                     continue;
                 }
                 
-                section_header->VirtualSize += frag->fixed_size;
+                section_header->SizeOfRawData += frag->fixed_size;
             
             }
         
