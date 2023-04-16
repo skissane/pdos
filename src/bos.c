@@ -873,7 +873,7 @@ unsigned int BosSystemMemoryMap(unsigned char *buf,
     }
     else
     {
-        return (regsout.d.eax); /* just checking */
+        return (0);
     }
 }
 #endif
