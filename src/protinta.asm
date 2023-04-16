@@ -255,23 +255,23 @@ endif
   mov bx, 0
 
   mov ax, word ptr [si + 6]
-  push bx
   push ax
+  push bx
   pop edx
 
   mov ax, word ptr [si + 4]
-  push bx
   push ax
+  push bx
   pop ecx
 
   mov ax, word ptr [si + 2]
-  push bx
   push ax
+  push bx
   pop ebx
 
   mov ax, word ptr [si + 0]
-  push bx
   push ax
+  push bx
   pop eax
 
   ret
