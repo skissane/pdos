@@ -2540,13 +2540,21 @@ static int readcomm(int port)
     G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
     uartEnableRxRDY(&uart);
     hltintgo();
+    /* if I immediately disable UART interrupts, I can no
+       longer read the old pending id of RxRDY.
+       If I read the pending ids, RxRDY just gets reasserted,
+       presumably because I haven't actually read the
+       character yet.
+       If I try reading the character, a new character may
+       come in and I'll miss it.
+       So the safest thing to do is just disable interrupts
+       and assume that RxRDY was hit, since that was the only
+       thing actually enabled, and I don't bother reading the
+       interrupt ids. */
+    G_intloc[(intno + 0xb0) * 2] = old1;
+    G_intloc[(intno + 0xb0) * 2 + 1] = old2;
     uartDisableInts(&uart);
     enable();
-    do
-    {
-        id = uartGetIntType(&uart);
-        printf("id is %d\n", id);
-    } while (id != UART_NO_PENDING);
     ch = uartRecCh(&uart);
     PWRITEB(0x20, 0x20);
     uartDisableGPO2(&uart);
@@ -2558,10 +2566,6 @@ static int readcomm(int port)
     uartReset(&uart);
     uartTerm(&uart);
 
-    disable();
-    G_intloc[(intno + 0xb0) * 2] = old1;
-    G_intloc[(intno + 0xb0) * 2 + 1] = old2;
-    enable();
     return (ch);
 }
 #endif
