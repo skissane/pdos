@@ -193,6 +193,7 @@ static void getDateTime(FAT_DATETIME *ptr);
 static int isDriveValid(int drive);
 static int ins_strcmp(const char *one, const char *two);
 static void writecomm(int port, int ch);
+static int readcomm(int port);
 
 static MEMMGR memmgr;
 #ifdef __32BIT__
@@ -2163,12 +2164,16 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
         int port;
 
         port = fhandle[fh].comm - 1;
+#ifdef __32BIT__
+        c = readcomm(port);
+#else
         while (1)
         {
             c = BosSerialReadChar(port);
             if ((c & 0x8000U) == 0) break;
         }
         c &= 0xff;
+#endif
         *(char *)data = c;
         *readbytes = 1;
         ret = 0;
@@ -2487,6 +2492,77 @@ static void writecomm(int port, int ch)
     G_intloc[(intno + 0xb0) * 2] = old1;
     G_intloc[(intno + 0xb0) * 2 + 1] = old2;
     enable();
+}
+
+static int readcomm(int port)
+{
+    UART uart;
+    unsigned long old1;
+    unsigned long old2;
+    unsigned long intdesc1;
+    unsigned long intdesc2;
+    unsigned long intaddr;
+    int xch;
+    int intno = 4;
+    int a8259 = 0x20;
+    int imr = 0x21;
+    int id;
+    int ch;
+
+    uartInit(&uart);
+    uartAddress(&uart, 0x3f8);
+    PREADB(a8259); /* we don't use the result of this */
+    uartDisableInts(&uart);
+    /* IRQs 0-7 are at 0xb0 instead of 8 now */
+    /* we are using IRQ 4 for COM1 */
+    old1 = G_intloc[(intno + 0xb0) * 2];
+    old2 = G_intloc[(intno + 0xb0) * 2 + 1];
+    intaddr = (unsigned long)hltinthit;
+
+    /* we are interested in this interrupt */
+    xch = PREADB(imr);
+    xch &= ~(1 << (intno % 8));
+    PWRITEB(imr, xch);
+
+    uartEnableGPO2(&uart);
+
+    /* uartEnableModem(&uart); */
+    /* uartRaiseDTR(&uart); */
+    /* uartRaiseRTS(&uart); */
+    /* uartCTS(&uart); */
+    intdesc1 = (0x8 << 16) | (intaddr & 0xffff);
+    intdesc2 = (intaddr & 0xffff0000)
+               | (1 << 15)
+               | (0 << 13)
+               | (0x0e << 8);
+    disable();
+    G_intloc[(intno + 0xb0) * 2] = intdesc1;
+    G_intloc[(intno + 0xb0) * 2 + 1] = intdesc2;
+    uartEnableRxRDY(&uart);
+    hltintgo();
+    uartDisableInts(&uart);
+    enable();
+    do
+    {
+        id = uartGetIntType(&uart);
+        printf("id is %d\n", id);
+    } while (id != UART_NO_PENDING);
+    ch = uartRecCh(&uart);
+    PWRITEB(0x20, 0x20);
+    uartDisableGPO2(&uart);
+
+    xch = PREADB(imr);
+    xch |= (1 << (intno % 8));
+    PWRITEB(imr, xch);
+
+    uartReset(&uart);
+    uartTerm(&uart);
+
+    disable();
+    G_intloc[(intno + 0xb0) * 2] = old1;
+    G_intloc[(intno + 0xb0) * 2 + 1] = old2;
+    enable();
+    return (ch);
 }
 #endif
 
