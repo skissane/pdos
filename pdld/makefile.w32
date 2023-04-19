@@ -1,0 +1,33 @@
+VPATH=src;src/bytearray;src/hashtab
+CC=gccwin
+CFLAGS=-O2 -masm=intel
+LD=pdld
+LDFLAGS=-s
+AS=pdas -O coff
+COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__
+
+OBJS=bytearray.o coff.o coff_bytearray.o error.o hashtab.o ld.o libld.o link.o sections.o symbols.o xmalloc.o
+
+TARGET=pdld.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.o $(OBJS) ../pdpclib/msvcrt.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f $(OBJS) $(TARGET)
+
+BOOTSTRAP_AS=aswin
+BOOTSTRAP_LD=ldwin
+
+bootstrap: set_bootstrap all
+
+set_bootstrap:
+  $(eval AS=$(BOOTSTRAP_AS))
+  $(eval LD=$(BOOTSTRAP_LD))
