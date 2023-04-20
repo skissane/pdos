@@ -1,6 +1,6 @@
 VPATH=src;src/bytearray;src/hashtab
 CC=gccwin
-CFLAGS=-O2 -masm=intel
+CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s
 AS=pdas -O coff
