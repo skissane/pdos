@@ -989,7 +989,7 @@ static const struct long_option long_options[] = {
 void coff_print_help (void)
 {
     printf ("i386pe:\n");
-    printf ("  --[no-]insert-timestamp            Use a real timestamp rather than zero (default).\n");
+    printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
     printf ("  --enable-reloc-section             Create the base relocation table\n");
     printf ("  --disable-reloc-section            Do not create the base relocation table\n");
