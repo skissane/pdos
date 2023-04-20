@@ -1,6 +1,6 @@
 VPATH=src
 CC=gccwin
-CFLAGS=-O2 -masm=intel
+CFLAGS=-O2
 LD=ldwin
 LDFLAGS=
 AS=aswin
