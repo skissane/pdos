@@ -2176,6 +2176,38 @@ unsigned int PosScreenMap(unsigned char *newmap)
 }
 
 
+/* F6,4C - Scancode Map */
+unsigned int PosScancodeMap(unsigned char *newmap)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x4C;
+#ifdef __32BIT__
+    regsin.d.ebx=(int)newmap;
+#else
+    sregs.ds = FP_SEG(newmap);
+    regsin.x.bx = FP_OFF(newmap);
+#endif
+    int86x(0x21,&regsin,&regsout,&sregs);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,
                                  unsigned int sectors,void *buf)

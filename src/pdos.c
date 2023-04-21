@@ -288,6 +288,7 @@ static int stderr_fhandle_index = 2;
 
 static int showret = 0;
 
+static int scanmap_active = 0;
 static int keybmap_active = 0;
 /* note that all these one to one definitions are not currently used */
 static unsigned char keybmap[256] =
@@ -1431,6 +1432,10 @@ unsigned int PosDirectCharInputNoEcho(void)
         {
             ascii = keybmap[ascii];
         }
+        else if (scanmap_active)
+        {
+            ascii = keybmap[scan];
+        }
         if (ascii == 0)
         {
             gotextend = scan;
@@ -1463,6 +1468,10 @@ unsigned int PosGetCharInputNoEcho(void)
     if (keybmap_active)
     {
         ascii = keybmap[ascii];
+    }
+    else if (scanmap_active)
+    {
+        ascii = keybmap[scan];
     }
 
     if(ascii) scan = 0;
@@ -1871,6 +1880,10 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 if (keybmap_active)
                 {
                     ascii = keybmap[ascii];
+                }
+                else if (scanmap_active)
+                {
+                    ascii = keybmap[scan];
                 }
                 /* double up ESC char as ANSI allows */
                 if (ascii == 0x1b)
@@ -3378,6 +3391,22 @@ unsigned int PosKeyboardMap(unsigned char *newmap)
     else
     {
         keybmap_active = 1;
+        scanmap_active = 0;
+        memcpy(keybmap, newmap, sizeof keybmap);
+    }
+    return (0);
+}
+
+unsigned int PosScancodeMap(unsigned char *newmap)
+{
+    if (newmap == NULL)
+    {
+        scanmap_active = 0;
+    }
+    else
+    {
+        keybmap_active = 0;
+        scanmap_active = 1;
         memcpy(keybmap, newmap, sizeof keybmap);
     }
     return (0);
