@@ -1400,6 +1400,10 @@ static void int21handler(union REGS *regsin,
             {
                 regsout->x.ax = PosShowret(regsin->x.dx);
             }
+            else if (regsin->h.al == 0x4A)
+            {
+                regsout->x.ax = PosKeyboardMap(MK_FP(sregs->ds,regsin->x.bx));
+            }
 #endif
 #ifdef __32BIT__
             else if (regsin->h.al == 0x46)
@@ -1417,6 +1421,10 @@ static void int21handler(union REGS *regsin,
             else if (regsin->h.al == 0x49)
             {
                 regsout->d.eax = PosShowret(regsin->d.edx);
+            }
+            else if (regsin->h.al == 0x4A)
+            {
+                regsout->d.eax = PosKeyboardMap(regsin->d.ebx);
             }
 #endif
             else

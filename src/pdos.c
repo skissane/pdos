@@ -3321,6 +3321,19 @@ unsigned int PosShowret(int flag)
     return (0);
 }
 
+unsigned int PosKeyboardMap(unsigned char *newmap)
+{
+    if (newmap == NULL)
+    {
+        keybmap_active = 0;
+    }
+    else
+    {
+        keybmap_active = 1;
+        memcpy(keybmap, newmap, sizeof keybmap);
+    }
+}
+
 void *PosGetStdHandle(unsigned int nStdHandle)
 {
     if (nStdHandle == -10) return ((void *)stdin_fhandle_index);

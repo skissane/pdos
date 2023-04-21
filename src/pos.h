@@ -430,6 +430,9 @@ unsigned int PosMonitor(void);
 /* F6,49 - show return codes */
 unsigned int PosShowret(int flag);
 
+/* F6,4A - map keyboard */
+unsigned int PosKeyboardMap(unsigned char *newmap);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

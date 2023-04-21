@@ -188,6 +188,7 @@ CMDPROTO(echo);
 CMDPROTO(exit);
 CMDPROTO(goto);
 CMDPROTO(help);
+CMDPROTO(keybmap);
 CMDPROTO(mcd);
 CMDPROTO(md);
 CMDPROTO(monitor);
@@ -257,6 +258,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(exit,"","Exits PCOMM"),
     CMDDEF(goto,"","GOTO label in batch file"),
     CMDDEF(help,"","Provides information about PDOS commands"),
+    CMDDEF(keybmap,"","Remaps the keyboard"),
     CMDDEF(mcd,"","Make new directory and change to it"),
     CMDDEF(md,"|mkdir","Creates new directories"),
     CMDDEF(monitor,"","Enter the system monitor"),
@@ -1841,6 +1843,14 @@ static void cmd_showret_help(void)
     printf("shows return codes from programs\n");
 }
 
+static void cmd_keybmap_help(void)
+{
+    printf("KEYBMAP [off|filename]\n");
+    printf("allows you to provide a 256-byte file\n");
+    printf("that is used to change keyboard hex codes into some\n");
+    printf("new hex code - especially for use with non-US keyboards\n");
+}
+
 static void cmd_sleep_help(void)
 {
     printf("SLEEP seconds\n");
@@ -2603,6 +2613,41 @@ static int cmd_showret_run(char *arg)
         return 1;
     }
     PosShowret(flag);
+    return 0;
+}
+
+static int cmd_keybmap_run(char *arg)
+{
+    int flag;
+
+    CMD_REQUIRES_ARGS(arg);
+    CMD_REQUIRES_GENUINE();
+    arg = stringTrimBoth(arg);
+    if (strcmp(arg, "off") == 0)
+    {
+        PosKeyboardMap(NULL);
+    }
+    else
+    {
+        FILE *fp;
+        char buf[257];
+        int cnt;
+
+        fp = fopen(arg, "rb");
+        if (fp == NULL)
+        {
+            printf("can't open %s for reading\n", arg);
+            return 1;
+        }
+        cnt = fread(buf, 1, sizeof buf, fp);
+        fclose(fp);
+        if (cnt != 256)
+        {
+            printf("file is not exactly 256 bytes in size\n");
+            return 1;
+        }
+        PosKeyboardMap(buf);
+    }
     return 0;
 }
 
