@@ -13,11 +13,19 @@
 #ifndef __SIGNAL_INCLUDED
 #define __SIGNAL_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 typedef int sig_atomic_t;
 
-void __sigdfl(int sig);
-void __sigerr(int sig);
-void __sigign(int sig);
+__PDPCLIB_HEADFUNC void __sigdfl(int sig);
+__PDPCLIB_HEADFUNC void __sigerr(int sig);
+__PDPCLIB_HEADFUNC void __sigign(int sig);
 
 #if (defined(__WIN32__) && !defined(__STATIC__)) || defined (__PDOSGEN__)
 #define SIG_DFL 0
@@ -39,10 +47,10 @@ void __sigign(int sig);
 #ifdef __SUBC__
 int signal(int sig, int (*handler)());
 #else
-void (*signal(int sig, void (*func)(int)))(int);
+__PDPCLIB_HEADFUNC void (*signal(int sig, void (*func)(int)))(int);
 #endif
 
-int raise(int sig);
+__PDPCLIB_HEADFUNC int raise(int sig);
 
 
 #if defined(__PDOSGEN__)

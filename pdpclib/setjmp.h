@@ -13,6 +13,14 @@
 #ifndef __SETJMP_INCLUDED
 #define __SETJMP_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 typedef struct {
 #if defined(__64BIT__)
     long long retval;
@@ -80,7 +88,7 @@ typedef struct {
 #endif
 } jmp_buf[1];
 
-void longjmp(jmp_buf env, int val);
+__PDPCLIB_HEADFUNC void longjmp(jmp_buf env, int val);
 
 #if defined(__MSC__)
 #define setjmp(x) __setj(x)

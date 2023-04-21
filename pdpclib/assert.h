@@ -13,7 +13,15 @@
 #ifndef __ASSERT_INCLUDED
 #define __ASSERT_INCLUDED
 
-int _assert(char *x, char *y, int z);
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
+__PDPCLIB_HEADFUNC int _assert(char *x, char *y, int z);
 
 #ifdef NDEBUG
 #define assert(ignore) (0)

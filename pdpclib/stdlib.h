@@ -13,6 +13,14 @@
 #ifndef __STDLIB_INCLUDED
 #define __STDLIB_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
 #if defined(__64BIT__)
@@ -52,60 +60,60 @@ typedef struct { long quot; long rem; } ldiv_t;
 #define MB_CUR_MAX 1
 #define __NATEXIT 32
 
-void *malloc(size_t size);
-void *calloc(size_t nmemb, size_t size);
-void *realloc(void *ptr, size_t size);
-void free(void *ptr);
+__PDPCLIB_HEADFUNC void *malloc(size_t size);
+__PDPCLIB_HEADFUNC void *calloc(size_t nmemb, size_t size);
+__PDPCLIB_HEADFUNC void *realloc(void *ptr, size_t size);
+__PDPCLIB_HEADFUNC void free(void *ptr);
 #if (defined(__MVS__) || defined(__CMS__) || defined(__VSE__)) \
     && defined(__GNUC__)
 void abort(void) __attribute__((noreturn));
 void exit(int status) __attribute__((noreturn));
 #else
-void abort(void);
-void exit(int status);
+__PDPCLIB_HEADFUNC void abort(void);
+__PDPCLIB_HEADFUNC void exit(int status);
 #endif
 
 #ifdef __SUBC__
 void qsort(void *a, size_t b, size_t c,
     int (*f)());
 #else
-void qsort(void *a, size_t b, size_t c,
+__PDPCLIB_HEADFUNC void qsort(void *a, size_t b, size_t c,
     int (*f)(const void *d, const void *e));
 #endif
 
-void srand(unsigned int seed);
-int rand(void);
-double atof(const char *nptr);
-double strtod(const char *nptr, char **endptr);
-int atoi(const char *nptr);
-long atol(const char *nptr);
-long strtol(const char *nptr, char **endptr, int base);
-unsigned long strtoul(const char *nptr, char **endptr, int base);
-int mblen(const char *s, size_t n);
-int mbtowc(wchar_t *pwc, const char *s, size_t n);
-int wctomb(char *s, wchar_t wchar);
-size_t mbstowcs(wchar_t *pwcs, const char *s, size_t n);
-size_t wcstombs(char *s, const wchar_t *pwcs, size_t n);
-int abs(int j);
-div_t div(int numer, int denom);
-long labs(long j);
-ldiv_t ldiv(long numer, long denom);
+__PDPCLIB_HEADFUNC void srand(unsigned int seed);
+__PDPCLIB_HEADFUNC int rand(void);
+__PDPCLIB_HEADFUNC double atof(const char *nptr);
+__PDPCLIB_HEADFUNC double strtod(const char *nptr, char **endptr);
+__PDPCLIB_HEADFUNC int atoi(const char *nptr);
+__PDPCLIB_HEADFUNC long atol(const char *nptr);
+__PDPCLIB_HEADFUNC long strtol(const char *nptr, char **endptr, int base);
+__PDPCLIB_HEADFUNC unsigned long strtoul(const char *nptr, char **endptr, int base);
+__PDPCLIB_HEADFUNC int mblen(const char *s, size_t n);
+__PDPCLIB_HEADFUNC int mbtowc(wchar_t *pwc, const char *s, size_t n);
+__PDPCLIB_HEADFUNC int wctomb(char *s, wchar_t wchar);
+__PDPCLIB_HEADFUNC size_t mbstowcs(wchar_t *pwcs, const char *s, size_t n);
+__PDPCLIB_HEADFUNC size_t wcstombs(char *s, const wchar_t *pwcs, size_t n);
+__PDPCLIB_HEADFUNC int abs(int j);
+__PDPCLIB_HEADFUNC div_t div(int numer, int denom);
+__PDPCLIB_HEADFUNC long labs(long j);
+__PDPCLIB_HEADFUNC ldiv_t ldiv(long numer, long denom);
 
 #ifdef __SUBC__
 int atexit(int (*func)());
 #else
-int atexit(void (*func)(void));
+__PDPCLIB_HEADFUNC int atexit(void (*func)(void));
 #endif
 
-char *getenv(const char *name);
-int system(const char *string);
+__PDPCLIB_HEADFUNC char *getenv(const char *name);
+__PDPCLIB_HEADFUNC int system(const char *string);
 
 #ifdef __SUBC__
 void *bsearch(const void *key, const void *base,
               size_t nmemb, size_t size,
               int (*compar)());
 #else
-void *bsearch(const void *key, const void *base,
+__PDPCLIB_HEADFUNC void *bsearch(const void *key, const void *base,
               size_t nmemb, size_t size,
               int (*compar)(const void *, const void *));
 #endif

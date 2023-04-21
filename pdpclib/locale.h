@@ -13,6 +13,14 @@
 #ifndef __LOCALE_INCLUDED
 #define __LOCALE_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 struct lconv {
     char *decimal_point;
     char *thousands_sep;
@@ -42,8 +50,8 @@ struct lconv {
 #define LC_NUMERIC 5
 #define LC_TIME 6
 
-char *setlocale(int category, const char *locale);
-struct lconv *localeconv(void);
+__PDPCLIB_HEADFUNC char *setlocale(int category, const char *locale);
+__PDPCLIB_HEADFUNC struct lconv *localeconv(void);
 
 #if defined(__PDOSGEN__)
 #include <__os.h>

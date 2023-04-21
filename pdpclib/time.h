@@ -13,6 +13,14 @@
 #ifndef __TIME_INCLUDED
 #define __TIME_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 #define CLOCKS_PER_SEC 1000
 #define NULL ((void *)0)
 
@@ -48,15 +56,15 @@ struct tm
     int tm_isdst;
 };
 
-time_t time(time_t *timer);
-clock_t clock(void);
-double difftime(time_t time1, time_t time0);
-time_t mktime(struct tm *timeptr);
-char *asctime(const struct tm *timeptr);
-char *ctime(const time_t *timer);
-struct tm *gmtime(const time_t *timer);
-struct tm *localtime(const time_t *timer);
-size_t strftime(char *s, size_t maxsize,
+__PDPCLIB_HEADFUNC time_t time(time_t *timer);
+__PDPCLIB_HEADFUNC clock_t clock(void);
+__PDPCLIB_HEADFUNC double difftime(time_t time1, time_t time0);
+__PDPCLIB_HEADFUNC time_t mktime(struct tm *timeptr);
+__PDPCLIB_HEADFUNC char *asctime(const struct tm *timeptr);
+__PDPCLIB_HEADFUNC char *ctime(const time_t *timer);
+__PDPCLIB_HEADFUNC struct tm *gmtime(const time_t *timer);
+__PDPCLIB_HEADFUNC struct tm *localtime(const time_t *timer);
+__PDPCLIB_HEADFUNC size_t strftime(char *s, size_t maxsize,
                 const char *format, const struct tm *timeptr);
 
 

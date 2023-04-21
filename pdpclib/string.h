@@ -13,6 +13,14 @@
 #ifndef __STRING_INCLUDED
 #define __STRING_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
 #if defined(__64BIT__)
@@ -29,28 +37,28 @@ typedef unsigned int size_t;
 #endif
 
 #define NULL ((void *)0)
-void *memcpy(void *s1, const void *s2, size_t n);
-void *memmove(void *s1, const void *s2, size_t n);
-char *strcpy(char *s1, const char *s2);
-char *strncpy(char *s1, const char *s2, size_t n);
-char *strcat(char *s1, const char *s2);
-char *strncat(char *s1, const char *s2, size_t n);
-int memcmp(const void *s1, const void *s2, size_t n);
-int strcmp(const char *s1, const char *s2);
-int strcoll(const char *s1, const char *s2);
-int strncmp(const char *s1, const char *s2, size_t n);
-size_t strxfrm(char *s1, const char *s2, size_t n);
-void *memchr(const void *s, int c, size_t n);
-char *strchr(const char *s, int c);
-size_t strcspn(const char *s1, const char *s2);
-char *strpbrk(const char *s1, const char *s2);
-char *strrchr(const char *s, int c);
-size_t strspn(const char *s1, const char *s2);
-char *strstr(const char *s1, const char *s2);
-char *strtok(char *s1, const char *s2);
-void *memset(void *s, int c, size_t n);
-char *strerror(int errnum);
-size_t strlen(const char *s);
+__PDPCLIB_HEADFUNC void *memcpy(void *s1, const void *s2, size_t n);
+__PDPCLIB_HEADFUNC void *memmove(void *s1, const void *s2, size_t n);
+__PDPCLIB_HEADFUNC char *strcpy(char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strncpy(char *s1, const char *s2, size_t n);
+__PDPCLIB_HEADFUNC char *strcat(char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strncat(char *s1, const char *s2, size_t n);
+__PDPCLIB_HEADFUNC int memcmp(const void *s1, const void *s2, size_t n);
+__PDPCLIB_HEADFUNC int strcmp(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC int strcoll(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC int strncmp(const char *s1, const char *s2, size_t n);
+__PDPCLIB_HEADFUNC size_t strxfrm(char *s1, const char *s2, size_t n);
+__PDPCLIB_HEADFUNC void *memchr(const void *s, int c, size_t n);
+__PDPCLIB_HEADFUNC char *strchr(const char *s, int c);
+__PDPCLIB_HEADFUNC size_t strcspn(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strpbrk(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strrchr(const char *s, int c);
+__PDPCLIB_HEADFUNC size_t strspn(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strstr(const char *s1, const char *s2);
+__PDPCLIB_HEADFUNC char *strtok(char *s1, const char *s2);
+__PDPCLIB_HEADFUNC void *memset(void *s, int c, size_t n);
+__PDPCLIB_HEADFUNC char *strerror(int errnum);
+__PDPCLIB_HEADFUNC size_t strlen(const char *s);
 
 #if defined(__WATCOMC__) && !defined(__SZ4__)
 #ifdef __INLINE_FUNCTIONS__

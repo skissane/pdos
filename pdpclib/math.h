@@ -13,6 +13,14 @@
 #ifndef __MATH_INCLUDED
 #define __MATH_INCLUDED
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 /*
   Some constants - at present these are only defined for IBM
 */
@@ -28,37 +36,37 @@
 
 #endif
 
-double ceil(double x);
-double fabs(double x);
-double floor(double x);
-double fmod(double x, double y);
+__PDPCLIB_HEADFUNC double ceil(double x);
+__PDPCLIB_HEADFUNC double fabs(double x);
+__PDPCLIB_HEADFUNC double floor(double x);
+__PDPCLIB_HEADFUNC double fmod(double x, double y);
 
 /* unimplemented: */
 
 
-double atan2(double y, double x);
-double frexp(double value, int *exp);
-double ldexp(double x, int exp);
-double modf(double value, double *iptr);
+__PDPCLIB_HEADFUNC double atan2(double y, double x);
+__PDPCLIB_HEADFUNC double frexp(double value, int *exp);
+__PDPCLIB_HEADFUNC double ldexp(double x, int exp);
+__PDPCLIB_HEADFUNC double modf(double value, double *iptr);
 
 /*
   Implemented by d.wade - April 2006
 */
 
-double pow(double x, double y);
-double sqrt(double x);
-double acos(double x);
-double asin(double x);
-double atan(double x);
-double cos(double x);
-double sin(double x);
-double tan(double x);
-double cosh(double x);
-double sinh(double x);
-double tanh(double x);
-double exp(double x);
-double log(double x);
-double log10(double x);
+__PDPCLIB_HEADFUNC double pow(double x, double y);
+__PDPCLIB_HEADFUNC double sqrt(double x);
+__PDPCLIB_HEADFUNC double acos(double x);
+__PDPCLIB_HEADFUNC double asin(double x);
+__PDPCLIB_HEADFUNC double atan(double x);
+__PDPCLIB_HEADFUNC double cos(double x);
+__PDPCLIB_HEADFUNC double sin(double x);
+__PDPCLIB_HEADFUNC double tan(double x);
+__PDPCLIB_HEADFUNC double cosh(double x);
+__PDPCLIB_HEADFUNC double sinh(double x);
+__PDPCLIB_HEADFUNC double tanh(double x);
+__PDPCLIB_HEADFUNC double exp(double x);
+__PDPCLIB_HEADFUNC double log(double x);
+__PDPCLIB_HEADFUNC double log10(double x);
 
 
 #if 0 /* def __WATCOMC__ */

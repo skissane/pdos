@@ -24,7 +24,7 @@
 
 BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved);
 
-BOOL WINAPI DllMainCRTStartup(HINSTANCE hinstDll,
+BOOL WINAPI _DllMainCRTStartup(HINSTANCE hinstDll,
                               DWORD fdwReason,
                               LPVOID lpvReserved)
 {

@@ -16,6 +16,14 @@
 /* Perhaps should copy these definitions in instead */
 #include <stdarg.h>
 
+#ifdef __PDPCLIB_DLL
+#define __PDPCLIB_HEADFUNC __declspec(dllexport)
+#endif
+
+#ifndef __PDPCLIB_HEADFUNC
+#define __PDPCLIB_HEADFUNC
+#endif
+
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
 #if defined(__64BIT__)
@@ -183,9 +191,9 @@ extern FILE *stderr;
 extern FILE *__userFiles[__NFILE];
 #endif
 
-FILE **__gtin(void);
-FILE **__gtout(void);
-FILE **__gterr(void);
+__PDPCLIB_HEADFUNC FILE **__gtin(void);
+__PDPCLIB_HEADFUNC FILE **__gtout(void);
+__PDPCLIB_HEADFUNC FILE **__gterr(void);
 
 #define __stdin (*(__gtin()))
 #define __stdout (*(__gtout()))
@@ -231,49 +239,49 @@ __declspec(dllimport) __DUMMYFILE _iob[3];
 extern FILE *__stdpch;
 #endif
 
-int printf(const char *format, ...);
-FILE *fopen(const char *filename, const char *mode);
-int fclose(FILE *stream);
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
-size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
-int fputc(int c, FILE *stream);
-int fputs(const char *s, FILE *stream);
-int fprintf(FILE *stream, const char *format, ...);
-int vfprintf(FILE *stream, const char *format, va_list arg);
-int vprintf(const char *format, va_list arg);
-int remove(const char *filename);
-int rename(const char *old, const char *newnam);
-int sprintf(char *s, const char *format, ...);
-int vsprintf(char *s, const char *format, va_list arg);
-char *fgets(char *s, int n, FILE *stream);
-int ungetc(int c, FILE *stream);
-int fgetc(FILE *stream);
-int fseek(FILE *stream, long offset, int whence);
-long ftell(FILE *stream);
-int fsetpos(FILE *stream, const fpos_t *pos);
-int fgetpos(FILE *stream, fpos_t *pos);
-void rewind(FILE *stream);
-void clearerr(FILE *stream);
-void perror(const char *s);
-int setvbuf(FILE *stream, char *buf, int mode, size_t size);
-int setbuf(FILE *stream, char *buf);
-FILE *freopen(const char *filename, const char *mode, FILE *stream);
-int fflush(FILE *stream);
-char *tmpnam(char *s);
-FILE *tmpfile(void);
-int fscanf(FILE *stream, const char *format, ...);
-int scanf(const char *format, ...);
-int sscanf(const char *s, const char *format, ...);
-char *gets(char *s);
-int puts(const char *s);
+__PDPCLIB_HEADFUNC int printf(const char *format, ...);
+__PDPCLIB_HEADFUNC FILE *fopen(const char *filename, const char *mode);
+__PDPCLIB_HEADFUNC int fclose(FILE *stream);
+__PDPCLIB_HEADFUNC size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+__PDPCLIB_HEADFUNC size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+__PDPCLIB_HEADFUNC int fputc(int c, FILE *stream);
+__PDPCLIB_HEADFUNC int fputs(const char *s, FILE *stream);
+__PDPCLIB_HEADFUNC int fprintf(FILE *stream, const char *format, ...);
+__PDPCLIB_HEADFUNC int vfprintf(FILE *stream, const char *format, va_list arg);
+__PDPCLIB_HEADFUNC int vprintf(const char *format, va_list arg);
+__PDPCLIB_HEADFUNC int remove(const char *filename);
+__PDPCLIB_HEADFUNC int rename(const char *old, const char *newnam);
+__PDPCLIB_HEADFUNC int sprintf(char *s, const char *format, ...);
+__PDPCLIB_HEADFUNC int vsprintf(char *s, const char *format, va_list arg);
+__PDPCLIB_HEADFUNC char *fgets(char *s, int n, FILE *stream);
+__PDPCLIB_HEADFUNC int ungetc(int c, FILE *stream);
+__PDPCLIB_HEADFUNC int fgetc(FILE *stream);
+__PDPCLIB_HEADFUNC int fseek(FILE *stream, long offset, int whence);
+__PDPCLIB_HEADFUNC long ftell(FILE *stream);
+__PDPCLIB_HEADFUNC int fsetpos(FILE *stream, const fpos_t *pos);
+__PDPCLIB_HEADFUNC int fgetpos(FILE *stream, fpos_t *pos);
+__PDPCLIB_HEADFUNC void rewind(FILE *stream);
+__PDPCLIB_HEADFUNC void clearerr(FILE *stream);
+__PDPCLIB_HEADFUNC void perror(const char *s);
+__PDPCLIB_HEADFUNC int setvbuf(FILE *stream, char *buf, int mode, size_t size);
+__PDPCLIB_HEADFUNC int setbuf(FILE *stream, char *buf);
+__PDPCLIB_HEADFUNC FILE *freopen(const char *filename, const char *mode, FILE *stream);
+__PDPCLIB_HEADFUNC int fflush(FILE *stream);
+__PDPCLIB_HEADFUNC char *tmpnam(char *s);
+__PDPCLIB_HEADFUNC FILE *tmpfile(void);
+__PDPCLIB_HEADFUNC int fscanf(FILE *stream, const char *format, ...);
+__PDPCLIB_HEADFUNC int scanf(const char *format, ...);
+__PDPCLIB_HEADFUNC int sscanf(const char *s, const char *format, ...);
+__PDPCLIB_HEADFUNC char *gets(char *s);
+__PDPCLIB_HEADFUNC int puts(const char *s);
 
 #ifndef __POWERC
-int getchar(void);
-int putchar(int c);
-int getc(FILE *stream);
-int putc(int c, FILE *stream);
-int feof(FILE *stream);
-int ferror(FILE *stream);
+__PDPCLIB_HEADFUNC int getchar(void);
+__PDPCLIB_HEADFUNC int putchar(int c);
+__PDPCLIB_HEADFUNC int getc(FILE *stream);
+__PDPCLIB_HEADFUNC int putc(int c, FILE *stream);
+__PDPCLIB_HEADFUNC int feof(FILE *stream);
+__PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #endif
 
 #if !defined(__WIN32__) || defined(__STATIC__)

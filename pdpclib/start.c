@@ -1260,9 +1260,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 }
 
-void _exit(int status);
-void _cexit(void);
-void _c_exit(void);
+__PDPCLIB_API__ void _exit(int status);
+__PDPCLIB_API__ void _cexit(void);
+__PDPCLIB_API__ void _c_exit(void);
 
 void __exit(int status)
 {
