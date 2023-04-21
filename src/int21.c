@@ -1424,7 +1424,7 @@ static void int21handler(union REGS *regsin,
             }
             else if (regsin->h.al == 0x4A)
             {
-                regsout->d.eax = PosKeyboardMap(regsin->d.ebx);
+                regsout->d.eax = PosKeyboardMap((unsigned char *)regsin->d.ebx);
             }
 #endif
             else
