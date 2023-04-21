@@ -1,5 +1,8 @@
 # This is the makefile for Win32 to build pdpclib using
 # Microsoft Visual Studio and MASM
+# Note that floating point won't work though, presumably
+# because some libraries have been dummied instead of
+# being properly implemented as the compiler expects
 
 CC=cl
 CFLAGS=-O2
