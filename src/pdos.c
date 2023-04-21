@@ -5268,7 +5268,7 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf)
     head = sector % diskinfo->sectors_per_cylinder;
     sect = head % diskinfo->sectors_per_track + 1;
     head = head / diskinfo->sectors_per_track;
-    if (diskinfo->lba)
+    if (diskinfo->lba || (track >= 1024))
     {
         ret = readLBA(buf, 1, diskinfo->drive, sector);
     }
@@ -5298,7 +5298,7 @@ static void writeLogical(void *diskptr, unsigned long sector, void *buf)
     head = sector % diskinfo->sectors_per_cylinder;
     sect = head % diskinfo->sectors_per_track + 1;
     head = head / diskinfo->sectors_per_track;
-    if (diskinfo->lba)
+    if (diskinfo->lba || (track >= 1024))
     {
         ret = writeLBA(buf, 1, diskinfo->drive, sector);
     }
