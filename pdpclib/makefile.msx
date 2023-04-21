@@ -1,5 +1,9 @@
 # This is the makefile for Win32 to build pdpclib using
-# Microsoft Visual Studio and MASM
+# Microsoft Visual Studio and MASM and targeting msvcrt.dll
+# Note that the msvcrt.dll produced is not capable of doing
+# floating point presumably due to some library functions
+# being dummied instead of properly implemented. The
+# executables appear to be fine though.
 
 CC=cl
 CFLAGS=-O2
