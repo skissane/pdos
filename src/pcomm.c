@@ -2347,7 +2347,7 @@ void safegets(char *buffer, int size, bool use_history)
                 memmove(buffer+pos, buffer+pos+1, i-pos);
                 putch('\b');
             }
-            else if (isprint((unsigned char)a))
+            else if (!iscntrl((unsigned char)a))
             {
                 putch(a);
                 memmove(buffer+pos+1, buffer+pos, i-pos+1);
