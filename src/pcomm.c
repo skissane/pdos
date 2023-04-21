@@ -205,6 +205,7 @@ CMDPROTO(rem);
 CMDPROTO(ren);
 CMDPROTO(save);
 CMDPROTO(scrncap);
+CMDPROTO(scrnmap);
 CMDPROTO(set);
 CMDPROTO(showret);
 CMDPROTO(sleep);
@@ -275,6 +276,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(ren,"|rename","Renames files and directories"),
     CMDDEF(save,"","Saves user input to file"),
     CMDDEF(scrncap,"","Start/stop screen capture"),
+    CMDDEF(scrnmap,"","Maps screen output"),
     CMDDEF(set,"","Show/modify environment variables"),
     CMDDEF(showret,"","Show return codes"),
     CMDDEF(sleep,"","Sleep for some seconds"),
@@ -1851,6 +1853,15 @@ static void cmd_keybmap_help(void)
     printf("new hex code - especially for use with non-US keyboards\n");
 }
 
+static void cmd_scrnmap_help(void)
+{
+    printf("SCRNMAP [off|filename]\n");
+    printf("allows you to provide a 256-byte file\n");
+    printf("that is used to change screen hex codes into some\n");
+    printf("new hex code - especially for use with non-US countries\n");
+    printf("attempting to use US bioses\n");
+}
+
 static void cmd_sleep_help(void)
 {
     printf("SLEEP seconds\n");
@@ -2647,6 +2658,41 @@ static int cmd_keybmap_run(char *arg)
             return 1;
         }
         PosKeyboardMap(buf);
+    }
+    return 0;
+}
+
+static int cmd_scrnmap_run(char *arg)
+{
+    int flag;
+
+    CMD_REQUIRES_ARGS(arg);
+    CMD_REQUIRES_GENUINE();
+    arg = stringTrimBoth(arg);
+    if (strcmp(arg, "off") == 0)
+    {
+        PosScreenMap(NULL);
+    }
+    else
+    {
+        FILE *fp;
+        char buf[257];
+        int cnt;
+
+        fp = fopen(arg, "rb");
+        if (fp == NULL)
+        {
+            printf("can't open %s for reading\n", arg);
+            return 1;
+        }
+        cnt = fread(buf, 1, sizeof buf, fp);
+        fclose(fp);
+        if (cnt != 256)
+        {
+            printf("file is not exactly 256 bytes in size\n");
+            return 1;
+        }
+        PosScreenMap(buf);
     }
     return 0;
 }
