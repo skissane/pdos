@@ -56,3 +56,8 @@ void __main(void)
 {
     return;
 }
+
+#if defined(__MSC__)
+int _fltused;
+int _ftol2_sse;
+#endif
