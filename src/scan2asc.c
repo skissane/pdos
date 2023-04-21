@@ -30,7 +30,10 @@ int main(void)
     while (1)
     {
         BosReadKeyboardCharacter(&scancode,&ascii);
-        map[scancode] = ascii;
+        if (ascii != 0)
+        {
+            map[scancode] = ascii;
+        }
         if (ascii == 0x1b) break;
     }
     fq = fopen("scanmap.dat", "wb");
