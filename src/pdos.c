@@ -2173,6 +2173,32 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                     pending[0] = 'm';
                     ascii = 0x1b;
                 }
+                /* these are altgr on a magellan */
+                else if (scan == 0x79) /* altgr-2 */
+                {
+                    num_pending = 0;
+                    ascii = '@';
+                }
+                else if (scan == 0x7e) /* altgr-7 */
+                {
+                    num_pending = 0;
+                    ascii = '{';
+                }
+                else if (scan == 0x7f) /* altgr-8 */
+                {
+                    num_pending = 0;
+                    ascii = '[';
+                }
+                else if (scan == 0x80) /* altgr-9 */
+                {
+                    num_pending = 0;
+                    ascii = ']';
+                }
+                else if (scan == 0x81) /* altgr-0 */
+                {
+                    num_pending = 0;
+                    ascii = '}';
+                }
             }
             if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
