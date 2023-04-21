@@ -519,17 +519,15 @@ static int testPosDirectCharInputNoEcho(void)
     printf("The return value is x %d x \n" , ret);
 }
 
-#if 0
+#if 1
 /* Test function to test BIOS Call Int 16/AH=00h */
 static int testBosReadKeyboardCharacter(void)
 {
-    int ret;
     int scancode,ascii;
     
-    ret = BosReadKeyboardCharacter(&scancode,&ascii);
-    printf("\n The return value is x %d x \n", ret);
-    printf("\n The value of scancode is x %d x \n", scancode);
-    printf("\n The value of ascii is x %d x \n", ascii);
+    BosReadKeyboardCharacter(&scancode,&ascii);
+    printf("\n The value of scancode is hex %02X\n", scancode);
+    printf("\n The value of ascii is hex %02X\n", ascii);
 }
 #endif
 
@@ -645,7 +643,7 @@ int main(void)
     /*testBosSetCursorPosition();*/
     /*testBosReadCursorPosition();*/ 
     /*testBosReadLightPen();*/
-    /*testBosReadKeyboardCharacter();*/   
+    testBosReadKeyboardCharacter();
     /*testBosSetSystemDate();*/
     
     /*Pos Tests*/    
@@ -656,7 +654,7 @@ int main(void)
     
     /* testPosSelectDisk(); */
 
-#if 1
+#if 0
     testBosSerialInitialize();
     testBosSerialWriteChar();
 #endif
