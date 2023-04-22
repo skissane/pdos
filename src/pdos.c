@@ -1505,6 +1505,11 @@ static int scanmap_domap(int scan)
     else
     {
         ascii = keybmap[scan];
+        /* if caps lock is on, call toupper */
+        if (flags & 0x40)
+        {
+            ascii = toupper(ascii);
+        }
     }
     return (ascii);
 }
