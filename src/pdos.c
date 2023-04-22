@@ -2298,8 +2298,15 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 /* not sure if \r should return just \n or both \r and \n */
                 /* probably best to force the C library to handle the \r
                    and reread to get the \n */
+                /* however, when I did that, micro-emacs created an extra blank
+                   line when I press enter. So I am switching to just \n to see
+                   how it goes */
+#if 0
                 num_pending = 1;
                 pending[0] = '\n';
+#else
+                ascii = '\n';
+#endif
                 p[x] = ascii;
             }
             else
