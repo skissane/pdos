@@ -4,7 +4,7 @@
 all: world.exe
 
 world.exe: world.o
-  ldwin -s -nostdlib -o world.exe ../pdpclib/p32start.o world.o ../pdpclib/pdpwin32.a ../src/kernel32.a
+  pdld -s -o world.exe ../pdpclib/p32start.o world.o ../pdpclib/pdpwin32.a ../src/kernel32.a
 
 .c.o:
   pdcc -E -D__SUBC__ -D__WIN32__ -D__STATIC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int -I ../pdpclib -o $*.i $<
