@@ -1857,10 +1857,11 @@ static void cmd_keybmap_help(void)
 
 static void cmd_scanmap_help(void)
 {
-    printf("SCANMAP [off|filename]\n");
+    printf("SCANMAP [off|filename] [shift|ctrl]\n");
     printf("allows you to provide a 256-byte file\n");
     printf("that is used to change keyboard scan codes into some\n");
     printf("new hex code - especially for use with non-US keyboards\n");
+    printf("3 tables are supported - normal, shifted and ctrl pressed\n");
 }
 
 static void cmd_scrnmap_help(void)
