@@ -2177,7 +2177,7 @@ unsigned int PosScreenMap(unsigned char *newmap)
 
 
 /* F6,4C - Scancode Map */
-unsigned int PosScancodeMap(unsigned char *newmap)
+unsigned int PosScancodeMap(unsigned char *newmap, int type)
 {
     union REGS regsin;
     union REGS regsout;
@@ -2187,9 +2187,11 @@ unsigned int PosScancodeMap(unsigned char *newmap)
     regsin.h.al = 0x4C;
 #ifdef __32BIT__
     regsin.d.ebx=(int)newmap;
+    regsin.d.ecx = type;
 #else
     sregs.ds = FP_SEG(newmap);
     regsin.x.bx = FP_OFF(newmap);
+    regsin.x.cx = type;
 #endif
     int86x(0x21,&regsin,&regsout,&sregs);
 #ifdef __32BIT__

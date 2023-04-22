@@ -1410,7 +1410,8 @@ static void int21handler(union REGS *regsin,
             }
             else if (regsin->h.al == 0x4C)
             {
-                regsout->x.ax = PosScancodeMap(MK_FP(sregs->ds,regsin->x.bx));
+                regsout->x.ax = PosScancodeMap(MK_FP(sregs->ds,regsin->x.bx),
+                                               regsin->x.cx);
             }
 #endif
 #ifdef __32BIT__
@@ -1440,7 +1441,8 @@ static void int21handler(union REGS *regsin,
             }
             else if (regsin->h.al == 0x4C)
             {
-                regsout->d.eax = PosScancodeMap((unsigned char *)regsin->d.ebx);
+                regsout->d.eax = PosScancodeMap((unsigned char *)regsin->d.ebx,
+                                                regsin->d.ecx);
             }
 #endif
             else

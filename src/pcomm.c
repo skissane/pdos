@@ -2681,14 +2681,38 @@ static int cmd_scanmap_run(char *arg)
     arg = stringTrimBoth(arg);
     if (strcmp(arg, "off") == 0)
     {
-        PosScancodeMap(NULL);
+        PosScancodeMap(NULL, 0);
     }
     else
     {
         FILE *fp;
         char buf[257];
         int cnt;
+        char *p;
+        int type;
 
+        p = strchr(arg, ' ');
+        if (p == NULL)
+        {
+            type = 0;
+        }
+        else
+        {
+            *p++ = '\0';
+            if (strcmp(p, "shift") == 0)
+            {
+                type = 1;
+            }
+            else if (strcmp(p, "ctrl") == 0)
+            {
+                type = 2;
+            }
+            else
+            {
+                printf("unknown map type %s\n", p);
+                return (1);
+            }
+        }
         fp = fopen(arg, "rb");
         if (fp == NULL)
         {
@@ -2702,7 +2726,7 @@ static int cmd_scanmap_run(char *arg)
             printf("file is not exactly 256 bytes in size\n");
             return 1;
         }
-        PosScancodeMap(buf);
+        PosScancodeMap(buf, type);
     }
     return 0;
 }
