@@ -512,6 +512,7 @@ int main(int argc, char **argv)
     {
         PosGetVideoInfo(&savedVideoState, sizeof(pos_video_info));
     }
+    setvbuf(stdin, NULL, _IONBF, 0);
     origpath = getenv("PATH");
     if (origpath != NULL)
     {
@@ -568,6 +569,7 @@ int main(int argc, char **argv)
                  __envptr = PosGetEnvBlock();
              }
         }
+        setvbuf(stdin, NULL, _IOLBF, 0);
         return (rc);
     }
     if (primary)
@@ -593,6 +595,7 @@ int main(int argc, char **argv)
     if (genuine_pdos) PosSetVideoAttribute(0x0C);
     printf("Thank you for using PCOMM!\n");
     if (genuine_pdos) PosSetVideoAttribute(savedVideoState.currentAttrib);
+    setvbuf(stdin, NULL, _IOLBF, 0);
     return (0);
 }
 
@@ -2252,6 +2255,7 @@ void bell(void)
     putch('\a');
 }
 
+#define ESC 0x1b
 #define UP_ARROW (72 << 8)
 #define LEFT_ARROW (75 << 8)
 #define RIGHT_ARROW (77 << 8)
@@ -2267,10 +2271,39 @@ void safegets(char *buffer, int size, bool use_history)
     while (1)
     {
 
+        a = getchar();
+        if (a == ESC)
+        {
+            a = getchar();
+            if (a != ESC)
+            {
+                if (a == '[')
+                {
+                    a = getchar();
+                    if (a == 'A')
+                    {
+                        a = UP_ARROW;
+                    }
+                    else if (a == 'B')
+                    {
+                        a = DOWN_ARROW;
+                    }
+                    else if (a == 'C')
+                    {
+                        a = RIGHT_ARROW;
+                    }
+                    else if (a == 'D')
+                    {
+                        a = LEFT_ARROW;
+                    }
+                }
+            }
+        }
+#if 0
         a = PosGetCharInputNoEcho();
         if(!a)
             a = PosGetCharInputNoEcho() << 8;
-
+#endif
         if(use_history)
         {
 
