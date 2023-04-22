@@ -2293,6 +2293,15 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 pdosWriteText(ascii);
                 pdosWriteText(' ');
             }
+            else if (ascii == '\r')
+            {
+                /* not sure if \r should return just \n or both \r and \n */
+                /* probably best to force the C library to handle the \r
+                   and reread to get the \n */
+                num_pending = 1;
+                pending[0] = '\n';
+                p[x] = ascii;
+            }
             else
             {
                 p[x] = ascii;
