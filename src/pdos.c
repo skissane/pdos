@@ -3537,6 +3537,31 @@ unsigned int PosScancodeMap(unsigned char *newmap, int type)
     return (0);
 }
 
+/* F6,4D - load fonts */
+unsigned int PosLoadFonts(int start,
+                          int count,
+                          int depth,
+                          void *table,
+                          int block)
+{
+    int x;
+
+#ifdef __32BIT__
+    for (x = 0; x < count; x++)
+    {
+        memcpy(transferbuf, (char *)table + depth * x, depth);
+        BosLoadActFonts(start + x,
+                        1,
+                        depth,
+                        transferbuf,
+                        block);
+    }
+#else
+    BosLoadActFonts(start, count, depth, table, block);
+#endif
+    return (0);
+}
+
 unsigned int PosScreenMap(unsigned char *newmap)
 {
     if (newmap == NULL)

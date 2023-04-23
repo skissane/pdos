@@ -439,6 +439,13 @@ unsigned int PosScreenMap(unsigned char *newmap);
 /* F6,4C - map scancode */
 unsigned int PosScancodeMap(unsigned char *newmap, int type);
 
+/* F6,4D - load fonts */
+unsigned int PosLoadFonts(int start,
+                          int count,
+                          int depth,
+                          void *table,
+                          int block);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

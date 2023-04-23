@@ -1413,6 +1413,14 @@ static void int21handler(union REGS *regsin,
                 regsout->x.ax = PosScancodeMap(MK_FP(sregs->ds,regsin->x.bx),
                                                regsin->x.cx);
             }
+            else if (regsin->h.al == 0x4D)
+            {
+                regsout->x.ax = PosLoadFonts(regsin->x.cx,
+                                             regsin->x.dx,
+                                             regsin->x.si,
+                                             MK_FP(sregs->ds,regsin->x.bx),
+                                             regsin->x.di);
+            }
 #endif
 #ifdef __32BIT__
             else if (regsin->h.al == 0x46)
@@ -1443,6 +1451,14 @@ static void int21handler(union REGS *regsin,
             {
                 regsout->d.eax = PosScancodeMap((unsigned char *)regsin->d.ebx,
                                                 regsin->d.ecx);
+            }
+            else if (regsin->h.al == 0x4D)
+            {
+                regsout->d.eax = PosLoadFonts(regsin->d.ecx,
+                                              regsin->d.edx,
+                                              regsin->d.esi,
+                                              (void *)regsin->d.ebx,
+                                              regsin->d.edi);
             }
 #endif
             else

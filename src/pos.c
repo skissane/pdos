@@ -2210,6 +2210,50 @@ unsigned int PosScancodeMap(unsigned char *newmap, int type)
 }
 
 
+/* F6,4D - load fonts */
+unsigned int PosLoadFonts(int start,
+                          int count,
+                          int depth,
+                          void *table,
+                          int block)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x4D;
+#ifdef __32BIT__
+    regsin.d.ebx=(int)table;
+    regsin.d.ecx = start;
+    regsin.d.edx = count;
+    regsin.d.esi = depth;
+    regsin.d.edi = block;
+#else
+    sregs.ds = FP_SEG(table);
+    regsin.x.bx = FP_OFF(table);
+    regsin.x.cx = start;
+    regsin.x.dx = count;
+    regsin.x.si = depth;
+    regsin.x.di = block;
+#endif
+    int86x(0x21,&regsin,&regsout,&sregs);
+#ifdef __32BIT__
+    if (!regsout.x.cflag)
+    {
+        regsout.d.eax = 0;
+    }
+    return (regsout.d.eax);
+#else
+    if (!regsout.x.cflag)
+    {
+        regsout.x.ax = 0;
+    }
+    return (regsout.x.ax);
+#endif
+}
+
+
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,
                                  unsigned int sectors,void *buf)
