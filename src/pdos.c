@@ -2298,7 +2298,8 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 pdosWriteText(ascii);
                 pdosWriteText(' ');
             }
-            else if (ascii == '\r')
+            /* we only get \r, but remapping may go direct to \n */
+            else if ((ascii == '\r') || (ascii == '\n'))
             {
                 /* not sure if \r should return just \n or both \r and \n */
                 /* probably best to force the C library to handle the \r
@@ -2311,14 +2312,22 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 pending[0] = '\n';
 #else
                 ascii = '\n';
+                if (!stdin_raw)
+                {
+                    pdosWriteText('\r');
+                    pdosWriteText(ascii);
+                }
 #endif
                 p[x] = ascii;
+                x++;
+                break;
             }
             else
             {
                 p[x] = ascii;
             }
             if (!stdin_raw) pdosWriteText(ascii);
+#if 0
             if (ascii == '\r')
             {
                 if (!stdin_raw) pdosWriteText('\n');
@@ -2332,6 +2341,7 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 }
                 break;
             }
+#endif
             if (stdin_raw)
             {
                 x++;
