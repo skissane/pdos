@@ -4092,6 +4092,20 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
         mybuf = buf;
         stream->theirBuffer = 1;
         size -= 8;
+#if defined(__PDOS386__)
+        if (mode == _IOLBF)
+        {
+            if (stream == stdin)
+            {
+                unsigned int dw;
+
+                PosGetDeviceInformation(0, &dw);
+                dw &= 0xff;
+                dw &= ~(1 << 5);
+                PosSetDeviceInformation(0, dw);
+            }
+        }
+#endif
     }
     if (!stream->permfile)
     {
