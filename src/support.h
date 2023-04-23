@@ -13,6 +13,7 @@ typedef struct {
     unsigned int edi;
     unsigned int cflag;
     unsigned int flags;
+    unsigned int ebp;
 } DWORDREGS;
 
 typedef struct {
@@ -32,6 +33,8 @@ typedef struct {
     unsigned short fill7;    
     unsigned short flags;
     unsigned short fill8;
+    unsigned short bp;
+    unsigned short fill9;
 } WORDREGS;
 
 typedef struct {
@@ -60,6 +63,7 @@ typedef struct {
     unsigned short di;
     unsigned short cflag;
     unsigned short flags;
+    unsigned short bp;
 } WORDREGS;
 
 typedef struct {
