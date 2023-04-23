@@ -512,7 +512,6 @@ int main(int argc, char **argv)
     {
         PosGetVideoInfo(&savedVideoState, sizeof(pos_video_info));
     }
-    setvbuf(stdin, NULL, _IONBF, 0);
     origpath = getenv("PATH");
     if (origpath != NULL)
     {
@@ -569,7 +568,6 @@ int main(int argc, char **argv)
                  __envptr = PosGetEnvBlock();
              }
         }
-        setvbuf(stdin, NULL, _IOLBF, 0);
         return (rc);
     }
     if (primary)
@@ -595,7 +593,6 @@ int main(int argc, char **argv)
     if (genuine_pdos) PosSetVideoAttribute(0x0C);
     printf("Thank you for using PCOMM!\n");
     if (genuine_pdos) PosSetVideoAttribute(savedVideoState.currentAttrib);
-    setvbuf(stdin, NULL, _IOLBF, 0);
     return (0);
 }
 
@@ -2267,7 +2264,11 @@ void safegets(char *buffer, int size, bool use_history)
     int j;
     int history_cursor = -1;
     int pos = 0;
+    /* this isn't ideal - it would be better if PDPCLIB was
+       able to return to line buffering using its own buffer */
+    static char sbuf[BUFSIZ];
 
+    setvbuf(stdin, NULL, _IONBF, 0);
     while (1)
     {
 
@@ -2378,7 +2379,10 @@ void safegets(char *buffer, int size, bool use_history)
             buffer[size] = '\0';
 
             if ((a == '\n') || (a == '\r'))
+            {
+                setvbuf(stdin, sbuf, _IOLBF, BUFSIZ);
                 return;
+            }
 
             bell();
         }
@@ -2395,6 +2399,7 @@ void safegets(char *buffer, int size, bool use_history)
 
                 buffer[i] = '\0';
 
+                setvbuf(stdin, sbuf, _IOLBF, BUFSIZ);
                 return;
             }
 
