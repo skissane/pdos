@@ -366,6 +366,39 @@ int BosGetVideoMode(unsigned int *columns, unsigned int *mode, unsigned int *pag
     return (0);
 }
 
+/* BosLoadActFonts - BIOS Int 10h Function 11h, SF 10h */
+unsigned int BosLoadActFonts(int start,
+                             int count,
+                             int depth,
+                             void *table,
+                             int block)
+{
+    union REGS regsin;
+    union REGS regsout;
+    struct SREGS sregs;
+
+    regsin.h.ah = 0x11;
+    regsin.h.al = 0x10;
+#ifdef __32BIT__
+    regsin.d.ecx = count;
+    regsin.d.edx = start;
+    sregs.es = (((unsigned long)table) >> 4) & 0xffffU;
+    regsin.d.ebp = ((unsigned long)table) & 0xf;
+    regsin.d.edi = (sregs.es << 16);
+#else
+    sregs.ds = FP_SEG(table);
+    regsin.x.bx = FP_OFF(table);
+    regsin.x.cx = start;
+    regsin.x.dx = count;
+    regsin.x.si = depth;
+    regsin.x.di = block;
+#endif
+    regsin.h.bl = block;
+    regsin.h.bh = depth;
+    int86x(0x10,&regsin,&regsout,&sregs);
+    return (0);
+}
+
 /* BosLoadTextModeRomFont - BIOS Int 10h Function 11h */
 int BosLoadTextModeRomFont(int font, int block)
 {

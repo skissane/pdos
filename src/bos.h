@@ -79,6 +79,13 @@ int BosReadGraphicsPixel(int page, /* 10:D */
 int BosWriteText(int page, int ch, int color); /* 10:E */
 int BosGetVideoMode(unsigned int *columns, unsigned int *mode, unsigned int *page); /* 10:F */
 
+/* BosLoadActFonts - BIOS Int 10h Function 11h, SF 10h */
+unsigned int BosLoadActFonts(int start,
+                             int count,
+                             int depth,
+                             void *table,
+                             int block);
+
 int BosLoadTextModeRomFont(int font, int block); /* 10:11:{11,12,14} */
 
 int BosVBEGetInfo(void *buffer); /* 10:4F00 */
