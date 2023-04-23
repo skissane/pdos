@@ -1946,6 +1946,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         *actualRead = tempRead;
         /* Windows returns DEL for backspace instead of ^H so we
            convert to ^H now */
+        /* this is presumably useful when line buffering is not in use */
         if (stream == stdin)
         {
             p = ptr;
