@@ -1978,6 +1978,13 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
             }
             if (ascii == 0)
             {
+                if (!stdin_raw)
+                {
+                    /* we can't handle special keys when doing line
+                       editing here at the moment, so just ignore them */
+                    continue;
+                }
+
                 if (scan == 0x48) /* up */
                 {
                     num_pending = 2;
@@ -2291,12 +2298,14 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                     ascii = '}';
                 }
             }
+            /* printf("ascii %x, x %d ", ascii, x); */
             if ((ascii == '\b') && (x > 0) && !stdin_raw)
             {
                 x--;
                 p[x] = '\0';
                 pdosWriteText(ascii);
                 pdosWriteText(' ');
+                /* we need one more backspace, but we fall through for that */
             }
             /* we only get \r, but remapping may go direct to \n */
             else if ((ascii == '\r') || (ascii == '\n'))
@@ -2352,6 +2361,7 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 x++;
             }
         }
+        /* printf("exiting with %d\n", x); */
         *readbytes = x;
         ret = 0;
     }
