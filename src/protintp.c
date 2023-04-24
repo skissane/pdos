@@ -60,9 +60,10 @@ static struct {
 } userInt[256];
 
 
-/* registers come in as eax, ebx, ecx, edx, esi, edi */
+/* registers come in as eax, ebx, ecx, edx, esi, edi,
+   cflag, flags, ebp */
 /* When translating to a real mode routine we need to set up
-   ax, bx, cx, dx, si, di, cflag, flags, es, blank, blank, ds */
+   ax, bx, cx, dx, si, di, cflag, flags, bp, es, blank, blank, ds */
 /* also note that since it is inappropriate to be using segment
    registers in protected mode, we use the upper 16 bits of esi
    for ds, and the upper 16 bits of edi for es, when translating
@@ -71,7 +72,7 @@ static struct {
    ebx, ecx and edx, to both set and obtain the high 16-bits. */
 void gotint(int intno, unsigned int *save)
 {
-    unsigned short newregs[12+4];
+    unsigned short newregs[13+4]; /* 4 for upper 16-bits of eax to edx */
     unsigned short *ssave;
     int x;
 
@@ -119,14 +120,15 @@ void gotint(int intno, unsigned int *save)
     newregs[5] = (unsigned short)save[5]; /* di */
     newregs[6] = 0;                       /* cflag */
     newregs[7] = 0;                       /* flags */
-    newregs[8] = (unsigned short)(save[5] >> 16); /* es = top edi */
-    newregs[9] = 0;                       /*  */
+    newregs[8] = (unsigned short)save[8]; /* bp */
+    newregs[9] = (unsigned short)(save[5] >> 16); /* es = top edi */
     newregs[10] = 0;                       /*  */
-    newregs[11] = (unsigned short)(save[4] >> 16); /* ds = top esi */
-    newregs[12 + 0] = (unsigned short)(save[0] >> 16); /* top eax */
-    newregs[12 + 1] = (unsigned short)(save[1] >> 16); /* top ebx */
-    newregs[12 + 2] = (unsigned short)(save[2] >> 16); /* top ecx */
-    newregs[12 + 3] = (unsigned short)(save[3] >> 16); /* top edx */
+    newregs[11] = 0;                       /*  */
+    newregs[12] = (unsigned short)(save[4] >> 16); /* ds = top esi */
+    newregs[13 + 0] = (unsigned short)(save[0] >> 16); /* top eax */
+    newregs[13 + 1] = (unsigned short)(save[1] >> 16); /* top ebx */
+    newregs[13 + 2] = (unsigned short)(save[2] >> 16); /* top ecx */
+    newregs[13 + 3] = (unsigned short)(save[3] >> 16); /* top edx */
     *intbuffer = intno;
     memcpy(intbuffer + 1, newregs, sizeof newregs);
     runreal_p(dorealint, 0);
@@ -141,11 +143,12 @@ void gotint(int intno, unsigned int *save)
     ssave[3*2] = newregs[3]; /* dx */
     ssave[3*2 + 1] = newregs[12 + 3]; /* high edx */
     ssave[4*2] = newregs[4]; /* si */
-    ssave[4*2 + 1] = newregs[11]; /* ds */
+    ssave[4*2 + 1] = newregs[12]; /* ds */
     ssave[5*2] = newregs[5]; /* di */
-    ssave[5*2 + 1] = newregs[8]; /* es */
+    ssave[5*2 + 1] = newregs[9]; /* es */
     save[6] = newregs[6]; /* cflag */
     save[7] = newregs[7]; /* flags */
+    ssave[8*2] = newregs[8]; /* bp */
     /* Protected mode handler of IRQ 0 is called after the BIOS one
      * so the BIOS handler is not affected by task switch. */
     if (userInt[x].intno == 0xB0) userInt[x].func(save);
