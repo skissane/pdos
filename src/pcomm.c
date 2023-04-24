@@ -189,6 +189,7 @@ CMDPROTO(exit);
 CMDPROTO(goto);
 CMDPROTO(help);
 CMDPROTO(keybmap);
+CMDPROTO(loadfont);
 CMDPROTO(mcd);
 CMDPROTO(md);
 CMDPROTO(monitor);
@@ -261,6 +262,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(goto,"","GOTO label in batch file"),
     CMDDEF(help,"","Provides information about PDOS commands"),
     CMDDEF(keybmap,"","Remaps the keyboard"),
+    CMDDEF(loadfont,"","Loads 8 * 14 fonts"),
     CMDDEF(mcd,"","Make new directory and change to it"),
     CMDDEF(md,"|mkdir","Creates new directories"),
     CMDDEF(monitor,"","Enter the system monitor"),
@@ -1855,6 +1857,14 @@ static void cmd_keybmap_help(void)
     printf("new hex code - especially for use with non-US keyboards\n");
 }
 
+static void cmd_loadfont_help(void)
+{
+    printf("LOADFONT [startchar] [filename]\n");
+    printf("allows you to provide a file containing 8 * 14 fonts, ie\n");
+    printf("14 bytes per character, to be loaded at the given hex character\n");
+    printf("e.g. loadfont 0x80 file.dat\n");
+}
+
 static void cmd_scanmap_help(void)
 {
     printf("SCANMAP [off|filename] [shift|ctrl]\n");
@@ -2708,6 +2718,21 @@ static int cmd_keybmap_run(char *arg)
         }
         PosKeyboardMap(buf);
     }
+    return 0;
+}
+
+static int cmd_loadfont_run(char *arg)
+{
+    int flag;
+    int startch;
+    char *fonts = "\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff";
+
+    CMD_REQUIRES_ARGS(arg);
+    CMD_REQUIRES_GENUINE();
+    arg = stringTrimBoth(arg);
+    startch = strtol(arg, NULL, 0);
+    PosLoadFonts(startch, 1, 14, fonts, 0);
     return 0;
 }
 
