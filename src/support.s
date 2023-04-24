@@ -41,71 +41,90 @@ _int86:
         mov     4(%esi), %ebx
         mov     8(%esi), %ecx
         mov     12(%esi), %edx
+
+        / preserve ebp
+        push    %ebp
+        / next is actually ebp
+        mov     32(%esi), %edi
+        / new ebp ready on stack
+        push    %edi
+
         mov     20(%esi), %edi
         mov     16(%esi), %esi
               
         cmpl    $0x10, 8(%ebp)
         jne     not10
+        pop     %ebp
         int     $0x10
         jmp     fintry
 not10:
 
         cmpl    $0x13, 8(%ebp)
         jne     not13
+        pop     %ebp
         int     $0x13
         jmp     fintry
 not13:
 
         cmpl    $0x14, 8(%ebp)
         jne     not14
+        pop     %ebp
         int     $0x14
         jmp     fintry
 not14:
 
         cmpl    $0x15, 8(%ebp)
         jne     not15
+        pop     %ebp
         int     $0x15
         jmp     fintry
 not15:
 
         cmpl    $0x16, 8(%ebp)
         jne     not16
+        pop     %ebp
         int     $0x16
         jmp     fintry
 not16:
 
         cmpl    $0x1A, 8(%ebp)
         jne     not1A
+        pop     %ebp
         int     $0x1A
         jmp     fintry  
 not1A:
 
         cmpl    $0x20, 8(%ebp)
         jne     not20
+        pop     %ebp
         int     $0x20
         jmp     fintry
 not20:
 
         cmpl    $0x21, 8(%ebp)
         jne     not21
+        pop     %ebp
         int     $0x21
         jmp     fintry
 not21:
 
         cmpl    $0x25, 8(%ebp)
         jne     not25
+        pop     %ebp
         int     $0x25
         jmp     fintry
 not25:
 
         cmpl    $0x26, 8(%ebp)
         jne     not26
+        pop     %ebp
         int     $0x26
         jmp     fintry
 not26:
 
         cmpl    $0x80, 8(%ebp)
         jne     not80
+        pop     %ebp
         int     $0x80
         jmp     fintry
 not80:
@@ -113,44 +132,61 @@ not80:
 / Copied BIOS interrupts.
         cmpl    $0xA0, 8(%ebp)
         jne     notA0
+        pop     %ebp
         int     $0xA0
         jmp     fintry
 notA0:
 
         cmpl    $0xA3, 8(%ebp)
         jne     notA3
+        pop     %ebp
         int     $0xA3
         jmp     fintry
 notA3:
 
         cmpl    $0xA4, 8(%ebp)
         jne     notA4
+        pop     %ebp
         int     $0xA4
         jmp     fintry
 notA4:
 
         cmpl    $0xA5, 8(%ebp)
         jne     notA5
+        pop     %ebp
         int     $0xA5
         jmp     fintry
 notA5:
 
         cmpl    $0xA6, 8(%ebp)
         jne     notA6
+        pop     %ebp
         int     $0xA6
         jmp     fintry
 notA6:
 
         cmpl    $0xAA, 8(%ebp)
         jne     notAA
+        pop     %ebp
         int     $0xAA
         jmp     fintry
 notAA:
 
+/ any unknown interrupt still needs to clean up ebp
+        pop     %ebp
+
 fintry:
+        / new result
+        push    %ebp
         push    %esi
+        / this is the old value, not new result
+        mov     8(%esp), %ebp
         mov     16(%ebp), %esi
         mov     %eax, 0(%esi)
+        / actually new ebp
+        mov     4(%esp), %eax
+        / new ebp
+        mov     %eax, 32(%esi)
         mov     %ebx, 4(%esi)
         mov     %ecx, 8(%esi)
         mov     %edx, 12(%esi)
@@ -168,6 +204,13 @@ nocarry:
         pushf
         pop     %eax
         mov     %eax, 28(%esi)
+
+        / we already popped esi, but the new ebp hasn't been popped yet
+        / we don't actually need that value anymore, so clobber eax instead
+        pop     %eax
+        / we already have this value loaded, but we need to
+        / get the stack back to previous state, so pop the same value
+        pop     %ebp
 
         pop     %edi
         pop     %esi
