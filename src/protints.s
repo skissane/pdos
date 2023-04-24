@@ -338,6 +338,8 @@ level10:
 / before switch back happens
         push   saveess
         push   saveesp
+/ some interrupts need bp, so we now make that accessible
+        push   %ebp
         push   %edx
 / above is actually room for flags
         push   %edx
@@ -372,6 +374,8 @@ level10:
         mov    %ebx, saveebx
         pop    %ebx
 / above is actually flags
+/ now we have ebp
+        pop    %ebp
         pop    saveesp
         pop    saveess
 / above are saved saveesp and saveess to handle task switches
@@ -503,6 +507,8 @@ level10c:
 / before switch back happens
         push   saveess
         push   saveesp
+/ some interrupts need bp, so we now make that accessible
+        push   %ebp
         push   %edx
 / above is actually room for flags
         push   %edx
@@ -537,6 +543,8 @@ level10c:
         mov    %ebx, saveebx
         pop    %ebx
 / above is actually flags
+/ now we have ebp
+        pop    %ebp
         pop    saveesp
         pop    saveess
 / above are saved saveesp and saveess to handle task switches
@@ -617,6 +625,8 @@ level10e:
         push   saveesp
         push   saveerrorcode
 / above is duplicated error code
+/ some interrupts need bp, so we now make that accessible
+        push   %ebp
         push   %edx
 / above is actually room for flags
         push   %edx
@@ -651,6 +661,8 @@ level10e:
         mov    %ebx, saveebx
         pop    %ebx
 / above is actually flags
+/ now we have ebp
+        pop    %ebp
         addl   $4, %esp
 / above is the duplicated error code
         pop    saveesp
