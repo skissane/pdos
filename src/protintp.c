@@ -135,13 +135,13 @@ void gotint(int intno, unsigned int *save)
     memcpy(newregs, intbuffer + 1, sizeof newregs);
     ssave = (unsigned short *)save;
     ssave[0*2] = newregs[0]; /* ax */
-    ssave[0*2 + 1] = newregs[12 + 0]; /* high eax */
+    ssave[0*2 + 1] = newregs[13 + 0]; /* high eax */
     ssave[1*2] = newregs[1]; /* bx */
-    ssave[1*2 + 1] = newregs[12 + 1]; /* high ebx */
+    ssave[1*2 + 1] = newregs[13 + 1]; /* high ebx */
     ssave[2*2] = newregs[2]; /* cx */
-    ssave[2*2 + 1] = newregs[12 + 2]; /* high ecx */
+    ssave[2*2 + 1] = newregs[13 + 2]; /* high ecx */
     ssave[3*2] = newregs[3]; /* dx */
-    ssave[3*2 + 1] = newregs[12 + 3]; /* high edx */
+    ssave[3*2 + 1] = newregs[13 + 3]; /* high edx */
     ssave[4*2] = newregs[4]; /* si */
     ssave[4*2 + 1] = newregs[12]; /* ds */
     ssave[5*2] = newregs[5]; /* di */
