@@ -3830,7 +3830,7 @@ int int0(unsigned int *regs)
            regs[4], regs[5]);
     printf("module loaded at %p, entry point %08lX\n", loadaddr, entry_point);
     printf("regs are at %p\n", regs);
-    oldsp = (unsigned int *)regs[8];
+    oldsp = (unsigned int *)regs[9];
     printf("old stack starts at %p\n", oldsp);
     ebp = (unsigned int *)regs[-4];
     printf("EBP should be %p\n", ebp);
@@ -3871,7 +3871,7 @@ int int1(unsigned int *regs)
            regs[4], regs[5]);
     printf("module loaded at %p, entry point %08lX\n", loadaddr, entry_point);
     printf("regs are at %p\n", regs);
-    oldsp = (unsigned int *)regs[8];
+    oldsp = (unsigned int *)regs[9];
     printf("old stack starts at %p\n", oldsp);
     ebp = (unsigned int *)regs[-4];
     printf("EBP should be %p\n", ebp);
@@ -3936,7 +3936,7 @@ int int3(unsigned int *regs)
            regs[4], regs[5]);
     printf("module loaded at %p, entry point %08lX\n", loadaddr, entry_point);
     printf("regs are at %p\n", regs);
-    oldsp = (unsigned int *)regs[8];
+    oldsp = (unsigned int *)regs[9];
     printf("old stack starts at %p\n", oldsp);
     ebp = (unsigned int *)regs[-4];
     printf("EBP should be %p\n", ebp);
@@ -3970,13 +3970,13 @@ int int0D(unsigned int *regs)
 {
     printf("General Protection Fault occurred\n");
     printf("(Protected Mode Exception 0xD)\n");
-    printf("Error code is %08x\n", regs[8]);
-    if (regs[8])
+    printf("Error code is %08x\n", regs[9]);
+    if (regs[9])
     {
-        int table = (regs[8] >> 1) & 0x3;
+        int table = (regs[9] >> 1) & 0x3;
 
-        if (regs[8] & 0x1) printf("Origin external to processor\n");
-        printf("Selector index 0x%x in ", regs[8] >> 3);
+        if (regs[9] & 0x1) printf("Origin external to processor\n");
+        printf("Selector index 0x%x in ", regs[9] >> 3);
         if (table == 0) printf("GDT\n");
         else if (table == 0x2) printf("LDT\n");
         else printf("IDT\n");
@@ -3987,12 +3987,12 @@ int int0D(unsigned int *regs)
     return (0);
 }
 
-/* registers come in as eax, ebx, ecx, edx, esi, edi, cflag */
+/* registers come in as eax, ebx, ecx, edx, esi, edi, cflag, flags, ebp */
 int int0E(unsigned int *regs)
 {
     printf("Page Fault occurred (Protected Mode Exception 0xE)\n");
     printf("while accessing virtual address 0x%08x\n", readCR2());
-    printf("Error code is %08x\n", regs[8]);
+    printf("Error code is %08x\n", regs[9]);
     printf("System halting\n");
     for (;;);
 
