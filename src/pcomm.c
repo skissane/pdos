@@ -2725,9 +2725,8 @@ static int cmd_loadfont_run(char *arg)
 {
     int flag;
     int startch;
-    static char fonts[14];
-    /* char *fonts = "\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff"; */
+    char *fonts = "\xff\xff\xff\xff\xff\xff\xff"
+                  "\xff\xff\xff\xff\xff\xff\xff";
 
     CMD_REQUIRES_ARGS(arg);
     CMD_REQUIRES_GENUINE();
