@@ -2725,14 +2725,38 @@ static int cmd_loadfont_run(char *arg)
 {
     int flag;
     int startch;
-    char *fonts = "\xff\xff\xff\xff\xff\xff\xff"
-                  "\xff\xff\xff\xff\xff\xff\xff";
+    char fonts[14 * 256];
+    int cnt;
+    char *p;
+    FILE *fp;
 
     CMD_REQUIRES_ARGS(arg);
     CMD_REQUIRES_GENUINE();
     arg = stringTrimBoth(arg);
+    p = strchr(arg, ' ');
+    if (p == NULL)
+    {
+        printf("need 2 parameters\n");
+        return 0;
+    }
+    p++;
     startch = strtol(arg, NULL, 0);
-    PosLoadFonts(startch, 1, 14, fonts, 0);
+    fp = fopen(p, "rb");
+    if (fp == NULL)
+    {
+        printf("couldn't open %s\n", p);
+        return 0;
+    }
+    cnt = fread(fonts, 1, sizeof fonts, fp);
+    if ((cnt % 14) != 0)
+    {
+        printf("file must be a multiple of 14\n");
+        fclose(fp);
+        return 0;
+    }
+    cnt /= 14;
+    PosLoadFonts(startch, cnt, 14, fonts, 0);
+    fclose(fp);
     return 0;
 }
 
