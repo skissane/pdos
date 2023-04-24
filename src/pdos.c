@@ -3832,6 +3832,9 @@ int int0(unsigned int *regs)
     printf("regs are at %p\n", regs);
     oldsp = (unsigned int *)regs[9];
     printf("old stack starts at %p\n", oldsp);
+    /* now that ebp is provided as a register, we should stop relying
+       on this kludge that looks at the ebp that was saved when doing
+       a call. ie change -4 to 8 */
     ebp = (unsigned int *)regs[-4];
     printf("EBP should be %p\n", ebp);
     printf("interrupt address is %08X\n", oldsp[8]);
