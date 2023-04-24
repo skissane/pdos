@@ -45,85 +45,106 @@ mov ax, word ptr [si + 0]
 mov bx, word ptr [si + 2]
 mov cx, word ptr [si + 4]
 mov dx, word ptr [si + 6]
+
+; now get bp ready
+; first preserve bp, for restoration after interrupt
+push bp
+; we'll use di instead of bp as a scratch register
+mov di, word ptr [si + 16]
+; now ready to be loaded
+push di  ; really bp from caller
+
 mov di, word ptr [si + 10]
 mov si, word ptr [si + 8]
 
-push bp
 
 cmp intnum, 08h
 jne not8
+pop bp
 int 08h
 jmp fintry
 not8:
 
 cmp intnum, 09h
 jne not9
+pop bp
 int 09h
 jmp fintry
 not9:
 
 cmp intnum, 010h
 jne not10
+pop bp
 int 010h
 jmp fintry
 not10:
 
 cmp intnum, 012h
 jne not12
+pop bp
 int 012h
 jmp fintry
 not12:
 
 cmp intnum, 013h
 jne not13
+pop bp
 int 013h
 jmp fintry
 not13:
 
 cmp intnum, 014h
 jne not14
+pop bp
 int 014h
 jmp fintry
 not14:
 
 cmp intnum, 015h
 jne not15
+pop bp
 int 015h
 jmp fintry
 not15:
 
 cmp intnum, 016h
 jne not16
+pop bp
 int 016h
 jmp fintry
 not16:
 
 cmp intnum, 01Ah
 jne not1A
+pop bp
 int 01Ah
 jmp fintry
 not1A:
 
 cmp intnum, 020h
 jne not20
+pop bp
 int 020h
 jmp fintry
 not20:
 
 cmp intnum, 021h
 jne not21
+pop bp
 int 021h
 jmp fintry
 not21:
 
 cmp intnum, 025h
 jne not25
+pop bp
 int 025h
 jmp fintry
 not25:
 
 cmp intnum, 026h
 jne not26
+pop bp
 int 026h
 jmp fintry
 not26:
@@ -131,36 +152,42 @@ not26:
 ; Copied BIOS interrupts for PDOS-32.
 cmp intnum, 0A0h
 jne notA0
+pop bp
 int 0A0h
 jmp fintry
 notA0:
 
 cmp intnum, 0A3h
 jne notA3
+pop bp
 int 0A3h
 jmp fintry
 notA3:
 
 cmp intnum, 0A4h
 jne notA4
+pop bp
 int 0A4h
 jmp fintry
 notA4:
 
 cmp intnum, 0A5h
 jne notA5
+pop bp
 int 0A5h
 jmp fintry
 notA5:
 
 cmp intnum, 0A6h
 jne notA6
+pop bp
 int 0A6h
 jmp fintry
 notA6:
 
 cmp intnum, 0AAh
 jne notAA
+pop bp
 int 0AAh
 jmp fintry
 notAA:
@@ -168,28 +195,42 @@ notAA:
 ; Copied BIOS IRQ handler interrupts for PDOS-32.
 cmp intnum, 0B0h
 jne notB0
+pop bp
 int 0B0h
 jmp fintry
 notB0:
 
 cmp intnum, 0B1h
 jne notB1
+pop bp
 int 0B1h
 jmp fintry
 notB1:
 
 cmp intnum, 0BEh
 jne notBE
+pop bp
 int 0BEh
 jmp fintry
 notBE:
 
+
+; if there was no applicable interrupt found, we still need to fix the stack
+pop bp
+
+
 fintry:
 
-pop bp
+push bp   ; new value from interrupt
 push si
 
 push ax
+
+mov bp, sp
+mov ax, [bp+6] ; this is the old, not new (from interrupt), bp
+push ax
+pop bp
+
 
 mov ax, 0
 jnc flagclear
@@ -229,6 +270,12 @@ mov [si + 6], dx
 mov [si + 10], di
 pop ax ; actually si
 mov [si + 8], ax
+pop ax ; actually bp
+mov [si + 16], ax ; bp
+
+; we already have this value, but we need to restore the
+; stack to its previous state
+pop bp
 
 ret
 
