@@ -21,6 +21,7 @@ enum option_index {
     LD_OPTION_IGNORED = 0,
     LD_OPTION_HELP,
     LD_OPTION_OUTPUT,
+    LD_OPTION_SHARED_LIBRARY,
     LD_OPTION_VERSION,
     LD_OPTION_VERSION_LONG
 
@@ -38,8 +39,10 @@ static const struct short_option short_options[] = {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
+    { STR_AND_LEN("Bshareable"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
     { STR_AND_LEN("output"), LD_OPTION_OUTPUT, OPTION_HAS_ARG},
+    { STR_AND_LEN("shared"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("strip-all"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("version"), LD_OPTION_VERSION_LONG, OPTION_NO_ARG},
     { NULL, 0, 0}
@@ -53,6 +56,7 @@ static void print_help (void)
     printf ("Options:\n");
     printf ("  --help                      Print option help\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
+    printf ("  -shared, -Bshareable        Create a shared library\n");
     printf ("  -s, --strip-all             Ignored\n");
     printf ("  -v, --version               Print version information\n");
     
@@ -74,6 +78,10 @@ static void use_option (enum option_index option_index, char *arg)
 
         case LD_OPTION_OUTPUT:
             ld_state->output_filename = arg;
+            break;
+
+        case LD_OPTION_SHARED_LIBRARY:
+            ld_state->create_shared_library = 1;
             break;
 
         case LD_OPTION_VERSION:

@@ -155,6 +155,7 @@ struct object_file *object_file_make (size_t symbol_count, const char *filename)
 
     of->symbol_array = symbol_count ? xmalloc (sizeof (*of->symbol_array) * (symbol_count)) : NULL;
     of->symbol_count = symbol_count;
+    if (of->symbol_array) memset (of->symbol_array, 0, sizeof (*of->symbol_array) * of->symbol_count);
 
     of->next = NULL;
     *last_object_file_p = of;

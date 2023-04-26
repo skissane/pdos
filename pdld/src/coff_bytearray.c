@@ -203,6 +203,38 @@ void write_struct_section_table_entry (void *memory, struct section_table_entry_
     COPY(section_table_entry, Characteristics, 4);
 }
 
+
+void write_struct_IMAGE_EXPORT_DIRECTORY (void *memory, struct IMAGE_EXPORT_DIRECTORY_internal *IMAGE_EXPORT_DIRECTORY_internal)
+{
+    struct IMAGE_EXPORT_DIRECTORY_file *IMAGE_EXPORT_DIRECTORY_file = memory;
+
+    COPY(IMAGE_EXPORT_DIRECTORY, ExportFlags, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, TimeDateStamp, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, MajorVersion, 2);
+    COPY(IMAGE_EXPORT_DIRECTORY, MinorVersion, 2);
+    COPY(IMAGE_EXPORT_DIRECTORY, NameRVA, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, OrdinalBase, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, AddressTableEntries, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, NumberOfNamePointers, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, ExportAddressTableRVA, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, NamePointerRVA, 4);
+    COPY(IMAGE_EXPORT_DIRECTORY, OrdinalTableRVA, 4);
+}
+
+void write_struct_EXPORT_Name_Pointer_Table (void *memory, struct EXPORT_Name_Pointer_Table_internal *EXPORT_Name_Pointer_Table_internal)
+{
+    struct EXPORT_Name_Pointer_Table_file *EXPORT_Name_Pointer_Table_file = memory;
+
+    COPY(EXPORT_Name_Pointer_Table, FunctionNameRVA, 4);
+}
+
+void write_struct_EXPORT_Ordinal_Table (void *memory, struct EXPORT_Ordinal_Table_internal *EXPORT_Ordinal_Table_internal)
+{
+    struct EXPORT_Ordinal_Table_file *EXPORT_Ordinal_Table_file = memory;
+
+    COPY(EXPORT_Ordinal_Table, FunctionOrdinal, 2);
+}
+
 void write_struct_IMAGE_BASE_RELOCATION (void *memory, struct IMAGE_BASE_RELOCATION_internal *IMAGE_BASE_RELOCATION_internal)
 {
     struct IMAGE_BASE_RELOCATION_file *IMAGE_BASE_RELOCATION_file = memory;

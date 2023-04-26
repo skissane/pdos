@@ -20,4 +20,7 @@ void write_struct_coff_header (void *memory, struct coff_header_internal *coff_h
 void write_struct_optional_header (void *memory, struct optional_header_internal *optional_header_internal);
 void write_struct_IMAGE_DATA_DIRECTORY (void *memory, struct IMAGE_DATA_DIRECTORY_internal *IMAGE_DATA_DIRECTORY_internal);
 void write_struct_section_table_entry (void *memory, struct section_table_entry_internal *section_table_entry_internal);
+void write_struct_IMAGE_EXPORT_DIRECTORY (void *memory, struct IMAGE_EXPORT_DIRECTORY_internal *IMAGE_EXPORT_DIRECTORY_internal);
+void write_struct_EXPORT_Name_Pointer_Table (void *memory, struct EXPORT_Name_Pointer_Table_internal *EXPORT_Name_Pointer_Table_internal);
+void write_struct_EXPORT_Ordinal_Table (void *memory, struct EXPORT_Ordinal_Table_internal *EXPORT_Ordinal_Table_internal);
 void write_struct_IMAGE_BASE_RELOCATION (void *memory, struct IMAGE_BASE_RELOCATION_internal *IMAGE_BASE_RELOCATION_internal);

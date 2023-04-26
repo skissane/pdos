@@ -86,6 +86,7 @@ struct optional_header_internal {
     unsigned long BaseOfData;
 
 #define DEFAULT_EXE_IMAGE_BASE 0x00400000
+#define DEFAULT_DLL_IMAGE_BASE 0x10000000
     unsigned long ImageBase;
 #define DEFAULT_SECTION_ALIGNMENT 0x1000
     unsigned long SectionAlignment;
@@ -311,6 +312,62 @@ struct string_table_header_file {
 
     unsigned char StringTableSize[4]; /* Including the size of the header itself. */
 
+};
+
+struct IMAGE_EXPORT_DIRECTORY_internal {
+
+    unsigned long ExportFlags; /* Reserved, must be 0. */
+    unsigned long TimeDateStamp;
+    unsigned short MajorVersion;
+    unsigned short MinorVersion;
+    unsigned long NameRVA;
+    unsigned long OrdinalBase; /* Usually set to 1. */
+    unsigned long AddressTableEntries;
+    unsigned long NumberOfNamePointers;
+    unsigned long ExportAddressTableRVA;
+    unsigned long NamePointerRVA;
+    unsigned long OrdinalTableRVA;
+
+};
+
+struct IMAGE_EXPORT_DIRECTORY_file {
+
+    unsigned char ExportFlags[4];
+    unsigned char TimeDateStamp[4];
+    unsigned char MajorVersion[2];
+    unsigned char MinorVersion[2];
+    unsigned char NameRVA[4];
+    unsigned char OrdinalBase[4];
+    unsigned char AddressTableEntries[4];
+    unsigned char NumberOfNamePointers[4];
+    unsigned char ExportAddressTableRVA[4];
+    unsigned char NamePointerRVA[4];
+    unsigned char OrdinalTableRVA[4];
+
+};
+
+struct EXPORT_Address_Table_internal {
+    unsigned long FunctionRVA;
+};
+
+struct EXPORT_Address_Table_file {
+    unsigned char FunctionRVA[4];
+};
+
+struct EXPORT_Name_Pointer_Table_internal {
+    unsigned long FunctionNameRVA;
+};
+
+struct EXPORT_Name_Pointer_Table_file {
+    unsigned char FunctionNameRVA[4];
+};
+
+struct EXPORT_Ordinal_Table_internal {
+    unsigned short FunctionOrdinal;
+};
+
+struct EXPORT_Ordinal_Table_file {
+    unsigned char FunctionOrdinal[2];
 };
 
 struct IMPORT_Directory_Table_internal {

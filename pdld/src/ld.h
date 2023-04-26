@@ -27,6 +27,7 @@ extern const char *program_name;
 
 struct ld_state {
     const char *output_filename;
+    int create_shared_library;
     int no_input_files_is_fine;
     
     address_type base_address;

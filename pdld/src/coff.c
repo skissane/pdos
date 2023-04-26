@@ -42,6 +42,14 @@ static struct section_part *iat_last_part = NULL;
 
 static struct section *last_section;
 
+struct name_list {
+    struct name_list *next;
+    char *name;
+};
+
+static struct name_list *export_name_list = NULL;
+static struct name_list **last_export_name_list_p = &export_name_list;
+
 static unsigned long translate_section_flags_to_Characteristics (flag_int flags) {
 
     unsigned long Characteristics = 0;
@@ -164,6 +172,7 @@ static void write_sections (unsigned char *file)
 
 address_type coff_get_base_address (void)
 {
+    if (ld_state->create_shared_library) return DEFAULT_DLL_IMAGE_BASE;
     return DEFAULT_EXE_IMAGE_BASE;
 }
 
@@ -172,11 +181,170 @@ address_type coff_get_first_section_rva (void)
     return ALIGN (size_of_headers, DEFAULT_SECTION_ALIGNMENT);
 }
 
+static int name_compar (const void *a, const void *b)
+{
+    return strcmp (*(char **)a, *(char **)b);
+}
+
+static void generate_edata (void)
+{
+    struct object_file *of;
+    struct section *section;
+    struct section_part *part;
+    size_t num_names, name_table_size;
+    char **names;
+    size_t i;
+    struct symbol *symbol;
+    struct relocation_entry_internal *relocs;
+    size_t name_table_offset;
+    struct IMAGE_EXPORT_DIRECTORY_internal ied;
+
+    {
+        struct name_list *name_list, *next_name_list;
+
+        for (name_list = export_name_list, num_names = 0, name_table_size = 0;
+             name_list;
+             name_list = name_list->next) {
+            num_names++;
+            name_table_size += strlen (name_list->name) + 1;
+        }
+
+        names = xmalloc (sizeof (*names) * num_names);
+        for (name_list = export_name_list, i = 0;
+             name_list;
+             name_list = next_name_list, i++) {
+            next_name_list = name_list->next;
+            names[i] = name_list->name;
+            free (name_list);
+        }
+    }
+
+    name_table_size += strlen (ld_state->output_filename) + 1;
+    qsort (names, num_names, sizeof (*names), &name_compar);
+
+    of = object_file_make (1 + num_names, "FAKE_LD_FILE");
+    section = section_find_or_make (".edata");
+    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+    section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
+    part = section_part_new (section, of);
+
+    part->content_size = (sizeof (struct IMAGE_EXPORT_DIRECTORY_file)
+                          + (num_names
+                             * (sizeof (struct EXPORT_Address_Table_file)
+                                + sizeof (struct EXPORT_Name_Pointer_Table_file)
+                                + sizeof (struct EXPORT_Ordinal_Table_file)))
+                          + name_table_size);
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+    section_append_section_part (section, part);
+
+    part->relocation_count = 4 + num_names * 2;
+    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    relocs = part->relocation_array;
+
+    of->symbol_array[0].name = xstrdup (section->name);
+    of->symbol_array[0].value = 0;
+    of->symbol_array[0].part = part;
+    of->symbol_array[0].section_number = 1;
+
+    name_table_offset = (sizeof (struct IMAGE_EXPORT_DIRECTORY_file)
+                          + (num_names
+                             * (sizeof (struct EXPORT_Address_Table_file)
+                                + sizeof (struct EXPORT_Name_Pointer_Table_file)
+                                + sizeof (struct EXPORT_Ordinal_Table_file))));
+
+    {
+        ied.ExportFlags = 0;
+        if (insert_timestamp) {
+            /* This timestamp is going to have different value than the timestamp in the COFF header
+             * but that is not forbidden. */
+            time_t time_stamp;
+            time_stamp = time (NULL);
+            ied.TimeDateStamp = (unsigned long)time_stamp;
+        } else {
+            ied.TimeDateStamp = 0;
+        }
+        ied.MajorVersion = 0;
+        ied.MinorVersion = 0;
+        ied.NameRVA = name_table_offset;
+        ied.OrdinalBase = 1;
+        ied.AddressTableEntries = num_names;
+        ied.NumberOfNamePointers = num_names;
+        ied.ExportAddressTableRVA = sizeof (struct IMAGE_EXPORT_DIRECTORY_file);
+        ied.NamePointerRVA = ied.ExportAddressTableRVA + num_names * sizeof (struct EXPORT_Address_Table_file);
+        ied.OrdinalTableRVA = ied.NamePointerRVA + num_names * sizeof (struct EXPORT_Name_Pointer_Table_file);
+
+        write_struct_IMAGE_EXPORT_DIRECTORY (part->content, &ied);
+
+        for (i = 0; i < 4; i++) {
+            relocs[i].SymbolTableIndex = 0;
+            relocs[i].Type = IMAGE_REL_I386_DIR32NB;
+        }
+        relocs[0].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NameRVA);
+        relocs[1].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, ExportAddressTableRVA);
+        relocs[2].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NamePointerRVA);
+        relocs[3].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, OrdinalTableRVA);
+        relocs += 4;
+    }
+
+    symbol = of->symbol_array + 1;
+    strcpy ((char *)(part->content + name_table_offset), ld_state->output_filename);
+    name_table_offset += strlen (ld_state->output_filename) + 1;
+    for (i = 0; i < num_names; i++) {
+        {
+            /* This underscore problem is likely much more complex
+             * but this workaround should be enough for now. */
+            symbol->name = xmalloc (1 + strlen (names[i]) + 1);
+            symbol->name[0] = '_';
+            strcpy (symbol->name + 1, names[i]);
+            symbol->value = 0;
+            symbol->part = NULL;
+            symbol->section_number = 0;
+            symbol_record_external_symbol (symbol);
+            symbol++;
+            relocs[0].VirtualAddress = ied.ExportAddressTableRVA + sizeof (struct EXPORT_Address_Table_file) * i;
+            relocs[0].SymbolTableIndex = i + 1;
+            relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+            relocs++;
+        }
+        {
+            struct EXPORT_Name_Pointer_Table_internal npt;
+            npt.FunctionNameRVA = name_table_offset;
+            write_struct_EXPORT_Name_Pointer_Table (part->content + ied.NamePointerRVA
+                                                    + sizeof (struct EXPORT_Name_Pointer_Table_file) * i,
+                                                    &npt);
+            relocs[0].VirtualAddress = ied.NamePointerRVA + sizeof (struct EXPORT_Name_Pointer_Table_file) * i;
+            relocs[0].SymbolTableIndex = 0;
+            relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+            relocs++;
+        }
+        {
+            struct EXPORT_Ordinal_Table_internal ot;
+            ot.FunctionOrdinal = i;
+            write_struct_EXPORT_Ordinal_Table (part->content + ied.OrdinalTableRVA
+                                               + sizeof (struct EXPORT_Ordinal_Table_file) * i,
+                                               &ot);
+        }
+        strcpy ((char *)(part->content + name_table_offset), names[i]);
+        name_table_offset += strlen (names[i]) + 1;
+    }
+
+    for (i = 0; i < num_names; i++) {
+        free (names[i]);
+    }
+
+    free (names);
+}
+
 void coff_before_link (void)
 {
     struct section *section;
     struct subsection *subsection;
     struct section_part *part;
+
+    if (export_name_list) {
+        generate_edata ();
+    }
 
     if (generate_reloc_section) {
         section = section_find_or_make (".reloc");
@@ -484,6 +652,7 @@ void coff_write (const char *filename)
                                      + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file));
     
     coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_DEBUG_STRIPPED;
+    if (ld_state->create_shared_library) coff_hdr.Characteristics |= IMAGE_FILE_DLL;
     if (!generate_reloc_section) coff_hdr.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
 
     write_struct_coff_header (pos, &coff_hdr);
@@ -539,27 +708,44 @@ void coff_write (const char *filename)
         for (i = 0; i < NUMBER_OF_DATA_DIRECTORIES; i++) {
             struct IMAGE_DATA_DIRECTORY_internal idd = {0};
 
-            if (i == 1) {
-                /* IMPORT Table. */
-                section = section_find (".idata");
-                if (section) {
-                    idd.VirtualAddress = section->rva;
-                    idd.Size = section->total_size;
-                }
-            } else if (i == 5) {
-                /* BASE RELOCATION Table. */
-                section = section_find (".reloc");
-                if (section) {
-                    idd.VirtualAddress = section->rva;
-                    idd.Size = section->total_size;
-                }
-            } else if (i == 12) {
-                /* IMPORT Address Table. */
-                section = section_find (".idata");
-                if (section && iat_first_part) {
-                    idd.VirtualAddress = iat_first_part->rva;
-                    idd.Size = iat_last_part->rva + iat_last_part->content_size - iat_first_part->rva;
-                }
+            switch (i) {
+
+                case 0:
+                    /* EXPORT Table. */
+                    section = section_find (".edata");
+                    if (section) {
+                        idd.VirtualAddress = section->rva;
+                        idd.Size = section->total_size;
+                    }
+                    break;
+
+                case 1:
+                    /* IMPORT Table. */
+                    section = section_find (".idata");
+                    if (section) {
+                        idd.VirtualAddress = section->rva;
+                        idd.Size = section->total_size;
+                    }
+                    break;
+
+                case 5:
+                    /* BASE RELOCATION Table. */
+                    section = section_find (".reloc");
+                    if (section) {
+                        idd.VirtualAddress = section->rva;
+                        idd.Size = section->total_size;
+                    }
+                    break;
+                
+                case 12:
+                    /* IMPORT Address Table. */
+                    section = section_find (".idata");
+                    if (section && iat_first_part) {
+                        idd.VirtualAddress = iat_first_part->rva;
+                        idd.Size = iat_last_part->rva + iat_last_part->content_size - iat_first_part->rva;
+                    }
+                    break;
+
             }
             write_struct_IMAGE_DATA_DIRECTORY (pos, &idd);
             pos += sizeof (struct IMAGE_DATA_DIRECTORY_file);
@@ -589,6 +775,57 @@ void coff_write (const char *filename)
 #define CHECK_READ(memory_position, size_to_read) \
     do { if (((memory_position) - file + (size_to_read) > file_size) \
              || (memory_position) < file) ld_fatal_error ("corrupted input file"); } while (0)
+
+static void interpret_dot_drectve_section (const unsigned char *file, size_t file_size, const unsigned char *pos, size_t size)
+{
+    char *temp_buf, *p;
+
+    /* According to specification the content of .drectve should be a string
+     * but that cannot be trusted, so NUL is appended. */
+    temp_buf = xmalloc (size + 1);
+    CHECK_READ (pos, size);
+    memcpy (temp_buf, pos, size);
+    temp_buf[size] = '\0';
+    
+    if (pos[0] == 0xEF && pos[1] == 0xBB && pos[2] == 0xBF) {
+        ld_internal_error_at_source (__FILE__, __LINE__, "UTF-8 byte order marker not yet supported at the start of .drectve section");
+    }
+
+    p = temp_buf;
+    while (*p) {
+        while (*p == ' ') p++;
+        if (strncmp (p, "-export:", 8) == 0) {
+            char *q;
+            char saved_c;
+            p += 8;
+            q = strchr (p, ' ');
+            if (q == NULL) q = p + strlen (p);
+            saved_c = *q;
+            *q = '\0';
+            {
+                /* For unknown reason there might be ",data" added to data symbol names,
+                 * so this handles it. */
+                char *comma;
+                comma = strchr (p, ',');
+                if (comma) *comma = '\0';
+            }
+            {
+                struct name_list *name_list;
+                name_list = xmalloc (sizeof (*name_list));
+                name_list->name = xstrdup (p);
+                name_list->next = NULL;
+                *last_export_name_list_p = name_list;
+                last_export_name_list_p = &name_list->next;
+            }
+            *q = saved_c;
+            p = q;
+        } else if (*p) {
+            ld_internal_error_at_source (__FILE__, __LINE__, "unsupported .drectve option: %s", p);
+        }
+    }
+
+    free (temp_buf);
+}
 
 static void read_coff_object (unsigned char *file, size_t file_size, const char *filename)
 {
@@ -655,6 +892,16 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                 if (p) {
                     *p = '\0';
                     p++;
+                }
+
+                if (strcmp (section_name, ".drectve") == 0) {
+                    interpret_dot_drectve_section (file,
+                                                   file_size,
+                                                   file + section_hdr.PointerToRawData,
+                                                   section_hdr.SizeOfRawData);
+                    part_p_array[i + 1] = NULL;
+                    free (section_name);
+                    continue;
                 }
 
                 section = section_find_or_make (section_name);
