@@ -15,7 +15,7 @@
 #ifndef __EXPORT__
 #define WINAPI __declspec(dllimport) __stdcall
 #else
-#define WINAPI __stdcall
+#define WINAPI __declspec(dllexport) __stdcall
 #endif
 
 #define PASCAL __stdcall
