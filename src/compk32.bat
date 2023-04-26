@@ -2,13 +2,13 @@ gccwin -S -O2 -ansi -DNOLIBALLOC -D__WIN32__ -D__EXPORT__ -I ../pdpclib -I . ../
 aswin -o dllcrt.o dllcrt.s
 del dllcrt.s
 
-gccwin -S -O2 -ansi -DNOLIBALLOC -D__WIN32__ -D__EXPORT__ -I ../pdpclib -I . ../pdpclib/string.c
-aswin -o string.o string.s
-del string.s
-
 gccwin -S -O2 -ansi -DNOLIBALLOC -D__WIN32__ -D__EXPORT__ -I ../pdpclib -I . kernel32.c
 aswin -o kernel32.o kernel32.s
 del kernel32.s
+
+gccwin -S -O2 -ansi -DNOLIBALLOC -D__WIN32__ -I ../pdpclib -I . ../pdpclib/string.c
+aswin -o string.o string.s
+del string.s
 
 gccwin -S -O2 -ansi -DNOLIBALLOC -D__WIN32__ -D__32BIT__ -I ../pdpclib -I . pos.c
 aswin -o pos.o pos.s
