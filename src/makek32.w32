@@ -18,8 +18,8 @@ AS=aswin
 LD=ldwin
 DLLTOOL=dlltwin
 
-EXPORT_OBJS=dllcrt.eo kernel32.eo string.eo
-OBJS=support.o pdossupc.o pos.o
+EXPORT_OBJS=dllcrt.eo kernel32.eo
+OBJS=support.o pdossupc.o pos.o string.o
 
 all: clean kernel32.dll
 
