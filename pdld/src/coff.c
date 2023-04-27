@@ -26,6 +26,7 @@
 #define NUMBER_OF_DATA_DIRECTORIES 16
 
 static int insert_timestamp = 1;
+static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int nx_compat = 1;
 
@@ -192,7 +193,7 @@ static void generate_edata (void)
     struct section *section;
     struct section_part *part;
     size_t num_names, name_table_size;
-    char **names;
+    char **names, **names_no_at;
     size_t i;
     struct symbol *symbol;
     struct relocation_entry_internal *relocs;
@@ -219,8 +220,28 @@ static void generate_edata (void)
         }
     }
 
-    name_table_size += strlen (ld_state->output_filename) + 1;
     qsort (names, num_names, sizeof (*names), &name_compar);
+    if (kill_at) {
+        name_table_size = 0;
+        names_no_at = xmalloc (sizeof (*names) * num_names);
+        
+        for (i = 0; i < num_names; i++) {
+            char *at_p;
+            at_p = strchr (names[i], '@');
+            if (at_p) {
+                names_no_at[i] = xmalloc (at_p - names[i] + 1);
+                memcpy (names_no_at[i], names[i], at_p - names[i]);
+                names_no_at[i][at_p - names[i]] = '\0';
+            } else {
+                names_no_at[i] = xstrdup (names[i]);
+            }
+            name_table_size += strlen (names_no_at[i]) + 1;
+        }
+    } else {
+        names_no_at = NULL;
+    }
+    
+    name_table_size += strlen (ld_state->output_filename) + 1;
 
     of = object_file_make (1 + num_names, "FAKE_LD_FILE");
     section = section_find_or_make (".edata");
@@ -325,14 +346,24 @@ static void generate_edata (void)
                                                + sizeof (struct EXPORT_Ordinal_Table_file) * i,
                                                &ot);
         }
-        strcpy ((char *)(part->content + name_table_offset), names[i]);
-        name_table_offset += strlen (names[i]) + 1;
+        {
+            char *name;
+            name = kill_at ? (names_no_at[i]) : (names[i]);
+            strcpy ((char *)(part->content + name_table_offset), name);
+            name_table_offset += strlen (name) + 1;
+        }
+    }
+
+    if (names_no_at) {
+        for (i = 0; i < num_names; i++) {
+            free (names_no_at[i]);
+        }
+        free (names_no_at);
     }
 
     for (i = 0; i < num_names; i++) {
         free (names[i]);
     }
-
     free (names);
 }
 
@@ -1212,6 +1243,7 @@ enum option_index {
     COFF_OPTION_IGNORED = 0,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
+    COFF_OPTION_KILL_AT,
     COFF_OPTION_ENABLE_RELOC_SECTION,
     COFF_OPTION_DISABLE_RELOC_SECTION,
     COFF_OPTION_NX_COMPAT,
@@ -1224,6 +1256,7 @@ static const struct long_option long_options[] = {
     
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
+    { STR_AND_LEN("kill-at"), COFF_OPTION_KILL_AT, OPTION_NO_ARG},
     { STR_AND_LEN("enable-reloc-section"), COFF_OPTION_ENABLE_RELOC_SECTION, OPTION_NO_ARG},
     { STR_AND_LEN("disable-reloc-section"), COFF_OPTION_DISABLE_RELOC_SECTION, OPTION_NO_ARG},
     { STR_AND_LEN("nxcompat"), COFF_OPTION_NX_COMPAT, OPTION_NO_ARG},
@@ -1238,6 +1271,7 @@ void coff_print_help (void)
     printf ("i386pe:\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
+    printf ("  --kill-at                          Remove @nn from exported symbols\n");
     printf ("  --enable-reloc-section             Create the base relocation table\n");
     printf ("  --disable-reloc-section            Do not create the base relocation table\n");
     printf ("  --[disable-]nxcompat               Image is compatible with data execution\n");
@@ -1257,6 +1291,10 @@ static void use_option (enum option_index option_index, char *arg)
 
         case COFF_OPTION_NO_INSERT_TIMESTAMP:
             insert_timestamp = 0;
+            break;
+
+        case COFF_OPTION_KILL_AT:
+            kill_at = 1;
             break;
 
         case COFF_OPTION_ENABLE_RELOC_SECTION:
