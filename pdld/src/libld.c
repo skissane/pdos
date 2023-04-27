@@ -41,6 +41,7 @@ static const struct long_option long_options[] = {
     
     { STR_AND_LEN("Bshareable"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
+    { STR_AND_LEN("nostdlib"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("output"), LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { STR_AND_LEN("shared"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("strip-all"), LD_OPTION_IGNORED, OPTION_NO_ARG},
@@ -55,6 +56,7 @@ static void print_help (void)
     printf ("Usage: %s [options] file...\n", program_name ? program_name : "pdld");
     printf ("Options:\n");
     printf ("  --help                      Print option help\n");
+    printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");
     printf ("  -s, --strip-all             Ignored\n");
