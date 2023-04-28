@@ -4999,6 +4999,10 @@ static int fileCreat(const char *fnm, int attrib, int *handle)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
     for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
     {
@@ -5047,6 +5051,10 @@ static int dirCreat(const char *dnm, int attrib)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
 
     if ((p[0] == '\\') || (p[0] == '/'))
@@ -5096,6 +5104,10 @@ static int newFileCreat(const char *fnm, int attrib, int *handle)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
     for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
     {
@@ -5137,6 +5149,10 @@ static int fileOpen(const char *fnm, int *handle)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
     for (x = NUM_SPECIAL_FILES; x < MAXFILES; x++)
     {
@@ -5351,6 +5367,10 @@ static int fileDelete(const char *fnm)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
 
     /* Checks if the file that should be deleted is not a directory.
@@ -5399,6 +5419,10 @@ static int dirDelete(const char *dnm)
         drive = *(p - 1);
         drive = toupper(drive) - 'A';
         p++;
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
     }
 
     if (!isDriveValid(drive))
@@ -6066,6 +6090,10 @@ static int formatcwd(const char *input,char *output)
         strcat(output,input);
     }
     tempDrive=toupper((unsigned char)(output[0])) - 'A';
+    if (tempDrive < 2)
+    {
+        accessDisk(tempDrive);
+    }
     if (!isDriveValid(tempDrive))
     {
         return POS_ERR_INVALID_DRIVE;
