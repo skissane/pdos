@@ -170,6 +170,17 @@ bypass2:
 
  mov  [BootDisk], dl   ;Store our boot disk
 
+push es  ; preserve
+
+; Don't get disk geometry for floppy disks, as that gets what
+; the drive is capable of, not what is currently in the drive.
+; e.g. you put a 360k floppy in, but are given a max cylinder
+; of 79 (ie 80 cylinders), max head of 1 (ie 2 heads), max sector
+; of 15, which is a 1.2 MB drive
+
+cmp dl, 0
+je ignorec
+
 ; get disk geometry from BIOS instead of relying on values
 ; stored at format time, because the disk may have been moved
 ; to a different machine with a different faking mechanism
@@ -177,7 +188,6 @@ bypass2:
  mov di, 0
 ; es should already be 0
 ; dl is already set
- push es  ; preserve
  int 13h
  jc ignorec   ; if it fails, just use the values at format time
 
