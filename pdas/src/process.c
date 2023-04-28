@@ -1067,9 +1067,9 @@ char get_symbol_name_end (char **pp) {
         }
         
         c = **pp;
-        **pp = '\0';
     
     }
+    **pp = '\0';
     
     return c;
 

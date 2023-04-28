@@ -622,6 +622,12 @@ static void handler_section (char **pp) {
     
     name = *pp;
     ch = get_symbol_name_end (pp);
+    if (name == *pp) {
+        as_error ("expected section name");
+        **pp = ch;
+        ignore_rest_of_line (pp);
+        return;
+    }
     
     section_set_by_name (name);
     
@@ -781,6 +787,12 @@ static void handler_def (char **pp) {
 
     name = *pp;
     ch = get_symbol_name_end (pp);
+    if (name == *pp) {
+        as_error ("expected symbol name");
+        **pp = ch;
+        ignore_rest_of_line (pp);
+        return;
+    }
 
     def_symbol = symbol_make (name);
     def_symbol->object_format_dependent_data = xmalloc (sizeof (struct symbol_table_entry_internal));
