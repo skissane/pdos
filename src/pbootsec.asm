@@ -178,8 +178,8 @@ push es  ; preserve
 ; of 79 (ie 80 cylinders), max head of 1 (ie 2 heads), max sector
 ; of 15, which is a 1.2 MB drive
 
-cmp dl, 0
-je ignorec
+cmp dl, 080h
+jb ignorec
 
 ; get disk geometry from BIOS instead of relying on values
 ; stored at format time, because the disk may have been moved
