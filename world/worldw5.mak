@@ -8,7 +8,7 @@ world.exe: world3.o
   pdld --no-insert-timestamp -s -o world.exe ../pdpclib/w32start.o world.o ../pdpclib/msvcrt.a ../pdpclib/winsupc.obj
 
 .c.o:
-  pdcc -E -D__WIN32__ -I ../pdpclib -o $*.i $<
+  pdcc -N -D__NODECLSPEC__ -D__WIN32__ -I ../pdpclib -o $*.i $<
   occ $*.i -o $*.s
   rm -f $*.i
   pdas -o $@ -O coff $*.s
