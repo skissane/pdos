@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+int line_flag = 1;
+
 struct deferred_option {
     int code;
     const char *arg;
@@ -281,6 +283,7 @@ int main(int argc, char **argv)
             printf("Options:\n");
             printf("  -h, --help      Displays this information.\n");
             printf("  -E              Preprocess only; do not compile.\n");
+            printf("  -N              Preprocess without generating #line.\n");
             printf("  -o <file>       Puts output into <file>.\n");
             printf("  -I <directory>  #include searches in <directory>.\n");
             printf("  -D <macro>      Defines <macro>.\n");
@@ -306,6 +309,11 @@ int main(int argc, char **argv)
                 case 'E':
                     core->preprocess_flag = 1;
                     core->compile_flag = 0;
+                    break;
+                case 'N':
+                    core->preprocess_flag = 1;
+                    core->compile_flag = 0;
+                    line_flag = 0;
                     break;
                 case 'I':
                     if (argv[i][1] != '\0')

@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern int line_flag;
+
 struct pp_output {
     FILE *out;
     const cpp_token *prev;
@@ -50,9 +52,12 @@ static int print_line(pp_output *pp_o, location_t loc, const char *flags)
                 pp_o->line == 0 ? 1 : pp_o->line,
                 new_name, flags);
 #else
+        if (line_flag)
+        {
         fprintf(pp_o->out, "#line %lu \"%s\"\n",
                 pp_o->line == 0 ? 1 : pp_o->line,
                 new_name);
+        }
 #endif
 
         free(new_name);
