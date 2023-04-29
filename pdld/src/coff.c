@@ -869,6 +869,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
     struct object_file *of;
     struct section_part **part_p_array;
+    struct section_part *bss_part;
+    long bss_section_number;
     unsigned long i;
 
     pos = file;
@@ -886,6 +888,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
     part_p_array = xmalloc (sizeof (*part_p_array) * (coff_hdr.NumberOfSections + 1));
     of = object_file_make (coff_hdr.NumberOfSymbols, filename);
+    bss_part = NULL;
+    bss_section_number = 0;
 
     for (i = 0; i < coff_hdr.NumberOfSections; i++) {
 
@@ -939,7 +943,10 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
                 section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
                 section->flags = translate_Characteristics_to_section_flags (section_hdr.Characteristics);
-                if (section_hdr.PointerToRawData == 0) section->is_bss = 1;
+                if (section_hdr.PointerToRawData == 0) {
+                    section->is_bss = 1;
+                    bss_section_number = i;
+                }
 
                 if (p) subsection = subsection_find_or_make (section, p);
                 else subsection = NULL;
@@ -957,6 +964,9 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
                     CHECK_READ (pos, part->content_size);
                     memcpy (part->content, pos, part->content_size);
+                }
+                if (section->is_bss) {
+                    bss_part = part;
                 }
 
                 if (section_hdr.PointerToRelocations && section_hdr.NumberOfRelocations) {
@@ -1013,11 +1023,36 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         } else symbol->name = xstrndup (coff_symbol.Name, 8);
         
         symbol->value = coff_symbol.Value;
-        if (coff_symbol.SectionNumber > 0
-            && coff_symbol.SectionNumber <= coff_hdr.NumberOfSections) {
+        symbol->section_number = coff_symbol.SectionNumber;
+        if (coff_symbol.SectionNumber == IMAGE_SYM_UNDEFINED) {
+            if (symbol->value) {
+                /* It is a common symbol. */
+                if (bss_part == NULL) {
+                    struct section *section;
+
+                    section = section_find_or_make (".bss");
+
+                    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+                    section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
+                    section->is_bss = 1;
+                    bss_section_number = coff_hdr.NumberOfSections ? coff_hdr.NumberOfSections : 1;
+
+                    bss_part = section_part_new (section, of);
+                    bss_part->content_size = 0;
+                    section_append_section_part (section, bss_part);
+                }
+                
+                symbol->part = bss_part;
+                bss_part->content_size += symbol->value;
+                symbol->value = bss_part->content_size - symbol->value;
+                symbol->section_number = bss_section_number;             
+            } else {
+                symbol->part = NULL;
+            }
+        } else if (coff_symbol.SectionNumber > 0
+                   && coff_symbol.SectionNumber <= coff_hdr.NumberOfSections) {
             symbol->part = part_p_array[coff_symbol.SectionNumber];
-        } else if (coff_symbol.SectionNumber  == IMAGE_SYM_UNDEFINED
-                   || coff_symbol.SectionNumber == IMAGE_SYM_DEBUG) {
+        } else if (coff_symbol.SectionNumber == IMAGE_SYM_DEBUG) {
             symbol->part = NULL;
         } else if (coff_symbol.SectionNumber > coff_hdr.NumberOfSections) {
             ld_error ("invalid symbol SectionNumber: %hi", coff_symbol.SectionNumber);
@@ -1025,8 +1060,6 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         } else ld_internal_error_at_source (__FILE__, __LINE__,
                                             "+++not yet supported symbol SectionNumber: %hi",
                                             coff_symbol.SectionNumber);
-        
-        symbol->section_number = coff_symbol.SectionNumber;
 
         if (coff_symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
             symbol_record_external_symbol (symbol);
