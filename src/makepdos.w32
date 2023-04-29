@@ -19,7 +19,7 @@ LD=ld386
 
 TARGET=PDOS.SYS
 TEMP_ARCHIVE=os.a
-ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o \
+ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o uart.o \
              int80.o log.o helper.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
 OBJS=strt32.o pdos.o
 
