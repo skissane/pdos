@@ -216,14 +216,14 @@ typedef struct
 } __DUMMYFILE;
 
 #ifndef __PDPCLIB_DLL
-#ifndef __SUBC__
+#if !defined(__SUBC__) && !defined(__NODECLSPEC__)
 __declspec(dllimport) __DUMMYFILE _iob[3];
 #else
 extern __DUMMYFILE *_imp___iob;
 #endif
 #endif
 
-#ifndef __SUBC__
+#if !defined(__SUBC__) && !defined(__NODECLSPEC__)
 #define stdin ((FILE *) &(_iob[0]))
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
