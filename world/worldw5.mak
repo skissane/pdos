@@ -5,7 +5,7 @@
 all: world.exe
 
 world.exe: world3.o
-  pdld --no-insert-timestamp -s -o world.exe ../pdpclib/w32start.o world.o ../pdpclib/msvcrt.a ../pdpclib/winsupc.obj
+  pdld --no-insert-timestamp -s -o world.exe ../pdpclib/w32start.o world3.o ../pdpclib/msvcrt.a ../pdpclib/winsupc.obj
 
 .c.o:
   pdcc -N -D__NODECLSPEC__ -D__WIN32__ -I ../pdpclib -o $*.i $<
