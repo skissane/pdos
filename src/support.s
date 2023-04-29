@@ -402,13 +402,11 @@ no:	loop	next
 
 .globl ___brkpoint
 ___brkpoint:
-# we use int3 instead of "int 3" because pdas doesn't
-# generate the short form otherwise
-        int3
+        int     $0x3
         ret
 
 
 .globl ___brkpoint2
 ___brkpoint2:
-        int3
+        int     $0x3
         ret
