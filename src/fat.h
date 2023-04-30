@@ -210,6 +210,8 @@ typedef struct {
      * Affects creation and modification of files, not only reading.
      * Default is 0, value is later changed externally. */
     int last_access_recording;
+    unsigned long cachedSector;
+    unsigned char cachedBuf[512];
 } FAT;
 
 

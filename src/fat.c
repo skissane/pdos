@@ -98,6 +98,7 @@ int fatInit(FAT *fat,
             void (*getDateTime)(FAT_DATETIME *ptr)
             )
 {
+    fat->cachedSector = 0;
     fat->readLogical = readLogical;
     fat->writeLogical = writeLogical;
     fat->parm = parm;
@@ -1841,6 +1842,24 @@ static void fatDirSearch(FAT *fat, char *search)
 }
 
 
+static void fatReadLogicalCached(FAT *fat, unsigned long sector, void *buf)
+{
+    if (fat->cachedSector == sector)
+    {
+        memcpy(buf, fat->cachedBuf, 512);
+    }
+    else
+    {
+        fatReadLogical(fat, sector, buf);
+        memcpy(fat->cachedBuf, buf, 512);
+        fat->cachedSector = sector;
+    }
+    return;
+}
+
+
+#define fatReadLogical fatReadLogicalCached
+
 /*
  * fatClusterAnalyse - given a cluster number, this function
  * determines the sector that the cluster starts and also the
@@ -1904,6 +1923,8 @@ static void fatClusterAnalyse(FAT *fat,
     }
     return;
 }
+
+#undef fatReadLogical
 
 
 /*
@@ -2148,6 +2169,7 @@ static void fatReadLogical(FAT *fat, unsigned long sector, void *buf)
 
 static void fatWriteLogical(FAT *fat, unsigned long sector, void *buf)
 {
+    fat->cachedSector = 0;
     fat->writeLogical(fat->parm, sector, buf);
     return;
 }
