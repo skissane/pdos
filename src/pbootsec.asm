@@ -172,6 +172,16 @@ bypass2:
 
 push es  ; preserve
 
+; If this is a hard disk image, force geometry check
+
+mov ax, [HiddenSectors_Low]
+cmp ax, 0
+jne forcec
+
+mov ax, [HiddenSectors_High]
+cmp ax, 0
+jne forcec
+
 ; Don't get disk geometry for floppy disks, as that gets what
 ; the drive is capable of, not what is currently in the drive.
 ; e.g. you put a 360k floppy in, but are given a max cylinder
@@ -180,6 +190,8 @@ push es  ; preserve
 
 cmp dl, 080h
 jb ignorec
+
+forcec:
 
 ; get disk geometry from BIOS instead of relying on values
 ; stored at format time, because the disk may have been moved
