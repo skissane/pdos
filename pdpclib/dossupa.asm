@@ -239,6 +239,45 @@ ret
 __close endp
 
 
+; extern void CTYP __devginfo(int handle, unsigned int *info);
+
+public __devginfo
+__devginfo proc uses ds bx dx, handle:word, info:ptr
+
+mov ah, 044h
+mov al, 0h
+mov bx, handle
+
+int 021h
+
+if @DataSize
+lds bx, info
+else
+mov bx, info
+endif
+
+mov word ptr [info], dx
+
+ret
+__devginfo endp
+
+
+; extern void CTYP __devsinfo(int handle, unsigned int info);
+
+public __devsinfo
+__devsinfo proc uses bx dx, handle:word, info:word
+
+mov ah, 044h
+mov al, 01h
+mov bx, handle
+mov dx, info
+
+int 021h
+
+ret
+__devsinfo endp
+
+
 ; extern void CTYP __remove(const char *filename);
 
 public __remove
