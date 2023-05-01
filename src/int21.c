@@ -1421,6 +1421,11 @@ static void int21handler(union REGS *regsin,
                                              MK_FP(sregs->ds,regsin->x.bx),
                                              regsin->x.di);
             }
+            else if (regsin->h.al == 0x4E)
+            {
+                regsout->x.ax = PosAccentMap(regsin->x.cx,
+                                             MK_FP(sregs->ds,regsin->x.bx));
+            }
 #endif
 #ifdef __32BIT__
             else if (regsin->h.al == 0x46)
@@ -1459,6 +1464,11 @@ static void int21handler(union REGS *regsin,
                                               regsin->d.esi,
                                               (void *)regsin->d.ebx,
                                               regsin->d.edi);
+            }
+            else if (regsin->h.al == 0x4E)
+            {
+                regsout->d.eax = PosAccentMap(regsin->d.ecx,
+                                              (unsigned char *)regsin->d.ebx);
             }
 #endif
             else

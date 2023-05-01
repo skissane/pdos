@@ -446,6 +446,9 @@ unsigned int PosLoadFonts(int start,
                           void *table,
                           int block);
 
+/* F6,4E - map accent */
+unsigned int PosAccentMap(int accent_key, unsigned char *newmap);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 
