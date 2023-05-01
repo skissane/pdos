@@ -61,6 +61,18 @@ void __close(int handle)
     return;
 }
 
+void __devginfo(int handle, unsigned int *info)
+{
+    PosGetDeviceInformation(handle, info);
+    return;
+}
+
+void __devsinfo(int handle, unsigned int info)
+{
+    PosSetDeviceInformation(handle, info);
+    return;
+}
+
 void __remove(const char *filename)
 {
     PosDeleteFile(filename);
