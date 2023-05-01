@@ -3611,6 +3611,34 @@ unsigned int PosScreenMap(unsigned char *newmap)
     return (0);
 }
 
+unsigned int PosAccentMap(int accent_key, unsigned char *newmap)
+{
+    if (newmap == NULL)
+    {
+        accenttot = 0;
+    }
+    else
+    {
+        int a;
+
+        for (a = 0; a < MAX_ACCENTS; a++)
+        {
+            if ((accentkey[a] == accent_key)
+                || (accentkey[a] == 0))
+            {
+                memcpy(accentmap[a], newmap, sizeof accentmap[a]);
+                if (a > accenttot)
+                {
+                    accenttot = a;
+                    accentkey[a] = accent_key;
+                }
+                break;
+            }
+        }
+    }
+    return (0);
+}
+
 void *PosGetStdHandle(unsigned int nStdHandle)
 {
     if (nStdHandle == -10) return ((void *)stdin_fhandle_index);
