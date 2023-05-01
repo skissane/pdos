@@ -177,6 +177,7 @@ static optBlock optRegistry[] =
     static void cmd_##name##_help(void)
 
 /* Prototypes for command do/help routines */
+CMDPROTO(accmap);
 CMDPROTO(attrib);
 CMDPROTO(cd);
 CMDPROTO(cls);
@@ -250,6 +251,7 @@ cmdBlock;
  */
 static cmdBlock cmdRegistry[] =
 {
+    CMDDEF(accmap,"","Load an accent map"),
     CMDDEF(attrib,"","View or change file attributes"),
     CMDDEF(cd,"|chdir","Changes the current directory"),
     CMDDEF(cls,"","Clears the screen"),
@@ -1635,6 +1637,15 @@ static void cmd_exit_help(void)
     printf("testing the TSR functionality of PDOS\n");
 }
 
+static void cmd_accmap_help(void)
+{
+    printf("ACCMAP [accent key] [filename]\n");
+    printf("allows you to provide a 256-byte file\n");
+    printf("that is used to provide an accent key and what it should map to\n");
+    printf("if the accent maps to itself, a single accent character will\n");
+    printf("be produced. If the mapping is invalid, 2 will be generated.\n");
+}
+
 static void cmd_attrib_help(void)
 {
     printf("ATTRIB filename {{+|-}{A|H|R|S}}*\n");
@@ -2815,6 +2826,49 @@ static int cmd_scanmap_run(char *arg)
             return 1;
         }
         PosScancodeMap(buf, type);
+    }
+    return 0;
+}
+
+static int cmd_accmap_run(char *arg)
+{
+    int flag;
+
+    CMD_REQUIRES_ARGS(arg);
+    CMD_REQUIRES_GENUINE();
+    arg = stringTrimBoth(arg);
+    {
+        FILE *fp;
+        char buf[257];
+        int cnt;
+        char *p;
+        int accent_key;
+
+        p = strchr(arg, ' ');
+        if (p == NULL)
+        {
+            printf("accent key and filename required\n");
+            return (0);
+        }
+        else
+        {
+            accent_key = arg[0];
+            *p++ = '\0';
+        }
+        fp = fopen(p, "rb");
+        if (fp == NULL)
+        {
+            printf("can't open %s for reading\n", p);
+            return 1;
+        }
+        cnt = fread(buf, 1, sizeof buf, fp);
+        fclose(fp);
+        if (cnt != 256)
+        {
+            printf("file is not exactly 256 bytes in size\n");
+            return 1;
+        }
+        PosAccentMap(accent_key, buf);
     }
     return 0;
 }
