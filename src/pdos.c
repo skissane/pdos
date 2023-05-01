@@ -372,6 +372,11 @@ static unsigned char scrnmap[256] =
     "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF"
     ;
 
+#define MAX_ACCENTS 10
+static int accenttot = 0;
+static unsigned char accentmap[MAX_ACCENTS][256];
+static unsigned char accentkey[MAX_ACCENTS];
+
 static int scrncapDrv = -1;
 static char scrncapBuf[512];
 static unsigned long scrncapSector;
@@ -1934,6 +1939,7 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
     int ret;
     static int num_pending = 0;
     static char pending[20];
+    static int accent_pending = -1;
 
     if (fh < NUM_SPECIAL_FILES)
     {
@@ -1961,6 +1967,35 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                 else if (scanmap_active)
                 {
                     ascii = scanmap_domap(scan);
+                }
+                if (accent_pending != -1)
+                {
+                    if (accentmap[accent_pending][ascii] == 0)
+                    {
+                        num_pending = 2;
+                        pending[0] = accentkey[accent_pending];
+                        pending[1] = ascii;
+                        accent_pending = -1;
+                        continue;
+                    }
+                    else
+                    {
+                        ascii = accentmap[accent_pending][ascii];
+                        accent_pending = -1;
+                    }
+                }
+                else if (accenttot > 0)
+                {
+                    int a;
+
+                    for (a = 0; a < accenttot; a++)
+                    {
+                        if (accentkey[a] == ascii)
+                        {
+                            accent_pending = a;
+                            continue;
+                        }
+                    }
                 }
 
                 /* double up ESC char as ANSI allows */
