@@ -1993,8 +1993,12 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
                         if (accentkey[a] == ascii)
                         {
                             accent_pending = a;
-                            continue;
+                            break;
                         }
+                    }
+                    if (a != accenttot)
+                    {
+                        continue;
                     }
                 }
 
@@ -3627,10 +3631,10 @@ unsigned int PosAccentMap(int accent_key, unsigned char *newmap)
                 || (accentkey[a] == 0))
             {
                 memcpy(accentmap[a], newmap, sizeof accentmap[a]);
-                if (a > accenttot)
+                accentkey[a] = accent_key;
+                if (a >= accenttot)
                 {
-                    accenttot = a;
-                    accentkey[a] = accent_key;
+                    accenttot = a + 1;
                 }
                 break;
             }
