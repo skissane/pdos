@@ -110,7 +110,10 @@ extern int CTYP __seek(int handle, long offset, int whence);
 extern void CTYP __close(int handle);
 extern void CTYP __remove(const char *filename);
 extern void CTYP __rename(const char *old, const char *newnam);
+extern void CTYP __devginfo(int handle, unsigned int *info);
+extern void CTYP __devsinfo(int handle, unsigned int info);
 #endif
+
 
 #ifdef __AMIGA__
 #include <clib/dos_protos.h>
@@ -4070,6 +4073,17 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             PosSetDeviceInformation(0, dw);
         }
 #endif
+#if defined(__MSDOS__)
+        if (stream == stdin)
+        {
+            unsigned int dw;
+
+            __devginfo(0, &dw);
+            dw &= 0xff;
+            dw |= (1 << 5);
+            __devsinfo(0, dw);
+        }
+#endif
         return (0);
     }
     if (buf == NULL)
@@ -4104,6 +4118,20 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
                 dw &= 0xff;
                 dw &= ~(1 << 5);
                 PosSetDeviceInformation(0, dw);
+            }
+        }
+#endif
+#if defined(__MSDOS__)
+        if (mode == _IOLBF)
+        {
+            if (stream == stdin)
+            {
+                unsigned int dw;
+
+                __devginfo(0, &dw);
+                dw &= 0xff;
+                dw &= ~(1 << 5);
+                __devsinfo(0, dw);
             }
         }
 #endif

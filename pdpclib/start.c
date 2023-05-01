@@ -268,6 +268,12 @@ unsigned char *__envptr;
 static unsigned int stdin_dw;
 #endif
 
+#if defined(__MSDOS__)
+extern void CTYP __devginfo(int handle, unsigned int *info);
+extern void CTYP __devsinfo(int handle, unsigned int info);
+static unsigned int stdin_dw;
+#endif
+
 #if USE_MEMMGR
 extern void *__lastsup; /* last thing supplied to memmgr */
 #endif
@@ -488,6 +494,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
 #if defined(__PDOS386__)
     PosGetDeviceInformation(0, &stdin_dw);
+    stdin_dw &= 0xff;
+#endif
+#if defined(__MSDOS__)
+    __devginfo(0, &stdin_dw);
     stdin_dw &= 0xff;
 #endif
 
@@ -1362,6 +1372,9 @@ __PDPCLIB_API__ void _c_exit(void)
 
 #if defined(__PDOS386__)
     PosSetDeviceInformation(0, stdin_dw);
+#endif
+#if defined(__MSDOS__)
+    __devsinfo(0, stdin_dw);
 #endif
 
 #if defined(__gnu_linux__)
