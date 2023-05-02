@@ -891,7 +891,9 @@ void pdosRun(void)
     bootDrivePhysical = bootBPB[-9]; /* drive number is in NOP */
     bootDriveLogical = 0;
     disks[0].accessed = 0;
+    disks[0].lba = 0;
     disks[1].accessed = 0;
+    disks[1].lba = 0;
     analyseBpb(&bootinfo, bootBPB);
     bootinfo.lba = 0;
     initdisks();
@@ -1135,13 +1137,32 @@ static void scanPartition(int drive)
     int sector = 1;
     int x;
     int systemId;
+    unsigned int major;
+    unsigned int support;
+    unsigned int extra;
 
-    /* read partition table */
-    /* rc = readAbs(buf, sectors, drive, track, head, sector); */
-    rc = readLBA(buf,
-                 sectors,
-                 drive,
-                 0); /* sector 0 */
+    rc = BosLBAExtensions(drive, &major, &support, &extra);
+    if (rc == 0)
+    {
+        lba = 1;
+    }
+    else
+    {
+        lba = 0;
+    }
+
+    if (lba)
+    {
+        rc = readLBA(buf,
+                     sectors,
+                     drive,
+                     0); /* sector 0 */
+    }
+    else
+    {
+        /* read partition table */
+        rc = readAbs(buf, sectors, drive, track, head, sector);
+    }
     if (rc != 0)
     {
         printf("can't read MBR sector 0/0/1 or LBA 0 of drive %x\n", drive);
@@ -1160,7 +1181,6 @@ static void scanPartition(int drive)
         /* for each partition */
         for (x = 0; x < PT_ENT; x++)
         {
-            lba = 1;
             systemId = buf[PT_OFFSET + x * PT_LEN + PTO_SYSID];
             /* Currently supported systems. */
             /* +++Add support for all systems and test. */
@@ -1176,7 +1196,6 @@ static void scanPartition(int drive)
         }
         for (x = 0; x < PT_ENT; x++)
         {
-            lba = 1;
             systemId = buf[PT_OFFSET + x * PT_LEN + PTO_SYSID];
             if ((systemId == PTS_DOSE)
                 || (systemId == PTS_W95EL))
@@ -1236,6 +1255,7 @@ static void processPartition(int drive, unsigned char *prm)
         printf("drive %x has partition without 55AA signature"
                " in VBR (%d/%d/%d)\n",
                drive, track, head, sect);
+#if 0
         printf("bytes per sector would have been %d\n",
                ((unsigned int)bpb[1] << 8) | bpb[0]);
         printf("maybe we could have used LBA instead, which is %ld\n", sector);
@@ -1249,6 +1269,7 @@ static void processPartition(int drive, unsigned char *prm)
             printf("and then bytes per sector would have been %d\n",
                    ((unsigned int)bpb[1] << 8) | bpb[0]);
         }
+#endif
         return;
     }
     analyseBpb(&disks[lastDrive], bpb);
@@ -1339,10 +1360,14 @@ static void processExtended(int drive, unsigned char *prm)
     unsigned long extsector;
     int rc;
 
+    /* we will always use LBA if the BIOS supports it */
+    /* otherwise we will not enable it */
+#if 0
     if (prm[PTO_SYSID] == PTS_W95EL)
     {
         lba = 1;
     }
+#endif
     head = prm[1];
     sect = prm[2] & 0x3f;
     track = (((unsigned int)prm[2] & 0xc0) << 2) | prm[3];
@@ -5598,7 +5623,10 @@ static void accessDisk(int drive)
         fatTerm(&disks[drive].fat);
     }
     analyseBpb(&disks[drive], bpb);
+    /* this should have been set at boot time */
+#if 0
     disks[drive].lba = 0;
+#endif
     fatDefaults(&disks[drive].fat);
     fatInit(&disks[drive].fat, bpb, readLogical, writeLogical, &disks[drive],
             getDateTime);
