@@ -131,6 +131,12 @@ int BosDriveParms(unsigned int drive, /* 13:8 */
 
 int BosFixedDiskStatus(unsigned int drive); /* 13:10 */
 
+/* 13:41 */
+unsigned int BosLBAExtensions(unsigned int drive,
+                              unsigned int *major,
+                              unsigned int *support,
+                              unsigned int *extra);
+
 int BosDiskSectorRLBA(void         *buffer, /* 13:42 */
                       unsigned int sectors,
                       unsigned int drive,

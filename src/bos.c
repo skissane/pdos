@@ -679,6 +679,45 @@ int BosFixedDiskStatus(unsigned int drive)
 }
 
 
+/* BosLBAExtensions - check if LBA extensions available Int 13h Function 41h */
+/* Returns 0 if successful, otherwise error code */
+
+unsigned int BosLBAExtensions(unsigned int drive,
+                              unsigned int *major,
+                              unsigned int *support,
+                              unsigned int *extra)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0x41;
+    regsin.h.dl = (unsigned char)drive;
+    regsin.x.bx = 0x55aa;
+
+    int86(0x13 + BIOS_INT_OFFSET, &regsin, &regsout);
+
+    if (regsout.x.cflag)
+    {
+        if (regsout.h.ah == 0)
+        {
+            return (0xff);
+        }
+        return (regsout.h.ah);
+    }
+
+    if (regsout.x.bx != 0xaa55)
+    {
+        return (0xfe);
+    }
+
+    *major = regsout.h.ah;
+    *support = regsout.x.cx;
+    *extra = regsout.h.dh;
+
+    return (0);
+}
+
+
 /* BosDiskSectorRLBA - read using LBA Int 13h Function 42h */
 /* Returns 0 if successful, otherwise error code */
 
