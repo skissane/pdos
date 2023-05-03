@@ -23,7 +23,7 @@
 #define INTSTOP() disable()
 #define INTALLOW() enable()
 
-#if (defined(MSDOS) && defined(__WATCOMC__))
+#if ((defined(MSDOS) || defined(__MSDOS__)) && defined(__WATCOMC__))
 #define DOSPREF cdecl
 #else
 #define DOSPREF
