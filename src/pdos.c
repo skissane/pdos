@@ -207,6 +207,15 @@ static MEMMGR btlmem;
 extern int *G_intloc;
 #endif
 
+#ifndef __32BIT__
+#ifdef __WATCOMC__
+#define CTYP __cdecl
+#else
+#define CTYP
+#endif
+void CTYP instint(void);
+#endif
+
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
 #ifdef __SZ4__
@@ -4188,7 +4197,7 @@ int intB0(unsigned int *regs)
 
 /**/
 #else
-void int0(unsigned int *regptrs)
+void CTYP int0(unsigned int *regptrs)
 {
     unsigned short ss;
     unsigned char *chain;
@@ -4219,7 +4228,7 @@ void int0(unsigned int *regptrs)
     return;
 }
 
-void int1(unsigned int *regptrs)
+void CTYP int1(unsigned int *regptrs)
 {
     unsigned short ss;
     unsigned char *chain;
@@ -4274,7 +4283,7 @@ void int1(unsigned int *regptrs)
     return;
 }
 
-void int3(unsigned int *regptrs)
+void CTYP int3(unsigned int *regptrs)
 {
     unsigned short ss;
     unsigned char *chain;
@@ -4304,7 +4313,7 @@ void int3(unsigned int *regptrs)
     return;
 }
 
-void int20(unsigned int *regptrs,
+void CTYP int20(unsigned int *regptrs,
         unsigned int es,
         unsigned int ds,
         unsigned int di,
@@ -4343,7 +4352,7 @@ void int20(unsigned int *regptrs,
 }
 
 /* INT 25 - Absolute Disk Read */
-void int25(unsigned int *regptrs,
+void CTYP int25(unsigned int *regptrs,
         unsigned int es,
         unsigned int ds,
         unsigned int di,
@@ -4386,7 +4395,7 @@ void int25(unsigned int *regptrs,
 }
 /**/
 /* INT 26 - Absolute Disk Write */
-void int26(unsigned int *regptrs,
+void CTYP int26(unsigned int *regptrs,
         unsigned int es,
         unsigned int ds,
         unsigned int di,

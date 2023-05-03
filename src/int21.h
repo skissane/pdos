@@ -14,10 +14,18 @@
 #ifndef INT21_INCLUDED
 #define INT21_INCLUDED
 
+#ifndef __32BIT__
+#ifdef __WATCOMC__
+#define CTYP __cdecl
+#else
+#define CTYP
+#endif
+#endif
+
 #ifdef __32BIT__
 int int21(unsigned int *regs);
 #else
-void int21(unsigned int *regptrs);
+void CTYP int21(unsigned int *regptrs);
 #endif
 
 #endif /* INT21_INCLUDED */

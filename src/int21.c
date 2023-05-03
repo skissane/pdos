@@ -26,6 +26,14 @@ static char *sbrk_start = NULL;
 static char *sbrk_end;
 #endif
 
+#ifndef __32BIT__
+#ifdef __WATCOMC__
+#define CTYP __cdecl
+#else
+#define CTYP
+#endif
+#endif
+
 static void int21handler(union REGS *regsin,
                          union REGS *regsout,
                          struct SREGS *sregs);
@@ -56,7 +64,7 @@ int int21(unsigned int *regs)
     return (0);
 }
 #else
-void int21(unsigned int *regptrs)
+void CTYP int21(unsigned int *regptrs)
 {
     static union REGS regsin;
     static union REGS regsout;
