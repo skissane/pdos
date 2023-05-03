@@ -252,7 +252,9 @@ BOOL WINAPI WriteFile(HANDLE hFile,
                       LPDWORD lpNumberOfBytesWritten,
                       LPOVERLAPPED lpOverlapped);
 
-__declspec(noreturn) void WINAPI ExitProcess(UINT uExitCode);
+/* we can use this non-standard keyword, but then it
+   causes a warning in compk32, for no obvious benefit */
+/* __declspec(noreturn) */ void WINAPI ExitProcess(UINT uExitCode);
 
 BOOL WINAPI CloseHandle(HANDLE hObject);
 
