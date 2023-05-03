@@ -7,6 +7,10 @@
 
 extrn dstart:proc
 
+ifndef MAKECOM
+.stack 1000h
+endif
+
 .code
 
 org 0100h
