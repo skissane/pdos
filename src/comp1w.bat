@@ -1,5 +1,5 @@
 @echo on
-wasm -zq -zcm -Dmemodel=tiny -DWATCOM ploadst.asm
+wasm -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM ploadst.asm
 wasm -zq -zcm -Dmemodel=tiny int13x.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
 
