@@ -22,7 +22,7 @@ OBJS=support.obj pdossupc.obj pos.obj string.obj
 
 all: clean kernel32.dll
 
-kernel32.dll: $(EXPORT_OBJS) $(OBJS) kernelv.obj
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   link -map -nologo -dll -fixed:no -nodefaultlib -out:kernel32.dll -def:kernel32.def $(EXPORT_OBJS) $(OBJS)
 
 .c.eo:
@@ -38,9 +38,6 @@ kernel32.obj: kernel32.c
 
 support.obj: support.s
   aswin -o support.obj support.s
-
-kernelv.obj: kernelv.asm
-  ml -nologo -c -coff kernelv.asm
 
 .c.obj:
   $(CC) $(COPTS) $<
