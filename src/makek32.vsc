@@ -37,6 +37,7 @@ kernel32.obj: kernel32.c
   $(CC) -c $(COPTS) -D__EXPORT__ kernel32.c
 
 .asm.obj:
+#  as86 -o $@ -f coff $<
   ml -nologo -c -coff $<
 
 .c.obj:
