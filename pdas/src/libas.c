@@ -35,7 +35,7 @@ enum option_index {
 static const struct as_option as_options[] = {
 
     { "I",          AS_OPTION_INCLUDE,      AS_OPTION_HAS_ARG           },
-    { "O",          AS_OPTION_FORMAT,       AS_OPTION_HAS_ARG           },
+    { "-oformat",   AS_OPTION_FORMAT,       AS_OPTION_HAS_ARG           },
     
     { "a",          AS_OPTION_LISTING,      AS_OPTION_HAS_OPTIONAL_ARG  },
     { "o",          AS_OPTION_OUTFILE,      AS_OPTION_HAS_ARG           },
@@ -125,7 +125,7 @@ static void _print_help (const char *name) {
     fprintf (stderr, "Usage: %s [options] asmfile...\n\n", name);
     
     fprintf (stderr, "    -I DIR                Add DIR to search list for .include directives\n");
-    fprintf (stderr, "    -O FORMAT             Create an output file in format FORMAT (default %s)\n", default_format);
+    fprintf (stderr, "    --oformat FORMAT      Create an output file in format FORMAT (default %s)\n", default_format);
     fprintf (stderr, "                              Supported formats are: a.out, coff, elf\n");
     
     fprintf (stderr, "    -a[=FILE]             Print listings to stdout or a specified file\n");
@@ -225,6 +225,8 @@ void as_parse_args (int *pargc, char ***pargv, int optind) {
                     
                     optarg = argv[optind++];
                 
+                } else if (*r1 == '=') {
+                    optarg = r1 + 1;
                 }
             
             } else if (popt->flags & AS_OPTION_HAS_OPTIONAL_ARG) {
