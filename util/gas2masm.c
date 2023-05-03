@@ -74,12 +74,13 @@ int main(int argc, char **argv)
 
     while (fgets(buf, 300, f_in))
     {
-        const char *p = buf;
+        char *p = buf;
         char *o = buf_out;
 
         if (*p == '/')
         {
             /* A comment. */
+            *p = ';';
             fputs(buf, f_out);
             continue;
         }
