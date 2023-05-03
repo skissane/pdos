@@ -19,7 +19,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsv.obj
   lib -nologo -out:pdpwin32.lib temp1.lib temp2.lib temp3.lib
   del temp*.lib
-  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe p32start.obj pdptest.obj pdpwin32.lib kernel32.lib
+  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe p32start.obj pdptest.obj pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
   $(CC) $(COPTS) $<
