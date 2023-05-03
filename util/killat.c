@@ -62,9 +62,29 @@ int main(int argc, char **argv)
         fprintf(fq, "\n");
         fwrite(buf + 1, 1, p - buf - 1, fq);
         fprintf(fq, ": jmp %s\n\n", buf);
+
         fprintf(fr, "EXPORTS ");
-        *p = '\0';
-        fprintf(fr, "%s\n", buf + 1);
+        fwrite(buf + 1, 1, p - buf - 1, fr);
+        fprintf(fr, "\n");
+
+#if 0
+        fprintf(fr, "EXPORTS %s=", buf);
+        fwrite(buf + 1, 1, p - buf - 1, fr);
+        fprintf(fr, "\n");
+#endif
+#if 0
+        fprintf(fr, "EXPORTS ");
+        fwrite(buf + 1, 1, p - buf - 1, fr);
+        fprintf(fr, "=%s\n", buf);
+#endif
+#if 0
+        fprintf(fr, "EXPORTS %s\n", buf);
+#endif
+#if 0
+        fprintf(fr, "EXPORTS ");
+        fwrite(buf + 1, 1, p - buf - 1, fr);
+        fprintf(fr, "\n");
+#endif
     }
     return (0);
 }
