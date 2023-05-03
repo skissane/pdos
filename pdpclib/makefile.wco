@@ -2,9 +2,9 @@
 # Build with pdmake -f makefile.wco
 
 CC=wcl
-COPTS=-D__SZ4__ -oneatx -ecc -zp1 -q -w -c -I. -I..\src -mh -zl -D__MSDOS__ -DPDOS86 -DBUFSIZ=512 -fpi87 -s -zdp -zu
+COPTS=-D__SZ4__ -oneatx -ecc -zp1 -q -w -c -I. -I..\src -mh -zl -D__MSDOS__ -DPDOS86 -DBUFSIZ=512 -DNOUNDMAIN -fpi87 -s -zdp -zu
 
-pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
+pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj pdossupc.obj dossupa.obj dossupc.obj
   if exist watcomo.lib del watcomo.lib
@@ -23,10 +23,11 @@ pdptest.exe: pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcomo +pdossupc.obj
   wlib -b -q watcomo +dossupa.obj
   wlib -b -q watcomo +dossupc.obj
+  wlib -b -q watcomo +dosstart.obj
 
 .c.obj:
   $(CC) $(COPTS) $<
 
-dossupa.obj: dossupa.asm
-#  ml -c -D__SZ4__ -DPDOS86 -Dmemodel=huge -DWATCOM dossupa.asm
-  wasm -zcm -q -DPDOS86 -DWATCOM -D__SZ4__ -Dmemodel=huge dossupa.asm
+.asm.obj:
+#  ml -c -D__SZ4__ -DPDOS86 -Dmemodel=huge -DWATCOM $<
+  wasm -zcm -q -DPDOS86 -DWATCOM -D__SZ4__ -Dmemodel=huge $<
