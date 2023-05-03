@@ -25,11 +25,6 @@ all: clean kernel32.dll
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   link -map -nologo -dll -fixed:no -nodefaultlib -out:kernel32.dll -def:kernel32.def $(EXPORT_OBJS) $(OBJS)
 
-.c.eo:
-  $(CC) $(COPTS) -D__EXPORT__ -o $@.s $<
-  $(AS) -o $@ $@.s
-  rm -f $@.s
-
 dllcrt.obj: ..\pdpclib\dllcrt.c
   $(CC) -c $(COPTS) -D__EXPORT__ ..\pdpclib\dllcrt.c
 
