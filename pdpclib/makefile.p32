@@ -19,11 +19,11 @@ pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  pdas -O coff -o $@ $*.s
+  pdas --oformat coff -o $@ $*.s
   rm -f $*.s
 
 .asm.obj:
-  pdas -O coff -o $@ $<
+  pdas --oformat coff -o $@ $<
 
 clean:
   rm -f *.o
