@@ -25,7 +25,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(CC) $(COPTS) $<
 
 .asm.obj:
-  ml -c -coff $<
+  ml -nologo -c -coff $<
 
 clean:
   rm -f *.obj
