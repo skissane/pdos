@@ -13,7 +13,7 @@
 #define CTYP
 #endif
 
-int __open(const char *filename, int mode, int *errind)
+int CTYP __open(const char *filename, int mode, int *errind)
 {
     int handle;
 
@@ -22,7 +22,7 @@ int __open(const char *filename, int mode, int *errind)
     return (handle);
 }
 
-int __creat(const char *filename, int mode, int *errind)
+int CTYP __creat(const char *filename, int mode, int *errind)
 {
     int handle;
 
@@ -31,7 +31,7 @@ int __creat(const char *filename, int mode, int *errind)
     return (handle);
 }
 
-int __read(int handle, void *buf, unsigned int len, int *errind)
+int CTYP __read(int handle, void *buf, unsigned int len, int *errind)
 {
     unsigned int readbytes;
 
@@ -40,7 +40,7 @@ int __read(int handle, void *buf, unsigned int len, int *errind)
     return (readbytes);
 }
 
-int __write(int handle, const void *buf, unsigned int len, int *errind)
+int CTYP __write(int handle, const void *buf, unsigned int len, int *errind)
 {
     unsigned int writtenbytes;
 
@@ -49,37 +49,37 @@ int __write(int handle, const void *buf, unsigned int len, int *errind)
     return (writtenbytes);
 }
 
-int __seek(int handle, long offset, int whence)
+int CTYP __seek(int handle, long offset, int whence)
 {
     long dummy;
     return (PosMoveFilePointer(handle, offset, whence, &dummy));
 }
 
-void __close(int handle)
+void CTYP __close(int handle)
 {
     PosCloseFile(handle);
     return;
 }
 
-void __devginfo(int handle, unsigned int *info)
+void CTYP __devginfo(int handle, unsigned int *info)
 {
     PosGetDeviceInformation(handle, info);
     return;
 }
 
-void __devsinfo(int handle, unsigned int info)
+void CTYP __devsinfo(int handle, unsigned int info)
 {
     PosSetDeviceInformation(handle, info);
     return;
 }
 
-void __remove(const char *filename)
+void CTYP __remove(const char *filename)
 {
     PosDeleteFile(filename);
     return;
 }
 
-void __rename(const char *old, const char *new)
+void CTYP __rename(const char *old, const char *new)
 {
     PosRenameFile(old, new);
     return;
@@ -113,7 +113,7 @@ int __liballoc_free(void *addr, size_t num_pages)
 
 #else
 
-void __allocmem(size_t size, void **ptr)
+void CTYP __allocmem(size_t size, void **ptr)
 {
 #if defined(__32BIT__) || defined(__PDOS386__)
     *ptr = PosAllocMem(size, POS_LOC32);
@@ -125,19 +125,19 @@ void __allocmem(size_t size, void **ptr)
     return;
 }
 
-void __freemem(void *ptr)
+void CTYP __freemem(void *ptr)
 {
     PosFreeMem(ptr);
     return;
 }
 #endif
 
-int __exec(char *cmd, void *env)
+int CTYP __exec(char *cmd, void *env)
 {
     return (PosExec(cmd, env));
 }
 
-int __getrc(void)
+int CTYP __getrc(void)
 {
     return (PosGetReturnCode());
 }
