@@ -3,33 +3,33 @@
 ; released to the public domain
 
 .386p
-.model flat
+.model flat, c
 
-        public _int86
-        public _int86x
-        public _enable
-        public _disable
-        public ___setj
-        public ___longj
-        public _inp
-        public _inpw
-        public _inpd
-        public _outp
-        public _outpw
-        public _outpd
-        public _hltintgo
-        public _hltinthit
-        public ___switch
-        public ___brkpoint
-        public ___brkpoint2
+        public int86
+        public int86x
+        public enable
+        public disable
+        public __setj
+        public __longj
+        public inp
+        public inpw
+        public inpd
+        public outp
+        public outpw
+        public outpd
+        public hltintgo
+        public hltinthit
+        public __switch
+        public __brkpoint
+        public __brkpoint2
 
         .code
 
 ; Because of the C calling convention, and the fact that the seg
 ; regs are the last parameter, and they're not actually used, the
 ; entry point for _int86 can be reused for _int86x
-_int86x:
-_int86:
+int86x:
+int86:
         push    ebp
         mov     ebp, esp
         push    eax
@@ -224,16 +224,16 @@ nocarry:
         pop     ebp
         ret
 
-_enable:
+enable:
         sti
         ret
 
-_disable:
+disable:
         cli
         ret
 
 ; read a character from a port
-_inp:
+inp:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -245,7 +245,7 @@ _inp:
         ret
 
 ; read a word from a port
-_inpw:
+inpw:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -257,7 +257,7 @@ _inpw:
         ret
 
 ; read a dword from a port
-_inpd:
+inpd:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -269,7 +269,7 @@ _inpd:
         ret
 
 ; write a character to a port
-_outp:
+outp:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -281,7 +281,7 @@ _outp:
         ret
 
 ; write a word to a port
-_outpw:
+outpw:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -293,7 +293,7 @@ _outpw:
         ret
 
 ; write a dword to a port
-_outpd:
+outpd:
         push    ebp
         mov     ebp, esp
         push    edx
@@ -306,7 +306,7 @@ _outpd:
 
 
 ; enable interrupts and then halt until interrupt hit
-_hltintgo:
+hltintgo:
 hloop:
 ; I believe hlt will be interrupted by other interrupts, like
 ; the timer interrupt, so we need to do it in a loop
@@ -314,7 +314,7 @@ hloop:
         hlt
         cli
         jmp     hloop
-_hltinthit:
+hltinthit:
 ; remove return address, segment and flags from the stack as we
 ; do not intend to return to the jmp following the hlt instruction
 ; that was likely interrupted
@@ -328,8 +328,8 @@ _hltinthit:
 
 ; Basically copied from linsupa.asm
 
-public ___setj
-___setj:
+public __setj
+__setj:
 mov eax, 4[esp]
 push ebx
 mov ebx, esp
@@ -354,8 +354,8 @@ ret
 
 
 
-public ___longj
-___longj:
+public __longj
+__longj:
 mov eax, 4[esp]
 mov ebp, 20[eax]
 mov esp, ebp
@@ -384,7 +384,7 @@ ret
 ; internal switch(expr) routine
 ; esi = switch table, eax = expr
 
-___switch:	push esi
+__switch:	push esi
 	mov	esi, edx
 	mov	ebx, eax
 	cld
@@ -403,14 +403,14 @@ no:	loop    next
 	jmp	eax
 
 
-public ___brkpoint
-___brkpoint:
+public __brkpoint
+__brkpoint:
         int     03h
         ret
 
 
-public ___brkpoint2
-___brkpoint2:
+public __brkpoint2
+__brkpoint2:
         int     03h
         ret
 
