@@ -8,5 +8,5 @@ world2.exe: world2.o
 
 .c.o:
   pdcc -D__WIN32__ -D__STATIC__ -I ../pdpclib -o $*.s $<
-  pdas -o $@ -O coff $*.s
+  pdas -o $@ --oformat coff $*.s
   rm -f $*.s

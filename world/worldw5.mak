@@ -11,5 +11,5 @@ world.exe: world.o
   pdcc -E -D__NODECLSPEC__ -D__WIN32__ -I ../pdpclib -o $*.i $<
   occ $*.i -o $*.s
   rm -f $*.i
-  pdas -o $@ -O coff $*.s
+  pdas -o $@ --oformat coff $*.s
   rm -f $*.s
