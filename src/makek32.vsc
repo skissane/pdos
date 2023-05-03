@@ -18,7 +18,7 @@ AS=ml
 LD=link
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
-OBJS=support.obj pdossupc.obj pos.obj string.obj
+OBJS=supportf.obj pdossupc.obj pos.obj string.obj
 
 all: clean kernel32.dll
 
@@ -36,8 +36,8 @@ dllcrt.obj: ..\pdpclib\dllcrt.c
 kernel32.obj: kernel32.c
   $(CC) -c $(COPTS) -D__EXPORT__ kernel32.c
 
-support.obj: support.s
-  aswin -o support.obj support.s
+.asm.obj:
+  ml -nologo -c -coff $<
 
 .c.obj:
   $(CC) $(COPTS) $<
