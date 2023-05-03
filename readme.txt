@@ -232,6 +232,13 @@ https://web.archive.org/web/20070202015826/http://download.microsoft.com/downloa
 directory, then copy ml.exe and ml.err into your PATH,
 and save MasmRef.doc as a reference)
 
+Not used:
+64-bit MASM:
+https://www.microsoft.com/en-us/download/details.aspx?id=14477
+6.1.6000.16384.10.WindowsSDK_Vista_Feb2007Update_rtm.DVD.Rel.iso
+WinSDKCompiler-WinSDKCompiler_X64_VC8CppCrossCompiler-x86.0.cab
+ren ml64_exe.DFB19EFA_5C47_43EC_95E0_F97ACB8E5B40 ml64.exe
+
 HX DOS extender:
 https://www.japheth.de/HX.html
 
