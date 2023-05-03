@@ -142,7 +142,7 @@ int CTYP __getrc(void)
     return (PosGetReturnCode());
 }
 
-void __datetime(void *ptr)
+void CTYP __datetime(void *ptr)
 {
     unsigned int year, month, day, dow;
     unsigned int hour, minute, second, hundredths;
