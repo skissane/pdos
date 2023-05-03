@@ -28,6 +28,7 @@ int main(int argc, char **argv)
         printf("usage: killat <funclist> <asm> <def>\n");
         printf("input file looks like:\n");
         printf("_CreateProcessA@40\n");
+        printf("note that the output assembler file is not needed\n");
         return (EXIT_FAILURE);
     }
     fp = fopen(*(argv + 1), "r");
