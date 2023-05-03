@@ -3,7 +3,7 @@ CC=gccwin
 CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s
-AS=pdas -O coff
+AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
 OBJS=bytearray.o coff.o coff_bytearray.o error.o hashtab.o ld.o libld.o link.o sections.o symbols.o xmalloc.o
