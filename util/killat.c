@@ -58,6 +58,7 @@ int main(int argc, char **argv)
         p = strchr(buf, '\n');
         if (p == NULL) break;
         *p = '\0';
+#if 1
         p = strchr(buf, '@');
         if (p == NULL) break;
         fprintf(fq, "extrn %s:proc\npublic ", buf);
@@ -65,6 +66,11 @@ int main(int argc, char **argv)
         fprintf(fq, "\n");
         fwrite(buf + 1, 1, p - buf - 1, fq);
         fprintf(fq, ": jmp %s\n\n", buf);
+#else
+        fprintf(fq, "extrn %s:proc\n", buf);
+        fprintf(fq, "public %s\n", buf + 1);
+        fprintf(fq, "%s: jmp %s\n\n", buf + 1, buf);
+#endif
 
         fprintf(fr, "EXPORTS ");
         fwrite(buf + 1, 1, p - buf - 1, fr);
