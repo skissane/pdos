@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+__PDPCLIB_API__ int __start(char *p);
+
 /* This is the main entry point of a console mode executable */
 
 /* consider adding this line so that relocatables are generated
