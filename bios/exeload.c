@@ -1581,8 +1581,6 @@ static int exeloadLoadPE(unsigned char **entry_point,
          section < section_table + coff_hdr.NumberOfSections;
          section++)
     {
-        unsigned long size_in_file;
-
         /* Virtual size of a section is larger than in file,
          * so the difference is filled with 0. */
         if (section->VirtualSize > section->SizeOfRawData)
@@ -1592,19 +1590,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
                    + section->SizeOfRawData,
                    0,
                    section->VirtualSize - section->SizeOfRawData);
-            size_in_file = section->SizeOfRawData;
         }
-        /* SizeOfRawData is rounded up,
-         * so it can be larger than VirtualSize. */
-        else
-        {
-            size_in_file = section->VirtualSize;
-        }
-        if (size_in_file != 0)
+        if (section->SizeOfRawData != 0)
         {
             if ((fseek(fp, section->PointerToRawData, SEEK_SET) != 0)
                 || (fread(exeStart + section->VirtualAddress,
-                         size_in_file,
+                         section->SizeOfRawData,
                          1,
                          fp) != 1))
             {
