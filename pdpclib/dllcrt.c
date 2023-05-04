@@ -28,6 +28,13 @@ __PDPCLIB_API__ int __start(char *p);
 BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved);
 
 
+#ifdef __WATCOMC__
+int __watcall main(int argc, int argv)
+{
+    return (0);
+}
+#endif
+
 BOOL __stdcall _DllMainCRTStartup(HINSTANCE hinstDll,
                               DWORD fdwReason,
                               LPVOID lpvReserved)
