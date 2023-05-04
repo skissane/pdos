@@ -22,7 +22,11 @@
 
 #include <windows.h>
 
+
+__PDPCLIB_API__ int __start(char *p);
+
 BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved);
+
 
 BOOL __stdcall _DllMainCRTStartup(HINSTANCE hinstDll,
                               DWORD fdwReason,
