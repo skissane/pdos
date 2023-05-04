@@ -13,7 +13,7 @@
 #ifndef __LOCALE_INCLUDED
 #define __LOCALE_INCLUDED
 
-#ifdef __PDPCLIB_DLL
+#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
 #define __PDPCLIB_HEADFUNC __declspec(dllexport)
 #endif
 

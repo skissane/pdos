@@ -13,7 +13,7 @@
 #ifndef __TIME_INCLUDED
 #define __TIME_INCLUDED
 
-#ifdef __PDPCLIB_DLL
+#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
 #define __PDPCLIB_HEADFUNC __declspec(dllexport)
 #endif
 
