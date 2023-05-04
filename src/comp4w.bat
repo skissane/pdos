@@ -32,4 +32,4 @@ rem and only the first 3 functions of near
 rem wcl ploadst.obj pload.obj
 rem wlink ploadst+pload+int13x+near+support+bos+dossupc+fat+string+pdosload+lldos+protinta+file+protint,pload.com,,,
 
-wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map
+wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map Disable 1019,1080
