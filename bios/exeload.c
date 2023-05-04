@@ -1745,7 +1745,8 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
     {
         name2 = kernel32;
     }
-    else if (strcmp(name1, "msvcrt.dll") == 0)
+    else if ((strcmp(name1, "msvcrt.dll") == 0)
+             || (strcmp(name1, "msvcrt") == 0))
     {
         name2 = msvcrt;
     }
