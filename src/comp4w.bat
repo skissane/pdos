@@ -2,7 +2,7 @@
 wasm -zq -zcm -Dmemodel=tiny support.asm
 rem as86 -DAS86 -Dmemodel=tiny -o support.obj support.asm
 rem ml -c -Dmemodel=tiny support.asm
-wasm -zq -zcm -Dmemodel=tiny -DWATCOM ploadst.asm
+wasm -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM ploadst.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
 wasm -zq -zcm -Dmemodel=tiny lldos.asm
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM protinta.asm
