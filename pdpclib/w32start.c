@@ -16,7 +16,13 @@
 
 int __getmainargs(int *_Argc, char ***_Argv, char ***_Env, int _DoWildCard,
                   int *_StartInfo);
+
+#ifdef __WATCOMC__
+int __watcall main(int argc, char **argv);
+int __cdmain(int argc, char **argv);
+#else
 int main(int argc, char **argv);
+#endif
 
 /* This is the main entry point of a console mode executable */
 
@@ -47,7 +53,11 @@ void mainCRTStartup(void)
 
     __getmainargs(&argc, &argv, &environ, 1, &startinfo);
 
+#ifdef __WATCOMC__
+    status = __cdmain(argc, argv);
+#else
     status = main(argc, argv);
+#endif
 
     exit(status);
 }
