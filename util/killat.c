@@ -28,6 +28,8 @@ int main(int argc, char **argv)
         printf("usage: killat <funclist> <asm> <def>\n");
         printf("input file looks like:\n");
         printf("_CreateProcessA@40\n");
+        printf("You can do link -map to get this, and use an editor\n");
+        printf("to clean it up\n");
         printf("note that the output assembler file is not needed\n");
         return (EXIT_FAILURE);
     }
