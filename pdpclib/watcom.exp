@@ -1,0 +1,12 @@
+Export printf=_printf
+Export __getmainargs=___getmainargs
+Export exit=_exit
+Export _exit=__exit
+Export malloc=_malloc
+Export strcmp=_strcmp
+Export fread=_fread
+Export fwrite=_fwrite
+Export ferror=_ferror
+Export fopen=_fopen
+Export fclose=_fclose
+Export _iob=__iob
