@@ -19,6 +19,7 @@ wlib -b -q watcom +pdosload.obj
 wlib -b -q watcom +lldos.obj
 wlib -b -q watcom +ctype.obj
 
+rem the below documentation is no longer valid
 rem the order of the following stuff is critical so that the first 3*512
 rem bytes have sufficient stuff to do the rest of the load of itself!!!
 rem it is ploadst, pload, int13x and near that need to be in the first 3*512
