@@ -35,10 +35,15 @@ void _CHP(void)
     return;
 }
 
-void __main(void);
-
 void cstart_(void)
 {
-    __main();
     return;
+}
+
+
+int __watcall main(int argc, char **argv);
+
+int __cdmain(int argc, char **argv)
+{
+    return (main(argc, argv));
 }
