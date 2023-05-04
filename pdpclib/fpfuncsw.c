@@ -15,29 +15,29 @@ int _fltused_ = 0;
 int __real87 = 0;
 int _argc;
 
-__init_387_emulator(void)
+void __init_387_emulator(void)
 {
     return;
 }
 
-__8087(void)
+void _8087(void)
 {
     return;
 }
 
-__STOSD(void)
+void __STOSD(void)
 {
     return;
 }
 
-__CHP(void)
+void _CHP(void)
 {
     return;
 }
 
 void __main(void);
 
-_cstart_(void)
+void cstart_(void)
 {
     __main();
     return;
