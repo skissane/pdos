@@ -1,5 +1,9 @@
 # This is the makefile for Win32 to build pdpclib using
 # Open Watcom
+# The executable runs on Windows, but on PDOS/386 it gives
+# lots of errors about unknown PE relocation. I tried adding:
+# Segment type code shared pageable, type data shared pageable
+# (and 3 other permutations) but that didn't solve the problem.
 
 CC=wcl386
 CFLAGS=-oneatx
