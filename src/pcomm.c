@@ -203,6 +203,7 @@ CMDPROTO(prompt);
 CMDPROTO(ps);
 CMDPROTO(rd);
 CMDPROTO(reboot);
+CMDPROTO(rehash);
 CMDPROTO(rem);
 CMDPROTO(ren);
 CMDPROTO(save);
@@ -277,6 +278,7 @@ static cmdBlock cmdRegistry[] =
     CMDDEF(ps,"","Shows running processes"),
     CMDDEF(rd,"|rmdir","Removes directories"),
     CMDDEF(reboot,"","Reboots the computer"),
+    CMDDEF(rehash,"","Clears the cache of a drive"),
     CMDDEF(rem,"","Comment in a batch file"),
     CMDDEF(ren,"|rename","Renames files and directories"),
     CMDDEF(save,"","Saves user input to file"),
@@ -989,6 +991,14 @@ static int cmd_reboot_run(char *ignored)
     /* if we return from PosReboot(), we know it failed */
     printf("ERROR: Reboot failed\n");
     return 1;
+}
+
+static int cmd_rehash_run(char *drive)
+{
+    CMD_REQUIRES_ARGS(drive);
+    PosRehash((toupper(drive[0])) - 'A');
+    printf("cache hopefully cleared\n");
+    return (0);
 }
 
 static int cmd_type_run(char *file)
@@ -1738,6 +1748,15 @@ static void cmd_cls_help(void)
 static void cmd_reboot_help(void)
 {
     printf("REBOOT\n");
+}
+
+static void cmd_rehash_help(void)
+{
+    printf("REHASH [drive]\n");
+    printf("clear cache of a drive\n");
+    printf("useful if you used the bios to bypass the OS "
+           "to change the drive\n");
+    printf("e.g. rehash c\n");
 }
 
 static void cmd_poweroff_help(void)

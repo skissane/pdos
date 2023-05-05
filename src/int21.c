@@ -1128,6 +1128,10 @@ static void int21handler(union REGS *regsin,
             {
                 PosReboot();
             }
+            else if (regsin->h.al == 2)
+            {
+                regsout->x.ax = PosRehash(regsin->x.dx);
+            }
             else if (regsin->h.al == 3)
             {
                 PosSetDosVersion(regsin->x.bx);

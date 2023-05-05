@@ -3503,6 +3503,15 @@ void PosReboot(void)
 }
 #endif
 
+int PosRehash(int c)
+{
+    if ((c >= 0) && (c < lastDrive))
+    {
+        disks[c].fat.cachedSector = 0;
+    }
+    return (0);
+}
+
 #ifdef __32BIT__
 void PosPowerOff(void)
 {

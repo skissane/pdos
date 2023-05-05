@@ -308,6 +308,8 @@ void PosDisplayInteger(int x); /* func f6.00 */
 
 void PosReboot(void); /* func f6.01 */
 
+int PosRehash(int c); /* func f6.02 */
+
 void PosSetDosVersion(unsigned int version); /* func f6.03 */
 
 int PosGetLogUnimplemented(void); /* func f6.04 */

@@ -1431,6 +1431,19 @@ void PosReboot(void)
     return;
 }
 
+/* Rehash - clear any caching on a drive */
+
+int PosRehash(int c)
+{
+    union REGS regsin;
+
+    regsin.h.ah = 0xf6;
+    regsin.h.al = 2;
+    regsin.x.dx = c;
+    int86i(0x21, &regsin);
+    return (0);
+}
+
 /* pos extension to set DOS version */
 void PosSetDosVersion(unsigned int version)
 {
