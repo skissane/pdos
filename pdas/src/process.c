@@ -900,10 +900,8 @@ static void handler_space (char **pp) {
             goto end;
         
         }
-        
-        while (repeat--) {
-            frag_append_1_char (val.add_number);
-        }
+
+        memset (frag_increase_fixed_size (repeat), val.add_number, repeat);
     
     } else {
     
