@@ -921,7 +921,7 @@ long BosExtendedMemorySize(void)
 #ifdef __32BIT__
 unsigned int BosSystemMemoryMap(unsigned char *buf,
                                 int szbuf,
-                                unsigned int contval)
+                                unsigned long *contval)
 {
     union REGS regsin;
     union REGS regsout;
@@ -931,7 +931,7 @@ unsigned int BosSystemMemoryMap(unsigned char *buf,
     regsin.h.ah = 0xe8;
     regsin.h.al = 0x20;
     regsin.d.edx = 0x534d4150;
-    regsin.d.ebx = contval;
+    regsin.d.ebx = *contval;
     regsin.d.ecx = szbuf;
 #ifdef __32BIT__
     sregs.es = (((unsigned long)buf) >> 4) & 0xffffU;
@@ -945,6 +945,7 @@ unsigned int BosSystemMemoryMap(unsigned char *buf,
     }
     else
     {
+        *contval = regsout.d.ebx;
         return (0);
     }
 }

@@ -161,7 +161,7 @@ long BosExtendedMemorySize(void); /* 15:88 */
 #ifdef __32BIT__
 unsigned int BosSystemMemoryMap(unsigned char *buf,
                                 int szbuf,
-                                unsigned int contval);
+                                unsigned long *contval);
 #endif
 
 void BosReadKeyboardCharacter(int *scancode, int *ascii); /* 16:0 */
