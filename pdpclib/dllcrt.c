@@ -35,7 +35,7 @@ int __watcall main(int argc, int argv)
 }
 #endif
 
-BOOL WINAPI _DllMainCRTStartup(HINSTANCE hinstDll,
+BOOL __stdcall _DllMainCRTStartup(HINSTANCE hinstDll,
                               DWORD fdwReason,
                               LPVOID lpvReserved)
 {
