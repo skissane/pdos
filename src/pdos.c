@@ -973,7 +973,97 @@ void pdosRun(void)
     memavail -= 0x200000;
 #ifdef NOVM
     memmgrInit(&physmemmgr);
-    memmgrSupply(&physmemmgr, (void *)memstart, memavail);
+
+#define USESMEMMAP 1
+#ifdef USESMEMMAP
+    {
+        unsigned long contval = 0;
+        unsigned long totfound = 0;
+        unsigned char *startaddr;
+        unsigned long thisamt;
+        unsigned char *endaddr;
+
+        while (BosSystemMemoryMap(transferbuf, 20, &contval) == 0)
+        {
+#if 0
+            printf("block addr: %08X %08X size: %08X %08X type: %08X\n",
+                   *(int *)(transferbuf + 0),
+                   *(int *)(transferbuf + 4),
+                   *(int *)(transferbuf + 8),
+                   *(int *)(transferbuf + 12),
+                   *(int *)(transferbuf + 16));
+#endif
+
+            /* if this memory is not available to the OS (1), then
+               ignore it */
+            if (*(unsigned int *)(transferbuf + 16) != 1)
+            {
+                if (contval == 0) break;
+                else continue;
+            }
+
+            /* If this memory is above 4 GiB, ignore it */
+            if (*(unsigned int *)(transferbuf + 4) != 0)
+            {
+                if (contval == 0) break;
+                else continue;
+            }
+
+            thisamt = *(unsigned int *)(transferbuf + 8);
+            /* If the block of memory available is more than 4 GiB,
+               adjust to just less than 4 GiB */
+            if (*(unsigned int *)(transferbuf + 12) != 0)
+            {
+                thisamt = 0xffffffffUL;
+            }
+
+            startaddr = *(void **)(transferbuf + 0);
+            endaddr = startaddr + thisamt;
+
+#define TWOMEG ((unsigned char *)(2 * 1024 * 1024UL))
+
+            /* if we exceed the limits of 32 bits, adjust to maximum */
+            if (endaddr < startaddr)
+            {
+                endaddr = (unsigned char *)0xffffffffUL;
+                thisamt = endaddr - startaddr;
+            }
+
+            /* not interested in memory below 1 MiB and also want to
+               stay clear of 1 MiB to 2 MiB region which could be
+               subject to A20 issues */
+            if (endaddr <= TWOMEG)
+            {
+                if (contval == 0) break;
+                else continue;
+            }
+
+            if (startaddr < TWOMEG)
+            {
+                thisamt -= (TWOMEG - startaddr);
+                startaddr = TWOMEG;
+                endaddr = startaddr + thisamt;
+            }
+
+            /* printf("startaddr %p, size %08X\n", startaddr, thisamt); */
+            memmgrSupply(&physmemmgr, (void *)startaddr, thisamt);
+            totfound += thisamt;
+
+            if (contval == 0) break;
+        }
+        if (totfound != 0)
+        {
+            printf("new extended memory is %lu bytes\n", thisamt);
+            memavail = 0;
+        }
+    }
+#endif
+
+    if (memavail != 0)
+    {
+        memmgrSupply(&physmemmgr, (void *)memstart, memavail);
+    }
+
 #else
     /* Provides memory to physical memory manager. */
     physmemmgrInit(&physmemmgr);
