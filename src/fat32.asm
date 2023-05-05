@@ -96,8 +96,8 @@ jmp bypass2
 
 ; Used to store our boot disk when we first start
 ; Some software is dependent on the second byte of the boot sector
-; to determine the FAT size, so this variable can't come immediately
-; after the BPB.
+; to determine the FAT size (ie they see how far the jmp instruction
+; goes), so this variable can't come immediately after the BPB.
 BootDisk db 0
 
 bypass2:
