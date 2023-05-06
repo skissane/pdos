@@ -25,6 +25,12 @@
  * and it is easier to generate them all even if they are unused. */
 #define NUMBER_OF_DATA_DIRECTORIES 16
 
+/* "__imp_" added in front of the "_" prefix means
+ * that the symbol is imported directly from Import Address Table
+ * instead of from stub generated in .text. */
+#define IMP_PREFIX_STR "__imp_"
+#define IMP_PREFIX_LEN 6
+
 static int insert_timestamp = 1;
 static int kill_at = 0;
 static int generate_reloc_section = 1;
@@ -43,9 +49,24 @@ static struct section_part *iat_last_part = NULL;
 
 static struct section *last_section;
 
+static char *current_import_dll_name = NULL;
+
 struct name_list {
     struct name_list *next;
+    int info;
     char *name;
+};
+
+enum export_type {
+    EXPORT_TYPE_CODE,
+    EXPORT_TYPE_DATA,
+    EXPORT_TYPE_CONST
+};
+
+struct export_name {
+    char *name;
+    char *name_no_at;
+    enum export_type export_type;
 };
 
 static struct name_list *export_name_list = NULL;
@@ -182,10 +203,225 @@ address_type coff_get_first_section_rva (void)
     return ALIGN (size_of_headers, DEFAULT_SECTION_ALIGNMENT);
 }
 
-static int name_compar (const void *a, const void *b)
+static char *unprefix_name (const char *orig_name)
 {
-    return strcmp (*(char **)a, *(char **)b);
+    char *name;
+    
+    if (orig_name[0] == '_') {
+        name = xmalloc (strlen (orig_name));
+        strcpy (name, orig_name + 1);
+    } else {
+        name = xstrdup (orig_name);
+    }
+
+    return name;
 }
+
+static char *unat_name (const char *orig_name)
+{
+    char *name;
+    const char *at_p;
+    
+    at_p = strchr (orig_name, '@');
+    if (at_p) {
+        name = xmalloc (at_p - orig_name + 1);
+        memcpy (name, orig_name, at_p - orig_name);
+        name[at_p - orig_name] = '\0';
+    } else {
+        name = xstrdup (orig_name);
+    }
+
+    return name;
+}
+
+static char *undecorate_name (const char *orig_name)
+{
+    char *name;
+    const char *at_p;
+
+    if (orig_name[0] == '_') orig_name++;
+    
+    at_p = strchr (orig_name, '@');
+    if (at_p) {
+        name = xmalloc (at_p - orig_name + 1);
+        memcpy (name, orig_name, at_p - orig_name);
+        name[at_p - orig_name] = '\0';
+    } else {
+        name = xstrdup (orig_name);
+    }
+
+    return name;
+}
+
+static int export_name_compar (const void *a, const void *b)
+{
+    return strcmp (((struct export_name *)a)->name, ((struct export_name *)b)->name);
+}
+
+static void write_archive_member_header (unsigned char *pos, const char *Name, unsigned long Size, unsigned long lu_timestamp)
+{
+    struct IMAGE_ARCHIVE_MEMBER_HEADER_internal member_hdr;
+
+    memset (&member_hdr, ' ', sizeof (member_hdr));
+    
+    member_hdr.Name[sprintf (member_hdr.Name, Name)] = ' ';
+    member_hdr.Date[sprintf (member_hdr.Date, "%lu", lu_timestamp)] = ' ';
+    member_hdr.UserID[0] = '0';
+    member_hdr.GroupID[0] = '0';
+    member_hdr.Mode[0] = '0';
+    member_hdr.Size[sprintf (member_hdr.Size, "%lu", Size)] = ' ';
+    memcpy (member_hdr.EndOfHeader, IMAGE_ARCHIVE_MEMBER_HEADER_END_OF_HEADER, sizeof (member_hdr.EndOfHeader));
+    
+    write_struct_IMAGE_ARCHIVE_MEMBER_HEADER (pos, &member_hdr);
+}
+
+static void write_implib (struct export_name *export_names, size_t num_names, unsigned long OrdinalBase)
+{
+    const char *filename;
+    unsigned char *file;
+    size_t file_size;
+    unsigned char *pos;
+
+    unsigned long lu_timestamp;
+
+    unsigned long linker_member_size;
+    unsigned long num_linker_member_offsets;
+    unsigned char *offset_pos;
+    unsigned char *string_table_pos;
+    size_t i;
+
+    filename = ld_state->output_implib_filename;
+
+    if (insert_timestamp) {
+        time_t timestamp;
+        timestamp = time (NULL);
+        lu_timestamp = (unsigned long)timestamp;
+    } else lu_timestamp = 0;
+
+    file_size = strlen (IMAGE_ARCHIVE_START);
+    linker_member_size = 1 * 4;
+
+    num_linker_member_offsets = 0;
+    for (i = 0; i < num_names; i++) {
+        file_size += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+        file_size += sizeof (struct IMPORT_OBJECT_HEADER_file);
+        file_size += 1 + strlen (export_names[i].name) + 1;
+        file_size += strlen (ld_state->output_filename) + 1;
+
+        if (export_names[i].export_type == EXPORT_TYPE_CODE) {
+            linker_member_size += 4 + 1 + strlen (export_names[i].name) + 1;
+            num_linker_member_offsets++;
+        }
+        linker_member_size += 4 + IMP_PREFIX_LEN + 1 + strlen (export_names[i].name) + 1;
+        num_linker_member_offsets++;
+
+        file_size = ALIGN (file_size, 2);
+    }
+
+    linker_member_size = ALIGN (linker_member_size, 2);
+    file_size += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file) + linker_member_size;
+
+    file = xmalloc (file_size);
+    memset (file, 0, file_size);
+
+    pos = file;
+
+    memcpy (pos, IMAGE_ARCHIVE_START, strlen (IMAGE_ARCHIVE_START));
+    pos += strlen (IMAGE_ARCHIVE_START);
+
+    write_archive_member_header (pos, IMAGE_ARCHIVE_LINKER_MEMBER_Name, linker_member_size, lu_timestamp);
+    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+
+    bytearray_write_4_bytes (pos, num_linker_member_offsets, BIG_ENDIAN);
+    pos += 4;
+
+    offset_pos = pos;
+    string_table_pos = pos + num_linker_member_offsets * 4;
+    pos = file + strlen (IMAGE_ARCHIVE_START) + sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file) + linker_member_size;
+
+    for (i = 0; i < num_names; i++) {
+
+        if (export_names[i].export_type == EXPORT_TYPE_CODE) {
+            bytearray_write_4_bytes (offset_pos, pos - file, BIG_ENDIAN);
+            offset_pos += 4;
+            
+            string_table_pos++[0] = '_';
+            strcpy ((char *)string_table_pos, export_names[i].name);
+            string_table_pos += strlen (export_names[i].name) + 1;
+        }
+
+        {
+            bytearray_write_4_bytes (offset_pos, pos - file, BIG_ENDIAN);
+            offset_pos += 4;
+            
+            memcpy (string_table_pos, IMP_PREFIX_STR, IMP_PREFIX_LEN);
+            string_table_pos += IMP_PREFIX_LEN;
+            string_table_pos++[0] = '_';
+            strcpy ((char *)string_table_pos, export_names[i].name);
+            string_table_pos += strlen (export_names[i].name) + 1;
+        }
+
+        write_archive_member_header (pos, "IMPORT/",
+                                     sizeof (struct IMPORT_OBJECT_HEADER_file)
+                                     + 1 + strlen (export_names[i].name) + 1
+                                     + strlen (ld_state->output_filename) + 1,
+                                     lu_timestamp);
+        pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+
+        {
+            struct IMPORT_OBJECT_HEADER_internal import_hdr;
+
+            import_hdr.Magic1 = IMAGE_FILE_MACHINE_UNKNOWN;
+            import_hdr.Magic2 = IMPORT_OBJECT_HDR_MAGIC2;
+            import_hdr.Version = 0;
+            import_hdr.Machine = IMAGE_FILE_MACHINE_I386;
+
+            import_hdr.TimeDateStamp = lu_timestamp;
+            
+            import_hdr.SizeOfData = 1 + strlen (export_names[i].name) + 1 + strlen (ld_state->output_filename) + 1;
+            import_hdr.OrdinalHint = OrdinalBase + i;
+            
+            switch (export_names[i].export_type) {
+                case EXPORT_TYPE_CODE: import_hdr.Type = IMPORT_CODE; break;
+                case EXPORT_TYPE_DATA: import_hdr.Type = IMPORT_DATA; break;
+                case EXPORT_TYPE_CONST: import_hdr.Type = IMPORT_CONST; break;
+            }
+            
+            import_hdr.Type |= (kill_at ? IMPORT_NAME_UNDECORATE : IMPORT_NAME_NOPREFIX) << 2;
+
+            write_struct_IMPORT_OBJECT_HEADER (pos, &import_hdr);
+            pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
+
+            pos++[0] = '_';
+            strcpy ((char *)pos, export_names[i].name);
+            pos += strlen (export_names[i].name) + 1;
+            strcpy ((char *)pos, ld_state->output_filename);
+            pos += strlen (ld_state->output_filename) + 1;
+        }
+
+        pos = file + ALIGN (pos - file, 2);
+    }
+
+    {
+        FILE *outfile;
+        
+        if (!(outfile = fopen (filename, "wb"))) {
+            ld_error ("cannot open '%s' for writing", filename);
+            return;
+        }
+
+        if (fwrite (file, file_size, 1, outfile) != 1) {
+            ld_error ("writing '%s' file failed", filename);
+        }
+
+        fclose (outfile);
+    }
+
+    free (file);
+    return;
+}
+
+#undef KILL_AT_PICK_NAME_I
 
 static void generate_edata (void)
 {
@@ -193,12 +429,15 @@ static void generate_edata (void)
     struct section *section;
     struct section_part *part;
     size_t num_names, name_table_size;
-    char **names, **names_no_at;
+    struct export_name *export_names;
     size_t i;
     struct symbol *symbol;
     struct relocation_entry_internal *relocs;
     size_t name_table_offset;
     struct IMAGE_EXPORT_DIRECTORY_internal ied;
+    unsigned long OrdinalBase;
+
+    OrdinalBase = 1;
 
     {
         struct name_list *name_list, *next_name_list;
@@ -207,39 +446,32 @@ static void generate_edata (void)
              name_list;
              name_list = name_list->next) {
             num_names++;
-            name_table_size += strlen (name_list->name) + 1;
         }
 
-        names = xmalloc (sizeof (*names) * num_names);
+        export_names = xmalloc (sizeof (*export_names) * num_names);
         for (name_list = export_name_list, i = 0;
              name_list;
              name_list = next_name_list, i++) {
             next_name_list = name_list->next;
-            names[i] = name_list->name;
+            
+            export_names[i].name = name_list->name;
+            if (kill_at) {
+                export_names[i].name_no_at = unat_name (export_names[i].name);
+                name_table_size += strlen (export_names[i].name_no_at) + 1;
+            } else {
+                export_names[i].name_no_at = NULL;
+                name_table_size += strlen (export_names[i].name) + 1;
+            }
+                
+            export_names[i].export_type = name_list->info ? EXPORT_TYPE_DATA : EXPORT_TYPE_CODE;
+            
             free (name_list);
         }
     }
 
-    qsort (names, num_names, sizeof (*names), &name_compar);
-    if (kill_at) {
-        name_table_size = 0;
-        names_no_at = xmalloc (sizeof (*names) * num_names);
-        
-        for (i = 0; i < num_names; i++) {
-            char *at_p;
-            at_p = strchr (names[i], '@');
-            if (at_p) {
-                names_no_at[i] = xmalloc (at_p - names[i] + 1);
-                memcpy (names_no_at[i], names[i], at_p - names[i]);
-                names_no_at[i][at_p - names[i]] = '\0';
-            } else {
-                names_no_at[i] = xstrdup (names[i]);
-            }
-            name_table_size += strlen (names_no_at[i]) + 1;
-        }
-    } else {
-        names_no_at = NULL;
-    }
+    qsort (export_names, num_names, sizeof (*export_names), &export_name_compar);
+
+    if (ld_state->output_implib_filename) write_implib (export_names, num_names, OrdinalBase);
     
     name_table_size += strlen (ld_state->output_filename) + 1;
 
@@ -279,16 +511,16 @@ static void generate_edata (void)
         if (insert_timestamp) {
             /* This timestamp is going to have different value than the timestamp in the COFF header
              * but that is not forbidden. */
-            time_t time_stamp;
-            time_stamp = time (NULL);
-            ied.TimeDateStamp = (unsigned long)time_stamp;
+            time_t timestamp;
+            timestamp = time (NULL);
+            ied.TimeDateStamp = (unsigned long)timestamp;
         } else {
             ied.TimeDateStamp = 0;
         }
         ied.MajorVersion = 0;
         ied.MinorVersion = 0;
         ied.NameRVA = name_table_offset;
-        ied.OrdinalBase = 1;
+        ied.OrdinalBase = OrdinalBase;
         ied.AddressTableEntries = num_names;
         ied.NumberOfNamePointers = num_names;
         ied.ExportAddressTableRVA = sizeof (struct IMAGE_EXPORT_DIRECTORY_file);
@@ -315,9 +547,9 @@ static void generate_edata (void)
         {
             /* This underscore problem is likely much more complex
              * but this workaround should be enough for now. */
-            symbol->name = xmalloc (1 + strlen (names[i]) + 1);
+            symbol->name = xmalloc (1 + strlen (export_names[i].name) + 1);
             symbol->name[0] = '_';
-            strcpy (symbol->name + 1, names[i]);
+            strcpy (symbol->name + 1, export_names[i].name);
             symbol->value = 0;
             symbol->part = NULL;
             symbol->section_number = 0;
@@ -348,23 +580,17 @@ static void generate_edata (void)
         }
         {
             char *name;
-            name = kill_at ? (names_no_at[i]) : (names[i]);
+            name = kill_at ? (export_names[i].name_no_at) : (export_names[i].name);
             strcpy ((char *)(part->content + name_table_offset), name);
             name_table_offset += strlen (name) + 1;
         }
     }
 
-    if (names_no_at) {
-        for (i = 0; i < num_names; i++) {
-            free (names_no_at[i]);
-        }
-        free (names_no_at);
-    }
-
     for (i = 0; i < num_names; i++) {
-        free (names[i]);
+        free (export_names[i].name);
+        free (export_names[i].name_no_at);
     }
-    free (names);
+    free (export_names);
 }
 
 void coff_before_link (void)
@@ -670,9 +896,9 @@ void coff_write (const char *filename)
     if (insert_timestamp) {
         /* Specification says TimeDateStamp should be low 32 bits of time_t
          * even though the meaning of time_t is not portable. */
-        time_t time_stamp;
-        time_stamp = time (NULL);
-        coff_hdr.TimeDateStamp = (unsigned long)time_stamp;
+        time_t timestamp;
+        timestamp = time (NULL);
+        coff_hdr.TimeDateStamp = (unsigned long)timestamp;
     } else {
         coff_hdr.TimeDateStamp = 0;
     }
@@ -828,22 +1054,34 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
         if (strncmp (p, "-export:", 8) == 0) {
             char *q;
             char saved_c;
+            int data = 0;
+            
             p += 8;
             q = strchr (p, ' ');
             if (q == NULL) q = p + strlen (p);
             saved_c = *q;
             *q = '\0';
             {
-                /* For unknown reason there might be ",data" added to data symbol names,
+                /* There is ",data" added to data symbol names,
                  * so this handles it. */
                 char *comma;
+                
                 comma = strchr (p, ',');
-                if (comma) *comma = '\0';
+                if (comma) {
+                    if (strcmp (comma, ",data") == 0) data = 1;
+                    else {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "unsupported comma argument to option -export: '%s'",
+                                                     comma);
+                    }
+                    *comma = '\0';
+                }
             }
             {
                 struct name_list *name_list;
                 name_list = xmalloc (sizeof (*name_list));
                 name_list->name = xstrdup (p);
+                name_list->info = data;
                 name_list->next = NULL;
                 *last_export_name_list_p = name_list;
                 last_export_name_list_p = &name_list->next;
@@ -1080,6 +1318,292 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     free (part_p_array);
 }
 
+static void import_generate_head (const char *dll_name)
+{
+    struct object_file *of;
+    struct section *section;
+    struct subsection *subsection;
+    struct section_part *part;
+
+    of = object_file_make (3, "FAKE_LD_FILE");
+    section = section_find_or_make (".idata");
+    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+    section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
+
+    subsection = subsection_find_or_make (section, "2");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+
+    part->content_size = sizeof (struct IMPORT_Directory_Table_file);
+    part->content = xmalloc (part->content_size);
+
+    {
+        struct IMPORT_Directory_Table_internal import_dt;
+        struct relocation_entry_internal *relocs;
+        int i;
+
+        import_dt.ImportNameTableRVA = 4;
+        import_dt.TimeDateStamp = 0;
+        import_dt.ForwarderChain = 0;
+        import_dt.NameRVA = 0;
+        import_dt.ImportAddressTableRVA = 4;
+
+        write_struct_IMPORT_Directory_Table (part->content, &import_dt);
+
+        part->relocation_count = 3;
+        part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+        relocs = part->relocation_array;
+
+        for (i = 0; i < 3; i++) {
+            relocs[i].SymbolTableIndex = i;
+            relocs[i].Type = IMAGE_REL_I386_DIR32NB;
+        }
+        relocs[0].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
+        relocs[1].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportAddressTableRVA);
+        relocs[2].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
+    }
+    
+    subsection = subsection_find_or_make (section, "4");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+
+    of->symbol_array[0].name = xstrdup (".idata$4");
+    of->symbol_array[0].value = 0;
+    of->symbol_array[0].part = part;
+    of->symbol_array[0].section_number = 2;
+
+    subsection = subsection_find_or_make (section, "5");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+
+    of->symbol_array[1].name = xstrdup (".idata$5");
+    of->symbol_array[1].value = 0;
+    of->symbol_array[1].part = part;
+    of->symbol_array[1].section_number = 3;
+
+    subsection = subsection_find_or_make (section, "7");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = ALIGN (strlen (dll_name) + 1, 2);
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+    strcpy ((char *)(part->content), dll_name);
+
+    of->symbol_array[2].name = xstrdup (".idata$7");
+    of->symbol_array[2].value = 0;
+    of->symbol_array[2].part = part;
+    of->symbol_array[2].section_number = 4;
+}
+
+static void import_generate_import (const char *import_name,
+                                    short OrdinalHint,
+                                    short ImportType,
+                                    short ImportNameType)
+{
+    struct section_part *dot_idata5_part;
+    struct object_file *of;
+    struct section *section;
+    struct subsection *subsection;
+    struct section_part *part;
+    struct relocation_entry_internal *relocs;
+    struct symbol *symbol;
+
+    /* 2 symbols are internal for .idata$5 and .idata$6. */
+    of = object_file_make (2 + 1 + ((ImportType == IMPORT_CODE) ? 1 : 0), "FAKE_LD_FILE");
+    symbol = of->symbol_array;
+
+    section = section_find_or_make (".idata");
+
+    subsection = subsection_find_or_make (section, "4");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+    
+    part->relocation_count = 1;
+    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    relocs = part->relocation_array;
+    relocs[0].SymbolTableIndex = 1;
+    relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+    relocs[0].VirtualAddress = 0;
+
+    subsection = subsection_find_or_make (section, "5");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+
+    symbol->name = xstrdup (".idata$5");
+    symbol->value = 0;
+    symbol->part = part;
+    symbol->section_number = 2;
+    symbol++;
+
+    part->relocation_count = 1;
+    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    relocs = part->relocation_array;
+    relocs[0].SymbolTableIndex = 1;
+    relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+    relocs[0].VirtualAddress = 0;
+
+    dot_idata5_part = part;
+
+    subsection = subsection_find_or_make (section, "6");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+
+    {
+        char *real_import_name;
+
+        switch (ImportNameType) {
+
+            case IMPORT_ORDINAL:
+                ld_internal_error_at_source (__FILE__, __LINE__, "IMPORT_ORDINAL is not yet supported");
+                break;
+
+            case IMPORT_NAME:
+                real_import_name = xstrdup (import_name);
+                break;
+            
+            case IMPORT_NAME_NOPREFIX:
+                real_import_name = unprefix_name (import_name);
+                break;
+
+            case IMPORT_NAME_UNDECORATE:
+                real_import_name = undecorate_name (import_name);
+                break;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "unsupported ImportNameType: %i",
+                                             ImportNameType);
+                break;
+            
+        }
+        
+        part->content_size = ALIGN (2 + strlen (real_import_name) + 1, 2);
+        part->content = xmalloc (part->content_size);
+        memset (part->content, 0, part->content_size);
+        bytearray_write_2_bytes (part->content, OrdinalHint, LITTLE_ENDIAN);
+        strcpy ((char *)(part->content + 2), real_import_name);
+
+        free (real_import_name);
+    }
+
+    symbol->name = xstrdup (".idata$6");
+    symbol->value = 0;
+    symbol->part = part;
+    symbol->section_number = 3;
+    symbol++;
+
+    if (ImportType == IMPORT_CODE) {
+        section = section_find_or_make (".text");
+        part = section_part_new (section, of);
+        section_append_section_part (section, part);
+
+        part->content_size = 8;
+        part->content = xmalloc (part->content_size);
+        memcpy (part->content, "\xFF\x25\x00\x00\x00\x00\x90\x90", 8);
+
+        symbol->name = xstrdup (import_name);
+        symbol->value = 0;
+        symbol->part = part;
+        symbol->section_number = 4;
+        symbol_record_external_symbol (symbol);
+        symbol++;
+
+        part->relocation_count = 1;
+        part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+        relocs = part->relocation_array;
+        relocs[0].SymbolTableIndex = 0;
+        relocs[0].Type = IMAGE_REL_I386_DIR32;
+        relocs[0].VirtualAddress = 2;
+    }
+    
+    symbol->name = xmalloc (IMP_PREFIX_LEN + strlen (import_name) + 1);
+    memcpy (symbol->name, IMP_PREFIX_STR, IMP_PREFIX_LEN);
+    strcpy (symbol->name + IMP_PREFIX_LEN, import_name);
+    
+    symbol->value = 0;
+    symbol->part = dot_idata5_part;
+    symbol->section_number = 2;
+    symbol_record_external_symbol (symbol);
+}
+
+static void import_generate_end (void)
+{
+    struct object_file *of;
+    struct section *section;
+    struct subsection *subsection;
+    struct section_part *part;
+
+    of = object_file_make (0, "FAKE_LD_FILE");
+    section = section_find_or_make (".idata");
+
+    subsection = subsection_find_or_make (section, "4");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+
+    subsection = subsection_find_or_make (section, "5");
+    part = section_part_new (section, of);
+    subsection_append_section_part (subsection, part);
+    part->content_size = 4;
+    part->content = xmalloc (part->content_size);
+    memset (part->content, 0, part->content_size);
+}
+
+static void read_import_object (unsigned char *file, size_t file_size, const char *filename)
+{
+    struct IMPORT_OBJECT_HEADER_internal import_hdr;
+    char *import_name;
+    char *dll_name;
+    
+    unsigned char *pos;
+
+    pos = file;
+    CHECK_READ (pos, sizeof (struct IMPORT_OBJECT_HEADER_file));
+    read_struct_IMPORT_OBJECT_HEADER (&import_hdr, pos);
+    pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
+
+    if (import_hdr.Machine != IMAGE_FILE_MACHINE_I386) {
+        ld_error ("unrecognized Machine in import header");
+        return;
+    }
+
+    if ((import_hdr.Type & 0x3) == IMPORT_CONST) {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "+++not yet supported import header import Type: 0x%x",
+                                     import_hdr.Type & 0x3);
+    }
+        
+    CHECK_READ (pos, 2);
+    import_name = (char *)pos;
+    dll_name = import_name + strlen (import_name) + 1;
+
+    if (current_import_dll_name && strcmp (dll_name, current_import_dll_name)) {
+        import_generate_end ();
+        free (current_import_dll_name);
+        current_import_dll_name = NULL;
+    }
+    if (current_import_dll_name == NULL) {
+        current_import_dll_name = xstrdup (dll_name);
+        import_generate_head (current_import_dll_name);
+    }
+    
+    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2);  
+}
+
 static void strip_trailing_spaces (char *str)
 {
     char *p = str + strlen (str);
@@ -1152,10 +1676,11 @@ static struct lm_offset_name_entry *read_linker_member (unsigned char *file, siz
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static void read_coff_archive_member (unsigned char *file, size_t file_size, unsigned char *pos)
+static int read_coff_archive_member (unsigned char *file, size_t file_size, unsigned char *pos)
 {
     struct archive_member_header hdr;
     unsigned short Machine;
+    int ret;
 
     CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
     read_archive_member_header (pos, &hdr);
@@ -1163,10 +1688,28 @@ static void read_coff_archive_member (unsigned char *file, size_t file_size, uns
 
     CHECK_READ (pos, 2);
     bytearray_read_2_bytes (&Machine, pos, LITTLE_ENDIAN);
-    if (Machine == IMAGE_FILE_MACHINE_I386) read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), hdr.name);
-    else ld_error ("unrecognized archive member object format");
+    if (Machine == IMAGE_FILE_MACHINE_I386) {
+        read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), hdr.name);
+        ret = 1;
+    } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
+        unsigned short Magic2;
+        
+        CHECK_READ (pos + 2, 2);
+        bytearray_read_2_bytes (&Magic2, pos + 2, LITTLE_ENDIAN);
+        if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) {
+            read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), hdr.name);
+        } else goto unrecognized;
+
+        ret = 2;
+    } else {
+unrecognized:
+        ld_error ("unrecognized archive member object format");
+        ret = 0;
+    }
 
     free (hdr.name);
+
+    return ret;
 }    
 
 static void read_coff_archive (unsigned char *file, size_t file_size)
@@ -1201,7 +1744,6 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
     /* This is necessary because "dh.o/" contains the first part of the .idata content
      * and "dt.o/" contains the terminators for the .idata content. */
     for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
-
         pos = file + offset_name_table[i].offset;
         CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
         read_archive_member_header (pos, &hdr);
@@ -1210,17 +1752,15 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
         else if (strcmp (hdr.name, "dt.o/") == 0) end_header_object_offset = offset_name_table[i].offset;
 
         free (hdr.name);
-
     }
 
     if (start_header_object_offset) read_coff_archive_member (file, file_size, file + start_header_object_offset);
 
     while (1) {
-
         int change = 0;
 
         for (i = 0; i < NumberOfSymbols; i++) {
-
+            int ret;
             struct symbol *symbol = symbol_find (offset_name_table[i].name);
 
             if (symbol == NULL) continue;
@@ -1230,17 +1770,23 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
                 || offset_name_table[i].offset == end_header_object_offset) continue;
             
             pos = file + offset_name_table[i].offset;
-            read_coff_archive_member (file, file_size, pos);
-
-            change = 1;
-
+            ret = read_coff_archive_member (file, file_size, pos);
+            if (ret == 0) return;
+            /* If the archive member is a real object (not short import entry),
+             * it might require more symbols. */
+            if (ret == 1) change = 1;
         }
 
         if (change == 0) break;
-
     }
 
     if (end_header_object_offset) read_coff_archive_member (file, file_size, file + end_header_object_offset);
+
+    if (current_import_dll_name) {
+        import_generate_end ();
+        free (current_import_dll_name);
+        current_import_dll_name = NULL;
+    }
 
     free (offset_name_table);
 }

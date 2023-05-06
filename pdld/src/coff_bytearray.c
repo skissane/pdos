@@ -105,6 +105,22 @@ void read_struct_IMAGE_ARCHIVE_MEMBER_HEADER (struct IMAGE_ARCHIVE_MEMBER_HEADER
     COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, EndOfHeader);
 }
 
+void read_struct_IMPORT_OBJECT_HEADER (struct IMPORT_OBJECT_HEADER_internal *IMPORT_OBJECT_HEADER_internal, void *memory)
+{
+    struct IMPORT_OBJECT_HEADER_file *IMPORT_OBJECT_HEADER_file = memory;
+
+    COPY(IMPORT_OBJECT_HEADER, Magic1, 2);
+    COPY(IMPORT_OBJECT_HEADER, Magic2, 2);
+    COPY(IMPORT_OBJECT_HEADER, Version, 2);
+    COPY(IMPORT_OBJECT_HEADER, Machine, 2);
+
+    COPY(IMPORT_OBJECT_HEADER, TimeDateStamp, 4);
+    COPY(IMPORT_OBJECT_HEADER, SizeOfData, 4);
+
+    COPY(IMPORT_OBJECT_HEADER, OrdinalHint, 2);
+    COPY(IMPORT_OBJECT_HEADER, Type, 2);
+}
+
 #undef COPY_CHAR_ARRAY
 #undef COPY
 
@@ -235,12 +251,52 @@ void write_struct_EXPORT_Ordinal_Table (void *memory, struct EXPORT_Ordinal_Tabl
     COPY(EXPORT_Ordinal_Table, FunctionOrdinal, 2);
 }
 
+void write_struct_IMPORT_Directory_Table (void *memory, struct IMPORT_Directory_Table_internal *IMPORT_Directory_Table_internal)
+{
+    struct IMPORT_Directory_Table_file *IMPORT_Directory_Table_file = memory;
+
+    COPY(IMPORT_Directory_Table, ImportNameTableRVA, 4);
+    COPY(IMPORT_Directory_Table, TimeDateStamp, 4);
+    COPY(IMPORT_Directory_Table, ForwarderChain, 4);
+    COPY(IMPORT_Directory_Table, NameRVA, 4);
+    COPY(IMPORT_Directory_Table, ImportAddressTableRVA, 4);
+}
+
 void write_struct_IMAGE_BASE_RELOCATION (void *memory, struct IMAGE_BASE_RELOCATION_internal *IMAGE_BASE_RELOCATION_internal)
 {
     struct IMAGE_BASE_RELOCATION_file *IMAGE_BASE_RELOCATION_file = memory;
 
     COPY(IMAGE_BASE_RELOCATION, RVAOfBlock, 4);
     COPY(IMAGE_BASE_RELOCATION, SizeOfBlock, 4);
+}
+
+void write_struct_IMAGE_ARCHIVE_MEMBER_HEADER (void *memory, struct IMAGE_ARCHIVE_MEMBER_HEADER_internal *IMAGE_ARCHIVE_MEMBER_HEADER_internal)
+{
+    struct IMAGE_ARCHIVE_MEMBER_HEADER_file *IMAGE_ARCHIVE_MEMBER_HEADER_file = memory;
+
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, Name);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, Date);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, UserID);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, GroupID);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, Mode);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, Size);
+    COPY_CHAR_ARRAY(IMAGE_ARCHIVE_MEMBER_HEADER, EndOfHeader);
+}
+
+void write_struct_IMPORT_OBJECT_HEADER (void *memory, struct IMPORT_OBJECT_HEADER_internal *IMPORT_OBJECT_HEADER_internal)
+{
+    struct IMPORT_OBJECT_HEADER_file *IMPORT_OBJECT_HEADER_file = memory;
+
+    COPY(IMPORT_OBJECT_HEADER, Magic1, 2);
+    COPY(IMPORT_OBJECT_HEADER, Magic2, 2);
+    COPY(IMPORT_OBJECT_HEADER, Version, 2);
+    COPY(IMPORT_OBJECT_HEADER, Machine, 2);
+
+    COPY(IMPORT_OBJECT_HEADER, TimeDateStamp, 4);
+    COPY(IMPORT_OBJECT_HEADER, SizeOfData, 4);
+
+    COPY(IMPORT_OBJECT_HEADER, OrdinalHint, 2);
+    COPY(IMPORT_OBJECT_HEADER, Type, 2);
 }
 
 #undef COPY_CHAR_ARRAY

@@ -62,6 +62,7 @@ struct coff_header_file {
 
 };
 
+#define     IMAGE_FILE_MACHINE_UNKNOWN                      0x0
 #define     IMAGE_FILE_MACHINE_AMD64                        0x8664
 #define     IMAGE_FILE_MACHINE_I386                         0x014C
 
@@ -427,6 +428,7 @@ struct IMAGE_ARCHIVE_MEMBER_HEADER_internal {
     char Mode[8];
     char Size[10];
     char EndOfHeader[2];
+#define IMAGE_ARCHIVE_MEMBER_HEADER_END_OF_HEADER "`\n"
 
 };
 
@@ -443,3 +445,42 @@ struct IMAGE_ARCHIVE_MEMBER_HEADER_file {
 };
 
 #define IMAGE_ARCHIVE_LINKER_MEMBER_Name "/"
+
+struct IMPORT_OBJECT_HEADER_internal {
+
+    unsigned short Magic1; /* Must be IMAGE_FILE_MACHINE_UNKNOWN. */
+    unsigned short Magic2;
+#define IMPORT_OBJECT_HDR_MAGIC2 0xFFFF
+    
+    unsigned short Version;
+    unsigned short Machine;
+    unsigned long TimeDateStamp;
+    unsigned long SizeOfData;
+    unsigned short OrdinalHint;
+    unsigned short Type; /* 2 bits import type, 3 bits import name type. */
+    /* Followed by 2 null-terminated strings: symbol name and DLL name. */
+
+};
+
+struct IMPORT_OBJECT_HEADER_file {
+
+    unsigned char Magic1[2];
+    unsigned char Magic2[2];
+    unsigned char Version[2];
+    unsigned char Machine[2];
+    unsigned char TimeDateStamp[4];
+    unsigned char SizeOfData[4];
+    unsigned char OrdinalHint[2];
+    unsigned char Type[2];
+
+};
+
+#define IMPORT_CODE 0
+#define IMPORT_DATA 1
+#define IMPORT_CONST 2
+
+#define IMPORT_ORDINAL 0
+#define IMPORT_NAME 1
+#define IMPORT_NAME_NOPREFIX 2
+#define IMPORT_NAME_UNDECORATE 3
+
