@@ -233,7 +233,7 @@ directory, then copy ml.exe and ml.err into your PATH,
 and save MasmRef.doc as a reference)
 
 Not used:
-64-bit MASM:
+64-bit MASM from Visual Studio 2005:
 https://www.microsoft.com/en-us/download/details.aspx?id=14477
 6.1.6000.16384.10.WindowsSDK_Vista_Feb2007Update_rtm.DVD.Rel.iso
 WinSDKCompiler-WinSDKCompiler_X64_VC8CppCrossCompiler-x86.0.cab
