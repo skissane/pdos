@@ -129,7 +129,7 @@ void c_init_options(global_core *core,
                     unsigned int option_count,
                     void *options)
 {
-    core->reader = cpp_create_reader(STD_C17, NULL);
+    core->reader = cpp_create_reader(STD_C89, NULL);
     core->ic = ic_create_include_paths();
 
     cpp_get_callbacks(core->reader)->diagnostics = &diagnostics;
