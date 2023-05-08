@@ -22,7 +22,7 @@ OBJS=supportf.obj pdossupc.obj pos.obj string.obj
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
-  $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,map,start='__DllMainCRTStartup@12' @watcom.exp
+  $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,nostdcall,map,start='__DllMainCRTStartup@12'
   del kernel32.lib
   echo wlib -q kernel32.lib kernel32.dll
   wlib -q kernel32.lib ++CloseHandle.kernel32._CloseHandle@4
