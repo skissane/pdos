@@ -22,7 +22,7 @@ OBJS=supportf.obj pdossupc.obj pos.obj string.obj
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
-  $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,map,NOSTDCall,start='__DllMainCRTStartup@12'
+  $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,map,start='__DllMainCRTStartup@12' @watcom.exp
   del kernel32.lib
   echo wlib -q kernel32.lib kernel32.dll
   wlib -q kernel32.lib ++CloseHandle.kernel32._CloseHandle@4
@@ -38,8 +38,6 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   wlib -q kernel32.lib ++DeleteFileA.kernel32._DeleteFileA@4
   wlib -q kernel32.lib ++MoveFileA.kernel32._MoveFileA@8
   wlib -q kernel32.lib ++SetFilePointer.kernel32._SetFilePointer@16
-  wlib -q kernel32.lib ++GetConsoleMode.kernel32._GetConsoleMode@8
-  wlib -q kernel32.lib ++SetConsoleMode.kernel32._SetConsoleMode@8
   wlib -q kernel32.lib ++GlobalAlloc.kernel32._GlobalAlloc@8
   wlib -q kernel32.lib ++GlobalFree.kernel32._GlobalFree@4
   wlib -q kernel32.lib ++GetEnvironmentStrings.kernel32._GetEnvironmentStrings@0
