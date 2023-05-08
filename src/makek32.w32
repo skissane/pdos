@@ -25,7 +25,7 @@ COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
 AS=aswin
 LD=ldwin
 
-EXPORT_OBJS=dllcrt.eo kernel32.eo
+EXPORT_OBJS=dllcrt.o kernel32.o
 OBJS=support.o pdossupc.o pos.o string.o
 
 all: clean kernel32.dll
@@ -33,7 +33,12 @@ all: clean kernel32.dll
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) -s -o kernel32.dll --shared --out-implib kernel32.a $(EXPORT_OBJS) $(OBJS)
 
-.c.eo:
+dllcrt.o: ../pdpclib/dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+kernel32.o: kernel32.c
   $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
   $(AS) -o $@ $*.s
   rm -f $*.s
