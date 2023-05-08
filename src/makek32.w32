@@ -9,10 +9,10 @@
 
 # This makefile builds kernel32.dll and kernel32.a on Windows.
 
-# Note that I think we should be able to add:
-# --out-implib kernel32.a to LD, so that we don't need to run
-# dlltwin separately, but that isn't working for some reason
-# (we get link errors when trying to run makefile.msv)
+# Note that if you wish to break the "ld" step into two parts,
+# you need to add "--kill-at" to the "ld" step and then you can run:
+# dlltwin -S aswin -k --export-all-symbols -D kernel32.dll kernel32.eo -l kernel32.a
+# There is no obvious reason why you would want to do that though.
 
 VPATH=../pdpclib
 
@@ -21,7 +21,6 @@ CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
 AS=aswin
 LD=ldwin
-DLLTOOL=dlltwin
 
 EXPORT_OBJS=dllcrt.eo kernel32.eo
 OBJS=support.o pdossupc.o pos.o string.o
@@ -29,8 +28,7 @@ OBJS=support.o pdossupc.o pos.o string.o
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
-  $(LD) -s -o kernel32.dll --shared --kill-at $(EXPORT_OBJS) $(OBJS)
-  $(DLLTOOL) -S $(AS) -k --export-all-symbols -D kernel32.dll kernel32.eo -l kernel32.a
+  $(LD) -s -o kernel32.dll --shared --out-implib kernel32.a $(EXPORT_OBJS) $(OBJS)
 
 .c.eo:
   $(CC) $(COPTS) -D__EXPORT__ -o $@.s $<
