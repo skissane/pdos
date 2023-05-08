@@ -13,6 +13,9 @@
 # you need to add "--kill-at" to the "ld" step and then you can run:
 # dlltwin -S aswin -k --export-all-symbols -D kernel32.dll kernel32.eo -l kernel32.a
 # There is no obvious reason why you would want to do that though.
+# Failure to add "kill-at" will cause the kernel32.dll to be invalid,
+# even though everything links correctly, and you won't know until you
+# attempt to run kernel32.dll on a system like PDOS/386 that actually uses it.
 
 VPATH=../pdpclib
 
