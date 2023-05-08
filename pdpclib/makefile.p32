@@ -7,17 +7,17 @@ COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../s
 
 all: pdptest.exe
 
-pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
-       start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o __memmgr.o winsupc.obj
-  rm -f pdpwin32.a
-  ar r pdpwin32.a p32start.o stdio.o string.o stdlib.o winsupc.obj
-  ar r pdpwin32.a start.o time.o errno.o assert.o signal.o
-  ar r pdpwin32.a locale.o ctype.o setjmp.o math.o __memmgr.o
-  ar s pdpwin32.a
-  pdld -s -o pdptest.exe p32start.o pdptest.o pdpwin32.a ../src/kernel32.a
+pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj winsupc.obj
+  rm -f pdpwin32.lib
+  ar r pdpwin32.lib p32start.obj stdio.obj string.obj stdlib.obj winsupc.obj
+  ar r pdpwin32.lib start.obj time.obj errno.obj assert.obj signal.obj
+  ar r pdpwin32.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
+  ar s pdpwin32.lib
+  pdld -s -o pdptest.exe p32start.obj pdptest.obj pdpwin32.lib ../src/kernel32.lib
 
-.c.o:
+.c.obj:
   $(CC) $(COPTS) -o $*.s $<
   pdas --oformat coff -o $@ $*.s
   rm -f $*.s
@@ -26,5 +26,5 @@ pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
   pdas --oformat coff -o $@ $<
 
 clean:
-  rm -f *.o
+  rm -f *.obj
   rm -f pdptest.exe
