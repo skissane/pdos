@@ -12,9 +12,9 @@ all: pdptest.exe
 
 pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
-       ctype.obj setjmp.obj math.obj dllcrt.obj winsupc.obj
+       ctype.obj setjmp.obj math.obj dllcrt.obj winsupa.obj
   rm -f temp.lib
-  $(AR) r temp.lib stdio.obj string.obj stdlib.obj winsupc.obj
+  $(AR) r temp.lib stdio.obj string.obj stdlib.obj winsupa.obj
   $(AR) r temp.lib start.obj time.obj errno.obj assert.obj signal.obj
   $(AR) r temp.lib locale.obj ctype.obj setjmp.obj math.obj
   $(AR) s temp.lib
@@ -38,7 +38,7 @@ dllcrt.obj: dllcrt.c
   rm -f $*.s
 
 .asm.obj:
-  $(AS) -o $@ --oformat coff $<
+  as86 -o $@ -f coff $<
 
 clean:
   rm -f *.obj
