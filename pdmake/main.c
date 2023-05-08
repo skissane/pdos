@@ -153,52 +153,54 @@ int file_exists(char *name)
     return (0);
 }
 
-char *find_target(char *target)
+char *find_target (char *target)
 {
     variable *vpath_var;
     char *vpath;
 
-    if (file_exists(target)) return (target);
+    if (file_exists (target)) return target;
 
-    vpath_var = variable_find("VPATH");
-    if (vpath_var == NULL) return (NULL);
+    vpath_var = variable_find ("VPATH");
+    if (vpath_var == NULL) return NULL;
 
     vpath = vpath_var->value;
 
-    for (;
-         vpath && *vpath;
-         )
-    {
-        char *vpath_part = vpath;
+    while (vpath && *vpath) {
+        char *vpath_part;
         char saved_c;
         char *new_target;
 
         /* Skips the initial whitespace. */
-        while (isspace(*vpath) || (*vpath == ';')) vpath++;
+        while (isspace (*vpath) || (*vpath == ';')) vpath++;
+        vpath_part = vpath;
 
         /* Finds the end of the current part. */
-        while (!isspace(*vpath) && (*vpath != ';') && (*vpath != '\0')) vpath++;
+        while (!isspace (*vpath) && (*vpath != ';') && (*vpath != '\0')) vpath++;
 
         saved_c = *vpath;
         *vpath = '\0';
 
-        new_target = xmalloc(strlen(vpath_part) + 1 + strlen(target) + 1);
-        strcpy(new_target, vpath_part);
-        strcat(new_target, "/");
-        strcat(new_target, target);
+        new_target = xmalloc (strlen (vpath_part) + 1 + strlen (target) + 1);
+        strcpy (new_target, vpath_part);
+        /* Some programs do not support '/' as directory separator,
+         * so if the user used '\\' in VPATH,
+         * it should not be broken by adding '/' at the end. */
+        if (strchr (vpath_part, '\\')) strcat (new_target, "\\");
+        else strcat (new_target, "/");
+        strcat (new_target, target);
 
         *vpath = saved_c;
 
-        if (file_exists(new_target)) return (new_target);
+        if (file_exists (new_target)) return new_target;
 
-        free(new_target);
+        free (new_target);
 
-        vpath = strchr(vpath, ';');
+        vpath = strchr (vpath, ';');
         if (vpath == NULL) break;
         vpath++;
     }
 
-    return (NULL);
+    return NULL;
 }
 
 void rule_search_and_build(char *name)
