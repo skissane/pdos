@@ -534,6 +534,7 @@ BOOL WINAPI FillConsoleOutputCharacterA(HANDLE h,
     size_t len = 43;
     PosWriteFile(1, "FillConsoleOutputCharacterA unimplemented\r\n", len, &len);
     for (;;) ;
+    return (0);
 }
 void WINAPI FindFirstVolumeW(void)
 {
