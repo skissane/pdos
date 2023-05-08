@@ -34,14 +34,14 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) -s -o kernel32.dll --shared --out-implib kernel32.a $(EXPORT_OBJS) $(OBJS)
 
 .c.eo:
-  $(CC) $(COPTS) -D__EXPORT__ -o $@.s $<
-  $(AS) -o $@ $@.s
-  rm -f $@.s
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
 
 .c.o:
-  $(CC) $(COPTS) -D__32BIT__ -o $@.s $<
-  $(AS) -o $@ $@.s
-  rm -f $@.s
+  $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
 
 .s.o:
   $(AS) -o $@ $<
