@@ -151,11 +151,6 @@ variable *variable_find (char *name)
 
     var = find_variable_internal (name);
 
-    if (var && !doing_inference_rule_commands && var->name[0] == '<' && var->name[1] == '\0') {
-        fprintf (stderr, "\"$<\" is not valid outside of inference rules, exiting\n");
-        exit (EXIT_FAILURE);
-    }
-
     return var;
 }
 

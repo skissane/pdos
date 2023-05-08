@@ -60,40 +60,42 @@ int rule_run_command(const char *name, char *p, char *q) {
     return 0;
 }
 
-void rule_use(rule *r, char *name)
+void rule_use (rule *r, char *name)
 {
     struct dep *dep;
     char *p, *q;
     char *star_name;
+    char *lesser_name;
     
-    for (dep = r->deps; dep; dep = dep->next)
-    {
-        rule_search_and_build(dep->name);
+    for (dep = r->deps; dep; dep = dep->next) {
+        rule_search_and_build (dep->name);
     }
 
     if (r->cmds == NULL) return;
 
     doing_inference_rule_commands = 0;
 
-    star_name = xstrdup(name);
-    p = strrchr(star_name, '.');
+    /* Extension: in target rules "$<" is the name of the first prerequisite. */
+    if (r->deps) lesser_name = xstrdup (r->deps->name);
+    else lesser_name = xstrdup ("");
+
+    star_name = xstrdup (name);
+    p = strrchr (star_name, '.');
     if (p) *p = '\0';
 
     variable_change ("@", xstrdup (name), VAR_ORIGIN_AUTOMATIC);
+    variable_change ("<", lesser_name, VAR_ORIGIN_AUTOMATIC);
     variable_change ("*", star_name, VAR_ORIGIN_AUTOMATIC);
 
     p = r->cmds->text;
-    q = strchr(p, '\n');
-    while (1)
-    {
-        int error = rule_run_command(name, p, q);
-        if (error < 0)
-        {
-            return;
-        }
+    q = strchr (p, '\n');
+    while (1) {
+        int error = rule_run_command (name, p, q);
+        
+        if (error < 0) return;
 
         p = q + 1;
-        q = strchr(p, '\n');
+        q = strchr (p, '\n');
         if (q == NULL) break;
     }
 }
