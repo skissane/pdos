@@ -46,6 +46,7 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   wlib -q kernel32.lib ++CreateProcessA.kernel32._CreateProcessA@40
   wlib -q kernel32.lib ++WaitForSingleObject.kernel32._WaitForSingleObject@8
   wlib -q kernel32.lib ++GetExitCodeProcess.kernel32._GetExitCodeProcess@8
+  wlib -q kernel32.lib ++GetSystemTime.kernel32._GetSystemTime@4
 
 dllcrt.obj: ..\pdpclib\dllcrt.c
   $(CC) -c $(COPTS) -D__EXPORT__ ..\pdpclib\dllcrt.c
