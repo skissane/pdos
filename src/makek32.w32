@@ -18,6 +18,7 @@
 # one-shot dll and .a, but although that produced a valid
 # dll, when things were linked with the .a, I got errors at
 # runtime saying CloseHandle@4 was not found in the dll.
+# And if I added --kill-at, I instead got link time errors.
 
 VPATH=../pdpclib
 
