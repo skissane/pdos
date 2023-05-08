@@ -9,9 +9,9 @@ all: pdptest.exe
 
 pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
-       ctype.obj setjmp.obj math.obj __memmgr.obj winsupc.obj
+       ctype.obj setjmp.obj math.obj __memmgr.obj winsupa.obj
   rm -f pdpwin32.lib
-  ar r pdpwin32.lib p32start.obj stdio.obj string.obj stdlib.obj winsupc.obj
+  ar r pdpwin32.lib p32start.obj stdio.obj string.obj stdlib.obj winsupa.obj
   ar r pdpwin32.lib start.obj time.obj errno.obj assert.obj signal.obj
   ar r pdpwin32.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   ar s pdpwin32.lib
@@ -23,7 +23,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   rm -f $*.s
 
 .asm.obj:
-  pdas --oformat coff -o $@ $<
+  as86 -f coff -o $@ $<
 
 clean:
   rm -f *.obj
