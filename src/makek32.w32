@@ -56,7 +56,6 @@ kernel32.o: kernel32.c
   $(AS) -o $@ $<
 
 clean:
-  rm -f *.eo 
   rm -f *.o
   rm -f kernel32.dll
   rm -f kernel32.a
