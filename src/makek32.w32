@@ -9,6 +9,11 @@
 
 # This makefile builds kernel32.dll and kernel32.a on Windows.
 
+# Note that I think we should be able to add:
+# --out-implib kernel32.a to LD, so that we don't need to run
+# dlltwin separately, but that isn't working for some reason
+# (we get link errors when trying to run makefile.msv)
+
 VPATH=../pdpclib
 
 CC=gccwin
