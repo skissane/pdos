@@ -1,0 +1,43 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds pload.com for PDOS/386 on Windows,
+# using the Open Watcom toolchain.
+
+VPATH=..\pdpclib
+
+CC=wcl
+CFLAGS=-oneatx
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -mt -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
+AS=wasm
+LD=wlink
+
+OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
+    lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
+    ploadst.obj int13x.obj nearw.obj
+
+all: clean pload.com
+
+pload.com: $(OBJS)
+  wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map Disable 1019,1080
+
+.c.obj:
+  $(CC) $(COPTS) $<
+  wlib -b -q watcom +$@
+
+.asm.obj:
+# as86 -DAS86 -Dmemodel=tiny -DMAKECOM -o $@ $<
+# ml -c -Dmemodel=tiny -DMAKECOM $<
+  $(AS) -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM $<
+  wlib -b -q watcom +$@
+
+clean:
+  rm -f *.obj
+  rm -f pload.com
+  rm -f watcom.lib
