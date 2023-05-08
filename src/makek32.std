@@ -16,7 +16,7 @@ AS=pdas
 LD=pdld
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
-OBJS=support.obj pdossupc.obj pos.obj string.obj
+OBJS=pdossupc.obj pos.obj string.obj supportf.obj
 
 all: clean kernel32.dll
 
@@ -38,8 +38,8 @@ kernel32.obj: kernel32.c
   $(AS) -o $@ --oformat coff $*.s
   rm -f $*.s
 
-.s.obj:
-  $(AS) -o $@ --oformat coff $<
+.asm.obj:
+  as86 -o $@ -f coff $<
 
 clean:
   rm -f *.obj
