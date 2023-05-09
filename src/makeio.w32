@@ -25,17 +25,21 @@ OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
 all: clean pload.com
 
 pload.com: $(OBJS)
-  wlink File ploadst.obj,pload.obj,int13x.obj,nearw.obj Name pload.com Form dos com Library watcom.lib Option quiet,map Disable 1019,1080
+  ar s watcom.lib
+  ld86 -o pload.com --oformat msdos ploadst.obj pload.obj int13x.obj nearw.obj watcom.lib
 
 .c.obj:
-  $(CC) $(COPTS) $<
-  wlib -b -q watcom +$@
+  $(CC) $(COPTS) -fo=$*.obj $<
+  wdis -a -l=$*.tas $*.obj
+  as86 -o $@ $*.tas
+  rm -f $*.tas
+  ar r watcom.lib $@
 
 .asm.obj:
-# as86 -DAS86 -Dmemodel=tiny -DMAKECOM -o $@ $<
+  as86 -DAS86 -Dmemodel=tiny -DMAKECOM -DWATCOMC -o $@ $<
 # ml -c -Dmemodel=tiny -DMAKECOM $<
-  $(AS) -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM $<
-  wlib -b -q watcom +$@
+#  $(AS) -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM $<
+  ar r watcom.lib $@
 
 clean:
   rm -f *.obj
