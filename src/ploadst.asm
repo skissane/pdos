@@ -65,7 +65,7 @@ bypass:
 ; It can be put into another source file if main is declared
 ; with __watcall
 call dstart
-sub sp,2
+
 mov ax, 0
 push ax
 call _exita
@@ -92,7 +92,6 @@ public _exita
 _exita proc
 ;myloop:
 ;jmp myloop
-pop ax
 pop ax
 mov ah,4ch
 int 21h ; terminate
