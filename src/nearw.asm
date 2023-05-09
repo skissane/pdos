@@ -10,7 +10,9 @@
 
 .code
 
-ifdef WATCOM
+; U4D is needed if we are using the Watcom C compiler,
+; regardless of whether we are using the Watcom assembler
+ifdef WATCOMC
 ; divide dx:ax by cx:bx, result in dx:ax
 public __U4D
 __U4D proc
