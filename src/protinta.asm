@@ -61,6 +61,14 @@ savecr3 dd 0
 oldds   dw ?
 
 
+ifdef NEWMODEL
+jjj     dd rawprota_stage2
+lll     dd runreal_stage3
+rrr     dd rtop_stage2
+rraddr  dd runreal
+endif
+
+
 .code
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -94,28 +102,43 @@ rawprota proc corsubr:dword, \
 ; now adjust the various places that require the code offsets
 
 ifdef NEWMODEL
-        mov eax, seg rawprota_stage2
+        push es
+        push bx
+
+        mov ebx, 0
+        les bx, jjj
+        mov eax, 0
+        mov ax, es
         shl eax, 4
+        add eax, ebx
         mov joffs, eax
-        mov eax, offset rawprota_stage2
-        add joffs, eax
 
-        mov eax, seg runreal_stage3
+        mov ebx, 0
+        les bx, lll
+        mov eax, 0
+        mov ax, es
         shl eax, 4
+        add eax, ebx
         mov loffs, eax
-        mov eax, offset runreal_stage3
-        add loffs, eax
 
-        mov eax, seg rtop_stage2
+        mov ebx, 0
+        les bx, rrr
+        mov eax, 0
+        mov ax, es
         shl eax, 4
+        add eax, ebx
         mov roffs, eax
-        mov eax, offset rtop_stage2
-        add roffs, eax
 
-        mov edx, seg runreal
-        shl edx, 4
-        mov eax, offset runreal
-        add edx, eax
+        mov ebx, 0
+        les bx, rraddr
+        mov eax, 0
+        mov ax, es
+        shl eax, 4
+        add eax, ebx
+        mov edx, eax
+
+        pop bx
+        pop es
 
 else
 ; get correction required for code offsets into eax
