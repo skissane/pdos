@@ -91,10 +91,36 @@ rawprota proc corsubr:dword, \
         mov ax,ds
         mov oldds, ax
 
+; now adjust the various places that require the code offsets
+
+ifdef NEWMODEL
+        mov eax, seg rawprota_stage2
+        shl eax, 4
+        mov joffs, eax
+        mov eax, offset rawprota_stage2
+        add joffs, eax
+
+        mov eax, seg runreal_stage3
+        shl eax, 4
+        mov loffs, eax
+        mov eax, offset runreal_stage3
+        add loffs, eax
+
+        mov eax, seg rtop_stage2
+        shl eax, 4
+        mov roffs, eax
+        mov eax, offset rtop_stage2
+        add roffs, eax
+
+        mov edx, seg runreal
+        shl edx, 4
+        mov eax, offset runreal
+        add edx, eax
+
+else
 ; get correction required for code offsets into eax
         mov eax, codecor
         
-; now adjust the various places that require the code offsets        
         mov joffs, offset rawprota_stage2
         add joffs, eax        
 
@@ -106,6 +132,8 @@ rawprota proc corsubr:dword, \
 
         mov edx, offset runreal
         add edx, eax
+endif
+
 ; end up storing one offset in edx to be passed up        
 
 ; save current ss:sp into variables for when we do real mode
@@ -406,7 +434,7 @@ rawprota_stage2:
 ; Return to real mode
         mov ebx, offset rawprota_stage3
         jmp ptor
-        
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; unsigned long runreal(unsigned long func, unsigned long parm);
 ; ***********************************************************

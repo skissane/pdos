@@ -105,7 +105,11 @@ void pdosload(void)
     psp = 0x10600UL;
     loads = (unsigned long)psp + 0x100;
     load = loads;
+#ifdef NEWMODEL
+    bpb = (unsigned char *)MK_FP(0, 0x7c00 + 11);
+#else
     bpb = (unsigned char *)(0x7c00 - 0x600 + 11);
+#endif
     diskinfo.drive = bpb[-9]; /* drive number is stored in NOP */
     analyseBpb(&diskinfo, bpb);
     fatDefaults(&gfat);

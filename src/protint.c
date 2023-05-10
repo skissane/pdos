@@ -107,7 +107,7 @@ unsigned long rawprot(unsigned long csbase,
        twice. The offset of the TEXT32 segment will always be
        less than 16 I think */
     myc32base = myc32base & 0xfffffff0UL;
-#ifdef __WATCOMC__
+#if defined(__WATCOMC__) && !defined(NEWMODEL)
     {
         /* for Watcom, the TEXT32 segment is not merged in
         with the TEXT segment, so protget32 is different, in
@@ -162,8 +162,10 @@ unsigned long rawprot(unsigned long csbase,
     parmlist.intloc = intloc;
     parmlist.userparm = userparm;
     parmlist_p = ADDR2ABS(&parmlist);
+#ifndef NEWMODEL
     parmlist_p -= dsbase;
-    
+#endif
+
     return (rawprota(ip, codecor, prot_sp, parmlist_p));
 }
 
@@ -183,6 +185,7 @@ unsigned long runprot(unsigned long csbase,
     
     runparm.userparm = userparm;    
     runparm.intbuffer = ADDR2ABS(intbuffer);
+
     myc32base = protget32();
     if (myc32base == 0)
     {
@@ -191,7 +194,7 @@ unsigned long runprot(unsigned long csbase,
     else
     {
         runparm.runreal = ((myc32base >> 16) << 4) + (unsigned short)runreal;
-#ifdef __WATCOMC__
+#if defined(__WATCOMC__) && !defined(NEWMODEL)
         {
             unsigned long extra;
             extra = (unsigned long)(void (far *)())(runreal);
@@ -201,10 +204,13 @@ unsigned long runprot(unsigned long csbase,
         }
 #endif
     }
+
     runparm.dorealint = (unsigned long)(void (far *)())dorealint;
     
     runparm_p = ADDR2ABS(&runparm);
+#ifndef NEWMODEL
     runparm_p -= dsbase;
+#endif
     
     return (rawprot(csbase, ip, dsbase, prot_sp, runparm_p, intloc));
 }

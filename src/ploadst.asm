@@ -13,7 +13,10 @@ endif
 
 .code
 
+ifdef MAKECOM
 org 0100h
+endif
+
 top:
 
 public _startup
@@ -42,20 +45,38 @@ jmp bypass
 
 ; for bootstrap
 bootstrap:
+
+ifdef NEWMODEL
+mov ax, 0
+
+else
 push cs
 pop ax
 sub ax, 010h
+endif
+
 lea bx, newstart
 push ax
 push bx
 retf ; should return to next instruction
 newstart:
+
+ifdef NEWMODEL
+mov dx, DGROUP
+mov ds,dx
+mov es,dx
+mov ss, dx
+mov sp, 02580h
+
+else
 push ax
 push ax
 pop es
 pop ds
 mov ss, ax
 mov sp, 0fffeh
+endif
+
 
 bypass:
 
@@ -98,9 +119,11 @@ int 21h ; terminate
 _exita endp
 
 ifdef WATCOM
+ifndef NEWMODEL
 public cstart_
 cstart_:
 ret
+endif
 endif
 
 
