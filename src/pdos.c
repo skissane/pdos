@@ -5726,6 +5726,39 @@ static void accessDisk(int drive)
         return;
     }
     bpb = buf + 11;
+
+    /* if this disk supports LBA - even if it is a floppy - */
+    /* force geometry check */
+    {
+        int rc;
+        unsigned int tracks;
+        unsigned int sectors;
+        unsigned int heads;
+        unsigned int attached;
+        unsigned char *parmtable;
+        unsigned int drivetype;
+        unsigned int major;
+        unsigned int support;
+        unsigned int extra;
+
+        rc = BosLBAExtensions(drive, &major, &support, &extra);
+        if (rc == 0)
+        {
+            rc = BosDriveParms(drive,
+                               &tracks,
+                               &sectors,
+                               &heads,
+                               &attached,
+                               &parmtable,
+                               &drivetype);
+            if (rc == 0)
+            {
+               *(short *)(buf + 0x18) = sectors;
+               *(short *)(buf + 0x1a) = heads;
+            }
+        }
+    }
+
     if (disks[drive].accessed)
     {
         fatTerm(&disks[drive].fat);
