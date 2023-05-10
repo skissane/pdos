@@ -154,6 +154,10 @@ int fatInit(FAT *fat,
     {
         return (-1);
     }
+#if 0
+    printf("sectors per track is %ld\n", (long)fat->sectors_per_track);
+    printf("num heads is %ld\n", (long)fat->num_heads);
+#endif
     fat->filestart = fat->rootstart + fat->rootsize;
 #if 0
     printf("filestart is %d\n", fat->filestart);
