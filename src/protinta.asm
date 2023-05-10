@@ -64,10 +64,11 @@ oldds   dw ?
 ifdef NEWMODEL
 jjj     dd rawprota_stage2
 lll     dd runreal_stage3
-;public rrr
-rrr     dd rtop_stage2
 rraddr  dd runreal
 endif
+
+;public rrr
+rrr     dd rtop_stage2
 
 
 .code
