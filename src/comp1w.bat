@@ -1,7 +1,7 @@
 @echo on
 wasm -zq -zcm -Dmemodel=tiny -DWATCOM -DMAKECOM ploadst.asm
 wasm -zq -zcm -Dmemodel=tiny int13x.asm
-wasm -zq -zcm -Dmemodel=tiny -DWATCOM nearw.asm
+wasm -zq -zcm -Dmemodel=tiny -DWATCOM -DWATCOMC nearw.asm
 
 rem these two files are shared between modules
 wasm -zq -zcm -Dmemodel=tiny support.asm 
