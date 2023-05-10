@@ -57,6 +57,16 @@ static void ivtCopyEntries(int dest, int orig, int count);
 static void picRemap(int master_offset, int slave_offset);
 #endif
 
+/* we should use readLogical etc directly, but Watcom is
+   generating code that is not suitable for a.out */
+
+static void (*rlfunc)(void *diskptr, unsigned long sector, void *buf)
+    = readLogical;
+static unsigned long (*drfunc)(unsigned long parm) = doreboot;
+static void (*dpfunc)(void) = dopoweroff;
+static void (*dbfunc)(unsigned long drive) = doboot;
+
+
 void pdosload(void)
 {
     unsigned long psp;
@@ -113,13 +123,13 @@ void pdosload(void)
     diskinfo.drive = bpb[-9]; /* drive number is stored in NOP */
     analyseBpb(&diskinfo, bpb);
     fatDefaults(&gfat);
-    fatInit(&gfat, bpb, readLogical, 0, &diskinfo, 0);
+    fatInit(&gfat, bpb, rlfunc, 0, &diskinfo, 0);
 #ifdef PDOS32    
     a20e(); /* enable a20 line */
     pp.transferbuf = ADDR2ABS(transferbuf);
-    pp.doreboot = (unsigned long)(void (far *)())doreboot;
-    pp.dopoweroff = (unsigned long)(void (far *)())dopoweroff;
-    pp.doboot = (unsigned long)(void (far *)())doboot;
+    pp.doreboot = (unsigned long)(void (far *)())drfunc;
+    pp.dopoweroff = (unsigned long)(void (far *)())dpfunc;
+    pp.doboot = (unsigned long)(void (far *)())dbfunc;
     pp.bpb = ADDR2ABS(bpb);
     runaout(name, load, ADDR2ABS(&pp));
 #else    

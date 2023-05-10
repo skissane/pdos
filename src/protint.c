@@ -83,6 +83,19 @@ static unsigned long mydbase;
 
 static unsigned long dorealint(unsigned long parm);
 
+
+/* we shouldn't need these intermediate function pointers,
+   but I am working around the fact that Watcom generates
+   the seg keyword which is unsuitable for the a.out format */
+static void (*rs2)(void) = rtop_stage2;
+static unsigned long (*rpfunc)(unsigned long corsubr,
+                       unsigned long codecor,
+                       unsigned long newsp,
+                       unsigned long parmlist) = rawprota;
+static unsigned long (*rrfunc)(int intno, unsigned short *regs) = runreal;
+static unsigned long (*drifunc)(unsigned long parm) = dorealint;
+
+
 unsigned long rawprot(unsigned long csbase,
                       unsigned long ip,
                       unsigned long dsbase,
@@ -99,7 +112,7 @@ unsigned long rawprot(unsigned long csbase,
     myc32base = protget32();
     if (myc32base == 0)
     {
-        myc32base = (unsigned long)(void (far *)())(rtop_stage2);
+        myc32base = (unsigned long)(void (far *)())(rs2);
     }
     myc32base = ADDR2ABS(myc32base);
     /* this masking is because the offsets in protinta already
@@ -115,7 +128,7 @@ unsigned long rawprot(unsigned long csbase,
         of the information we need. We still need to add the
         code base though. */
         unsigned long extra;
-        extra = (unsigned long)(void (far *)())(rtop_stage2);
+        extra = (unsigned long)(void (far *)())(rs2);
         extra = ((extra >> 16) << 4);
         dumpbuf("", 0); /* +++ why is this no-op required to make Watcom
             work? Without it, the first extra (0x600) is not added.
@@ -128,7 +141,7 @@ unsigned long rawprot(unsigned long csbase,
     }
 #endif
 
-    mycbase = (unsigned long)(void (far *)())rawprota;
+    mycbase = (unsigned long)(void (far *)())rpfunc;
     mycbase = (mycbase >> 16) << 4;
 
     mydbase = (unsigned long)(void far *)&newstack;
@@ -166,7 +179,7 @@ unsigned long rawprot(unsigned long csbase,
     parmlist_p -= dsbase;
 #endif
 
-    return (rawprota(ip, codecor, prot_sp, parmlist_p));
+    return (rpfunc(ip, codecor, prot_sp, parmlist_p));
 }
 
 unsigned long runprot(unsigned long csbase,
@@ -189,15 +202,15 @@ unsigned long runprot(unsigned long csbase,
     myc32base = protget32();
     if (myc32base == 0)
     {
-        runparm.runreal = CADDR2ABS(runreal);
+        runparm.runreal = CADDR2ABS(rrfunc);
     }
     else
     {
-        runparm.runreal = ((myc32base >> 16) << 4) + (unsigned short)runreal;
+        runparm.runreal = ((myc32base >> 16) << 4) + (unsigned short)rrfunc;
 #if defined(__WATCOMC__) && !defined(NEWMODEL)
         {
             unsigned long extra;
-            extra = (unsigned long)(void (far *)())(runreal);
+            extra = (unsigned long)(void (far *)())(rrfunc);
             extra = ((extra >> 16) << 4);
             runparm.runreal += extra;
             runparm.runreal += 0x100; /* psp */
@@ -205,7 +218,7 @@ unsigned long runprot(unsigned long csbase,
 #endif
     }
 
-    runparm.dorealint = (unsigned long)(void (far *)())dorealint;
+    runparm.dorealint = (unsigned long)(void (far *)())drifunc;
     
     runparm_p = ADDR2ABS(&runparm);
 #ifndef NEWMODEL
