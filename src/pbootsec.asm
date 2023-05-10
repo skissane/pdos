@@ -172,21 +172,31 @@ bypass2:
 
 push es  ; preserve
 
-; If this is a hard disk image, force geometry check
 
-mov ax, [HiddenSectors_Low]
-cmp ax, 0
-jne forcec
+; If this drive supports LBA (even if it is a floppy on
+; drive 0), force a geometry check
 
-mov ax, [HiddenSectors_High]
-cmp ax, 0
-jne forcec
+; Check BIOS LBA extensions exist
+mov ah,041h
+; dl is still set
+mov bx,055aah
+int 013h
+jc normcheck
+cmp bx,0aa55h
+jne normcheck
+
+; LBA supported, so force the geometry check
+
+jmp forcec
+
 
 ; Don't get disk geometry for floppy disks, as that gets what
 ; the drive is capable of, not what is currently in the drive.
 ; e.g. you put a 360k floppy in, but are given a max cylinder
 ; of 79 (ie 80 cylinders), max head of 1 (ie 2 heads), max sector
 ; of 15, which is a 1.2 MB drive
+
+normcheck:
 
 cmp dl, 080h
 jb ignorec
