@@ -64,6 +64,7 @@ oldds   dw ?
 ifdef NEWMODEL
 jjj     dd rawprota_stage2
 lll     dd runreal_stage3
+;public rrr
 rrr     dd rtop_stage2
 rraddr  dd runreal
 endif
@@ -266,11 +267,19 @@ ptor_stage3:
 ; unsigned long protget32(void);
 ; ***********************************************************
 ; get the far address of the _TEXT32 module
+; use rrr so as to avoid the use of the "seg" keyword
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 protget32 proc
 ifdef WATCOM
-        mov dx, _TEXT32
-        mov ax, offset _TEXT32
+        push es
+        push bx
+        les bx, rrr
+;        mov dx, _TEXT32
+;        mov ax, offset _TEXT32
+        mov dx, es
+        mov ax, bx
+        pop bx
+        pop es
 else
 ; if it's the tiny memory model, return 0 and let the C code
 ; handle it.
@@ -278,8 +287,15 @@ if @Model eq 1
         mov dx, 0
         mov ax, 0
 else
-        mov dx, _TEXT32
-        mov ax, offset _TEXT32
+        push es
+        push bx
+        les bx, rrr
+;        mov dx, _TEXT32
+;        mov ax, offset _TEXT32
+        mov dx, es
+        mov ax, bx
+        pop bx
+        pop es
 endif
 endif
         ret
@@ -370,7 +386,7 @@ gethigh endp
 
 
 
-
+;extern rrr:dword
 
 _TEXT32 segment dword use32 public 'CODE'
 assume cs:_TEXT32
