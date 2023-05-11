@@ -906,6 +906,7 @@ void pdosRun(void)
     disks[1].lba = 0;
     strcpy(disks[1].cwd, "");
     analyseBpb(&bootinfo, bootBPB);
+    bootinfo.drive = bootDrivePhysical;
     bootinfo.lba = 0;
     initdisks();
 #ifdef EXE32
@@ -6045,6 +6046,8 @@ static int writeLBA(void *buf,
 
 static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
 {
+    /* this drive number is almost certainly wrong, so the caller is
+       expected to override it. but for as long as it exists, it exists */
     diskinfo->drive = bpb[25];
     diskinfo->num_heads = bpb[15] | ((unsigned int)bpb[16] << 8);
     diskinfo->hidden = bpb[17]
