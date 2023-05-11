@@ -923,6 +923,25 @@ void pdosRun(void)
             lastDrive++;
         }
         disks[bootDriveLogical] = bootinfo;
+
+        /* even floppies get an LBA check, because on some systems a
+           hard drive appears as a floppy, and it supports LBA, but
+           the geometry may not have been corrected because the
+           boot sector used LBA unconditionally. We will have an issue
+           if we now switch back to CHS without correcting geometry.
+           Rather than correcting geometry we juse use LBA */
+        {
+            unsigned int major;
+            unsigned int support;
+            unsigned int extra;
+            int rc;
+
+            rc = BosLBAExtensions(bootDrivePhysical, &major, &support, &extra);
+            if (rc == 0)
+            {
+                disks[bootDriveLogical].lba = 1;
+            }
+        }
         fatDefaults(&disks[bootDriveLogical].fat);
         fatInit(&disks[bootDriveLogical].fat,
                 bootBPB,
@@ -5715,49 +5734,40 @@ static void accessDisk(int drive)
     int sector = 1;
     unsigned char *bpb;
 
-    rc = readAbs(buf,
-                sectors,
-                drive,
-                track,
-                head,
-                sector);
+    /* on some systems, a drive appearing as a floppy, can
+       apparently be LBA-only. And the geometry could be
+       wrong too. So if LBA works, we just go with that. */
+    /* without LBA, we don't want to do a geometry check,
+       because it could be a 360k floppy in a 1.2 MB drive */
+
+    rc = readLBA(buf,
+                 sectors,
+                 drive,
+                 0); /* sector 0 */
+    if (rc == 0)
+    {
+        disks[drive].lba = 1;
+    }
+    else
+    {
+        rc = readAbs(buf,
+                    sectors,
+                    drive,
+                    track,
+                    head,
+                    sector);
+        if (rc == 0)
+        {
+            disks[drive].lba = 0;
+        }
+    }
+
     if (rc != 0)
     {
         return;
     }
+
     bpb = buf + 11;
-
-    /* if this disk supports LBA - even if it is a floppy - */
-    /* force geometry check */
-    {
-        int rc;
-        unsigned int tracks;
-        unsigned int sectors;
-        unsigned int heads;
-        unsigned int attached;
-        unsigned char *parmtable;
-        unsigned int drivetype;
-        unsigned int major;
-        unsigned int support;
-        unsigned int extra;
-
-        rc = BosLBAExtensions(drive, &major, &support, &extra);
-        if (rc == 0)
-        {
-            rc = BosDriveParms(drive,
-                               &tracks,
-                               &sectors,
-                               &heads,
-                               &attached,
-                               &parmtable,
-                               &drivetype);
-            if (rc == 0)
-            {
-               *(short *)(buf + 0x18) = sectors;
-               *(short *)(buf + 0x1a) = heads;
-            }
-        }
-    }
 
     if (disks[drive].accessed)
     {
