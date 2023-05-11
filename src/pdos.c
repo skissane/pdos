@@ -467,8 +467,8 @@ static long freem_start; /* start of free memory below 1 MiB,
 static unsigned long doreboot;
 static unsigned long dopoweroff;
 static unsigned long doboot;
-unsigned char *loadaddr = NULL;
-unsigned char *entry_point;
+unsigned char *loadaddr = (unsigned char *)0x10720;
+unsigned char *entry_point = (unsigned char *)0x10720;
 #endif
 
 #ifndef __32BIT__
