@@ -901,8 +901,10 @@ void pdosRun(void)
     bootDriveLogical = 0;
     disks[0].accessed = 0;
     disks[0].lba = 0;
+    strcpy(disks[0].cwd, "");
     disks[1].accessed = 0;
     disks[1].lba = 0;
+    strcpy(disks[1].cwd, "");
     analyseBpb(&bootinfo, bootBPB);
     bootinfo.lba = 0;
     initdisks();
@@ -5791,7 +5793,9 @@ static void accessDisk(int drive)
     fatDefaults(&disks[drive].fat);
     fatInit(&disks[drive].fat, bpb, readLogical, writeLogical, &disks[drive],
             getDateTime);
-    strcpy(disks[drive].cwd, "");
+    /* the current working directory doesn't change, even if the
+       disk is swapped. */
+    /* strcpy(disks[drive].cwd, ""); */
     disks[drive].accessed = 1;
     disks[drive].valid = 1;
     return;
