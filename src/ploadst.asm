@@ -66,7 +66,7 @@ mov dx, DGROUP
 mov ds,dx
 mov es,dx
 mov ss, dx
-mov sp, 02580h
+mov sp, 03580h
 
 else
 push ax
