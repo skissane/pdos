@@ -4059,6 +4059,8 @@ int int0(unsigned int *regs)
     ebp = (unsigned int *)regs[-4];
     printf("EBP should be %p\n", ebp);
     printf("interrupt address is %08X\n", oldsp[8]);
+    printf("for divide by zero, the interrupt address is probably the\n");
+    printf("failing instruction rather than the following instruction\n");
     printf("flags are %08X\n", oldsp[10]);
     printf("EBP chain to EBP is %08X\n", ebp[0]);
     retaddr = (unsigned int *)ebp[1];
