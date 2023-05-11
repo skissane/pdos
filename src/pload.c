@@ -36,6 +36,7 @@ typedef struct
     unsigned int num_heads;
     unsigned int sectors_per_track;
     unsigned int sector_size;
+    unsigned int reserved_sectors;
     unsigned int numfats;
     unsigned int fatstart;
     unsigned int rootstart;
@@ -55,11 +56,16 @@ int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 int main(void)
 {
     /* we now get the boot sector to load all the sectors */
-    /* loadIO(); */
+#ifdef NEWMODEL
+    loadIO();
+#endif
+
 #ifdef CONTINUOUS_LOOP
     for (;;)
 #endif        
+
     pdosload();
+
 #ifndef CONTINUOUS_LOOP
     return (0);
 #endif        
@@ -88,15 +94,23 @@ static void loadIO(void)
     ReadLogical(&diskinfo, sector, p);
     p += 11;
 #endif
-    p = (unsigned char *)(0x7c00 - 0x600 + 11);    
+#ifdef NEWMODEL
+    p = ABS2ADDR(0x7c00 + 11);
+#else
+    p = (unsigned char *)(0x7c00 - 0x600 + 11);
+#endif
     AnalyseBpb(&diskinfo, p);
+#ifdef NEWMODEL
+    p = ABS2ADDR(0x700);
+#else
     p = (unsigned char *)0x100;
+#endif
     sector = diskinfo.filestart;
     
     /* You can't load more than 58 sectors, otherwise you will
        clobber the disk parameter table being used, located in
        the 7b00-7d00 sector (ie at 7c3e) */
-    for (x = 0; x < 58; x++)
+    for (x = 0; x < 15; x++) /* was 58, using 15 as example */
     {
 #if 1 /* (!defined(USING_EXE)) */
         ReadLogical(&diskinfo, sector + x, p);
@@ -117,7 +131,8 @@ static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
                        | ((unsigned long)bpb[19] << 16)
                        | ((unsigned long)bpb[20] << 24);
     diskinfo->drive = bpb[25];
-    diskinfo->fatstart = 1;
+    diskinfo->reserved_sectors = bpb[3] | ((unsigned int)bpb[4] << 8);
+    diskinfo->fatstart = diskinfo->reserved_sectors;
     diskinfo->rootstart = diskinfo->fatsize 
                           * diskinfo->numfats + diskinfo->fatstart;
     diskinfo->rootentries = bpb[6] | ((unsigned int)bpb[7] << 8);
