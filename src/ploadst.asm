@@ -80,6 +80,9 @@ endif
 
 bypass:
 
+; see "nop" further down
+;call displayc
+
 ; We need to call dstart instead of __start because we're
 ; not linking in the C library. And dstart needs to go into
 ; the main C code so that it gets the name mangling correct.
@@ -91,6 +94,12 @@ mov ax, 0
 push ax
 call _exita
 _startup endp
+
+; There appears to be a bug in wasm in Open Watcom 1.6
+; where references to displayc actually hit the byte
+; before. At least with current alignment. But adding
+; a "nop" safeguards against that.
+nop
 
 ifdef NEED_DISPLAYC
 ;display a 'C' just to let us know that it's working!
