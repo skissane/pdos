@@ -76,5 +76,6 @@ unsigned long rawprot_p(rawprot_parms *parmlist);
 unsigned long runprot_p(rawprot_parms *parmlist);
 unsigned long runaout_p(rawprot_parms *parmlist);
 void protintHandler(int interrupt, int (*func)(unsigned int *));
+void *protintGetHandler(int interrupt);
 
 #endif

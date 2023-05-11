@@ -1873,7 +1873,11 @@ int PosGetMagic(void)
 
 void *PosGetInterruptVector(int intnum)
 {
+#ifdef __32BIT__
+    return (protintGetHandler(intnum));
+#else
     return *((void **)0 + intnum);
+#endif
 }
 
 /*To find out the free space in hard disk given by drive*/

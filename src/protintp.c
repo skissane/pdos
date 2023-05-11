@@ -14,6 +14,8 @@
 /*                                                                   */
 /*********************************************************************/
 
+#include <stddef.h>
+
 #include "support.h"
 #include "protint.h"
 #include "unused.h"
@@ -277,4 +279,18 @@ void protintHandler(int intno, int (*func)(unsigned int *))
     userInt[x].func = func;
     numUserInts++;
     return;
+}
+
+void *protintGetHandler(int interrupt)
+{
+    int x;
+
+    for (x = 0; x < numUserInts; x++)
+    {
+        if (userInt[x].intno == interrupt)
+        {
+            return (userInt[x].func);
+        }
+    }
+    return (NULL);
 }
