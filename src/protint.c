@@ -280,10 +280,14 @@ unsigned long runaout(char *fnm, unsigned long absaddr, unsigned long userparm)
     memcpy(&firstbit, buf, sizeof firstbit);
     while (1)
     {
+#ifdef NEWMODEL
+        memcpy(ABS2ADDR(curraddr), buf, ret);
+#else
         for (y = 0; y < ret; y++)
         {
             putabs(curraddr + y, buf[y]);
         }
+#endif
         curraddr += ret;
         if (ret < sizeof buf) break;
         ret = fread(buf, 1, sizeof buf, fp);
