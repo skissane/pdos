@@ -5733,17 +5733,27 @@ static void accessDisk(int drive)
     int head = 0;
     int sector = 1;
     unsigned char *bpb;
+    unsigned int major;
+    unsigned int support;
+    unsigned int extra;
 
     /* on some systems, a drive appearing as a floppy, can
        apparently be LBA-only. And the geometry could be
        wrong too. So if LBA works, we just go with that. */
     /* without LBA, we don't want to do a geometry check,
        because it could be a 360k floppy in a 1.2 MB drive */
+    /* Note that you shouldn't attempt to read LBA unless
+       LBA extensions are actually available. It hangs for
+       some reason. */
 
-    rc = readLBA(buf,
-                 sectors,
-                 drive,
-                 0); /* sector 0 */
+    rc = BosLBAExtensions(drive, &major, &support, &extra);
+    if (rc == 0)
+    {
+        rc = readLBA(buf,
+                     sectors,
+                     drive,
+                     0); /* sector 0 */
+    }
     if (rc == 0)
     {
         disks[drive].lba = 1;
