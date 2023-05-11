@@ -945,6 +945,9 @@ void pdosRun(void)
                 disks[bootDriveLogical].lba = 1;
             }
         }
+
+        /* shouldn't need this - should have been copied from bootinfo */
+        /* disks[bootDriveLogical].drive = bootDrivePhysical; */
         fatDefaults(&disks[bootDriveLogical].fat);
         fatInit(&disks[bootDriveLogical].fat,
                 bootBPB,
@@ -5789,6 +5792,7 @@ static void accessDisk(int drive)
         fatTerm(&disks[drive].fat);
     }
     analyseBpb(&disks[drive], bpb);
+    disks[drive].drive = drive;
     /* this should have been set at boot time */
 #if 0
     disks[drive].lba = 0;
@@ -6048,6 +6052,9 @@ static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
 {
     /* this drive number is almost certainly wrong, so the caller is
        expected to override it. but for as long as it exists, it exists */
+    /* it is especially wrong for FAT32 because this is not the correct
+       offset. But since no-one should be using it anyway, not worth
+       trying to detect FAT32 and giving the proper value */
     diskinfo->drive = bpb[25];
     diskinfo->num_heads = bpb[15] | ((unsigned int)bpb[16] << 8);
     diskinfo->hidden = bpb[17]
