@@ -259,10 +259,15 @@ struct relocation_entry_file {
 };
 
 #define     IMAGE_REL_I386_ABSOLUTE                         0x0000
-#define     IMAGE_REL_I386_DIR16                            0x0001
-#define     IMAGE_REL_I386_REL16                            0x0002
+#define     IMAGE_REL_I386_DIR16                            0x0001 /* No longer supported. */
+#define     IMAGE_REL_I386_REL16                            0x0002 /* No longer supported. */
 #define     IMAGE_REL_I386_DIR32                            0x0006
 #define     IMAGE_REL_I386_DIR32NB                          0x0007
+#define     IMAGE_REL_I386_SEG12                            0x0009 /* No longer supported. */
+#define     IMAGE_REL_I386_SECTION                          0x000A
+#define     IMAGE_REL_I386_SECREL                           0x000B
+#define     IMAGE_REL_I386_TOKEN                            0x000C
+#define     IMAGE_REL_I386_SECREL7                          0x000D
 #define     IMAGE_REL_I386_REL32                            0x0014
 
 struct symbol_table_entry_internal {

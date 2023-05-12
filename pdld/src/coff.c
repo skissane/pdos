@@ -705,8 +705,23 @@ void coff_relocate_part (struct section_part *part)
                 }
                 break;
 
+            case IMAGE_REL_I386_SECTION:
+            case IMAGE_REL_I386_SECREL:
+            case IMAGE_REL_I386_TOKEN:
+            case IMAGE_REL_I386_SECREL7:
+                ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", relocs[i].Type);
+                break;
+
+            case IMAGE_REL_I386_DIR16:
+            case IMAGE_REL_I386_REL16:
+            case IMAGE_REL_I386_SEG12:
+                /* There is no point in continuing, the user is using very outdated objects. */
+                ld_fatal_error ("relocation type 0x%04hx is no longer supported according to the specification", relocs[i].Type);
+                break;
+
             default:
-                ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet");
+                /* There is no point in continuing, the object is broken. */
+                ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", relocs[i].Type, part->of->filename);
                 break;
 
         }
