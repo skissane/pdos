@@ -43,13 +43,15 @@ struct symbol {
     address_type value;
     struct section_part *part;
     
-    long section_number; /* 1-based, 0 means undefined. */
+    long section_number; /* 1-based, 0 means undefined, negative numbers have special meaning. */
 
     int auxiliary; /* Such symbol should be ignored and is only a filler. */
 
 };
 
 #define UNDEFINED_SECTION_NUMBER 0
+#define ABSOLUTE_SECTION_NUMBER (-1)
+#define DEBUG_SECTION_NUMBER (-2)
 
 struct object_file {
 
@@ -185,3 +187,5 @@ void symbol_add_to_hashtab (struct symbol *symbol);
 void symbol_remove_from_hashtab (struct symbol *symbol);
 void symbol_record_external_symbol (struct symbol *symbol);
 int symbol_is_undefined (struct symbol *symbol);
+address_type symbol_get_value_with_base (struct symbol *symbol);
+address_type symbol_get_value_no_base (struct symbol *symbol);

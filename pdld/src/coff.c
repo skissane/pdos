@@ -675,7 +675,7 @@ void coff_relocate_part (struct section_part *part)
 
                     bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
 
-                    result += ld_state->base_address + symbol->part->rva + symbol->value;
+                    result += symbol_get_value_with_base (symbol);
 
                     bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
                 }
@@ -687,7 +687,7 @@ void coff_relocate_part (struct section_part *part)
 
                     bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
 
-                    result += symbol->part->rva + symbol->value;
+                    result += symbol_get_value_no_base (symbol);
 
                     bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
                 }
@@ -699,7 +699,7 @@ void coff_relocate_part (struct section_part *part)
 
                     bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
 
-                    result += symbol->part->rva + symbol->value - (part->rva + relocs[i].VirtualAddress) - 4;
+                    result += symbol_get_value_no_base (symbol) - (part->rva + relocs[i].VirtualAddress) - 4;
 
                     bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
                 }
@@ -734,7 +734,7 @@ address_type coff_calculate_entry_point (void)
     struct symbol *symbol;
 
     symbol = symbol_find ("_mainCRTStartup");
-    if (symbol) return symbol->part->rva + symbol->value;
+    if (symbol) return symbol_get_value_no_base (symbol);
 
     return 0;
 }
@@ -1305,7 +1305,11 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         } else if (coff_symbol.SectionNumber > 0
                    && coff_symbol.SectionNumber <= coff_hdr.NumberOfSections) {
             symbol->part = part_p_array[coff_symbol.SectionNumber];
+        } else if (coff_symbol.SectionNumber == IMAGE_SYM_ABSOLUTE) {
+            symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+            symbol->part = NULL;
         } else if (coff_symbol.SectionNumber == IMAGE_SYM_DEBUG) {
+            symbol->section_number = DEBUG_SECTION_NUMBER;
             symbol->part = NULL;
         } else if (coff_symbol.SectionNumber > coff_hdr.NumberOfSections) {
             ld_error ("invalid symbol SectionNumber: %hi", coff_symbol.SectionNumber);
