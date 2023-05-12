@@ -13,7 +13,13 @@
 #include <stddef.h>
 
 #ifndef __EXPORT__
+
+#ifdef __SUBC__
+#define WINAPI
+#else
 #define WINAPI __declspec(dllimport) __stdcall
+#endif
+
 #else
 #define WINAPI __declspec(dllexport) __stdcall
 #endif
@@ -119,11 +125,17 @@ typedef LPCSTR LPCTSTR;
 typedef TCHAR *LPTCH;
 typedef void *HGLOBAL;
 typedef void *LPOVERLAPPED;
+#ifndef __SUBC__
 typedef BOOL (__stdcall *PHANDLER_ROUTINE)(DWORD CtrlType);
+#endif
 typedef unsigned char CHAR;
 typedef unsigned short WCHAR;
 typedef short SHORT;
+#ifdef __SUBC__
+#define VOID void
+#else
 typedef void VOID;
+#endif
 typedef unsigned short USHORT;
 
 typedef struct _SECURITY_ATTRIBUTES {
@@ -172,6 +184,7 @@ typedef struct _SYSTEMTIME {
     WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
+#ifndef __SUBC__
 typedef struct _CHAR_INFO {
     union {
         WCHAR UnicodeChar;
@@ -181,6 +194,7 @@ typedef struct _CHAR_INFO {
 } CHAR_INFO;
 
 typedef CHAR_INFO *PCHAR_INFO;
+#endif
 
 typedef struct _COORD {
     SHORT X;
@@ -202,6 +216,7 @@ typedef struct _CONSOLE_SCREEN_BUFFER_INFO {
     COORD dwMaximumWindowSize;
 } CONSOLE_SCREEN_BUFFER_INFO;
 
+#ifndef __SUBC__
 typedef struct _KEY_EVENT_RECORD {
     BOOL  bKeyDown;
     WORD  wRepeatCount;
@@ -213,6 +228,7 @@ typedef struct _KEY_EVENT_RECORD {
     } uChar;
     DWORD dwControlKeyState;
 } KEY_EVENT_RECORD;
+#endif
 
 typedef struct _MOUSE_EVENT_RECORD {
     COORD dwMousePosition;
@@ -225,6 +241,7 @@ typedef struct _WINDOW_BUFFER_SIZE_RECORD {
   COORD dwSize;
 } WINDOW_BUFFER_SIZE_RECORD;
 
+#ifndef __SUBC__
 typedef struct _INPUT_RECORD {
     WORD EventType;
     union {
@@ -233,6 +250,7 @@ typedef struct _INPUT_RECORD {
     WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
+#endif
 
 typedef struct {
     char unused1a[32];
@@ -334,6 +352,7 @@ BOOL WINAPI GetConsoleScreenBufferInfo(
     HANDLE hFile,
     CONSOLE_SCREEN_BUFFER_INFO *pcsbi);
 
+#ifndef __SUBC__
 #define WriteConsoleOutput WriteConsoleOutputA
 BOOL WINAPI WriteConsoleOutputA(
     HANDLE hFile,
@@ -341,6 +360,7 @@ BOOL WINAPI WriteConsoleOutputA(
     COORD bufferSize,
     COORD bufferCoord,
     SMALL_RECT *rect);
+#endif
 
 BOOL WINAPI GetConsoleMode(HANDLE hFile, DWORD *dw);
 
@@ -370,7 +390,9 @@ BOOL WINAPI FillConsoleOutputAttribute(HANDLE h,
                                        LPDWORD lpd);
 
 #define ReadConsoleInput ReadConsoleInputA
+#ifndef __SUBC__
 BOOL WINAPI ReadConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd);
+#endif
 
 BOOL WINAPI AllocConsole(void);
 
