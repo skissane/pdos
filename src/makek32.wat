@@ -10,6 +10,8 @@
 # This makefile builds kernel32.dll and kernel32.lib on Windows,
 # using the Open Watcom toolchain.
 
+VPATH=..\pdpclib
+
 CC=wcl386
 CFLAGS=-oneatx
 COPTS=-zls -c -ecc $(CFLAGS) -DNOLIBALLOC -zl -fpi87 -q -D__32BIT__ -D__WIN32__ -D__STATIC__ -I. -I..\pdpclib -wcd=2002 -wcd=2003 -wcd=2004 -wcd=1176
@@ -24,7 +26,6 @@ all: clean kernel32.dll
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,nostdcall,map,start='__DllMainCRTStartup@12'
   del kernel32.lib
-  echo wlib -q kernel32.lib kernel32.dll
   wlib -q kernel32.lib ++CloseHandle.kernel32._CloseHandle@4
   wlib -q kernel32.lib ++GetCommandLineA.kernel32._GetCommandLineA@0
   wlib -q kernel32.lib ++GetStdHandle.kernel32._GetStdHandle@4
@@ -51,9 +52,6 @@ dllcrt.obj: ..\pdpclib\dllcrt.c
 
 kernel32.obj: kernel32.c
   $(CC) -c $(COPTS) -D__EXPORT__ kernel32.c
-
-pdossupc.obj: ..\pdpclib\pdossupc.c
-  $(CC) $(COPTS) ..\pdpclib\pdossupc.c
 
 .asm.obj:
   $(AS) -q -DWATCOM $<
