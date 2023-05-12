@@ -13,7 +13,7 @@ public _CreateDirectoryA
 _CreateDirectoryA:
 push 8[esp]
 push 8[esp]
-call __imp__CreateDirectoryA@8
+call [__imp__CreateDirectoryA@8]
 ret
 ret
 
