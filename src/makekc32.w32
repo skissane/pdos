@@ -1,0 +1,36 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds krnlc32.a on Windows.
+
+VPATH=../pdpclib
+
+CC=gccwin
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
+AS=as86
+LD=ldwin
+#AR=arwin
+AR=ar
+
+OBJS=krnlc32.obj
+
+all: clean krnlc32.a
+
+krnlc32.a: $(OBJS)
+  $(AR) r krnlc32.a $(OBJS)
+  $(AR) s krnlc32.a
+
+.asm.obj:
+#  $(AS) -f coff -o $@ $<
+  ml -nologo -c -coff $<
+
+clean:
+  rm -f *.o
+  rm -f krnlc32.a
