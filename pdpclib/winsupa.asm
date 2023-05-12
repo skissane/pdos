@@ -18,7 +18,7 @@ endif
 public __setj
 public __longj
 public __chkstk_ms
-
+public __switch
 
 ifdef WATCOM
 ___setj:
@@ -82,5 +82,30 @@ __longj endp
 __chkstk_ms proc
         ret
 __chkstk_ms endp
+
+
+; From SubC, for SubC, then modified for intel syntax
+; internal switch(expr) routine
+; %esi = switch table, %eax = expr
+
+__switch:
+	push	esi
+	mov	esi,edx
+	mov	ebx,eax
+	cld
+	lodsd
+	mov	ecx,eax
+next:	lodsd
+	mov	edx,eax
+	lodsd
+	cmp	ebx,edx
+	jnz	no
+	pop	esi
+	jmp	eax
+no:	loop	next
+	lodsd
+	pop	esi
+	jmp	eax
+
 
 end
