@@ -1740,18 +1740,20 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
     free (hdr.name);
 
     if (offset_name_table == NULL) return;
-
-    /* This is necessary because "dh.o/" contains the first part of the .idata content
-     * and "dt.o/" contains the terminators for the .idata content. */
+    
+    /* This is necessary because the member containing symbol "__head_something_dll"
+     * contains the first part of the .idata content
+     * and the member containing symbol "_something_dll_iname" contains the terminators for the .idata content.
+     * (Applies only to the traditional import library format,
+     * for the short format whole .idata is automatically generated.)*/
     for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
-        pos = file + offset_name_table[i].offset;
-        CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
-        read_archive_member_header (pos, &hdr);
-
-        if (strcmp (hdr.name, "dh.o/") == 0) start_header_object_offset = offset_name_table[i].offset;
-        else if (strcmp (hdr.name, "dt.o/") == 0) end_header_object_offset = offset_name_table[i].offset;
-
-        free (hdr.name);
+        if (strncmp (offset_name_table[i].name, "__head_", 7) == 0
+            && strcmp (offset_name_table[i].name + strlen (offset_name_table[i].name) - 4, "_dll") == 0) {
+            start_header_object_offset = offset_name_table[i].offset;
+        } else if (strlen (offset_name_table[i].name) > 10
+                   && strcmp (offset_name_table[i].name + strlen (offset_name_table[i].name) - 10, "_dll_iname") == 0) {
+            end_header_object_offset = offset_name_table[i].offset;
+        }
     }
 
     if (start_header_object_offset) read_coff_archive_member (file, file_size, file + start_header_object_offset);
