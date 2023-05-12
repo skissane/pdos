@@ -24,10 +24,11 @@ int main(int argc, char **argv)
     FILE *fr;
     FILE *fs;
     FILE *ft;
+    FILE *fu;
 
-    if (argc <= 5)
+    if (argc <= 6)
     {
-        printf("usage: killat <funclist> <asm> <def> <wat> <wat2>\n");
+        printf("usage: killat <funclist> <asm> <def> <wat> <wat2> <wat3>\n");
         printf("input file (funclist) looks like:\n");
         printf("_CreateProcessA@40\n");
         printf("You can do link -map (with Visual Studio) to get this, "
@@ -65,6 +66,12 @@ int main(int argc, char **argv)
     if (ft == NULL)
     {
         printf("failed to open %s for write\n", *(argv + 5));
+        return (EXIT_FAILURE);
+    }
+    fu = fopen(*(argv + 6), "w");
+    if (fu == NULL)
+    {
+        printf("failed to open %s for write\n", *(argv + 6));
         return (EXIT_FAILURE);
     }
     while (fgets(buf, sizeof buf, fp) != NULL)
@@ -164,6 +171,8 @@ do {
 } while (0);
 
         fprintf(ft, "++%s.msvcrt._%s\n", buf, buf);
+
+        fprintf(fu, "Export %s=_%s\n", buf, buf);
 
     }
     return (0);
