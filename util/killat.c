@@ -22,11 +22,12 @@ int main(int argc, char **argv)
     FILE *fp;
     FILE *fq;
     FILE *fr;
+    FILE *fs;
 
-    if (argc <= 3)
+    if (argc <= 4)
     {
-        printf("usage: killat <funclist> <asm> <def>\n");
-        printf("input file looks like:\n");
+        printf("usage: killat <funclist> <asm> <def> <wat>\n");
+        printf("input file (funclist) looks like:\n");
         printf("_CreateProcessA@40\n");
         printf("You can do link -map (with Visual Studio) to get this, "
                "and use an editor\n");
@@ -50,6 +51,12 @@ int main(int argc, char **argv)
     if (fr == NULL)
     {
         printf("failed to open %s for write\n", *(argv + 3));
+        return (EXIT_FAILURE);
+    }
+    fs = fopen(*(argv + 4), "w");
+    if (fs == NULL)
+    {
+        printf("failed to open %s for write\n", *(argv + 4));
         return (EXIT_FAILURE);
     }
     while (fgets(buf, sizeof buf, fp) != NULL)
@@ -132,6 +139,14 @@ ret
         fwrite(buf + 1, 1, p - buf - 1, fr);
         fprintf(fr, "\n");
 #endif
+
+        p = strchr(buf, '@');
+        if (p == NULL) break;
+        fprintf(fs, "++");
+        fwrite(buf + 1, 1, p - buf - 1, fs);
+        fprintf(fs, ".kernel32.");
+        fprintf(fs, "%s\n", buf);
+
     }
     return (0);
 }
