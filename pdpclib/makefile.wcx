@@ -16,7 +16,8 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 #  echo wlib -q -n -ic msvcrt.lib +msvcrt.dll
   wlib -q msvcrt ++printf.msvcrt._printf
   wlib -q msvcrt ++__getmainargs.msvcrt.___getmainargs
-  wlib -q msvcrt ++_exit.msvcrt._exit
+  wlib -q msvcrt ++exit.msvcrt._exit
+  wlib -q msvcrt ++_exit.msvcrt.__exit
   wlib -q msvcrt ++malloc.msvcrt._malloc
   wlib -q msvcrt ++strcmp.msvcrt._strcmp
   wlib -q msvcrt ++fread.msvcrt._fread
