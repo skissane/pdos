@@ -14,18 +14,7 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlink File dllcrt.obj,temp.lib Name msvcrt.dll Form windows nt dll Runtime con Library temp.lib,..\src\kernel32.lib Option quiet,nod,map,start='__DllMainCRTStartup@12' @watcom.exp
   del msvcrt.lib
 #  echo wlib -q -n -ic msvcrt.lib +msvcrt.dll
-  wlib -q msvcrt ++printf.msvcrt._printf
-  wlib -q msvcrt ++__getmainargs.msvcrt.___getmainargs
-  wlib -q msvcrt ++exit.msvcrt._exit
-  wlib -q msvcrt ++_exit.msvcrt.__exit
-  wlib -q msvcrt ++malloc.msvcrt._malloc
-  wlib -q msvcrt ++strcmp.msvcrt._strcmp
-  wlib -q msvcrt ++fread.msvcrt._fread
-  wlib -q msvcrt ++fwrite.msvcrt._fwrite
-  wlib -q msvcrt ++ferror.msvcrt._ferror
-  wlib -q msvcrt ++fopen.msvcrt._fopen
-  wlib -q msvcrt ++fclose.msvcrt._fclose
-  wlib -q msvcrt ++_iob.msvcrt.__iob
+  wlib -q msvcrt @msvcrt.wat
   wlink File w32start.obj,fpfuncsw.obj,pdptest.obj Name pdptest.exe Form windows nt Runtime con Library msvcrt.lib Option quiet,start=_mainCRTStartup
 
 pdptest.obj: pdptest.c
