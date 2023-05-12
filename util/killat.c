@@ -90,8 +90,8 @@ ret
         {
             fprintf(fq, "push %s[esp]\n", p + 1);
         }
-        fprintf(fq, "call [__imp_%s\n", buf);
-        fprintf(fq, "ret\nret\n");
+        fprintf(fq, "call [__imp_%s]\n", buf);
+        fprintf(fq, "ret\nret\n\n");
 #endif
 
 #if 0
