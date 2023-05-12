@@ -32,7 +32,6 @@ int main(int argc, char **argv)
                "and use an editor\n");
         printf("or grep \" f \" kernel32.map | grep kernel32.obj\n");
         printf("to clean it up\n");
-        printf("note that the output assembler file is not needed\n");
         return (EXIT_FAILURE);
     }
     fp = fopen(*(argv + 1), "r");
@@ -56,11 +55,46 @@ int main(int argc, char **argv)
     while (fgets(buf, sizeof buf, fp) != NULL)
     {
         char *p;
+        int x;
+        int tot;
 
         p = strchr(buf, '\n');
         if (p == NULL) break;
         *p = '\0';
+
+#if 0
+
+extrn __imp__CreateDirectoryA@8:ptr
+public _CreateDirectoryA
+_CreateDirectoryA:
+push 8[esp]
+push 8[esp]
+call [__imp__CreateDirectoryA@8]
+ret
+ret
+
+#endif
+
+
 #if 1
+        p = strchr(buf, '@');
+        if (p == NULL) break;
+        fprintf(fq, "extrn __imp_%s:ptr\n", buf);
+        fprintf(fq, "public ");
+        fwrite(buf, 1, p - buf, fq);
+        fprintf(fq, "\n");
+        fwrite(buf, 1, p - buf, fq);
+        fprintf(fq, ":\n");
+        tot = atoi(p + 1) / 4;
+        for (x = 0; x < tot; x++)
+        {
+            fprintf(fq, "push %s[esp]\n", p + 1);
+        }
+        fprintf(fq, "call [__imp_%s\n", buf);
+        fprintf(fq, "ret\nret\n");
+#endif
+
+#if 0
         p = strchr(buf, '@');
         if (p == NULL) break;
         fprintf(fq, "extrn %s:proc\npublic ", buf);
@@ -68,7 +102,9 @@ int main(int argc, char **argv)
         fprintf(fq, "\n");
         fwrite(buf + 1, 1, p - buf - 1, fq);
         fprintf(fq, ": jmp %s\n\n", buf);
-#else
+#endif
+
+#if 0
         fprintf(fq, "extrn %s:proc\n", buf);
         fprintf(fq, "public %s\n", buf + 1);
         fprintf(fq, "%s: jmp %s\n\n", buf + 1, buf);
