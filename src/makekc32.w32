@@ -28,8 +28,8 @@ krnlc32.a: $(OBJS)
   $(AR) s krnlc32.a
 
 .asm.obj:
-#  $(AS) -f coff -o $@ $<
-  ml -nologo -c -coff $<
+#  ml -nologo -c -coff $<
+  $(AS) -f coff -o $@ $<
 
 clean:
   rm -f *.o
