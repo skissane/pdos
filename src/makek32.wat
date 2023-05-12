@@ -26,26 +26,7 @@ all: clean kernel32.dll
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,nostdcall,map,start='__DllMainCRTStartup@12'
   del kernel32.lib
-  wlib -q kernel32.lib ++CloseHandle.kernel32._CloseHandle@4
-  wlib -q kernel32.lib ++GetCommandLineA.kernel32._GetCommandLineA@0
-  wlib -q kernel32.lib ++GetStdHandle.kernel32._GetStdHandle@4
-  wlib -q kernel32.lib ++GetConsoleMode.kernel32._GetConsoleMode@8
-  wlib -q kernel32.lib ++SetConsoleMode.kernel32._SetConsoleMode@8
-  wlib -q kernel32.lib ++ExitProcess.kernel32._ExitProcess@4
-  wlib -q kernel32.lib ++CreateFileA.kernel32._CreateFileA@28
-  wlib -q kernel32.lib ++GetLastError.kernel32._GetLastError@0
-  wlib -q kernel32.lib ++ReadFile.kernel32._ReadFile@20
-  wlib -q kernel32.lib ++WriteFile.kernel32._WriteFile@20
-  wlib -q kernel32.lib ++DeleteFileA.kernel32._DeleteFileA@4
-  wlib -q kernel32.lib ++MoveFileA.kernel32._MoveFileA@8
-  wlib -q kernel32.lib ++SetFilePointer.kernel32._SetFilePointer@16
-  wlib -q kernel32.lib ++GlobalAlloc.kernel32._GlobalAlloc@8
-  wlib -q kernel32.lib ++GlobalFree.kernel32._GlobalFree@4
-  wlib -q kernel32.lib ++GetEnvironmentStrings.kernel32._GetEnvironmentStrings@0
-  wlib -q kernel32.lib ++CreateProcessA.kernel32._CreateProcessA@40
-  wlib -q kernel32.lib ++WaitForSingleObject.kernel32._WaitForSingleObject@8
-  wlib -q kernel32.lib ++GetExitCodeProcess.kernel32._GetExitCodeProcess@8
-  wlib -q kernel32.lib ++GetSystemTime.kernel32._GetSystemTime@4
+  wlib -q kernel32.lib @kernel32.wat
 
 dllcrt.obj: ..\pdpclib\dllcrt.c
   $(CC) -c $(COPTS) -D__EXPORT__ ..\pdpclib\dllcrt.c
