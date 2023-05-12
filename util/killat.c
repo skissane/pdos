@@ -23,10 +23,11 @@ int main(int argc, char **argv)
     FILE *fq;
     FILE *fr;
     FILE *fs;
+    FILE *ft;
 
-    if (argc <= 4)
+    if (argc <= 5)
     {
-        printf("usage: killat <funclist> <asm> <def> <wat>\n");
+        printf("usage: killat <funclist> <asm> <def> <wat> <wat2>\n");
         printf("input file (funclist) looks like:\n");
         printf("_CreateProcessA@40\n");
         printf("You can do link -map (with Visual Studio) to get this, "
@@ -59,6 +60,12 @@ int main(int argc, char **argv)
         printf("failed to open %s for write\n", *(argv + 4));
         return (EXIT_FAILURE);
     }
+    ft = fopen(*(argv + 5), "w");
+    if (ft == NULL)
+    {
+        printf("failed to open %s for write\n", *(argv + 5));
+        return (EXIT_FAILURE);
+    }
     while (fgets(buf, sizeof buf, fp) != NULL)
     {
         char *p;
@@ -84,6 +91,7 @@ ret
 
 
 #if 1
+do {
         p = strchr(buf, '@');
         if (p == NULL) break;
         fprintf(fq, "extrn __imp_%s:ptr\n", buf);
@@ -99,6 +107,7 @@ ret
         }
         fprintf(fq, "call [__imp_%s]\n", buf);
         fprintf(fq, "ret\nret\n\n");
+} while (0);
 #endif
 
 #if 0
@@ -117,9 +126,13 @@ ret
         fprintf(fq, "%s: jmp %s\n\n", buf + 1, buf);
 #endif
 
+do {
+        p = strchr(buf, '@');
+        if (p == NULL) break;
         fprintf(fr, "EXPORTS ");
         fwrite(buf + 1, 1, p - buf - 1, fr);
         fprintf(fr, "\n");
+} while (0);
 
 #if 0
         fprintf(fr, "EXPORTS %s=", buf);
@@ -140,12 +153,16 @@ ret
         fprintf(fr, "\n");
 #endif
 
+do {
         p = strchr(buf, '@');
         if (p == NULL) break;
         fprintf(fs, "++");
         fwrite(buf + 1, 1, p - buf - 1, fs);
         fprintf(fs, ".kernel32.");
         fprintf(fs, "%s\n", buf);
+} while (0);
+
+        fprintf(ft, "++%s.msvcrt._%s\n", buf, buf);
 
     }
     return (0);
