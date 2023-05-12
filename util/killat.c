@@ -34,6 +34,7 @@ int main(int argc, char **argv)
                "and use an editor\n");
         printf("or grep \" f \" kernel32.map | grep kernel32.obj\n");
         printf("to clean it up\n");
+        printf("and -map -mapinfo:exports will get the msvcrt one\n");
         return (EXIT_FAILURE);
     }
     fp = fopen(*(argv + 1), "r");
