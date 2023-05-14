@@ -5750,7 +5750,12 @@ static void accessDisk(int drive)
     unsigned int extra;
 
     /* on some systems, a drive appearing as a floppy, can
-       apparently be LBA-only. And the geometry could be
+       apparently be LBA-only (this is probably not true -
+       and what's more true - it seems - is that some systems
+       report that LBA is available, and you can read it, but
+       it turns out to be all NULs - so the prudent thing to
+       do is to use CHS for floppies until the track becomes
+       too large). And the geometry could be
        wrong too. So if LBA works, we just go with that. */
     /* without LBA, we don't want to do a geometry check,
        because it could be a 360k floppy in a 1.2 MB drive */
@@ -5758,6 +5763,7 @@ static void accessDisk(int drive)
        LBA extensions are actually available. It hangs for
        some reason. */
 
+#if 0
     rc = BosLBAExtensions(drive, &major, &support, &extra);
     if (rc == 0)
     {
@@ -5772,17 +5778,14 @@ static void accessDisk(int drive)
     }
     else
     {
-        rc = readAbs(buf,
-                    sectors,
-                    drive,
-                    track,
-                    head,
-                    sector);
-        if (rc == 0)
-        {
-            disks[drive].lba = 0;
-        }
-    }
+#endif
+
+    rc = readAbs(buf,
+                sectors,
+                drive,
+                track,
+                head,
+                sector);
 
     if (rc != 0)
     {
@@ -5797,10 +5800,7 @@ static void accessDisk(int drive)
     }
     analyseBpb(&disks[drive], bpb);
     disks[drive].drive = drive;
-    /* this should have been set at boot time */
-#if 0
     disks[drive].lba = 0;
-#endif
     fatDefaults(&disks[drive].fat);
     fatInit(&disks[drive].fat, bpb, readLogical, writeLogical, &disks[drive],
             getDateTime);
