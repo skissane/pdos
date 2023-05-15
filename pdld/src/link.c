@@ -69,10 +69,33 @@ static void calculate_entry_point (void)
 {
     struct section *section;
 
-    if ((ld_state->entry_point = coff_calculate_entry_point ())) return;
+    if (ld_state->entry_symbol_name) {
+        if (ld_state->entry_symbol_name[0] == '\0') {
+            ld_state->entry_point -= ld_state->base_address;
+            return;
+        } else {
+            struct symbol *symbol;
+
+            symbol = symbol_find (ld_state->entry_symbol_name);
+            if (symbol) {
+                ld_state->entry_point = symbol_get_value_no_base (symbol);
+                return;
+            }
+        }
+    }
+
+    if (ld_state->entry_symbol_name == NULL) {
+        if ((ld_state->entry_point = coff_calculate_entry_point ())) return;
+    }
 
     section = section_find (".text");
     if (section) ld_state->entry_point = section->rva;
+
+    if (ld_state->entry_symbol_name) {
+        ld_warn ("cannot find entry symbol '%s'; defaulting to 0x%08lx",
+                 ld_state->entry_symbol_name,
+                 ld_state->base_address + ld_state->entry_point);
+    }
 }
 
 void link (void)

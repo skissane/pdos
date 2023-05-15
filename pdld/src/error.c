@@ -91,6 +91,15 @@ void ld_error (const char *fmt, ...)
     error_count++;
 }
 
+void ld_warn (const char *fmt, ...)
+{
+    va_list ap;
+    
+    va_start (ap, fmt);
+    report (fmt, ap, "warning");
+    va_end (ap);
+}
+
 void ld_note (const char *fmt, ...)
 {
     va_list ap;

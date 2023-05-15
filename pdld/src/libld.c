@@ -19,6 +19,7 @@
 enum option_index {
 
     LD_OPTION_IGNORED = 0,
+    LD_OPTION_ENTRY,
     LD_OPTION_HELP,
     LD_OPTION_OUTPUT,
     LD_OPTION_OUT_IMPLIB,
@@ -30,6 +31,7 @@ enum option_index {
 
 static const struct short_option short_options[] = {
     
+    { 'e', LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { 'o', LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { 's', LD_OPTION_IGNORED, OPTION_NO_ARG},
     { 'v', LD_OPTION_VERSION, OPTION_NO_ARG},
@@ -40,6 +42,7 @@ static const struct short_option short_options[] = {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
+    { STR_AND_LEN("entry"), LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { STR_AND_LEN("Bshareable"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
     { STR_AND_LEN("nostdlib"), LD_OPTION_IGNORED, OPTION_NO_ARG},
@@ -57,6 +60,7 @@ static void print_help (void)
 {
     printf ("Usage: %s [options] file...\n", program_name ? program_name : "pdld");
     printf ("Options:\n");
+    printf ("  -e ADDRESS, --entry ADDRESS Set start address\n");
     printf ("  --help                      Print option help\n");
     printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
@@ -75,6 +79,20 @@ static void use_option (enum option_index option_index, char *arg)
     switch (option_index) {
 
         case LD_OPTION_IGNORED:
+            break;
+
+        case LD_OPTION_ENTRY:
+            {
+                char *endptr;
+                
+                ld_state->entry_point = strtoul (arg, &endptr, 0);
+                if (endptr == arg + strlen (arg)) {
+                    ld_state->entry_symbol_name = "";
+                } else {
+                    ld_state->entry_point = 0;
+                    ld_state->entry_symbol_name = arg;
+                }
+            }
             break;
 
         case LD_OPTION_HELP:

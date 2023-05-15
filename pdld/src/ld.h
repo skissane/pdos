@@ -26,6 +26,7 @@ typedef unsigned long flag_int;
 extern const char *program_name;
 
 struct ld_state {
+    const char *entry_symbol_name;
     const char *output_filename;
     const char *output_implib_filename;
     int create_shared_library;
@@ -138,6 +139,7 @@ NORETURN void ld_internal_error_at_source (const char *code_filename,
                                            ...);
 NORETURN void ld_fatal_error (const char *fmt, ...);
 void ld_error (const char *fmt, ...);
+void ld_warn (const char *fmt, ...);
 void ld_note (const char *fmt, ...);
 int ld_get_error_count (void);
 
