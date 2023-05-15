@@ -21,6 +21,8 @@ enum option_index {
     LD_OPTION_IGNORED = 0,
     LD_OPTION_ENTRY,
     LD_OPTION_HELP,
+    LD_OPTION_MAP,
+    LD_OPTION_MAP_FILE,
     LD_OPTION_OUTPUT,
     LD_OPTION_OUT_IMPLIB,
     LD_OPTION_SHARED_LIBRARY,
@@ -32,6 +34,7 @@ enum option_index {
 static const struct short_option short_options[] = {
     
     { 'e', LD_OPTION_ENTRY, OPTION_HAS_ARG},
+    { 'M', LD_OPTION_MAP, OPTION_NO_ARG},
     { 'o', LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { 's', LD_OPTION_IGNORED, OPTION_NO_ARG},
     { 'v', LD_OPTION_VERSION, OPTION_NO_ARG},
@@ -42,9 +45,11 @@ static const struct short_option short_options[] = {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
-    { STR_AND_LEN("entry"), LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { STR_AND_LEN("Bshareable"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
+    { STR_AND_LEN("entry"), LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
+    { STR_AND_LEN("print-map"), LD_OPTION_MAP, OPTION_NO_ARG},
+    { STR_AND_LEN("Map"), LD_OPTION_MAP_FILE, OPTION_HAS_ARG},
     { STR_AND_LEN("nostdlib"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("output"), LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { STR_AND_LEN("out-implib"), LD_OPTION_OUT_IMPLIB, OPTION_HAS_ARG},
@@ -62,6 +67,8 @@ static void print_help (void)
     printf ("Options:\n");
     printf ("  -e ADDRESS, --entry ADDRESS Set start address\n");
     printf ("  --help                      Print option help\n");
+    printf ("  -M, --print-map             Print map file on standard output\n");
+    printf ("  -Map FILE                   Write a linker map to FILE\n");
     printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
     printf ("  --out-implib FILE           Generate import library\n");
@@ -97,6 +104,14 @@ static void use_option (enum option_index option_index, char *arg)
 
         case LD_OPTION_HELP:
             print_help ();
+            break;
+
+        case LD_OPTION_MAP:
+            ld_state->output_map_filename = "";
+            break;
+
+        case LD_OPTION_MAP_FILE:
+            ld_state->output_map_filename = arg;
             break;
 
         case LD_OPTION_OUTPUT:

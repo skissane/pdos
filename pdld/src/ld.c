@@ -50,6 +50,8 @@ int main (int argc, char **argv)
     coff_after_link ();
     
     coff_write (ld_state->output_filename);
+
+    if (ld_state->output_map_filename) map_write (ld_state->output_map_filename);
     
     sections_destroy ();
     symbols_destroy ();

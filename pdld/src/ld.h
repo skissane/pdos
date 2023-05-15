@@ -27,6 +27,7 @@ extern const char *program_name;
 
 struct ld_state {
     const char *entry_symbol_name;
+    const char *output_map_filename;
     const char *output_filename;
     const char *output_implib_filename;
     int create_shared_library;
@@ -163,6 +164,9 @@ void coff_read (const char *filename);
 void coff_print_help (void);
 void coff_use_option (int option_index, char *arg);
 const struct long_option *coff_get_long_options (void);
+
+/* map.c */
+void map_write (const char *filename);
 
 /* sections.c */
 struct section *section_find (const char *name);
