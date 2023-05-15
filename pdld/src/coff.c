@@ -36,6 +36,10 @@ static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int nx_compat = 1;
 
+static unsigned short MajorSubsystemVersion = 4;
+static unsigned short MinorSubsystemVersion = 0;
+static unsigned short Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+
 static long size_of_headers;
 
 static address_type size_of_code = 0;
@@ -952,12 +956,13 @@ void coff_write (const char *filename)
 
     optional_hdr.MajorOperatingSystemVersion = 4;
     optional_hdr.MajorImageVersion = 1;
-    optional_hdr.MajorSubsystemVersion = 4;
+    optional_hdr.MajorSubsystemVersion = MajorSubsystemVersion;
+    optional_hdr.MinorSubsystemVersion = MinorSubsystemVersion;
 
     optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, DEFAULT_SECTION_ALIGNMENT);
     optional_hdr.SizeOfHeaders = size_of_headers;
 
-    optional_hdr.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    optional_hdr.Subsystem = Subsystem;
     
     optional_hdr.DllCharacteristics = 0;
     if (nx_compat) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
@@ -1840,6 +1845,7 @@ void coff_read (const char *filename)
 enum option_index {
 
     COFF_OPTION_IGNORED = 0,
+    COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
     COFF_OPTION_KILL_AT,
@@ -1853,6 +1859,7 @@ enum option_index {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
+    { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("kill-at"), COFF_OPTION_KILL_AT, OPTION_NO_ARG},
@@ -1868,6 +1875,7 @@ static const struct long_option long_options[] = {
 void coff_print_help (void)
 {
     printf ("i386pe:\n");
+    printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
     printf ("  --kill-at                          Remove @nn from exported symbols\n");
@@ -1882,6 +1890,28 @@ static void use_option (enum option_index option_index, char *arg)
     switch (option_index) {
 
         case COFF_OPTION_IGNORED:
+            break;
+
+        case COFF_OPTION_SUBSYSTEM:
+            {
+                char *p;
+
+                Subsystem = strtoul (arg, &p, 10);
+                if (*p == '\0') break;
+                if (*p != ':') goto bad_subsystem;
+
+                p++;
+                MajorSubsystemVersion = strtoul (p, &p, 10);
+                if (*p == '\0') break;
+                if (*p != '.') goto bad_subsystem;
+
+                p++;
+                MinorSubsystemVersion = strtoul (p, &p, 10);
+                if (*p == '\0') break;
+
+            bad_subsystem:
+                ld_error ("invalid subsystem type '%s'", arg);
+            }
             break;
 
         case COFF_OPTION_INSERT_TIMESTAMP:
