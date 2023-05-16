@@ -36,6 +36,10 @@ static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int nx_compat = 1;
 
+static address_type user_specified_base_address = 0;
+
+static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
+static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
 static unsigned short MajorSubsystemVersion = 4;
 static unsigned short MinorSubsystemVersion = 0;
 static unsigned short Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -165,11 +169,11 @@ static void write_sections (unsigned char *file)
         hdr->VirtualAddress = section->rva;
 
         if (!section->is_bss) {
-            hdr->SizeOfRawData = ALIGN (section->total_size, DEFAULT_FILE_ALIGNMENT);
+            hdr->SizeOfRawData = ALIGN (section->total_size, FileAlignment);
             hdr->PointerToRawData = pos - file;
 
             section_write (section, pos);
-            pos += ALIGN (section->total_size, DEFAULT_FILE_ALIGNMENT);
+            pos += ALIGN (section->total_size, FileAlignment);
         } else {
             hdr->SizeOfRawData = 0;
             hdr->PointerToRawData = 0;
@@ -198,13 +202,15 @@ static void write_sections (unsigned char *file)
 
 address_type coff_get_base_address (void)
 {
+    if (user_specified_base_address) return user_specified_base_address;
+    
     if (ld_state->create_shared_library) return DEFAULT_DLL_IMAGE_BASE;
     return DEFAULT_EXE_IMAGE_BASE;
 }
 
 address_type coff_get_first_section_rva (void)
 {
-    return ALIGN (size_of_headers, DEFAULT_SECTION_ALIGNMENT);
+    return ALIGN (size_of_headers, SectionAlignment);
 }
 
 static char *unprefix_name (const char *orig_name)
@@ -481,7 +487,7 @@ static void generate_edata (void)
 
     of = object_file_make (1 + num_names, "FAKE_LD_FILE");
     section = section_find_or_make (".edata");
-    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+    section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
     part = section_part_new (section, of);
 
@@ -609,7 +615,7 @@ void coff_before_link (void)
 
     if (generate_reloc_section) {
         section = section_find_or_make (".reloc");
-        section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+        section->section_alignment = SectionAlignment;
         section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
     }
 
@@ -618,7 +624,7 @@ void coff_before_link (void)
                        + sizeof (struct optional_header_file)
                        + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
                        + sizeof (struct section_table_entry_file) * section_count ());
-    size_of_headers = ALIGN (size_of_headers, DEFAULT_FILE_ALIGNMENT);
+    size_of_headers = ALIGN (size_of_headers, FileAlignment);
 
     /* .idata$2 contains Import Directory Table which needs to be terminated with null entry. */
     section = section_find (".idata");
@@ -881,7 +887,7 @@ void coff_write (const char *filename)
         size_t total_section_size_to_write = 0;
 
         for (section = all_sections; section; section = section->next) {
-            if (!section->is_bss) total_section_size_to_write += ALIGN (section->total_size, DEFAULT_FILE_ALIGNMENT);
+            if (!section->is_bss) total_section_size_to_write += ALIGN (section->total_size, FileAlignment);
         }
 
         file_size = size_of_headers + total_section_size_to_write;
@@ -941,9 +947,9 @@ void coff_write (const char *filename)
     optional_hdr.MinorLinkerVersion = LD_MINOR_VERSION;
     
     /* Seems that these 3 fields should be rounded up to FileAlignment. */
-    optional_hdr.SizeOfCode = ALIGN (size_of_code, DEFAULT_FILE_ALIGNMENT);
-    optional_hdr.SizeOfInitializedData = ALIGN (size_of_initialized_data, DEFAULT_FILE_ALIGNMENT);
-    optional_hdr.SizeOfUninitializedData = ALIGN (size_of_uninitialized_data, DEFAULT_FILE_ALIGNMENT);
+    optional_hdr.SizeOfCode = ALIGN (size_of_code, FileAlignment);
+    optional_hdr.SizeOfInitializedData = ALIGN (size_of_initialized_data, FileAlignment);
+    optional_hdr.SizeOfUninitializedData = ALIGN (size_of_uninitialized_data, FileAlignment);
 
     optional_hdr.AddressOfEntryPoint = ld_state->entry_point;
 
@@ -951,15 +957,15 @@ void coff_write (const char *filename)
     optional_hdr.BaseOfData = base_of_data;
 
     optional_hdr.ImageBase = ld_state->base_address;
-    optional_hdr.SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
-    optional_hdr.FileAlignment = DEFAULT_FILE_ALIGNMENT;
+    optional_hdr.SectionAlignment = SectionAlignment;
+    optional_hdr.FileAlignment = FileAlignment;
 
     optional_hdr.MajorOperatingSystemVersion = 4;
     optional_hdr.MajorImageVersion = 1;
     optional_hdr.MajorSubsystemVersion = MajorSubsystemVersion;
     optional_hdr.MinorSubsystemVersion = MinorSubsystemVersion;
 
-    optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, DEFAULT_SECTION_ALIGNMENT);
+    optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
     optional_hdr.SizeOfHeaders = size_of_headers;
 
     optional_hdr.Subsystem = Subsystem;
@@ -1199,7 +1205,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
                 section = section_find_or_make (section_name);
 
-                section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+                section->section_alignment = SectionAlignment;
                 section->flags = translate_Characteristics_to_section_flags (section_hdr.Characteristics);
                 if (section_hdr.PointerToRawData == 0) {
                     section->is_bss = 1;
@@ -1290,7 +1296,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
                     section = section_find_or_make (".bss");
 
-                    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+                    section->section_alignment = SectionAlignment;
                     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
                     section->is_bss = 1;
                     bss_section_number = coff_hdr.NumberOfSections ? coff_hdr.NumberOfSections : 1;
@@ -1351,7 +1357,7 @@ static void import_generate_head (const char *dll_name)
 
     of = object_file_make (3, "FAKE_LD_FILE");
     section = section_find_or_make (".idata");
-    section->section_alignment = DEFAULT_SECTION_ALIGNMENT;
+    section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
 
     subsection = subsection_find_or_make (section, "2");
@@ -1845,6 +1851,9 @@ void coff_read (const char *filename)
 enum option_index {
 
     COFF_OPTION_IGNORED = 0,
+    COFF_OPTION_FILE_ALIGNMENT,
+    COFF_OPTION_IMAGE_BASE,
+    COFF_OPTION_SECTION_ALIGNMENT,
     COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
@@ -1859,6 +1868,9 @@ enum option_index {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
+    { STR_AND_LEN("file-alignment"), COFF_OPTION_FILE_ALIGNMENT, OPTION_HAS_ARG},
+    { STR_AND_LEN("image-base"), COFF_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
+    { STR_AND_LEN("section-alignment"), COFF_OPTION_SECTION_ALIGNMENT, OPTION_HAS_ARG},
     { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
@@ -1875,6 +1887,9 @@ static const struct long_option long_options[] = {
 void coff_print_help (void)
 {
     printf ("i386pe:\n");
+    printf ("  --file-alignment <size>            Set file alignment\n");
+    printf ("  --image-base <address>             Set base address of the executable\n");
+    printf ("  --section-alignment <size>         Set section alignment\n");
     printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
@@ -1892,21 +1907,71 @@ static void use_option (enum option_index option_index, char *arg)
         case COFF_OPTION_IGNORED:
             break;
 
+        case COFF_OPTION_FILE_ALIGNMENT:
+            {
+                char *p;
+                
+                FileAlignment = strtoul (arg, &p, 0);
+                if (FileAlignment == 0) FileAlignment = 1;
+                if (*p != '\0') {
+                    ld_error ("invalid file alignment number '%s'", arg);
+                    break;
+                }
+
+                if (FileAlignment < 512 || FileAlignment > 0x10000 || (FileAlignment & (FileAlignment - 1))) {
+                    ld_warn ("file alignment should be a power of two between 512 and 64 KiB (0x10000) inclusive according to the specification");
+                }
+            }
+            break;
+
+        case COFF_OPTION_IMAGE_BASE:
+            {
+                char *p;
+                
+                user_specified_base_address = strtoul (arg, &p, 0);
+                if (*p != '\0') {
+                    ld_error ("invalid start address number '%s'", arg);
+                    break;
+                }
+
+                if (user_specified_base_address % 0x10000) {
+                    ld_warn ("base address must be a multiple of 64 KiB (0x10000) according to the specification");
+                }
+            }
+            break;
+
+        case COFF_OPTION_SECTION_ALIGNMENT:
+            {
+                char *p;
+                
+                SectionAlignment = strtoul (arg, &p, 0);
+                if (SectionAlignment == 0) SectionAlignment = 1;
+                if (*p != '\0') {
+                    ld_error ("invalid section alignment number '%s'", arg);
+                    break;
+                }
+
+                if (SectionAlignment < FileAlignment) {
+                    ld_warn ("section alignment must be greater than or equal to file alignment according to the specification");
+                }
+            }
+            break;
+
         case COFF_OPTION_SUBSYSTEM:
             {
                 char *p;
 
-                Subsystem = strtoul (arg, &p, 10);
+                Subsystem = strtoul (arg, &p, 0);
                 if (*p == '\0') break;
                 if (*p != ':') goto bad_subsystem;
 
                 p++;
-                MajorSubsystemVersion = strtoul (p, &p, 10);
+                MajorSubsystemVersion = strtoul (p, &p, 0);
                 if (*p == '\0') break;
                 if (*p != '.') goto bad_subsystem;
 
                 p++;
-                MinorSubsystemVersion = strtoul (p, &p, 10);
+                MinorSubsystemVersion = strtoul (p, &p, 0);
                 if (*p == '\0') break;
 
             bad_subsystem:
