@@ -32,6 +32,7 @@ pload.com: $(OBJS)
   wlib -b -q watcom +$@
 
 .asm.obj:
+# ml -c -DNEWMODEL -nologo -Dmemodel=large -DWATCOM -DWATCOMC -DNEED_DISPLAYC $<
   $(AS) -DNEWMODEL -zq -zcm -Dmemodel=large -DWATCOM -DWATCOMC -DNEED_DISPLAYC $<
   wlib -b -q watcom +$@
 
