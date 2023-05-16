@@ -36,6 +36,8 @@ static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int nx_compat = 1;
 
+static int convert_to_flat = 0;
+
 static address_type user_specified_base_address = 0;
 
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
@@ -1046,6 +1048,14 @@ void coff_write (const char *filename)
         free (hdr);
     }
 
+    if (convert_to_flat) {
+        file = xrealloc (file, optional_hdr.SizeOfImage);
+        memset (file + file_size, '\0', optional_hdr.SizeOfImage - file_size);
+        file_size = optional_hdr.SizeOfImage;
+        file[0] = 0xE9;
+        bytearray_write_4_bytes (file + 1, ld_state->entry_point - 4, LITTLE_ENDIAN);
+    }
+
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
     }
@@ -1861,7 +1871,8 @@ enum option_index {
     COFF_OPTION_ENABLE_RELOC_SECTION,
     COFF_OPTION_DISABLE_RELOC_SECTION,
     COFF_OPTION_NX_COMPAT,
-    COFF_OPTION_DISABLE_NX_COMPAT
+    COFF_OPTION_DISABLE_NX_COMPAT,
+    COFF_OPTION_CONVERT_TO_FLAT
 
 };
 
@@ -1879,6 +1890,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("disable-reloc-section"), COFF_OPTION_DISABLE_RELOC_SECTION, OPTION_NO_ARG},
     { STR_AND_LEN("nxcompat"), COFF_OPTION_NX_COMPAT, OPTION_NO_ARG},
     { STR_AND_LEN("disable-nxcompat"), COFF_OPTION_DISABLE_NX_COMPAT, OPTION_NO_ARG},
+    { STR_AND_LEN("convert-to-flat"), COFF_OPTION_CONVERT_TO_FLAT, OPTION_NO_ARG},
     { NULL, 0, 0}
 
 };
@@ -1898,6 +1910,7 @@ void coff_print_help (void)
     printf ("  --disable-reloc-section            Do not create the base relocation table\n");
     printf ("  --[disable-]nxcompat               Image is compatible with data execution\n");
     printf ("                                       prevention\n");
+    printf ("  --convert-to-flat                  (experimental) Convert to flat file\n");
 }
 
 static void use_option (enum option_index option_index, char *arg)
@@ -2005,6 +2018,10 @@ static void use_option (enum option_index option_index, char *arg)
 
         case COFF_OPTION_DISABLE_NX_COMPAT:
             nx_compat = 0;
+            break;
+
+        case COFF_OPTION_CONVERT_TO_FLAT:
+            convert_to_flat = 1;
             break;
 
     }
