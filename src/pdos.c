@@ -5749,36 +5749,26 @@ static void accessDisk(int drive)
     unsigned int support;
     unsigned int extra;
 
-    /* on some systems, a drive appearing as a floppy, can
-       apparently be LBA-only (this is probably not true -
-       and what's more true - it seems - is that some systems
-       report that LBA is available, and you can read it, but
-       it turns out to be all NULs - so the prudent thing to
-       do is to use CHS for floppies until the track becomes
-       too large). And the geometry could be
-       wrong too. So if LBA works, we just go with that. */
-    /* without LBA, we don't want to do a geometry check,
-       because it could be a 360k floppy in a 1.2 MB drive */
-    /* Note that you shouldn't attempt to read LBA unless
-       LBA extensions are actually available. It hangs for
-       some reason. */
+    /* on some real hardware, a hard drive - even a FAT32 -
+       can appear as a floppy. And for FAT32 the floppy
+       doesn't even support CHS, not even for the first sector.
+       And on other real hardware, a normal floppy says that it
+       is capable of LBA, and succeeds when you try to read
+       using LBA, but actually it was a failure and you need
+       to use CHS.
 
-#if 0
-    rc = BosLBAExtensions(drive, &major, &support, &extra);
-    if (rc == 0)
-    {
-        rc = readLBA(buf,
-                     sectors,
-                     drive,
-                     0); /* sector 0 */
-    }
-    if (rc == 0)
-    {
-        disks[drive].lba = 1;
-    }
-    else
-    {
-#endif
+       To work around these dual attempts to drive me nuts (too
+       late assholes), what we do is attempt CHS, and then if
+       that fails, attempt LBA.
+
+       Note that you shouldn't attempt to read LBA unless
+       LBA extensions are actually available. It hangs for
+       some reason.
+
+       We also don't want to do a geometry check for a floppy drive,
+       because it could be a 360k floppy in a 1.2 MB drive */
+
+    disks[drive].lba = 0;
 
     rc = readAbs(buf,
                 sectors,
@@ -5786,6 +5776,22 @@ static void accessDisk(int drive)
                 track,
                 head,
                 sector);
+
+    if (rc != 0)
+    {
+        rc = BosLBAExtensions(drive, &major, &support, &extra);
+        if (rc == 0)
+        {
+            rc = readLBA(buf,
+                         sectors,
+                         drive,
+                         0); /* sector 0 */
+            if (rc == 0)
+            {
+                disks[drive].lba = 1;
+            }
+        }
+    }
 
     if (rc != 0)
     {
@@ -5800,7 +5806,6 @@ static void accessDisk(int drive)
     }
     analyseBpb(&disks[drive], bpb);
     disks[drive].drive = drive;
-    disks[drive].lba = 0;
     fatDefaults(&disks[drive].fat);
     fatInit(&disks[drive].fat, bpb, readLogical, writeLogical, &disks[drive],
             getDateTime);
