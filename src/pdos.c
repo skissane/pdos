@@ -5751,15 +5751,17 @@ static void accessDisk(int drive)
 
     /* on some real hardware, a hard drive - even a FAT32 -
        can appear as a floppy. And for FAT32 the floppy
-       doesn't even support CHS, not even for the first sector.
+       supports CHS, but you need to do a geometry check
+       or else use LBA.
+
        And on other real hardware, a normal floppy says that it
        is capable of LBA, and succeeds when you try to read
        using LBA, but actually it was a failure and you need
        to use CHS.
 
        To work around these dual attempts to drive me nuts (too
-       late assholes), what we do is attempt CHS, and then if
-       that fails, attempt LBA.
+       late assholes), what we do is use CHS for the first sector,
+       and if FAT32 is detected, switch to LBA.
 
        Note that you shouldn't attempt to read LBA unless
        LBA extensions are actually available. It hangs for
@@ -5777,19 +5779,12 @@ static void accessDisk(int drive)
                 head,
                 sector);
 
-    if (rc != 0)
+    if ((rc == 0) && (buf[1] == 0x58)) /* FAT-32 has a longer jmp */
     {
         rc = BosLBAExtensions(drive, &major, &support, &extra);
         if (rc == 0)
         {
-            rc = readLBA(buf,
-                         sectors,
-                         drive,
-                         0); /* sector 0 */
-            if (rc == 0)
-            {
-                disks[drive].lba = 1;
-            }
+            disks[drive].lba = 1;
         }
     }
 
