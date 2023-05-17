@@ -60,9 +60,9 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 dosstart.obj: dosstart.asm
 #  as86 -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
 #  ml -c -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
-  wasm -zcm -q -DWATCOM $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
+  wasm -zcm -q -DWATCOM -DWATCOMC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) dosstart.asm
 
 dossupa.obj: dossupa.asm
-#  as86 -DWATCOM $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
-#  ml -c -DWATCOM $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
-  wasm -zcm -q -DWATCOM $(SZ4) -Dmemodel=$(MODELA) dossupa.asm
+#  as86 -DWATCOMC $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
+#  ml -c -DWATCOMC $(SZ4) -Dmemodel=$(MODELA) -DWATCOM dossupa.asm
+  wasm -zcm -q -DWATCOM -DWATCOMC $(SZ4) -Dmemodel=$(MODELA) dossupa.asm

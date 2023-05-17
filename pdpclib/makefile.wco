@@ -29,5 +29,5 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(CC) $(COPTS) $<
 
 .asm.obj:
-#  ml -c -D__SZ4__ -DPDOS86 -Dmemodel=huge -DWATCOM $<
-  wasm -zcm -q -DPDOS86 -DWATCOM -D__SZ4__ -Dmemodel=huge $<
+#  ml -c -D__SZ4__ -DPDOS86 -Dmemodel=huge -DWATCOMC $<
+  wasm -zcm -q -DPDOS86 -DWATCOM -DWATCOMC -D__SZ4__ -Dmemodel=huge $<

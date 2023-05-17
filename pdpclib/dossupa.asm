@@ -596,7 +596,7 @@ __datetime endp
 endif   ; PDOS86
 
 
-ifdef WATCOM
+ifdef WATCOMC
 ; divide dx:ax by cx:bx, result in dx:ax
 ; remainder in cx:bx I think
 public _U4D
@@ -620,7 +620,7 @@ _U4D endp
 endif
 
 
-ifdef WATCOM
+ifdef WATCOMC
 ; increment address dx:ax by cx:bx, normalized result in dx:ax
 public _PIA
 _PIA proc
@@ -645,7 +645,7 @@ _PIA endp
 endif
 
 
-ifdef WATCOM
+ifdef WATCOMC
 ; decrement address dx:ax by cx:bx, normalized result in dx:ax
 public _PIS
 _PIS proc
@@ -670,7 +670,7 @@ _PIS endp
 endif
 
 
-ifdef WATCOM
+ifdef WATCOMC
 ; subtract address dx:ax with address cx:bx, number of bytes in dx:ax
 public _PTS
 _PTS proc
@@ -695,7 +695,7 @@ _PTS endp
 endif
 
 
-ifdef WATCOM
+ifdef WATCOMC
 ; compare address dx:ax to cx:bx
 public _PTC
 _PTC proc
@@ -772,7 +772,7 @@ f_ludiv@ endp
 
 ; dx:ax divided by cx:bx, result in dx:ax, module on cx:bx
 
-ifdef WATCOM
+ifdef WATCOMC
 public _I4D
 _I4D proc
 push cx
@@ -1081,7 +1081,7 @@ ___COS__ proc
 ret
 ___COS__ endp
 
-ifdef WATCOM
+ifdef WATCOMC
 public _CHP
 _CHP proc
 ret
