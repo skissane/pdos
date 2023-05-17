@@ -509,6 +509,7 @@ runreal_stage3 label near
         pop edi
         pop esi
         pop ebp
+        db 0c3h
         retn    ; always near return since called from 32-bit
 runreal  endp
 
