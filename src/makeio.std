@@ -34,7 +34,7 @@ pload.com: $(OBJS)
   ar r watcom.lib $@
 
 .asm.obj:
-  as86 -Dmemodel=large -DNEWMODEL -DWATCOM -DWATCOMC -DNEED_DISPLAYC -o $@ $<
+  as86 -Dmemodel=large -DNEWMODEL -DWATCOMC -DNEED_DISPLAYC -o $@ $<
   ar r watcom.lib $@
 
 clean:
