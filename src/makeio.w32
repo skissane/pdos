@@ -25,7 +25,7 @@ OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
 all: clean pload.com
 
 pload.com: $(OBJS)
-  wlink File ploadst.obj,pload.obj,int13x.obj Name pload.com Form dos Output raw offset=0x700 Order clname CODE segment ploadst_TEXT offset=0x700 clname DATA clname BSS clname STACK Library watcom.lib Option quiet,map Disable 1080
+  wlink File ploadst.obj,pload.obj,int13x.obj Name pload.com Form dos Output raw offset=0x700 Order clname CODE segment ploadst_TEXT offset=0x700 clname DATA clname BSS clname STACK Library watcom.lib Option quiet,map,verbose Disable 1080
 
 .c.obj:
   $(CC) $(COPTS) $<
