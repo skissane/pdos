@@ -281,7 +281,7 @@ unsigned long runaout(char *fnm, unsigned long absaddr, unsigned long userparm)
     while (1)
     {
 #ifdef NEWMODEL
-        memcpy(ABS2ADDR(curraddr), buf, ret);
+        memcpy(FP_NORM(ABS2ADDR(curraddr)), buf, ret);
 #else
         for (y = 0; y < ret; y++)
         {
