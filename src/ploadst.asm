@@ -88,7 +88,10 @@ mov dx, DGROUP
 mov ds,dx
 mov es,dx
 mov ss, dx
-mov sp, 03580h
+
+; max out the stack, because it will potentially be shared
+; by pdos.sys
+mov sp, 0fffeh
 
 else
 push ax

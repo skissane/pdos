@@ -112,8 +112,10 @@ void pdosload(void)
         name = "PDOS.BAK";
     }
     /* start loading PDOS straight after PLOAD, ie 0x600 + 64k */
-    psp = 0x10600UL;
-    loads = (unsigned long)psp + 0x100;
+    /* now need to allow for more stack space, so add another 64k */
+    /* actually - no reason not to start on a 64k boundary */
+    loads = 0x20000UL;
+    psp = loads - 0x100;
     load = loads;
 #ifdef NEWMODEL
     /* was 0x7c00 but now relocated to 0x600 - ditto below */
