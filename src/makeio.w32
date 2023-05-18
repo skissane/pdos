@@ -14,7 +14,7 @@ VPATH=..\pdpclib
 
 CC=wcl
 CFLAGS=-oneatx
-COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -ml -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
 AS=wasm
 LD=wlink
 
@@ -32,8 +32,8 @@ pload.com: $(OBJS)
   wlib -b -q watcom +$@
 
 .asm.obj:
-# ml -c -DNEWMODEL -nologo -Dmemodel=large -DWATCOMC -DNEED_DISPLAYC $<
-  $(AS) -DNEWMODEL -zq -zcm -Dmemodel=large -DWATCOM -DWATCOMC -DNEED_DISPLAYC $<
+# ml -c -DNEWMODEL -nologo -Dmemodel=huge -DWATCOMC -DNEED_DISPLAYC $<
+  $(AS) -DNEWMODEL -zq -zcm -Dmemodel=huge -DWATCOM -DWATCOMC -DNEED_DISPLAYC $<
   wlib -b -q watcom +$@
 
 clean:

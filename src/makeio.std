@@ -14,7 +14,7 @@ VPATH=..\pdpclib
 
 CC=wcl
 CFLAGS=-oneatx
-COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -ml -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
 
 OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
     lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
@@ -24,7 +24,7 @@ all: clean pload.com
 
 pload.com: $(OBJS)
   ar s watcom.lib
-  ld86 -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj watcom.lib
+  ld86 -Map map.txt -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj watcom.lib
 
 .c.obj:
   $(CC) $(COPTS) -fo=$*.obj $<
@@ -34,7 +34,7 @@ pload.com: $(OBJS)
   ar r watcom.lib $@
 
 .asm.obj:
-  as86 -Dmemodel=large -DNEWMODEL -DWATCOMC -DNEED_DISPLAYC -o $@ $<
+  as86 -Dmemodel=huge -DNEWMODEL -DWATCOMC -DNEED_DISPLAYC -o $@ $<
   ar r watcom.lib $@
 
 clean:

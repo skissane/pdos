@@ -35,7 +35,7 @@ int fclose(FILE *fp)
 
 size_t fread(void *buf, size_t size, size_t nelem, FILE *fp)
 {
-    size_t readbytes;
+    unsigned int readbytes;
     
     unused(size);
     unused(fp);
