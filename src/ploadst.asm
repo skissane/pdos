@@ -116,11 +116,18 @@ bypass:
 ; It can be put into another source file if main is declared
 ; with __watcall
 
+; This is where we need to load up to
+ifdef NEWMODEL
+push ds
+mov di, offset DGROUP:_edata
+push di
+endif
+
 push bx ; drive number
 
 call dstart
 
-add sp, 2
+add sp, 6
 
 
 ; Note that if we actually return here, we're screwed. So

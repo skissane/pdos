@@ -48,7 +48,7 @@ typedef struct
 } DISKINFO;
 
 void pdosload(void);
-static void loadIO(int drive);
+static void loadIO(int drive, char *edata);
 static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
 static void ReadLogical(DISKINFO *diskinfo, long sector, void *buf);
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
@@ -68,7 +68,7 @@ int main(void)
 }
 
 /* we need to enter here to avoid Watcom name mangling of main() */
-void dstart(int drive)
+void dstart(int drive, char *edata)
 {
 
 /* Until we have loaded all the sectors, we can't rely on the
@@ -86,20 +86,22 @@ void dstart(int drive)
    be surprised that it's a bit hairy. */
 
 #ifdef NEWMODEL
-    loadIO(drive);
-#endif
+    loadIO(drive, edata);
 
     clrbss();
+#endif
 
     main();
+    return;
 }
 
-static void loadIO(int drive)
+static void loadIO(int drive, char *edata)
 {
     long sector = 0;
     unsigned char *p;
     DISKINFO diskinfo;
     int x;
+    int numsects = 0;
 
 #if 0        
     diskinfo.sectors_per_cylinder = 1;
@@ -120,6 +122,9 @@ static void loadIO(int drive)
     diskinfo.drive = drive;
 #ifdef NEWMODEL
     p = ABS2ADDR(0x700);
+    /* add 1 sector for good measure, and the clear of bss will
+       fix up any mess */
+    numsects = (ADDR2ABS(edata) - 0x700) / 512 + 1;
 #else
     p = (unsigned char *)0x100;
 #endif
@@ -128,7 +133,8 @@ static void loadIO(int drive)
     /* You can't load more than 58 sectors, otherwise you will
        clobber the disk parameter table being used, located in
        the 7b00-7d00 sector (ie at 7c3e) */
-    for (x = 0; x < 15; x++) /* was 58, using 15 as example */
+    /* It has been relocated now */
+    for (x = 0; x < numsects; x++) /* was 58 */
     {
 #if 1 /* (!defined(USING_EXE)) */
         ReadLogical(&diskinfo, sector + x, p);
