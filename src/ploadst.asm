@@ -80,6 +80,25 @@ endif
 
 bypass:
 
+
+
+; relocate the first half (256 bytes) of the VBR - the bit that contains
+; the BPB - to address 0x600 before it gets clobbered
+
+push ds
+push es
+mov dx, 0
+mov ds, dx
+mov es, dx
+mov si,07c00h       ; Set source and destination
+mov di,0600h
+mov cx,080h         ; 0x80 words = 256 bytes
+rep movsw           ; Copy bpb etc to 0x0600
+pop es
+pop ds
+
+
+
 ; see "nop" further down
 ;call displayc
 

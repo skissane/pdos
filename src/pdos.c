@@ -894,7 +894,8 @@ void pdosRun(void)
     bootedAt = BosGetClockTickCount();
 
 #ifndef __32BIT__
-    bootBPB = (unsigned char *)0x7c00 + 11;
+    bootBPB = (unsigned char *)0x600 + 11;  /* was 0x7c00 but now 0x600
+          because it has been relocated */
 #endif
     /*bootDrivePhysical = bootBPB[25];*/
     bootDrivePhysical = bootBPB[-9]; /* drive number is in NOP */

@@ -95,9 +95,9 @@ static void loadIO(void)
     p += 11;
 #endif
 #ifdef NEWMODEL
-    p = ABS2ADDR(0x7c00 + 11);
+    p = ABS2ADDR(0x600 + 11); /* was 0x7c00, now 0x600 - ditto below */
 #else
-    p = (unsigned char *)(0x7c00 - 0x600 + 11);
+    p = (unsigned char *)(0x600 - 0x600 + 11);
 #endif
     AnalyseBpb(&diskinfo, p);
 #ifdef NEWMODEL
