@@ -52,6 +52,7 @@ static void loadIO(int drive);
 static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
 static void ReadLogical(DISKINFO *diskinfo, long sector, void *buf);
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
+void clrbss(void);
 
 int main(void)
 {
@@ -87,6 +88,8 @@ void dstart(int drive)
 #ifdef NEWMODEL
     loadIO(drive);
 #endif
+
+    clrbss();
 
     main();
 }

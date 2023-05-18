@@ -7,6 +7,9 @@
 
 extrn dstart:proc
 
+extrn _end:byte
+extrn _edata:byte
+
 ifndef MAKECOM
 .stack 1000h
 endif
@@ -132,6 +135,59 @@ mov ax, 0
 push ax
 call _exita
 _startup endp
+
+
+; This nop is required for the same reason as displayc needs it
+nop ; for good measure
+
+public clrbss
+clrbss proc
+
+; we are responsible for clearing our own BSS
+; in Watcom at least, the BSS is at the end of the DGROUP
+; which can be referenced as _end, and the end of the
+; DATA section is referenced as _edata
+; We can use rep stos to clear the memory, which initializes
+; using the byte in al, starting at es:di, for a length of cx
+
+push es
+push cx
+push di
+push ax
+
+
+; temporary eyecatcher
+nop
+nop
+nop
+nop
+nop
+
+
+mov cx, offset DGROUP:_end
+mov di, offset DGROUP:_edata
+
+sub cx, di
+
+; putting these in instead of the sub doesn't solve the problem
+;db 02bh
+;db 0cfh
+
+; move ds (data pointer, often DGROUP, into es)
+push ds
+pop es
+mov al, 0
+rep stosb
+
+
+pop ax
+pop di
+pop cx
+pop es
+
+ret
+
+clrbss endp
 
 
 
