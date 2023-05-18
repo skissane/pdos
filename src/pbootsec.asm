@@ -230,8 +230,12 @@ ignorec:
 
  call CalculateLocation   ;Gets our data sector into dx:ax
 
- mov  cx, 55        ;Load 55 sectors (was 58, was 3)
-; I dropped down to 55 in case we have a cdrom with 2048 byte
+; We need enough code for pload to load the rest of itself.
+; That needs to be determined by looking at the link map.
+; The dossup* code needs to be loaded (it should probably be
+; trimmed too).
+ mov  cx, 6        ;Load 6 sectors (was 55, was 58, was 3)
+; I had dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
  call ReadSectors   ;Read the actual sectors
