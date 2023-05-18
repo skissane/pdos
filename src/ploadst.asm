@@ -66,6 +66,23 @@ newstart:
 
 mov bx, dx ; preserve drive number
 
+
+; relocate the first half (256 bytes) of the VBR - the bit that contains
+; the BPB - to address 0x600 before it gets clobbered
+; Do this before setting sp, to give flexibility of setting a value of
+; sp that may clobber 7c00
+; no need to prreserve any of the below registers
+
+mov dx, 0
+mov ds, dx
+mov es, dx
+mov si,07c00h       ; Set source and destination
+mov di,0600h
+mov cx,080h         ; 0x80 words = 256 bytes
+rep movsw           ; Copy bpb etc to 0x0600
+
+
+
 ifdef NEWMODEL
 mov dx, DGROUP
 mov ds,dx
@@ -84,23 +101,6 @@ endif
 
 
 bypass:
-
-
-
-; relocate the first half (256 bytes) of the VBR - the bit that contains
-; the BPB - to address 0x600 before it gets clobbered
-
-push ds
-push es
-mov dx, 0
-mov ds, dx
-mov es, dx
-mov si,07c00h       ; Set source and destination
-mov di,0600h
-mov cx,080h         ; 0x80 words = 256 bytes
-rep movsw           ; Copy bpb etc to 0x0600
-pop es
-pop ds
 
 
 
