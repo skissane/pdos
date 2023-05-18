@@ -48,18 +48,13 @@ typedef struct
 } DISKINFO;
 
 void pdosload(void);
-static void loadIO(void);
+static void loadIO(int drive);
 static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
 static void ReadLogical(DISKINFO *diskinfo, long sector, void *buf);
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 
 int main(void)
 {
-    /* we now get the boot sector to load all the sectors */
-#ifdef NEWMODEL
-    loadIO();
-#endif
-
 #ifdef CONTINUOUS_LOOP
     for (;;)
 #endif        
@@ -72,12 +67,31 @@ int main(void)
 }
 
 /* we need to enter here to avoid Watcom name mangling of main() */
-void dstart(void)
+void dstart(int drive)
 {
+
+/* Until we have loaded all the sectors, we can't rely on the
+   data section being valid - and if we were to write anything
+   to the data section, it would be clobbered by the load.
+   Also the BSS has not been initialized to 0 yet, so we can't
+   rely on that, and when we do finish the loading, we need to
+   clear the BSS, so it would be wiped anyway. We could wipe
+   it first, but then we would have difficulty loading sectors
+   of a multiple of 512 which could encroach into the BSS. We
+   could try aligning the BSS in the executable, and make sure
+   we load the exact correct number of sectors. But it is safer
+   all around to simply use stack variables until this process
+   is complete. ie this is not normal C programming, so don't
+   be surprised that it's a bit hairy. */
+
+#ifdef NEWMODEL
+    loadIO(drive);
+#endif
+
     main();
 }
 
-static void loadIO(void)
+static void loadIO(int drive)
 {
     long sector = 0;
     unsigned char *p;
@@ -100,6 +114,7 @@ static void loadIO(void)
     p = (unsigned char *)(0x600 - 0x600 + 11);
 #endif
     AnalyseBpb(&diskinfo, p);
+    diskinfo.drive = drive;
 #ifdef NEWMODEL
     p = ABS2ADDR(0x700);
 #else

@@ -61,6 +61,8 @@ push bx
 retf ; should return to next instruction
 newstart:
 
+mov bx, dx ; preserve drive number
+
 ifdef NEWMODEL
 mov dx, DGROUP
 mov ds,dx
@@ -107,12 +109,31 @@ pop ds
 ; the main C code so that it gets the name mangling correct.
 ; It can be put into another source file if main is declared
 ; with __watcall
+
+push bx ; drive number
+
 call dstart
+
+add sp, 2
+
+
+; Note that if we actually return here, we're screwed. So
+; just loop
+
+dmyloop:
+hlt
+jmp dmyloop
+
+
+
+; Under more normal circumstances we could do something like below
 
 mov ax, 0
 push ax
 call _exita
 _startup endp
+
+
 
 ; There appears to be a bug in wasm in Open Watcom 1.6
 ; where references to displayc actually hit the byte

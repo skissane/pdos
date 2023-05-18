@@ -236,6 +236,11 @@ ignorec:
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
  call ReadSectors   ;Read the actual sectors
 
+; pload is expecting the boot disk in dx
+; Maybe it should be pushed onto the stack instead
+ mov  dx, 0
+ mov  dl, [BootDisk]
+
  mov  ax, 0070h
  push ax
  mov  ax, 0
