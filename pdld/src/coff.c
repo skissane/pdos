@@ -34,6 +34,7 @@
 static int insert_timestamp = 1;
 static int kill_at = 0;
 static int generate_reloc_section = 1;
+static int can_be_relocated = 0;
 static int nx_compat = 1;
 
 static int convert_to_flat = 0;
@@ -605,6 +606,41 @@ static void generate_edata (void)
     free (export_names);
 }
 
+static int check_reloc_section_needed_section_part (struct section_part *part)
+{
+    struct relocation_entry_internal *relocs;
+    size_t i;
+    
+    relocs = part->relocation_array;
+    for (i = 0; i < part->relocation_count; i++) {
+        if (relocs[i].Type == IMAGE_REL_I386_DIR32) return 1;
+    }
+    
+    return 0;
+}
+
+static int check_reloc_section_needed (void)
+{
+    struct section *section;
+
+    for (section = all_sections; section; section = section->next) {
+        struct subsection *subsection;
+        struct section_part *part;
+
+        for (part = section->first_part; part; part = part->next) {
+            if (check_reloc_section_needed_section_part (part)) return 1;
+        }
+
+        for (subsection = section->all_subsections; subsection; subsection = subsection->next) {
+            for (part = subsection->first_part; part; part = part->next) {
+                if (check_reloc_section_needed_section_part (part)) return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 void coff_before_link (void)
 {
     struct section *section;
@@ -615,7 +651,15 @@ void coff_before_link (void)
         generate_edata ();
     }
 
+    /* Certain OS rejects executables with empty .reloc section,
+     * so empty .reloc section must NOT be generated. */
+    if (!check_reloc_section_needed ()) {
+        can_be_relocated = 1;
+        generate_reloc_section = 0;
+    }
+
     if (generate_reloc_section) {
+        can_be_relocated = 1;
         section = section_find_or_make (".reloc");
         section->section_alignment = SectionAlignment;
         section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
@@ -937,7 +981,7 @@ void coff_write (const char *filename)
     
     coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_DEBUG_STRIPPED;
     if (ld_state->create_shared_library) coff_hdr.Characteristics |= IMAGE_FILE_DLL;
-    if (!generate_reloc_section) coff_hdr.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
+    if (!can_be_relocated) coff_hdr.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
 
     write_struct_coff_header (pos, &coff_hdr);
     pos += sizeof (struct coff_header_file);
@@ -974,7 +1018,7 @@ void coff_write (const char *filename)
     
     optional_hdr.DllCharacteristics = 0;
     if (nx_compat) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
-    if (generate_reloc_section) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+    if (can_be_relocated) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
 
     /* No idea how to determine the following. */
     optional_hdr.SizeOfStackReserve = 0x200000;
