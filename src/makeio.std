@@ -18,7 +18,7 @@ VPATH=..\pdpclib
 
 CC=wcl
 CFLAGS=-oneatx
-COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu -DPDOS32 $(CFLAGS)
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DXPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
 
 OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
     lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
