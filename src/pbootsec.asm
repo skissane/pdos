@@ -235,8 +235,11 @@ ignorec:
 ; The dossup* code needs to be loaded (it should probably be
 ; trimmed too).
 ; Switching to huge bumped required sectors from 6 to 7,
-; but I use 8 for good measure
- mov  cx, 8        ;Load 8 sectors (was 55, was 58, was 3)
+; but I use 8 for good measure. fat32 development pushed
+; the requirement sort of up to 9. If you wish to do debugging
+; using dumpbuf/dumplong, you will need more sectors - may as
+; well max it out with 58
+ mov  cx, 9        ;Load 9 sectors (was 55, was 58, was 3)
 ; I had dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)

@@ -10,6 +10,10 @@
 # This makefile builds pload.com for PDOS/386 on Windows,
 # using the Open Watcom toolchain.
 
+# Note that if you are doing debugging using dumpbuf etc,
+# you will need to load more sectors in the boot sector.
+# May as well just make it the max of 58
+
 VPATH=..\pdpclib
 
 CC=wcl
@@ -24,7 +28,7 @@ all: clean pload.com
 
 pload.com: $(OBJS)
   ar s watcom.lib
-  ld86 -Map map.txt -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj watcom.lib
+  ld86 -Map map.txt -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj dossupa.obj dossupc.obj bos.obj watcom.lib
 
 .c.obj:
   $(CC) $(COPTS) -fo=$*.obj $<
