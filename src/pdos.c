@@ -5769,6 +5769,17 @@ static void accessDisk(int drive)
        We also don't want to do a geometry check for a floppy drive,
        because it could be a 360k floppy in a 1.2 MB drive */
 
+    /* So basically the rules are:
+
+       For fat12/16, accept whatever the media says it is, unless it
+       is a hard disk (0x80+), and then force a geometry check, and
+       you can check and do LBA too if you want.
+
+       For fat32 (as detected by a CHS read of the first sector), do
+       an LBA check, regardless of whether it is floppy or hard disk,
+       and accept the result */
+
+
     disks[drive].lba = 0;
 
     rc = readAbs(buf,
