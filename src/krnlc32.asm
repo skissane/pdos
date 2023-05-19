@@ -76,14 +76,6 @@ call [__imp__GetFileAttributesA@4]
 ret
 ret
 
-extrn __imp__PathFileExistsA@4:ptr
-public _PathFileExistsA
-_PathFileExistsA:
-push 4[esp]
-call [__imp__PathFileExistsA@4]
-ret
-ret
-
 extrn __imp__CreateProcessA@40:ptr
 public _CreateProcessA
 _CreateProcessA:

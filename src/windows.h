@@ -295,10 +295,6 @@ BOOL WINAPI CreateDirectoryA(
 DWORD WINAPI GetFileAttributesA(
     LPCSTR lpFileName);
 
-#define PathFileExists PathFileExistsA
-BOOL WINAPI PathFileExistsA(
-    LPCSTR pszPath);
-
 #define CreateProcess CreateProcessA
 BOOL WINAPI CreateProcessA(
     LPCSTR lpApplicationName,

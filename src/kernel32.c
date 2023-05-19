@@ -101,14 +101,6 @@ DWORD WINAPI GetFileAttributesA(
     return attr;
 }
 
-BOOL WINAPI PathFileExistsA(
-    LPCSTR pszPath)
-{
-    int attr;
-    PosGetFileAttributes(pszPath, &attr);
-    return (attr != -1);
-}
-
 BOOL WINAPI CreateProcessA(
     LPCSTR lpApplicationName,
     LPSTR lpCommandLine,
