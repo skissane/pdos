@@ -30,6 +30,8 @@ typedef struct {
 static DISKINFO diskinfo;
 FAT gfat;
 
+int G_live = 0;
+
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 
 #ifndef PDOS32
@@ -105,6 +107,10 @@ void pdosload(void)
         enable();
     }
 #endif
+
+    /* this dummy code allows us to do debugging in the future if a
+       problem arises where any code change makes the problem go away */
+    if (G_live) dumplong(0x123L);
 
     BosGetKeyboardShiftStatus(&flags);
     if (flags & (1 << 0))
