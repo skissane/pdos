@@ -302,6 +302,15 @@ call [__imp__FindClose@4]
 ret
 ret
 
+extrn __imp__GetCurrentDirectoryA@8:ptr
+public _GetCurrentDirectoryA
+_GetCurrentDirectoryA:
+push 8[esp]
+push 8[esp]
+call [__imp__GetCurrentDirectoryA@8]
+ret
+ret
+
 extrn __imp__AllocConsole@0:ptr
 public _AllocConsole
 _AllocConsole:
@@ -1644,13 +1653,6 @@ extrn __imp__GetACP@0:ptr
 public _GetACP
 _GetACP:
 call [__imp__GetACP@0]
-ret
-ret
-
-extrn __imp__GetCurrentDirectoryA@0:ptr
-public _GetCurrentDirectoryA
-_GetCurrentDirectoryA:
-call [__imp__GetCurrentDirectoryA@0]
 ret
 ret
 
