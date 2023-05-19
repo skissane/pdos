@@ -14,11 +14,16 @@
 # you will need to load more sectors in the boot sector.
 # May as well just make it the max of 58
 
+# To produce the 32-bit version, do this:
+# pdmake -f makeio.std TARG=PDOS32
+
 VPATH=..\pdpclib
+
+TARG=XPDOS32
 
 CC=wcl
 CFLAGS=-oneatx
-COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DXPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -D$(TARG) -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
 
 OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
     lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
