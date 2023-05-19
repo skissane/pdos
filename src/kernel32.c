@@ -360,6 +360,14 @@ DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer)
     return (strlen(lpbuffer));
 }
 
+BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir)
+{
+    int ret;
+
+    ret = PosChangeDir(dir);
+    return (ret == 0);
+}
+
 /* auto-genned dummy functions */
 
 BOOL WINAPI AllocConsole(void)
@@ -1590,12 +1598,6 @@ void WINAPI LocalFileTimeToFileTime(void)
 {
     size_t len = 39;
     PosWriteFile(1, "LocalFileTimeToFileTime unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI SetCurrentDirectoryA(void)
-{
-    size_t len = 36;
-    PosWriteFile(1, "SetCurrentDirectoryA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI SetEndOfFile(void)

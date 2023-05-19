@@ -303,6 +303,14 @@ call [__imp__GetCurrentDirectoryA@8]
 ret
 ret
 
+extrn __imp__SetCurrentDirectoryA@4:ptr
+public _SetCurrentDirectoryA
+_SetCurrentDirectoryA:
+push 4[esp]
+call [__imp__SetCurrentDirectoryA@4]
+ret
+ret
+
 extrn __imp__AllocConsole@0:ptr
 public _AllocConsole
 _AllocConsole:
@@ -1736,13 +1744,6 @@ extrn __imp__LocalFileTimeToFileTime@0:ptr
 public _LocalFileTimeToFileTime
 _LocalFileTimeToFileTime:
 call [__imp__LocalFileTimeToFileTime@0]
-ret
-ret
-
-extrn __imp__SetCurrentDirectoryA@0:ptr
-public _SetCurrentDirectoryA
-_SetCurrentDirectoryA:
-call [__imp__SetCurrentDirectoryA@0]
 ret
 ret
 
