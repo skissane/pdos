@@ -354,8 +354,9 @@ DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer)
 
     drive = PosGetDefaultDrive();
     lpbuffer[0] = 'A' + drive;
-    lpbuffer[1] = '\\';
-    PosGetCurDir(0, &lpbuffer[2]);
+    lpbuffer[1] = ':';
+    lpbuffer[2] = '\\';
+    PosGetCurDir(0, &lpbuffer[3]);
     return (strlen(lpbuffer));
 }
 
