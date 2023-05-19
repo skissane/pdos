@@ -50,7 +50,9 @@ mov ax, cs
 
 mov ax, DGROUP
 mov ds, ax
-;call far ptr _displayc
+
+;;;call far ptr _displayc
+;call displayc
 
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
@@ -81,20 +83,23 @@ push ax
 call __exita
 __startup endp
 
+ifdef NEED_DISPLAYC
 ;display a 'C' just to let us know that it's working!
-;public displayc
-;displayc proc
-;push ax
-;push bx
-;mov ah, 0eh
-;mov al, 043h
-;mov bl, 0
-;mov bh, 0
-;int 10h
-;pop bx
-;pop ax
-;ret
-;displayc endp
+public displayc
+displayc proc
+push ax
+push bx
+mov ah, 0eh
+mov al, 043h
+mov bl, 0
+mov bh, 0
+int 10h
+pop bx
+pop ax
+ret
+displayc endp
+endif
+
 
 public __exita
 __exita proc
