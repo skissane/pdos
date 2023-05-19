@@ -219,14 +219,12 @@ void CTYP instint(void);
 /* we implement special versions of allocate and free */
 #ifndef __32BIT__
 #ifdef __SZ4__
-/* Currently we load at 10600 plus 0100, the header size (also placed
+/* We now load at 20000, the header size (also placed
 in memory) is 13k, the executable is about 200k, which gives us an
-end point of about 43e00 hex. Normally I would bump up the memmgr
-start to 50000, but that doesn't allow the test program to do two
-allocates of about 70k each */
-#define PDOS16_MEMSTART 0x4800
+end point above 50000 hex. */
+#define PDOS16_MEMSTART 0x5800
 #else
-#define PDOS16_MEMSTART 0x4000
+#define PDOS16_MEMSTART 0x5000
 #endif
 #define memmgrAllocate(m,b,i) pdos16MemmgrAllocate(m,b,i)
 #define memmgrFree(m,p) pdos16MemmgrFree(m,p)
