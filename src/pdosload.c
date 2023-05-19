@@ -83,7 +83,7 @@ void pdosload(void)
     FATFILE fatfile;
     static char buf[512];
     unsigned long start;
-    size_t readbytes;
+    unsigned int readbytes;
     unsigned int progentry;
     int x;
 #endif
