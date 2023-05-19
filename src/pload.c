@@ -33,6 +33,7 @@ typedef struct
 {
     unsigned long hidden;
     unsigned long sectors_per_cylinder;
+    unsigned long fatsize;
     unsigned int num_heads;
     unsigned int sectors_per_track;
     unsigned int sector_size;
@@ -44,7 +45,6 @@ typedef struct
     unsigned int drive;
     unsigned int rootentries;
     unsigned int rootsize;
-    unsigned int fatsize;
 } DISKINFO;
 
 void pdosload(void);
@@ -102,6 +102,12 @@ static void loadIO(int drive, char *edata)
     DISKINFO diskinfo;
     int x;
     int numsects = 0;
+    int fat32 = 0;
+    unsigned long datastart;
+    unsigned char secbuf[512];
+    unsigned long rootcluster;
+    int sectors_per_cluster;
+    unsigned long cluster;
 
 #if 0        
     diskinfo.sectors_per_cylinder = 1;
@@ -114,12 +120,45 @@ static void loadIO(int drive, char *edata)
     p += 11;
 #endif
 #ifdef NEWMODEL
+    p = ABS2ADDR(0x600);
+    if (p[1] == 0x58)
+    {
+        fat32 = 1;
+    }
     p = ABS2ADDR(0x600 + 11); /* was 0x7c00, now 0x600 - ditto below */
 #else
     p = (unsigned char *)(0x600 - 0x600 + 11);
 #endif
     AnalyseBpb(&diskinfo, p);
     diskinfo.drive = drive;
+    sector = diskinfo.filestart;
+    if (fat32)
+    {
+        diskinfo.fatsize = p[0x24 - 0xb + 0]
+                           | ((unsigned long)p[0x24 - 0xb + 1] << 8)
+                           | ((unsigned long)p[0x24 - 0xb + 2] << 16)
+                           | ((unsigned long)p[0x24 - 0xb + 3] << 24);
+        rootcluster = p[0x2c - 0xb + 0]
+                      | ((unsigned long)p[0x2c - 0xb + 1] << 8)
+                      | ((unsigned long)p[0x2c - 0xb + 2] << 16)
+                      | ((unsigned long)p[0x2c - 0xb + 3] << 24);
+        sectors_per_cluster = p[0xd - 0xb];
+        datastart = diskinfo.reserved_sectors
+                    + diskinfo.fatsize * diskinfo.numfats;
+        ReadLogical(&diskinfo, datastart, secbuf);
+        p = secbuf;
+        if ((p[0xb] & 0x8) != 0)
+        {
+            p += 0x20; /* skip presumed label */
+        }
+        /* we should now be at the io.sys directory entry */
+        cluster = p[0x1a + 0]
+                  | ((unsigned long)p[0x1a + 1] << 8)
+                  | ((unsigned long)p[0x14 + 0] << 16)
+                  | ((unsigned long)p[0x14 + 1] << 24);
+        sector = (cluster - rootcluster) * sectors_per_cluster;
+        sector += datastart;
+    }
 #ifdef NEWMODEL
     p = ABS2ADDR(0x700);
     /* add 1 sector for good measure, and the clear of bss will
@@ -128,7 +167,6 @@ static void loadIO(int drive, char *edata)
 #else
     p = (unsigned char *)0x100;
 #endif
-    sector = diskinfo.filestart;
     
     /* You can't load more than 58 sectors, otherwise you will
        clobber the disk parameter table being used, located in
@@ -246,3 +284,50 @@ static int BosDiskReset(unsigned int drive)
     int13x(&regsin, &regsout, &sregs);
     return (regsout.x.cflag);
 }
+
+#ifdef NEED_DUMP
+void dumpbuf(unsigned char *buf, int len)
+{
+    int x;
+
+    for (x = 0; x < len; x++)
+    {
+        BosWriteText(0, buf[x], 0);
+    }
+    return;
+}
+
+void dumplong(unsigned long x)
+{
+    int y;
+    char z[16]; /* = "0123456789abcdef"; */
+    char buf[9];
+
+/* can't rely on non-existent constants. could potentially force
+   constants into code section, but compiler may not allow that */
+    z[0] = '0';
+    z[1] = '1';
+    z[2] = '2';
+    z[3] = '3';
+    z[4] = '4';
+    z[5] = '5';
+    z[6] = '6';
+    z[7] = '7';
+    z[8] = '8';
+    z[9] = '9';
+    z[10] = 'A';
+    z[11] = 'B';
+    z[12] = 'C';
+    z[13] = 'D';
+    z[14] = 'E';
+    z[15] = 'F';
+    for (y = 0; y < 8; y++)
+    {
+        buf[7 - y] = z[x & 0x0f];
+        x /= 16;
+    }
+    buf[8] = '\0';
+    dumpbuf(buf, 8);
+    return;
+}
+#endif

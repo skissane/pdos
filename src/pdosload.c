@@ -327,35 +327,6 @@ static void doboot(unsigned long drivenum)
     return;
 }
 
-#ifdef NEED_DUMP
-void dumpbuf(unsigned char *buf, int len)
-{
-    int x;
-
-    for (x = 0; x < len; x++)
-    {
-        BosWriteText(0, buf[x], 0);
-    }
-    return;
-}
-
-void dumplong(unsigned long x)
-{
-    int y;
-    char *z = "0123456789abcdef";
-    char buf[9];
-    
-    for (y = 0; y < 8; y++)
-    {
-        buf[7 - y] = z[x & 0x0f];
-        x /= 16;
-    }
-    buf[8] = '\0';
-    dumpbuf(buf, 8);
-    return;
-}
-#endif
-
 #ifdef PDOS32
 static void ivtCopyEntries(int dest, int orig, int count)
 {

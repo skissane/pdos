@@ -68,7 +68,7 @@ FatSize32High       dw 0               ; Size of a single Fat in sectors
 ExtFlags            dw 0               ; Used for mirroring, leave this alone
 ; offset 2a
 FSVersion           dw 0               ; Our version is 0.0 :)
-; offset 2b
+; offset 2c
 RootClusterLow      dw 2               ; Cluster # of root, normally 2
 RootClusterHigh     dw 0
 ; offset 30
@@ -174,11 +174,16 @@ mov di, word ptr es:[7c00h + 512 + 20h + 1Ah]   ; Store low word of cluster in d
 already:
 
 call CalculateCluster ; Take our cluster # stored in si:di, and return sector in dx:ax
-mov cx, 55 ;Load 55 sectors (was 58, was 3)
+mov cx, 58 ; Load 8 sectors (was 55, was 58, was 3)
 ; I dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
 mov bx, 0700h ;Loaded to es:bx (0x00:0x0700)
 call ReadSectors ;Read the actual sectors
+
+; pload is expecting the boot disk in dx
+; Maybe it should be pushed onto the stack instead
+mov  dx, 0
+mov  dl, [BootDisk]
 
 mov  ax, 0070h
 push ax
