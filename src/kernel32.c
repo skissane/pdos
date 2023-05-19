@@ -354,6 +354,18 @@ BOOL WINAPI FindClose(HANDLE h)
     return (1);
 }
 
+/* assume they have provided at least 66 bytes */
+
+DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer)
+{
+    int drive;
+
+    drive = PosGetDefaultDrive();
+    lpbuffer[0] = 'A' + drive;
+    lpbuffer[1] = '\\';
+    PosGetCurDir(0, &lpbuffer[2]);
+    return (strlen(lpbuffer));
+}
 
 /* auto-genned dummy functions */
 
@@ -1507,12 +1519,6 @@ void WINAPI GetACP(void)
 {
     size_t len = 22;
     PosWriteFile(1, "GetACP unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetCurrentDirectoryA(void)
-{
-    size_t len = 36;
-    PosWriteFile(1, "GetCurrentDirectoryA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetDriveTypeA(void)

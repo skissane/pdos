@@ -405,3 +405,6 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData);
 BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData);
 
 BOOL WINAPI FindClose(HANDLE h);
+
+#define GetCurrentDirectory GetCurrentDirectoryA
+DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer);
