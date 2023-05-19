@@ -89,6 +89,8 @@ void dstart(int drive, char *edata)
     loadIO(drive, edata);
 
     clrbss();
+    /* now you can do debugging with dumplong/dumpbuf, without
+       needing to adjust the boot sector to load more sectors */
 #endif
 
     main();
