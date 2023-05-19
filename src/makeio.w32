@@ -10,11 +10,16 @@
 # This makefile builds pload.com for PDOS/386 on Windows,
 # using the Open Watcom toolchain.
 
+# To produce the 32-bit version, do this:
+# pdmake -f makeio.w32 TARG=PDOS32
+
 VPATH=..\pdpclib
+
+TARG=XPDOS32
 
 CC=wcl
 CFLAGS=-oneatx
-COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -DXPDOS32 -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
+COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -D$(TARG) -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
 AS=wasm
 LD=wlink
 
