@@ -243,19 +243,37 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
         if (line[0] == '\0') continue;
 
-        if (line[0] == ' ' || line[0] == '\t')
-        {
-            if (filenames)
-            {
+        if (line[0] == ' ' || line[0] == '\t') {
+            if (filenames) {                
                 while (line[0] == ' ' || line[0] == '\t') line++;
 
-                if (commands_index + strlen(line) + 1 > commands_size)
-                {
-                    commands_size = (commands_index + strlen(line) + 1) * 2;
+                if (commands_index + strlen (line) + 1 > commands_size) {
+                    commands_size = (commands_index + strlen (line) + 1) * 2;
                     commands = xrealloc(commands, commands_size);
                 }
-                memcpy(&(commands[commands_index]), line, strlen(line) + 1);
-                commands_index += strlen(line) + 1;
+                
+                {
+                    /* Escaped newlines in command lines must be preserved
+                     * but if the character following escaped newline is <tab>,
+                     * the <tab> should be removed. */
+                    char *source;
+                    char *dest;
+
+                    source = line;
+                    dest = &commands[commands_index];
+
+                    for (; *source; source++, dest++) {
+                        if (source[0] == '\n' && source[-1] == '\\' && source[1] == '\t') {
+                            *dest = *source;
+                            source++;
+                            continue;
+                        }
+                        *dest = *source;
+                    }
+
+                    *dest = '\0';
+                    commands_index += dest - &commands[commands_index] + 1; 
+                }
                 commands[commands_index - 1] = '\n';
 
                 continue;

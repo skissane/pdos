@@ -45,7 +45,7 @@ int rule_run_command(const char *name, char *p, char *q) {
         s++;
     }
     
-    if (!is_silent) printf("%s\n", new_cmds);
+    if (!is_silent) printf ("%s\n", new_cmds);
     if (!dry_run)
     {
         int error = system(s);
@@ -60,10 +60,36 @@ int rule_run_command(const char *name, char *p, char *q) {
     return 0;
 }
 
+static int run_commands (struct commands *cmds, char *name)
+{
+    char *p, *q;
+    
+    p = cmds->text;
+
+    while (1) {
+        int error;
+
+        q = strchr (p, '\n');
+        if (q != cmds->text) {
+            while (q && q[-1] == '\\') q = strchr (q + 1, '\n');
+        }
+        
+        if (q == NULL) break;
+
+        error = rule_run_command (name, p, q);
+        
+        if (error < 0) return error;
+
+        p = q + 1;
+    }
+    
+    return 0;
+}
+
 void rule_use (rule *r, char *name)
 {
     struct dep *dep;
-    char *p, *q;
+    char *p;
     char *star_name;
     char *lesser_name;
     
@@ -87,24 +113,13 @@ void rule_use (rule *r, char *name)
     variable_change ("<", lesser_name, VAR_ORIGIN_AUTOMATIC);
     variable_change ("*", star_name, VAR_ORIGIN_AUTOMATIC);
 
-    p = r->cmds->text;
-    q = strchr (p, '\n');
-    while (1) {
-        int error = rule_run_command (name, p, q);
-        
-        if (error < 0) return;
-
-        p = q + 1;
-        q = strchr (p, '\n');
-        if (q == NULL) break;
-    }
+    run_commands (r->cmds, name);
 }
 
 static void suffix_rule_use(suffix_rule *s, char *name)
 {
     char *lesser_name, *star_name;
     char *p;
-    char *q;
 
     if (s->cmds == NULL) return;
 
@@ -123,20 +138,7 @@ static void suffix_rule_use(suffix_rule *s, char *name)
     variable_change("<", lesser_name, VAR_ORIGIN_AUTOMATIC);
     variable_change("*", star_name, VAR_ORIGIN_AUTOMATIC);
 
-    p = s->cmds->text;
-    q = strchr(p, '\n');
-    while (1)
-    {
-        int error = rule_run_command(name, p, q);
-        if (error < 0)
-        {
-            return;
-        }
-
-        p = q + 1;
-        q = strchr(p, '\n');
-        if (q == NULL) break;
-    }   
+    run_commands (s->cmds, name); 
 }
 
 int file_exists(char *name)
