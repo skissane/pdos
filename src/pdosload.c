@@ -94,6 +94,9 @@ void pdosload(void)
     unsigned int readbytes;
     unsigned int progentry;
     int x;
+    FILE *fp;
+    char *loadp;
+    size_t rets;
 #endif
     char *name = "PDOS.SYS";
     unsigned int flags = 0;
@@ -165,7 +168,25 @@ void pdosload(void)
     dumplong((long)progret);
     for (;;) ;
     /* runaout(name, load, ADDR2ABS(&pp)); */
-#else    
+#else
+    loadp = ABS2ADDR(loads);
+    fp = fopen(name, "rb");
+    if (fp == NULL)
+    {
+        dumpbuf("Unable to read PDOS.SYS", 23);
+        for (;;) ;
+    }
+    do
+    {
+        rets = fread(loadp, 1, 0x200, fp);
+        loadp += rets;
+    } while (rets == 0x200);
+    fclose(fp);
+
+    callfar(ABS2ADDR(loads));
+#endif
+
+#if 0
     fatOpenFile(&gfat, name, &fatfile);
     do 
     {

@@ -28,4 +28,4 @@ wlib -b -q os +int21.obj
 wlib -b -q os +log.obj
 wlib -b -q os +helper.obj
 
-wlink File pdosstrt.obj,pdos.obj Name pdos.exe Form dos Library os.lib,..\pdpclib\watcomo.lib Option quiet,map,verbose,dosseg
+wlink File pdosstrt.obj,pdos.obj Name pdos.exe Form dos Output raw offset=0x20000 Order clname CODE segment pdosstrt_TEXT segaddr=0x2000 offset=0x0 clname DATA clname BSS clname STACK Library os.lib,..\pdpclib\watcomo.lib Option quiet,map,verbose,dosseg
