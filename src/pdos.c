@@ -876,6 +876,7 @@ void pdosRun(void)
     unsigned long memstart;
 #endif
     unsigned long memavail;
+    int rc;
 
 #if (!defined(USING_EXE) && !defined(__32BIT__))
     instint();
@@ -948,12 +949,17 @@ void pdosRun(void)
         /* shouldn't need this - should have been copied from bootinfo */
         /* disks[bootDriveLogical].drive = bootDrivePhysical; */
         fatDefaults(&disks[bootDriveLogical].fat);
-        fatInit(&disks[bootDriveLogical].fat,
-                bootBPB,
-                readLogical,
-                writeLogical,
-                &disks[bootDriveLogical],
-                getDateTime);
+        rc = fatInit(&disks[bootDriveLogical].fat,
+                     bootBPB,
+                     readLogical,
+                     writeLogical,
+                     &disks[bootDriveLogical],
+                     getDateTime);
+        if (rc != 0)
+        {
+            printf("boot drive FAT is corrupt - halting\n");
+            for (;;) ;
+        }
         strcpy(disks[bootDriveLogical].cwd, "");
         disks[bootDriveLogical].accessed = 1;
         disks[bootDriveLogical].valid = 1;
