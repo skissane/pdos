@@ -10,6 +10,8 @@
 /*                                                                   */
 /*********************************************************************/
 
+#include <stdio.h>
+
 #include "protint.h"
 #include "fat.h"
 #include "bos.h"
@@ -81,6 +83,10 @@ void pdosload(void)
        block, required by BosDiskSectorRLBA */
     static unsigned char transferbuf[512+16];
     pdos_parms pp;
+    FILE *fp;
+    char *loadp;
+    size_t rets;
+    long progret;
 #else
     FATFILE fatfile;
     static char buf[512];
@@ -140,7 +146,25 @@ void pdosload(void)
     pp.dopoweroff = (unsigned long)(void (far *)())dpfunc;
     pp.doboot = (unsigned long)(void (far *)())dbfunc;
     pp.bpb = ADDR2ABS(bpb);
-    runaout(name, load, ADDR2ABS(&pp));
+    loadp = ABS2ADDR(loads);
+    fp = fopen(name, "rb");
+    if (fp == NULL)
+    {
+        dumpbuf("Unable to read PDOS.SYS", 23);
+        for (;;) ;
+    }
+    do
+    {
+        rets = fread(loadp, 1, 0x200, fp);
+        loadp += rets;
+    } while (rets == 0x200);
+    fclose(fp);
+
+    /* stack of 0x8000 */
+    progret = runprot(0, loads, 0, ADDR2ABS(loadp) + 0x8000, ADDR2ABS(&pp));
+    dumplong((long)progret);
+    for (;;) ;
+    /* runaout(name, load, ADDR2ABS(&pp)); */
 #else    
     fatOpenFile(&gfat, name, &fatfile);
     do 

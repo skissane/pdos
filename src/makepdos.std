@@ -26,7 +26,7 @@ OBJS=strt32.o pdos.o
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
-  $(LD) -N -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
+  $(LD) -Map map.txt -m a.out_i386 --oformat binary --include-bss -Ttext 0x20000 -N -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
   rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
@@ -34,9 +34,9 @@ $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
   $(AR) -r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
 
 .c.o:
-  $(CC) $(COPTS) -o $@.s $<
-  $(AS) -o $@ $@.s
-  rm -f $@.s
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
 
 .s.o:
   $(AS) -o $@ $<
