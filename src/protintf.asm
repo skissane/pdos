@@ -325,7 +325,7 @@ inthdlr_p:
         mov    eax, 32[ebp]
         mov    saveeax, eax
         pop    ebp
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10
         mov    eax, 010h
         mov    ss, ax
@@ -383,7 +383,7 @@ level10:
         pop    saveesp
         pop    saveess
 ; above are saved saveesp and saveess to handle task switches
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10b
         mov    eax, saveesp
         mov    esp, eax
@@ -493,7 +493,7 @@ inthdlr_q:
         mov    eax, 32[ebp]
         mov    saveeax, eax
         pop    ebp
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10c
         mov    eax, 010h
         mov    ss, ax
@@ -552,7 +552,7 @@ level10c:
         pop    saveesp
         pop    saveess
 ; above are saved saveesp and saveess to handle task switches
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10d
         mov    eax, saveesp
         mov    esp, eax
@@ -610,7 +610,7 @@ inthdlr_r:
         mov    eax, 36[ebp]
         mov    saveerrorcode, eax
         pop    ebp
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10e
         mov    eax, 010h
         mov    ss, ax
@@ -672,7 +672,7 @@ level10e:
         pop    saveesp
         pop    saveess
 ; above are saved saveesp and saveess to handle task switches
-        cmp    saveess, 010h
+        cmp    dword ptr saveess, 010h
         je     level10f
         mov    eax, saveesp
         mov    esp, eax
