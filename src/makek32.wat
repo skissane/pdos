@@ -25,7 +25,7 @@ all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) File dllcrt.obj,kernel32.obj,supportf.obj,pdossupc.obj,pos.obj,string.obj Name kernel32.dll Form windows nt dll Runtime con Option quiet,nod,nostdcall,map,start='__DllMainCRTStartup@12'
-  del kernel32.lib
+  rm -f kernel32.lib
   wlib -q kernel32.lib @kernel32.wat
 
 dllcrt.obj: ..\pdpclib\dllcrt.c
