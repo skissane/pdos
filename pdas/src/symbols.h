@@ -10,6 +10,8 @@
  *****************************************************************************/
 struct symbol {
 
+    struct symbol *next_to_free;
+
     char *name;
     
     struct expr value;
@@ -35,6 +37,8 @@ struct symbol {
 
 extern struct symbol *symbols;
 extern int finalize_symbols;
+
+void symbols_destroy (void);
 
 struct expr *symbol_get_value_expression (struct symbol *symbol);
 struct frag *symbol_get_frag (struct symbol *symbol);

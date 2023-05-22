@@ -51,6 +51,7 @@ unsigned int sections_get_count (void);
 
 void sections_chain_subsection_frags (void);
 void sections_init (void);
+void sections_destroy (void);
 void section_set_object_format_dependent_data (section_t section, void *data);
 
 void sections_number (unsigned int start_at);

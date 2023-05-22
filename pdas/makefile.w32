@@ -1,10 +1,10 @@
-VPATH=src
+VPATH=src;src/hashtab
 CC=gccwin
 CFLAGS=-O2
 LD=ldwin
 LDFLAGS=
 AS=aswin
-COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I./src -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
 OBJS=a_out.o as.o assemble.o bytearray.o cfi.o coff.o cstr.o elf.o error.o expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o
 

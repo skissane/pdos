@@ -8,15 +8,29 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <stddef.h>
-#include    <string.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include    "as.h"
+#include "as.h"
 
 static struct symbol **pointer_to_pointer_to_next_symbol = &symbols;
+static struct symbol *symbols_to_free = NULL;
 
 struct symbol *symbols = NULL;
 int finalize_symbols = 0;
+
+void symbols_destroy (void)
+{
+    struct symbol *symbol, *next_symbol;
+
+    for (symbol = symbols_to_free; symbol; symbol = next_symbol) {
+        next_symbol = symbol->next_to_free;
+
+        free (symbol->name);
+        free (symbol);
+    }
+}
 
 struct expr *symbol_get_value_expression (struct symbol *symbol) {
     return &(symbol->value);
@@ -31,6 +45,9 @@ struct symbol *symbol_create (const char *name, section_t section, unsigned long
     struct symbol *symbol = xmalloc (sizeof (*symbol));
     
     memset (symbol, 0, sizeof (*symbol));
+
+    symbol->next_to_free = symbols_to_free;
+    symbols_to_free = symbol;
     
     symbol->name    = xstrdup (name);
     symbol->section = section;

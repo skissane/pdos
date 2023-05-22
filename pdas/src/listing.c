@@ -1,11 +1,12 @@
 /******************************************************************************
  * @file            listing.c
  *****************************************************************************/
-#include    <stddef.h>
-#include    <stdio.h>
-#include    <string.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include    "as.h"
+#include "as.h"
 
 struct listing_message {
 
@@ -273,3 +274,25 @@ void update_listing_line (struct frag *frag) {
     }
 
 }
+
+void listing_destroy (void)
+{
+    struct ll *ll, *next_ll;
+
+    for (ll = first_line; ll; ll = next_ll) {
+        struct listing_message *lm, *next_lm;
+
+        for (lm = ll->messages; lm; lm = next_lm) {
+            next_lm = lm->next;
+            
+            free (lm->message);
+            free (lm);
+        }
+
+        next_ll = ll->next;
+
+        free (ll->line);
+        free (ll);
+    }
+}
+

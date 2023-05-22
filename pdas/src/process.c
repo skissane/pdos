@@ -131,17 +131,17 @@ static void handler_constant (char **pp, int size, int is_rva) {
 
 }
 
-static void handler_align (char **pp, int first_arg_is_bytes) {
-
+static void handler_align (char **pp, int first_arg_is_bytes)
+{
     offset_t alignment;
     int fill_specified;
     offset_t fill_value = 0;
     offset_t max_bytes_to_skip;
-    offset_t i;
     
     alignment = get_result_of_absolute_expression (pp);
 
     if (first_arg_is_bytes) {
+        offset_t i;
 
         /* Converts to log2. */    
         for (i = 0; (alignment & 1) == 0; alignment >>= 1, i++);
@@ -151,7 +151,6 @@ static void handler_align (char **pp, int first_arg_is_bytes) {
         }
         
         alignment = i;
-
     }
 
     if (**pp != ',') {
@@ -197,7 +196,6 @@ static void handler_align (char **pp, int first_arg_is_bytes) {
     }
     
     demand_empty_rest_of_line (pp);
-    
 }
 
 static void handler_align_bytes (char **pp) {
@@ -1054,6 +1052,11 @@ void process_init (void) {
 
 }
 
+void process_destroy (void)
+{
+    hashtab_destroy_hashtab (pseudo_op_hashtab);
+}
+
 char get_symbol_name_end (char **pp) {
 
     char c = **pp;
@@ -1105,21 +1108,18 @@ int process (const char *fname) {
         new_line_number += newlines + 1;
         
         if (state->generate_listing) {
-        
             update_listing_line (current_frag);
             add_listing_line (real_line, real_line_len, filename, line_number);
-        
         }
         
         while (line < line_end) {
-        
             char *start_p;
-            char saved_c;
             
             line = skip_whitespace (line);
             start_p = line;
             
             if (is_name_beginner ((int) *line)) {
+                char saved_c;
                 
                 saved_c = get_symbol_name_end (&line);
                 

@@ -20,22 +20,20 @@
 struct as_state *state;
 const char *program_name = 0;
 
-int main (int argc, char **argv) {
-
+int main (int argc, char **argv)
+{
     char **pargv = argv;
     int pargc = argc;
     
     int i;
     
     if (argc && *argv) {
-    
         char *p;
         program_name = *argv;
         
         if ((p = strrchr (program_name, '/'))) {
             program_name = (p + 1);
         }
-    
     }
     
     state = xmalloc (sizeof (*state));
@@ -54,29 +52,23 @@ int main (int argc, char **argv) {
     machine_dependent_init ();
     
     if (state->nb_files == 0) {
-    
         if (program_name) {
             fprintf (stderr, "%s: ", program_name);
         }
         
         fprintf (stderr, "error: no input files provided\n");
         exit (EXIT_FAILURE);
-    
     }
     
     for (i = 0; i < state->nb_files; i++) {
-    
         if (process (state->files[i])) {
-        
             if (program_name) {
                 fprintf (stderr, "%s: ", program_name);
             }
             
             as_error_at (NULL, 0, "error: failed to open '%s' for reading", state->files[i]);
             continue;
-        
         }
-    
     }
 
     cfi_finish ();
@@ -85,15 +77,18 @@ int main (int argc, char **argv) {
     
     if (state->generate_listing) {
         generate_listing ();
+        listing_destroy ();
     }
+
+    machine_dependent_destroy ();
+    process_destroy ();
+    sections_destroy ();
+    symbols_destroy ();
     
     if (as_get_error_count ()) {
-    
         remove (state->outfile);
         return EXIT_FAILURE;
-    
     }
     
     return EXIT_SUCCESS;
-
 }

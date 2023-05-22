@@ -8,10 +8,11 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <stddef.h>
-#include    <string.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include    "as.h"
+#include "as.h"
 
 struct section {
 
@@ -248,6 +249,39 @@ void sections_init (void) {
     /* .text section is the default section. */
     section_set (text_section);
 
+}
+
+void sections_destroy (void)
+{
+    section_t section, next_section;
+    
+    for (section = sections; section; section = next_section) {
+        struct frag_chain *frag_chain, *next_frag_chain;
+        
+        for (frag_chain = section->frag_chain; frag_chain; frag_chain = next_frag_chain) {
+            if (!frags_chained || frag_chain == section->frag_chain) {
+                struct frag *frag, *next_frag;
+                struct fixup *fixup, *next_fixup;
+
+                for (frag = frag_chain->first_frag; frag; frag = next_frag) {
+                    next_frag = frag->next;
+                    frag_destroy (frag);
+                }
+                for (fixup = frag_chain->first_fixup; fixup; fixup = next_fixup) {
+                    next_fixup = fixup->next;
+                    free (fixup);
+                }
+            }
+            
+            next_frag_chain = frag_chain->next;
+            free (frag_chain);
+        }
+        
+        next_section = section->next;
+
+        free (section->name);
+        free (section);
+    }
 }
 
 void section_set_object_format_dependent_data (section_t section, void *data) {

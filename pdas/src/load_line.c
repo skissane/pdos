@@ -282,18 +282,15 @@ void *load_line_create_internal_data (unsigned long *new_line_number_p) {
 
 }
 
-void load_line_destroy_internal_data (void *load_line_internal_data) {
-
-    struct load_line_data *l_l_data;
-    
+void load_line_destroy_internal_data (void *load_line_internal_data)
+{
     if (load_line_internal_data) {
+        struct load_line_data *l_l_data;
     
         l_l_data = load_line_internal_data;
         
         free (l_l_data->line);
         free (l_l_data->real_line);
         free (l_l_data);
-    
     }
-
 }

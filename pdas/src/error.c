@@ -49,7 +49,7 @@ static void report (const char *filename, unsigned long line_number, const char 
     vsprintf (message + strlen (message), fmt, ap);
     fprintf (stderr, "%s\n", message);
 
-    if (filename) {
+    if (state->generate_listing && filename) {
         add_listing_message (message, filename, line_number);
     } else {
         free (message);

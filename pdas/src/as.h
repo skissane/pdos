@@ -133,6 +133,7 @@ long machine_dependent_relax_frag (struct frag *frag, section_t section, long ch
 void machine_dependent_apply_fixup (struct fixup *fixup, unsigned long value);
 void machine_dependent_finish_frag (struct frag *frag);
 void machine_dependent_init (void);
+void machine_dependent_destroy (void);
 
 enum expr_type machine_dependent_parse_operator (char **pp, char *name, char *original_saved_c, unsigned int operands);
 
@@ -188,6 +189,7 @@ void add_listing_line (char *real_line, size_t real_line_len, const char *filena
 void add_listing_message (char *message, const char *filename, unsigned long line_number);
 void generate_listing (void);
 void update_listing_line (struct frag *frag);
+void listing_destroy (void);
 
 /* load_line.c */
 int load_line (char **line_p, char **line_end_p, char **real_line_p, size_t *real_line_len_p,
@@ -209,3 +211,4 @@ void handler_ignore (char **pp);
 void handler_lcomm (char **pp);
 void ignore_rest_of_line (char **pp);
 void process_init (void);
+void process_destroy (void);

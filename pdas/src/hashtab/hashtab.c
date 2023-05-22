@@ -17,14 +17,14 @@
  * Prime number of slots
  * Upper probe limit equal to max (ln2 (number of slots), 4)
  */
-#include    <math.h>
-#include    <stddef.h>
+#include <math.h>
+#include <stddef.h>
 
-#include    "hashtab.h"
+#include "hashtab.h"
 
-#define     max(a, b)                   ((a) < (b) ? (b) : (a))
+#define max(a, b) ((a) < (b) ? (b) : (a))
 
-#define     MINIMAL_PROBE_LIMIT         4
+#define MINIMAL_PROBE_LIMIT 4
 
 /* The primes are closest largest primes to powers of two. */
 static const size_t prime_tab[] = {
@@ -37,29 +37,23 @@ static const size_t prime_tab[] = {
 
 };
 
-static size_t find_prime_greater_than (size_t n) {
-
+static size_t find_prime_greater_than (size_t n)
+{
     size_t i;
     
     for (i = 0; i < sizeof (prime_tab) / sizeof (prime_tab[0]); i++) {
-    
-        if (prime_tab[i] > n) {
-            return prime_tab[i];
-        }
-    
+        if (prime_tab[i] > n) return prime_tab[i];
     }
     
     return 0;
-    
 }
 
-static int internal_log2 (size_t n) {
-
+static int internal_log2 (size_t n)
+{
     int i;
     
     for (i = 0; n; n >>= 1, i++);
     return i;
-
 }
 
 struct hashtab_entry {
@@ -67,7 +61,7 @@ struct hashtab_entry {
     const void *element;
     int distance_from_desired;
     
-#define     EMPTY_ENTRY_DISTANCE        (-1)
+#define EMPTY_ENTRY_DISTANCE (-1)
 
 };
 
@@ -91,8 +85,8 @@ struct hashtab {
 
 };
 
-static int rehash (struct hashtab *hashtab, size_t target_size) {
-
+static int rehash (struct hashtab *hashtab, size_t target_size)
+{
     struct hashtab old_hashtab = *hashtab;
     struct hashtab_entry *entry;
     
@@ -100,10 +94,8 @@ static int rehash (struct hashtab *hashtab, size_t target_size) {
     
     hashtab->number_of_elements = 0;
     hashtab->size = find_prime_greater_than (target_size);
-    
-    if (hashtab->size < target_size) {
-        goto failure;
-    }
+
+    if (hashtab->size < target_size) goto failure;
     
     hashtab->probe_limit = max (internal_log2 (hashtab->size), MINIMAL_PROBE_LIMIT);
     hashtab->max_number_of_elements = ceil (hashtab->max_load_factor * hashtab->size);
@@ -111,53 +103,42 @@ static int rehash (struct hashtab *hashtab, size_t target_size) {
     /* Allocates size + probe_limit + 1 so no bounds checking needs to be done. */
     hashtab->entries = hashtab->malloc_func (sizeof (hashtab->entries[0]) * (hashtab->size + hashtab->probe_limit + 1));
     
-    if (hashtab->entries == NULL) {
-        goto failure;
-    }
+    if (hashtab->entries == NULL) goto failure;
     
     for (i = hashtab->size + hashtab->probe_limit + 1, entry = hashtab->entries; i; i--, entry++) {
-    
         entry->element = NULL;
         entry->distance_from_desired = EMPTY_ENTRY_DISTANCE;
-    
     }
     
     /* Inserts the entries from the old table into the new table. */
     if (old_hashtab.size) {
-    
         for (i = old_hashtab.size + old_hashtab.probe_limit, entry = old_hashtab.entries; i; i--, entry++) {
-        
             if (entry->distance_from_desired != EMPTY_ENTRY_DISTANCE) {
-            
                 if (hashtab_insert (hashtab, entry->element)) {
-                
                     old_hashtab.free_func (hashtab->entries);
                     goto failure;
-                
                 }
-            
             }
-        
         }
-    
+        old_hashtab.free_func (old_hashtab.entries);    
     }
     
     return 0;
     
 failure:
-    
     *hashtab = old_hashtab;
     return 1;
-
 }
 
-struct hashtab *hashtab_create_hashtab (size_t starting_size, hashtab_hash_element_func_t hash_element_func, hashtab_elements_equal_func_t elements_equal_func, hashtab_malloc_func_t malloc_func, hashtab_free_func_t free_func) {
-
+struct hashtab *hashtab_create_hashtab (size_t starting_size,
+                                        hashtab_hash_element_func_t hash_element_func,
+                                        hashtab_elements_equal_func_t elements_equal_func,
+                                        hashtab_malloc_func_t malloc_func,
+                                        hashtab_free_func_t free_func)
+{
     struct hashtab *hashtab = malloc_func (sizeof (*hashtab));
     
-    if (hashtab == NULL) {
-        return NULL;
-    }
+    if (hashtab == NULL) return NULL;
     
     hashtab->max_load_factor = 0.5;
     
@@ -169,38 +150,33 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size, hashtab_hash_eleme
     hashtab->size = 0;
     
     if (rehash (hashtab, starting_size)) {
-    
         free_func (hashtab);
         return NULL;
     
     }
     
     return hashtab;
-
 }
 
-const void *hashtab_find (struct hashtab *hashtab, const void *element) {
-
+const void *hashtab_find (struct hashtab *hashtab, const void *element)
+{
     size_t index = hashtab->hash_element_func (element) % hashtab->size;
     struct hashtab_entry *entry = hashtab->entries + index;
     
     int distance;
     
     for (distance = 0; entry->distance_from_desired >= distance; distance++, entry++) {
-    
         if (hashtab->elements_equal_func (element, entry->element)) {
             return entry->element;
         }
-    
     }
     
     return NULL;
-
 }
 
 /* The return value is the element that was not possible to insert into the table. */
-const void *hashtab_insert (struct hashtab *hashtab, const void *element) {
-
+const void *hashtab_insert (struct hashtab *hashtab, const void *element)
+{
     size_t index = hashtab->hash_element_func (element) % hashtab->size;
     struct hashtab_entry *entry = hashtab->entries + index;
     
@@ -208,29 +184,20 @@ const void *hashtab_insert (struct hashtab *hashtab, const void *element) {
     const void *swap_element;
     
     for (distance_from_desired = 0; entry->distance_from_desired >= distance_from_desired; distance_from_desired++, entry++) {
-    
         if (hashtab->elements_equal_func (element, entry->element)) {
             return element;
         }
-    
     }
     
     if (distance_from_desired == hashtab->probe_limit || hashtab->number_of_elements + 1 > hashtab->max_number_of_elements) {
-    
-        if (rehash (hashtab, hashtab->size * 2)) {
-            return element;
-        }
-        
+        if (rehash (hashtab, hashtab->size * 2)) return element;        
         return hashtab_insert (hashtab, element);
-    
     } else if (entry->distance_from_desired == EMPTY_ENTRY_DISTANCE) {
-    
         entry->element = element;
         entry->distance_from_desired = distance_from_desired;
         
         hashtab->number_of_elements++;
         return NULL;
-    
     }
     
     swap_element = entry->element;
@@ -242,17 +209,13 @@ const void *hashtab_insert (struct hashtab *hashtab, const void *element) {
     distance_from_desired = swap_distance_from_desired;
     
     for (distance_from_desired++, entry++; ; entry++) {
-    
         if (entry->distance_from_desired == EMPTY_ENTRY_DISTANCE) {
-        
             entry->element = element;
             entry->distance_from_desired = distance_from_desired;
             
             hashtab->number_of_elements++;
             return NULL;
-        
         } else if (entry->distance_from_desired < distance_from_desired) {
-        
             swap_element = entry->element;
             entry->element = element;
             element = swap_element;
@@ -262,66 +225,64 @@ const void *hashtab_insert (struct hashtab *hashtab, const void *element) {
             distance_from_desired = swap_distance_from_desired;
             
             distance_from_desired++;
-        
         } else {
-        
             if (++distance_from_desired == hashtab->probe_limit) {
-            
-                if (rehash (hashtab, hashtab->size * 2)) {
-                    return element;
-                }
-                
+                if (rehash (hashtab, hashtab->size * 2)) return element;                
                 return hashtab_insert (hashtab, element);
-            
             }
-        
         }
-    
     }
-
 }
 
-void hashtab_delete (struct hashtab *hashtab, const void *element) {
-
+void hashtab_delete (struct hashtab *hashtab, const void *element)
+{
     size_t index = hashtab->hash_element_func (element) % hashtab->size;
     struct hashtab_entry *entry = hashtab->entries + index, *next;
     
     int distance;
     
     for (distance = 0; entry->distance_from_desired >= distance; distance++, entry++) {
-    
         if (hashtab->elements_equal_func (element, entry->element)) {
             goto found;
         }
-    
     }
     
     return;
     
 found:
-    
     entry->element = NULL;
     entry->distance_from_desired = EMPTY_ENTRY_DISTANCE;
+    hashtab->number_of_elements--;
     
     for (next = entry + 1; next->distance_from_desired > 0; entry++, next++) {
-    
         entry->element = next->element;
-        entry->distance_from_desired = next->distance_from_desired;
-    
+        entry->distance_from_desired = next->distance_from_desired - 1;
+        next->element = NULL;
+        next->distance_from_desired = EMPTY_ENTRY_DISTANCE;
     }
-
 }
 
-void hashtab_destroy_hashtab (struct hashtab *hashtab) {
+void hashtab_for_each_element (struct hashtab *hashtab, void (*element_callback) (void *))
+{
+    struct hashtab_entry *entry;
+    size_t i;
+    
+    for (i = hashtab->size + hashtab->probe_limit, entry = hashtab->entries; i; i--, entry++) {
+        if (entry->distance_from_desired != EMPTY_ENTRY_DISTANCE) {
+            element_callback ((void *) entry->element);
+        }
+    }
+}
 
+void hashtab_destroy_hashtab (struct hashtab *hashtab)
+{
     hashtab->free_func (hashtab->entries);
     hashtab->free_func (hashtab);
-
 }
 
 /** Functions that can be used for implementing the hashtab callbacks. */
-hash_value_t hashtab_help_default_hash_string (const void *p) {
-
+hash_value_t hashtab_help_default_hash_string (const void *p)
+{
     const unsigned char *str = (const unsigned char *) p;
     unsigned char c;
     
@@ -332,5 +293,4 @@ hash_value_t hashtab_help_default_hash_string (const void *p) {
     }
     
     return result;
-
 }

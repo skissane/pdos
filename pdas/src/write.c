@@ -50,13 +50,12 @@ static unsigned long relax_align (unsigned long address, unsigned long alignment
 
 }
 
-static void relax_section (section_t section) {
-
+static void relax_section (section_t section)
+{
     struct frag *root_frag, *frag;
     unsigned long address, frag_count, max_iterations;
     unsigned long alignment_needed;
     
-    long change;
     int changed;
     
     section_set (section);
@@ -130,8 +129,7 @@ static void relax_section (section_t section) {
     }
     
     do {
-    
-        change = 0;
+        long change = 0;
         changed = 0;
         
         for (frag = root_frag; frag; frag = frag->next) {
@@ -262,7 +260,6 @@ static void relax_section (section_t section) {
                            "Infinite loop encountered whilst attempting to compute the addresses in section %s",
                            section_get_name (section));
     }
-
 }
 
 static void finish_frags_after_relaxation (section_t section) {
@@ -373,17 +370,17 @@ static void adjust_reloc_symbols_of_section (section_t section) {
 
 }
 
-static unsigned long fixup_section (section_t section) {
-
+static unsigned long fixup_section (section_t section)
+{
     struct fixup *fixup;
     section_t add_symbol_section;
     
     unsigned long section_reloc_count = 0;
-    unsigned long add_number;
     
     section_set (section);
     
     for (fixup = current_frag_chain->first_fixup; fixup; fixup = fixup->next) {
+        unsigned long add_number;
     
         add_number = fixup->add_number;
         
@@ -429,7 +426,6 @@ static unsigned long fixup_section (section_t section) {
     }
     
     return section_reloc_count;
-
 }
 
 struct fixup *fixup_new (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, long add_number, int pcrel, reloc_type_t reloc_type) {

@@ -8,18 +8,21 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <string.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include    "as.h"
+#include "as.h"
 
 struct frag zero_address_frag = { 0 };
 struct frag *current_frag;
 
-struct frag *frag_alloc (void) {
-
+struct frag *frag_alloc (void)
+{
     struct frag *frag = xmalloc (sizeof (*frag));
+    
+    memset (frag, 0, sizeof (*frag));
+    
     return frag;
-
 }
 
 /**
@@ -206,6 +209,14 @@ void frag_new (void) {
     prev_frag->next = current_frag;
     current_frag_chain->last_frag = current_frag;
 
+}
+
+void frag_destroy (struct frag *frag)
+{
+    if (frag == NULL) return;
+
+    free (frag->buf);
+    free (frag);
 }
 
 void frag_set_as_variant (relax_type_t relax_type, relax_subtype_t relax_subtype, struct symbol *symbol, offset_t offset, value_t opcode_offset_in_buf) {

@@ -304,6 +304,18 @@ void machine_dependent_init (void) {
 
 }
 
+static void templates_destroy (void *p)
+{
+    free (p);
+}
+
+void machine_dependent_destroy (void)
+{
+    hashtab_destroy_hashtab (reg_entry_hashtab);
+    hashtab_for_each_element (templates_hashtab, &templates_destroy); 
+    hashtab_destroy_hashtab (templates_hashtab);
+}
+
 void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size) {
     
     unsigned long i;
@@ -1629,7 +1641,6 @@ static int finalize_imms (void) {
 static void output_jump (void) {
     
     struct symbol *symbol;
-    relax_subtype_t relax_subtype;
     
     unsigned long offset;
     unsigned long opcode_offset_in_buf;
@@ -1681,6 +1692,7 @@ static void output_jump (void) {
     offset = instruction.disps[0]->add_number;
     
     if (!instruction.force_short_jump) {
+        relax_subtype_t relax_subtype;
     
         if (instruction.template.base_opcode == PC_RELATIVE_JUMP) {
             relax_subtype = ENCODE_RELAX_SUBTYPE (RELAX_SUBTYPE_UNCONDITIONAL_JUMP, RELAX_SUBTYPE_SHORT_JUMP);

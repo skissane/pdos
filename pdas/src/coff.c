@@ -557,22 +557,19 @@ void write_coff_file (void) {
     }
     
     for (section = sections; section; section = section_get_next_section (section)) {
-    
         struct section_table_entry_internal *section_header = section_get_object_format_dependent_data (section);
         
         if (write_struct_section_table_entry (outfile, section_header)) {
-        
             as_error_at (NULL, 0, "Failed to write section header!");
             return;
-        
         }
-    
+
+        free (section_header);
     }
     
     if (fclose (outfile)) {
         as_error_at (NULL, 0, "Failed to close file!");
     }
-
 }
 
 static void handler_bss (char **pp) {
