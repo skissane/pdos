@@ -280,7 +280,7 @@ callDllEntry:
         pop     ebp
         ret
 
-.bss
+.data?
 saveess dd ?
         public saveesp
 saveesp dd ?
