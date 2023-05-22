@@ -25,9 +25,9 @@ $(TARGET): $(OBJS)
   $(LD) -N -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.o $(OBJS) ../pdpclib/pdos.a
 
 .c.o:
-  $(CC) $(COPTS) -o $@.s $<
-  $(AS) -o $@ $@.s
-  rm -f $@.s
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
 
 clean:
   rm -f *.o
