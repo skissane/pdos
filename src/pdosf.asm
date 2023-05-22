@@ -88,14 +88,14 @@ call32:
 ; reenable interrupts for called program        
         sti
 ; call it via far return        
-        lret
+        retf
 call32_singleret:
         ret
 call32_singlelret:
         pop     ebx
 ; and skip the parameters too
         add     esp, 16
-        lret
+        retf
 call32_ret:
 ; disable interrupts so that we can play with stack
         cli
@@ -280,7 +280,7 @@ callDllEntry:
         pop     ebp
         ret
 
-.bss
+.data?
 saveess dd ?
         public saveesp
 saveesp dd ?
