@@ -6,12 +6,12 @@ COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT_
 
 pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o pos.o support.o pdossupc.o
+       ctype.o setjmp.o math.o pos.o supportf.obj pdossupc.o
   rm -f pdos.a
   ar r pdos.a pdosst32.o stdio.o string.o stdlib.o
   ar r pdos.a start.o time.o errno.o assert.o signal.o
   ar r pdos.a locale.o ctype.o setjmp.o math.o
-  ar r pdos.a pos.o support.o pdossupc.o
+  ar r pdos.a pos.o supportf.obj pdossupc.o
   ar s pdos.a
   pdld --no-insert-timestamp -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
 
@@ -20,8 +20,8 @@ pos.o: ../src/pos.c
   pdas --oformat coff -o $*.o $*.s
   rm -f $*.s
 
-support.o: ../src/support.s
-  pdas --oformat coff -o $*.o ../src/support.s
+supportf.obj: ../src/supportf.asm
+  as86 -f coff -o $@ ../src/supportf.asm
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
