@@ -20,15 +20,14 @@ LD=pdld
 TARGET=pdos.exe
 TEMP_ARCHIVE=os.a
 ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o uart.o \
-             int80.o log.o helper.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
-OBJS=strt32.o pdos.o
+             int80.o log.o helper.o memmgr.o patmat.o supportf.obj protintp.o protints.o pdoss.o
+OBJS=strt32.obj pdos.o
 
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
   $(AR) s $(TEMP_ARCHIVE)
-  $(LD) -Map map.txt --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
-  zap $(TARGET) 0x1 0xfb
+  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
   rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
@@ -42,6 +41,10 @@ $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
 
 .s.o:
   $(AS) --oformat coff -o $@ $<
+
+.asm.obj:
+#  as86 -f coff -o $@ $<
+  ml -c -nologo -coff $<
 
 clean:
   rm -f *.o
