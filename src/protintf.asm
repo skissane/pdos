@@ -418,7 +418,7 @@ level10b:
         push   ebp
         mov    ebp, esp
         pop    ebp
-        iret        
+        iretd
 
 ; This is for interrupts that should not alter
 ; the flags, like the timer interrupt
@@ -431,7 +431,7 @@ level10b:
 ; And because this is an interrupt that does not push an error
 ; code, above those 3 dwords are the EIP, cs (stored as a
 ; dword), and the flags (also stored as a dword). All three of
-; those things will be popped when we do an iret.
+; those things will be popped when we do an iretd.
 
 ; Above that is completely unpredictable, as it is just whatever
 ; the application had pushed onto the stack before the
@@ -586,7 +586,7 @@ level10d:
         push   ebp
         mov    ebp, esp
         pop    ebp
-        iret
+        iretd
 
 ; This is for exceptions that have an error code pushed when they occur.
 inthdlr_r:
@@ -606,7 +606,7 @@ inthdlr_r:
 ; at offset 32 thanks to the above pushes
         mov    eax, 32[ebp]
         mov    saveeax, eax
-; Saves the error code pushed after the data for iret.
+; Saves the error code pushed after the data for iretd.
         mov    eax, 36[ebp]
         mov    saveerrorcode, eax
         pop    ebp
@@ -707,7 +707,7 @@ level10f:
         pop    ebp
 ; Removes the error code pushed when the exception occured.
         add    esp, 04h
-        iret
+        iretd
 
 ;////////////////////////////////////////////////////////////
 ; void int_enable(void);
