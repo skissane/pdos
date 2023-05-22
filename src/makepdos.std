@@ -20,7 +20,7 @@ LD=pdld
 TARGET=pdos.exe
 TEMP_ARCHIVE=os.a
 ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o uart.o \
-             int80.o log.o helper.o memmgr.o patmat.o supportf.obj protintp.o protintf.obj pdoss.o
+             int80.o log.o helper.o memmgr.o patmat.o supportf.obj protintp.o protintf.obj pdosf.obj
 OBJS=strt32.obj pdos.o
 
 all: clean $(TARGET)
