@@ -1097,7 +1097,7 @@ void coff_write (const char *filename)
         memset (file + file_size, '\0', optional_hdr.SizeOfImage - file_size);
         file_size = optional_hdr.SizeOfImage;
         file[0] = 0xE9;
-        bytearray_write_4_bytes (file + 1, ld_state->entry_point - 4, LITTLE_ENDIAN);
+        bytearray_write_4_bytes (file + 1, ld_state->entry_point - 5, LITTLE_ENDIAN);
     }
 
     if (fwrite (file, file_size, 1, outfile) != 1) {
