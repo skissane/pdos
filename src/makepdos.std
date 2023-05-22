@@ -10,12 +10,12 @@
 # This makefile builds 32-bit pdos.exe (aka PDOS.SYS) on Windows.
 # makefile.pdw in PDPCLIB must be used before using this makefile to produce the pdos.a.
 
-CC=gcc386
+CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -fno-common -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib
+COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib
 AS=pdas
 AR=ar
-LD=ld86
+LD=pdld
 
 TARGET=pdos.exe
 TEMP_ARCHIVE=os.a
@@ -26,7 +26,9 @@ OBJS=strt32.o pdos.o
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
-  $(LD) -Map map.txt -m a.out_i386 --oformat binary --include-bss -Ttext 0x20000 -N -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
+  $(AR) s $(TEMP_ARCHIVE)
+  $(LD) -Map map.txt --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
+  zap $(TARGET) 0x1 0xfb
   rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
@@ -35,11 +37,11 @@ $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) -o $@ $*.s
+  $(AS) --oformat coff -o $@ $*.s
   rm -f $*.s
 
 .s.o:
-  $(AS) -o $@ $<
+  $(AS) --oformat coff -o $@ $<
 
 clean:
   rm -f *.o

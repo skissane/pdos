@@ -10,11 +10,11 @@
 # This makefile builds 32-bit pcomm.exe (COMMAND.EXE) on Windows.
 # makefile.pdw in PDPCLIB must be used before using this makefile to produce the pdos.a.
 
-CC=gcc386
+CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -fno-common -D__PDOS386__ -D__32BIT__ -I../pdpclib
-AS=as386
-LD=ld86
+COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -D__PDOS386__ -D__32BIT__ -I../pdpclib
+AS=pdas
+LD=pdld
 
 TARGET=pcomm.exe
 OBJS=pcomm.o dostime.o
@@ -22,11 +22,11 @@ OBJS=pcomm.o dostime.o
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) -N -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.o $(OBJS) ../pdpclib/pdos.a
+  $(LD) -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.o $(OBJS) ../pdpclib/pdos.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) -o $@ $*.s
+  $(AS) --oformat coff -o $@ $*.s
   rm -f $*.s
 
 clean:
