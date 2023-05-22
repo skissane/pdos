@@ -205,7 +205,7 @@ char *find_target (char *target)
     return NULL;
 }
 
-void rule_search_and_build(char *name)
+void rule_search_and_build (char *name)
 {
     rule *r;
     suffix_rule *s;
@@ -215,35 +215,32 @@ void rule_search_and_build(char *name)
 
     if (r)
     {
-        rule_use(r, name);
+        rule_use (r, name);
         return;
     }
 
-    suffix = strrchr(name, '.');
-    if (suffix)
-    {
+    suffix = strrchr (name, '.');
+    if (suffix) {
         char *duplicated_name = xstrdup (name);
         /* Set here because $@ shall evaluate to FULL target name
          * of the current target.
          * This means that the name should not be modified
          * by the search for target. */
         variable_change ("@", xstrdup (duplicated_name), VAR_ORIGIN_AUTOMATIC);
-        for (s = suffix_rules; s; s = s->next)
-        {
-            if (strcmp(suffix, s->second) == 0)
-            {
+        for (s = suffix_rules; s; s = s->next) {
+            if (strcmp (suffix, s->second) == 0) {
                 char *prereq_name, *p;
                 char *new_name;
 
                 /* Creates the name of the prerequisite. */
-                prereq_name = xmalloc(strlen(duplicated_name) + strlen(s->first) + 1);
-                memcpy(prereq_name, duplicated_name, strlen(duplicated_name) + 1);
-                p = strrchr(prereq_name, '.');
+                prereq_name = xmalloc (strlen (duplicated_name) + strlen (s->first) + 1);
+                memcpy (prereq_name, duplicated_name, strlen (duplicated_name) + 1);
+                p = strrchr (prereq_name, '.');
                 *p = '\0';
-                strcat(prereq_name, s->first);
+                strcat (prereq_name, s->first);
 
                 /* Tries to find the prerequisite. */
-                new_name = find_target(prereq_name);
+                new_name = find_target (prereq_name);
                 if (new_name == NULL) { /* Not found. */
                     free (prereq_name);
                     continue;
@@ -257,16 +254,16 @@ void rule_search_and_build(char *name)
                 free (prereq_name);
 
                 /* Restore the original suffix in the new name. */
-                if (strlen(s->first) < strlen(s->second))
-                {
-                    new_name = xrealloc(new_name,
-                                        (strlen(new_name)
-                                         + strlen(s->second)
-                                         - strlen(s->first)));
+                if (strlen (s->first) < strlen (s->second)) {
+                    new_name = xrealloc (new_name,
+                                         (strlen (new_name)
+                                          + strlen (s->second)
+                                          - strlen (s->first)
+                                          + 1));
                 }
-                p = strrchr(new_name, '.');
+                p = strrchr (new_name, '.');
                 *p = '\0';
-                strcat(new_name, s->second);
+                strcat (new_name, s->second);
 
                 free (duplicated_name);
                 duplicated_name = new_name;
@@ -275,9 +272,8 @@ void rule_search_and_build(char *name)
             }
         }
 
-        if (s)
-        {
-            suffix_rule_use(s, duplicated_name);
+        if (s) {
+            suffix_rule_use (s, duplicated_name);
             free (duplicated_name);
             return;
         }
@@ -285,15 +281,14 @@ void rule_search_and_build(char *name)
     }
 
     {
-        char *new_name = find_target(name);
+        char *new_name = find_target (name);
         if (new_name != name) free (new_name);
         if (new_name == NULL)
         {
             fprintf(stderr, "No rule to make target `%s'. Stop.\n", name);
-            exit(EXIT_FAILURE);
+            exit (EXIT_FAILURE);
         }
     }
-
 }
 
 void help(void)
