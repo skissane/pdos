@@ -25,18 +25,6 @@
 
         .code
 
-; language C doesn't seem to be working for wasm
-
-ifdef WATCOM
-public _int86x
-public _int86
-endif
-
-ifdef WATCOM
-_int86x:
-_int86:
-endif
-
 ; Because of the C calling convention, and the fact that the seg
 ; regs are the last parameter, and they're not actually used, the
 ; entry point for _int86 can be reused for _int86x
