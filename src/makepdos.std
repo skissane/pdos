@@ -43,8 +43,8 @@ $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
   $(AS) --oformat coff -o $@ $<
 
 .asm.obj:
-#  as86 -f coff -o $@ $<
-  ml -c -nologo -coff $<
+  as86 -f coff -o $@ $<
+#  ml -c -nologo -coff $<
 
 clean:
   rm -f *.o
