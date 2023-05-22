@@ -25,7 +25,7 @@
 call32:
         push    ebp
         mov     ebp, esp
-        pushf
+        pushfd
 ; disable interrupts so that we can play with stack        
 ; Note - I think this can actually be moved down to where the
 ; actual switch takes place
@@ -118,7 +118,7 @@ call32_pops:
         pop    edx
         pop    ecx
         pop    ebx
-        popf
+        popfd
         pop    ebp
         ret
 
@@ -207,7 +207,7 @@ switchFromToThread:
     push esi
     push edi
     push ebp
-    pushf
+    pushfd
 
 ; Loads oldTCB into EDI and newTCB into ESI.
     push ebp
@@ -226,7 +226,7 @@ switchFromToThread:
 
 ; Code running after the switch.
 ; Pops registers.
-    popf
+    popfd
     pop ebp
     pop edi
     pop esi
@@ -242,7 +242,7 @@ switchFromToThread:
 getEFLAGSAndDisable:
         push    ebp
         mov     ebp, esp
-        pushf
+        pushfd
         pop     eax
         cli
         pop     ebp
@@ -256,7 +256,7 @@ setEFLAGS:
         mov     ebp, esp
         mov     eax, 8[ebp]
         push    eax
-        popf
+        popfd
         pop     ebp
         ret
 
