@@ -58,6 +58,9 @@ void map_write (const char *filename)
                  symbol++) {
                 if (symbol->auxiliary || symbol->part != part) continue;
 
+                if (symbol->value == 0
+                    && strncmp (section->name, symbol->name, strlen (section->name)) == 0) continue;
+
                 fprintf (outfile, "%-16s%#08lx %10s %s\n",
                          "",
                          symbol_get_value_with_base (symbol),

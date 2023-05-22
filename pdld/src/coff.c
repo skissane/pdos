@@ -488,7 +488,7 @@ static void generate_edata (void)
     
     name_table_size += strlen (ld_state->output_filename) + 1;
 
-    of = object_file_make (1 + num_names, "FAKE_LD_FILE");
+    of = object_file_make (1 + num_names, FAKE_LD_FILENAME);
     section = section_find_or_make (".edata");
     section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
@@ -678,7 +678,7 @@ void coff_before_link (void)
     subsection = subsection_find (section, "2");
     if (subsection == NULL) return;
     
-    part = section_part_new (section, object_file_make (0, "FAKE_LD_FILE"));
+    part = section_part_new (section, object_file_make (0, FAKE_LD_FILENAME));
 
     part->content_size = sizeof (struct IMPORT_Directory_Table_file);
     part->content = xmalloc (part->content_size);
@@ -811,7 +811,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
      * because the start of the blocks must be aligned on 4 byte boundary. */
     ibr_hdr_p->SizeOfBlock = ALIGN (sizeof (struct IMAGE_BASE_RELOCATION_file) + num_relocs * 2, 4);
 
-    reloc_part = section_part_new (reloc_section, object_file_make (0, "FAKE_LD_FILE"));
+    reloc_part = section_part_new (reloc_section, object_file_make (0, FAKE_LD_FILENAME));
     reloc_part->content_size = ibr_hdr_p->SizeOfBlock;
     reloc_part->content = xmalloc (reloc_part->content_size);
     reloc_part->content[reloc_part->content_size - 2] = reloc_part->content[reloc_part->content_size - 1] = 0;
@@ -1402,14 +1402,14 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     free (part_p_array);
 }
 
-static void import_generate_head (const char *dll_name)
+static void import_generate_head (const char *dll_name, const char *filename)
 {
     struct object_file *of;
     struct section *section;
     struct subsection *subsection;
     struct section_part *part;
 
-    of = object_file_make (3, "FAKE_LD_FILE");
+    of = object_file_make (3, filename);
     section = section_find_or_make (".idata");
     section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
@@ -1488,7 +1488,8 @@ static void import_generate_head (const char *dll_name)
 static void import_generate_import (const char *import_name,
                                     short OrdinalHint,
                                     short ImportType,
-                                    short ImportNameType)
+                                    short ImportNameType,
+                                    const char *filename)
 {
     struct section_part *dot_idata5_part;
     struct object_file *of;
@@ -1499,7 +1500,7 @@ static void import_generate_import (const char *import_name,
     struct symbol *symbol;
 
     /* 2 symbols are internal for .idata$5 and .idata$6. */
-    of = object_file_make (2 + 1 + ((ImportType == IMPORT_CODE) ? 1 : 0), "FAKE_LD_FILE");
+    of = object_file_make (2 + 1 + ((ImportType == IMPORT_CODE) ? 1 : 0), filename);
     symbol = of->symbol_array;
 
     section = section_find_or_make (".idata");
@@ -1629,7 +1630,7 @@ static void import_generate_end (void)
     struct subsection *subsection;
     struct section_part *part;
 
-    of = object_file_make (0, "FAKE_LD_FILE");
+    of = object_file_make (0, FAKE_LD_FILENAME);
     section = section_find_or_make (".idata");
 
     subsection = subsection_find_or_make (section, "4");
@@ -1682,10 +1683,10 @@ static void read_import_object (unsigned char *file, size_t file_size, const cha
     }
     if (current_import_dll_name == NULL) {
         current_import_dll_name = xstrdup (dll_name);
-        import_generate_head (current_import_dll_name);
+        import_generate_head (current_import_dll_name, filename);
     }
     
-    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2);  
+    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2, filename);  
 }
 
 static void strip_trailing_spaces (char *str)
@@ -1760,20 +1761,37 @@ static struct lm_offset_name_entry *read_linker_member (unsigned char *file, siz
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static int read_coff_archive_member (unsigned char *file, size_t file_size, unsigned char *pos)
+static int read_coff_archive_member (unsigned char *file, size_t file_size, unsigned char *pos, const char *archive_name)
 {
     struct archive_member_header hdr;
     unsigned short Machine;
     int ret;
+    char *filename;
 
     CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
     read_archive_member_header (pos, &hdr);
     pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
 
+    {
+        size_t archive_name_len = strlen (archive_name);
+        size_t member_name_len = strlen (hdr.name);
+
+        /* Outside of members starting with '/' the '/' serves as name terminator
+         * according to the specification. */
+        if (member_name_len && hdr.name[member_name_len - 1] == '/' && hdr.name[0] != '/') member_name_len--;
+        
+        filename = xmalloc (archive_name_len + 1 + member_name_len + 1 + 1);
+        memcpy (filename, archive_name, archive_name_len);
+        filename[archive_name_len] = '(';
+        memcpy (filename + archive_name_len + 1, hdr.name, member_name_len);
+        filename[archive_name_len + 1 + member_name_len] = ')';
+        filename[archive_name_len + 1 + member_name_len + 1] = '\0';
+    }
+
     CHECK_READ (pos, 2);
     bytearray_read_2_bytes (&Machine, pos, LITTLE_ENDIAN);
     if (Machine == IMAGE_FILE_MACHINE_I386) {
-        read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), hdr.name);
+        read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
         ret = 1;
     } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
         unsigned short Magic2;
@@ -1781,22 +1799,23 @@ static int read_coff_archive_member (unsigned char *file, size_t file_size, unsi
         CHECK_READ (pos + 2, 2);
         bytearray_read_2_bytes (&Magic2, pos + 2, LITTLE_ENDIAN);
         if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) {
-            read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), hdr.name);
+            read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
         } else goto unrecognized;
 
         ret = 2;
     } else {
 unrecognized:
-        ld_error ("unrecognized archive member object format");
+        ld_error ("%s: unrecognized archive member object format", filename);
         ret = 0;
     }
 
     free (hdr.name);
+    free (filename);
 
     return ret;
 }    
 
-static void read_coff_archive (unsigned char *file, size_t file_size)
+static void read_coff_archive (unsigned char *file, size_t file_size, const char *archive_name)
 {
     struct archive_member_header hdr;
 
@@ -1839,7 +1858,8 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
         }
     }
 
-    if (start_header_object_offset) read_coff_archive_member (file, file_size, file + start_header_object_offset);
+    if (start_header_object_offset)
+        read_coff_archive_member (file, file_size, file + start_header_object_offset, archive_name);
 
     while (1) {
         int change = 0;
@@ -1855,7 +1875,7 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
                 || offset_name_table[i].offset == end_header_object_offset) continue;
             
             pos = file + offset_name_table[i].offset;
-            ret = read_coff_archive_member (file, file_size, pos);
+            ret = read_coff_archive_member (file, file_size, pos, archive_name);
             if (ret == 0) return;
             /* If the archive member is a real object (not short import entry),
              * it might require more symbols. */
@@ -1865,7 +1885,8 @@ static void read_coff_archive (unsigned char *file, size_t file_size)
         if (change == 0) break;
     }
 
-    if (end_header_object_offset) read_coff_archive_member (file, file_size, file + end_header_object_offset);
+    if (end_header_object_offset)
+        read_coff_archive_member (file, file_size, file + end_header_object_offset, archive_name);
 
     if (current_import_dll_name) {
         import_generate_end ();
@@ -1894,7 +1915,7 @@ void coff_read (const char *filename)
 
     if (Machine == IMAGE_FILE_MACHINE_I386) read_coff_object (file, file_size, filename);
     else if (memcmp (file, IMAGE_ARCHIVE_START, strlen (IMAGE_ARCHIVE_START)) == 0) {
-        read_coff_archive (file, file_size);
+        read_coff_archive (file, file_size, filename);
     } else ld_error ("unrecognized file format");
 
     free (file);
