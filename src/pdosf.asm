@@ -48,8 +48,8 @@ call32:
         lea    ecx, call32_ret
 ; get subroutine's address into ebx
         mov    ebx, 8[ebp]
-; load address of single lret into edi
-        lea    edi, call32_singlelret
+; load address of single retf into edi
+        lea    edi, call32_singleretf
 ; load address of single ret into esi
         lea    esi, call32_singleret
 ; switch stack etc to new one
@@ -74,7 +74,7 @@ call32:
         push   eax
         push   eax
         push   eax
-; push address of a "lret" statement so that they can come back
+; push address of a "retf" statement so that they can come back
         push   edi
 ; push subroutine's address
         push    ebx
@@ -91,7 +91,7 @@ call32:
         retf
 call32_singleret:
         ret
-call32_singlelret:
+call32_singleretf:
         pop     ebx
 ; and skip the parameters too
         add     esp, 16
