@@ -35,7 +35,7 @@ kernel32.obj: kernel32.c
   $(CC) -c $(COPTS) -D__EXPORT__ kernel32.c
 
 .asm.obj:
-  $(AS) -q -DWATCOM $<
+  $(AS) -zcm -q $<
 
 .c.obj:
   $(CC) $(COPTS) $<
