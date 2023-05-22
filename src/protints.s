@@ -4,7 +4,7 @@
 
 / symbols defined outside of here that are accessed
         .globl _gotint
-        .globl saveesp
+        .globl _saveesp
 
 / symbols defined here that are accessed from elsewhere
         .globl _inthdlr
@@ -44,13 +44,13 @@
 / handling interrupts is very complex.  here is an example:
 /
 / command.com, 0x30 does int 21 to exec pgm world
-/ interrupt saves esp into saveesp
-/ then a load is done, clobbering saveesp, but not before saving it,
+/ interrupt saves esp into _saveesp
+/ then a load is done, clobbering _saveesp, but not before saving it,
 / although since it was already 0x10 it doesn't need to be saved in this case
 / then world is executed, which does an int 21 to do a print
-/ it saves the old saveesp onto the stack, puts the new esp into saveesp,
+/ it saves the old _saveesp onto the stack, puts the new esp into _saveesp,
 / then there is a bios call, but it doesn't do anything since ss is already
-/ 0x10.  then the interrupt ends, restoring saveesp
+/ 0x10.  then the interrupt ends, restoring _saveesp
 
 / _inthdlr is the default interrupt handler designed to do nothing.
 / It sets the interrupt number to 0xff for recognition by gotint.
@@ -305,7 +305,7 @@ _inthdlr_BE:
 
 _inthdlr_p:
         push   saveess
-        push   saveesp
+        push   _saveesp
         push   %ebx
         push   saveeax
         push   saveebx
@@ -313,7 +313,7 @@ _inthdlr_p:
         mov    %ss, %ax
         mov    %eax, saveess
         mov    %esp, %eax
-        mov    %eax, saveesp
+        mov    %eax, _saveesp
         push   %ebp
         mov    %esp, %ebp        
 / Restore original eax (at time of interrupt) which is now located
@@ -328,16 +328,16 @@ _inthdlr_p:
         mov    %ax, %es
         mov    %ax, %fs
         mov    %ax, %gs
-        mov    call32_esp, %eax
+        mov    _call32_esp, %eax
         mov    %eax, %esp
 level10:
         mov    saveeax, %eax
-/ saveess and saveesp must be saved on the stack
+/ saveess and _saveesp must be saved on the stack
 / because task switch can occur
 / and the next interrupt might not restore them
 / before switch back happens
         push   saveess
-        push   saveesp
+        push   _saveesp
 / some interrupts need bp, so we now make that accessible
         push   %ebp
         push   %edx
@@ -376,12 +376,12 @@ level10:
 / above is actually flags
 / now we have ebp
         pop    %ebp
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
-/ above are saved saveesp and saveess to handle task switches
+/ above are saved _saveesp and saveess to handle task switches
         cmpl   $0x10, saveess
         je     level10b
-        mov    saveesp, %eax
+        mov    _saveesp, %eax
         mov    %eax, %esp
 level10b:
         mov    saveess, %eax
@@ -405,7 +405,7 @@ level10b:
         pop    saveebx
         pop    saveeax
         pop    %ebx
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
         pop    intnum
         pop    %eax
@@ -463,17 +463,17 @@ level10b:
 / ds
 / old intnum
 / previous interrupt's ss (saveess)
-/ previous interrupt's esp (saveesp)
+/ previous interrupt's esp (_saveesp)
 / ebx (not sure why it is needed, seems to do with flags)
 / previous interrupt's eax (saveeax)
 / previous interrupt's ebx (saveebx)
-/ The above is what saveesp will be pointing to
+/ The above is what _saveesp will be pointing to
 / ebp is temporarily stored here, and will remain if there is a
 /     stack switch done
 
 _inthdlr_q:
         push   saveess
-        push   saveesp
+        push   _saveesp
         push   %ebx
         push   saveeax
         push   saveebx
@@ -481,7 +481,7 @@ _inthdlr_q:
         mov    %ss, %ax
         mov    %eax, saveess
         mov    %esp, %eax
-        mov    %eax, saveesp
+        mov    %eax, _saveesp
         push   %ebp
         mov    %esp, %ebp
 / Restore original eax (at time of interrupt) which is now located
@@ -496,17 +496,17 @@ _inthdlr_q:
         mov    %ax, %es
         mov    %ax, %fs
         mov    %ax, %gs
-        mov    call32_esp, %eax
+        mov    _call32_esp, %eax
         mov    %eax, %esp
 / Now we are on the new stack.
 level10c:
         mov    saveeax, %eax
-/ saveess and saveesp must be saved on stack
+/ saveess and _saveesp must be saved on stack
 / because task switch can occur
 / and the next interrupt might not restore them
 / before switch back happens
         push   saveess
-        push   saveesp
+        push   _saveesp
 / some interrupts need bp, so we now make that accessible
         push   %ebp
         push   %edx
@@ -545,12 +545,12 @@ level10c:
 / above is actually flags
 / now we have ebp
         pop    %ebp
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
-/ above are saved saveesp and saveess to handle task switches
+/ above are saved _saveesp and saveess to handle task switches
         cmpl   $0x10, saveess
         je     level10d
-        mov    saveesp, %eax
+        mov    _saveesp, %eax
         mov    %eax, %esp
 level10d:
         mov    saveess, %eax
@@ -572,7 +572,7 @@ level10d:
         pop    saveebx
         pop    saveeax
         pop    %ebx
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
         pop    intnum
         pop    %eax
@@ -587,7 +587,7 @@ level10d:
 / This is for exceptions that have an error code pushed when they occur.
 _inthdlr_r:
         push   saveess
-        push   saveesp
+        push   _saveesp
         push   %ebx
         push   saveeax
         push   saveebx
@@ -595,7 +595,7 @@ _inthdlr_r:
         mov    %ss, %ax
         mov    %eax, saveess
         mov    %esp, %eax
-        mov    %eax, saveesp
+        mov    %eax, _saveesp
         push   %ebp
         mov    %esp, %ebp
 / Restore original eax (at time of interrupt) which is now located
@@ -613,16 +613,16 @@ _inthdlr_r:
         mov    %ax, %es
         mov    %ax, %fs
         mov    %ax, %gs
-        mov    call32_esp, %eax
+        mov    _call32_esp, %eax
         mov    %eax, %esp
 level10e:
         mov    saveeax, %eax
-/ saveess and saveesp must be saved on stack
+/ saveess and _saveesp must be saved on stack
 / because task switch can occur
 / and the next interrupt might not restore them
 / before switch back happens
         push   saveess
-        push   saveesp
+        push   _saveesp
         push   saveerrorcode
 / above is duplicated error code
 / some interrupts need bp, so we now make that accessible
@@ -665,12 +665,12 @@ level10e:
         pop    %ebp
         addl   $4, %esp
 / above is the duplicated error code
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
-/ above are saved saveesp and saveess to handle task switches
+/ above are saved _saveesp and saveess to handle task switches
         cmpl   $0x10, saveess
         je     level10f
-        mov    saveesp, %eax
+        mov    _saveesp, %eax
         mov    %eax, %esp
 level10f:
         mov    saveess, %eax
@@ -692,7 +692,7 @@ level10f:
         pop    saveebx
         pop    saveeax
         pop    %ebx
-        pop    saveesp
+        pop    _saveesp
         pop    saveess
         pop    intnum
         pop    %eax

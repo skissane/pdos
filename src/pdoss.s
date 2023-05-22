@@ -32,15 +32,15 @@ _call32:
         push    %edx
         push    %esi
         push    %edi
-        push    call32_esp
-        push    saveesp2
-        mov     %esp, call32_esp
-/ call32_esp has to be saved in TCB
+        push    _call32_esp
+        push    _saveesp2
+        mov     %esp, _call32_esp
+/ _call32_esp has to be saved in TCB
         mov     16(%ebp), %edi
         mov     %esp, 4(%edi)
 / save stack of caller
-        mov     saveesp, %eax
-        mov     %eax, saveesp2
+        mov     _saveesp, %eax
+        mov     %eax, _saveesp2
 / load return address into ecx
         lea    _call32_ret, %ecx
 / get subroutine's address into ebx
@@ -99,7 +99,7 @@ _call32_ret:
 / restore our old stack etc
         mov    $0x10, %bx
         mov    %bx, %ds
-        mov    call32_esp, %esp
+        mov    _call32_esp, %esp
         mov    %bx, %ss
         mov    %bx, %gs
         mov    %bx, %fs
@@ -108,8 +108,8 @@ _call32_ret:
         sti
 
 _call32_pops:
-        pop    saveesp2
-        pop    call32_esp
+        pop    _saveesp2
+        pop    _call32_esp
         pop    %edi
         pop    %esi        
         pop    %edx
@@ -130,8 +130,8 @@ _callwithbypass:
 / skip return address, not required
         pop     %eax
 / restore old esp
-        mov     saveesp2, %eax
-        mov     %eax, saveesp        
+        mov     _saveesp2, %eax
+        mov     %eax, _saveesp
 / get return code
         pop     %eax
         jmp     _call32_ret
@@ -219,7 +219,7 @@ _switchFromToThread:
 / Loads state from newTCB.
     mov 0(%esi), %esp
     mov 4(%esi), %eax
-    mov %eax, call32_esp
+    mov %eax, _call32_esp
 
 / Code running after the switch.
 / Pops registers.
@@ -282,13 +282,13 @@ _callDllEntry:
 saveess:
         .space 4
         .p2align 2
-        .globl saveesp
-saveesp:
+        .globl _saveesp
+_saveesp:
         .space 4
         .p2align 2
-saveesp2:
+_saveesp2:
         .space 4
         .p2align 2
-        .globl call32_esp
-call32_esp:
+        .globl _call32_esp
+_call32_esp:
         .space 4
