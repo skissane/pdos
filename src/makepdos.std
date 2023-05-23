@@ -18,35 +18,32 @@ AR=ar
 LD=pdld
 
 TARGET=pdos.exe
-TEMP_ARCHIVE=os.a
-ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o uart.o \
-             int80.o log.o helper.o memmgr.o patmat.o supportf.obj protintp.o protintf.obj pdosf.obj
-OBJS=strt32.obj pdos.o
+TEMP_ARCHIVE=os.lib
+ARCHIVE_OBJS=bos.obj fat.obj ../bios/exeload.obj physmem.obj vmm.obj process.obj int21.obj uart.obj \
+             int80.obj log.obj helper.obj memmgr.obj patmat.obj supportf.obj protintp.obj protintf.obj pdosf.obj
+OBJS=strt32.obj pdos.obj
 
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
   $(AR) s $(TEMP_ARCHIVE)
-  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
+  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
   rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
   rm -f $(TEMP_ARCHIVE)
   $(AR) -r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
 
-.c.o:
+.c.obj:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) --oformat coff -o $@ $*.s
   rm -f $*.s
-
-.s.o:
-  $(AS) --oformat coff -o $@ $<
 
 .asm.obj:
   as86 -f coff -o $@ $<
 #  ml -c -nologo -coff $<
 
 clean:
-  rm -f *.o
+  rm -f *.obj
   rm -f $(TARGET)
   rm -f $(TEMP_ARCHIVE)

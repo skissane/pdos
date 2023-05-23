@@ -17,18 +17,18 @@ AS=pdas
 LD=pdld
 
 TARGET=pcomm.exe
-OBJS=pcomm.o dostime.o
+OBJS=pcomm.obj dostime.obj
 
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.o $(OBJS) ../pdpclib/pdos.a
+  $(LD) -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.obj $(OBJS) ../pdpclib/pdos.lib
 
-.c.o:
+.c.obj:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) --oformat coff -o $@ $*.s
   rm -f $*.s
 
 clean:
-  rm -f *.o
+  rm -f *.obj
   rm -f $(TARGET)
