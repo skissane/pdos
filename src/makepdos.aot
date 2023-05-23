@@ -1,0 +1,47 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds 32-bit pdos.exe (aka PDOS.SYS) on Windows.
+# makefile.opd in PDPCLIB must be used before using this makefile to produce the pdos.a.
+
+CC=gcc386
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -fno-common -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib
+AS=pdas
+AR=ar
+LD=ld86
+
+TARGET=pdos.exe
+TEMP_ARCHIVE=os.a
+ARCHIVE_OBJS=bos.o fat.o ../bios/exeload.o physmem.o vmm.o process.o int21.o uart.o \
+             int80.o log.o helper.o memmgr.o patmat.o support.o protintp.o protints.o pdoss.o
+OBJS=strt32.o pdos.o
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS) $(TEMP_ARCHIVE)
+  $(LD) -Map map.txt -m a.out_i386 --oformat binary --include-bss -Ttext 0x20000 -N -s -e start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.a
+  rm -f $(TEMP_ARCHIVE)
+
+$(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
+  rm -f $(TEMP_ARCHIVE)
+  $(AR) -r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.s.o:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
+  rm -f $(TEMP_ARCHIVE)
