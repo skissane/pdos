@@ -1,0 +1,30 @@
+# This builds a.out files for PDOS386, on Windows
+# For the 32-bit version of PDOS we define __PDOS386__
+
+CC=wcl386
+CFLAGS=-oneatx
+COPTS=-c -ecc $(CFLAGS) -zl -fpi87 -q -U__WIN32__ -DNOLIBALLOC -D__PDOS386__ -D__32BIT__ -I. -I..\src
+
+pdptest.exe: pdosst32.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj pos.obj supportf.obj pdossupc.obj \
+       fpfuncsv.obj
+  rm -f pdos.lib
+  wlib -b -q pdos.lib +pdosst32.obj stdio.obj string.obj stdlib.obj
+  wlib -b -q pdos.lib +start.obj time.obj errno.obj assert.obj signal.obj
+  wlib -b -q pdos.lib +locale.obj ctype.obj setjmp.obj math.obj
+  wlib -b -q pdos.lib +pos.obj supportf.obj pdossupc.obj fpfuncsv.obj
+  wlink File pdosst32.obj,pdptest.obj Name pdptest.exe Form windows nt Runtime con Library pdos.lib Option quiet,nodef,start=___pdosst32
+#  link -nologo -fixed:no -nodefaultlib -entry:__pdosst32 -out:pdptest.exe pdosst32.obj pdptest.obj pdos.lib
+#  pdld --no-insert-timestamp -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
+
+pos.obj: ..\src\pos.c
+  $(CC) $(COPTS) -fo=$@ ..\src\pos.c
+
+supportf.obj: ..\src\supportf.asm
+  wasm -q -zcm -fo=$@ $<
+#  ml -nologo -c -coff -Fo$@ $<
+#  as86 -f coff -o $@ ..\src\supportf.asm
+
+.c.obj:
+  $(CC) $(COPTS) -fo=$@ $<
