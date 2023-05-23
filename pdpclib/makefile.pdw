@@ -4,26 +4,26 @@
 CC=gccwin
 COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
 
-pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
-       start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o pos.o supportf.obj pdossupc.o
-  rm -f pdos.a
-  ar r pdos.a pdosst32.o stdio.o string.o stdlib.o
-  ar r pdos.a start.o time.o errno.o assert.o signal.o
-  ar r pdos.a locale.o ctype.o setjmp.o math.o
-  ar r pdos.a pos.o supportf.obj pdossupc.o
-  ar s pdos.a
-  pdld --no-insert-timestamp -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
+pdptest.exe: pdosst32.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj pos.obj supportf.obj pdossupc.obj
+  rm -f pdos.lib
+  ar r pdos.lib pdosst32.obj stdio.obj string.obj stdlib.obj
+  ar r pdos.lib start.obj time.obj errno.obj assert.obj signal.obj
+  ar r pdos.lib locale.obj ctype.obj setjmp.obj math.obj
+  ar r pdos.lib pos.obj supportf.obj pdossupc.obj
+  ar s pdos.lib
+  pdld --no-insert-timestamp -s -e ___pdosst32 -o pdptest.exe pdosst32.obj pdptest.obj pdos.lib
 
-pos.o: ../src/pos.c
+pos.obj: ../src/pos.c
   $(CC) $(COPTS) -o $*.s ../src/pos.c
-  pdas --oformat coff -o $*.o $*.s
+  pdas --oformat coff -o $@ $*.s
   rm -f $*.s
 
 supportf.obj: ../src/supportf.asm
   as86 -f coff -o $@ ../src/supportf.asm
 
-.c.o:
+.c.obj:
   $(CC) $(COPTS) -o $*.s $<
-  pdas --oformat coff -o $*.o $*.s
+  pdas --oformat coff -o $@ $*.s
   rm -f $*.s
