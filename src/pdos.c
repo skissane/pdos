@@ -4152,7 +4152,7 @@ int int1(unsigned int *regs)
         if (strcmp(buf, "stop\n") == 0)
         {
             oldsp[10] &= ~0x100;
-            return;
+            return (0);
         }
         if (strcmp(buf, "auto\n") == 0)
         {
