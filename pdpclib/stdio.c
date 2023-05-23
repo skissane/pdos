@@ -81,6 +81,10 @@
 #include "limits.h"
 #include "stddef.h"
 
+#if defined(__PDOS386__)
+#include <pos.h>
+#endif
+
 /* VSE is similar to MVS at the moment */
 #if defined(__VSE__)
 #define __MVS__ 1
