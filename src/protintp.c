@@ -281,13 +281,13 @@ void protintHandler(int intno, int (*func)(unsigned int *))
     return;
 }
 
-void *protintGetHandler(int interrupt)
+void *protintGetHandler(int interrpt)
 {
     int x;
 
     for (x = 0; x < numUserInts; x++)
     {
-        if (userInt[x].intno == interrupt)
+        if (userInt[x].intno == interrpt)
         {
             return (userInt[x].func);
         }
