@@ -1,0 +1,35 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds 32-bit pcomm.exe (COMMAND.EXE) on Windows.
+# makefile.vsp in PDPCLIB must be used before using this makefile to produce the pdos.lib.
+
+CC=cl
+CFLAGS=-O2
+COPTS=-c $(CFLAGS) -U__WIN32__ -D__PDOS386__ -D__32BIT__ -I../pdpclib -D__XXXMSC__ -Oi- -Zl -GS- -nologo
+AS=ml
+AR=lib
+LD=link
+#LD=pdld
+
+
+TARGET=pcomm.exe
+OBJS=pcomm.obj dostime.obj
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) -map -nologo -fixed:no -entry:__pdosst32 -out:$(TARGET) ../pdpclib/pdosst32.obj $(OBJS) ../pdpclib/pdos.lib
+
+.c.obj:
+  $(CC) $(COPTS) -Fo$@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
