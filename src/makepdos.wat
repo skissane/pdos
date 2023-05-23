@@ -27,8 +27,12 @@ OBJS=strt32.obj pdos.obj
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
-#  $(AR) s $(TEMP_ARCHIVE)
-  $(LD) File strt32.obj,pdos.obj Library $(TEMP_ARCHIVE),..\pdpclib\pdos.lib Name pdos.exe Form windows nt dll Runtime con Option quiet,nod,nostdcall,map,start='_start'
+  $(LD) File strt32.obj,pdos.obj Library $(TEMP_ARCHIVE),..\pdpclib\pdos.lib Name pdos.exe Form windows nt dll Runtime con Output raw offset=0x20000 order clname CODE offset=0x21000 clname DATA clname BSS Option quiet,nod,nostdcall,map,start='_start'
+  zap pdos.exe 0 0xe9
+  zap pdos.exe 1 0xfb
+  zap pdos.exe 2 0x0f
+  zap pdos.exe 3 0x00
+  zap pdos.exe 4 0x00
 #  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
 #  link -map -nologo -fixed -nodefaultlib -entry:start -out:$@ $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
   rm -f $(TEMP_ARCHIVE)
