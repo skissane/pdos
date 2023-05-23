@@ -1011,7 +1011,8 @@ void coff_write (const char *filename)
     optional_hdr.MajorSubsystemVersion = MajorSubsystemVersion;
     optional_hdr.MinorSubsystemVersion = MinorSubsystemVersion;
 
-    optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
+    if (last_section) optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
+    else optional_hdr.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
     optional_hdr.SizeOfHeaders = size_of_headers;
 
     optional_hdr.Subsystem = Subsystem;
