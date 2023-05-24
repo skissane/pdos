@@ -83,6 +83,7 @@ static void _convert_to_lower (char *out, const char *str) {
     while ((ch = *str++)) {
         *out++ = tolower (ch);
     }
+    *out = '\0';
 
 }
 
@@ -356,7 +357,6 @@ void *xmalloc (size_t size) {
         _error ("memory full (malloc)\n");
     }
     
-    memset (ptr, 0, size);
     return ptr;
 
 }

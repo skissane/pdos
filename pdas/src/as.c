@@ -37,6 +37,7 @@ int main (int argc, char **argv)
     }
     
     state = xmalloc (sizeof (*state));
+    memset (state, 0, sizeof (*state));
     
 #if      defined (USE_COFF_BY_DEFAULT)
     state->format = AS_FORMAT_COFF;

@@ -23,6 +23,7 @@ static struct fixup *fixup_new_internal (struct frag *frag, unsigned long where,
     fixup->add_symbol   = add_symbol;
     fixup->add_number   = add_number;
     fixup->pcrel        = pcrel;
+    fixup->done         = 0;
     fixup->reloc_type   = reloc_type;
     fixup->next         = NULL;
     
