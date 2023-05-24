@@ -165,11 +165,11 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     UINTN Index;
     UINT64 dummy_watchdog_code = {0, 0};
     char *argv[2] = { "prog", NULL };
-    EFI_GUID sp_guid = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
+    static EFI_GUID sp_guid = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
     EFI_SHELL_PARAMETERS_PROTOCOL *sp_protocol;
-    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    static EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
-    EFI_GUID shell_guid = EFI_SHELL_PROTOCOL_GUID;
+    static EFI_GUID shell_guid = EFI_SHELL_PROTOCOL_GUID;
     EFI_SHELL_PROTOCOL *shell_protocol;
     int x;
     int y;
