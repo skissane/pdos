@@ -778,8 +778,8 @@ static void osfopen(void)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     static EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
-    UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
-    UINT64 OpenModeWrite = {0x3, 0x80000000}; /* Read+Write+Create */
+    static UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
+    static UINT64 OpenModeWrite = {0x3, 0x80000000}; /* Read+Write+Create */
     EFI_FILE_PROTOCOL *new_file;
     static UINT64 Attributes = {0, 0};
     CHAR16 file_name[FILENAME_MAX];
