@@ -21,6 +21,15 @@
 ; exe2bin utility or your linker may be able to produce a
 ; COM file itself.
 
+; Note that @model values are:
+; 1 = tiny
+; 2 = small
+; 3 = compact
+; 4 = medium
+; 5 = large
+; 6 = huge
+; 7 = flat
+
 % .model memodel, c
 
 extrn __start:proc
