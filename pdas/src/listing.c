@@ -39,6 +39,8 @@ static struct ll *last_line = NULL;
 static void internal_add_line (char *line, const char *filename, unsigned long line_number) {
 
     struct ll *ll = xmalloc (sizeof (*ll));
+
+    memset (ll, 0, sizeof (*ll));
     
     ll->line = line;
     ll->filename = filename;
