@@ -94,16 +94,16 @@ static void out_nbyte_value (long value, int nbytes) {
 
 }
 
-static struct cfi_instruction_data *alloc_cfi_instruction_data (void) {
-
+static struct cfi_instruction_data *alloc_cfi_instruction_data (void)
+{
     struct cfi_instruction_data *cfi_instruction_data = xmalloc (sizeof (*cfi_instruction_data));
     struct fde *fde = current_frag_chain->cfi_frag_chain_data->fde;
 
+    cfi_instruction_data->next = NULL;
     *(fde->last_data_p) = cfi_instruction_data;
     fde->last_data_p = &(cfi_instruction_data->next);
 
     return cfi_instruction_data;
-
 }
 
 static void cfi_add_CFA_instruction (int instruction) {
@@ -525,10 +525,10 @@ static struct cie *select_cie_for_fde (struct fde *fde,
 
 }
 
-void cfi_finish (void) {
-
+void cfi_finish (void)
+{
     section_t eh_frame_section;
-    struct fde *fde;
+    struct fde *fde, *next_fde;
     struct cfi_instruction_data *first_instruction_not_in_cie;
 
     if (warned) {
@@ -547,21 +547,37 @@ void cfi_finish (void) {
                        | SECTION_FLAG_READONLY);
 
     for (fde = all_fde; fde; fde = fde->next) {
-
         struct cie *cie;
 
         if (fde->end_address == NULL) {
-
             as_error_at (NULL, 0, "open CFI at the end of file; missing .cfi_endproc directive");
             fde->end_address = fde->start_address;
-
         }
 
         cie = select_cie_for_fde (fde, &first_instruction_not_in_cie);
         output_fde (fde, cie, first_instruction_not_in_cie);
-
     }
 
+    {
+        struct cie *cie, *next_cie;
+
+        for (cie = all_cie; cie; cie = next_cie) {
+            next_cie = cie->next;
+            free (cie);
+        }
+    }
+
+    for (fde = all_fde; fde; fde = next_fde) {
+        struct cfi_instruction_data *i, *next_i;
+        
+        for (i = fde->data; i; i = next_i) {
+            next_i = i->next;
+            free (i);
+        }
+        
+        next_fde = fde->next;
+        free (fde);
+    }
 }
 
 int cfi_estimate_size_before_relax (struct frag *frag) {
