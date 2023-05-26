@@ -113,10 +113,15 @@ void rule_add_suffix (char *name, struct commands *cmds)
     struct suffix_rule *s = xmalloc (sizeof(*s));
     char *p = strchr (name + 1, '.');
 
-    *p = '\0';
-    s->first = xstrdup (name);
-    *p = '.';
-    s->second = xstrdup (p);
+    if (p) {
+        *p = '\0';
+        s->first = xstrdup (name);
+        *p = '.';
+        s->second = xstrdup (p);
+    } else {
+        s->first = xstrdup (name);
+        s->second = NULL;
+    }
 
     s->cmds = cmds;
 

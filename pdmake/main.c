@@ -141,6 +141,26 @@ static void suffix_rule_use(suffix_rule *s, char *name)
     run_commands (s->cmds, name); 
 }
 
+static void single_suffix_rule_use (suffix_rule *s, char *name)
+{
+    char *lesser_name, *star_name;
+
+    if (s->cmds == NULL) return;
+
+    doing_inference_rule_commands = 1;
+    
+    lesser_name = xmalloc (strlen (name) + strlen (s->first) + 1);
+    strcpy (lesser_name, name);
+    strcat (lesser_name, s->first);
+
+    star_name = xstrdup (name);
+    
+    variable_change ("<", lesser_name, VAR_ORIGIN_AUTOMATIC);
+    variable_change ("*", star_name, VAR_ORIGIN_AUTOMATIC);
+
+    run_commands (s->cmds, name);
+}
+
 int file_exists(char *name)
 {
     FILE *f;
@@ -228,7 +248,7 @@ void rule_search_and_build (char *name)
          * by the search for target. */
         variable_change ("@", xstrdup (duplicated_name), VAR_ORIGIN_AUTOMATIC);
         for (s = suffix_rules; s; s = s->next) {
-            if (strcmp (suffix, s->second) == 0) {
+            if (s->second && strcmp (suffix, s->second) == 0) {
                 char *prereq_name, *p;
                 char *new_name;
 
@@ -278,8 +298,39 @@ void rule_search_and_build (char *name)
             return;
         }
         free (duplicated_name);
-    }
+    } else {
+        variable_change ("@", xstrdup (name), VAR_ORIGIN_AUTOMATIC);
+        for (s = suffix_rules; s; s = s->next) {
+            if (s->second == NULL) {
+                char *prereq_name, *new_name;
+                char *p;
 
+                prereq_name = xmalloc (strlen (name) + strlen (s->first) + 1);
+                strcpy (prereq_name, name);
+                strcat (prereq_name, s->first);
+
+                /* Tries to find the prerequisite. */
+                new_name = find_target (prereq_name);
+                if (new_name == NULL) { /* Not found. */
+                    free (prereq_name);
+                    continue;
+                }
+                /* find_target () returns the argument if VPATH is not used
+                 * but the target is found. */
+                if (prereq_name != new_name) {
+                    free (prereq_name);
+                }
+
+                p = new_name + strlen (new_name) - strlen (s->first);
+                *p = '\0';
+
+                single_suffix_rule_use (s, new_name);
+                free (new_name);
+                return;
+            }
+        }
+    }
+    
     {
         char *new_name = find_target (name);
         if (new_name != name) free (new_name);
