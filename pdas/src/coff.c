@@ -448,6 +448,7 @@ void write_coff_file (void) {
 
             }
 
+            free (symbol->object_format_dependent_data);
         }
         
         symbol->write_name_to_string_table = 0;
