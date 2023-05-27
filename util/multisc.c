@@ -56,9 +56,10 @@ void _start()
 
 Which produces:
 
-C:\devel\develop>hexdump samp.com
-000000  90E81800 B8034CA0 3C38CD21 C3B80500  ......L.<8.!....
-000010  89069000 B8070089 063C38C3 E8EEFFC3  .........<8.....
+C:\devel\pdos\util>hexdump samp.com
+000000  908CDA81 C200108E DAE81800 B8034CA0  ..............L.
+000010  3C38CD21 C3B80500 89069000 B8070089  <8.!............
+000020  063C38C3 E8EEFFC3                    .<8.....
 
 #endif
 
@@ -169,6 +170,8 @@ static jmp_buf compile_jmpbuf;
 
 static int skiptok = 0;
 
+static int remember;
+
 /********************************************************************/
 /* binary operator table                                            */
 /********************************************************************/
@@ -239,10 +242,25 @@ int main(int argc, char **argv)
 
     di = 0;    /* codegen index, zero'd */
 
-    codegen_output_buffer[di++] = 0x90; /* emit "nop" instruction */
+    codegen_output_buffer[di++] = 0x90; /* emit "nop" instruction for fun */
+    
+    /* adjust ds to the next 64k block */
+    /* mov dx, ds */
+    codegen_output_buffer[di++] = 0x8c;
+    codegen_output_buffer[di++] = 0xda;
+    /* add dx, 1000h */
+    codegen_output_buffer[di++] = 0x81;
+    codegen_output_buffer[di++] = 0xc2;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x10;
+    /* mov ds, dx */
+    codegen_output_buffer[di++] = 0x8e;
+    codegen_output_buffer[di++] = 0xda;
+    
     codegen_output_buffer[di++] = 0xe8; /* emit "call" instruction */
     codegen_output_buffer[di++] = 0x00;
     codegen_output_buffer[di++] = 0x00;
+    remember = di;
     codegen_output_buffer[di++] = 0xb8; /* emit "mov ax,4c03h" instruction */
     codegen_output_buffer[di++] = 0x03;
     codegen_output_buffer[di++] = 0x4c;
@@ -252,14 +270,10 @@ int main(int argc, char **argv)
     codegen_output_buffer[di++] = 0xa0;
     codegen_output_buffer[di++] = 0x3c;
     codegen_output_buffer[di++] = 0x38;
-#if 0
-    codegen_output_buffer[di++] = 0x00;
-    codegen_output_buffer[di++] = 0x00;
-#endif
     
     codegen_output_buffer[di++] = 0xcd; /* emit "int 21h" instruction */
     codegen_output_buffer[di++] = 0x21;
-    codegen_output_buffer[di++] = 0xc3; /* emit "ret" instruction */
+    codegen_output_buffer[di++] = 0xc3; /* emit "ret" instruction for fun */
 
     while (setjmp(compile_jmpbuf) != 0)
     {
@@ -342,9 +356,9 @@ execute:
   retf                          ; jump into it via "retf"
 #endif
 
-    ax = symtbl[bx] - 4;
-    codegen_output_buffer[2] = ax & 0xff;
-    codegen_output_buffer[3] = (ax >> 8) & 0xff;
+    ax = symtbl[bx] - remember;
+    codegen_output_buffer[remember - 2] = ax & 0xff;
+    codegen_output_buffer[remember - 1] = (ax >> 8) & 0xff;
 
 /*    codegen_output_buffer[1] = 0x90;
     codegen_output_buffer[2] = 0x90;
