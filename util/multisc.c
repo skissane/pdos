@@ -635,7 +635,6 @@ static void compile_expr_tok_next(void)
         }
     }
 
-    ptr++;
     tmp = *ptr;  /* load 16-bit of machine-code */
 
     codegen_output_buffer[di++] = 0x50; /* code for "push ax" */
