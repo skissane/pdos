@@ -12,7 +12,7 @@ CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s
 AS=pdas --oformat coff
-COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
 OBJS=multisc.obj
 
