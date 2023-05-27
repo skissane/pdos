@@ -713,9 +713,7 @@ static void compile_unary(void)
     }
     
     /* compile var */
-    /* code for "mov ax,[imm]" */
-    codegen_output_buffer[di++] = 0x8b;
-    codegen_output_buffer[di++] = 0x06;
+    ax = 0x068b; /* code for "mov ax,[imm]" */
     emit_var();
     return;
 }
