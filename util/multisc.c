@@ -160,7 +160,7 @@ static int es;
 
 static short *symtbl;
 
-static char *codegen_output_buffer;
+static unsigned char *codegen_output_buffer;
 
 static FILE *fp;
 static FILE *fq;
