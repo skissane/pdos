@@ -347,11 +347,12 @@ int main(int argc, char **argv)
             compile_function();
         }
         tok_next(); /* consume "int" */
-        if (symtbl[bx] != 0)
+        if (symtbl[(unsigned)bx] != 0)
         {
             hashclash();
         }
-        symtbl[bx] = TOK_INT;
+        symtbl[(unsigned)bx] = TOK_INT; /* this value won't be used,
+                                           but we reserve it anyway */
         tok_next();  /* consume <ident> */
     }
 
@@ -365,11 +366,11 @@ static void compile_function(void)
 
     tok_next(); /* consume "void" */
     oldbx = bx;   /* save function name token */
-    if (symtbl[bx] != 0)
+    if (symtbl[(unsigned)bx] != 0)
     {
         hashclash();
     }
-    symtbl[bx] = di; /* record function address in symtbl */
+    symtbl[(unsigned)bx] = di; /* record function address in symtbl */
     compile_stmts_tok_next2(); /* compile function body */
 
     codegen_output_buffer[di++] = 0xc3; /* emit "ret" instruction */
@@ -414,9 +415,9 @@ execute:
   retf                          ; jump into it via "retf"
 #endif
 
-    ax = symtbl[bx] - remember;
-    codegen_output_buffer[remember - 2] = ax & 0xff;
-    codegen_output_buffer[remember - 1] = (ax >> 8) & 0xff;
+    ax = symtbl[(unsigned)bx] - remember;
+    codegen_output_buffer[(unsigned)(remember - 2)] = ax & 0xff;
+    codegen_output_buffer[(unsigned)(remember - 1)] = (ax >> 8) & 0xff;
 
 /*    codegen_output_buffer[1] = 0x90;
     codegen_output_buffer[2] = 0x90;
@@ -472,7 +473,7 @@ static void compile_stmts_tok_next2(void)
             /* emit "call" instruction */
             codegen_output_buffer[di++] = 0xe8;
             /* load function offset from symbol-table */
-            ax = symtbl[bx];
+            ax = symtbl[(unsigned)bx];
             /* compute relative to this location: "dest - cur - 2" */
             /* note that although a "call" is a 3 byte instruction
                (in this case), we have already incremented di when
