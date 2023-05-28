@@ -174,6 +174,10 @@ static int ds;
 static int di;
 static int es;
 
+/* I'm not sure which bit of logic can't cope with large values */
+/* so we squirrel that away */
+static int bx_origval;
+
 static int *symtbl;
 
 static unsigned char *codegen_output_buffer;
@@ -1039,6 +1043,8 @@ static void compile_unary(void)
         /* jump over constant, and r14 points to the constant */
         codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
         codegen_output_buffer[di++] = 0xef;
+        
+        bx = bx_origval;
 #else
         codegen_output_buffer[di++] = 0xb8; /* code for "mov ax,imm" */
 #endif
@@ -1122,6 +1128,7 @@ static void tok_next(void)
         /* should probably use isspace() and iscntrl() */
         if (ax <= ' ')
         {
+            bx_origval = bx;
             bx &= MAXSYM_MASK;
             if (debug)
             {
