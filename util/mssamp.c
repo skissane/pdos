@@ -16,6 +16,10 @@
 /* ***************************************************************** */
 
 int ret; /* must be this name */
+    /* reason being that the hash is calculated as:
+       ( (114-48)*100+(101-48)*10+(116-48) ) * 2 = 14396 = x'383c'
+       which you can see referenced in the assembler below,
+       and also in the startup code which is embedded in the compiler */
 int x;
 
 /* this will probably be in a separate file, and pdcc used to
