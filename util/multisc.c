@@ -541,11 +541,40 @@ static void compile_function(void)
     codegen_output_buffer[di++] = 0xec; 
     codegen_output_buffer[di++] = 0xd0; 
     codegen_output_buffer[di++] = 0x0c;    
+
+    /* save original r13 in r9 */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r9,r13" instruction */
+    codegen_output_buffer[di++] = 0x9d; 
+
+    /* bump r13 up for the next guy */
+    codegen_output_buffer[di++] = 0x41; /* emit "la r13,72(,r13)" instruction */
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0x48;
+
+    /* store old r13 (ie backchain) */
+    codegen_output_buffer[di++] = 0x50; /* emit "st r9,4(,r13)" instruction */
+    codegen_output_buffer[di++] = 0x90;
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0x04;
+    
+    /* store new r13 (ie forward chain) */
+    codegen_output_buffer[di++] = 0x50; /* emit "st r13,8(,r9)" instruction */
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0x90;
+    codegen_output_buffer[di++] = 0x08;
+    
 #endif
 
     compile_stmts_tok_next2(); /* compile function body */
 
 #if TARGET_MVS
+    /* load old r13 */
+    codegen_output_buffer[di++] = 0x58; /* emit "l r13,4(,r13)" instruction */
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0x04;
+
     /* load registers */
     codegen_output_buffer[di++] = 0x98; /* emit "lm r14,r12,12(r13)" */
     codegen_output_buffer[di++] = 0xec;
