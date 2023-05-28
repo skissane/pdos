@@ -816,6 +816,16 @@ static void tok_next(void)
         cx <<= 8;
         cx |= ax;
 
+        /* Note that this is the real genius of the original Sector C.
+           Just hope that a simple atoi implementation, when used on
+           non-numeric fields, would produce a value that didn't clash
+           with anything important. And the result was - no clash! If
+           you happen to use a variable name that clashes with an
+           existing token or variable, then you will have to change your
+           variable name, or make a much more complex compiler. And
+           when bootstrapping, you get to zap in every hex code yourself.
+           */
+
         /* atoi computation: bx = 10 * bx + (ax - '0') */
         bx = 10 * bx + (ax - '0');
 
