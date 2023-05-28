@@ -255,6 +255,39 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
 
+    /* reserve any names that clash with our tokens */
+    symtbl[TOK_INT] = -1;
+    symtbl[TOK_VOID] = -1;
+    symtbl[TOK_ASM] = -1;
+    symtbl[TOK_COMM] = -1;
+    symtbl[TOK_SEMI] = -1;
+    symtbl[TOK_LPAREN] = -1;
+    symtbl[TOK_RPAREN] = -1;
+    /* not this one - we need to allow it to be defined in the program */
+    /* symtbl[TOK_START] = -1; */
+    symtbl[TOK_DEREF] = -1;
+    symtbl[TOK_WHILE_BEGIN] = -1;
+    symtbl[TOK_IF_BEGIN] = -1;
+    symtbl[TOK_BODY_BEGIN] = -1;
+    symtbl[TOK_BLK_BEGIN] = -1;
+    symtbl[TOK_BLK_END] = -1;
+    symtbl[TOK_ASSIGN] = -1;
+    symtbl[TOK_ADDR] = -1;
+    symtbl[TOK_SUB] = -1;
+    symtbl[TOK_ADD] = -1;
+    symtbl[TOK_MUL] = -1;
+    symtbl[TOK_AND] = -1;
+    symtbl[TOK_OR] = -1;
+    symtbl[TOK_XOR] = -1;
+    symtbl[TOK_SHL] = -1;
+    symtbl[TOK_SHR] = -1;
+    symtbl[TOK_EQ] = -1;
+    symtbl[TOK_NE] = -1;
+    symtbl[TOK_LT] = -1;
+    symtbl[TOK_GT] = -1;
+    symtbl[TOK_LE] = -1;
+    symtbl[TOK_GE] = -1;
+
     di = 0;    /* codegen index, zero'd */
 
     codegen_output_buffer[di++] = 0x90; /* emit "nop" instruction for fun */
