@@ -193,72 +193,108 @@ static unsigned long translate_alignment_power_to_Characteristics (int alignment
 
 }
 
-static int output_relocation (FILE *outfile, struct fixup *fixup) {
-
+static int output_relocation (FILE *outfile, struct fixup *fixup)
+{
     struct relocation_entry_internal reloc_entry;
     reloc_entry.VirtualAddress = fixup->frag->address + fixup->where;
     
     if (fixup->add_symbol == NULL) {
-    
         as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0, "+++output relocation fixup->add_symbol is NULL");
         return 1;
-    
     }
     
     reloc_entry.SymbolTableIndex = symbol_get_symbol_table_index (fixup->add_symbol);
-    
-    switch (fixup->reloc_type) {
-    
-        case RELOC_TYPE_DEFAULT:
-        
-            switch (fixup->size) {
+
+    if (target_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        switch (fixup->reloc_type) {
             
-                case 2:
-                
-                    if (fixup->pcrel) {
-                        reloc_entry.Type = IMAGE_REL_I386_REL16;
-                    } else {
-                        reloc_entry.Type = IMAGE_REL_I386_DIR16;
-                    }
+            case RELOC_TYPE_DEFAULT:
+                switch (fixup->size) {
                     
-                    break;
-                
-                case 4:
-                
-                    if (fixup->pcrel) {
-                        reloc_entry.Type = IMAGE_REL_I386_REL32;
-                    } else {
-                        reloc_entry.Type = IMAGE_REL_I386_DIR32;
-                    }
+                    case 4:
+                        if (fixup->pcrel) reloc_entry.Type = IMAGE_REL_AMD64_REL32;
+                        else reloc_entry.Type = IMAGE_REL_AMD64_ADDR32;
+                        break;
+
+                    case 8:
+                        reloc_entry.Type = IMAGE_REL_AMD64_ADDR64;
+                        break;
+
+                    default:
+                        as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                        "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_DEFAULT",
+                                                        fixup->size);
+                        break;
                     
-                    break;
-                
-                default:
-                
+                }
+                break;
+
+            case RELOC_TYPE_RVA:
+                if (fixup->size != 4) {
                     as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
-                                                    "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_DEFAULT", fixup->size);
-                    break;
-            
-            }
-            
-            break;
-        
-        case RELOC_TYPE_RVA:
+                                                    "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_RVA",
+                                                    fixup->size);
+                }
+                reloc_entry.Type = IMAGE_REL_AMD64_ADDR32NB;
+                break;
 
-            if (fixup->size != 4) {
+            default:
                 as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
-                                                "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_RVA", fixup->size);
-            }
+                                                "output_relocation invalid reloc_type",
+                                                fixup->reloc_type);
+                break;
+
+        }
+    } else {
+        switch (fixup->reloc_type) {
         
-            reloc_entry.Type = IMAGE_REL_I386_DIR32NB;
-            break;
+            case RELOC_TYPE_DEFAULT:
+                switch (fixup->size) {
+                
+                    case 2:
+                        if (fixup->pcrel) {
+                            reloc_entry.Type = IMAGE_REL_I386_REL16;
+                        } else {
+                            reloc_entry.Type = IMAGE_REL_I386_DIR16;
+                        }
+                        
+                        break;
+                    
+                    case 4:
+                        if (fixup->pcrel) {
+                            reloc_entry.Type = IMAGE_REL_I386_REL32;
+                        } else {
+                            reloc_entry.Type = IMAGE_REL_I386_DIR32;
+                        }
+                        
+                        break;
+                    
+                    default:
+                        as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                        "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_DEFAULT",
+                                                        fixup->size);
+                        break;
+                
+                }
+                
+                break;
+            
+            case RELOC_TYPE_RVA:
+                if (fixup->size != 4) {
+                    as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                    "unsupported COFF relocation size %i for reloc_type RELOC_TYPE_RVA",
+                                                    fixup->size);
+                }
+                reloc_entry.Type = IMAGE_REL_I386_DIR32NB;
+                break;
 
-        default:
-
-            as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
-                                            "output_relocation invalid reloc_type", fixup->reloc_type);
-            break;
-    
+            default:
+                as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                "output_relocation invalid reloc_type",
+                                                fixup->reloc_type);
+                break;
+        
+        }
     }
     
     if (write_struct_relocation_entry (outfile, &reloc_entry)) {
@@ -266,7 +302,6 @@ static int output_relocation (FILE *outfile, struct fixup *fixup) {
     }
     
     return 0;
-
 }
 
 void write_coff_file (void) {
@@ -904,6 +939,18 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "scl",        &handler_scl        },
     { "section",    &handler_section    },
     { "type",       &handler_type       },
+
+    /* Structured exception handling (SEH) can probably be safely ignored for now. */
+    { "seh_proc",        &handler_ignore },
+    { "seh_endproc",     &handler_ignore },
+    { "seh_pushframe",   &handler_ignore },
+    { "seh_endprologue", &handler_ignore },
+    { "seh_setframe",    &handler_ignore },
+    { "seh_stackalloc",  &handler_ignore },
+    { "seh_pushreg",     &handler_ignore },
+    { "seh_savereg",     &handler_ignore },
+    { "seh_savexmm",     &handler_ignore },
+    
     { 0,            0                   }
 
 };

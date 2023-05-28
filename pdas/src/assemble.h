@@ -133,6 +133,7 @@ struct template {
 #define     JUMP_ABSOLUTE               (1LU << 23)
 
 #define     REG_REX                     (1LU << 24)
+#define     REG_REX64                   (1LU << 25)
     
 #define     IMPLICIT_REGISTER           (SHIFT_COUNT | ACC)
     
@@ -294,7 +295,7 @@ static const struct template template_table[] = {
     { "out", 2, 0xEE, NONE, BWL_SUF | W, { PORT, 0, 0 }, 0 },
     
     /* Load effective address. */
-    { "lea", 2, 0x8D, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 0 },
+    { "lea", 2, 0x8D, NONE, WLQ_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 0 },
     
     /* Load far pointer from memory. */
     { "lds", 2, 0xC5, NONE, WL_SUF | MODRM, { ANY_MEM, WORD_REG, 0 }, 0 },
@@ -318,61 +319,61 @@ static const struct template template_table[] = {
     { "popf", 0, 0x9D, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
     
     /* Arithmetic instructions. */
-    { "add", 2, 0x00, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "add", 2, 0x83, 0, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "add", 2, 0x04, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "add", 2, 0x80, 0, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "add", 2, 0x00, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "add", 2, 0x83, 0, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "add", 2, 0x04, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "add", 2, 0x80, 0, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
     { "inc", 1, 0x40, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, CPU_NO64 },
-    { "inc", 1, 0xFE, 0, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
+    { "inc", 1, 0xFE, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "sub", 2, 0x28, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "sub", 2, 0x83, 5, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "sub", 2, 0x2C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "sub", 2, 0x80, 5, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "sub", 2, 0x28, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "sub", 2, 0x83, 5, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "sub", 2, 0x2C, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "sub", 2, 0x80, 5, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
     { "dec", 1, 0x48, NONE, WL_SUF | SHORT_FORM, { WORD_REG, 0, 0 }, CPU_NO64 },
-    { "dec", 1, 0xFE, 1, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
+    { "dec", 1, 0xFE, 1, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
-    { "sbb", 2, 0x18, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "sbb", 2, 0x83, 3, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "sbb", 2, 0x1C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "sbb", 2, 0x80, 3, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "sbb", 2, 0x18, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "sbb", 2, 0x83, 3, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "sbb", 2, 0x1C, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "sbb", 2, 0x80, 3, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "cmp", 2, 0x38, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "cmp", 2, 0x83, 7, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "cmp", 2, 0x3C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "cmp", 2, 0x80, 7, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "cmp", 2, 0x38, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "cmp", 2, 0x83, 7, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "cmp", 2, 0x3C, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "cmp", 2, 0x80, 7, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "test", 2, 0x84, NONE, BWL_SUF | W | MODRM, { REG | ANY_MEM, REG, 0 }, 0 },
-    { "test", 2, 0x84, NONE, BWL_SUF | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "test", 2, 0xA8, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "test", 2, 0xF6, 0, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "test", 2, 0x84, NONE, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, REG, 0 }, 0 },
+    { "test", 2, 0x84, NONE, BWLQ_SUF | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "test", 2, 0xA8, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "test", 2, 0xF6, 0, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "and", 2, 0x20, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "and", 2, 0x83, 4, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "and", 2, 0x24, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "and", 2, 0x80, 4, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "and", 2, 0x20, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "and", 2, 0x83, 4, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "and", 2, 0x24, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "and", 2, 0x80, 4, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "or", 2, 0x08, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "or", 2, 0x83, 1, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "or", 2, 0x0C, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "or", 2, 0x80, 1, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "or", 2, 0x08, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "or", 2, 0x83, 1, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "or", 2, 0x0C, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "or", 2, 0x80, 1, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
     { "xor", 2, 0x30, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
     { "xor", 2, 0x83, 6, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "xor", 2, 0x34, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "xor", 2, 0x80, 6, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "xor", 2, 0x34, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "xor", 2, 0x80, 6, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
     { "clr", 1, 0x30, NONE, BWLQ_SUF | W | MODRM | REG_DUPLICATION, { REG, 0, 0 }, 0 },
     
-    { "adc", 2, 0x10, NONE, BWL_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
-    { "adc", 2, 0x83, 2, WL_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
-    { "adc", 2, 0x14, NONE, BWL_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
-    { "adc", 2, 0x80, 2, BWL_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "adc", 2, 0x10, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
+    { "adc", 2, 0x83, 2, WLQ_SUF | MODRM, { IMM8S, WORD_REG | ANY_MEM, 0 }, 0 },
+    { "adc", 2, 0x14, NONE, BWLQ_SUF | W, { ENCODABLEIMM, ACC, 0 }, 0 },
+    { "adc", 2, 0x80, 2, BWLQ_SUF | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
     
-    { "neg", 1, 0xF6, 3, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
-    { "not", 1, 0xF6, 2, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
+    { "neg", 1, 0xF6, 3, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
+    { "not", 1, 0xF6, 2, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     
     { "aaa", 0, 0x37, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "aas", 0, 0x3F, NONE, NO_SUF, { 0, 0, 0 }, 0 },
@@ -454,7 +455,8 @@ static const struct template template_table[] = {
     { "shrd", 2, 0x0FAD, NONE, WL_SUF | MODRM, { WORD_REG, WORD_REG | ANY_MEM, 0 }, CPU_386 },
     
     /* Program control transfer instructions. */
-    { "call", 1, 0xE8, NONE, WL_SUF | DEFAULT_SIZE | CALL, { DISP16 | DISP32, 0, 0 }, 0 },
+    { "call", 1, 0xE8, NONE, WL_SUF | DEFAULT_SIZE | CALL, { DISP16 | DISP32, 0, 0 }, CPU_NO64 },
+    { "call", 1, 0xE8, NONE, WQ_SUF | DEFAULT_SIZE | CALL | NO_REX_W, { DISP16 | DISP32, 0, 0 }, CPU_64 },
     { "call", 1, 0xFF, 2, WL_SUF | DEFAULT_SIZE | MODRM, { WORD_REG | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     { "call", 2, 0x9A, NONE, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
     { "call", 1, 0xFF, 3, INTEL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
@@ -893,7 +895,8 @@ static const struct template template_table[] = {
 
 };
 
-#define     REG_FLAT_NUMBER             ((unsigned int) ~0)
+#define REG_FLAT_NUMBER ((unsigned int) ~0)
+#define REG_IP_NUMBER ((unsigned int) ~0)
 
 static const struct reg_entry reg_table[] = {
 
@@ -906,6 +909,22 @@ static const struct reg_entry reg_table[] = {
     { "ch", REG8, 5 },
     { "dh", REG8, 6 },
     { "bh", REG8, 7 },
+    { "axl", REG8 | REG_REX64, 0 },
+    { "cxl", REG8 | REG_REX64, 1 },
+    { "dxl", REG8 | REG_REX64, 2 },
+    { "bxl", REG8 | REG_REX64, 3 },
+    { "spl", REG8 | REG_REX64, 4 },
+    { "bpl", REG8 | REG_REX64, 5 },
+    { "sil", REG8 | REG_REX64, 6 },
+    { "dil", REG8 | REG_REX64, 7 },
+    { "r8b", REG8 | REG_REX | REG_REX64, 0 },
+    { "r9b", REG8 | REG_REX | REG_REX64, 1 },
+    { "r10b", REG8 | REG_REX | REG_REX64, 2 },
+    { "r11b", REG8 | REG_REX | REG_REX64, 3 },
+    { "r12b", REG8 | REG_REX | REG_REX64, 4 },
+    { "r13b", REG8 | REG_REX | REG_REX64, 5 },
+    { "r14b", REG8 | REG_REX | REG_REX64, 6 },
+    { "r15b", REG8 | REG_REX | REG_REX64, 7 },
 
     /* 16 bit registers. */
     { "ax", REG16 | ACC, 0 },
@@ -926,6 +945,14 @@ static const struct reg_entry reg_table[] = {
     { "ebp", REG32 | BASE_INDEX, 5 },
     { "esi", REG32 | BASE_INDEX, 6 },
     { "edi", REG32 | BASE_INDEX, 7 },
+    { "r8d", REG32 | BASE_INDEX | REG_REX, 0 },
+    { "r9d", REG32 | BASE_INDEX | REG_REX, 1 },
+    { "r10d", REG32 | BASE_INDEX | REG_REX, 2 },
+    { "r11d", REG32 | BASE_INDEX | REG_REX, 3 },
+    { "r12d", REG32 | BASE_INDEX | REG_REX, 4 },
+    { "r13d", REG32 | BASE_INDEX | REG_REX, 5 },
+    { "r14d", REG32 | BASE_INDEX | REG_REX, 6 },
+    { "r15d", REG32 | BASE_INDEX | REG_REX, 7 },
 
     /* 64 bit registers. */
     { "rax", REG64 | BASE_INDEX | ACC, 0 },
@@ -995,6 +1022,10 @@ static const struct reg_entry reg_table[] = {
     { "tr5", TEST, 5 },
     { "tr6", TEST, 6 },
     { "tr7", TEST, 7 },
+
+    /* RIP is used only for RIP relative addressing.
+     * (REG_REX64 only denies RIP use in 32-bit mode.)*/
+    { "rip", REG_REX64, REG_IP_NUMBER },
     
     /* Floating point registers. Explicit "st(0)" is not needed. */
     { "st", FLOAT_REG | FLOAT_ACC, 0},

@@ -125,6 +125,12 @@ struct relocation_entry_file {
 
 };
 
+#define IMAGE_REL_AMD64_ABSOLUTE 0x0000
+#define IMAGE_REL_AMD64_ADDR64   0x0001
+#define IMAGE_REL_AMD64_ADDR32   0x0002
+#define IMAGE_REL_AMD64_ADDR32NB 0x0003
+#define IMAGE_REL_AMD64_REL32    0x0004
+
 #define     IMAGE_REL_I386_ABSOLUTE                         0x0000
 #define     IMAGE_REL_I386_DIR16                            0x0001
 #define     IMAGE_REL_I386_REL16                            0x0002

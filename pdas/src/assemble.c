@@ -112,6 +112,9 @@ struct instruction {
     int mem_operands;
     
     unsigned int types[MAX_OPERANDS];
+/* There is no need to put this into types. */
+    unsigned int special_types[MAX_OPERANDS];
+#define OPERAND_PCREL (1U << 0)
     
     const struct reg_entry *regs[MAX_OPERANDS];
     struct expr *imms[MAX_OPERANDS];
@@ -429,7 +432,7 @@ static int check_reg (const struct reg_entry *reg) {
         return 0;
     }
 
-    if ((reg->type & (REG64 | REG_REX)) && bits != 64) {
+    if ((reg->type & (REG64 | REG_REX | REG_REX64)) && bits != 64) {
         return 0;
     }
     
@@ -547,39 +550,30 @@ static int fits_in_unsigned_word (long number) {
     return ((number & 0xffff) == number);
 }
 
-static int base_index_check (char *operand_string) {
-
+static int base_index_check (char *operand_string)
+{
     if (bits == 64) {
-
-        if ((instruction.base_reg && !(instruction.base_reg->type & REG64))
+        if ((instruction.base_reg && !(instruction.base_reg->type & REG64) && instruction.base_reg->number != REG_IP_NUMBER)
             || (instruction.index_reg && (!(instruction.index_reg->type & BASE_INDEX) || !(instruction.index_reg->type & REG64)))) {
             goto bad;
         }
-
     } else if (bits == 32) {
-    
         if ((instruction.base_reg && !(instruction.base_reg->type & REG32))
             || (instruction.index_reg && (!(instruction.index_reg->type & BASE_INDEX) || !(instruction.index_reg->type & REG32)))) {
         bad:
-        
             as_error ("'%s' is not a valid base/index expression", operand_string);
-            return 1;
-        
-        }
-    
+            return 1; 
+        } 
     } else {
-    
         if ((instruction.base_reg && (!(instruction.base_reg->type & BASE_INDEX) || !(instruction.base_reg->type & REG16)))
             || (instruction.index_reg && (!(instruction.index_reg->type & BASE_INDEX) || !(instruction.index_reg->type & REG16)
                 || !(instruction.base_reg && instruction.base_reg->number < 6 && instruction.index_reg->number >= 6
                 && instruction.log2_scale_factor == 0)))) {
             goto bad;
         }
-    
     }
     
     return 0;
-
 }
 
 static int finalize_immediate (struct expr *expr, const char *imm_start) {
@@ -1116,16 +1110,26 @@ static long convert_number_to_size (unsigned long value, int size) {
 
 }
 
-static void output_disps (void) {
+static int imm_size (flag_int operand_type)
+{
+    int size = 4;
+    
+    if (operand_type & (IMM8 | IMM8S)) {
+        size = 1;
+    } else if (operand_type & IMM16) {
+        size = 2;
+    }
 
+    return size;
+}
+
+static void output_disps (void)
+{
     int operand;
     
     for (operand = 0; operand < instruction.operands; operand++) {
-    
         if (instruction.types[operand] & DISP) {
-        
             if (instruction.disps[operand]->type == EXPR_TYPE_CONSTANT) {
-            
                 int size = 4;
                 unsigned long value;
                 
@@ -1137,9 +1141,8 @@ static void output_disps (void) {
                 
                 value = convert_number_to_size (instruction.disps[operand]->add_number, size);
                 machine_dependent_number_to_chars (frag_increase_fixed_size (size), value, size);
-            
             } else {
-            
+                int pcrel = (instruction.special_types[operand] & OPERAND_PCREL) != 0;
                 int size = 4;
                 
                 if (instruction.types[operand] & DISP8) {
@@ -1147,16 +1150,24 @@ static void output_disps (void) {
                 } else if (instruction.types[operand] & DISP16) {
                     size = 2;
                 }
-                
-                fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.disps[operand], 0, RELOC_TYPE_DEFAULT);
-                frag_increase_fixed_size (size);
-            
-            }
-        
-        }
-    
-    }
 
+                if (pcrel) {
+                    /* pcrel displacement is relative to the end of the instruction,
+                     * so the size of immediate operands have to be included. */
+                    int operand2;
+
+                    for (operand2 = 0; operand2 < instruction.operands; operand2++) {
+                        if (instruction.types[operand2] & IMM) {
+                            instruction.disps[operand]->add_number -= imm_size (instruction.types[operand2]);
+                        }
+                    }
+                }
+ 
+                fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.disps[operand], pcrel, RELOC_TYPE_DEFAULT);
+                frag_increase_fixed_size (size);
+            }
+        }
+    }
 }
 
 static void output_imm (unsigned int operand) {
@@ -2485,6 +2496,11 @@ static int process_operands (void) {
                     
                     }
                 
+                } else if (instruction.base_reg->number == REG_IP_NUMBER) {
+                    instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER;
+                    instruction.types[operand] = DISP32;
+                    instruction.special_types[operand] |= OPERAND_PCREL;
+                    if (instruction.disp_operands == 0) fake_zero_displacement = 1;
                 } else if (instruction.base_reg->type & REG16) {
                 
                     switch (instruction.base_reg->number) {
@@ -2528,10 +2544,14 @@ static int process_operands (void) {
                     instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
                 
                 } else {
-                
                     if (bits == 16 && (instruction.types[operand] & BASE_INDEX)) {
                         add_prefix (ADDR_PREFIX_OPCODE);
                     }
+
+                    if (instruction.types[operand] & DISP) {
+                        instruction.types[operand] &= ~DISP16;
+                        instruction.types[operand] |= DISP32;
+                    }                        
                     
                     instruction.modrm.regmem = instruction.base_reg->number;
                     if (instruction.base_reg->type & REG_REX) instruction.rex |= REX_B;
@@ -2540,24 +2560,19 @@ static int process_operands (void) {
                     instruction.sib.scale = instruction.log2_scale_factor;
                     
                     if (instruction.base_reg->number == 5 && instruction.disp_operands == 0) {
-                    
                         fake_zero_displacement = 1;
                         instruction.types[operand] |= DISP8;
-                    
                     }
                     
                     if (instruction.index_reg) {
-                    
                         instruction.sib.index = instruction.index_reg->number;
                         instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
                         if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
-                    
                     } else {
                         instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
                     }
                     
                     instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
-                
                 }
                 
                 if (fake_zero_displacement) {
@@ -2741,6 +2756,37 @@ char *machine_dependent_assemble_line (char *line) {
         instruction.template.base_opcode = INT3_OPCODE;
         instruction.operands = 0;
 
+    }
+
+    /* For new 8 bit registers at least empty REX prefix is needed. */
+    if (!instruction.rex) {
+        int operand;
+
+        for (operand = 0; operand < MAX_OPERANDS; operand++) {
+            if ((instruction.types[operand] & REG8)
+                && (instruction.regs[operand]->type & REG_REX64)) {
+                instruction.rex |= REX_PREFIX_OPCODE;
+                break;
+            }
+        }
+    }
+
+    if (instruction.rex) {
+        int operand;
+
+        for (operand = 0; operand < MAX_OPERANDS; operand++) {
+            if ((instruction.types[operand] & REG8)
+                && (instruction.regs[operand]->type & REG_REX64) == 0) {
+                /* %ah is replaced by %spl when REX prefix is used... */
+                if (instruction.regs[operand]->number > 3) {
+                    as_error ("cannot encode register %%%s in an instruction requiring REX prefix",
+                              instruction.regs[operand]->name);
+                }
+
+                /* %al is replaced by %axl but they mean the same thing. */
+                instruction.regs[operand] += 8;
+            }
+        }
     }
     
     if (instruction.rex) add_prefix (REX_PREFIX_OPCODE | instruction.rex);        
