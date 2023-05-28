@@ -112,6 +112,9 @@ int __cdecl __setj(jmp_buf env);
 int __setj(jmp_buf env);
 #endif
 
+#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#define setjmp(x) __setj(x)
+
 #else
 #define setjmp(x) _setjmp(x)
 int _setjmp(jmp_buf env);
