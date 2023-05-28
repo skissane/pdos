@@ -131,7 +131,15 @@ typedef struct {
 #define TOK_GE          153
 
 /* maximum number of bytes of code we can produce */
+#ifdef TARGET_MVS
+/* for MVS, include room for a 64k stack, and 64k for a little overhead */
+/* and since we have a flat address space, allow for 256k of code */
+/* plus another 256k for data */
+#define MAXCODESZ (0x10000 + 0x10000 + 4 * 0x10000 + 4 * 0x10000)
+#define DATASTART (6 * 0x10000)
+#else
 #define MAXCODESZ 0x10000
+#endif
 
 /* maximum number of symbols we support, and corresponding mask */
 #define MAXSYM_MASK 0xffffU
@@ -215,6 +223,7 @@ static void tok_next2(void);
 static void tok_next(void);
 static void getch(void);
 static void hashclash(void);
+static int tasc(int loc);
 
 int main(int argc, char **argv)
 {
@@ -227,7 +236,9 @@ int main(int argc, char **argv)
     }
 
     symtbl = calloc(1, MAXSYMS * sizeof(int));
-    codegen_output_buffer = malloc(MAXCODESZ);
+    /* initialize the codegen buffer as it is desirable for MVS
+       where the stack is part of the executable */
+    codegen_output_buffer = calloc(1, MAXCODESZ);
 
     if ((symtbl == NULL)
         || (codegen_output_buffer == NULL))
@@ -290,6 +301,158 @@ int main(int argc, char **argv)
 
     di = 0;    /* codegen index, zero'd */
 
+#if TARGET_MVS
+
+    /* give us some confidence it is working */
+    codegen_output_buffer[di++] = 0x07; /* emit "nopr" instruction (bcr 0,0) */
+    codegen_output_buffer[di++] = 0x00; /* for fun */
+
+    /* establish location */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    /* subtract 4 without needing a constant */
+    codegen_output_buffer[di++] = 0x06; /* emit "bctr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x06; /* emit "bctr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x06; /* emit "bctr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x06; /* emit "bctr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    /* clean r15 for display purposes */
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,0(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x00; /* rest of offset */
+
+    /* save registers */
+    codegen_output_buffer[di++] = 0x90; /* emit "stm r14,r12,12(r13)" */
+    codegen_output_buffer[di++] = 0xec; 
+    codegen_output_buffer[di++] = 0xd0; 
+    codegen_output_buffer[di++] = 0x0c;     
+    
+    /* save original r13 in r9 */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r9,r13" instruction */
+    codegen_output_buffer[di++] = 0x9d; 
+
+    /* r7 dedicated to load point */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r7,r15" instruction */
+    codegen_output_buffer[di++] = 0x7F; 
+
+    /* we want a pc-relative jump, but don't have one (in s/370) unless you rely
+       on being within 4095 bytes of the base. not a general solution.
+       this is the next best (worst) thing. it's not that bad if you
+       don't have any friends to lose anyway */
+    /* oh - we also want to load a large immediate value, but don't have
+       that either - again, s/370, not esa/390 or z/arch */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    /* remember = di; */
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    /* 64k stack */
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x01;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+
+    /* di - remember */
+
+    /* skip forward 64k from where we are now */
+    /* remember = di; */
+    codegen_output_buffer[di++] = 0x58; /* emit "l r2,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0x20;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r15,r2" instruction */
+    codegen_output_buffer[di++] = 0xf2;
+
+    /* r13 points to the register save area stack */
+    codegen_output_buffer[di++] = 0x41; /* emit "la r13,18(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x12;
+
+    /* branch over stack */
+    codegen_output_buffer[di++] = 0x45; /* emit "bal r0,14(,r15)" instruction */
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0x0e;
+
+    /* stack */
+    di += 0x10000;
+    
+    /* di - remember */
+
+    /* now we're ready to do a call to a particular (di) offset from r7 */
+
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    remember = di;
+
+    /* placeholder */
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r15,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r15,r7" instruction */
+    codegen_output_buffer[di++] = 0xf7;
+
+    /* we now call the user's entry point */
+
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    /* restore original r13 */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r13,r9" instruction */
+    codegen_output_buffer[di++] = 0xd9; 
+
+    /* load return address */
+    codegen_output_buffer[di++] = 0x58; /* emit "l r14,12(,r13)" instruction */
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0xd0;
+    codegen_output_buffer[di++] = 0x0c;
+
+    /* load registers */
+    codegen_output_buffer[di++] = 0x98; /* emit "lm r0,r12,20(r13)" */
+    codegen_output_buffer[di++] = 0x0c; 
+    codegen_output_buffer[di++] = 0xd0; 
+    codegen_output_buffer[di++] = 0x14;
+
+    codegen_output_buffer[di++] = 0x07; /* emit "br r14" instruction */
+    codegen_output_buffer[di++] = 0xfe; /* (bcr 15,14) */
+
+#else
     codegen_output_buffer[di++] = 0x90; /* emit "nop" instruction for fun */
     
     /* adjust ds to the next 64k block */
@@ -322,6 +485,7 @@ int main(int argc, char **argv)
     codegen_output_buffer[di++] = 0xcd; /* emit "int 21h" instruction */
     codegen_output_buffer[di++] = 0x21;
     codegen_output_buffer[di++] = 0xc3; /* emit "ret" instruction for fun */
+#endif
 
     while (setjmp(compile_jmpbuf) != 0)
     {
@@ -371,9 +535,28 @@ static void compile_function(void)
         hashclash();
     }
     symtbl[(unsigned)bx] = di; /* record function address in symtbl */
+#ifdef TARGET_MVS
+    /* save registers */
+    codegen_output_buffer[di++] = 0x90; /* emit "stm r14,r12,12(r13)" */
+    codegen_output_buffer[di++] = 0xec; 
+    codegen_output_buffer[di++] = 0xd0; 
+    codegen_output_buffer[di++] = 0x0c;    
+#endif
+
     compile_stmts_tok_next2(); /* compile function body */
 
+#if TARGET_MVS
+    /* load registers */
+    codegen_output_buffer[di++] = 0x98; /* emit "lm r14,r12,12(r13)" */
+    codegen_output_buffer[di++] = 0xec;
+    codegen_output_buffer[di++] = 0xd0; 
+    codegen_output_buffer[di++] = 0x0c;
+
+    codegen_output_buffer[di++] = 0x07; /* emit "br r14" instruction */
+    codegen_output_buffer[di++] = 0xfe; /* (bcr 15,14) */
+#else
     codegen_output_buffer[di++] = 0xc3; /* emit "ret" instruction */
+#endif
 
     bx = oldbx;
 
@@ -405,6 +588,24 @@ static void compile_function(void)
        _start() code can have code to set ds to 64k above what
        it received from MSDOS (ie set to the PSP) and a call to
        INT 21H to terminate. */
+
+#if TARGET_MVS
+    {
+        int ret;
+        int (*foo)(void);
+
+        ax = symtbl[(unsigned)bx];
+        codegen_output_buffer[(unsigned)(remember)] = (ax >> 24) & 0xff;
+        codegen_output_buffer[(unsigned)(remember + 1)] = (ax >> 16) & 0xff;
+        codegen_output_buffer[(unsigned)(remember + 2)] = (ax >> 8) & 0xff;
+        codegen_output_buffer[(unsigned)(remember + 3)] = ax & 0xff;
+        foo = (int (*)(void))codegen_output_buffer;        
+        foo();
+        ret = *(int *)(codegen_output_buffer + DATASTART + 0x7078);
+        printf("return from called program is %d %x\n", ret, ret);
+        exit(EXIT_SUCCESS);
+    }
+#endif
 
 #if 0
 execute:
@@ -626,8 +827,40 @@ static void compile_assign(void)
 
     /* compile_store: */
     bx = bp;   /* restore dest var token */
+#ifdef TARGET_MVS
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    bx *= 4; /* there are 65536 possible hash values, each occupying 4 bytes */
+    bx += DATASTART; /* and the data space starts after the code */
+    emit_tok();
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r11,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r11,r7" instruction */
+    codegen_output_buffer[di++] = 0xb7;
+
+    codegen_output_buffer[di++] = 0x50; /* emit "st r6,0(,r11)" instruction */
+    codegen_output_buffer[di++] = 0x60;
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0x00;
+    
+#else
     ax = 0x0689;   /* code for "mov [imm],ax" */
     emit_var();
+#endif
     return;
 }
 
@@ -765,8 +998,28 @@ static void compile_unary(void)
     /* check for tok_is_num */
     if (dl)
     {
+#if TARGET_MVS
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+        codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; /* target + source index */
+        codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+        codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+        /* jump over constant, and r14 points to the constant */
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+        codegen_output_buffer[di++] = 0xef;
+#else
         codegen_output_buffer[di++] = 0xb8; /* code for "mov ax,imm" */
+#endif
         emit_tok(); /* emit imm */
+#if TARGET_MVS
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r14)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0xe0;
+        codegen_output_buffer[di++] = 0x00;
+#endif
         return;
     }
     
@@ -789,8 +1042,15 @@ static void emit_tok(void)
 {
     ax = bx;
     /* emit token value */
+#if TARGET_MVS
+    codegen_output_buffer[di++] = (ax >> 24) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 16) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+    codegen_output_buffer[di++] = ax & 0xff;
+#else
     codegen_output_buffer[di++] = ax & 0xff;
     codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+#endif
     tok_next();
     return;
 }
@@ -815,7 +1075,7 @@ static void tok_next(void)
     getch();
 
     /* skip spaces (anything <= ' ' is considered space) */
-    while (ax <= 32)
+    while (ax <= ' ')
     {
         getch();
     }
@@ -848,7 +1108,7 @@ static void tok_next(void)
         
         /* shift this char into cx */
         cx <<= 8;
-        cx |= ax;
+        cx |= tasc(ax);
 
         /* Note that this is the real genius of the original Sector C.
            Just hope that a simple atoi implementation, when used on
@@ -861,7 +1121,7 @@ static void tok_next(void)
            */
 
         /* atoi computation: bx = 10 * bx + (ax - '0') */
-        bx = 10 * bx + (ax - '0');
+        bx = 10 * bx + (tasc(ax) - tasc('0'));
 
         getch();
     }
@@ -940,4 +1200,119 @@ static void hashclash(void)
     printf("run with debug on to figure out which names hashed\n");
     printf("to the same value\n");
     exit(EXIT_FAILURE);
+}
+
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a representation of a character.  An integer         */
+/*  is returned, containing the representation of that character     */
+/*  in the ASCII character set.                                      */
+/*                                                                   */
+/*********************************************************************/
+static int tasc(int loc)
+{
+  switch (loc)
+  {
+    case '\t' : return (0x09);
+    case '\n' : return (0x0a);
+    case '\f' : return (0x0c);
+    case '\r' : return (0x0d);
+    case ' '  : return (0x20);
+    case '!'  : return (0x21);
+    case '\"' : return (0x22);
+    case '#'  : return (0x23);
+    case '$'  : return (0x24);
+    case '%'  : return (0x25);
+    case '&'  : return (0x26);
+    case '\'' : return (0x27);
+    case '('  : return (0x28);
+    case ')'  : return (0x29);
+    case '*'  : return (0x2a);
+    case '+'  : return (0x2b);
+    case ','  : return (0x2c);
+    case '-'  : return (0x2d);
+    case '.'  : return (0x2e);
+    case '/'  : return (0x2f);
+    case '0'  : return (0x30);
+    case '1'  : return (0x31);
+    case '2'  : return (0x32);
+    case '3'  : return (0x33);
+    case '4'  : return (0x34);
+    case '5'  : return (0x35);
+    case '6'  : return (0x36);
+    case '7'  : return (0x37);
+    case '8'  : return (0x38);
+    case '9'  : return (0x39);
+    case ':'  : return (0x3a);
+    case ';'  : return (0x3b);
+    case '<'  : return (0x3c);
+    case '='  : return (0x3d);
+    case '>'  : return (0x3e);
+    case '?'  : return (0x3f);
+    case '@'  : return (0x40);
+    case 'A'  : return (0x41);
+    case 'B'  : return (0x42);
+    case 'C'  : return (0x43);
+    case 'D'  : return (0x44);
+    case 'E'  : return (0x45);
+    case 'F'  : return (0x46);
+    case 'G'  : return (0x47);
+    case 'H'  : return (0x48);
+    case 'I'  : return (0x49);
+    case 'J'  : return (0x4a);
+    case 'K'  : return (0x4b);
+    case 'L'  : return (0x4c);
+    case 'M'  : return (0x4d);
+    case 'N'  : return (0x4e);
+    case 'O'  : return (0x4f);
+    case 'P'  : return (0x50);
+    case 'Q'  : return (0x51);
+    case 'R'  : return (0x52);
+    case 'S'  : return (0x53);
+    case 'T'  : return (0x54);
+    case 'U'  : return (0x55);
+    case 'V'  : return (0x56);
+    case 'W'  : return (0x57);
+    case 'X'  : return (0x58);
+    case 'Y'  : return (0x59);
+    case 'Z'  : return (0x5a);
+    case '['  : return (0x5b);
+    case '\\' : return (0x5c);
+    case ']'  : return (0x5d);
+    case '^'  : return (0x5e);
+    case '_'  : return (0x5f);
+    case '`'  : return (0x60);
+    case 'a'  : return (0x61);
+    case 'b'  : return (0x62);
+    case 'c'  : return (0x63);
+    case 'd'  : return (0x64);
+    case 'e'  : return (0x65);
+    case 'f'  : return (0x66);
+    case 'g'  : return (0x67);
+    case 'h'  : return (0x68);
+    case 'i'  : return (0x69);
+    case 'j'  : return (0x6a);
+    case 'k'  : return (0x6b);
+    case 'l'  : return (0x6c);
+    case 'm'  : return (0x6d);
+    case 'n'  : return (0x6e);
+    case 'o'  : return (0x6f);
+    case 'p'  : return (0x70);
+    case 'q'  : return (0x71);
+    case 'r'  : return (0x72);
+    case 's'  : return (0x73);
+    case 't'  : return (0x74);
+    case 'u'  : return (0x75);
+    case 'v'  : return (0x76);
+    case 'w'  : return (0x77);
+    case 'x'  : return (0x78);
+    case 'y'  : return (0x79);
+    case 'z'  : return (0x7a);
+    case '{'  : return (0x7b);
+    case '|'  : return (0x7c);
+    case '}'  : return (0x7d);
+    case '~'  : return (0x7e);
+    default   : return(0);
+  }
 }
