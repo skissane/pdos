@@ -704,6 +704,44 @@ static void compile_stmts_tok_next2(void)
         /* otherwise it is a call, so ... */
         if (dh != 0)
         {
+#if TARGET_MVS
+    /* now we're ready to do a call to a particular (di) offset from r7 */
+
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    /* load function offset (from r7) from symbol-table */
+    ax = symtbl[(unsigned)bx];
+
+    /* write out the constant */
+    codegen_output_buffer[di++] = (ax >> 24) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 16) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+    codegen_output_buffer[di++] = ax & 0xff;
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r15,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r15,r7" instruction */
+    codegen_output_buffer[di++] = 0xf7;
+
+    /* we now call the user's entry point */
+
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+#else
             /* emit "call" instruction */
             codegen_output_buffer[di++] = 0xe8;
             /* load function offset from symbol-table */
@@ -721,6 +759,7 @@ static void compile_stmts_tok_next2(void)
             /* emit target */
             codegen_output_buffer[di++] = ax & 0xff;
             codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+#endif
 
             continue; /* loop to compile next statement */
         }
