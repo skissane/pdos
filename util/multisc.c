@@ -130,6 +130,13 @@ typedef struct {
 #define TOK_LE          133
 #define TOK_GE          153
 
+/* maximum number of bytes of code we can produce */
+#define MAXCODESZ 0x10000
+
+/* maximum number of symbols we support, and corresponding mask */
+#define MAXSYM_MASK 0xffffU
+#define MAXSYMS (MAXSYM_MASK + 1UL)
+
 /********************************************************************/
 /* Common variable uses                                             */
 /********************************************************************/
@@ -172,10 +179,12 @@ static int skiptok = 0;
 
 static int remember;
 
+static int debug = 0;
+
 /********************************************************************/
 /* binary operator table                                            */
 /********************************************************************/
-int binary_oper_tbl[] = {
+static int binary_oper_tbl[] = {
    TOK_ADD, 0xc103,             /* add ax,cx */
    TOK_SUB, 0xc12b,             /* sub ax,cx */
    TOK_MUL, 0xe1f7,             /* mul ax,cx */
@@ -205,19 +214,20 @@ static void emit_tok(void);
 static void tok_next2(void);
 static void tok_next(void);
 static void getch(void);
+static void hashclash(void);
 
 int main(int argc, char **argv)
 {
     if (argc <= 2)
     {
-        printf("multisc <source> <COM>\n");
+        printf("multisc [-d] <source> <COM>\n");
         printf("builds a 8086 COM file from source code in the\n");
         printf("subset of C90 originally defined by Sector C\n");
         return (EXIT_FAILURE);
     }
 
-    symtbl = malloc(0x10000 * sizeof(int));
-    codegen_output_buffer = malloc(0x10000);
+    symtbl = calloc(1, MAXSYMS * sizeof(int));
+    codegen_output_buffer = malloc(MAXCODESZ);
 
     if ((symtbl == NULL)
         || (codegen_output_buffer == NULL))
@@ -226,17 +236,22 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     
-    fp = fopen(argv[1], "r");
+    if (strcmp(argv[1], "-d") == 0)
+    {
+        debug = 1;
+    }
+    
+    fp = fopen(argv[1+debug], "r");
     if (fp == NULL)
     {
-        printf("failed to open %s for reading\n", argv[1]);
+        printf("failed to open %s for reading\n", argv[1+debug]);
         return (EXIT_FAILURE);
     }
     
-    fq = fopen(argv[2], "wb");
+    fq = fopen(argv[2+debug], "wb");
     if (fq == NULL)
     {
-        printf("failed to open %s for writing\n", argv[2]);
+        printf("failed to open %s for writing\n", argv[2+debug]);
         return (EXIT_FAILURE);
     }
 
@@ -298,7 +313,13 @@ int main(int argc, char **argv)
         {
             compile_function();
         }
-        tok_next2();  /* consume "int" and <ident> */
+        tok_next(); /* consume "int" */
+        if (symtbl[bx] != 0)
+        {
+            hashclash();
+        }
+        symtbl[bx] = TOK_INT;
+        tok_next();  /* consume <ident> */
     }
 
     return (0);
@@ -311,6 +332,10 @@ static void compile_function(void)
 
     tok_next(); /* consume "void" */
     oldbx = bx;   /* save function name token */
+    if (symtbl[bx] != 0)
+    {
+        hashclash();
+    }
     symtbl[bx] = di; /* record function address in symtbl */
     compile_stmts_tok_next2(); /* compile function body */
 
@@ -774,9 +799,19 @@ static void tok_next(void)
         /* should probably use isspace() and iscntrl() */
         if (ax <= ' ')
         {
+            bx &= MAXSYM_MASK;
+            if (debug)
+            {
+                printf(" is hash %x\n", bx);
+            }
             break;
         }
 
+        if (debug)
+        {
+            printf("%c", ax);
+        }
+        
         /* shift this char into cx */
         cx <<= 8;
         cx |= ax;
@@ -787,7 +822,7 @@ static void tok_next(void)
         getch();
     }
 
-    cx &= 0xffffU;
+    cx &= 0xffffU; /* only 2 characters should be inspected */
     ax = cx;
     /* check for single-line comment "//" */
     if (ax == 0x2f2f)
@@ -817,7 +852,6 @@ static void tok_next(void)
     /* check for call parens "()" */
     dh = (ax == 0x2829);
 
-    bx &= 0xffffU;
     ax = bx;  /* return token in ax also */
     return;
 }
@@ -853,4 +887,13 @@ static void getch(void)
     semi = ax;
     ax = 0;   /* return 0 instead, treated as whitespace */
     return;
+}
+
+static void hashclash(void)
+{
+    printf("duplicate name (or at least, hash clash)\n");
+    printf("variables and functions now share the same namespace\n");
+    printf("run with debug on to figure out which names hashed\n");
+    printf("to the same value\n");
+    exit(EXIT_FAILURE);
 }
