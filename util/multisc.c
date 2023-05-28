@@ -159,7 +159,7 @@ static int ds;
 static int di;
 static int es;
 
-static short *symtbl;
+static int *symtbl;
 
 static unsigned char *codegen_output_buffer;
 
@@ -216,7 +216,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
 
-    symtbl = malloc(0x10000 * sizeof(short));
+    symtbl = malloc(0x10000 * sizeof(int));
     codegen_output_buffer = malloc(0x10000);
 
     if ((symtbl == NULL)
