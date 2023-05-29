@@ -31,6 +31,7 @@ static int d;
 static void doemul(void);
 static void splitrx(void);
 static void splitrs(void);
+static void splitrr(void);
 static void writereg(unsigned char *z, int x);
 
 int main(int argc, char **argv)
@@ -73,7 +74,7 @@ static void doemul(void)
     while (1)
     {
         instr = *p;
-        printf("instr is %02X\n", instr);
+        printf("instr is %02X at %08X\n", instr, p - base - 0x10000);
         if (instr == 0x07) /* bcr */
         {
             x1 = (p[1] >> 4) & 0x0f;
@@ -100,6 +101,7 @@ static void doemul(void)
             }
             if (x2 != 0)
             {
+                printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
                 p = base + regs[x2];
                 printf("new address is %08X\n", regs[x2]);
             }
@@ -125,11 +127,26 @@ static void doemul(void)
         }
         else if (instr == 0x41) /* la */
         {
+            int one = 0;
+            int two = 0;
+            
             t = (p[1] >> 4) & 0x0f;
             i = p[1] & 0x0f;
             b = (p[2] >> 4) & 0x0f;
-            d = (p[3] & 0xf) << 8 | p[4];
-            regs[t] = regs[b] + regs[i] + d;
+            d = ((p[2] & 0xf) << 8) | p[3];
+            printf("xxx %x %x\n", ((p[2] & 0xf) << 8), p[3]);
+            if (b != 0)
+            {
+                one = regs[b];
+                printf("one is %x\n", one);
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+                printf("two is %x\n", two);
+            }
+            printf("d is %x\n", d);
+            regs[t] = one + two + d;
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
@@ -161,9 +178,16 @@ static void doemul(void)
             }
             p += 4;
         }
+        else if (instr == 0x18) /* lr */
+        {
+            splitrr();
+            regs[x1] = regs[x2];
+            p += 2;
+        }
         else
         {
-            printf("unknown instruction %02X\n", p[0]);
+            printf("unknown instruction %02X at %08X\n", p[0],
+                   p - base - 0x10000);
             exit(EXIT_FAILURE);
         }
     }
@@ -185,6 +209,13 @@ static void splitrs(void)
     x2 = p[1] & 0x0f;
     b = (p[2] >> 4) & 0x0f;
     d = (p[3] & 0xf) << 8 | p[4];
+    return;
+}
+
+static void splitrr(void)
+{
+    x1 = (p[1] >> 4) & 0x0f;
+    x2 = p[1] & 0x0f;
     return;
 }
 
