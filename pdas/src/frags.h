@@ -41,7 +41,6 @@ extern struct frag *current_frag;
 
 struct frag *frag_alloc (void);
 
-int frags_offset_is_fixed (const struct frag *frag1, const struct frag *frag2, long *offset_p);
 int frags_offset_is_fixed (const struct frag *frag1, const struct frag *frag2, offset_t *offset_p);
 int frags_is_greater_than_offset (value_t offset2, const struct frag *frag2, value_t offset1, const struct frag *frag1, offset_t *offset_p);
 

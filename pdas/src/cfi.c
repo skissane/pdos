@@ -225,7 +225,7 @@ static void output_cfi_instruction (struct cfi_instruction_data *cfi_instruction
             if (symbol_get_frag (cfi_instruction->u.ll.label1)
                 == symbol_get_frag (cfi_instruction->u.ll.label2)) {
 
-                address_t delta = symbol_get_value (cfi_instruction->u.ll.label2) - symbol_get_value (cfi_instruction->u.ll.label1);
+                value_t delta = symbol_get_value (cfi_instruction->u.ll.label2) - symbol_get_value (cfi_instruction->u.ll.label1);
 
                 delta /= DEFAULT_CODE_ALIGNMENT_FACTOR;
 

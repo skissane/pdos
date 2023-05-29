@@ -20,7 +20,7 @@
 /* Internal suffix for .intel_syntax. It cannot be directly used by the user. */
 #define     INTEL_SUFFIX                '\1'
 
-#define     MAX_OPERANDS                0x03
+#define     MAX_OPERANDS                3
 #define     MAX_REG_NAME_SIZE           8
 
 /* Prefixes are emitted in the following order. */
@@ -41,12 +41,12 @@ struct template {
 
     const char *name;
     
-#define     NO_BSUF                     0x00000040
-#define     NO_WSUF                     0x00000080
-#define     NO_SSUF                     0x00000100
-#define     NO_LSUF                     0x00200000
-#define     NO_QSUF                     0x00400000
-#define     NO_INTELSUF                 0x00800000
+#define     NO_BSUF                     (1LU << 25)
+#define     NO_WSUF                     (1LU << 26)
+#define     NO_SSUF                     (1LU << 27)
+#define     NO_LSUF                     (1LU << 28)
+#define     NO_QSUF                     (1LU << 29)
+#define     NO_INTELSUF                 (1LU << 30)
     
     int operands;
     unsigned int base_opcode;
@@ -56,36 +56,36 @@ struct template {
     
     flag_int opcode_modifier;
 
-#define     W                           0x00000001
-#define     D                           0x00000002
+#define     W                           (1LU << 0)
+#define     D                           (1LU << 1)
     
-#define     MODRM                       0x00000004
-#define     SHORT_FORM                  0x00000008
+#define     MODRM                       (1LU << 2)
+#define     SHORT_FORM                  (1LU << 3)
 
-#define     JUMP                        0x00000010
-#define     CALL                        0x00000020
+#define     JUMP                        (1LU << 4)
+#define     CALL                        (1LU << 5)
     
-#define     IGNORE_SIZE                 0x00000200
-#define     DEFAULT_SIZE                0x01000000
-#define     SEGSHORTFORM                0x00040000
+#define     IGNORE_SIZE                 (1LU << 6)
+#define     DEFAULT_SIZE                (1LU << 7)
+#define     SEGSHORTFORM                (1LU << 8)
 
-#define     FLOAT_D                     0x00000400          /* Must be 0x400. */
+#define     FLOAT_D                     (1LU << 10)          /* Must be 0x400 (1LU << 10). */
     
-#define     JUMPINTERSEGMENT            0x00000800
-#define     JUMPBYTE                    0x00001000
+#define     JUMPINTERSEGMENT            (1LU << 11)
+#define     JUMPBYTE                    (1LU << 12)
     
-#define     SIZE16                      0x00002000
-#define     SIZE32                      0x00004000
+#define     SIZE16                      (1LU << 13)
+#define     SIZE32                      (1LU << 14)
     
-#define     IS_PREFIX                   0x00008000
-#define     IS_STRING                   0x00010000
+#define     IS_PREFIX                   (1LU << 15)
+#define     IS_STRING                   (1LU << 16)
     
-#define     REG_DUPLICATION             0x00020000
+#define     REG_DUPLICATION             (1LU << 17)
     
-#define     FLOAT_MF                    0x00080000
-#define     ADD_FWAIT                   0x00100000
+#define     FLOAT_MF                    (1LU << 18)
+#define     ADD_FWAIT                   (1LU << 19)
 
-#define     NO_REX_W                    0x00200000
+#define     NO_REX_W                    (1LU << 20)
     
     flag_int operand_types[MAX_OPERANDS];
     
@@ -109,31 +109,32 @@ struct template {
 #define     IMM8S                       (1LU << 12)
 #define     IMM16                       (1LU << 13)
 #define     IMM32                       (1LU << 14)
+#define     IMM64                       (1LU << 15)
     
-#define     IMM                         (IMM8 | IMM8S | IMM16 | IMM32)
+#define     IMM                         (IMM8 | IMM8S | IMM16 | IMM32 | IMM64)
 #define     ENCODABLEIMM                (IMM8 | IMM16 | IMM32)
     
-#define     DISP8                       (1LU << 15)
-#define     DISP16                      (1LU << 16)
-#define     DISP32                      (1LU << 17)
+#define     DISP8                       (1LU << 17)
+#define     DISP16                      (1LU << 18)
+#define     DISP32                      (1LU << 19)
     
 #define     DISP                        (DISP8 | DISP16 | DISP32)
-#define     BASE_INDEX                  (1LU << 18)
+#define     BASE_INDEX                  (1LU << 22)
     
 /*
  * INV_MEM is for instruction with modrm where general register
  * encoding is allowed only in modrm.regmem (control register move).
  * */
-#define     INV_MEM                     (1LU << 19)
+#define     INV_MEM                     (1LU << 23)
 #define     ANY_MEM                     (DISP8 | DISP16 | DISP32 | BASE_INDEX | INV_MEM)
     
-#define     ACC                         (1LU << 20)
-#define     PORT                        (1LU << 21)
-#define     SHIFT_COUNT                 (1LU << 22)
-#define     JUMP_ABSOLUTE               (1LU << 23)
+#define     ACC                         (1LU << 25)
+#define     PORT                        (1LU << 26)
+#define     SHIFT_COUNT                 (1LU << 27)
+#define     JUMP_ABSOLUTE               (1LU << 28)
 
-#define     REG_REX                     (1LU << 24)
-#define     REG_REX64                   (1LU << 25)
+#define     REG_REX                     (1LU << 29)
+#define     REG_REX64                   (1LU << 30)
     
 #define     IMPLICIT_REGISTER           (SHIFT_COUNT | ACC)
     
@@ -226,6 +227,9 @@ static const struct template template_table[] = {
     { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, CPU_386 },
     { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, CPU_386 },
     { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 },
+
+    /* 64-bit only moves. */
+    { "movabs", 2, 0xB8, NONE, Q_SUF | SHORT_FORM, { IMM64, REG64, 0 }, CPU_64 },
     
     /* Move with sign extend. */
     /* "movsbl" and "movsbw" are not unified into "movsb" to prevent conflict with "movs". */

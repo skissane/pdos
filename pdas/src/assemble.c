@@ -319,10 +319,10 @@ void machine_dependent_destroy (void)
     hashtab_destroy_hashtab (templates_hashtab);
 }
 
-void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size) {
+void machine_dependent_number_to_chars (unsigned char *p, value_t number, unsigned long size) {
     
     unsigned long i;
-    
+
     for (i = 0; i < size; i++) {
         p[i] = (number >> (8 * i)) & 0xff;
     }
@@ -534,20 +534,34 @@ static const struct reg_entry *parse_register (const char *reg_string, char **en
 
 }
 
-static int fits_in_signed_byte (long number) {
+static int fits_in_signed_byte (int_fast64_t number)
+{
     return ((number >= -128) && (number <= 127));
 }
 
-static int fits_in_unsigned_byte (long number) {
+static int fits_in_unsigned_byte (int_fast64_t number)
+{
     return ((number & 0xff) == number);
 }
 
-static int fits_in_signed_word (long number) {
+static int fits_in_signed_word (int_fast64_t number)
+{
     return ((number >= -32768) && (number <= 32767));
 }
 
-static int fits_in_unsigned_word (long number) {
+static int fits_in_unsigned_word (int_fast64_t number)
+{
     return ((number & 0xffff) == number);
+}
+
+static int fits_in_signed_long (int_fast64_t number)
+{
+    return ((number >= -2147483647-1) && (number <= 2147483647));
+}
+
+static int fits_in_unsigned_long (int_fast64_t number)
+{
+    return ((number & 0xffffffff) == number);
 }
 
 static int base_index_check (char *operand_string)
@@ -576,30 +590,23 @@ static int base_index_check (char *operand_string)
     return 0;
 }
 
-static int finalize_immediate (struct expr *expr, const char *imm_start) {
-
+static int finalize_immediate (struct expr *expr, const char *imm_start)
+{
     if (expr->type == EXPR_TYPE_INVALID || expr->type == EXPR_TYPE_ABSENT) {
-    
         if (imm_start) {
             as_error ("missing or invalid immediate expression '%s'", imm_start);
         }
-        
+
         return 1;
-    
     } else if (expr->type == EXPR_TYPE_CONSTANT) {
-    
         /* Size will be determined later. */
-        instruction.types[instruction.operands] |= IMM32;
-    
+        instruction.types[instruction.operands] |= IMM64;
     } else {
-    
         /* It is an address and size will determined later. */
-        instruction.types[instruction.operands] = IMM8 | IMM16 | IMM32;
-    
+        instruction.types[instruction.operands] = IMM8 | IMM16 | IMM32 | IMM64;
     }
     
     return 0;
-
 }
 
 static int finalize_displacement (struct expr *expr, const char *disp_start) {
@@ -941,8 +948,8 @@ static int att_parse_operand (char *operand_string) {
 
 }
 
-unsigned int smallest_imm_type (long number) {
-
+flag_int smallest_imm_type (int_fast64_t number)
+{
     if (fits_in_signed_byte (number)) {
         return (IMM8S | IMM8 | IMM16 | IMM32);
     }
@@ -954,9 +961,10 @@ unsigned int smallest_imm_type (long number) {
     if (fits_in_signed_word (number) || fits_in_unsigned_word (number)) {
         return (IMM16 | IMM32);
     }
-    
-    return IMM32;
 
+    if (fits_in_signed_long (number) || fits_in_unsigned_long (number)) return IMM32;
+    
+    return IMM64;
 }
 
 static void optimize_size_of_disps (void) {
@@ -990,15 +998,14 @@ static void optimize_size_of_disps (void) {
 
 }
 
-static void optimize_size_of_imms (void) {
-
+static void optimize_size_of_imms (void)
+{
     char guessed_suffix = 0;
     int operand;
     
     if (instruction.suffix) {
         guessed_suffix = instruction.suffix;
     } else if (instruction.reg_operands) {
-    
         /**
          * Guesses a suffix from the last register operand
          * what is good enough for shortening immediates
@@ -1006,30 +1013,27 @@ static void optimize_size_of_imms (void) {
          * Example: mov $1234, %al
          */
         for (operand = instruction.operands; --operand >= 0; ) {
-        
             if (instruction.types[operand] & REG) {
-            
-                guessed_suffix = ((instruction.types[operand] & REG8) ? BYTE_SUFFIX : (instruction.types[operand] & REG16) ? WORD_SUFFIX : DWORD_SUFFIX);
+                if (instruction.types[operand] & REG8) guessed_suffix = BYTE_SUFFIX;
+                else if (instruction.types[operand] & REG16) guessed_suffix = WORD_SUFFIX;
+                else if (instruction.types[operand] & REG32) guessed_suffix = DWORD_SUFFIX;
+                else if (instruction.types[operand] & REG64) guessed_suffix = QWORD_SUFFIX;
+
                 break;
-            
             }
-        
         }
-    
     } else if ((bits == 16) ^ (instruction.prefixes[DATA_PREFIX] != 0)) {
-    
         /**
          * Immediate shortening for 16 bit code.
          * Example: .code16\n push $12341234
          */
         guessed_suffix = WORD_SUFFIX;
-    
     }
     
     for (operand = 0; operand < instruction.operands; operand++) {
     
         if (instruction.types[operand] & IMM) {
-        
+
             if (instruction.imms[operand]->type == EXPR_TYPE_CONSTANT) {
             
                 /* If a suffix is given, it is allowed to shorten the immediate. */
@@ -1053,49 +1057,42 @@ static void optimize_size_of_imms (void) {
                 }
                 
                 if (instruction.types[0] & IMM32) {
-                
                     instruction.imms[operand]->add_number &= 0xffffffff;
                     instruction.imms[operand]->add_number = ((instruction.imms[operand]->add_number ^ (1UL << 31)) - (1UL << 31));
-                
                 }
                 
                 instruction.types[operand] |= smallest_imm_type (instruction.imms[operand]->add_number);
-            
             }
-        
         }
-    
     }
-
 }
 
 static unsigned int modrm_mode_from_disp_size (unsigned int type) {
     return ((type & DISP8) ? 1 : ((type & (DISP16 | DISP32)) ? 2 : 0));
 }
 
-static long convert_number_to_size (unsigned long value, int size) {
-
+static value_t convert_number_to_size (value_t value, int size)
+{
     unsigned long mask;
     
     switch (size) {
     
         case 1:
-        
             mask = 0xff;
             break;
         
         case 2:
-        
             mask = 0xffff;
             break;
         
         case 4:
-        
             mask = 0xffffffff;
             break;
 
+        case 8:
+            return value;
+
         default:
-        
             as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0, "convert_number_to_size invalid case %i", size);
             break;
     
@@ -1107,7 +1104,6 @@ static long convert_number_to_size (unsigned long value, int size) {
     
     value &= mask;
     return value;
-
 }
 
 static int imm_size (flag_int operand_type)
@@ -1118,6 +1114,8 @@ static int imm_size (flag_int operand_type)
         size = 1;
     } else if (operand_type & IMM16) {
         size = 2;
+    } else if (operand_type & IMM64) {
+        size = 8;
     }
 
     return size;
@@ -1153,7 +1151,7 @@ static void output_disps (void)
 
                 if (pcrel) {
                     /* pcrel displacement is relative to the end of the instruction,
-                     * so the size of immediate operands have to be included. */
+                     * so the size of immediate operands has to be included. */
                     int operand2;
 
                     for (operand2 = 0; operand2 < instruction.operands; operand2++) {
@@ -1170,41 +1168,22 @@ static void output_disps (void)
     }
 }
 
-static void output_imm (unsigned int operand) {
-
+static void output_imm (unsigned int operand)
+{
     if (instruction.types[operand] & IMM) {
-    
         if (instruction.imms[operand]->type == EXPR_TYPE_CONSTANT) {
-        
-            int size = 4;
-            unsigned long value;
-            
-            if (instruction.types[operand] & (IMM8 | IMM8S)) {
-                size = 1;
-            } else if (instruction.types[operand] & IMM16) {
-                size = 2;
-            }
+            int size = imm_size (instruction.types[operand]);
+            value_t value;
             
             value = convert_number_to_size (instruction.imms[operand]->add_number, size);
             machine_dependent_number_to_chars (frag_increase_fixed_size (size), value, size);
-        
         } else {
-        
-            int size = 4;
-            
-            if (instruction.types[operand] & (IMM8 | IMM8S)) {
-                size = 1;
-            } else if (instruction.types[operand] & IMM16) {
-                size = 2;
-            }
+            int size = imm_size (instruction.types[operand]);
             
             fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.imms[operand], 0, RELOC_TYPE_DEFAULT);
             frag_increase_fixed_size (size);
-        
         }
-    
     }
-
 }
 
 static void output_imms (void) {
@@ -1589,64 +1568,62 @@ static int process_suffix (void) {
 
 }
 
-static int finalize_imms (void) {
-
+static int finalize_imms (void)
+{
     int operand;
     
     for (operand = 0; operand < instruction.operands; operand++) {
-    
         unsigned int overlap = instruction.types[operand] & instruction.template.operand_types[operand];
         
-        if ((overlap & IMM) && (overlap != IMM8) && (overlap != IMM8S) && (overlap != IMM16) && (overlap != IMM32)) {
+        if ((overlap & IMM)
+            && (overlap != IMM8)
+            && (overlap != IMM8S)
+            && (overlap != IMM16)
+            && (overlap != IMM32)
+            && (overlap != IMM64)) {
         
             if (instruction.suffix) {
-            
                 switch (instruction.suffix) {
                 
                     case BYTE_SUFFIX:
-                    
                         overlap &= IMM8 | IMM8S;
                         break;
                     
                     case WORD_SUFFIX:
-                    
                         overlap &= IMM16;
                         break;
                     
                     case DWORD_SUFFIX:
-                    
                         overlap &= IMM32;
+                        break;
+
+                    case QWORD_SUFFIX:
+                        overlap &= IMM64;
                         break;
                 
                 }
-            
             } else if (overlap == (IMM16 | IMM32)) {
-            
                 if ((bits == 16) ^ (instruction.prefixes[DATA_PREFIX] != 0)) {
                     overlap = IMM16;
                 } else {
                     overlap = IMM32;
                 }
-            
             } else if (instruction.prefixes[DATA_PREFIX]) {
                 overlap &= (bits != 16) ? IMM16 : IMM32;
             }
 
-            if ((overlap != IMM8) && (overlap != IMM8S) && (overlap != IMM16) && (overlap != IMM32)) {
-            
+            if ((overlap != IMM8) && (overlap != IMM8S)
+                && (overlap != IMM16) && (overlap != IMM32)
+                && (overlap != IMM64)) {
                 as_error ("no instruction suffix given; cannot determine immediate size");
                 return 1;
-            
             }
-        
         }
         
         instruction.types[operand] = overlap;
-    
     }
     
     return 0;
-
 }
 
 static void output_jump (void) {
@@ -2388,8 +2365,8 @@ static int match_template (void) {
 
 }
 
-static int process_operands (void) {
-
+static int process_operands (void)
+{
     if (instruction.template.opcode_modifier & REG_DUPLICATION) {
     
         unsigned int first_reg_operand = (instruction.types[0] & REG) ? 0 : 1;
@@ -2409,9 +2386,7 @@ static int process_operands (void) {
     }
     
     if (instruction.template.opcode_modifier & MODRM) {
-    
         if (instruction.reg_operands == 2) {
-        
             unsigned int source, dest;
             
             source = (instruction.types[0] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) ? 0 : 1;
@@ -2420,25 +2395,18 @@ static int process_operands (void) {
             instruction.modrm.mode = 3;
             
             if ((instruction.template.operand_types[dest] & ANY_MEM) == 0) {
-            
                 instruction.modrm.regmem = instruction.regs[source]->number;
                 instruction.modrm.reg = instruction.regs[dest]->number;
                 if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_R;
                 if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_B;
-            
             } else {
-            
                 instruction.modrm.regmem = instruction.regs[dest]->number;
                 instruction.modrm.reg = instruction.regs[source]->number;
                 if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_B;
                 if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_R;
-            
-            }
-        
+            }  
         } else {
-        
             if (instruction.mem_operands) {
-            
                 int fake_zero_displacement = 0;
                 int operand = 0;
                 
@@ -2574,9 +2542,8 @@ static int process_operands (void) {
                     
                     instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
                 }
-                
+
                 if (fake_zero_displacement) {
-                
                     struct expr *expr = &operand_exprs[operand_exprs_count++];
                     instruction.disps[operand] = expr;
                     
@@ -2584,22 +2551,15 @@ static int process_operands (void) {
                     expr->add_number = 0;
                     expr->add_symbol = NULL;
                     expr->op_symbol = NULL;
-                
                 }
-            
             }
             
             if (instruction.reg_operands) {
-            
                 int operand = 0;
-                
-                if (instruction.types[0] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) {
-                    ;
-                } else if (instruction.types[1] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) {
-                    operand = 1;
-                } else {
-                    operand = 2;
-                }
+
+                for (operand = 0; operand < instruction.operands; operand++)
+                    if (instruction.types[operand]
+                        & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) break;
                 
                 if (instruction.template.extension_opcode != NONE) {
                     instruction.modrm.regmem = instruction.regs[operand]->number;
@@ -2614,13 +2574,11 @@ static int process_operands (void) {
                 }
             
             }
-            
+
             if (instruction.template.extension_opcode != NONE) {
                 instruction.modrm.reg = instruction.template.extension_opcode;
             }
-        
         }
-    
     }
     
     if (instruction.template.opcode_modifier & SEGSHORTFORM) {
@@ -2654,7 +2612,6 @@ static int process_operands (void) {
     }
     
     return 0;
-
 }
 
 static void swap_2_operands (unsigned int op1, unsigned int op2) {

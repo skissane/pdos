@@ -8,8 +8,9 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <stddef.h>
-#include    <stdio.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <inttypes.h>
 
 enum { AS_FORMAT_A_OUT, AS_FORMAT_COFF, AS_FORMAT_ELF };
 
@@ -76,12 +77,15 @@ typedef enum {
 
 } reloc_type_t;
 
-typedef     unsigned long               address_t;
+typedef unsigned long address_t;
 
-typedef     signed long                 offset_t;
-typedef     unsigned long               value_t;
+typedef int_fast64_t offset_t;
+typedef uint_fast64_t value_t;
+#define PRIxVALUE PRIxFAST64
+#define PRIXVALUE PRIXFAST64
+#define PRIiOFFSET PRIiFAST64
 
-typedef     unsigned long               flag_int;
+typedef unsigned long flag_int;
 
 #include    "frags.h"
 #include    "expr.h"
@@ -143,7 +147,7 @@ int machine_dependent_parse_name (char **pp, struct expr *expr, char *name, char
 void machine_dependent_parse_operand (char **pp, struct expr *expr);
 
 section_t machine_dependent_simplified_expression_read_into (char **pp, struct expr *expr);
-void machine_dependent_number_to_chars (unsigned char *p, unsigned long number, unsigned long size);
+void machine_dependent_number_to_chars (unsigned char *p, value_t number, unsigned long size);
 
 /* coff.c */
 struct pseudo_op_entry *coff_get_pseudo_op_table (void);

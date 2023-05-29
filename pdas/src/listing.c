@@ -185,7 +185,7 @@ void generate_listing (void) {
         }
         
         if (ll->frag) {
-            fprintf (f, "%04lX ", ll->frag->address + ll->where);
+            fprintf (f, "%04lx", ll->frag->address + ll->where);
         } else {
             fprintf (f, "     ");
         }
@@ -231,7 +231,7 @@ void generate_listing (void) {
                     continue;
                 }
                 
-                fprintf (f, "    %08lx    %s\n", symbol_get_value (symbol), symbol_get_name (symbol));
+                fprintf (f, "    %08"PRIxVALUE"    %s\n", symbol_get_value (symbol), symbol_get_name (symbol));
             
             }
         
@@ -250,7 +250,7 @@ void generate_listing (void) {
                 }
                 
                 if (symbol_is_undefined (symbol)) {
-                    fprintf (f, "    %08lx    %s\n", symbol_get_value (symbol), symbol_get_name (symbol));
+                    fprintf (f, "    %08"PRIxVALUE"    %s\n", symbol_get_value (symbol), symbol_get_name (symbol));
                 }
             
             }

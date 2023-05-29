@@ -291,7 +291,7 @@ static void finish_frags_after_relaxation (section_t section) {
                 
                 if (((long)(frag->offset)) < 0) {
                 
-                    as_error_at (frag->filename, frag->line_number, "attempt to .org/.space backward (%li)", frag->offset);
+                    as_error_at (frag->filename, frag->line_number, "attempt to .org/.space backward ("PRIiOFFSET")", frag->offset);
                     frag->offset = 0;
                 
                 }

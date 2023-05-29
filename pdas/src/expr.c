@@ -31,7 +31,7 @@ struct expr_symbol_line {
 
 static struct expr_symbol_line *expr_symbol_lines = NULL;
 
-static char *read_character (char *p, unsigned long *c) {
+static char *read_character (char *p, uint_fast64_t *c) {
 
     if (*p == '\\') {
     
@@ -766,7 +766,7 @@ section_t read_into (char **pp, struct expr *expr, unsigned int rank, enum expr_
     while (left_op != EXPR_TYPE_INVALID && op_rank_table[left_op] > rank) {
     
         enum expr_type right_op;
-        long offset;
+        offset_t offset;
         
         section_t right_section;
         
