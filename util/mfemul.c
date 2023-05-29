@@ -177,7 +177,9 @@ static void doemul(void)
             {
                 one = regs[b];
             }
-            target = base + b + d;
+            target = base + one + d;
+            printf("storing to offset %x\n", (target - base));
+            printf("base %x, displacement %x\n", one, d);
             if (x2 < x1)
             {
                 end = 15;
