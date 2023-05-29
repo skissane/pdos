@@ -97,6 +97,11 @@ static void doemul(void)
                 p = base + regs[x2];
                 printf("updating with %x %x\n", x2, regs[x2]);
                 printf("base %p, p %p, at p is %x\n", base, p, *p);
+                if ((p - base) < 0x10000)
+                {
+                    printf("branched below - terminating\n");
+                    exit(EXIT_SUCCESS);
+                }
                 continue;
             }
             else
