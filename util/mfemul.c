@@ -38,6 +38,7 @@ static void splitrx(void);
 static void splitrs(void);
 static void splitrr(void);
 static void writereg(unsigned char *z, int x);
+static void updatereg(int *x, unsigned char *z);
 
 int main(int argc, char **argv)
 {
@@ -72,6 +73,8 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
+    unsigned char *watching = base + 0x1007a;
+    
     regs[13] = 0x100; /* save area */
     regs[15] = 0x10000; /* entry point */
     regs[14] = 0; /* branch to zero will terminate */
@@ -79,7 +82,7 @@ static void doemul(void)
     while (1)
     {
         instr = *p;
-        printf("instr is %02X at %08X\n", instr, p - base - 0x10000);
+        printf("instr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base - 0x10000, *watching, regs[14]);
         if (instr == 0x07) /* bcr */
         {
             splitrr();
@@ -87,6 +90,14 @@ static void doemul(void)
             if ((x1 == 0) || (x2 == 0))
             {
                 printf("noop\n");
+            }
+            /* unconditional branch */
+            else if (x1 == 0xf)
+            {
+                p = base + regs[x2];
+                printf("updating with %x %x\n", x2, regs[x2]);
+                printf("base %p, p %p, at p is %x\n", base, p, *p);
+                continue;
             }
             else
             {
@@ -123,6 +134,11 @@ static void doemul(void)
                 if (x2 != 0)
                 {
                     p = base + regs[x2];
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+                        exit(EXIT_SUCCESS);
+                    }
                     continue;
                 }
             }
@@ -152,10 +168,15 @@ static void doemul(void)
             int end;
             int x;
             unsigned char *target;
+            int one = 0;
             
             splitrs();
             start = x1;
             end = x2;
+            if (b != 0)
+            {
+                one = regs[b];
+            }
             target = base + b + d;
             if (x2 < x1)
             {
@@ -291,6 +312,48 @@ static void doemul(void)
             }
             p += 4;
         }
+        else if (instr == 0x12) /* ltr */
+        {
+            splitrr();
+            regs[x1] = regs[x2];
+            zero = (regs[x1] == 0);
+            p += 2;
+        }
+        else if (instr == 0x98) /* lm */
+        {
+            int start;
+            int end;
+            int x;
+            unsigned char *target;
+            int one = 0;
+            
+            splitrs();
+            start = x1;
+            end = x2;
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            target = base + one + d;
+            printf("loading from offset %x\n", (target - base));
+            printf("displacement %x\n", d);
+            if (x2 < x1)
+            {
+                end = 15;
+                for (x = start; x <= end; x++)
+                {
+                   updatereg(&regs[x], target);
+                   target += 4;
+                }
+                start = 0;
+            }
+            for (x = start; x <= end; x++)
+            {
+                updatereg(&regs[x], target);
+                target += 4;
+            }
+            p += 4;
+        }
         else
         {
             printf("unknown instruction %02X at %08X\n", p[0],
@@ -332,5 +395,11 @@ static void writereg(unsigned char *z, int x)
     z[1] = (x >> 16) & 0xff;
     z[2] = (x >> 8) & 0xff;
     z[3] = x & 0xff;
+    return;
+}
+
+static void updatereg(int *x, unsigned char *z)
+{
+    *x = (z[0] << 24) | (z[1] << 16) | (z[2] << 8) | z[3];
     return;
 }
