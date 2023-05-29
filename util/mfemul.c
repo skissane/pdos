@@ -293,6 +293,7 @@ static void doemul(void)
         {
             int branch = 0;
             int one = 0;
+            int cond;
 
             splitrx();
             /* not sure if this is subject to r0 check */
@@ -300,8 +301,9 @@ static void doemul(void)
             {
                 one = regs[b];
             }
+            cond = (t << 4) | i;
             /* bl */
-            if (i == 0x40)
+            if (cond == 0x40)
             {
                 if (lt)
                 {
@@ -310,13 +312,18 @@ static void doemul(void)
                 }
             }
             /* bnz */
-            else if (i == 0x70)
+            else if (cond == 0x70)
             {
                 if (!zero)
                 {
                     p = base + one + d;
                     continue;
                 }
+            }
+            else
+            {
+                printf("unknown condition %x\n", cond);
+                exit(EXIT_FAILURE);
             }
             p += 4;
         }
