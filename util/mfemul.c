@@ -77,8 +77,7 @@ static void doemul(void)
         printf("instr is %02X at %08X\n", instr, p - base - 0x10000);
         if (instr == 0x07) /* bcr */
         {
-            x1 = (p[1] >> 4) & 0x0f;
-            x2 = p[1] & 0x0f;
+            splitrr();
             /* x1 is condition, x2 is register to branch to */
             if ((x1 == 0) || (x2 == 0))
             {
@@ -93,8 +92,7 @@ static void doemul(void)
         }
         else if (instr == 0x05) /* balr */
         {
-            x1 = (p[1] >> 4) & 0x0f;
-            x2 = p[1] & 0x0f;
+            splitrr();
             if (x1 != 0)
             {
                 regs[x1] = (p - base) + 2;
@@ -104,6 +102,7 @@ static void doemul(void)
                 printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
                 p = base + regs[x2];
                 printf("new address is %08X\n", regs[x2]);
+                continue;
             }
             p += 2;
         }
@@ -111,8 +110,7 @@ static void doemul(void)
            if 0, fall through. otherwise branch to second register */
         else if (instr == 0x06) /* bctr */
         {
-            x1 = (p[1] >> 4) & 0x0f;
-            x2 = p[1] & 0x0f;
+            splitrr();
             regs[x1]--;
             printf("new value of %x is %08X\n", x1, regs[x1]);
             if (regs[x1] != 0)
