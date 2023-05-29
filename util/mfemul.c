@@ -19,23 +19,7 @@ static unsigned char *base;
 static unsigned char *p;
 static int instr;
 
-static int r0 = 0;
-static int r1 = 0;
-static int r2 = 0;
-static int r3 = 0;
-static int r4 = 0;
-static int r5 = 0;
-static int r6 = 0;
-static int r7 = 0;
-static int r8 = 0;
-static int r9 = 0;
-static int r10 = 0;
-static int r11 = 0;
-static int r12 = 0;
-static int r13 = 0;
-static int r14 = 0;
-static int r15 = 0;
-static int r16 = 0;
+static int regs[16];
 
 static void doemul(void);
 
@@ -74,10 +58,15 @@ static void doemul(void)
 {
     int x1;
     int x2;
+    int t;
+    int i;
+    int b;
+    int d;
 
-    r13 = 0x100; /* save area */
-    r15 = 0x10000; /* entry point */
-    r14 = 0; /* branch to zero will terminate */
+    regs[13] = 0x100; /* save area */
+    regs[15] = 0x10000; /* entry point */
+    regs[14] = 0; /* branch to zero will terminate */
+
     while (1)
     {
         instr = *p;
@@ -104,9 +93,33 @@ static void doemul(void)
             x2 = p[1] & 0x0f;
             if (x1 != 0)
             {
-                /* regs[x1] = (p - base); */
+                regs[x1] = (p - base) + 2;
             }
-            exit(0);
+            if (x2 != 0)
+            {
+                p = base + regs[x2];
+                printf("new address is %08X\n", regs[x2]);
+            }
+            p += 2;
+        }
+        /* not sure what this is, but it subtracts 1 */
+        else if (instr == 0x06) /* bctr */
+        {
+            x1 = (p[1] >> 4) & 0x0f;
+            x2 = p[1] & 0x0f;
+            regs[x1]--;
+            printf("new value of %x is %08X\n", x1, regs[x1]);
+            p += 2;
+        }
+        else if (instr == 0x41) /* la */
+        {
+            t = (p[1] >> 4) & 0x0f;
+            i = p[1] & 0x0f;
+            b = (p[2] >> 4) & 0x0f;
+            d = (p[3] & 0xf) << 8 | p[4];
+            regs[t] = regs[b] + regs[i] + d;
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
         }
         else
         {
