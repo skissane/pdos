@@ -8,7 +8,7 @@
 /*                                                                   */
 /*  mssamp - sample program that can be handled by multisc           */
 /*                                                                   */
-/*  This program just prints C using WTO                             */
+/*  This program just prints ABC using WTO                           */
 /*                                                                   */
 /*  compile like this:                                               */
 /*  multisc mssamp.c mssamp.com                                      */
@@ -43,6 +43,7 @@ void display()
     asm 69; asm 224; asm 240; asm 8; /* 45 e0 f0 08 */
     
     /* 6 * 0x10000 (DATASTART) + 0x7078 = 0x67078 */
+    /* this is where the "ret" variable goes */
     asm 0; asm 6; asm 112; asm 120;
 
 /* bypass1: */
@@ -75,7 +76,7 @@ void display()
     /* this is the WTO parameters */
     asm 0; asm 5; /* text length of 1 requires 5 */
     asm 128; asm 0; /* mcs flags */
-    asm 193; /* placeholder ('A') */
+    asm 231; /* placeholder ('X') */
     asm 0; asm 0; /* descriptor codes */
     asm 0; asm 32; /* routing codes */
     asm 0; /* one byte padding to get 2-byte alignment because we
@@ -86,7 +87,8 @@ void display()
     asm 10; asm 35; /* svc 35 */
 
     /* asm 0; asm 0; */ /* dc h'0' to force a s0c1 abend - can't easily
-                           use ex 0,* to get s0c3 instead */
+                           use ex 0,* (or *-* I think Gerhard said?) to
+                           get s0c3 instead */
     
 }
 
@@ -94,6 +96,10 @@ void display()
 
 void main()
 {
+    ret = 193; /* 'A' in EBCDIC */
+    display();
+    ret = 194; /* 'B' in EBCDIC */
+    display();
     ret = 195; /* 'C' in EBCDIC */
     display();
     ret = 0; /* return code to operating system */
