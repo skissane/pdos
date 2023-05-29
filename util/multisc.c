@@ -132,6 +132,14 @@ typedef struct {
 
 /* maximum number of bytes of code we can produce */
 #ifdef TARGET_MVS
+/* register usage: */
+/* r7 = pointer to beginning of executable */
+/* r13 = pointer to save area */
+/* r6 = ax (I think this is called an "accumulator") */
+/* r6 and all other registers can be trashed at any time */
+/* note that this is in relation to the generated code, not
+   this compiler code */
+
 /* for MVS, include room for a 64k stack, and 64k for a little overhead */
 /* and since we have a flat address space, allow for 256k of code */
 /* plus another 256k for data */
@@ -796,6 +804,46 @@ static void compile_stmts_tok_next2(void)
         {
             tmp = di; /* save loop start location */
             control_flow_block(); /* compile control-flow block */
+#if TARGET_MVS
+            /* ok, so we want to jmp to tmp, offset from r7 */
+
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    /* load function offset (from r7) from symbol-table */
+    ax = tmp;
+
+    /* write out the constant */
+    codegen_output_buffer[di++] = (ax >> 24) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 16) & 0xff;
+    codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+    codegen_output_buffer[di++] = ax & 0xff;
+
+    /* emit "l r15,0(,r14)" instruction */
+        codegen_output_buffer[di++] = 0x58; /* emit "l r15,0(,r14)" inst */
+        codegen_output_buffer[di++] = 0xf0;
+        codegen_output_buffer[di++] = 0xe0;
+        codegen_output_buffer[di++] = 0x00;
+
+    /* ar r15,r7 */
+        codegen_output_buffer[di++] = 0x1a; /* emit "ar r15,r7" inst */
+        codegen_output_buffer[di++] = 0xf7;
+        
+    /* emit "br r15" instruction */
+    codegen_output_buffer[di++] = 0x07; /* emit "br r15" instruction */
+    codegen_output_buffer[di++] = 0xff; /* (bcr 15,15) */
+    
+
+#else
             /* emit "jmp" instruction (backwards) */
             codegen_output_buffer[di++] = 0xe9;
 
@@ -806,7 +854,15 @@ static void compile_stmts_tok_next2(void)
             ax = tmp - di - 2;
             codegen_output_buffer[di++] = ax & 0xff;
             codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+#endif
 
+#if TARGET_MVS
+            ax = di;
+            codegen_output_buffer[si] = (ax >> 24) & 0xff;
+            codegen_output_buffer[si+1] = (ax >> 16) & 0xff;
+            codegen_output_buffer[si+2] = (ax >> 8) & 0xff;
+            codegen_output_buffer[si+3] = ax & 0xff;
+#else
             /* now when the while loop terminates, we need to get to
                right here. We have apparently already saved the location
                after the (presumed) conditional jump in si. So the
@@ -822,6 +878,8 @@ static void compile_stmts_tok_next2(void)
             ax = di - si;
             codegen_output_buffer[si-2] = ax & 0xff;
             codegen_output_buffer[si-2+1] = (ax >> 8) & 0xff;
+#endif
+
             skiptok = 1;
             continue;
         }
@@ -842,6 +900,64 @@ static void control_flow_block(void)
 
     /* emit forward jump */
 
+#if TARGET_MVS
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0;
+    
+/* base */
+    
+    /* emit ltr r6,r6 */
+    codegen_output_buffer[di++] = 0x12;
+    codegen_output_buffer[di++] = 0x66;
+    
+    /* ok, so we want to do a jump to some location further
+       down, which will be relative to r7. we don't have an
+       instruction to do that, so we do it the hard way */
+    /* bnz some_relative_value */
+
+    /* bz bypass */
+
+    /* it seems it is the other way around. we need bnz */
+
+    /* emit bnz bypass */
+    codegen_output_buffer[di++] = 0x47;
+    codegen_output_buffer[di++] = 0x70;
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0x16; /* 22 from base to bypass */
+
+    /* emit bal r14, 14(r15) */
+    /* branch over jump location */
+    codegen_output_buffer[di++] = 0x45; /* emit "bal r14,14(,r15)" instruction */
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0x0e;
+
+    tmp = di; /* save forward patch location */
+              /* not sure if we want it here, or after these NULs */
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+    codegen_output_buffer[di++] = 0x00;
+
+/* we no longer need r15 as a base register, so we can clobber it */
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r15,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xf0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r15,r7" instruction */
+    codegen_output_buffer[di++] = 0xf7;
+
+    /* br r15 */
+    codegen_output_buffer[di++] = 0x07;
+    codegen_output_buffer[di++] = 0xff; /* i think first f means
+                                           unconditional */
+
+/* bypass */
+
+
+#else
     /* emit "test ax,ax" */
     codegen_output_buffer[di++] = 0x85;
     codegen_output_buffer[di++] = 0xc0;
@@ -853,7 +969,9 @@ static void control_flow_block(void)
     /* emit placeholder for target */
     codegen_output_buffer[di++] = 0x00;
     codegen_output_buffer[di++] = 0x00;
-    
+    tmp = di; /* save forward patch location */
+#endif
+
     /* ok, so basically what we have done is if you have
        if (something) { do this } then "something" has been
        evaluated to false, with 0 in ax, so in that situation,
@@ -864,7 +982,6 @@ static void control_flow_block(void)
        by potential recursion, so we save di into a temporary
        variable and only set si when the recursion has finished */
 
-    tmp = di; /* save forward patch location */
     skiptok = 1;
     compile_stmts_tok_next2();   /* compile a block of statements */
     si = tmp; /* restore forward patch location */
@@ -999,15 +1116,94 @@ static void compile_expr_tok_next(void)
         }
     }
 
+#if TARGET_MVS
+    tmp = ax; /* use just token on MVS */
+#else
     tmp = *ptr;  /* load 16-bit of machine-code */
+#endif
 
+#if TARGET_MVS
+    /* we could reserve some space on the stack for internal
+       compiler use, but we have enough registers that we
+       don't need to */
+    /* save original r6 in r2 */
+    /* note that I avoid 8 becaue of my poor eyesight
+       when looking at dumps */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r2,r6" instruction */
+    codegen_output_buffer[di++] = 0x26;
+#else
     codegen_output_buffer[di++] = 0x50; /* code for "push ax" */
+#endif
     tok_next();      /* consume operator token */
     compile_unary(); /* compile right-hand side */
 
+#if TARGET_MVS
+    /* r3 is used for cx */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r3,r6" instruction */
+    codegen_output_buffer[di++] = 0x36;
+
+    /* get r6 restored */
+    codegen_output_buffer[di++] = 0x18; /* emit "lr r6,r2" instruction */
+    codegen_output_buffer[di++] = 0x62;
+
+/* ok, so the ax/R6 in the program that is being generated is set.
+   the cx/R3 in the program that is being generated is set.
+   these variables are unrelated to the use of ax here in the
+   compiler itself */
+
+#else
     codegen_output_buffer[di++] = 0x59; /* code for "pop cx" */
     codegen_output_buffer[di++] = 0x91; /* code for "xchg ax,cx" */
+#endif
 
+#if TARGET_MVS
+    if (tmp == TOK_ADD)
+    {
+        codegen_output_buffer[di++] = 0x1a; /* emit "ar r6,r3" instruction */
+        codegen_output_buffer[di++] = 0x63;
+    }
+    /* the goal is to set ax (r6) = 1 if ax (r6) < cx (r3) */
+    /* we do that in the most unsophisticated way possible */
+    else if (tmp == TOK_LT)
+    {
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+/* base: */
+
+        codegen_output_buffer[di++] = 0x19; /* emit "cr r6,r3" instruction */
+        codegen_output_buffer[di++] = 0x63; 
+
+        /* if it is less than, then go and set the 1 */
+        codegen_output_buffer[di++] = 0x47; /* emit "bl 14(,r15)" instruction */
+        codegen_output_buffer[di++] = 0x40; 
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0x0e; 
+
+        /* not less than, so set to 0 */
+        codegen_output_buffer[di++] = 0x41; /* emit "la r6,0(0,0)" instruction */
+        codegen_output_buffer[di++] = 0x60; /* target + source index */
+        codegen_output_buffer[di++] = 0x00; /* source base + offset */
+        codegen_output_buffer[di++] = 0x00; /* rest of offset */
+
+        /* should this have a comma? ie is that an index register? */
+        codegen_output_buffer[di++] = 0x47; /* emit "b 18(,r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0x12;
+
+        /* less than, so set to 1 */
+        codegen_output_buffer[di++] = 0x41; /* emit "la r6,0(0,1)" instruction */
+        codegen_output_buffer[di++] = 0x60; /* target + source index */
+        codegen_output_buffer[di++] = 0x00; /* source base + offset */
+        codegen_output_buffer[di++] = 0x01; /* rest of offset */
+    }
+    else
+    {
+        printf("uncoded operation\n");
+        exit(EXIT_FAILURE);
+    }
+#else
     /* we could just use *ptr instead of tmp */
     bx = tmp; /* restore 16-bit of machine-code */
  
@@ -1023,7 +1219,7 @@ static void compile_expr_tok_next(void)
         codegen_output_buffer[di++] = 0x00;
 
         /* code for the rest of imm and prefix for "setX" instrs */
-        codegen_output_buffer[di++] = 0x00;
+        codegen_output_buffer[di++] = 0x00; /* ie this is part of the b8 inst */
         codegen_output_buffer[di++] = 0x0f;
     }
 
@@ -1031,6 +1227,7 @@ static void compile_expr_tok_next(void)
     /* emit machine code for op */
     codegen_output_buffer[di++] = ax & 0xff;
     codegen_output_buffer[di++] = (ax >> 8) & 0xff;
+#endif
     return;
 }
 
@@ -1098,8 +1295,39 @@ static void compile_unary(void)
     }
     
     /* compile var */
+#if TARGET_MVS
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+        codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; /* target + source index */
+        codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+        codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+        /* jump over constant, and r14 points to the constant */
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+        codegen_output_buffer[di++] = 0xef;
+        
+        bx *= 4; /* there are 65536 possible hash values, each occupying 4 bytes */
+        bx += DATASTART; /* and the data space starts after the code */
+        emit_tok(); /* emit imm */
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r14)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0xe0;
+        codegen_output_buffer[di++] = 0x00;
+
+        codegen_output_buffer[di++] = 0x1a; /* emit "ar r6,r7" instruction */
+        codegen_output_buffer[di++] = 0x67;
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r6)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x00;
+#else
     ax = 0x068b; /* code for "mov ax,[imm]" */
     emit_var();
+#endif
     return;
 }
 
