@@ -201,6 +201,29 @@ static void doemul(void)
             regs[x1] += regs[x2];
             p += 2;
         }
+        else if (instr == 0x45) /* bal */
+        {
+            int one = 0;
+            int two = 0;
+            int dest;
+
+            splitrx();            
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            dest = one + two + d;
+            if (regs[t] != 0)
+            {
+                regs[t] = p + 4 - base;
+            }
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p = base + dest;
+        }
         else
         {
             printf("unknown instruction %02X at %08X\n", p[0],
