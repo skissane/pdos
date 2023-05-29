@@ -31,6 +31,7 @@ static int d;
 static int lt;
 static int gt;
 static int eq;
+static int zero;
 
 static void doemul(void);
 static void splitrx(void);
@@ -258,6 +259,37 @@ static void doemul(void)
             gt = (regs[x1] > regs[x2]);
             eq = (regs[x1] == regs[x2]);
             p += 2;
+        }
+        else if (instr == 0x47) /* bc */
+        {
+            int branch = 0;
+            int one = 0;
+
+            splitrx();
+            /* not sure if this is subject to r0 check */
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            /* bl */
+            if (i == 0x40)
+            {
+                if (lt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bnz */
+            else if (i == 0x70)
+            {
+                if (!zero)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            p += 4;
         }
         else
         {
