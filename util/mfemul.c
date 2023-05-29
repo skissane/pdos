@@ -129,23 +129,16 @@ static void doemul(void)
         {
             int one = 0;
             int two = 0;
-            
-            t = (p[1] >> 4) & 0x0f;
-            i = p[1] & 0x0f;
-            b = (p[2] >> 4) & 0x0f;
-            d = ((p[2] & 0xf) << 8) | p[3];
-            printf("xxx %x %x\n", ((p[2] & 0xf) << 8), p[3]);
+
+            splitrx();            
             if (b != 0)
             {
                 one = regs[b];
-                printf("one is %x\n", one);
             }
             if (i != 0)
             {
                 two = regs[i];
-                printf("two is %x\n", two);
             }
-            printf("d is %x\n", d);
             regs[t] = one + two + d;
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
@@ -199,7 +192,7 @@ static void splitrx(void)
     t = (p[1] >> 4) & 0x0f;
     i = p[1] & 0x0f;
     b = (p[2] >> 4) & 0x0f;
-    d = (p[3] & 0xf) << 8 | p[4];
+    d = (p[2] & 0xf) << 8 | p[3];
     return;
 }
 
@@ -208,7 +201,7 @@ static void splitrs(void)
     x1 = (p[1] >> 4) & 0x0f;
     x2 = p[1] & 0x0f;
     b = (p[2] >> 4) & 0x0f;
-    d = (p[3] & 0xf) << 8 | p[4];
+    d = (p[2] & 0xf) << 8 | p[3];
     return;
 }
 
