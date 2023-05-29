@@ -101,7 +101,7 @@ static void doemul(void)
             {
                 printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
                 p = base + regs[x2];
-                printf("new address is %08X\n", regs[x2]);
+                printf("new address is %08X\n", regs[x2] - 0x10000);
                 continue;
             }
             p += 2;
@@ -217,11 +217,12 @@ static void doemul(void)
                 two = regs[i];
             }
             dest = one + two + d;
-            if (regs[t] != 0)
+            if (t != 0)
             {
                 regs[t] = p + 4 - base;
+                printf("new value of %x is %08X\n", t, regs[t]);
             }
-            printf("new value of %x is %08X\n", t, regs[t]);
+            printf("new dest is %08X\n", dest - 0x10000);
             p = base + dest;
         }
         else
