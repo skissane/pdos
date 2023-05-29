@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x1007a;
+    unsigned char *watching = base + 0x10086 + 3; /*0x1007a; */
     
     regs[13] = 0x100; /* save area */
     regs[15] = 0x10000; /* entry point */
@@ -189,6 +189,7 @@ static void doemul(void)
                    target += 4;
                 }
                 start = 0;
+                end = x2;
             }
             for (x = start; x <= end; x++)
             {
@@ -344,10 +345,13 @@ static void doemul(void)
                 end = 15;
                 for (x = start; x <= end; x++)
                 {
+                   printf("updating reg %x currently %x\n", x, regs[x]);
                    updatereg(&regs[x], target);
+                   printf("new value %x\n", regs[x]);
                    target += 4;
                 }
                 start = 0;
+                end = x2;
             }
             for (x = start; x <= end; x++)
             {
