@@ -8,7 +8,7 @@
 /*                                                                   */
 /*  mssamp - sample program that can be handled by multisc           */
 /*                                                                   */
-/*  This program just prints ABC using WTO                           */
+/*  This program just prints ABCDE using WTO                         */
 /*                                                                   */
 /*  compile like this:                                               */
 /*  multisc mssamp.c mssamp.com                                      */
@@ -87,8 +87,7 @@ void display()
     asm 10; asm 35; /* svc 35 */
 
     /* asm 0; asm 0; */ /* dc h'0' to force a s0c1 abend - can't easily
-                           use ex 0,* (or *-* I think Gerhard said?) to
-                           get s0c3 instead */
+                           use ex 0,* to get s0c3 instead */
     
 }
 
@@ -97,11 +96,10 @@ void display()
 void main()
 {
     ret = 193; /* 'A' in EBCDIC */
-    display();
-    ret = 194; /* 'B' in EBCDIC */
-    display();
-    ret = 195; /* 'C' in EBCDIC */
-    display();
+    while( ret < 198 ){
+        display();
+        ret = ret + 1;
+    }
     ret = 0; /* return code to operating system */
 }
 
