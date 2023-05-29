@@ -28,6 +28,10 @@ static int i;
 static int b;
 static int d;
 
+static int lt;
+static int gt;
+static int eq;
+
 static void doemul(void);
 static void splitrx(void);
 static void splitrs(void);
@@ -224,6 +228,36 @@ static void doemul(void)
             }
             printf("new dest is %08X\n", dest - 0x10000);
             p = base + dest;
+        }
+        else if (instr == 0x50) /* st */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            v[0] = (regs[t] >> 24) & 0xff;
+            v[1] = (regs[t] >> 16) & 0xff;
+            v[2] = (regs[t] >> 8) & 0xff;
+            v[3] = regs[t] & 0xff;
+            p += 4;
+        }
+        else if (instr == 0x19) /* cr */
+        {
+            splitrr();
+            lt = (regs[x1] < regs[x2]);
+            gt = (regs[x1] > regs[x2]);
+            eq = (regs[x1] == regs[x2]);
+            p += 2;
         }
         else
         {
