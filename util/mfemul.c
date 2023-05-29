@@ -21,7 +21,15 @@ static int instr;
 
 static int regs[16];
 
+static int x1;
+static int x2;
+static int t;
+static int i;
+static int b;
+static int d;
+
 static void doemul(void);
+static void split4(void);
 
 int main(int argc, char **argv)
 {
@@ -56,13 +64,6 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    int x1;
-    int x2;
-    int t;
-    int i;
-    int b;
-    int d;
-
     regs[13] = 0x100; /* save area */
     regs[15] = 0x10000; /* entry point */
     regs[14] = 0; /* branch to zero will terminate */
@@ -102,13 +103,22 @@ static void doemul(void)
             }
             p += 2;
         }
-        /* not sure what this is, but it subtracts 1 */
+        /* this is used for looping. subtract 1 from first register.
+           if 0, fall through. otherwise branch to second register */
         else if (instr == 0x06) /* bctr */
         {
             x1 = (p[1] >> 4) & 0x0f;
             x2 = p[1] & 0x0f;
             regs[x1]--;
             printf("new value of %x is %08X\n", x1, regs[x1]);
+            if (regs[x1] != 0)
+            {
+                if (x2 != 0)
+                {
+                    p = base + regs[x2];
+                    continue;
+                }
+            }
             p += 2;
         }
         else if (instr == 0x41) /* la */
@@ -121,11 +131,31 @@ static void doemul(void)
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
+#if 0
+        else if (instr == 0x90) /* stm */
+        {
+            int start;
+            int end = 16;
+            
+            split4();
+            if (i < b)
+            {
+        }
+#endif            
         else
         {
             printf("unknown instruction %02X\n", p[0]);
             exit(EXIT_FAILURE);
         }
     }
+    return;
+}
+
+static void split4(void)
+{
+    t = (p[1] >> 4) & 0x0f;
+    i = p[1] & 0x0f;
+    b = (p[2] >> 4) & 0x0f;
+    d = (p[3] & 0xf) << 8 | p[4];
     return;
 }
