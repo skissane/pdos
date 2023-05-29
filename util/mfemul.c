@@ -29,7 +29,9 @@ static int b;
 static int d;
 
 static void doemul(void);
-static void split4(void);
+static void splitrx(void);
+static void splitrs(void);
+static void writereg(unsigned char *z, int x);
 
 int main(int argc, char **argv)
 {
@@ -131,17 +133,34 @@ static void doemul(void)
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
-#if 0
         else if (instr == 0x90) /* stm */
         {
             int start;
-            int end = 16;
+            int end;
+            int x;
+            unsigned char *target;
             
-            split4();
-            if (i < b)
+            splitrs();
+            start = x1;
+            end = x2;
+            target = base + b + d;
+            if (x2 < x1)
             {
+                end = 15;
+                for (x = start; x <= end; x++)
+                {
+                   writereg(target, regs[x]);
+                   target += 4;
+                }
+                start = 0;
+            }
+            for (x = start; x <= end; x++)
+            {
+                writereg(target, regs[x]);
+                target += 4;
+            }
+            p += 4;
         }
-#endif            
         else
         {
             printf("unknown instruction %02X\n", p[0]);
@@ -151,11 +170,29 @@ static void doemul(void)
     return;
 }
 
-static void split4(void)
+static void splitrx(void)
 {
     t = (p[1] >> 4) & 0x0f;
     i = p[1] & 0x0f;
     b = (p[2] >> 4) & 0x0f;
     d = (p[3] & 0xf) << 8 | p[4];
+    return;
+}
+
+static void splitrs(void)
+{
+    x1 = (p[1] >> 4) & 0x0f;
+    x2 = p[1] & 0x0f;
+    b = (p[2] >> 4) & 0x0f;
+    d = (p[3] & 0xf) << 8 | p[4];
+    return;
+}
+
+static void writereg(unsigned char *z, int x)
+{
+    z[0] = (x >> 24) & 0xff;
+    z[1] = (x >> 16) & 0xff;
+    z[2] = (x >> 8) & 0xff;
+    z[3] = x & 0xff;
     return;
 }
