@@ -1366,7 +1366,10 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                 if ((cons_type == 3270) || (cons_type == 3275))
                 {
                     intbuf[0] = 0xc3; /* unlock keyboard */
-                    memcpy(intbuf + 6, "XX", 2);
+                    /* can't remember why I did this, but it is actually
+                       displaying on a 3270 terminal emulator, so whenever
+                       it is required again, need a solution for that */
+                    /* memcpy(intbuf + 6, "XX", 2); */
                     __conswr(sizeof intbuf, intbuf, 0);
                     intbuf[0] = 0x41; /* lock keyboard for next time */
                     cnt = __c3270r(300, tbuf);
