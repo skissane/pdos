@@ -186,6 +186,8 @@ static void negotiate(FILE *sf)
         /* note that declining 3270e has it asking for
            terminal type and not accepting my response.
            so we'll try extended (above) instead */
+        /* I think that was an unrelated error, so maybe
+           try this "easy" option again? */
         fseek(sf, 0, SEEK_CUR);
         printf("writing wont 3270e\n");
         /* IAC WONT TN3270E */
@@ -257,7 +259,15 @@ static void negotiate(FILE *sf)
     if ((termtype == 3270) || (termtype == 3275))
     {
         printf("writing IBM-3270\n");
-        fwrite("IBM-3270", 1, 8, sf);
+        if (extend)
+        {
+            printf("actually IBM-3278-2\n");
+            fwrite("IBM-3278-2", 1, 10, sf);
+        }
+        else
+        {
+            fwrite("IBM-3270", 1, 8, sf);
+        }
         if (strcmp(luname, "") != 0)
         {
             fputc('@', sf);
@@ -285,10 +295,12 @@ static void negotiate(FILE *sf)
     if ((termtype == 3270) || (termtype == 3275))
     {
         fseek(sf, 0, SEEK_CUR);
+#if 0
         if (extend)
         {
     expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
         }
+#endif
         /* do eor and will eor */
         expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
         fseek(sf, 0, SEEK_CUR);
