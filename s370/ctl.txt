@@ -11,6 +11,8 @@ MKIPLCRD.EXE SEQ mkiplcrd.exe CYL  1 1 0 PS U 0 18452
 BBS.EXE      SEQ bbs.exe      CYL  1 1 0 PS U 0 18452
 EXE2COM.EXE  SEQ exe2com.exe  CYL  1 1 0 PS U 0 18452
 PDPNNTP.EXE  SEQ pdpnntp.exe  CYL  1 1 0 PS U 0 18452
+MULTISC.EXE  SEQ multisc.exe  CYL  1 1 0 PS U 0 18452
+MVSSAMP.C    SEQ mvssamp.txt  CYL  1 1 0 PS U 0 18452
 WTOWORLD.EXE SEQ wtoworld.exe CYL  1 1 0 PS U 0 18452
 SAMPLE.C     SEQ sample.c     CYL  1 1 0 PS U 0 18452
 SAMPLE2.C    SEQ sample.c     CYL  1 1 0 PS U 0 18452

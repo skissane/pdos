@@ -26,13 +26,14 @@ gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../pdpclib/__memmgr.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pload.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -DXXZAM31 -S -I . -I ../pdpclib pdos.c
 gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pdosutil.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib pcomm.c
-gccmvs -DUSE_MEMMGR -O0 -DZARCH -S -I . -I ../pdpclib world.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib mkipltap.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib mkiplcrd.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib bbs.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib exe2com.c
-gccmvs -DUSE_MEMMGR -Os -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib pcomm.c
+gccmvs -O0 -DZARCH -S -I . -I ../pdpclib world.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib mkipltap.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib mkiplcrd.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib bbs.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib exe2com.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
+gccmvs -DTARGET_MVS -Os -DZARCH -S -I . -I ../pdpclib ../util/multisc.c
 
 sleep 1
 
@@ -65,6 +66,7 @@ copy mkiplcrd.txt mkiplcrd.exe
 copy bbs.txt bbs.exe
 copy exe2com.txt exe2com.exe
 copy pdpnntp.txt pdpnntp.exe
+copy multisc.txt multisc.exe
 copy sample.txt sample.c
 copy wtoworld.txt wtoworld.exe
 copy diff.txt diff.exe
@@ -118,6 +120,6 @@ zip -9X pdospkg ctl.txt pdos00.ckd pdos.cnf auto*.rc termherc*.rc
 zip -9X pdospkg runpdos.bat pdos.bat pdpi.zip pdpnntp.exe mkipltap.exe
 zip -9X pdospkg gcc.exe mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
 zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
-zip -9X pdospkg exe2com.exe
+zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c
 
 rem Simply unzip the package into c:\pdos or whatever and it's done
