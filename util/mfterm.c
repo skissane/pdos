@@ -82,6 +82,8 @@ static char keybbuf[300];
 
 static char luname[50] = "";
 
+static int extend = 0;
+
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
@@ -96,16 +98,23 @@ int main(int argc, char **argv)
 
     if (argc < 2)
     {
-        printf("usage: mfterm [-lu=xxx] [-3270|-3275|-1057] <serial file>\n");
+        printf("usage: mfterm [-lu=xxx] [-3270|-3275|-1052}-1057]"
+               " <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
         printf("e.g. mfterm com1:\n");
         printf("1057 is an EBCDIC ANSI terminal\n");
         printf("3275 is an EBCDIC ANSI stream on top of a 3270 data stream\n");
         printf("ctrl-] gets menu when keyboard is active\n");
+        printf("-x at beginning does extended 3270\n");
         return (EXIT_FAILURE);
     }
     if (argc > 2)
     {
+        if (strncmp(argv[x], "-x", 2) == 0)
+        {
+            extend = 1;
+            x++;
+        }
         if (strncmp(argv[x], "-lu=", 4) == 0)
         {
             strcpy(luname, argv[x] + 4);
@@ -162,6 +171,19 @@ int main(int argc, char **argv)
 
 static void negotiate(FILE *sf)
 {
+    if (extend)
+    {
+        fseek(sf, 0, SEEK_CUR);
+        /* IAC DO TN3270E */
+        expect(sf, "\xff\xfd\x28", 3);
+
+        fseek(sf, 0, SEEK_CUR);
+        printf("writing will 3270e\n");
+        /* IAC WILL TN3270E */
+        fwrite("\xff\xfb\x28", 1, 3, sf);
+    }
+
+    fseek(sf, 0, SEEK_CUR);
     /* IAC DO TERM_TYPE */
     expect(sf, "\xff\xfd\x18", 3);
 
@@ -251,6 +273,7 @@ static void expect(FILE *sf, unsigned char *buf, size_t buflen)
     int c;
     size_t x;
 
+    printf("expect for %d bytes\n", buflen);
     for (x = 0; x < buflen; x++)
     {
         c = fgetc(sf);
