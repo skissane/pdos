@@ -126,3 +126,24 @@ dsk2fil 1b9 tap1c2:
 
 But you don't need to do that, because tap1c1: points to
 the actual disk image already, making it a valid tape.
+
+
+Note that if you are using a 3270 terminal, the only editor
+provided is edlin, which is copyrighted.
+
+If you require a purely public domain distribution, you can
+still (barely) edit files, by using copycon, xychop and
+assemble. So if you have temp.001, temp.002, temp.003 you
+can do "assemble temp.c" and it will combine the files.
+You can use hexdump to figure out where to split a file.
+
+Also, you can (barely) code in C instead of needing to zap
+machine code. You can try the example program:
+
+multisc mvssamp.c mvssamp.com
+mvssamp
+
+(you can create .com files the same as MSDOS used)
+
+It is unclear if you can fight your way out in C using just
+the provided tools.
