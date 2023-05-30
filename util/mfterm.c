@@ -220,6 +220,20 @@ static void negotiate(FILE *sf)
         /* IAC SE */
         fwrite("\xff\xf0", 1, 2, sf);
 
+#if 0
+        fseek(sf, 0, SEEK_CUR);
+        /* IAC DONT TN3270E IAC DO TERMINAL_TYPE */
+        expect(sf, "\xff\xfe\x28\xff\xfd\x18", 6);
+
+        printf("ok, we won't?\n");
+        fseek(sf, 0, SEEK_CUR);
+        /* IAC WONT TN3270E IAC DO TERMINAL_TYPE */
+        expect(sf, "\xff\xfc\x28\xff\xfd\x18", 6);
+#endif
+        fseek(sf, 0, SEEK_CUR);
+        /* IAC DONT TN3270E */
+        expect(sf, "\xff\xfe\x28", 3);
+        /* fall through to expect request to do terminal type */
     }
 #endif
 
