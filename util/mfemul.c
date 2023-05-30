@@ -320,6 +320,12 @@ static void doemul(void)
                     continue;
                 }
             }
+            /* unconditional */
+            else if (cond == 0xf0)
+            {
+                p = base + one + d;
+                continue;
+            }
             else
             {
                 printf("unknown condition %x\n", cond);
