@@ -185,6 +185,14 @@ undivert(exe2com.s)dnl
 //SYSIN  DD  *
 undivert(pdpnntp.s)dnl
 /*
+//COPYCON  EXEC PDPASM,MEMBER=COPYCON
+//SYSIN  DD  *
+undivert(copycon.s)dnl
+/*
+//ASSEMBLE EXEC PDPASM,MEMBER=ASSEMBLE
+//SYSIN  DD  *
+undivert(assemble.s)dnl
+/*
 //MULTISC  EXEC PDPASM,MEMBER=MULTISC
 //SYSIN  DD  *
 undivert(multisc.s)dnl
@@ -352,6 +360,30 @@ undivert(multisc.s)dnl
 //SYSPRINT DD SYSOUT=*
 //SYSIN DD *
  INCLUDE SYSLIB(PDPNNTP)
+ ENTRY @@MAIN
+/*
+//*
+//LKED     EXEC PGM=IEWL,PARM='MAP,LIST,AMODE=31,RMODE=ANY'
+//SYSLIN   DD DDNAME=SYSIN
+//SYSLIB   DD DSN=PDPCLIB.NCALIB,DISP=SHR
+//         DD DSN=&&NCALIB,DISP=(OLD,PASS)
+//SYSLMOD  DD DSN=&&LOADLIB(COPYCON),DISP=(OLD,PASS)
+//SYSUT1   DD UNIT=SYSALLDA,SPACE=(CYL,(2,1))
+//SYSPRINT DD SYSOUT=*
+//SYSIN DD *
+ INCLUDE SYSLIB(COPYCON)
+ ENTRY @@MAIN
+/*
+//*
+//LKED     EXEC PGM=IEWL,PARM='MAP,LIST,AMODE=31,RMODE=ANY'
+//SYSLIN   DD DDNAME=SYSIN
+//SYSLIB   DD DSN=PDPCLIB.NCALIB,DISP=SHR
+//         DD DSN=&&NCALIB,DISP=(OLD,PASS)
+//SYSLMOD  DD DSN=&&LOADLIB(ASSEMBLE),DISP=(OLD,PASS)
+//SYSUT1   DD UNIT=SYSALLDA,SPACE=(CYL,(2,1))
+//SYSPRINT DD SYSOUT=*
+//SYSIN DD *
+ INCLUDE SYSLIB(ASSEMBLE)
  ENTRY @@MAIN
 /*
 //*
@@ -587,6 +619,48 @@ undivert(multisc.s)dnl
 //STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
 //IN       DD  DSN=&&COPY,DISP=(OLD,DELETE)
 //OUT      DD  DSN=&&HEX(PDPNNTP),DISP=(OLD,PASS)
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//SYSIN    DD  DUMMY
+//*
+//*
+//* Copy COPYCON
+//*
+//IEBCOPY  EXEC PGM=IEBCOPY
+//SYSUT1   DD DSN=&&LOADLIB,DISP=(OLD,PASS)
+//SYSUT2   DD DSN=&&COPY,SPACE=(CYL,(1,1)),UNIT=SYSALLDA,
+//         DISP=(NEW,PASS)
+//SYSPRINT DD SYSOUT=*
+//SYSIN DD *
+ COPY INDD=((SYSUT1,R)),OUTDD=SYSUT2
+ SELECT MEMBER=COPYCON
+/*
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-bb dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//IN       DD  DSN=&&COPY,DISP=(OLD,DELETE)
+//OUT      DD  DSN=&&HEX(COPYCON),DISP=(OLD,PASS)
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//SYSIN    DD  DUMMY
+//*
+//*
+//* Copy ASSEMBLE
+//*
+//IEBCOPY  EXEC PGM=IEBCOPY
+//SYSUT1   DD DSN=&&LOADLIB,DISP=(OLD,PASS)
+//SYSUT2   DD DSN=&&COPY,SPACE=(CYL,(1,1)),UNIT=SYSALLDA,
+//         DISP=(NEW,PASS)
+//SYSPRINT DD SYSOUT=*
+//SYSIN DD *
+ COPY INDD=((SYSUT1,R)),OUTDD=SYSUT2
+ SELECT MEMBER=ASSEMBLE
+/*
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-bb dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//IN       DD  DSN=&&COPY,DISP=(OLD,DELETE)
+//OUT      DD  DSN=&&HEX(ASSEMBLE),DISP=(OLD,PASS)
 //SYSPRINT DD  SYSOUT=*
 //SYSTERM  DD  SYSOUT=*
 //SYSIN    DD  DUMMY
@@ -865,12 +939,12 @@ int main(void)
 /* ***************************************************************** */
 /* ***************************************************************** */
 /*                                                                   */
-/*  mssamp - sample program that can be handled by multisc           */
+/*  mvssamp - sample program that can be handled by multisc          */
 /*                                                                   */
 /*  This program just prints ABCDE using WTO                         */
 /*                                                                   */
 /*  compile like this:                                               */
-/*  multisc mssamp.c mssamp.com                                      */
+/*  multisc mvssamp.c mvssamp.com                                    */
 /*                                                                   */
 /* ***************************************************************** */
 

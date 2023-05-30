@@ -34,6 +34,8 @@ gccmvs -Os -DZARCH -S -I . -I ../pdpclib bbs.c
 gccmvs -Os -DZARCH -S -I . -I ../pdpclib exe2com.c
 gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
 gccmvs -DTARGET_MVS -Os -DZARCH -S -I . -I ../pdpclib ../util/multisc.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../../mvssrc/ozpd/c/copycon.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../../mvssrc/ozpd/c/assemble.c
 
 sleep 1
 
@@ -66,6 +68,8 @@ copy mkiplcrd.txt mkiplcrd.exe
 copy bbs.txt bbs.exe
 copy exe2com.txt exe2com.exe
 copy pdpnntp.txt pdpnntp.exe
+copy copycon.txt copycon.exe
+copy assemble.txt assemble.exe
 copy multisc.txt multisc.exe
 copy sample.txt sample.c
 copy wtoworld.txt wtoworld.exe
@@ -120,6 +124,6 @@ zip -9X pdospkg ctl.txt pdos00.ckd pdos.cnf auto*.rc termherc*.rc
 zip -9X pdospkg runpdos.bat pdos.bat pdpi.zip pdpnntp.exe mkipltap.exe
 zip -9X pdospkg gcc.exe mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
 zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
-zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c
+zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c copycon.exe assemble.exe
 
 rem Simply unzip the package into c:\pdos or whatever and it's done
