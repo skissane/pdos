@@ -6,12 +6,12 @@
 /* ***************************************************************** */
 /* ***************************************************************** */
 /*                                                                   */
-/*  mssamp - sample program that can be handled by multisc           */
+/*  mvssamp - sample program that can be handled by multisc          */
 /*                                                                   */
 /*  This program just prints ABCDE using WTO                         */
 /*                                                                   */
 /*  compile like this:                                               */
-/*  multisc mssamp.c mssamp.com                                      */
+/*  multisc mvssamp.c mvssamp.com                                    */
 /*                                                                   */
 /* ***************************************************************** */
 
