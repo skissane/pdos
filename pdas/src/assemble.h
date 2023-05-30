@@ -224,9 +224,11 @@ static const struct template template_table[] = {
     { "mov", 2, 0x8E, NONE, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT2, 0 }, CPU_386 },
     
     /* Move instructions for control, debug and test registers. */
-    { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, CPU_386 },
-    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, CPU_386 },
-    { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 },
+    { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
+    { "mov", 2, 0x0F20, NONE, Q_SUF | D | MODRM | NO_REX_W, { CONTROL, REG64 | INV_MEM, 0 }, CPU_64 },
+    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
+    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | NO_REX_W, { DEBUG, REG64 | INV_MEM, 0 }, CPU_64 },
+    { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
 
     /* 64-bit only moves. */
     { "movabs", 2, 0xB8, NONE, Q_SUF | SHORT_FORM, { IMM64, REG64, 0 }, CPU_64 },
@@ -604,13 +606,13 @@ static const struct template template_table[] = {
     { "iret", 0, 0xCF, NONE, WL_SUF | DEFAULT_SIZE, { 0, 0, 0 }, 0 },
     
     { "rsm", 0, 0x0FAA, NONE, 0, { 0, 0, 0 }, CPU_386 },
-    { "bound", 2, 0x62, NONE, 0, { WORD_REG, ANY_MEM, 0 }, CPU_186 },
+    { "bound", 2, 0x62, NONE, WL_SUF | MODRM, { REG16 | REG32 , ANY_MEM, 0 }, CPU_186 | CPU_NO64 },
     
     { "hlt", 0, 0xF4, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     { "nop", 0, 0x90, NONE, NO_SUF, { 0, 0, 0 }, 0 },
     
     /* Protection control. */
-    { "arpl", 2, 0x63, NONE, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM, 0 }, CPU_286 },
+    { "arpl", 2, 0x63, NONE, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM, 0 }, CPU_286 | CPU_NO64 },
     { "lar", 2, 0x0F02, NONE, WL_SUF | MODRM, { WORD_REG | ANY_MEM, WORD_REG, 0 }, CPU_286 },
     { "lgdt", 1, 0x0F01, 2, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },
     { "lidt", 1, 0x0F01, 3, WL_SUF | MODRM, { ANY_MEM, 0, 0 }, CPU_286 },

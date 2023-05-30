@@ -432,6 +432,10 @@ static int check_reg (const struct reg_entry *reg) {
         return 0;
     }
 
+    if ((reg->type & TEST) && (bits == 64 || !(cpu_arch_flags & CPU_386))) {
+        return 0;
+    }
+
     if ((reg->type & (REG64 | REG_REX | REG_REX64)) && bits != 64) {
         return 0;
     }
