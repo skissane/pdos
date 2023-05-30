@@ -177,7 +177,7 @@ static void negotiate(FILE *sf)
         /* IAC DO TN3270E */
         expect(sf, "\xff\xfd\x28", 3);
 
-#if 1
+#if 0
         fseek(sf, 0, SEEK_CUR);
         printf("writing will 3270e\n");
         /* IAC WILL TN3270E */
@@ -195,7 +195,7 @@ static void negotiate(FILE *sf)
 #endif
     }
 
-#if 1
+#if 0
     if (extend)
     {
         fseek(sf, 0, SEEK_CUR);
