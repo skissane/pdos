@@ -76,8 +76,6 @@ copy copyfile.txt copyfile.exe
 copy hexdump.txt hexdump.exe
 copy mvsendec.txt mvsendec.exe
 copy mvsunzip.txt mvsunzip.exe
-rem put this in until the S878 abend is solved
-echo hi >wtowcom.com
 copy wtowcom.txt wtowcom.com
 
 rem create dummy batch file
