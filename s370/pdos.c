@@ -1357,8 +1357,14 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
 #endif
             if (dcb->gendev != 0)
             {
-                cnt = rdtape(dcb->gendev, buf, len);
+                /* don't read directly into buf which could be ATL,
+                   and the CCW can't handle that */
+                cnt = rdtape(dcb->gendev, tbuf, len);
                 printf("read %d bytes from %x\n", cnt, dcb->gendev);
+                if (cnt > 0)
+                {
+                    memcpy(buf, tbuf, cnt);
+                }
             }
             else if (memcmp(dcb->dcbfdad,
                             "\x00\x00\x00\x00\x00\x00\x00\x00", 8) == 0)
