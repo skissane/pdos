@@ -12,7 +12,7 @@
 
 CC=gccwin
 CFLAGS=-O2
-LD=ldwin
+LD=pdld
 LDFLAGS=
 AS=aswin
 AR=arwin
@@ -20,10 +20,10 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN
 
 all: clean mfterm.exe
 
-mfterm.exe: mfterm.o
-    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/p32start.o mfterm.o ../../pdos/pdpclib/pdpwin32.a ../../pdos/src/kernel32.a
+mfterm.exe: mfterm.obj
+    $(LD) $(LDFLAGS) -s -o mfterm.exe ../pdpclib/p32start.obj mfterm.obj ../../pdos/pdpclib/pdpwin32.lib ../../pdos/src/kernel32.lib
 
-.c.o:
+.c.obj:
     $(CC) $(COPTS) -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
