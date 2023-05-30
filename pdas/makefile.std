@@ -10,6 +10,7 @@
 VPATH=src;src/hashtab
 CC=gccwin
 CFLAGS=-O2
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=pdld
 LDFLAGS=
 AS=pdas --oformat coff
