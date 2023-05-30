@@ -202,12 +202,24 @@ static void negotiate(FILE *sf)
 
         fseek(sf, 0, SEEK_CUR);
         printf("sending device type\n");
-        /* not sure what to do if there is no
-           luname = device-name = network name */
+        /* luname = device-name = network name */
+#if 0
         /* IAC SB TN3270E DEVICE-TYPE IS xxx CONNECT yyy IAC SE */
-        fwrite("\xff\xfa\x28\x08\x00" "IBM-3278-2" "\x01", 1, 16, sf);
+        fwrite("\xff\xfa\x28\x02\x00" "IBM-3278-2" "\x01", 1, 16, sf);
         fwrite(luname, 1, strlen(luname), sf);
         fwrite("\xff\xf0", 1, 2, sf);
+#endif
+        /* IAC SB TN3270E DEVICE-TYPE REQUEST xxx */
+        fwrite("\xff\xfa\x28\x02\x07" "IBM-3278-2", 1, 15, sf);
+        if (strcmp(luname, "") != 0)
+        {
+            /* CONNECT yyy */
+            fwrite("\x01", 1, 1, sf);
+            fwrite(luname, 1, strlen(luname), sf);
+        }
+        /* IAC SE */
+        fwrite("\xff\xf0", 1, 2, sf);
+
     }
 #endif
 
