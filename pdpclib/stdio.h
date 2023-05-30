@@ -253,8 +253,10 @@ extern FILE *__stdpch;
 __PDPCLIB_HEADFUNC int printf(const char *format, ...);
 __PDPCLIB_HEADFUNC FILE *fopen(const char *filename, const char *mode);
 __PDPCLIB_HEADFUNC int fclose(FILE *stream);
-__PDPCLIB_HEADFUNC size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
-__PDPCLIB_HEADFUNC size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+__PDPCLIB_HEADFUNC size_t fread(void *ptr, size_t size, size_t nmemb,
+    FILE *stream);
+__PDPCLIB_HEADFUNC size_t fwrite(const void *ptr, size_t size, size_t nmemb,
+    FILE *stream);
 __PDPCLIB_HEADFUNC int fputc(int c, FILE *stream);
 __PDPCLIB_HEADFUNC int fputs(const char *s, FILE *stream);
 __PDPCLIB_HEADFUNC int fprintf(FILE *stream, const char *format, ...);
@@ -276,7 +278,8 @@ __PDPCLIB_HEADFUNC void clearerr(FILE *stream);
 __PDPCLIB_HEADFUNC void perror(const char *s);
 __PDPCLIB_HEADFUNC int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 __PDPCLIB_HEADFUNC int setbuf(FILE *stream, char *buf);
-__PDPCLIB_HEADFUNC FILE *freopen(const char *filename, const char *mode, FILE *stream);
+__PDPCLIB_HEADFUNC FILE *freopen(const char *filename, const char *mode,
+    FILE *stream);
 __PDPCLIB_HEADFUNC int fflush(FILE *stream);
 __PDPCLIB_HEADFUNC char *tmpnam(char *s);
 __PDPCLIB_HEADFUNC FILE *tmpfile(void);
@@ -351,5 +354,3 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #endif
 
 #endif /* __STDIO_INCLUDED */
-
-
