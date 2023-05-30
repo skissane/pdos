@@ -310,6 +310,13 @@ static void negotiate(FILE *sf)
         expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
         fseek(sf, 0, SEEK_CUR);
         fwrite("\xff\xfb\x00" "\xff\xfd\x00", 6, 1, sf);
+        if (extend)
+        {
+            fseek(sf, 0, SEEK_CUR);
+            expect(sf, "\xff\xfd\x00"
+                   "\xff\xfb\x00\x0d\xc2\xff\xef\x02\xff\xef", 13);
+            return;
+        }
         fseek(sf, 0, SEEK_CUR);
         {
             int x = 0;
