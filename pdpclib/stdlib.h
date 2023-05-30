@@ -89,7 +89,8 @@ __PDPCLIB_HEADFUNC double strtod(const char *nptr, char **endptr);
 __PDPCLIB_HEADFUNC int atoi(const char *nptr);
 __PDPCLIB_HEADFUNC long atol(const char *nptr);
 __PDPCLIB_HEADFUNC long strtol(const char *nptr, char **endptr, int base);
-__PDPCLIB_HEADFUNC unsigned long strtoul(const char *nptr, char **endptr, int base);
+__PDPCLIB_HEADFUNC unsigned long strtoul(const char *nptr, char **endptr,
+    int base);
 __PDPCLIB_HEADFUNC int mblen(const char *s, size_t n);
 __PDPCLIB_HEADFUNC int mbtowc(wchar_t *pwc, const char *s, size_t n);
 __PDPCLIB_HEADFUNC int wctomb(char *s, wchar_t wchar);
