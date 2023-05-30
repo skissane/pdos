@@ -177,11 +177,39 @@ static void negotiate(FILE *sf)
         /* IAC DO TN3270E */
         expect(sf, "\xff\xfd\x28", 3);
 
+#if 1
         fseek(sf, 0, SEEK_CUR);
         printf("writing will 3270e\n");
         /* IAC WILL TN3270E */
         fwrite("\xff\xfb\x28", 1, 3, sf);
+#else
+        /* note that declining 3270e has it asking for
+           terminal type and not accepting my response.
+           so we'll try extended (above) instead */
+        fseek(sf, 0, SEEK_CUR);
+        printf("writing wont 3270e\n");
+        /* IAC WONT TN3270E */
+        fwrite("\xff\xfc\x28", 1, 3, sf);
+#endif
     }
+
+#if 1
+    if (extend)
+    {
+        fseek(sf, 0, SEEK_CUR);
+        /* IAC SB TN3270E SEND DEVICE-TYPE IAC SE */
+        expect(sf, "\xff\xfa\x28\x08\x02\xff\xf0", 7);
+
+        fseek(sf, 0, SEEK_CUR);
+        printf("sending device type\n");
+        /* not sure what to do if there is no
+           luname = device-name = network name */
+        /* IAC SB TN3270E DEVICE-TYPE IS xxx CONNECT yyy IAC SE */
+        fwrite("\xff\xfa\x28\x08\x00" "IBM-3278-2" "\x01", 1, 16, sf);
+        fwrite(luname, 1, strlen(luname), sf);
+        fwrite("\xff\xf0", 1, 2, sf);
+    }
+#endif
 
     fseek(sf, 0, SEEK_CUR);
     /* IAC DO TERM_TYPE */
@@ -231,6 +259,10 @@ static void negotiate(FILE *sf)
     if ((termtype == 3270) || (termtype == 3275))
     {
         fseek(sf, 0, SEEK_CUR);
+        if (extend)
+        {
+    expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
+        }
         /* do eor and will eor */
         expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
         fseek(sf, 0, SEEK_CUR);
