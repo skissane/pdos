@@ -12,6 +12,7 @@ BBS.EXE      SEQ bbs.exe      CYL  1 1 0 PS U 0 18452
 EXE2COM.EXE  SEQ exe2com.exe  CYL  1 1 0 PS U 0 18452
 PDPNNTP.EXE  SEQ pdpnntp.exe  CYL  1 1 0 PS U 0 18452
 COPYCON.EXE  SEQ copycon.exe  CYL  1 1 0 PS U 0 18452
+MFEMUL.EXE   SEQ mfemul.exe   CYL  1 1 0 PS U 0 18452
 XYCHOP.EXE   SEQ xychop.exe   CYL  1 1 0 PS U 0 18452
 ASSEMBLE.EXE SEQ assemble.exe CYL  1 1 0 PS U 0 18452
 MULTISC.EXE  SEQ multisc.exe  CYL  1 1 0 PS U 0 18452
