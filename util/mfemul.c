@@ -372,6 +372,25 @@ static void doemul(void)
             }
             p += 4;
         }
+        else if (instr == 0x42) /* stc */
+        {
+            int one = 0;
+            int two = 0;
+            int dest;
+
+            splitrx();            
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            dest = one + two + d;
+            base[dest] = regs[t] & 0xff;
+            p += 4;
+        }
         else
         {
             printf("unknown instruction %02X at %08X\n", p[0],
