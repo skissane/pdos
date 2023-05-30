@@ -73,6 +73,7 @@ copy copycon.txt copycon.exe
 copy xychop.txt xychop.exe
 copy assemble.txt assemble.exe
 copy multisc.txt multisc.exe
+copy mvssamp.txt mvssamp.c
 copy sample.txt sample.c
 copy wtoworld.txt wtoworld.exe
 copy diff.txt diff.exe
