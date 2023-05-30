@@ -13,11 +13,24 @@
 
 #include <stdint.h>
 
+#ifndef NO_LONG_LONG
+
 #define PRIdFAST64 "lld"
 #define PRIiFAST64 "lli"
 #define PRIoFAST64 "llo"
 #define PRIuFAST64 "llu"
 #define PRIxFAST64 "llx"
 #define PRIXFAST64 "llX"
+
+#else
+
+#define PRIdFAST64 "ld"
+#define PRIiFAST64 "li"
+#define PRIoFAST64 "lo"
+#define PRIuFAST64 "lu"
+#define PRIxFAST64 "lx"
+#define PRIXFAST64 "lX"
+
+#endif
 
 #endif /* __INTTYPES_INCLUDED */

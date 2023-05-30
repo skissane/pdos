@@ -13,6 +13,7 @@
 /* For unknown reason the compiler cannot generate code
  * for (u)int_fast64_t (long long) division on its own,
  * so they need to be provided this way. */
+#ifndef NO_LONG_LONG
 
 int_fast64_t __divdi3 (int_fast64_t a, int_fast64_t b)
 {
@@ -101,3 +102,5 @@ uint_fast64_t __umoddi3 (uint_fast64_t a, uint_fast64_t b)
 
     return a;
 }
+
+#endif /* NO_LONG_LONG */

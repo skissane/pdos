@@ -11,7 +11,16 @@
 #ifndef __STDINT_INCLUDED
 #define __STDINT_INCLUDED
 
+#ifndef NO_LONG_LONG
+
 typedef long long int_fast64_t;
 typedef unsigned long long uint_fast64_t;
+
+#else
+
+typedef long int_fast64_t;
+typedef unsigned long uint_fast64_t;
+
+#endif
 
 #endif /* __STDINT_INCLUDED */
