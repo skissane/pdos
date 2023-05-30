@@ -3999,6 +3999,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     int j;
     char tbuf[MAXBLKSZ];
     char srchprog[FILENAME_MAX+10]; /* give an extra space */
+    char srchprog2[FILENAME_MAX+10]; /* give an extra space */
     int cnt = -1;
     int lastcnt = 0;
     int ret = 0;
@@ -4007,6 +4008,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     int exeLen;
     int imgsize;
     static int first = 1; /* first executable, ie command.exe */
+    int iscom = 0;
 
     if (!first || (!__istape && !__iscard && !__ismem))
     {
@@ -4016,7 +4018,9 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     memcpy(srchprog, prog, 8);
     srchprog[8] = ' ';
     *strchr(srchprog, ' ') = '\0';
+    strcpy(srchprog2, srchprog);
     strcat(srchprog, ".EXE "); /* extra space deliberate */
+    strcat(srchprog2, ".COM ");
     
     /* read VOL1 record */
     cnt = rdblock(pdos->ipldev, 0, 0, 3, tbuf, MAXBLKSZ, 0x0e);
@@ -4045,10 +4049,24 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
                         cyl = head = 0;
                         rec = 1;
                         /* +++ more macros needed here */
-                        memcpy((char *)&cyl + sizeof(int) - 2, 
+                        memcpy((char *)&cyl + sizeof(int) - 2,
                                dscb1.startcchh, 2);
                         memcpy((char *)&head + sizeof(int) - 2,
                                dscb1.startcchh + 2, 2);
+                        break;
+                    }
+                    else if (memcmp(dscb1.ds1dsnam,
+                                   srchprog2,
+                                   strlen(srchprog2)) == 0)
+                    {
+                        cyl = head = 0;
+                        rec = 1;
+                        /* +++ more macros needed here */
+                        memcpy((char *)&cyl + sizeof(int) - 2,
+                               dscb1.startcchh, 2);
+                        memcpy((char *)&head + sizeof(int) - 2,
+                               dscb1.startcchh + 2, 2);
+                        iscom = 1;
                         break;
                     }
                 }
@@ -4069,7 +4087,7 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     {
         cnt = rdtape(pdos->ipldev, tbuf, MAXBLKSZ);
     }
-    if (__iscard || __ismem)
+    if (__iscard || __ismem || iscom)
     {
         pe = 1;
     }
@@ -4194,7 +4212,11 @@ static int pdosLoadExe(PDOS *pdos, char *prog, char *parm)
     }
 
     exeLen = load - initial;    
-    if (pe)
+    if (iscom)
+    {
+        entry = (int)initial;
+    }
+    else if (pe)
     {
         if (fixPE(initial, &exeLen, &entry, (int)initial) != 0)
         {
