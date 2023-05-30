@@ -641,9 +641,14 @@ static void compile_function(void)
         codegen_output_buffer[(unsigned)(remember + 2)] = (ax >> 8) & 0xff;
         codegen_output_buffer[(unsigned)(remember + 3)] = ax & 0xff;
         foo = (int (*)(void))codegen_output_buffer;        
+#if GO
         foo();
         ret = *(int *)(codegen_output_buffer + DATASTART + 0x7078);
         printf("return from called program is %d %x\n", ret, ret);
+#else
+        fwrite(codegen_output_buffer, 1, di, fq);
+        fclose(fq);
+#endif
         exit(EXIT_SUCCESS);
     }
 #endif
