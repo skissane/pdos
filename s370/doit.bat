@@ -36,6 +36,7 @@ gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../src/pdpnntp.c
 gccmvs -DTARGET_MVS -Os -DZARCH -S -I . -I ../pdpclib ../util/multisc.c
 gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../../mvssrc/ozpd/c/copycon.c
 gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../../mvssrc/ozpd/c/assemble.c
+gccmvs -Os -DZARCH -S -I . -I ../pdpclib ../../mvssrc/ozpd/c/xychop.c
 
 sleep 1
 
@@ -69,6 +70,7 @@ copy bbs.txt bbs.exe
 copy exe2com.txt exe2com.exe
 copy pdpnntp.txt pdpnntp.exe
 copy copycon.txt copycon.exe
+copy xychop.txt xychop.exe
 copy assemble.txt assemble.exe
 copy multisc.txt multisc.exe
 copy sample.txt sample.c
@@ -125,5 +127,6 @@ zip -9X pdospkg runpdos.bat pdos.bat pdpi.zip pdpnntp.exe mkipltap.exe
 zip -9X pdospkg gcc.exe mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
 zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
 zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c copycon.exe assemble.exe
+zip -9X pdospkg xychop.exe
 
 rem Simply unzip the package into c:\pdos or whatever and it's done
