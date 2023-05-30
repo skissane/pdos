@@ -313,6 +313,7 @@ static void negotiate(FILE *sf)
         if (extend)
         {
             fseek(sf, 0, SEEK_CUR);
+            /* IAC DO ? IAC WILL ? ? ? IAC EOR_MARK ? IAC EOR_MARK */
             expect(sf, "\xff\xfd\x00"
                    "\xff\xfb\x00\x0d\xc2\xff\xef\x02\xff\xef", 13);
             return;
