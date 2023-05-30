@@ -391,6 +391,15 @@ static void doemul(void)
             base[dest] = regs[t] & 0xff;
             p += 4;
         }
+        else if (instr == 0x0a) /* svc */
+        {
+            int c;
+            
+            splitrr();
+            c = base[regs[1] + 4];
+            printf("c is %x\n", c);
+            p += 2;
+        }
         else
         {
             printf("unknown instruction %02X at %08X\n", p[0],
