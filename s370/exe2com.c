@@ -12,11 +12,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static FILE *fp;
 static FILE *fq;
 
-static unsigned char buf[10000];
+static unsigned char buf[33000];
 
 static void processPE(void);
 
@@ -99,8 +100,8 @@ static void processPE(void)
         fread(buf, 1, 4, fp);
         if (feof(fp))
         {
-            printf("seems to have worked\n");
-            exit(EXIT_SUCCESS);
+            printf("unexpected eof\n");
+            exit(EXIT_FAILURE);
         }
         l = (buf[0] << 8) | buf[1];
 #if PE_DEBUG
@@ -174,6 +175,9 @@ static void processPE(void)
                 r2 -= sizeof(short);
                 if (l2 > r2)
                 {
+#if PE_DEBUG
+                    printf("l2 is %d, r2 is %d\n", l2, r2);
+#endif
                     printf("mismatched record size at %ld\n", ftell(fp));
                     exit(EXIT_FAILURE);
                 }
@@ -197,21 +201,21 @@ static void processPE(void)
                     printf("rectype: program text\n");
 #endif
                     lasttxt = q;
+#if PE_DEBUG
+                    printf("doing write of %d\n", l2);
+#endif
                     fwrite(q, 1, l2, fq);
 /*                    memmove(upto, q, l2);
                     upto += l2; */
+                    /* I think this t is meaningless if we have exe data */
                     t = -1;
                     /* not sure about this. would need to check the manual */
                     /* I'll assume that we allow one bit of program text */
                     /* after the d record */
                     if (lastt == 0x0d)
                     {
-                        printf("seem to have finished now\n");
+                        printf("done!\n");
                         exit(EXIT_SUCCESS);
-#if 0
-                        printf("corrupt program text at %ld\n", ftell(fp));
-                        exit(EXIT_FAILURE);
-#endif
                     }
                 }
                 else if (t == 0x20)
