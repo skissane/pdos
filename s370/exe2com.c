@@ -204,6 +204,11 @@ static void processPE(void)
 #if PE_DEBUG
                     printf("doing write of %d\n", l2);
 #endif
+                    /* note that sometimes you will see NULs at the end of
+                       the file. I believe this is the assembler doing
+                       alignment and you shouldn't attempt to adjust that
+                       here or else you will start truncating legitimate
+                       data too */
                     fwrite(q, 1, l2, fq);
 /*                    memmove(upto, q, l2);
                     upto += l2; */
