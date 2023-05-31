@@ -110,9 +110,10 @@ struct template {
 #define     IMM8S                       (1LU << 12)
 #define     IMM16                       (1LU << 13)
 #define     IMM32                       (1LU << 14)
-#define     IMM64                       (1LU << 15)
+#define     IMM32S                      (1LU << 15)
+#define     IMM64                       (1LU << 16)
     
-#define     IMM                         (IMM8 | IMM8S | IMM16 | IMM32 | IMM64)
+#define     IMM                         (IMM8 | IMM8S | IMM16 | IMM32 | IMM32S | IMM64)
 #define     ENCODABLEIMM                (IMM8 | IMM16 | IMM32)
     
 #define     DISP8                       (1LU << 17)
@@ -213,7 +214,7 @@ static const struct template template_table[] = {
     { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32, ACC, 0 }, 0 },
     { "mov", 2, 0x88, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
     { "mov", 2, 0xB0, NONE, BWL_SUF | W | SHORT_FORM, { ENCODABLEIMM, REG8 | REG16 | REG32, 0 }, 0 },
-    { "mov", 2, 0xC6, NONE, BWL_SUF | D | W | MODRM, { ENCODABLEIMM, REG | ANY_MEM, 0 }, 0 },
+    { "mov", 2, 0xC6, NONE, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM, 0 }, 0 },
     
     /* Move instructions for segment registers. */
     { "mov", 2, 0x8C, NONE, WL_SUF | MODRM, { SEGMENT1, WORD_REG | INV_MEM, 0 }, 0 },
@@ -473,19 +474,21 @@ static const struct template template_table[] = {
     /* Program control transfer instructions. */
     { "call", 1, 0xE8, NONE, WL_SUF | DEFAULT_SIZE | CALL, { DISP16 | DISP32, 0, 0 }, CPU_NO64 },
     { "call", 1, 0xE8, NONE, WQ_SUF | DEFAULT_SIZE | CALL | NO_REX_W, { DISP16 | DISP32, 0, 0 }, CPU_64 },
-    { "call", 1, 0xFF, 2, WL_SUF | DEFAULT_SIZE | MODRM, { WORD_REG | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
-    { "call", 2, 0x9A, NONE, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
+    { "call", 1, 0xFF, 2, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, CPU_NO64 },
+    { "call", 1, 0xFF, 2, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, CPU_64 },
+    { "call", 2, 0x9A, NONE, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, CPU_NO64 },
     { "call", 1, 0xFF, 3, INTEL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     
     /* Alternative syntax. */
-    { "lcall", 2, 0x9A, NONE, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
+    { "lcall", 2, 0x9A, NONE, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, CPU_NO64 },
     { "lcall", 1, 0xFF, 3, WL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     
 #define     PC_RELATIVE_JUMP            0xEB
     
     { "jmp", 1, 0xEB, NONE, NO_SUF | JUMP, { DISP, 0, 0 }, 0 },
-    { "jmp", 1, 0xFF, 4, WL_SUF | MODRM, { WORD_REG | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
-    { "jmp", 2, 0xEA, NONE, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, 0 },
+    { "jmp", 1, 0xFF, 4, WL_SUF | MODRM, { REG16 | REG32 | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, CPU_NO64 },
+    { "jmp", 1, 0xFF, 4, WQ_SUF | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, CPU_64 },
+    { "jmp", 2, 0xEA, NONE, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32, 0 }, CPU_NO64 },
     { "jmp", 1, 0xFF, 5, INTEL_SUF | MODRM, { ANY_MEM | JUMP_ABSOLUTE, 0, 0 }, 0 },
     
     /* Alternative syntax. */
@@ -538,8 +541,9 @@ static const struct template template_table[] = {
     { "jg", 1, 0x7F, NONE, NO_SUF | JUMP, { DISP, 0, 0 }, 0 },
     { "jnle", 1, 0x7F, NONE, NO_SUF | JUMP, { DISP, 0, 0 }, 0 },
     
-    { "jcxz", 1, 0xE3, NONE, NO_SUF | JUMPBYTE | SIZE16, { DISP, 0, 0 }, 0 },
+    { "jcxz", 1, 0xE3, NONE, NO_SUF | JUMPBYTE | SIZE16, { DISP, 0, 0 }, CPU_NO64 },
     { "jecxz", 1, 0xE3, NONE, NO_SUF | JUMPBYTE | SIZE32, { DISP, 0, 0 }, 0 },
+    { "jrcxz", 1, 0xE3, NONE, NO_SUF | JUMPBYTE | SIZE64 | NO_REX_W, { DISP, 0, 0 }, CPU_64 },
     
     /* Loop instructions. */
     { "loop", 1, 0xE2, NONE, WL_SUF | JUMPBYTE, { DISP, 0, 0 }, 0 },

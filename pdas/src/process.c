@@ -87,48 +87,33 @@ static section_t get_known_section_expression (char **pp, struct expr *expr) {
 
 }
 
-static void handler_constant (char **pp, int size, int is_rva) {
-
+static void handler_constant (char **pp, int size, int is_rva)
+{
     struct expr expr;
     
     do {
-    
         machine_dependent_simplified_expression_read_into (pp, &expr);
         
         if (is_rva) {
-        
             if (expr.type == EXPR_TYPE_SYMBOL) {
                 expr.type = EXPR_TYPE_SYMBOL_RVA;
             } else {
                 as_error ("rva without symbol.");
             }
-        
         }
         
         if (expr.type == EXPR_TYPE_CONSTANT) {
-        
-            int i;
-            
-            for (i = 0; i < size; i++) {
-                frag_append_1_char ((expr.add_number >> (8 * i)) & 0xff);
-            }
-        
+            machine_dependent_number_to_chars (frag_increase_fixed_size (size), expr.add_number, size);
         } else if (expr.type != EXPR_TYPE_INVALID) {
-        
             fixup_new_expr (current_frag, current_frag->fixed_size, size, &expr, 0, RELOC_TYPE_DEFAULT);
             frag_increase_fixed_size (size);
-        
         } else {
-        
             as_error ("value is not a constant");
             return;
-        
         }
-    
     } while (*((*pp)++) == ',');
     
     demand_empty_rest_of_line (pp);
-
 }
 
 static void handler_align (char **pp, int first_arg_is_bytes)
@@ -849,6 +834,10 @@ static void handler_p2align (char **pp) {
     handler_align (pp, 0 /* first_arg_is_bytes */);
 }
 
+static void handler_quad (char **pp) {
+    handler_constant (pp, 8, 0);
+}
+
 static void handler_rva (char **pp) {
     handler_constant (pp, 4, 1);
 }
@@ -950,6 +939,7 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "long",       &handler_long           },
     { "org",        &handler_org            },
     { "p2align",    &handler_p2align        },
+    { "quad",       &handler_quad           },
     { "rva",        &handler_rva            },
     { "space",      &handler_space          },
     { "text",       &handler_text           },

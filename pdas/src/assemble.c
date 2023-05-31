@@ -613,20 +613,16 @@ static int finalize_immediate (struct expr *expr, const char *imm_start)
     return 0;
 }
 
-static int finalize_displacement (struct expr *expr, const char *disp_start) {
-
+static int finalize_displacement (struct expr *expr, const char *disp_start)
+{
     if (expr->type == EXPR_TYPE_INVALID || expr->type == EXPR_TYPE_ABSENT) {
-    
         if (disp_start) {
             as_error ("missing or invalid displacement expression '%s'", disp_start);
-        }
-        
+        }        
         return 1;
-    
     }
     
     return 0;
-
 }
 
 static int att_parse_operand (char *operand_string) {
@@ -954,21 +950,19 @@ static int att_parse_operand (char *operand_string) {
 
 flag_int smallest_imm_type (int_fast64_t number)
 {
+    flag_int type = IMM64;
+    
     if (fits_in_signed_byte (number)) {
-        return (IMM8S | IMM8 | IMM16 | IMM32);
-    }
+        type |= IMM8S | IMM8 | IMM16 | IMM32 | IMM32S;
+    } else if (fits_in_unsigned_byte (number)) {
+        type |= IMM8 | IMM16 | IMM32 | IMM32S;
+    } else if (fits_in_signed_word (number) || fits_in_unsigned_word (number)) {
+        type |=  IMM16 | IMM32 | IMM32S;
+    } else if (fits_in_signed_long (number)) {
+        type |= IMM32 | IMM32S;
+    } else if (fits_in_unsigned_long (number)) type |= IMM32;
     
-    if (fits_in_unsigned_byte (number)) {
-        return (IMM8 | IMM16 | IMM32);
-    }
-    
-    if (fits_in_signed_word (number) || fits_in_unsigned_word (number)) {
-        return (IMM16 | IMM32);
-    }
-
-    if (fits_in_signed_long (number) || fits_in_unsigned_long (number)) return IMM32;
-    
-    return IMM64;
+    return type;
 }
 
 static void optimize_size_of_disps (void) {
@@ -1397,21 +1391,28 @@ static int process_suffix (void)
                    /* lgdt, lidt, sgdt, sidt */
                    || ((instruction.template.base_opcode == 0x0F01
                         && instruction.template.extension_opcode <= 3)))) {
+        switch (bits) {
 
-        if (bits == 32) {
+            case 64:
+                if (!(instruction.template.opcode_modifier & NO_QSUF)) {
+                    instruction.suffix = QWORD_SUFFIX;
+                    break;
+                }
+                /* fall through. */
+                
+            case 32:
+                if (!(instruction.template.opcode_modifier & NO_LSUF)) {
+                    instruction.suffix = DWORD_SUFFIX;
+                }
+                break;
+
+            case 16:
+                if (!(instruction.template.opcode_modifier & NO_WSUF)) {
+                    instruction.suffix = WORD_SUFFIX;
+                }
+                break;
             
-            if (!(instruction.template.opcode_modifier & NO_LSUF)) {
-                instruction.suffix = DWORD_SUFFIX;
-            }
-            
-        } else {
-
-            if (!(instruction.template.opcode_modifier & NO_WSUF)) {
-                instruction.suffix = WORD_SUFFIX;
-            }
-
         }
-
     }
                                           
     if (!instruction.suffix
@@ -1601,7 +1602,7 @@ static int finalize_imms (void)
                         break;
 
                     case QWORD_SUFFIX:
-                        overlap &= IMM64;
+                        overlap &= IMM32S | IMM64;
                         break;
                 
                 }
@@ -1617,7 +1618,7 @@ static int finalize_imms (void)
 
             if ((overlap != IMM8) && (overlap != IMM8S)
                 && (overlap != IMM16) && (overlap != IMM32)
-                && (overlap != IMM64)) {
+                && (overlap != IMM32S) && (overlap != IMM64)) {
                 as_error ("no instruction suffix given; cannot determine immediate size");
                 return 1;
             }
