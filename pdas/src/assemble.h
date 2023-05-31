@@ -76,16 +76,17 @@ struct template {
     
 #define     SIZE16                      (1LU << 13)
 #define     SIZE32                      (1LU << 14)
+#define     SIZE64                      (1LU << 15)
     
-#define     IS_PREFIX                   (1LU << 15)
-#define     IS_STRING                   (1LU << 16)
+#define     IS_PREFIX                   (1LU << 16)
+#define     IS_STRING                   (1LU << 17)
     
-#define     REG_DUPLICATION             (1LU << 17)
+#define     REG_DUPLICATION             (1LU << 18)
     
-#define     FLOAT_MF                    (1LU << 18)
-#define     ADD_FWAIT                   (1LU << 19)
+#define     FLOAT_MF                    (1LU << 19)
+#define     ADD_FWAIT                   (1LU << 20)
 
-#define     NO_REX_W                    (1LU << 20)
+#define     NO_REX_W                    (1LU << 21)
     
     flag_int operand_types[MAX_OPERANDS];
     
@@ -195,6 +196,7 @@ struct sib_byte {
 #define     WL_SUF                      (NO_BSUF | NO_SSUF | NO_QSUF | NO_INTELSUF)
 #define     WQ_SUF                      (NO_BSUF | NO_SSUF | NO_LSUF | NO_INTELSUF)
 #define     SL_SUF                      (NO_BSUF | NO_WSUF | NO_QSUF | NO_INTELSUF)
+#define     LQ_SUF                      (NO_BSUF | NO_WSUF | NO_SSUF | NO_INTELSUF)
 #define     BWL_SUF                     (NO_SSUF | NO_QSUF | NO_INTELSUF)
 #define     WLQ_SUF                     (NO_BSUF | NO_SSUF | NO_INTELSUF)
 #define     BWLQ_SUF                    (NO_SSUF | NO_INTELSUF)
@@ -227,7 +229,7 @@ static const struct template template_table[] = {
     { "mov", 2, 0x0F20, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
     { "mov", 2, 0x0F20, NONE, Q_SUF | D | MODRM | NO_REX_W, { CONTROL, REG64 | INV_MEM, 0 }, CPU_64 },
     { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { DEBUG, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
-    { "mov", 2, 0x0F21, NONE, L_SUF | D | MODRM | NO_REX_W, { DEBUG, REG64 | INV_MEM, 0 }, CPU_64 },
+    { "mov", 2, 0x0F21, NONE, Q_SUF | D | MODRM | NO_REX_W, { DEBUG, REG64 | INV_MEM, 0 }, CPU_64 },
     { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
 
     /* 64-bit only moves. */
@@ -238,13 +240,17 @@ static const struct template template_table[] = {
     { "movsbl", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG32, 0 }, CPU_386 },
     { "movsbw", 2, 0x0FBE, NONE, NO_SUF | MODRM, { REG8 | ANY_MEM, REG16, 0 }, CPU_386 },
     { "movswl", 2, 0x0FBF, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, CPU_386 },
+    { "movsbq", 2, 0x0FBE, NONE, NO_SUF | MODRM | SIZE64, { REG8 | ANY_MEM, REG64, 0 }, CPU_64 },
+    { "movswq", 2, 0x0FBF, NONE, NO_SUF | MODRM | SIZE64, { REG16 | ANY_MEM, REG64, 0 }, CPU_64 },
+    { "movslq", 2, 0x63, NONE, NO_SUF | MODRM | SIZE64, { REG32 | ANY_MEM, REG64, 0 }, CPU_64 },
     
     /* Alternative syntax. */
     { "movsx", 2, 0x0FBE, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "movsx", 2, 0x63, NONE, L_SUF | MODRM, { REG32 | ANY_MEM, REG32 | REG64, 0 }, CPU_64 },
     
     /* Move with zero extend. */
-    { "movzb", 2, 0x0FB6, NONE, WL_SUF | MODRM, { REG8 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
-    { "movzwl", 2, 0x0FB7, NONE, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32, 0 }, CPU_386 },
+    { "movzb", 2, 0x0FB6, NONE, WLQ_SUF | MODRM, { REG8 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
+    { "movzw", 2, 0x0FB7, NONE, LQ_SUF | MODRM, { REG16 | ANY_MEM, REG32 | REG64, 0 }, CPU_386 },
     
     /* Alternative syntax. */
     { "movzx", 2, 0x0FB6, NONE, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, WORD_REG, 0 }, CPU_386 },
@@ -396,14 +402,18 @@ static const struct template template_table[] = {
     /* Conversion instructions. */
     { "cbw", 0, 0x98, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cwde", 0, 0x98, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 0 },
+    { "cdqe", 0, 0x98, NONE, NO_SUF | SIZE64, { 0, 0, 0 }, CPU_64 },
     { "cwd", 0, 0x99, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cdq", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, CPU_386 },
+    { "cqo", 0, 0x99, NONE, NO_SUF | SIZE64, { 0, 0, 0 }, CPU_64 },
     
     /* Other naming. */
     { "cbtw", 0, 0x98, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cwtl", 0, 0x98, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, 0 },
+    { "cltq", 0, 0x98, NONE, NO_SUF | SIZE64, { 0, 0, 0 }, CPU_64 },
     { "cwtd", 0, 0x99, NONE, NO_SUF | SIZE16, { 0, 0, 0 }, 0 },
     { "cltd", 0, 0x99, NONE, NO_SUF | SIZE32, { 0, 0, 0 }, CPU_386 },
+    { "cqto", 0, 0x99, NONE, NO_SUF | SIZE64, { 0, 0, 0 }, CPU_64 },
     
     { "mul", 1, 0xF6, 4, BWL_SUF | W | MODRM, { REG | ANY_MEM, 0, 0 }, 0 },
     

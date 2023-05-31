@@ -1299,25 +1299,24 @@ static int check_qword_reg (void) {
 
 }
 
-static int process_suffix (void) {
-
+static int process_suffix (void)
+{
     int is_movsx_or_movzx = 0;
-    
-    if (instruction.template.opcode_modifier & (SIZE16 | SIZE32)) {
-    
-        if (instruction.template.opcode_modifier & SIZE16) {
-            instruction.suffix = WORD_SUFFIX;
-        } else {
-            instruction.suffix = DWORD_SUFFIX;
-        }
-    
+
+    if (instruction.template.opcode_modifier & SIZE16) {
+        instruction.suffix = WORD_SUFFIX;
+    } else if (instruction.template.opcode_modifier & SIZE32) {
+        instruction.suffix = DWORD_SUFFIX;
+    } else if (instruction.template.opcode_modifier & SIZE64) {
+        instruction.suffix = QWORD_SUFFIX;
     } else if (instruction.reg_operands
                && (instruction.operands > 1 || (instruction.types[0] & REG))) {
-    
         int saved_operands = instruction.operands;
         
-        is_movsx_or_movzx = ((instruction.template.base_opcode & 0xFF00) == 0x0F00
-            && ((instruction.template.base_opcode & 0xFF) | 8) == 0xBE);
+        is_movsx_or_movzx = (((instruction.template.base_opcode & 0xFF00) == 0x0F00
+                              && ((instruction.template.base_opcode & 0xFF) | 8) == 0xBE)
+                             || (instruction.template.base_opcode == 0x63
+                                 && (instruction.template.cpu_flags & CPU_64)));
         
         /* For movsx/movzx only the source operand is considered for the ambiguity checking.
          * The suffix is replaced to represent the destination later. */
@@ -1326,7 +1325,6 @@ static int process_suffix (void) {
         }
         
         if (!instruction.suffix) {
-        
             int op;
 
             for (op = instruction.operands; --op >= 0; ) {
@@ -1484,6 +1482,8 @@ static int process_suffix (void) {
         
             if (instruction.types[1] & REG16) {
                 instruction.suffix = WORD_SUFFIX;
+            } else if (instruction.types[1] & REG64) {
+                instruction.suffix = QWORD_SUFFIX;
             } else {
                 instruction.suffix = DWORD_SUFFIX;
             }
@@ -1569,7 +1569,6 @@ static int process_suffix (void) {
     }
     
     return 0;
-
 }
 
 static int finalize_imms (void)
