@@ -10,6 +10,8 @@
 /*                                                                   */
 /*********************************************************************/
 
+#define ALTEXT 1
+
 #if 0
 
 Here is a list of control characters. 6 will need to be
@@ -250,7 +252,8 @@ static void negotiate(FILE *sf)
 
     fseek(sf, 0, SEEK_CUR);
     /* IAC SB TERM_TYPE SEND IAC SE */
-    expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
+
+#if !ALTEXT
 
     fseek(sf, 0, SEEK_CUR);
     /* printf("writing\n"); */
@@ -279,6 +282,7 @@ static void negotiate(FILE *sf)
         fwrite("ANSI", 1, 4, sf);
     }
     fwrite("\xff\xf0", 1, 2, sf);
+#endif
 
     if ((termtype == 1052) || (termtype == 1057))
     {
@@ -302,22 +306,48 @@ static void negotiate(FILE *sf)
         }
 #endif
         /* do eor and will eor */
+#if ALTEXT
+        expect(sf, "\xff\xfb\x19" "\xff\xfd\x19", 6);
+#else
         expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
+#endif
         fseek(sf, 0, SEEK_CUR);
+        /* these fb and fd should probably be swapped!!! */
+        /* (for the non-ALTEXT) */
         fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
         fseek(sf, 0, SEEK_CUR);
         printf("binary\n");
+#if ALTEXT
+        expect(sf, "\xff\xfb\x00" "\xff\xfd\x00", 6);
+#else
         expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
+#endif
         fseek(sf, 0, SEEK_CUR);
+        /* and swap these too for non-ALTEXT!!! */
         fwrite("\xff\xfb\x00" "\xff\xfd\x00", 6, 1, sf);
+#if !ALTEXT
         if (extend)
         {
             fseek(sf, 0, SEEK_CUR);
             /* IAC DO ? IAC WILL ? ? ? IAC EOR_MARK ? IAC EOR_MARK */
+#if ALTEXT
+            expect(sf, "\x0d\xc7\x11\x40\x40\x1d\x60\x40\xe4", 9);
+#else
             expect(sf, "\xff\xfd\x00"
                    "\xff\xfb\x00\x0d\xc2\xff\xef\x02\xff\xef", 13);
+#endif
+
+            fseek(sf, 0, SEEK_CUR);
+            /* press enter */
+            fwrite("\x7d\x5b\xe2\x11\x5b\x61", 6, 1, sf);
+            /* insert data before enter here */
+            fwrite("\xff\xef", 1, 2, sf);
+            
+            fseek(sf, 0, SEEK_CUR);
+            expect(sf, "\x00", 1);
             return;
         }
+#endif
         fseek(sf, 0, SEEK_CUR);
         {
             int x = 0;
@@ -326,6 +356,9 @@ static void negotiate(FILE *sf)
             while (1)
             {
                 c = fgetc(sf);
+#if ALTEXT
+                printf("c from logo is %02X\n", c);
+#endif
                 if (c == EOF) break;
                 if (c == IAC)
                 {
