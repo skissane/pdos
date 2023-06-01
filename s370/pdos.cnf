@@ -13,6 +13,9 @@ PGMPRDOS             RESTRICTED
 CODEPAGE             819/1047
 CNSLPORT             3270
 
+# Note that on Hercules you can specify an iplparm by going:
+# ipl 1b9 parm 9.3270
+
 # Ideally put the console first. It can be either an integrated
 # console (3215-C) or a "normal" telnet console (3215). Or a 3270
 # terminal. Or an EBCDIC ANSI terminal (1052 repurposed for this).
