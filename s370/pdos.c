@@ -976,7 +976,7 @@ int pdosInit(PDOS *pdos)
     pdos->iplregs[16] = 0; /* effective NUL-terminator */
     if (__consdn == 0)
     {
-        sscanf((char *)pdos->iplregs, "%x %d", &__consdn, &cons_type);
+        sscanf((char *)pdos->iplregs, "%x.%d", &__consdn, &cons_type);
     }
 
 /* cover the case where they have zapped a device number
