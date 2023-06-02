@@ -1172,6 +1172,29 @@ static void compile_expr_tok_next(void)
         codegen_output_buffer[di++] = 0x1b; /* emit "sr r6,r3" instruction */
         codegen_output_buffer[di++] = 0x63;
     }
+    else if (tmp == TOK_MUL)
+    {
+        /* from memory, multiply uses a register pair, starting with an
+           even number */
+        /* so we will be using r4 + r5 */
+        /* and the result goes into r5 i believe */
+        
+        /* move something from r6 to r5 */
+        codegen_output_buffer[di++] = 0x18; /* emit "lr r3,r6" instruction */
+        codegen_output_buffer[di++] = 0x56; 
+        
+        codegen_output_buffer[di++] = 0x41; /* emit "la r4,0(0,0)" instruction */
+        codegen_output_buffer[di++] = 0x40; /* target + source index */
+        codegen_output_buffer[di++] = 0x00; /* source base + offset */
+        codegen_output_buffer[di++] = 0x00; /* rest of offset */
+
+        codegen_output_buffer[di++] = 0x1c; /* emit "mr r4,r3" instruction */
+        codegen_output_buffer[di++] = 0x43;
+
+        /* move result from r5 to r6 */
+        codegen_output_buffer[di++] = 0x18; /* emit "lr r6,r5" instruction */
+        codegen_output_buffer[di++] = 0x65; 
+    }
     else if (tmp == TOK_EQ)
     {
         codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
