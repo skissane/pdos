@@ -10,7 +10,7 @@
 /*                                                                   */
 /*********************************************************************/
 
-/* alternate form of extended - used by z1090 */
+/* alternate form of extended - used by z1090 IBM hardware emulator */
 /* normal extended is z/VM */
 /* and the OSS-ICC never got anywhere */
 #define ALTEXT 1
