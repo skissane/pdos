@@ -10,6 +10,9 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* alternate form of extended - used by z1090 */
+/* normal extended is z/VM */
+/* and the OSS-ICC never got anywhere */
 #define ALTEXT 1
 
 #if 0
