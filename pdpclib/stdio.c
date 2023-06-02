@@ -4664,7 +4664,8 @@ static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s)
                                 break;
                             }
                             /* this logic may need to be applied to stro(u)l
-                               and be more generalized too */
+                               and be more generalized too. And that 'X' above
+                               should be checked more stringently */
                             else if ((base == 16)
                                      && !isxdigit((unsigned char)ch))
                             {
