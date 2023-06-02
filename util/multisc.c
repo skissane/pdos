@@ -1208,6 +1208,40 @@ static void compile_expr_tok_next(void)
         codegen_output_buffer[di++] = 0x00; /* source base + offset */
         codegen_output_buffer[di++] = 0x01; /* rest of offset */
     }
+    else if (tmp == TOK_LE)
+    {
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+/* base: */
+
+        codegen_output_buffer[di++] = 0x19; /* emit "cr r6,r3" instruction */
+        codegen_output_buffer[di++] = 0x63; 
+
+        /* if it is less than, then go and set the 1 */
+        codegen_output_buffer[di++] = 0x47; /* emit "bnh 14(,r15)" instruction */
+        codegen_output_buffer[di++] = 0xd0;
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0x0e; 
+
+        /* not less than, so set to 0 */
+        codegen_output_buffer[di++] = 0x41; /* emit "la r6,0(0,0)" instruction */
+        codegen_output_buffer[di++] = 0x60; /* target + source index */
+        codegen_output_buffer[di++] = 0x00; /* source base + offset */
+        codegen_output_buffer[di++] = 0x00; /* rest of offset */
+
+        /* should this have a comma? ie is that an index register? */
+        codegen_output_buffer[di++] = 0x47; /* emit "b 18(,r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0xf0; 
+        codegen_output_buffer[di++] = 0x12;
+
+        /* less than, so set to 1 */
+        codegen_output_buffer[di++] = 0x41; /* emit "la r6,0(0,1)" instruction */
+        codegen_output_buffer[di++] = 0x60; /* target + source index */
+        codegen_output_buffer[di++] = 0x00; /* source base + offset */
+        codegen_output_buffer[di++] = 0x01; /* rest of offset */
+    }
     else if (tmp == TOK_GT)
     {
         codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
