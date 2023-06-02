@@ -976,7 +976,10 @@ int pdosInit(PDOS *pdos)
     pdos->iplregs[16] = 0; /* effective NUL-terminator */
     if (__consdn == 0)
     {
-        sscanf((char *)pdos->iplregs, "%x.%d", &__consdn, &cons_type);
+        /* dot (.) doesn't seem to work as a separator - or that
+           could be misinformation */
+        /* use Z instead of X to work around a bug in pdpclib */
+        sscanf((char *)pdos->iplregs, "%xZ%d", &__consdn, &cons_type);
     }
 
 /* cover the case where they have zapped a device number
