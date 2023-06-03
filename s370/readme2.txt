@@ -147,3 +147,65 @@ mvssamp
 
 It is unclear if you can fight your way out in C using just
 the provided tools.
+
+
+The IPL tape provided is designed to drive a 3270.
+If you wish to instead drive a 3275 (EBCDIC ANSI
+encapsulated in 3270 data stream which requires a
+special terminal emulator to decipher - specifically
+mfterm -3275 which comes with PDOS/386), so that
+you can run microemacs or whatever, then you will
+either need to use a pre-CZAM z/Arch machine that
+stored the IPL PARM in registers that were easy to
+access (albeit undocumented), so that you can
+override the 3270 with something like 9Z3275 which
+is device 9, Z is a separator (must be Z), and 3275
+is the device type. If you are using a CZAM machine
+you have no choice but to zap the included config.sys
+whose location varies, but you can find it via a
+hexdump and look for 3270 somewhere. There are multiple
+places with 3270, so you're looking for the one that
+starts 0009 with no comment.
+
+01D3A0  A3157BF0 F0F0F940 40404040 40F3F2F1  ..{....@@@@@@...
+01D3B0  F5404040 40404040 95969799 969497A3  .@@@@@@@........
+
+3215 - no use
+
+01D3C0  15F0F0F0 F9404040 404040F3 F2F7F015  .....@@@@@@.....
+
+009 and 3270 and newline (x'15') - perfect.
+
+So in this case you would zap 0x1d3ce to 0xf5
+
+01D3D0  7BF0F0F0 F9404040 404040F1 F0F5F240  {....@@@@@@....@
+01D3E0  40404040 40409596 97999694 97A3157B  @@@@@@.........{
+01D3F0  40F1F0F5 F2404E40 85828384 89834083  @....@N@......@.
+01D400  998581A3 85A240A6 8881A340 9486A385  ......@....@....
+01D410  99944083 819393A2 408140F1 F0F5F715  ..@.....@.@.....
+01D420  7BF0F0F0 F9404040 404040F1 F0F5F240  {....@@@@@@....@
+01D430  40404040 40408582 83848983 40959697  @@@@@@......@...
+01D440  99969497 A3157BF0 F0F0F940 40404040  ......{....@@@@@
+01D450  40F1F0F5 F260C340 40404040 40614095  @....`.@@@@@@a@.
+01D460  96979996 9497A315                    ........
+
+
+If you are using a z1090 (zPDT?), then use the "-x" option to mfterm
+to get it to do extended negotiation (so that it can decline
+the TN3270E request, plus other differences compared to
+Hercules).
+
+There is a "ramdisk" command, and I think you can reference it
+as device 20000. Although I thought it became the default drive,
+so you should be able to reference it as device 0. But try
+drv20000: first
+
+Some commands don't give feedback, but run successfully. Can't
+remember which ones.
+
+Just run a command with no parameters and it normally gives usage.
+
+Because of the difficulty of creating an unlabeled AWS tape from a
+flat file on the z1090 (unless the file is a multiple of 80 and
+then you can use a card program?), I am now including the 3390
+image as an AWS tape.
