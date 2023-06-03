@@ -96,9 +96,11 @@ void display()
 void main()
 {
     ret = 193; /* 'A' in EBCDIC */
+    x = & ret;
     while( ret < 198 ){
         display();
-        ret = ret + 1;
+        ret = ret - 1;
+        *(int*) x = *(int*) x + 2;
     }
     ret = 0; /* return code to operating system */
 }
