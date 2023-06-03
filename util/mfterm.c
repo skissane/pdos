@@ -536,7 +536,9 @@ static void interact(FILE *sf)
                     }
                     newc += (p - hex);
                     c = newc;
+                    /* printf("deciphered %x\n", c); */
                     c = febc(c);
+                    /* printf("which is %x\n", c); */
                     if (c == 0)
                     {
                         ign3275 = 1;
@@ -684,6 +686,7 @@ int febc(int ebc)
 {
   switch (ebc)
   {
+    case 0x16 : return('\b');
     case 0x15 : return('\n');
     case 0x25 : return('\n');
     case 0x40 : return(' ');
