@@ -253,11 +253,13 @@ static void negotiate(FILE *sf)
     /* IAC WILL TERM_TYPE */
     fwrite("\xff\xfb\x18", 1, 3, sf);
 
+    if (!extend || !ALTEXT)
+    {
+
     fseek(sf, 0, SEEK_CUR);
     /* IAC SB TERM_TYPE SEND IAC SE */
-
-#if !ALTEXT
-
+    expect(sf, "\xff\xfa\x18\x01\xff\xf0", 6);
+    
     fseek(sf, 0, SEEK_CUR);
     /* printf("writing\n"); */
     /* IAC SB TERM_TYPE IS (ANSI) IAC SE */
@@ -265,7 +267,7 @@ static void negotiate(FILE *sf)
     if ((termtype == 3270) || (termtype == 3275))
     {
         printf("writing IBM-3270\n");
-        if (extend)
+        if (1) /* extend) */
         {
             printf("actually IBM-3278-2\n");
             fwrite("IBM-3278-2", 1, 10, sf);
@@ -285,7 +287,8 @@ static void negotiate(FILE *sf)
         fwrite("ANSI", 1, 4, sf);
     }
     fwrite("\xff\xf0", 1, 2, sf);
-#endif
+
+    }
 
     if ((termtype == 1052) || (termtype == 1057))
     {
@@ -309,25 +312,38 @@ static void negotiate(FILE *sf)
         }
 #endif
         /* do eor and will eor */
-#if ALTEXT
-        expect(sf, "\xff\xfb\x19" "\xff\xfd\x19", 6);
-#else
-        expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
-#endif
+        if (extend && ALTEXT)
+        {
+            expect(sf, "\xff\xfb\x19" "\xff\xfd\x19", 6);
+        }
+        else
+        {
+            expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
+        }
         fseek(sf, 0, SEEK_CUR);
         /* these fb and fd should probably be swapped!!! */
         /* (for the non-ALTEXT) */
         fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
         fseek(sf, 0, SEEK_CUR);
         printf("binary\n");
-#if ALTEXT
+        if (extend && ALTEXT)
+        {
         expect(sf, "\xff\xfb\x00" "\xff\xfd\x00", 6);
-#else
+        }
+        else
+        {
         expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
-#endif
+        }
         fseek(sf, 0, SEEK_CUR);
         /* and swap these too for non-ALTEXT!!! */
+        if (extend && ALTEXT)
+        {
         fwrite("\xff\xfb\x00" "\xff\xfd\x00", 6, 1, sf);
+        }
+        else
+        {
+        fwrite("\xff\xfd\x00" "\xff\xfb\x00", 6, 1, sf);
+        }
 #if !ALTEXT
         if (extend)
         {
