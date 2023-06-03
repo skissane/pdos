@@ -2993,6 +2993,10 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
         {
             indev = getssid(indev);
         }
+        if ((outdev != 0) && (outdev < 0x10000))
+        {
+            outdev = getssid(outdev);
+        }
 #endif
     }
     else if (strncmp(fnm, "tap", 3) == 0)
