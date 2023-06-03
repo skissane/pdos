@@ -970,9 +970,9 @@ int pdosInit(PDOS *pdos)
     int rec;
 
     pdos->ipldev = initsys();
-    /* The registers as they were at IPL time are stored at FLCGRSAV
+    /* The registers as they were at IPL time are stored at PSACLHT
        by sapstart */
-    memcpy(pdos->iplregs, (int *)0x180, 16 * 4);
+    memcpy(pdos->iplregs, (int *)0x280, 16 * 4);
     pdos->iplregs[16] = 0; /* effective NUL-terminator */
     if (__consdn == 0)
     {
