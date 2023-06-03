@@ -10,7 +10,8 @@
 /*                                                                   */
 /*********************************************************************/
 
-/* alternate form of extended - used by z1090 IBM hardware emulator */
+/* alternate form of extended - used by zPDT (aka z1090/zOPD) IBM
+   hardware emulator */
 /* normal extended is z/VM */
 /* and the OSS-ICC never got anywhere */
 #define ALTEXT 1
@@ -479,7 +480,7 @@ static void interact(FILE *sf)
                 /* the first character received is x'f1' which is a write
                    command, added by Hercules, not PDOS. That's what the
                    +1 is about */
-                /* the z1090 seems to send x'01' instead of x'f1'. no idea
+                /* the zPDT seems to send x'01' instead of x'f1'. no idea
                    what the difference is. */
                 /* ignore first 6+1 characters */
                 if (cnt == 2)
