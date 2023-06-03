@@ -1172,6 +1172,11 @@ static void compile_expr_tok_next(void)
         codegen_output_buffer[di++] = 0x1b; /* emit "sr r6,r3" instruction */
         codegen_output_buffer[di++] = 0x63;
     }
+    else if (tmp == TOK_AND)
+    {
+        codegen_output_buffer[di++] = 0x14; /* emit "nr r6,r3" instruction */
+        codegen_output_buffer[di++] = 0x63;
+    }
     else if (tmp == TOK_MUL)
     {
         /* from memory, multiply uses a register pair, starting with an
