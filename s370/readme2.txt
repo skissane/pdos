@@ -190,7 +190,7 @@ So in this case you would zap 0x1d3ce to 0xf5
 01D460  96979996 9497A315                    ........
 
 
-If you are using a z1090 (zPDT?), then use the "-x" option to mfterm
+If you are using zPDT (aka z1090/zOPD), then use the "-x" option to mfterm
 to get it to do extended negotiation (so that it can decline
 the TN3270E request, plus other differences compared to
 Hercules).
@@ -206,6 +206,6 @@ remember which ones.
 Just run a command with no parameters and it normally gives usage.
 
 Because of the difficulty of creating an unlabeled AWS tape from a
-flat file on the z1090 (unless the file is a multiple of 80 and
+flat file on the zPDT (unless the file is a multiple of 80 and
 then you can use a card program?), I am now including the 3390
 image as an AWS tape.
