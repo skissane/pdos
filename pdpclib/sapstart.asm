@@ -108,7 +108,7 @@ CMAXBLKS DC    F'0'   max number of cards to read
 *
 POSTIPL  DS    0H
          USING PSA,R0
-         STM    R0,R15,FLCGRSAV
+         STM    R0,R15,PSACLHT
          BALR  R12,0
          USING *,R12
          LA    R12,0(R12)
@@ -123,7 +123,7 @@ POSTIPL  DS    0H
 *
 TAPEIPL  DS    0H
          USING PSA,R0
-         STM    R0,R15,FLCGRSAV
+         STM    R0,R15,PSACLHT
          BALR  R12,0
          USING *,R12
          LA    R12,0(R12)
@@ -141,7 +141,7 @@ TAPEIPL  DS    0H
 *
 CARDIPL  DS    0H
          USING PSA,R0
-         STM    R0,R15,FLCGRSAV
+         STM    R0,R15,PSACLHT
          BALR  R12,0
          USING *,R12
          LA    R12,0(R12)
@@ -159,7 +159,7 @@ CARDIPL  DS    0H
 *
 MEMIPL   DS    0H
          USING PSA,R0
-         STM    R0,R15,FLCGRSAV
+         STM    R0,R15,PSACLHT
          BALR  R12,0
          USING *,R12
          LA    R12,0(R12)
