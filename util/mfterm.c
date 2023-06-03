@@ -463,13 +463,19 @@ static void interact(FILE *sf)
                 /* the first character received is x'f1' which is a write
                    command, added by Hercules, not PDOS. That's what the
                    +1 is about */
+                /* the z1090 seems to send x'01' instead of x'f1'. no idea
+                   what the difference is. */
                 /* ignore first 6+1 characters */
                 if (cnt == 2)
                 {
                     keybcode = c;
                     /* printf("keyboard code is %x\n", c); */
                 }
-                if (cnt <= (6+1)) continue;
+                if (cnt <= (6+1))
+                {
+                    /* printf("ignoring %x\n", c); */
+                    continue;
+                }
                 /* ignore stuff after actual data */
                 if (cnt > (1766+1)) continue;
                 c = febc(c);
