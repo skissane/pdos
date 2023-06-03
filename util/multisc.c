@@ -139,6 +139,11 @@ typedef struct {
 /* r6 and all other registers can be trashed at any time */
 /* note that this is in relation to the generated code, not
    this compiler code */
+/* r3 is used cross-function to store cx, so it can't be
+   unconditionally trashed */
+/* r10 is now being used to store si, so also can't be
+   unconditionally trashed - actually not true - we don't
+   seem to need an si - or rather, we do that adhoc */
 
 /* for MVS, include room for a 64k stack, and 64k for a little overhead */
 /* and since we have a flat address space, allow for 256k of code */
@@ -1010,9 +1015,47 @@ static void compile_assign(void)
 
         /* compile_store_deref: */
         bx = bp; /* restore dest var token */
+        
+#if TARGET_MVS
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+    codegen_output_buffer[di++] = 0xf0; 
+
+    codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+    codegen_output_buffer[di++] = 0xf0; /* target + source index */
+    codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+    codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+    /* jump over constant, and r14 points to the constant */
+    codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+    codegen_output_buffer[di++] = 0xef;
+
+    bx *= 4; /* there are 65536 possible hash values, each occupying 4 bytes */
+    bx += DATASTART; /* and the data space starts after the code */
+    emit_tok();
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r11,0(,r14)" instruction */
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0xe0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x1a; /* emit "ar r11,r7" instruction */
+    codegen_output_buffer[di++] = 0xb7;
+
+    codegen_output_buffer[di++] = 0x58; /* emit "l r11,0(,r11)" instruction */
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0x00;
+    
+    codegen_output_buffer[di++] = 0x50; /* emit "st r6,0(,r11)" instruction */
+    codegen_output_buffer[di++] = 0x60;
+    codegen_output_buffer[di++] = 0xb0;
+    codegen_output_buffer[di++] = 0x00;
+    
+#else
         ax = 0x0489; /* code for "mov [si],ax" */
 
         emit_common_ptr_op();
+#endif
         return;
     }
 
@@ -1460,8 +1503,44 @@ static void compile_unary(void)
     {
         /* compile deref (load) */
         tok_next();  /* consume "*(int*)" */
+#if TARGET_MVS
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+        codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; /* target + source index */
+        codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+        codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+        /* jump over constant, and r14 points to the constant */
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+        codegen_output_buffer[di++] = 0xef;
+        
+        bx *= 4; /* there are 65536 possible hash values, each occupying 4 bytes */
+        bx += DATASTART; /* and the data space starts after the code */
+        emit_tok(); /* emit imm */
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r14)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0xe0;
+        codegen_output_buffer[di++] = 0x00;
+
+        codegen_output_buffer[di++] = 0x1a; /* emit "ar r6,r7" instruction */
+        codegen_output_buffer[di++] = 0x67;
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r6)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x00;
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r6)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0x00;
+#else
         ax = 0x048b; /* code for "mov ax,[si]" */
         emit_common_ptr_op();
+#endif
         return;
     }
 
@@ -1477,8 +1556,36 @@ static void compile_unary(void)
     if (ax == TOK_ADDR)
     {
         tok_next();  /* consume "&" */
+
+#if TARGET_MVS
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r15,0" instruction */
+        codegen_output_buffer[di++] = 0xf0; 
+
+        codegen_output_buffer[di++] = 0x41; /* emit "la r15,10(r15)" instruction */
+        codegen_output_buffer[di++] = 0xf0; /* target + source index */
+        codegen_output_buffer[di++] = 0xf0; /* source base + offset */
+        codegen_output_buffer[di++] = 0x0a; /* rest of offset */
+
+        /* jump over constant, and r14 points to the constant */
+        codegen_output_buffer[di++] = 0x05; /* emit "balr r14,r15" instruction */
+        codegen_output_buffer[di++] = 0xef;
+        
+        bx *= 4; /* there are 65536 possible hash values, each occupying 4 bytes */
+        bx += DATASTART; /* and the data space starts after the code */
+        emit_tok(); /* emit imm */
+
+        codegen_output_buffer[di++] = 0x58; /* emit "l r6,0(,r14)" instruction */
+        codegen_output_buffer[di++] = 0x60;
+        codegen_output_buffer[di++] = 0xe0;
+        codegen_output_buffer[di++] = 0x00;
+
+        codegen_output_buffer[di++] = 0x1a; /* emit "ar r6,r7" instruction */
+        codegen_output_buffer[di++] = 0x67;
+
+#else
         ax = 0x068d;   /* code for "lea ax,[imm]" */
         emit_var();   /* emit code */
+#endif
         return;
     }
 
