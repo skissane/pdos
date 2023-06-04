@@ -49,7 +49,7 @@ struct template {
 #define     NO_INTELSUF                 (1LU << 30)
     
     int operands;
-    unsigned int base_opcode;
+    unsigned long base_opcode;
     unsigned int extension_opcode;
     
 #define     NONE                        0x0000FFFF
@@ -69,7 +69,7 @@ struct template {
 #define     DEFAULT_SIZE                (1LU << 7)
 #define     SEGSHORTFORM                (1LU << 8)
 
-#define     FLOAT_D                     (1LU << 10)          /* Must be 0x400 (1LU << 10). */
+#define     FLOAT_D                     (1LU << 10)
     
 #define     JUMPINTERSEGMENT            (1LU << 11)
 #define     JUMPBYTE                    (1LU << 12)
@@ -139,6 +139,8 @@ struct template {
 #define     REG_REX64                   (1LU << 30)
     
 #define     IMPLICIT_REGISTER           (SHIFT_COUNT | ACC)
+
+#define     REG_XMM                     (1LU << 31)
     
     flag_int cpu_flags;
 
@@ -155,10 +157,12 @@ struct template {
 
 #define     CPU_CMOV                    (1LU << 12)
 
-#define     CPU_LONG_MODE               (1LU << 13)
+#define     CPU_SSE                     (1LU << 13)
 
-#define     CPU_NO64                    (1LU << 14)
-#define     CPU_64                      (1LU << 15)
+#define     CPU_LONG_MODE               (1LU << 29)
+
+#define     CPU_NO64                    (1LU << 30)
+#define     CPU_64                      (1LU << 31)
 
 };
 
@@ -209,6 +213,10 @@ struct sib_byte {
  * for the code searching the template table to work properly.
  * */
 static const struct template template_table[] = {
+    
+#define OPCODE_D       0x2
+#define OPCODE_FLOAT_D 0x400
+#define OPCODE_SIMD_D  0x1
 
     /* Move instructions. */
     { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32, ACC, 0 }, 0 },
@@ -909,6 +917,10 @@ static const struct template template_table[] = {
     CMOVcc ("cmovg", 0x0F4F),
     CMOVcc ("cmovnle", 0x0F4F),
 #undef CMOVcc
+
+    { "movaps", 2, 0x0F28, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
+    { "movapd", 2, 0x660F28, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
+    { "movsd", 2, 0xF20F10, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
     
     /* End of instructions. */
     { 0, 0, 0, 0, 0, { 0, 0, 0 }, 0 }
@@ -1046,6 +1058,24 @@ static const struct reg_entry reg_table[] = {
     /* RIP is used only for RIP relative addressing.
      * (REG_REX64 only denies RIP use in 32-bit mode.)*/
     { "rip", REG_REX64, REG_IP_NUMBER },
+
+    { "xmm0", REG_XMM, 0 },
+    { "xmm1", REG_XMM, 1 },
+    { "xmm2", REG_XMM, 2 },
+    { "xmm3", REG_XMM, 3 },
+    { "xmm4", REG_XMM, 4 },
+    { "xmm5", REG_XMM, 5 },
+    { "xmm6", REG_XMM, 6 },
+    { "xmm7", REG_XMM, 7 },
+    { "xmm8", REG_XMM | REG_REX, 0 },
+    { "xmm9", REG_XMM | REG_REX, 1 },
+    { "xmm10", REG_XMM | REG_REX, 2 },
+    { "xmm11", REG_XMM | REG_REX, 3 },
+    { "xmm12", REG_XMM | REG_REX, 4 },
+    { "xmm13", REG_XMM | REG_REX, 5 },
+    { "xmm14", REG_XMM | REG_REX, 6 },
+    { "xmm15", REG_XMM | REG_REX, 7 },
+    
     
     /* Floating point registers. Explicit "st(0)" is not needed. */
     { "st", FLOAT_REG | FLOAT_ACC, 0},
@@ -1081,7 +1111,7 @@ struct cpu_arch_entry {
 };
 
 #define CPU_GENERIC32_FLAGS (CPU_186 | CPU_286 | CPU_386)
-#define CPU_GENERIC64_FLAGS (CPU_I686_FLAGS | CPU_LONG_MODE)
+#define CPU_GENERIC64_FLAGS (CPU_I686_FLAGS | CPU_LONG_MODE | CPU_SSE)
 
 #define CPU_I186_FLAGS (CPU_186)
 #define CPU_I286_FLAGS (CPU_I186_FLAGS | CPU_286)
@@ -1109,7 +1139,8 @@ static const struct cpu_arch_entry cpu_extensions[] = {
     {"287", CPU_287},
     {"387", CPU_387},
     {"687", CPU_387 | CPU_687},
-    {"cmov", CPU_CMOV}
+    {"cmov", CPU_CMOV},
+    {"sse", CPU_SSE}
 
 };
 
@@ -1120,6 +1151,7 @@ static const struct cpu_arch_entry cpu_no_extensions[] = {
     {"no287", CPU_287},
     {"no387", CPU_387},
     {"no687", CPU_687},
-    {"nocmov", CPU_CMOV}
+    {"nocmov", CPU_CMOV},
+    {"nosse", CPU_SSE}
 
 };

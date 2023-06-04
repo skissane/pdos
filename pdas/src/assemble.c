@@ -426,13 +426,17 @@ static int add_prefix (unsigned char prefix) {
 
 }
 
-static int check_reg (const struct reg_entry *reg) {
-
+static int check_reg (const struct reg_entry *reg)
+{
     if (!(cpu_arch_flags & CPU_386) && (reg->type & (REG32 | SEGMENT2 | CONTROL | DEBUG))) {
         return 0;
     }
 
     if ((reg->type & TEST) && (bits == 64 || !(cpu_arch_flags & CPU_386))) {
+        return 0;
+    }
+
+    if ((reg->type & REG_XMM) && !(cpu_arch_flags & CPU_SSE)) {
         return 0;
     }
 
@@ -445,7 +449,6 @@ static int check_reg (const struct reg_entry *reg) {
     }
     
     return 1;
-
 }
 
 /** reg_string points to the REGISTER_PREFIX. */
@@ -2185,8 +2188,8 @@ enum x86_error {
 
 #define MATCH(overlap, operand_type)    (((overlap) & ~JUMP_ABSOLUTE) && (((operand_type) & (BASE_INDEX | JUMP_ABSOLUTE)) == ((overlap) & (BASE_INDEX | JUMP_ABSOLUTE))))
 
-static int match_template (void) {
-
+static int match_template (void)
+{
     const struct template *template;
     enum x86_error matching_error;
     
@@ -2230,7 +2233,6 @@ static int match_template (void) {
     matching_error = x86_error_number_of_operands_mismatch;
     
     for (template = current_templates->start; template < current_templates->end; template++) {
-    
         flag_int operand_type_overlap0, operand_type_overlap1;
         
         if (instruction.operands != template->operands) {
@@ -2267,7 +2269,6 @@ static int match_template (void) {
         switch (template->operands) {
         
             case 1:
-            
                 if (!MATCH (operand_type_overlap0, instruction.types[0])) {
                     continue;
                 }
@@ -2280,7 +2281,6 @@ static int match_template (void) {
             
             case 2:
             case 3:
-            
                 operand_type_overlap1 = instruction.types[1] & template->operand_types[1];
                 
                 if (!MATCH (operand_type_overlap0, instruction.types[0]) || !MATCH (operand_type_overlap1, instruction.types[1])) {
@@ -2296,30 +2296,25 @@ static int match_template (void) {
                         continue;
                     }
                     
-                    found_reverse_match = template->opcode_modifier & (D | FLOAT_D);
-                
+                    if (template->opcode_modifier & FLOAT_D) found_reverse_match = OPCODE_FLOAT_D;
+                    else if (template->operand_types[0] & REG_XMM) found_reverse_match = OPCODE_SIMD_D;
+                    else found_reverse_match = OPCODE_D;
                 } else if (instruction.operands == 3) {
-                
                     flag_int operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
                     
                     if (!MATCH (operand_type_overlap2, instruction.types[2])) {
                         continue;
                     }
-                
                 }
-                
+         
                 break;
-        
         }
         
         break;
-    
     }
     
     if (template == current_templates->end) {
-
         /* No match was found. */
-
         const char *error_msg;
 
         switch (matching_error) {
@@ -2351,22 +2346,210 @@ static int match_template (void) {
 
         as_error ("%s for '%s'", error_msg, current_templates->name);
         return 1;
-    
     }
     
     instruction.template = *template;
     
     if (found_reverse_match) {
-    
-        instruction.template.base_opcode |= found_reverse_match;
+        instruction.template.base_opcode ^= found_reverse_match;
         
         instruction.template.operand_types[0] = template->operand_types[1];
         instruction.template.operand_types[1] = template->operand_types[0];
-    
     }
     
     return 0;
+}
 
+static void build_modrm (void)
+{
+    if (instruction.reg_operands == 2) {
+        unsigned int source, dest;
+        
+        source = (instruction.types[0] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST | REG_XMM)) ? 0 : 1;
+        dest = source + 1;
+        
+        instruction.modrm.mode = 3;
+        
+        if ((instruction.template.operand_types[dest] & ANY_MEM) == 0) {
+            instruction.modrm.regmem = instruction.regs[source]->number;
+            instruction.modrm.reg = instruction.regs[dest]->number;
+            if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_R;
+            if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_B;
+        } else {
+            instruction.modrm.regmem = instruction.regs[dest]->number;
+            instruction.modrm.reg = instruction.regs[source]->number;
+            if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_B;
+            if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_R;
+        }  
+    } else {
+        if (instruction.mem_operands) {
+            int fake_zero_displacement = 0;
+            int operand;
+            
+            for (operand = 0; operand < instruction.operands; operand++)
+                if (instruction.types[operand] & ANY_MEM) break;
+            
+            if (instruction.base_reg == NULL) {
+            
+                instruction.modrm.mode = 0;
+                
+                if (instruction.disp_operands == 0) {
+                    fake_zero_displacement = 1;
+                }
+                
+                if (instruction.index_reg == NULL) {
+                
+                    if (bits == 64) {
+                        
+                        /* In 64 bit mode default addressing is %rip relative addressing
+                         * instead of absolute addresing. */
+                        instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
+                        instruction.sib.base = SIB_BASE_NO_BASE_REGISTER;
+                        instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
+                        instruction.types[operand] = DISP32;
+                        
+                    } else if ((bits == 16) ^ (instruction.prefixes[ADDR_PREFIX] != 0)) {
+                    
+                        instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER_16;
+                        instruction.types[operand] = DISP16;
+                    
+                    } else {
+                    
+                        instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER;
+                        instruction.types[operand] = DISP32;
+                    
+                    }
+                
+                } else {
+                
+                    instruction.sib.base = SIB_BASE_NO_BASE_REGISTER;
+                    instruction.sib.index = instruction.index_reg->number;
+                    instruction.sib.scale = instruction.log2_scale_factor;
+                    
+                    instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
+                    
+                    instruction.types[operand] &= ~DISP;
+                    instruction.types[operand] |= DISP32;
+
+                    if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
+                
+                }
+            
+            } else if (instruction.base_reg->number == REG_IP_NUMBER) {
+                instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER;
+                instruction.types[operand] = DISP32;
+                instruction.special_types[operand] |= OPERAND_PCREL;
+                if (instruction.disp_operands == 0) fake_zero_displacement = 1;
+            } else if (instruction.base_reg->type & REG16) {
+            
+                switch (instruction.base_reg->number) {
+                
+                    case 3:
+                    
+                        if (instruction.index_reg == NULL) {
+                            instruction.modrm.regmem = 7;
+                        } else {
+                            instruction.modrm.regmem = (instruction.index_reg->number - 6);
+                        }
+                        
+                        break;
+                    
+                    case 5:
+                    
+                        if (instruction.index_reg == NULL) {
+                        
+                            instruction.modrm.regmem = 6;
+                            
+                            if ((instruction.types[operand] & DISP) == 0) {
+                            
+                                fake_zero_displacement = 1;
+                                instruction.types[operand] |= DISP8;
+                            
+                            }
+                        
+                        } else {
+                            instruction.modrm.regmem = (instruction.index_reg->number - 6 + 2);
+                        }
+                        
+                        break;
+                    
+                    default:
+                    
+                        instruction.modrm.regmem = (instruction.base_reg->number - 6 + 4);
+                        break;
+                
+                }
+                
+                instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
+            
+            } else {
+                if (bits == 16 && (instruction.types[operand] & BASE_INDEX)) {
+                    add_prefix (ADDR_PREFIX_OPCODE);
+                }
+
+                if (instruction.types[operand] & DISP) {
+                    instruction.types[operand] &= ~DISP16;
+                    instruction.types[operand] |= DISP32;
+                }                        
+                
+                instruction.modrm.regmem = instruction.base_reg->number;
+                if (instruction.base_reg->type & REG_REX) instruction.rex |= REX_B;
+                
+                instruction.sib.base = instruction.base_reg->number;
+                instruction.sib.scale = instruction.log2_scale_factor;
+                
+                if (instruction.base_reg->number == 5 && instruction.disp_operands == 0) {
+                    fake_zero_displacement = 1;
+                    instruction.types[operand] |= DISP8;
+                }
+                
+                if (instruction.index_reg) {
+                    instruction.sib.index = instruction.index_reg->number;
+                    instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
+                    if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
+                } else {
+                    instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
+                }
+                
+                instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
+            }
+
+            if (fake_zero_displacement) {
+                struct expr *expr = &operand_exprs[operand_exprs_count++];
+                instruction.disps[operand] = expr;
+                
+                expr->type = EXPR_TYPE_CONSTANT;
+                expr->add_number = 0;
+                expr->add_symbol = NULL;
+                expr->op_symbol = NULL;
+            }
+        }
+        
+        if (instruction.reg_operands) {
+            int operand = 0;
+
+            for (operand = 0; operand < instruction.operands; operand++)
+                if (instruction.types[operand]
+                    & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST | REG_XMM)) break;
+            
+            if (instruction.template.extension_opcode != NONE) {
+                instruction.modrm.regmem = instruction.regs[operand]->number;
+                if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_B;
+            } else {
+                instruction.modrm.reg = instruction.regs[operand]->number;
+                if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_R;
+            }
+            
+            if (instruction.mem_operands == 0) {
+                instruction.modrm.mode = 3;
+            }
+        
+        }
+
+        if (instruction.template.extension_opcode != NONE) {
+            instruction.modrm.reg = instruction.template.extension_opcode;
+        }
+    }
 }
 
 static int process_operands (void)
@@ -2389,201 +2572,7 @@ static int process_operands (void)
     
     }
     
-    if (instruction.template.opcode_modifier & MODRM) {
-        if (instruction.reg_operands == 2) {
-            unsigned int source, dest;
-            
-            source = (instruction.types[0] & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) ? 0 : 1;
-            dest = source + 1;
-            
-            instruction.modrm.mode = 3;
-            
-            if ((instruction.template.operand_types[dest] & ANY_MEM) == 0) {
-                instruction.modrm.regmem = instruction.regs[source]->number;
-                instruction.modrm.reg = instruction.regs[dest]->number;
-                if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_R;
-                if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_B;
-            } else {
-                instruction.modrm.regmem = instruction.regs[dest]->number;
-                instruction.modrm.reg = instruction.regs[source]->number;
-                if (instruction.regs[dest]->type & REG_REX) instruction.rex |= REX_B;
-                if (instruction.regs[source]->type & REG_REX) instruction.rex |= REX_R;
-            }  
-        } else {
-            if (instruction.mem_operands) {
-                int fake_zero_displacement = 0;
-                int operand = 0;
-                
-                if (instruction.types[0] & ANY_MEM) {
-                    ;
-                } else if (instruction.types[1] & ANY_MEM) {
-                    operand = 1;
-                } else {
-                    operand = 2;
-                }
-                
-                if (instruction.base_reg == NULL) {
-                
-                    instruction.modrm.mode = 0;
-                    
-                    if (instruction.disp_operands == 0) {
-                        fake_zero_displacement = 1;
-                    }
-                    
-                    if (instruction.index_reg == NULL) {
-                    
-                        if (bits == 64) {
-                            
-                            /* In 64 bit mode default addressing is %rip relative addressing
-                             * instead of absolute addresing. */
-                            instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
-                            instruction.sib.base = SIB_BASE_NO_BASE_REGISTER;
-                            instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
-                            instruction.types[operand] = DISP32;
-                            
-                        } else if ((bits == 16) ^ (instruction.prefixes[ADDR_PREFIX] != 0)) {
-                        
-                            instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER_16;
-                            instruction.types[operand] = DISP16;
-                        
-                        } else {
-                        
-                            instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER;
-                            instruction.types[operand] = DISP32;
-                        
-                        }
-                    
-                    } else {
-                    
-                        instruction.sib.base = SIB_BASE_NO_BASE_REGISTER;
-                        instruction.sib.index = instruction.index_reg->number;
-                        instruction.sib.scale = instruction.log2_scale_factor;
-                        
-                        instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
-                        
-                        instruction.types[operand] &= ~DISP;
-                        instruction.types[operand] |= DISP32;
-
-                        if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
-                    
-                    }
-                
-                } else if (instruction.base_reg->number == REG_IP_NUMBER) {
-                    instruction.modrm.regmem = SIB_BASE_NO_BASE_REGISTER;
-                    instruction.types[operand] = DISP32;
-                    instruction.special_types[operand] |= OPERAND_PCREL;
-                    if (instruction.disp_operands == 0) fake_zero_displacement = 1;
-                } else if (instruction.base_reg->type & REG16) {
-                
-                    switch (instruction.base_reg->number) {
-                    
-                        case 3:
-                        
-                            if (instruction.index_reg == NULL) {
-                                instruction.modrm.regmem = 7;
-                            } else {
-                                instruction.modrm.regmem = (instruction.index_reg->number - 6);
-                            }
-                            
-                            break;
-                        
-                        case 5:
-                        
-                            if (instruction.index_reg == NULL) {
-                            
-                                instruction.modrm.regmem = 6;
-                                
-                                if ((instruction.types[operand] & DISP) == 0) {
-                                
-                                    fake_zero_displacement = 1;
-                                    instruction.types[operand] |= DISP8;
-                                
-                                }
-                            
-                            } else {
-                                instruction.modrm.regmem = (instruction.index_reg->number - 6 + 2);
-                            }
-                            
-                            break;
-                        
-                        default:
-                        
-                            instruction.modrm.regmem = (instruction.base_reg->number - 6 + 4);
-                            break;
-                    
-                    }
-                    
-                    instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
-                
-                } else {
-                    if (bits == 16 && (instruction.types[operand] & BASE_INDEX)) {
-                        add_prefix (ADDR_PREFIX_OPCODE);
-                    }
-
-                    if (instruction.types[operand] & DISP) {
-                        instruction.types[operand] &= ~DISP16;
-                        instruction.types[operand] |= DISP32;
-                    }                        
-                    
-                    instruction.modrm.regmem = instruction.base_reg->number;
-                    if (instruction.base_reg->type & REG_REX) instruction.rex |= REX_B;
-                    
-                    instruction.sib.base = instruction.base_reg->number;
-                    instruction.sib.scale = instruction.log2_scale_factor;
-                    
-                    if (instruction.base_reg->number == 5 && instruction.disp_operands == 0) {
-                        fake_zero_displacement = 1;
-                        instruction.types[operand] |= DISP8;
-                    }
-                    
-                    if (instruction.index_reg) {
-                        instruction.sib.index = instruction.index_reg->number;
-                        instruction.modrm.regmem = MODRM_REGMEM_TWO_BYTE_ADDRESSING;
-                        if (instruction.index_reg->type & REG_REX) instruction.rex |= REX_X;
-                    } else {
-                        instruction.sib.index = SIB_INDEX_NO_INDEX_REGISTER;
-                    }
-                    
-                    instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
-                }
-
-                if (fake_zero_displacement) {
-                    struct expr *expr = &operand_exprs[operand_exprs_count++];
-                    instruction.disps[operand] = expr;
-                    
-                    expr->type = EXPR_TYPE_CONSTANT;
-                    expr->add_number = 0;
-                    expr->add_symbol = NULL;
-                    expr->op_symbol = NULL;
-                }
-            }
-            
-            if (instruction.reg_operands) {
-                int operand = 0;
-
-                for (operand = 0; operand < instruction.operands; operand++)
-                    if (instruction.types[operand]
-                        & (REG | SEGMENT1 | SEGMENT2 | CONTROL | DEBUG | TEST)) break;
-                
-                if (instruction.template.extension_opcode != NONE) {
-                    instruction.modrm.regmem = instruction.regs[operand]->number;
-                    if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_B;
-                } else {
-                    instruction.modrm.reg = instruction.regs[operand]->number;
-                    if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_R;
-                }
-                
-                if (instruction.mem_operands == 0) {
-                    instruction.modrm.mode = 3;
-                }
-            
-            }
-
-            if (instruction.template.extension_opcode != NONE) {
-                instruction.modrm.reg = instruction.template.extension_opcode;
-            }
-        }
-    }
+    if (instruction.template.opcode_modifier & MODRM) build_modrm ();
     
     if (instruction.template.opcode_modifier & SEGSHORTFORM) {
     
@@ -2703,11 +2692,7 @@ char *machine_dependent_assemble_line (char *line) {
     }
     
     if (instruction.operands) {
-    
-        if (process_operands ()) {
-            goto skip;
-        }
-    
+        if (process_operands ()) goto skip;
     }
 
     /* int $3 should be converted to the one byte INT3. */
@@ -2759,17 +2744,15 @@ char *machine_dependent_assemble_line (char *line) {
     } else if (instruction.template.opcode_modifier & JUMPINTERSEGMENT) {
         output_intersegment_jump ();
     } else {
-    
         unsigned int i;
 
         for (i = 0; i < ARRAY_SIZE (instruction.prefixes); i++) {
-        
-            if (instruction.prefixes[i]) {
-                frag_append_1_char (instruction.prefixes[i]);
-            }
-        
+            if (instruction.prefixes[i]) frag_append_1_char (instruction.prefixes[i]);        
         }
-        
+
+        if (instruction.template.base_opcode & 0xff0000) {
+            frag_append_1_char ((instruction.template.base_opcode >> 16) & 0xff);
+        }
         if (instruction.template.base_opcode & 0xff00) {
             frag_append_1_char ((instruction.template.base_opcode >> 8) & 0xff);
         }
@@ -2788,7 +2771,6 @@ char *machine_dependent_assemble_line (char *line) {
         
         output_disps ();
         output_imms ();
-    
     }
     
     return line;
@@ -2796,25 +2778,20 @@ char *machine_dependent_assemble_line (char *line) {
 skip:
 
     while (*line != '\0') {
-    
         if (line[0] == '#') {
             break;
         }
         
         if (line[0] == '/') {
-        
             if (line[1] == '/' || line[1] == '*') {
                 break;
             }
-        
         }
         
         line++;
-    
     }
     
     return line;
-
 }
 
 int machine_dependent_force_relocation_local (struct fixup *fixup) {
