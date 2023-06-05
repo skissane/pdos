@@ -2994,10 +2994,6 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
         {
             indev = getssid(indev);
         }
-        if ((outdev != 0) && (outdev < 0x10000))
-        {
-            outdev = getssid(outdev);
-        }
 #endif
     }
     else if (strncmp(fnm, "tap", 3) == 0)
@@ -3010,6 +3006,13 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
         }
 #endif
     }
+
+#if defined(S390) || defined(ZARCH)
+    if ((outdev != 0) && (outdev < 0x10000))
+    {
+        outdev = getssid(outdev);
+    }
+#endif
 
     if (intape != 0)
     {
@@ -3314,7 +3317,8 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
             /* *(short *)(tbuf + 6) = len; */
             len = cnt;
             /* record number must be one less when using 0x1d write */
-            printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
+            printf("attempting2 to write to %d %d %d\n",
+                   outcyl, outhead, outrec);
 
             /* we certainly can't exceed 255, probably not 254 either, but
                existing practice seems to be to not exceed 50 */
