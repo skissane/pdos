@@ -2922,6 +2922,7 @@ static int pdosDiskInit(PDOS *pdos, char *parm)
         }
         cyl++;
     }
+    printf("finished initializing disk\n");
     return (0);
 }
 
