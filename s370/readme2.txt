@@ -189,6 +189,13 @@ So in this case you would zap 0x1d3ce to 0xf5
 01D450  40F1F0F5 F260C340 40404040 40614095  @....`.@@@@@@a@.
 01D460  96979996 9497A315                    ........
 
+Note that this changes every release, so the above is just
+an example. You need to find the right offset yourself.
+Here is another example:
+
+C:\devel\pdos\s370\tapes\xxx\tapes>hexdump ipltap.aws 0x1d346 1
+01D346  F0                                   .
+
 
 If you are using zPDT (aka z1090/zOPD), then use the "-x" option to mfterm
 to get it to do extended negotiation (so that it can decline
