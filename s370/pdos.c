@@ -3142,8 +3142,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                            cchhr_kl_dl.kl + cchhr_kl_dl.dl);
                     len = outcnt;
             /* record number must be one less when using 0x1d write */
+#if DSKDEBUG
             printf("attempting to write to %d %d %d\n", outcyl, outhead, outrec);
-
+#endif
                     /* we certainly can't exceed 255, probably not 254 either,
                        but existing practice seems to be to not exceed 50 (for
                        3390 - other disks are different, but similar) */
@@ -3156,7 +3157,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                         outcnt = wrblock(outdev, outcyl, outhead, outrec - 1,
                                          tbuf, len, 0x1d);
                     }
+#if DSKDEBUG
                     printf("outcnt is %d\n", outcnt);
+#endif
                     /* sometimes we get a count of -1 on error, sometimes
                        we get 0 */
                     /* The -1 is probably when the seek fails to find the
@@ -3169,7 +3172,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                         tbuf[4] = outrec;
                         outhead++;
                         *(short *)(tbuf + 2) = outhead;
+#if DSKDEBUG
         printf("new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+#endif
                         outcnt = wrblock(outdev, outcyl, outhead, outrec - 1,
                                          tbuf, len, 0x1d);
                         if (outcnt != len)
@@ -3178,7 +3183,9 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                             *(short *)(tbuf + 2) = outhead;
                             outcyl++;
                             *(short *)tbuf = outcyl;
+#if DSKDEBUG
             printf("new new attempt to write to %d %d %d\n", outcyl, outhead, outrec);
+#endif
                             outcnt = wrblock(outdev, outcyl, outhead,
                                              outrec - 1, tbuf, len, 0x1d);
                             if (outcnt != len)
@@ -3217,6 +3224,7 @@ static int pdosFil2Dsk(PDOS *pdos, char *parm)
                 }
             }
         }
+        printf("i think that is end of reading from tape\n");
         return (0);
     }
     len = 0;
