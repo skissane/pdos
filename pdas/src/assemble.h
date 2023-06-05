@@ -87,6 +87,8 @@ struct template {
 #define     ADD_FWAIT                   (1LU << 20)
 
 #define     NO_REX_W                    (1LU << 21)
+
+#define     IMMEXT                      (1LU << 22)
     
     flag_int operand_types[MAX_OPERANDS];
     
@@ -158,6 +160,8 @@ struct template {
 #define     CPU_CMOV                    (1LU << 12)
 
 #define     CPU_SSE                     (1LU << 13)
+/* Preparation for future when those 2 will be separate. */
+#define     CPU_SSE2                    CPU_SSE
 
 #define     CPU_LONG_MODE               (1LU << 29)
 
@@ -214,9 +218,10 @@ struct sib_byte {
  * */
 static const struct template template_table[] = {
     
-#define OPCODE_D       0x2
-#define OPCODE_FLOAT_D 0x400
-#define OPCODE_SIMD_D  0x1
+#define OPCODE_D            0x2
+#define OPCODE_FLOAT_D      0x400
+#define OPCODE_SIMD_FLOAT_D 0x1
+#define OPCODE_SIMD_INT_D   0x10
 
     /* Move instructions. */
     { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32, ACC, 0 }, 0 },
@@ -919,8 +924,38 @@ static const struct template template_table[] = {
 #undef CMOVcc
 
     { "movaps", 2, 0x0F28, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
-    { "movapd", 2, 0x660F28, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
-    { "movsd", 2, 0xF20F10, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE },
+
+    /* SSE2 instructions. */
+    { "movapd", 2, 0x660F28, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "movsd", 2, 0xF20F10, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "comisd", 2, 0x660F2F, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+
+    { "cvtsi2sd", 2, 0xF20F2A, NONE, LQ_SUF | IGNORE_SIZE | MODRM, { REG32 | REG64 | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 | CPU_64 },
+    { "cvttsd2si", 2, 0xF20F2C, NONE, LQ_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM, REG32 | REG64, 0 }, CPU_SSE2 },
+    { "cvtsd2ss", 2, 0xF20F5A, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "cvtss2sd", 2, 0xF30F5A, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    
+    
+    { "andpd", 2, 0xF20F54, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "andnpd", 2, 0xF20F55, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "orpd", 2, 0xF20F56, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "addsd", 2, 0xF20F58, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "cmpltsd", 2, 0xF20FC2, 1, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "mulsd", 2, 0xF20F59, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "subsd", 2, 0xF20F5C, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "divsd", 2, 0xF20F5E, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+
+    { "ucomisd", 2, 0x660F2E, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "xorpd", 2, 0x660F57, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    
+    { "pxor", 2, 0x660FEF, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+
+    { "movq", 2, 0xF30F7E, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "movq", 2, 0x660F6E, NONE, NO_SUF | D | MODRM | SIZE64, { REG64 | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 | CPU_64 },
+    /* Above movq conflicts with non-SSE mov with 'q' suffix. */
+    { "movq", 2, 0x89, NONE, NO_SUF | D | MODRM | SIZE64, { REG64, REG64 | ANY_MEM, 0 }, CPU_64 },
+    { "movq", 2, 0xB8, NONE, NO_SUF | SHORT_FORM | SIZE64, { IMM64, REG64, 0 }, CPU_64 },
+    { "movq", 2, 0xC7, NONE, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM, 0 }, CPU_64 },
     
     /* End of instructions. */
     { 0, 0, 0, 0, 0, { 0, 0, 0 }, 0 }
@@ -967,6 +1002,14 @@ static const struct reg_entry reg_table[] = {
     { "bp", REG16 | BASE_INDEX, 5 },
     { "si", REG16 | BASE_INDEX, 6 },
     { "di", REG16 | BASE_INDEX, 7 },
+    { "r8w", REG16 | REG_REX, 0 },
+    { "r9w", REG16 | REG_REX, 1 },
+    { "r10w", REG16 | REG_REX, 2 },
+    { "r11w", REG16 | REG_REX, 3 },
+    { "r12w", REG16 | REG_REX, 4 },
+    { "r13w", REG16 | REG_REX, 5 },
+    { "r14w", REG16 | REG_REX, 6 },
+    { "r15w", REG16 | REG_REX, 7 },
     
     /* 32 bit registers. */
     { "eax", REG32 | BASE_INDEX | ACC, 0 },

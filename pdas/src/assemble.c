@@ -2297,8 +2297,10 @@ static int match_template (void)
                     }
                     
                     if (template->opcode_modifier & FLOAT_D) found_reverse_match = OPCODE_FLOAT_D;
-                    else if (template->operand_types[0] & REG_XMM) found_reverse_match = OPCODE_SIMD_D;
-                    else found_reverse_match = OPCODE_D;
+                    else if (template->operand_types[0] & REG_XMM
+                             || template->operand_types[template->operands - 1] & REG_XMM) {
+                        found_reverse_match = ((template->base_opcode & 0xee) != 0x6e) ? OPCODE_SIMD_FLOAT_D : OPCODE_SIMD_INT_D;
+                    } else found_reverse_match = OPCODE_D;
                 } else if (instruction.operands == 3) {
                     flag_int operand_type_overlap2 = instruction.types[2] & template->operand_types[2];
                     
@@ -2554,22 +2556,37 @@ static void build_modrm (void)
 
 static int process_operands (void)
 {
-    if (instruction.template.opcode_modifier & REG_DUPLICATION) {
+    if (instruction.template.opcode_modifier & IMMEXT) {
+        /* Some instructions have extension opcode encoded
+         * as 1 byte immediate operand at the end of the instruction
+         * instead of having it in ModRM. */
+        struct expr *expr;
+        
+        expr = &operand_exprs[operand_exprs_count++];
+        instruction.imms[instruction.operands] = expr;
+        instruction.types[instruction.operands] = IMM8;
+        
+        expr->type = EXPR_TYPE_CONSTANT;
+        expr->add_number = instruction.template.extension_opcode;
+        expr->add_symbol = NULL;
+        expr->op_symbol = NULL;
+        instruction.operands++;
+
+        instruction.template.extension_opcode = NONE;
+    }
     
+    if (instruction.template.opcode_modifier & REG_DUPLICATION) {
         unsigned int first_reg_operand = (instruction.types[0] & REG) ? 0 : 1;
         
         instruction.regs[first_reg_operand + 1] = instruction.regs[first_reg_operand];
         instruction.types[first_reg_operand + 1] = instruction.types[first_reg_operand];
         instruction.reg_operands = 2;
-    
     }
     
     if (instruction.template.opcode_modifier & SHORT_FORM) {
-    
         int operand = (instruction.types[0] & (REG | FLOAT_REG)) ? 0 : 1;
         instruction.template.base_opcode |= instruction.regs[operand]->number;
         if (instruction.regs[operand]->type & REG_REX) instruction.rex |= REX_B;
-    
     }
     
     if (instruction.template.opcode_modifier & MODRM) build_modrm ();
@@ -2745,6 +2762,21 @@ char *machine_dependent_assemble_line (char *line) {
         output_intersegment_jump ();
     } else {
         unsigned int i;
+
+        if (instruction.template.base_opcode & 0xff0000) {
+            unsigned char builtin_prefix = (instruction.template.base_opcode & 0xff0000) >> 16;
+            
+            switch (builtin_prefix) {
+
+                case REPNE_PREFIX_OPCODE:
+                case REPE_PREFIX_OPCODE:
+                case DATA_PREFIX_OPCODE:
+                    add_prefix (builtin_prefix);
+                    instruction.template.base_opcode &= ~0xff0000;
+                    break;
+
+            }
+        }                    
 
         for (i = 0; i < ARRAY_SIZE (instruction.prefixes); i++) {
             if (instruction.prefixes[i]) frag_append_1_char (instruction.prefixes[i]);        
