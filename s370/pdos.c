@@ -1051,7 +1051,7 @@ int pdosInit(PDOS *pdos)
         }
         else
         cnt = rdblock(pdos->ipldev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
-#if DSKDEBUG
+#if 0 /* DSKDEBUG */
         printf("cnt is %d\n", cnt);
 #endif
         /* find out which device console really is */
