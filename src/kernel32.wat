@@ -220,6 +220,7 @@
 ++FreeEnvironmentStringsA.kernel32._FreeEnvironmentStringsA@0
 ++GetACP.kernel32._GetACP@0
 ++GetCurrentDirectoryA.kernel32._GetCurrentDirectoryA@0
+++GetTempPathA.kernel32._GetTempPathA@0
 ++GetDriveTypeA.kernel32._GetDriveTypeA@0
 ++GetFullPathNameA.kernel32._GetFullPathNameA@0
 ++GetLocalTime.kernel32._GetLocalTime@0

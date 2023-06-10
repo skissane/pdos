@@ -221,6 +221,7 @@ EXPORTS FormatMessageA
 EXPORTS FreeEnvironmentStringsA
 EXPORTS GetACP
 EXPORTS GetCurrentDirectoryA
+EXPORTS GetTempPathA
 EXPORTS GetDriveTypeA
 EXPORTS GetFullPathNameA
 EXPORTS GetLocalTime

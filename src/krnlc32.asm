@@ -303,6 +303,15 @@ call [__imp__GetCurrentDirectoryA@8]
 ret
 ret
 
+extrn __imp__GetTempPathA@8:ptr
+public _GetTempPathA
+_GetTempPathA:
+push 8[esp]
+push 8[esp]
+call [__imp__GetTempPathA@8]
+ret
+ret
+
 extrn __imp__SetCurrentDirectoryA@4:ptr
 public _SetCurrentDirectoryA
 _SetCurrentDirectoryA:

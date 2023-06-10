@@ -360,6 +360,20 @@ DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer)
     return (strlen(lpbuffer));
 }
 
+/* assume they have provided at least 66 bytes */
+
+DWORD WINAPI GetTempPathA(DWORD d, LPTSTR lpbuffer)
+{
+    int drive;
+
+    drive = PosGetDefaultDrive();
+    lpbuffer[0] = 'A' + drive;
+    lpbuffer[1] = ':';
+    lpbuffer[2] = '\\';
+    PosGetCurDir(0, &lpbuffer[3]);
+    return (strlen(lpbuffer));
+}
+
 BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir)
 {
     int ret;

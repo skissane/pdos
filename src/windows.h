@@ -405,5 +405,8 @@ BOOL WINAPI FindClose(HANDLE h);
 #define GetCurrentDirectory GetCurrentDirectoryA
 DWORD WINAPI GetCurrentDirectoryA(DWORD d, LPTSTR lpbuffer);
 
+#define GetTempPath GetTempPathA
+DWORD WINAPI GetTempPathA(DWORD d, LPTSTR lpbuffer);
+
 #define SetCurrentDirectory SetCurrentDirectoryA
 BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir);
