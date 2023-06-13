@@ -242,3 +242,13 @@ mfterm sees a distinction. The 1052 is the only thing that is
 expecting to see ASCII. Hercules/380 is able to convert the EBCDIC
 ANSI (1057) into ASCII ANSI (1052) for use with a normal ASCII
 ANSI telnet connection.
+
+
+Note that on a CZAM machine the registers may be available at
+location x'1280' for 8 bytes - hasn't been tested.
+
+Also note that the startup code for all MVS programs probably
+needs to clean all registers using LA - currently there may be
+a reliance on the high 32 bits already being 0 - which is
+normally the case, but not guaranteed, and at least one person
+has an exit on their site to force junk into the high 32 bits.
