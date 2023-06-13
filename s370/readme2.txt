@@ -27,7 +27,7 @@ selected. If you wish to use a different device, you can
 override the device number and optionally device type via
 an IPL parm, e.g. on Hercules you might go:
 
-ipl 1b9 parm 019 3215
+ipl 1b9 parm 019Z3215
 
 If there is no override, and device 9 doesn't exist, it will
 make a final attempt to use SSID x'10000' which will probably
@@ -121,11 +121,25 @@ copy pdos.cnf
 manually inspect the pdos00.ckd to make sure zapcons.bat is accurate
 scratch.cckd was copied from a previous run of doit.bat
 
+
+In separate runs of z/PDOS you can ...
+
 You can create an AWS tape with the disk image by:
 dsk2fil 1b9 tap1c2:
 
 But you don't need to do that, because tap1c1: points to
 the actual disk image already, making it a valid tape.
+
+However, because of the difficulty of creating an unlabeled AWS tape
+from a flat file on the zPDT (unless the file is a multiple of 80 and
+then you can use a card program?), I am now including the 3390
+image as an AWS tape.
+
+Create an IPL-from-memory (.ins) using:
+mkiplmem dev1c2:
+
+Create an IPL card deck using:
+mkiplcrd dev1c2:
 
 
 Note that if you are using a 3270 terminal, the only editor
@@ -212,7 +226,19 @@ remember which ones.
 
 Just run a command with no parameters and it normally gives usage.
 
-Because of the difficulty of creating an unlabeled AWS tape from a
-flat file on the zPDT (unless the file is a multiple of 80 and
-then you can use a card program?), I am now including the 3390
-image as an AWS tape.
+
+
+There is virus-licensed software known to work on z/PDOS, including
+GCCMVS, EDLIN, UEMACS and DIFF, but it is not included any more,
+because I have switched to a pure public domain distribution.
+You can probably put this onto another 3390 disk pack and load it
+with fil2dsk, but you'll still need to write another utility,
+presumably written in multisc C, to get it onto the main disk.
+
+
+Also note that you can change the config.sys to use a 1052 or a
+1057. Both of these are identical to PDOS - EBCDIC ANSI - but
+mfterm sees a distinction. The 1052 is the only thing that is
+expecting to see ASCII. Hercules/380 is able to convert the EBCDIC
+ANSI (1057) into ASCII ANSI (1052) for use with a normal ASCII
+ANSI telnet connection.

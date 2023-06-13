@@ -3,6 +3,9 @@ Welcome to PDOS/390 (and friends).
 This distribution comes with the PDOS operating system
 installed on a 3390.
 
+Note - this document refers to subsystem IDs, but we now
+have the ability to specify unit numbers. Also there is
+a replacement readme. I'll probably fix some of this one day.
 
 
 
