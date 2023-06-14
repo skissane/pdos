@@ -2,8 +2,10 @@ rd /s /q dist
 md dist
 md dist\tapes
 
-del scratch.cckd
-dasdinit -bz2 scratch.cckd 3390 SC3390
+dasdinit -bz2 dist\scratch.cckd 3390 SC3390
+copy \devel\mvssrc\ozpd\c\zap.c dist
+copy \winpath\zap.exe dist
+copy zapcons.bat dist
 
 echo after you get the prompt, type "quit"
 call doit
