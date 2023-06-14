@@ -1081,14 +1081,10 @@ echo off
 echo welcome to autoexec.bat
 echo type "help" for some example commands
 
-echo note that in order to use GCC:
-rem gcc --version
+echo type "type readme.txt" for some documentation
+echo but that won't work very well so you need to use
+echo hexdump instead (just type "hexdump")
 
-echo you need a command such as:
-echo gcc -S -I . -o - sample.c
-echo the package should have shipped with "mvsunzip pdpi.zip" already run
-
-echo that's enough for now - enter further commands yourself!
 echo on
 /*
 //*
