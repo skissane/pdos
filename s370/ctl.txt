@@ -23,15 +23,11 @@ MVSSAMP.C    SEQ mvssamp.c    CYL  1 1 0 PS U 0 18452
 WTOWORLD.EXE SEQ wtoworld.exe CYL  1 1 0 PS U 0 18452
 SAMPLE.C     SEQ sample.c     CYL  1 1 0 PS U 0 18452
 SAMPLE2.C    SEQ sample.c     CYL  1 1 0 PS U 0 18452
-GCC.EXE      SEQ gcc.exe      CYL  6 1 0 PS U 0 18452
 HEXDUMP.EXE  SEQ hexdump.exe  CYL  1 1 0 PS U 0 18452
 COPYFILE.EXE SEQ copyfile.exe CYL  1 1 0 PS U 0 18452
 MVSUNZIP.EXE SEQ mvsunzip.exe CYL  1 1 0 PS U 0 18452
 MVSENDEC.EXE SEQ mvsendec.exe CYL  1 1 0 PS U 0 18452
 PDPI.ZIP     SEQ pdpi.zip     CYL  1 1 0 PS U 0 18452
-DIFF.EXE     SEQ diff.exe     CYL  1 1 0 PS U 0 18452
-UEMACS.EXE   SEQ uemacs.exe   CYL  1 1 0 PS U 0 18452
-EDLIN.EXE    SEQ edlin.exe    CYL  1 1 0 PS U 0 18452
 PDMAKE.EXE   SEQ pdmake.exe   CYL  1 1 0 PS U 0 18452
 ANTITWIT.TXT SEQ antitwit.txt CYL  1 1 0 PS U 0 18452
 WTOWCOM.COM  SEQ wtowcom.com  CYL  1 1 0 PS U 0 18452
