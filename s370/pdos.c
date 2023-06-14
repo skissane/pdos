@@ -3466,7 +3466,9 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
 #endif
 
     cnt = wrtape(outdev, header, sizeof header);
+#if DSKDEBUG
     printf("outcnt is %d\n", cnt);
+#endif
 
     len = 0;
     for (incyl = 0; incyl < 1113; incyl++)
@@ -3492,7 +3494,9 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
             inrec = 1;
             while (1)
             {
+#if DSKDEBUG
                 printf("reading %x %d %d %d\n", indev, incyl, inhead, inrec);
+#endif
                 /* I think we need to specify one less record */
                 cnt = rdblock(indev, incyl, inhead, inrec - 1, tbuf,
                               sizeof tbuf, 0x1e);
@@ -3503,7 +3507,9 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
                 /* Or maybe that is a misdiagnosis. We are getting a count of
                    0 on the first record not found, so need to check for 0 or
                    negative a bit later */
+#if DSKDEBUG
                 printf("cnt is %d\n", cnt);
+#endif
                 if (cnt != -1)
                 {
                     if (tbuf[4] != inrec)
@@ -3519,7 +3525,9 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
                     for (x = 0; x < 4; x++)
                     {
                         cnt = wrtape(outdev, onetrack + x * 14208, 14208);
+#if DSKDEBUG
                         printf("outcnt is %d\n", cnt);
+#endif
                     }
                     break;
                 }
@@ -3530,6 +3538,7 @@ static int pdosDsk2Fil(PDOS *pdos, char *parm)
             }
         }
     }
+    printf("seems to be complete\n");
     return (0);
 }
 
