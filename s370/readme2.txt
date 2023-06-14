@@ -234,6 +234,11 @@ because I have switched to a pure public domain distribution.
 You can probably put this onto another 3390 disk pack and load it
 with fil2dsk, but you'll still need to write another utility,
 presumably written in multisc C, to get it onto the main disk.
+Actually, you should be able to just use the "copy" command and
+copy it from a RECFM=U tape. And indeed, the OZPD and PDOS code
+can be zipped up without compression (and junking directory paths)
+and put on the mainframe the same way and mvsunzip can be used to
+unzip it.
 
 
 Also note that you can change the config.sys to use a 1052 or a
