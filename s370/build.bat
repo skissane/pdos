@@ -6,6 +6,7 @@ dasdinit -bz2 dist\scratch.cckd 3390 SC3390
 copy \devel\mvssrc\ozpd\c\zap.c dist
 copy \winpath\zap.exe dist
 copy zapcons.bat dist
+copy readme2.txt dist\readme.txt
 
 echo after you get the prompt, type "quit"
 call doit
