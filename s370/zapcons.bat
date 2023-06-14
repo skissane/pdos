@@ -1,0 +1,6 @@
+echo an example of zapping a SSID
+
+zap pdos00.ckd 0x2741F9 0x00
+zap pdos00.ckd 0x2741FA 0x01
+zap pdos00.ckd 0x2741FB 0x00
+zap pdos00.ckd 0x2741FC 0x00
