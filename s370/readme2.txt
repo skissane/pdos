@@ -137,6 +137,9 @@ image as an AWS tape.
 
 Create an IPL-from-memory (.ins) using:
 mkiplmem dev1c2:
+(note that in Hercules you can do ipl pdos.ins and wait a while - it
+looks like it has frozen because the instruction count remains as 0
+but it hasn't really)
 
 Create an IPL card deck using:
 mkiplcrd dev1c2:
