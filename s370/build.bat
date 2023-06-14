@@ -14,6 +14,7 @@ copy saved.log dist\hercules.log
 copy pdos00.ckd dist
 copy pdos.cnf dist
 copy pdos.ins dist
+copy pcomm.exe dist
 
 echo after hercules/380 starts, run startterm then ipl 1b9
 echo then mkipltap tav1c2:
