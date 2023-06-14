@@ -252,3 +252,14 @@ needs to clean all registers using LA - currently there may be
 a reliance on the high 32 bits already being 0 - which is
 normally the case, but not guaranteed, and at least one person
 has an exit on their site to force junk into the high 32 bits.
+
+Also note that I use LPSW but I really need LPSWE, introduced
+with z/Arch, before executables can reside above 2 GiB.
+
+Note that LPSWE assembles to:
+
+0000FE B2B2C160                     326+         DC    0XL4'00',X'B2B2',S(WRWTNOER)
+
+compared to:
+
+000102 8200 C160      001E8         327          LPSW  WRWTNOER     Wait for an interrupt
