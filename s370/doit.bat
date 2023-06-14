@@ -130,10 +130,10 @@ rem create package suitable for "shipping"
 del pdospkg.zip
 zip -9X pdospkg pload.sys pdos.sys config.sys readme.txt
 zip -9X pdospkg pcomm.exe autoexec.bat world.exe bbs.exe sample.c
-zip -9X pdospkg wtoworld.exe diff.exe uemacs.exe edlin.exe hercauto.zip
+zip -9X pdospkg wtoworld.exe hercauto.zip
 zip -9X pdospkg ctl.txt pdos00.ckd pdos.cnf auto*.rc termherc*.rc
 zip -9X pdospkg runpdos.bat pdos.bat pdpi.zip pdpnntp.exe mkipltap.exe
-zip -9X pdospkg gcc.exe mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
+zip -9X pdospkg mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
 zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
 zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c copycon.exe assemble.exe
 zip -9X pdospkg xychop.exe mfemul.exe zcalc.exe hex2dec.exe dec2hex.exe
