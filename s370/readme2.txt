@@ -253,6 +253,20 @@ a reliance on the high 32 bits already being 0 - which is
 normally the case, but not guaranteed, and at least one person
 has an exit on their site to force junk into the high 32 bits.
 
+There is a goal to update the codebase so that z/PDOS could
+actually have run starting on a S/360. So that means the code
+generator should use MVC instead of MVCL. It should IPL in
+AM24 and then attempt to switch to AM64 or AM32 or AM31, whatever
+is available. Whether to use SIO or SSCH can be determined by
+looking at the IPL device to see if it is less than x'1000'
+(SIO). EC mode PSW should be used, which means on a S/360 that
+will activate ASCII, which should then be switched off. That
+can be done by loading 1 into a register, then do a CVD of that
+register, then check if the rightmost byte in the doubleword
+stored by CVD is X'1C' or X'1A', for EBCDIC or USASCII-8
+respectively (thanks Tony Harminc for that).
+
+
 Also note that I use LPSW but I really need LPSWE, introduced
 with z/Arch, before executables can reside above 2 GiB.
 
@@ -263,3 +277,7 @@ Note that LPSWE assembles to:
 compared to:
 
 000102 8200 C160      001E8         327          LPSW  WRWTNOER     Wait for an interrupt
+
+This would be the only instruction that didn't already exist
+in S/370-XA. Although things like doing a BSM with x'01' didn't
+exist until z/Arch either.
