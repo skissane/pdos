@@ -141,7 +141,7 @@ undivert(__memmgr.s)dnl
 //SYSIN  DD  *
 undivert(pload.s)dnl
 /*
-//PLOADSUP EXEC PDPASM,MEMBER=PLOADSUP
+//PLOADSUP EXEC PDPASM,MEMBER=PLOADSUP,LIST=LIST
 //SYSIN  DD  *
 undivert(ploadsup.asm)dnl
 /*
@@ -149,7 +149,7 @@ undivert(ploadsup.asm)dnl
 //SYSIN  DD  *
 undivert(pdos.s)dnl
 /*
-//PDOSSUP  EXEC PDPASM,MEMBER=PDOSSUP
+//PDOSSUP  EXEC PDPASM,MEMBER=PDOSSUP,LIST=LIST
 //SYSIN  DD  *
 undivert(pdossup.asm)dnl
 /*
