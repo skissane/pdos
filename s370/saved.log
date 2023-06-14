@@ -1,0 +1,80 @@
+11:48:56 Hercules Version 3.07:380-5.0
+11:48:56 (c)Copyright 1999-2010 by Roger Bowler, Jan Jaeger, and others
+11:48:56 Built on Oct  2 2019 at 13:49:13
+11:48:56 Build information:
+11:48:56   Windows (MSVC) build for AMD64
+11:48:56   Modes: S/370 S/380 ESA/390 z/Arch
+11:48:56   Max CPU Engines: 8
+11:48:56   Using fthreads instead of pthreads
+11:48:56   Dynamic loading support
+11:48:56   Using shared libraries
+11:48:56   HTTP Server support
+11:48:56   No SIGABEND handler
+11:48:56   Regular Expressions support
+11:48:56   Automatic Operator support
+11:48:56   Machine dependent assists: cmpxchg1 cmpxchg4 cmpxchg8
+11:48:56 Running on DESKTOP-J09M6U1 Windows_NT-6.2 AMD64 MP=2
+11:48:56 HHCHD018I Loadable module directory is hercules
+11:48:56 Crypto module loaded (c) Copyright Bernard van der Helm, 2003-2010
+11:48:56   Active: Message Security Assist
+11:48:56           Message Security Assist Extension 1
+11:48:56           Message Security Assist Extension 2
+11:48:56 HHCCF065I Hercules: tid=000019C0, pid=2236, pgid=2236, priority=0
+11:48:56 HHCDA020I pdos00.ckd cyls=1113 heads=15 tracks=16695 trklen=56832
+11:48:56 HHCTE001I Console connection thread started: tid=00002868, pid=2236
+11:48:56 HHCTE003I Waiting for console connection on port 3270
+11:48:56 HHCTT002I Timer thread started: tid=00000B20, pid=2236, priority=0
+11:48:56 HHCCP002I CPU0000 thread started: tid=00000934, pid=2236, priority=15
+11:48:56 HHCCP003I CPU0000 architecture mode z/Arch
+11:48:56 HHCPN001I Control panel thread started: tid=000019C0, pid=2236
+11:48:56 HHCPN995E .RC file "conf/auto_run.rc" not found.
+11:48:56 HHCAO001I Hercules Automatic Operator thread started;
+11:48:56           tid=00000C88, pri=0, pid=2236
+11:49:02 HHCTE009I Client 127.0.0.1 connected to 3270 device 0:0009
+11:49:06 ipl 1b9
+11:49:06 HHCCP007I CPU0000 architecture mode set to ESA/390
+11:49:06 CPU0000: SIGP Set architecture mode (12) CPU0000, PARM 00000001: CC 0
+11:49:06 HHCCP007I CPU0000 architecture mode set to z/Arch
+11:49:25 v 7ffffff0
+11:49:25 V:000000007FFFFFF0 (primary) R:000000007FFFFFF0
+11:49:25 V:000000007FFFFFF0:K:00=00000000 00000000 00000000 00000000  ................
+11:49:25 V:0000000080000000 (primary) R:0000000080000000
+11:49:25 V:0000000080000000:K:00=00000000 00000000 00000000 00000000  ................
+11:49:25 V:0000000080000010:K:00=00000000 00000000 00000000 00000000  ................
+11:49:25 V:0000000080000020:K:00=00000000 00000000 00000000 00000000  ................
+11:49:36 v 7ffffff0
+11:49:36 V:000000007FFFFFF0 (primary) R:000000007FFFFFF0
+11:49:36 V:000000007FFFFFF0:K:06=00000000 00000000 00000000 00000102  ................
+11:49:36 V:0000000080000000 (primary) R:0000000080000000
+11:49:36 V:0000000080000000:K:06=03040000 00000000 00000000 00000000  ................
+11:49:36 V:0000000080000010:K:06=00000000 00000000 00000000 00000000  ................
+11:49:36 V:0000000080000020:K:06=00000000 00000000 00000000 00000000  ................
+11:49:44 v 00000000
+11:49:44 V:0000000000000000 (primary) R:0000000000000000
+11:49:44 V:0000000000000000:K:06=000C0000 80002000 00000000 00000000  ................
+11:49:44 V:0000000000000010:K:06=00B2E4A0 00000000 00000000 00000000  ..U.............
+11:49:44 V:0000000000000020:K:06=040C0001 8100370A 00000000 00000000  ....a...........
+11:49:44 V:0000000000000030:K:06=00000000 00000000 00000000 00000000  ................
+11:49:48 quit
+11:49:48 HHCIN900I Begin Hercules shutdown
+11:49:48 HHCIN901I Releasing configuration
+11:49:48 HHCCP008I CPU0000 thread ended: tid=00000934, pid=2236
+11:49:48 HHCAO002I Hercules Automatic Operator thread ended
+11:49:48 HHCCF047I Subchannel 0:0000 detached
+11:49:48 HHCTE004I Console connection thread terminated
+11:49:48 HHCTT003I Timer thread ended
+11:49:48 HHCDA023I 01B9 cache hits 109, misses 12, waits 0
+11:49:48 HHCCF047I Subchannel 0:0001 detached
+11:49:48 HHCIN902I Configuration release complete
+11:49:48 HHCIN903I Calling termination routines
+11:49:48 HHCHD900I Begin shutdown sequence
+11:49:48 HHCHD901I Calling panel_cleanup
+11:49:48 HHCHD902I panel_cleanup complete
+11:49:48 HHCHD901I Calling console_shutdown
+11:49:48 HHCHD902I console_shutdown complete
+11:49:48 HHCHD901I Calling hdl_term
+11:49:48 HHCHD950I Begin HDL termination sequence
+11:49:48 HHCHD951I Calling module *Hercules cleanup routine
+11:49:48 HHCHD952I Module *Hercules cleanup complete
+11:49:48 HHCHD959I HDL Termination sequence complete
+11:49:48 HHCLG014I logger thread terminating
