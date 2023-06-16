@@ -16,7 +16,8 @@ struct fixup {
     unsigned int size;
     
     struct symbol *add_symbol;
-    long add_number;
+    struct symbol *sub_symbol;
+    offset_t add_number;
     
     int pcrel;
     int done;
@@ -26,7 +27,7 @@ struct fixup {
 
 };
 
-struct fixup *fixup_new (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, long add_number, int pcrel, reloc_type_t reloc_type);
+struct fixup *fixup_new (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, offset_t add_number, int pcrel, reloc_type_t reloc_type);
 struct fixup *fixup_new_expr (struct frag *frag, unsigned long where, int size, struct expr *expr, int pcrel, reloc_type_t reloc_type);
 
 void write_object_file (void);

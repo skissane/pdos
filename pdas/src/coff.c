@@ -203,7 +203,15 @@ static int output_relocation (FILE *outfile, struct fixup *fixup)
         return 1;
     }
     
-    reloc_entry.SymbolTableIndex = symbol_get_symbol_table_index (fixup->add_symbol);
+    if (symbol_is_section_symbol (fixup->add_symbol)
+        && !SECTION_IS_NORMAL (symbol_get_section (fixup->add_symbol))) {
+        /* It is possible the add_symbol is internal section symbol
+         * such as the absolute section symbol (".L300: .long 123 - .L300").
+         * In that case a special symbol table index needs to be used. */
+        reloc_entry.SymbolTableIndex = ~(unsigned long)0;
+    } else {
+        reloc_entry.SymbolTableIndex = symbol_get_symbol_table_index (fixup->add_symbol);
+    }
 
     if (target_Machine == IMAGE_FILE_MACHINE_AMD64) {
         switch (fixup->reloc_type) {

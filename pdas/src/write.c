@@ -13,14 +13,22 @@
 #include    "as.h"
 #include    "cfi.h"
 
-static struct fixup *fixup_new_internal (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, long add_number, int pcrel, reloc_type_t reloc_type) {
-
+static struct fixup *fixup_new_internal (struct frag *frag,
+                                         unsigned long where,
+                                         int size,
+                                         struct symbol *add_symbol,
+                                         struct symbol *sub_symbol,
+                                         offset_t add_number,
+                                         int pcrel,
+                                         reloc_type_t reloc_type)
+{
     struct fixup *fixup = xmalloc (sizeof (*fixup));
     
     fixup->frag         = frag;
     fixup->where        = where;
     fixup->size         = size;
     fixup->add_symbol   = add_symbol;
+    fixup->sub_symbol   = sub_symbol;
     fixup->add_number   = add_number;
     fixup->pcrel        = pcrel;
     fixup->done         = 0;
@@ -28,16 +36,13 @@ static struct fixup *fixup_new_internal (struct frag *frag, unsigned long where,
     fixup->next         = NULL;
     
     if (current_frag_chain->last_fixup) {
-    
         current_frag_chain->last_fixup->next = fixup;
         current_frag_chain->last_fixup = fixup;
-    
     } else {
         current_frag_chain->last_fixup = current_frag_chain->first_fixup = fixup;
     }
     
     return fixup;
-
 }
 
 static unsigned long relax_align (unsigned long address, unsigned long alignment) {
@@ -330,28 +335,26 @@ static void finish_frags_after_relaxation (section_t section) {
 
 }
 
-static void adjust_reloc_symbols_of_section (section_t section) {
-
+static void adjust_reloc_symbols_of_section (section_t section)
+{
     struct fixup *fixup;
     section_set (section);
     
     for (fixup = current_frag_chain->first_fixup; fixup; fixup = fixup->next) {
-    
-        if (fixup->done) { continue; }
+        if (fixup->done) continue;
         
         if (fixup->add_symbol) {
-        
             struct symbol *symbol = fixup->add_symbol;
             
             /* Resolves symbols that have not been resolved yet (expression symbols). */
             symbol_resolve_value (symbol);
+
+            if (fixup->sub_symbol) symbol_resolve_value (fixup->sub_symbol);
             
             if (symbol_uses_reloc_symbol (symbol)) {
-            
                 fixup->add_number += symbol_get_value_expression (symbol)->add_number;
                 symbol = symbol_get_value_expression (symbol)->add_symbol;
                 fixup->add_symbol = symbol;
-            
             }
             
             if (symbol_force_reloc (symbol)) {
@@ -364,60 +367,78 @@ static void adjust_reloc_symbols_of_section (section_t section) {
             
             fixup->add_number += symbol_get_value (symbol);
             fixup->add_symbol = section_symbol (symbol_get_section (symbol));
-        
         }
-    
     }
-
 }
 
 static unsigned long fixup_section (section_t section)
 {
-    struct fixup *fixup;
-    section_t add_symbol_section;
-    
+    struct fixup *fixup;    
     unsigned long section_reloc_count = 0;
     
     section_set (section);
     
     for (fixup = current_frag_chain->first_fixup; fixup; fixup = fixup->next) {
-        unsigned long add_number;
+        value_t add_number;
+        section_t add_symbol_section = absolute_section;
     
         add_number = fixup->add_number;
         
-        if (fixup->add_symbol) {
+        if (fixup->add_symbol) add_symbol_section = symbol_get_section (fixup->add_symbol);
+
+        if (fixup->sub_symbol) {
+            section_t sub_symbol_section;
+            
+            symbol_resolve_value (fixup->sub_symbol);
+            sub_symbol_section = symbol_get_section (fixup->sub_symbol);
+
+            if (fixup->add_symbol
+                && add_symbol_section == sub_symbol_section
+                && !symbol_force_reloc (fixup->add_symbol)
+                && !symbol_force_reloc (fixup->add_symbol)) {
+                add_number += symbol_get_value (fixup->add_symbol);
+                add_number -= symbol_get_value (fixup->sub_symbol);
+                fixup->add_number = add_number;
+                fixup->add_symbol = NULL;
+                fixup->sub_symbol = NULL;
+            } else if (sub_symbol_section == section) {
+                add_number -= symbol_get_value (fixup->sub_symbol);
+
+                if (!fixup->pcrel) add_number += machine_dependent_pcrel_from (fixup);
+                fixup->sub_symbol = NULL;
+                fixup->pcrel = 1;
+            } else {
+                as_internal_error_at_source_at (__FILE__, __LINE__, NULL, 0,
+                                                "+++fixup_section sub_symbol");
+            }
+        }
         
-            add_symbol_section = symbol_get_section (fixup->add_symbol);
-            
+        if (fixup->add_symbol) {
             if ((add_symbol_section == section) && !machine_dependent_force_relocation_local (fixup)) {
-            
                 add_number += symbol_get_value (fixup->add_symbol);
                 fixup->add_number = add_number;
                 
                 if (fixup->pcrel) {
-                
                     add_number -= machine_dependent_pcrel_from (fixup);
                     fixup->pcrel = 0;
-                
                 }
                 
                 fixup->add_symbol = NULL;
-            
             } else if (add_symbol_section == absolute_section) {
-            
                 add_number += symbol_get_value (fixup->add_symbol);
                 
                 fixup->add_number = add_number;
                 fixup->add_symbol = NULL;
-            
             }
-        
         }
         
         if (fixup->pcrel) {
             add_number -= machine_dependent_pcrel_from (fixup);
+            if (!fixup->add_symbol && !fixup->done) {
+                fixup->add_symbol = section_symbol (absolute_section);
+            }
         }
-        
+
         machine_dependent_apply_fixup (fixup, add_number);
         
         if (fixup->done == 0) {
@@ -429,34 +450,36 @@ static unsigned long fixup_section (section_t section)
     return section_reloc_count;
 }
 
-struct fixup *fixup_new (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, long add_number, int pcrel, reloc_type_t reloc_type) {
-    return fixup_new_internal (frag, where, size, add_symbol, add_number, pcrel, reloc_type);
+struct fixup *fixup_new (struct frag *frag, unsigned long where, int size, struct symbol *add_symbol, offset_t add_number, int pcrel, reloc_type_t reloc_type)
+{
+    return fixup_new_internal (frag, where, size, add_symbol, NULL, add_number, pcrel, reloc_type);
 }
 
-struct fixup *fixup_new_expr (struct frag *frag, unsigned long where, int size, struct expr *expr, int pcrel, reloc_type_t reloc_type) {
-
+struct fixup *fixup_new_expr (struct frag *frag, unsigned long where, int size, struct expr *expr, int pcrel, reloc_type_t reloc_type)
+{
     struct symbol *add_symbol = NULL;
+    struct symbol *sub_symbol = NULL;
     offset_t add_number = 0;
     
     switch (expr->type) {
     
         case EXPR_TYPE_ABSENT:
-        
             break;
         
         case EXPR_TYPE_CONSTANT:
-        
             add_number = expr->add_number;
             break;
+
+        case EXPR_TYPE_SUBTRACT:
+            sub_symbol = expr->op_symbol;
+            /* fall through. */
         
         case EXPR_TYPE_SYMBOL:
-        
             add_symbol = expr->add_symbol;
             add_number = expr->add_number;
             break;
         
         case EXPR_TYPE_SYMBOL_RVA:
-        
             add_symbol = expr->add_symbol;
             add_number = expr->add_number;
             
@@ -464,14 +487,12 @@ struct fixup *fixup_new_expr (struct frag *frag, unsigned long where, int size, 
             break;
         
         default:
-        
             add_symbol = make_expr_symbol (expr);
             break;
         
     }
     
-    return fixup_new_internal (frag, where, size, add_symbol, add_number, pcrel, reloc_type);
-
+    return fixup_new_internal (frag, where, size, add_symbol, sub_symbol, add_number, pcrel, reloc_type);
 }
 
 void write_object_file (void) {
