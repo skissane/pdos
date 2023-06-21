@@ -11,10 +11,10 @@
 
 extrn __divide:proc
 extrn __modulo:proc
+extrn __subhphp:proc
 ifdef WATCOMC
 extrn __addhpi:proc
 extrn __subhpi:proc
-extrn __subhphp:proc
 extrn __cmphphp:proc
 endif
 
@@ -684,7 +684,12 @@ _PIS endp
 endif
 
 
-ifdef WATCOMC
+ifdef MSC
+public _aFahdiff
+_aFahdiff:
+endif
+
+; MSC needs this too ifdef WATCOMC
 ; subtract address dx:ax with address cx:bx, number of bytes in dx:ax
 public _PTS
 _PTS proc
@@ -706,7 +711,7 @@ pop bx
 
 ret
 _PTS endp
-endif
+;endif
 
 
 ifdef WATCOMC

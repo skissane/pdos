@@ -101,6 +101,21 @@ unsigned long CTYP __modulo(unsigned long x, unsigned long y)
     return (x);
 }
 
+/* dx:ax and cx:bx are huge pointers, and the return should be
+   the number of bytes between the two */
+unsigned long CTYP __subhphp(unsigned int dx,
+                             unsigned int ax,
+                             unsigned int cx,
+                             unsigned int bx)
+{
+    unsigned long first;
+    unsigned long second;
+
+    first = ((unsigned long)dx << 4) + ax;
+    second = ((unsigned long)cx << 4) + bx;
+    return (first - second);
+}
+
 #ifdef __WATCOMC__
 /* dx:ax is a huge pointer to which a long is added, and
    the return should be a normalized huge pointer */
@@ -142,21 +157,6 @@ unsigned long CTYP __subhpi(unsigned int dx,
     first += ax;
 
     return (first);
-}
-
-/* dx:ax and cx:bx are huge pointers, and the return should be
-   the number of bytes between the two */
-unsigned long CTYP __subhphp(unsigned int dx,
-                             unsigned int ax,
-                             unsigned int cx,
-                             unsigned int bx)
-{
-    unsigned long first;
-    unsigned long second;
-
-    first = ((unsigned long)dx << 4) + ax;
-    second = ((unsigned long)cx << 4) + bx;
-    return (first - second);
 }
 
 /* dx:ax and cx:bx are huge pointers to be compared */
