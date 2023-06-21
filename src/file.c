@@ -39,6 +39,6 @@ size_t fread(void *buf, size_t size, size_t nelem, FILE *fp)
     
     unused(size);
     unused(fp);
-    fatReadFile(&gfat, &fatfile, buf, nelem, &readbytes);
+    fatReadFile(&gfat, &fatfile, buf, (unsigned int)nelem, &readbytes);
     return (readbytes);
 }

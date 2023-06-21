@@ -605,7 +605,7 @@ static void fatNextSearch(FAT *fat, char *search, const char **upto)
     }
     /* Checks if the next part of path is LFN.
      * If it is, its length is stored. */
-    fat->lfn_search_len = isLFN(*upto, p - *upto);
+    fat->lfn_search_len = isLFN(*upto, (unsigned int)(p - *upto));
     if (!fat->lfn_search_len)
     {
         /* Next part of path is 8.3 name and might need padding. */

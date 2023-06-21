@@ -241,10 +241,10 @@ static unsigned long getlong(unsigned long loc)
 
 static void putlong(unsigned long loc, unsigned long val)
 {
-    putabs(loc, val & 0xff); val >>= 8;
-    putabs(loc + 1, val & 0xff); val >>= 8;
-    putabs(loc + 2, val & 0xff); val >>= 8;
-    putabs(loc + 3, val & 0xff);
+    putabs(loc, (unsigned int)(val & 0xff)); val >>= 8;
+    putabs(loc + 1, (unsigned int)(val & 0xff)); val >>= 8;
+    putabs(loc + 2, (unsigned int)(val & 0xff)); val >>= 8;
+    putabs(loc + 3, (unsigned int)(val & 0xff));
     return;
 }
 

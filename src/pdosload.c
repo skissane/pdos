@@ -300,7 +300,7 @@ static void readLogical(void *diskptr, unsigned long sector, void *buf)
     }
     else
     {
-        ret = readAbs(buf, 1, diskinfo->drive, track, head, sect);
+        ret = readAbs(buf, 1, diskinfo->drive, (int)track, head, sect);
     }
     if (ret != 0)
     {
