@@ -11,10 +11,12 @@
 
 extrn __divide:proc
 extrn __modulo:proc
+ifdef WATCOMC
 extrn __addhpi:proc
 extrn __subhpi:proc
 extrn __subhphp:proc
 extrn __cmphphp:proc
+endif
 
 public fidrqq
 public fiwrqq
@@ -25,6 +27,13 @@ public fierqq
 fidrqq  dw  ?
 fiwrqq  dw  ?
 fierqq  dw  ?
+
+ifdef MSC
+public _AHINCR
+public _AHSHIFT
+_AHINCR dw 1000H
+_AHSHIFT dw 12
+endif
 
 .code
 
