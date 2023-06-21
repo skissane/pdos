@@ -966,7 +966,7 @@ mov dx, [bp + 6 + @CodeSize * 2]
 mov bx, [bp + 8 + @CodeSize * 2]
 mov cx, [bp + 10 + @CodeSize * 2]
 
-call _U4M
+call f_lxmul@
 
 pop cx
 pop bx
