@@ -20,6 +20,10 @@ ifdef MAKECOM
 org 0100h
 endif
 
+ifdef MAKEPL
+org 0700h
+endif
+
 top:
 
 public _startup

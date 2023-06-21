@@ -32,6 +32,7 @@ OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
 all: clean pload.com
 
 pload.com: $(OBJS)
+  rm -f pload.tmp
   link /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,,,,
   exe2bin -base=700 pload.tmp pload.com
 
@@ -40,7 +41,7 @@ pload.com: $(OBJS)
 #  lib watcom /nologo +$@,,
 
 .asm.obj:
-  ml -c -omf -DMSC -DNEWMODEL -nologo -Dmemodel=huge -DNEED_DISPLAYC $<
+  ml -c -omf -DMAKEPL -DMSC -DNEWMODEL -nologo -Dmemodel=huge -DNEED_DISPLAYC $<
 #  lib watcom /nologo +$@,,
 
 clean:
