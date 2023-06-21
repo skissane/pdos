@@ -27,6 +27,7 @@ static unsigned short *rlstart;
 static int nreloc;
 static int x;
 static Mz_hdr *hdr;
+static unsigned short *fixseg;
 
 int main(int argc, char **argv)
 {
@@ -41,6 +42,7 @@ int main(int argc, char **argv)
     }
 
     base = strtol(&argv[1][6], NULL, 16);
+    printf("base is hex %x\n", base);
     
     fp = fopen(argv[2], "rb");
     if (fp == NULL)
@@ -75,11 +77,21 @@ int main(int argc, char **argv)
 
     for (x = 0; x < nreloc; x++)
     {
-        /* this, and other stuff, is woefully inadequate */
-        *(unsigned short *)(codestart + rlstart[x]) += (base >> 4);
+        fixseg = (unsigned short *)(codestart + rlstart[x * 2]
+                 + (rlstart[x * 2 + 1] << 4));
+#if 0
+        printf("first %d\n", rlstart[x*2]);
+        printf("second %d\n", rlstart[x * 2 + 1] << 4);
+#endif
+#if 0
+        *fixseg += (base >> 4);
+#endif
     }
 
-    fwrite(codestart, 1, sz - hdr->header_size * 16, fq);
+    /* because we are now using org, the relocations don't
+       need to be done, and instead we just need to strip
+       the loading NULs - this needs to be revisited */
+    fwrite(codestart + base, 1, sz - hdr->header_size * 16 - base, fq);
 
     printf("done\n");
     return (EXIT_SUCCESS);
