@@ -1,0 +1,49 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds pload.com for PDOS/386 on Windows,
+# using Visual Studio 1.52 plus exe2bin from Open Watcom.
+
+# To produce the 32-bit version, do this:
+# pdmake -f makeio.vsc TARG=PDOS32
+
+VPATH=..\pdpclib
+
+TARG=PDOS32
+
+CC=cl
+
+# both -O2 and -O give out of memory error on some files in some conditions
+CFLAGS=
+
+COPTS=-c -I. -I..\pdpclib -DNEWMODEL -D__SZ4__ -D__MSDOS__ -D$(TARG) -DNEED_DUMP $(CFLAGS) -AH -Zl -Gs -nologo
+AS=ml
+LD=link
+
+OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
+    lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
+    ploadst.obj int13x.obj dossupa.obj
+
+all: clean pload.com
+
+pload.com: $(OBJS)
+  link /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.com,,,,
+
+.c.obj:
+  $(CC) $(COPTS) $<
+#  lib watcom /nologo +$@,,
+
+.asm.obj:
+  ml -c -omf -DMSC -DNEWMODEL -nologo -Dmemodel=huge -DNEED_DISPLAYC $<
+#  lib watcom /nologo +$@,,
+
+clean:
+  rm -f *.obj
+  rm -f pload.com
+#  rm -f watcom.lib
