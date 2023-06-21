@@ -23,9 +23,9 @@ static long base;
 static char *p;
 static size_t sz;
 static char *codestart;
-static char *rlstart;
+static unsigned short *rlstart;
 static int nreloc;
-
+static int x;
 static Mz_hdr *hdr;
 
 int main(int argc, char **argv)
@@ -68,10 +68,19 @@ int main(int argc, char **argv)
 
     hdr = (Mz_hdr *)p;
     codestart = p + hdr->header_size * 16;
-    rlstart = p + hdr->reloc_tab_offset;
+    rlstart = (unsigned short *)(p + hdr->reloc_tab_offset);
     nreloc = hdr->num_reloc_entries;
     
-    printf("nreloc is %d\n", nreloc);
+    printf("number of relocations is %d\n", nreloc);
 
+    for (x = 0; x < nreloc; x++)
+    {
+        /* this, and other stuff, is woefully inadequate */
+        *(unsigned short *)(codestart + rlstart[x]) += (base >> 4);
+    }
+
+    fwrite(codestart, 1, sz - hdr->header_size * 16, fq);
+
+    printf("done\n");
     return (EXIT_SUCCESS);
 }
