@@ -29,6 +29,11 @@
 #include "int13x.h"
 #include "unused.h"
 
+#ifdef NEED_DUMP
+void dumpbuf(unsigned char *buf, int len);
+void dumplong(unsigned long x);
+#endif
+
 typedef struct
 {
     unsigned long hidden;
