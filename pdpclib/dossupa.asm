@@ -29,6 +29,11 @@ fiwrqq  dw  ?
 fierqq  dw  ?
 
 ifdef MSC
+public _acrtused
+_acrtused dw ?
+endif
+
+ifdef MSC
 public _AHINCR
 public _AHSHIFT
 _AHINCR dw 1000H
