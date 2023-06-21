@@ -890,6 +890,11 @@ ret 8
 f_lmod@ endp
 
 
+ifdef MSC
+public _aFulrem
+_aFulrem:
+endif
+
 ; procedure needs to fix up stack
 ; original value and divisor will be on stack
 ; return in dx:ax
