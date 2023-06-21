@@ -33,7 +33,7 @@ all: clean pload.com
 
 pload.com: $(OBJS)
   link /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,,,,
-  exe2bin -l=700 pload.tmp pload.com
+  exe2bin -base=700 pload.tmp pload.com
 
 .c.obj:
   $(CC) $(COPTS) $<
