@@ -956,6 +956,11 @@ f_lxmul@ endp
 
 ; shift dx:ax left by cl
 
+ifdef MSC
+public _aFlshl
+_aFlshl:
+endif
+
 public f_lxlsh@
 f_lxlsh@ proc uses bx
 
@@ -1002,6 +1007,11 @@ f_lxlsh@ endp
 
 
 ; shift dx:ax right by cl
+
+ifdef MSC
+public _aFulshr
+_aFulshr:
+endif
 
 public f_lxursh@
 f_lxursh@ proc uses bx
