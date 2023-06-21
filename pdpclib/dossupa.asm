@@ -739,6 +739,11 @@ _PTC endp
 endif
 
 
+ifdef MSC
+public _aFuldiv
+_aFuldiv:
+endif
+
 ; must release stack space in this procedure
 ; original value and divisor will be on stack
 ; return value in dx:ax
