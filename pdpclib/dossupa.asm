@@ -929,6 +929,33 @@ ret 8
 f_lumod@ endp
 
 
+ifdef MSC
+; procedure needs to fix up stack
+; two values to multiple will be on stack
+; return in dx:ax
+public _aFulmul
+_aFulmul proc
+push bp
+mov bp,sp
+push bx
+push cx
+
+mov ax, [bp + 4 + @CodeSize * 2]
+mov dx, [bp + 6 + @CodeSize * 2]
+
+mov bx, [bp + 8 + @CodeSize * 2]
+mov cx, [bp + 10 + @CodeSize * 2]
+
+call _U4M
+
+pop cx
+pop bx
+pop bp
+ret 8
+_aFulmul endp
+endif
+
+
 ; multiply cx:bx by dx:ax, result in dx:ax
 
 public _I4M
