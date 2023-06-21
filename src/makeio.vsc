@@ -19,8 +19,7 @@ TARG=PDOS32
 
 CC=cl
 
-# both -O2 and -O give out of memory error on some files in some conditions
-CFLAGS=
+CFLAGS=-O2 -f
 
 COPTS=-c -I. -I..\pdpclib -DNEWMODEL -D__SZ4__ -D__MSDOS__ -D$(TARG) -DNEED_DUMP $(CFLAGS) -AH -Zl -Gs -nologo
 AS=ml
@@ -33,7 +32,8 @@ OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
 all: clean pload.com
 
 pload.com: $(OBJS)
-  link /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.com,,,,
+  link /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,,,,
+  exe2bin -l=700 pload.tmp pload.com
 
 .c.obj:
   $(CC) $(COPTS) $<
