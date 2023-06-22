@@ -946,9 +946,9 @@ static const struct template template_table[] = {
     { "movdqa", 2, 0x660F6F, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
     { "movdqu", 2, 0xF30F6F, NONE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
     
-    { "andpd", 2, 0xF20F54, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
-    { "andnpd", 2, 0xF20F55, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
-    { "orpd", 2, 0xF20F56, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "andpd", 2, 0x660F54, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "andnpd", 2, 0x660F55, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
+    { "orpd", 2, 0x660F56, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
     { "addsd", 2, 0xF20F58, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
     { "cmpltsd", 2, 0xF20FC2, 1, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
     { "mulsd", 2, 0xF20F59, NONE, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM, 0 }, CPU_SSE2 },
