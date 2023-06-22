@@ -22,8 +22,11 @@ extern FAT gfat;
 
 FILE *fopen(const char *name, const char *mode)
 {
+    int rc;
+
     unused(mode);
-    fatOpenFile(&gfat, name, &fatfile);
+    rc = fatOpenFile(&gfat, name, &fatfile);
+    if (rc != 0) return (NULL);
     return ((FILE *)1);
 }
 
