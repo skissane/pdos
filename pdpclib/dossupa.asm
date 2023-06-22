@@ -684,12 +684,25 @@ _PIS endp
 endif
 
 
+; in this case, stuff is already on the stack, and we need
+; to clean up the stack
 ifdef MSC
 public _aFahdiff
-_aFahdiff:
+_aFahdiff proc
+push bp
+mov bp,sp
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+push word ptr [bp + 6 + @CodeSize * 2]
+push word ptr [bp + 4 + @CodeSize * 2]
+call __subhphp
+add sp,8
+pop bp
+ret 8
+_aFahdiff endp
 endif
 
-; MSC needs this too ifdef WATCOMC
+ifdef WATCOMC
 ; subtract address dx:ax with address cx:bx, number of bytes in dx:ax
 public _PTS
 _PTS proc
@@ -711,7 +724,7 @@ pop bx
 
 ret
 _PTS endp
-;endif
+endif
 
 
 ifdef WATCOMC
