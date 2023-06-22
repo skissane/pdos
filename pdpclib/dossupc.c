@@ -103,17 +103,17 @@ unsigned long CTYP __modulo(unsigned long x, unsigned long y)
 
 /* dx:ax and cx:bx are huge pointers, and the return should be
    the number of bytes between the two */
-unsigned long CTYP __subhphp(unsigned int dx,
-                             unsigned int ax,
+unsigned long CTYP __subhphp(unsigned int bx,
                              unsigned int cx,
-                             unsigned int bx)
+                             unsigned int ax,
+                             unsigned int dx)
 {
     unsigned long first;
     unsigned long second;
 
-    first = ((unsigned long)dx << 4) + ax;
-    second = ((unsigned long)cx << 4) + bx;
-    return (first - second);
+    second = ((unsigned long)dx << 4) + ax;
+    first = ((unsigned long)cx << 4) + bx;
+    return (second - first);
 }
 
 #ifdef __WATCOMC__
