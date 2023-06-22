@@ -711,10 +711,10 @@ _PTS proc
 push bx
 push cx
 
-push dx
-push ax
 push cx
 push bx
+push dx
+push ax
 
 call __subhphp
 add sp,8
