@@ -113,7 +113,7 @@ unsigned long CTYP __subhphp(unsigned int bx,
 
     second = ((unsigned long)dx << 4) + ax;
     first = ((unsigned long)cx << 4) + bx;
-    return (second - first);
+    return (first - second);
 }
 
 #ifdef __WATCOMC__
