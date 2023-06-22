@@ -645,8 +645,8 @@ done:
 
 }
 
-void handler_lcomm (char **pp) {
-
+void handler_lcomm (char **pp)
+{
     struct expr expr;
     struct symbol *symbol;
     offset_t alignment = 0;
@@ -741,8 +741,7 @@ void handler_lcomm (char **pp) {
     }   
     
     if (symbol_is_undefined (symbol)) {
-    
-        section_set (bss_section);
+        section_subsection_set (bss_section, 1);
 
         if (alignment) {
             frag_align (alignment, 0, 0);
@@ -755,18 +754,14 @@ void handler_lcomm (char **pp) {
         frag_increase_fixed_size (expr.add_number);
         
         section_subsection_set (saved_section, saved_subsection);
-    
     } else {
-    
         as_error ("symbol '%s' is already defined", symbol->name);
         
         ignore_rest_of_line (pp);
         return;
-    
     }
     
-    demand_empty_rest_of_line (pp);
-    
+    demand_empty_rest_of_line (pp);  
 }
 
 static void handler_linkonce (char **pp)
