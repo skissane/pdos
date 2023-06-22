@@ -105,6 +105,27 @@ static int write_struct_symbol_table_entry (FILE *outfile, struct symbol_table_e
 
 }
 
+static int write_struct_aux_section_symbol (FILE *outfile, struct aux_section_symbol_internal *aux_section_symbol_internal)
+{
+    struct aux_section_symbol_file aux_section_symbol_file;
+
+    COPY(aux_section_symbol, Length, 4);
+    COPY(aux_section_symbol, NumberOfRelocations, 2);
+    COPY(aux_section_symbol, NumberOfLinenumbers, 2);
+
+    COPY(aux_section_symbol, CheckSum, 4);
+    COPY(aux_section_symbol, Number, 2);
+    COPY(aux_section_symbol, Selection, 1);
+
+    memcpy (aux_section_symbol_file.Unused, aux_section_symbol_internal->Unused, sizeof (aux_section_symbol_file.Unused));
+
+    if (fwrite (&aux_section_symbol_file, sizeof (aux_section_symbol_file), 1, outfile) != 1) {
+        return 1;
+    }
+
+    return 0;
+}
+
 static int write_struct_string_table_header (FILE *outfile, struct string_table_header_internal *string_table_header_internal) {
 
     struct string_table_header_file string_table_header_file;
@@ -158,6 +179,10 @@ static unsigned long translate_section_flags_to_Characteristics (unsigned int fl
     /* .bss */
     if ((flags & SECTION_FLAG_ALLOC) && !(flags & SECTION_FLAG_LOAD)) {
         Characteristics |= IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+    }
+
+    if (flags & SECTION_FLAG_LINK_ONCE) {
+        Characteristics |= IMAGE_SCN_LNK_COMDAT;
     }
 
     return Characteristics;
@@ -424,7 +449,6 @@ void write_coff_file (void) {
     header.NumberOfSymbols = 0;
     
     for (symbol = symbols; symbol; symbol = symbol->next) {
-    
         struct symbol_table_entry_internal sym_tbl_ent;
         
         if (symbol->object_format_dependent_data == NULL) {
@@ -508,24 +532,71 @@ void write_coff_file (void) {
             symbol->write_name_to_string_table = 1;
         
         }
+
+        if (symbol_is_section_symbol (symbol)
+            && (section_get_flags (symbol_get_section (symbol)) & SECTION_FLAG_LINK_ONCE)) {
+            sym_tbl_ent.NumberOfAuxSymbols = 1;
+        }
         
         if (write_struct_symbol_table_entry (outfile, &sym_tbl_ent)) {
-        
             as_error_at (NULL, 0, "Error writing symbol table!");
             return;
-        
         }
         
         symbol_set_symbol_table_index (symbol, header.NumberOfSymbols);
         header.NumberOfSymbols++;
-    
+
+        if (symbol_is_section_symbol (symbol) && sym_tbl_ent.NumberOfAuxSymbols) {
+            struct aux_section_symbol_internal aux_sym_ent;
+            struct section_table_entry_internal *section_header;
+            
+            section = symbol_get_section (symbol);
+            section_header = section_get_object_format_dependent_data (section);
+
+            memset (&aux_sym_ent, 0, sizeof (aux_sym_ent));
+
+            aux_sym_ent.Length = section_header->SizeOfRawData;
+            {
+                struct fixup *fixup;
+
+                aux_sym_ent.NumberOfRelocations = 0;
+                section_set (section);
+                
+                for (fixup = current_frag_chain->first_fixup; fixup; fixup = fixup->next) {
+                    if (fixup->done) continue;                    
+                    aux_sym_ent.NumberOfRelocations++;
+                }
+            }
+            aux_sym_ent.NumberOfLinenumbers = 0;
+
+            aux_sym_ent.CheckSum = 0;
+            aux_sym_ent.Number = 0;
+
+            {
+                flag_int flags = section_get_flags (section);
+
+                if (flags & SECTION_FLAG_LINK_DUPLICATES_DISCARD) {
+                    aux_sym_ent.Selection = IMAGE_COMDAT_SELECT_ANY;
+                } else if (flags & SECTION_FLAG_LINK_DUPLICATES_ONE_ONLY) {
+                    aux_sym_ent.Selection = IMAGE_COMDAT_SELECT_NODUPLICATES;
+                } else if (flags & SECTION_FLAG_LINK_DUPLICATES_SAME_SIZE) {
+                    aux_sym_ent.Selection = IMAGE_COMDAT_SELECT_SAME_SIZE;
+                } else if (flags & SECTION_FLAG_LINK_DUPLICATES_SAME_CONTENTS) {
+                    aux_sym_ent.Selection = IMAGE_COMDAT_SELECT_EXACT_MATCH;
+                } else aux_sym_ent.Selection = 0;
+            }
+            
+            if (write_struct_aux_section_symbol (outfile, &aux_sym_ent)) {
+                as_error_at (NULL, 0, "Error writing symbol table!");
+                return;
+            }
+            header.NumberOfSymbols++;
+        }
     }
     
     if (write_struct_string_table_header (outfile, &string_table_header)) {
-    
         as_error_at (NULL, 0, "Failed to write string table!");
         return;
-    
     }
 
     for (section = sections; section; section = section_get_next_section (section)) {

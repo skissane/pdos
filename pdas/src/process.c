@@ -769,6 +769,44 @@ void handler_lcomm (char **pp) {
     
 }
 
+static void handler_linkonce (char **pp)
+{
+    flag_int flags;
+
+    flags = section_get_flags (current_section);
+    flags |= SECTION_FLAG_LINK_ONCE;
+
+    if (!is_end_of_line[(int) **pp]) {
+        char *name;
+        char ch;
+
+        name = *pp;
+        ch = get_symbol_name_end (pp);
+
+        if (xstrcasecmp (name, "discard") == 0) {
+            flags |= SECTION_FLAG_LINK_DUPLICATES_DISCARD;
+        } else if (xstrcasecmp (name, "one_only") == 0) {
+            flags |= SECTION_FLAG_LINK_DUPLICATES_ONE_ONLY;
+        } else if (xstrcasecmp (name, "same_size") == 0) {
+            flags |= SECTION_FLAG_LINK_DUPLICATES_SAME_SIZE;
+        } else if (xstrcasecmp (name, "same_contents") == 0) {
+            flags |= SECTION_FLAG_LINK_DUPLICATES_SAME_CONTENTS;
+        } else {
+            as_warn ("unrecognized .linkonce type '%s'", name);
+        }
+        
+        **pp = ch;
+    } else flags |= SECTION_FLAG_LINK_DUPLICATES_DISCARD;
+    
+    if (state->format != AS_FORMAT_COFF) {
+        as_warn (".linkonce is not supported for this object file format");
+    }
+
+    section_set_flags (current_section, flags);
+    
+    demand_empty_rest_of_line (pp);
+}
+
 static void handler_long (char **pp) {
     handler_constant (pp, 4, 0);
 }
@@ -936,6 +974,7 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "global",     &handler_global         },
     { "include",    &handler_include        },
     { "lcomm",      &handler_lcomm          },
+    { "linkonce",   &handler_linkonce       },
     { "long",       &handler_long           },
     { "org",        &handler_org            },
     { "p2align",    &handler_p2align        },
