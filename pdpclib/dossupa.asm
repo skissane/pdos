@@ -967,6 +967,8 @@ f_lumod@ endp
 
 
 ifdef MSC
+public _aFlmul
+_aFlmul:
 ; procedure needs to fix up stack
 ; two values to multiple will be on stack
 ; return in dx:ax
