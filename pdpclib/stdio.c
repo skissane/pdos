@@ -280,7 +280,7 @@ __PDPCLIB_API__ FILE **__gterr(void)
 __PDPCLIB_API__ __DUMMYFILE _iob[3];
 #endif
 
-static void dblcvt(double num, char cnvtype, size_t nwidth,
+static void dblcvt(double num, int cnvtype, int nwidth,
                    int nprecision, char *result);
 static int vvprintf(const char *format, va_list arg, FILE *fq, char *s);
 static int vvscanf(const char *format, va_list arg, FILE *fp, const char *s);
@@ -1968,7 +1968,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
 #endif
 #ifdef __MSDOS__
-    tempRead = __read(stream->hfile, ptr, toread, &errind);
+    tempRead = __read(stream->hfile, ptr, (unsigned int)toread, &errind);
     if (errind)
     {
         errno = tempRead;
@@ -2336,7 +2336,7 @@ static void iwrite(FILE *stream,
 #ifdef __MSDOS__
     tempWritten = __write(stream->hfile,
                           ptr,
-                          towrite,
+                          (unsigned int)towrite,
                           &errind);
     if (errind)
     {
@@ -6510,7 +6510,7 @@ static char *int_strtok(char *s1, const char *s2)
 
 */
 
-static void dblcvt(double num, char cnvtype, size_t nwidth,
+static void dblcvt(double num, int cnvtype, int nwidth,
             int nprecision, char *result)
 {
     double b,round;
