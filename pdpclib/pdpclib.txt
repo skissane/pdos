@@ -1,8 +1,8 @@
             Public Domain C runtime library
             -------------------------------
 
-Version : 4.00
-Released: 2019-10-01
+Version : 4.xx
+Released: xxxx-xx-xx
 
 Written by Paul Edwards.
 Released to the public domain.
@@ -11,7 +11,7 @@ restriction.
 
 Here is a more formal wording governing the software:
 
-I, the copyright holder of this work, hereby release it into the 
+I, the author of this work, hereby release it into the 
 public domain. This applies worldwide.
 
 In case this is not legally possible, I grant any entity the right 
