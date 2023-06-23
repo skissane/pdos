@@ -236,10 +236,12 @@ ignorec:
 ; trimmed too).
 ; Switching to huge bumped required sectors from 6 to 7,
 ; but I use 8 for good measure. fat32 development pushed
-; the requirement sort of up to 9. If you wish to do debugging
+; the requirement sort of up to 9. Supporting Visual C++ 1.52
+; pushed the requirement up to about 11 - I used 12 for
+; good measure. If you wish to do debugging
 ; using dumpbuf/dumplong, you will need more sectors - may as
 ; well max it out with 58
- mov  cx, 9        ;Load 9 sectors (was 55, was 58, was 3)
+ mov  cx, 12        ;Load 12 sectors (was 9, was 55, was 58, was 3)
 ; I had dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
