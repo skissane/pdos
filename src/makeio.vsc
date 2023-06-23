@@ -13,11 +13,20 @@
 # To produce the 32-bit version, do this:
 # pdmake -f makeio.vsc TARG=PDOS32
 
+# If you use this for io.sys, you will also need to increase
+# the initial number of sectors in pbootsec.asm and fat32.asm
+# from 9 to 13, not really because the executable is bigger,
+# but because link is putting the object code into a different
+# order to that specified in the command line and I don't
+# know how to stop that
+
 VPATH=..\pdpclib
 
 TARG=PDOS32
 
 CC=cl
+
+# Use -f to avoid an out of memory error
 
 CFLAGS=-O2 -f
 
@@ -33,7 +42,7 @@ all: clean pload.com
 
 pload.com: $(OBJS)
   rm -f pload.tmp
-  link /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,pload.map,,,
+  link /cp:1 /noi /nod /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,pload.map,,,
   exe2bin -base=700 pload.tmp pload.com
 
 .c.obj:
