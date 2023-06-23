@@ -1,4 +1,6 @@
-# This builds a.out files for PDOS386, on Windows
+# This builds support library for PDOS386 programs, on Windows using Visual Studio
+# This allows the Pos* functions to be called by applications
+# PDOS itself uses the C library, but defines the Pos functions internally
 # For the 32-bit version of PDOS we define __PDOS386__
 
 CC=cl
