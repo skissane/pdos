@@ -58,7 +58,7 @@ helper.obj
 all: clean pdos.exe
 
 pdos.exe: $(OBJS)
-  rm -f pload.tmp
+  rm -f pdos.tmp
   link /cp:1 /noe /noi /nod /map /nologo /dosseg pdosstrt.obj+pdos.obj,pdos.tmp,pdos.map,os.lib+..\pdpclib\msc.lib,,
   exe2bin -base=700 pdos.tmp pdos.exe
 
