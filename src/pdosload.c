@@ -183,7 +183,7 @@ void pdosload(void)
     } while (rets == 0x200);
     fclose(fp);
 
-    callfar(ABS2ADDR(loads));
+    callfar((long)ABS2ADDR(loads));
 #endif
 
 #if 0
