@@ -13,13 +13,6 @@
 # To produce the 32-bit version, do this:
 # pdmake -f makeio.vsc TARG=PDOS32
 
-# If you use this for io.sys, you will also need to increase
-# the initial number of sectors in pbootsec.asm and fat32.asm
-# from 9 to 13, not really because the executable is bigger,
-# but because link is putting the object code into a different
-# order to that specified in the command line and I don't
-# know how to stop that
-
 VPATH=..\pdpclib
 
 TARG=PDOS32
@@ -27,8 +20,13 @@ TARG=PDOS32
 CC=cl
 
 # Use -f to avoid an out of memory error
+# If you use -O2 instead of -Ox, you get a smaller executable
+# because -Gy seems to be in effect allowing the linker to
+# strip unreferenced functions. But it has the side-effect of
+# rearranging the order of object files so that they are not
+# in the order required for self-loading to complete
 
-CFLAGS=-O2 -f
+CFLAGS=-Ox -f
 
 COPTS=-c -I. -I..\pdpclib -DNEWMODEL -D__SZ4__ -D__MSDOS__ -D$(TARG) -DNEED_DUMP $(CFLAGS) -AH -Zl -Gs -nologo
 AS=ml
