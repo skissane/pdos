@@ -18,15 +18,15 @@ extrn __subhpi:proc
 extrn __cmphphp:proc
 endif
 
-public fidrqq
-public fiwrqq
-public fierqq
+public FIDRQQ
+public FIWRQQ
+public FIERQQ
 
 .data
 
-fidrqq  dw  ?
-fiwrqq  dw  ?
-fierqq  dw  ?
+FIDRQQ  dw  ?
+FIWRQQ  dw  ?
+FIERQQ  dw  ?
 
 ifdef MSC
 public _acrtused
@@ -760,6 +760,8 @@ endif
 ifdef MSC
 public _aFuldiv
 _aFuldiv:
+public _aFldiv
+_aFldiv:
 endif
 
 ; must release stack space in this procedure
@@ -916,6 +918,8 @@ f_lmod@ endp
 ifdef MSC
 public _aFulrem
 _aFulrem:
+public _aFlrem
+_aFlrem:
 endif
 
 ; procedure needs to fix up stack
