@@ -1,0 +1,47 @@
+# Produce MSDOS executable using Microsoft Visual C++
+# Build with pdmake -f makefile.msc
+
+# Choose T (tiny), S (small), M (medium), C (compact), L (large), H (huge)
+MODELC=H
+# Choose long form of above name, required by masm instead of cl
+MODELA=huge
+
+# If you want to produce a COM file, uncommment this, and follow the
+# instructions further down (when written)
+#MAKECOM=-DMAKECOM
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+
+
+CFLAGS=-Ox -f
+
+COPTS=-c -I. $(SZ4) -D__MSDOS__ $(CFLAGS) -A$(MODELC) -Zl -Gs -nologo
+CC=cl
+AS=ml
+LD=link
+
+
+all: clean pdptest.exe
+
+pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj dossupc.obj dossupa.obj fpfuncsv.obj \
+       dossupb.obj
+#  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib,,
+  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj+fpfuncsv.obj,pdptest.exe,pdptest.map,msc.lib,,
+
+.c.obj:
+  $(CC) $(COPTS) $<
+  lib msc /nologo +$@,,
+
+.asm.obj:
+  ml -c -nologo -DMSC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) $<
+  lib msc /nologo +$@,,
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
+  rm -f msc.lib
+  lib msc /nologo ,
