@@ -1076,6 +1076,8 @@ f_lxlsh@ endp
 ifdef MSC
 public _aFulshr
 _aFulshr:
+public _aFlshr
+_aFlshr:
 endif
 
 public f_lxursh@
