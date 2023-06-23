@@ -35,7 +35,7 @@ VPATH=..\pdpclib
 
 CFLAGS=-Ox -f -Gy
 
-COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo
+COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo -Zp1
 CC=cl
 AS=ml
 LD=link
