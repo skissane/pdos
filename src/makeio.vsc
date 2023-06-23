@@ -11,7 +11,7 @@
 # using Visual Studio 1.52 plus exe2bin from Open Watcom.
 
 # To produce the 32-bit version, do this:
-# pdmake -f makeio.vsc
+# pdmake -f makeio.vsc TARG=PDOS32
 
 # Note that it is necessary to add the "noe" linker option
 # to stop the extended dictionary from being used and giving
@@ -23,7 +23,7 @@
 
 VPATH=..\pdpclib
 
-TARG=PDOS32
+TARG=XPDOS32
 
 CC=cl
 
