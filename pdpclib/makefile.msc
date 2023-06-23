@@ -29,8 +29,7 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj dossupc.obj dossupa.obj fpfuncsv.obj \
        dossupb.obj
-#  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib,,
-  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj+fpfuncsv.obj,pdptest.exe,pdptest.map,msc.lib,,
+  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib,,
 
 .c.obj:
   $(CC) $(COPTS) $<
