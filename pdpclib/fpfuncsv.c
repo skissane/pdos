@@ -35,4 +35,14 @@ void _aFfcompp(void)
     return;
 }
 
+void _fmemset(void)
+{
+    return;
+}
+
+void _fmemcpy(void)
+{
+    return;
+}
+
 #endif
