@@ -15,7 +15,7 @@
 
 #include <mz.h>
 
-#define MAXPRGSZ 0x20000
+#define MAXPRGSZ 0x50000
 
 static FILE *fp;
 static FILE *fq;
@@ -83,15 +83,23 @@ int main(int argc, char **argv)
         printf("first %d\n", rlstart[x*2]);
         printf("second %d\n", rlstart[x * 2 + 1] << 4);
 #endif
-#if 0
-        *fixseg += (base >> 4);
-#endif
+        if (base != 0x700)
+        {
+            *fixseg += (base >> 4);
+        }
     }
 
     /* because we are now using org, the relocations don't
        need to be done, and instead we just need to strip
        the loading NULs - this needs to be revisited */
-    fwrite(codestart + base, 1, sz - hdr->header_size * 16 - base, fq);
+    if (base == 0x700)
+    {
+        fwrite(codestart + base, 1, sz - hdr->header_size * 16 - base, fq);
+    }
+    else
+    {
+        fwrite(codestart, 1, sz - hdr->header_size * 16, fq);
+    }
 
     printf("done\n");
     return (EXIT_SUCCESS);
