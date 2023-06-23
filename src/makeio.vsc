@@ -11,7 +11,15 @@
 # using Visual Studio 1.52 plus exe2bin from Open Watcom.
 
 # To produce the 32-bit version, do this:
-# pdmake -f makeio.vsc TARG=PDOS32
+# pdmake -f makeio.vsc
+
+# Note that it is necessary to add the "noe" linker option
+# to stop the extended dictionary from being used and giving
+# errors about duplicates. Not sure if there is a better
+# way of doing that. Using a library reduces the number of
+# object files needed to be specified on the link command,
+# as we only need to specify the ones that are involved in
+# the self-loading process.
 
 VPATH=..\pdpclib
 
@@ -40,18 +48,19 @@ all: clean pload.com
 
 pload.com: $(OBJS)
   rm -f pload.tmp
-  link /cp:1 /noi /nod /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj+bos.obj+support.obj+minifat.obj+string.obj+pdosload.obj+lldos.obj+protinta.obj+file.obj+protint.obj+ctype.obj,pload.tmp,pload.map,,,
+  link /cp:1 /noe /noi /nod /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj,pload.tmp,pload.map,io.lib,,
   exe2bin -base=700 pload.tmp pload.com
 
 .c.obj:
   $(CC) $(COPTS) $<
-#  lib watcom /nologo +$@,,
+  lib io /nologo +$@,,
 
 .asm.obj:
   ml -c -omf -DMAKEPL -DMSC -DNEWMODEL -nologo -Dmemodel=huge -DNEED_DISPLAYC $<
-#  lib watcom /nologo +$@,,
+  lib io /nologo +$@,,
 
 clean:
   rm -f *.obj
   rm -f pload.com
-#  rm -f watcom.lib
+  rm -f io.lib
+  lib io /nologo ,
