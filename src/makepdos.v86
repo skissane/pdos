@@ -1,0 +1,77 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds pdos.exe for PDOS/86 on Windows,
+# using Visual Studio 1.52 plus exe2bin
+
+# makefile.msc should be run in PDPCLIB first
+
+# Note that it is necessary to add the "noe" linker option
+# to stop the extended dictionary from being used and giving
+# errors about duplicates. Not sure if there is a better
+# way of doing that. Using a library reduces the number of
+# object files needed to be specified on the link command,
+# as we only need to specify the ones that are involved in
+# the self-loading process.
+
+VPATH=..\pdpclib
+
+# Use -f to avoid an out of memory error
+# If you use -O2 instead of -Ox, you get a smaller executable
+# because -Gy seems to be in effect allowing the linker to
+# strip unreferenced functions. But it has the side-effect of
+# rearranging the order of object files so that they are not
+# in the order required for self-loading to complete
+
+# Actually we need -Gy for pdos.exe because fat.c is so big
+# that it takes more than 64k of code, so functions need to
+# be split into separate segments
+
+CFLAGS=-Ox -f -Gy
+
+COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo
+CC=cl
+AS=ml
+LD=link
+
+OBJS=\
+pdosstrt.obj \
+pdos.obj\
+bos.obj \
+support.obj \
+fat.obj \
+lldos.obj \
+handlers.obj \
+memmgr.obj \
+patmat.obj \
+process.obj \
+int21.obj \
+log.obj \
+helper.obj
+
+all: clean pdos.exe
+
+pdos.exe: $(OBJS)
+  rm -f pload.tmp
+  link /cp:1 /noe /noi /nod /map /nologo /dosseg pdosstrt.obj+pdos.obj,pdos.tmp,pdos.map,os.lib+..\pdpclib\msc.lib,,
+  exe2bin -base=700 pdos.tmp pdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+  lib os /nologo +$@,,
+
+.asm.obj:
+  ml -c -omf -DMSC -nologo -Dmemodel=huge $<
+  lib os /nologo +$@,,
+
+clean:
+  rm -f *.obj
+  rm -f pdos.exe
+  rm -f os.lib
+  lib os /nologo ,
