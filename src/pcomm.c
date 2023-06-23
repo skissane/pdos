@@ -3516,7 +3516,7 @@ static void showVideoSetError(char *attr, int n, bool hex)
 static int cmd_v_run(char *arg)
 {
     pos_video_info videoInfo;
-    long n;
+    int n;
     char *token;
     int ret;
 
@@ -3580,7 +3580,7 @@ static int cmd_v_run(char *arg)
                 showArgBadSyntaxMsg("ROW=");
                 return 1;
             }
-            n = strtol(token,&token,10);
+            n = (int)strtol(token,&token,10);
             if (*token != 0 || n < 0)
             {
                 showArgBadSyntaxMsg("ROW=");
