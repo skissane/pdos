@@ -8,7 +8,7 @@
 # and by any means.
 
 # This makefile builds pload.com for PDOS/386 on Windows,
-# using Visual Studio 1.52 plus exe2bin from Open Watcom.
+# using Visual Studio 1.52 plus exe2bin
 
 # To produce the 32-bit version, do this:
 # pdmake -f makeio.vsc TARG=PDOS32
