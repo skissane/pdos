@@ -17,7 +17,7 @@ SZ4=-D__SZ4__
 
 CFLAGS=-Ox -f
 
-COPTS=-c -I. $(SZ4) -D__MSDOS__ $(CFLAGS) -A$(MODELC) -Zl -Gs -nologo
+COPTS=-c -I. $(SZ4) -D__MSDOS__ $(CFLAGS) -A$(MODELC) -Zl -Gs -nologo -Zp1
 CC=cl
 AS=ml
 LD=link
