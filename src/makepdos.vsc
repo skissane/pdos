@@ -30,6 +30,7 @@ all: clean $(TARGET)
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
 #  $(AR) s $(TEMP_ARCHIVE)
 #  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
+# You will get a warning from link about Win 95/98 which can be ignored
   link -map -nologo -fixed -base:0x20000 -filealign:4096 -nodefaultlib -entry:start -out:$*.tmp $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
   pe2bin $*.tmp $@
   rm -f $(TEMP_ARCHIVE)
