@@ -1719,7 +1719,7 @@ unsigned int PosDisplayString(const char *buf)
 
     p = memchr(buf, '$', (size_t)-1);
     if (p == NULL) p = buf;
-    PosWriteFile(1, buf, p - buf, &writtenbytes);
+    PosWriteFile(1, buf, (unsigned int)(p - buf), &writtenbytes);
     return ('$');
 }
 
@@ -4852,8 +4852,8 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     else
     {
         memcpy(exeStart, firstbit, sizeof firstbit);
-        fileRead(fno, exeStart + sizeof firstbit, 32768, &readbytes);
-        fileRead(fno, FP_NORM(exeStart + sizeof firstbit + 32768), 32768,
+        fileRead(fno, exeStart + sizeof firstbit, 32768U, &readbytes);
+        fileRead(fno, FP_NORM(exeStart + sizeof firstbit + 32768), 32768U,
                  &readbytes);
     }
     fileClose(fno);
@@ -7182,7 +7182,7 @@ static char *envModify(char *envPtr, char *name, char *value)
 
     /* We need to allocate a new segment */
     size += strlen(name) + strlen(value) + 2;
-    newPtr = PosAllocMemPages(((size/16)+1), NULL);
+    newPtr = PosAllocMemPages((unsigned int)((size/16)+1), NULL);
     if (newPtr == NULL)
     {
         return NULL;
