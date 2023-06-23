@@ -14,3 +14,25 @@
 int _fltused;
 
 int _ftol2_sse;
+
+
+/* I don't know what these are */
+
+#ifdef __MSDOS__
+
+void _aFftol(void)
+{
+    return;
+}
+
+void _fac(void)
+{
+    return;
+}
+
+void _aFfcompp(void)
+{
+    return;
+}
+
+#endif
