@@ -36,8 +36,8 @@ endif
 ifdef MSC
 public _AHINCR
 public _AHSHIFT
-_AHINCR dw 1000H
-_AHSHIFT dw 12
+_AHINCR equ 1000H
+_AHSHIFT equ 12
 endif
 
 .code
