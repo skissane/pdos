@@ -13,6 +13,10 @@
 # To produce the 32-bit version, do this:
 # pdmake -f makeio.vsc TARG=PDOS32
 
+# The 16-bit just drop the TARG=
+
+# You must run makefile.msc in pdpclib before running this
+
 # Note that it is necessary to add the "noe" linker option
 # to stop the extended dictionary from being used and giving
 # errors about duplicates. Not sure if there is a better
@@ -45,19 +49,19 @@ CC=cl
 
 CFLAGS=-Ob1ceglnot
 
-COPTS=-c -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
+COPTS=-c -nologo -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
 AS=ml
 LD=link
 
-OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
-    lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
-    ploadst.obj int13x.obj dossupa.obj
+OBJS=support.obj bos.obj minifat.obj pdosload.obj \
+    lldos.obj protinta.obj file.obj protint.obj pload.obj \
+    ploadst.obj int13x.obj
 
 all: clean pload.com
 
 pload.com: $(OBJS)
   rm -f pload.tmp
-  link /cp:1 /noe /noi /nod /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+dossupa.obj+dossupc.obj,pload.tmp,pload.map,io.lib,,
+  link /cp:1 /noe /noi /nod /map /nologo /dosseg ploadst.obj+pload.obj+int13x.obj+..\pdpclib\dossupa.obj+..\pdpclib\dossupc.obj,pload.tmp,pload.map,io.lib+..\pdpclib\msc.lib,,
   exe2bin -base=700 pload.tmp pload.com
 
 .c.obj:
