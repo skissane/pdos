@@ -1087,7 +1087,8 @@ static void optimize_size_of_imms (void)
     }
 }
 
-static unsigned int modrm_mode_from_disp_size (flag_int type){
+static unsigned int modrm_mode_from_disp_size (flag_int type)
+{
     return ((type & DISP8) ? 1 : ((type & (DISP16 | DISP32)) ? 2 : 0));
 }
 

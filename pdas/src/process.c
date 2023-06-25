@@ -171,14 +171,14 @@ static void handler_align (char **pp, int first_arg_is_bytes)
     if (fill_specified) {
         frag_align (alignment, fill_value, max_bytes_to_skip);
     } else {
-
-        if (current_section == text_section) {
+        if (section_get_flags (current_section) & SECTION_FLAG_CODE) {
             frag_align_code (alignment, max_bytes_to_skip);
         } else {
             frag_align (alignment, 0, max_bytes_to_skip);
         }
-
     }
+
+    section_record_alignment_power (current_section, alignment);
     
     demand_empty_rest_of_line (pp);
 }
@@ -745,6 +745,7 @@ void handler_lcomm (char **pp)
 
         if (alignment) {
             frag_align (alignment, 0, 0);
+            section_record_alignment_power (current_section, alignment);
         }
         
         symbol->section = bss_section;

@@ -344,6 +344,7 @@ static void adjust_reloc_symbols_of_section (section_t section)
         if (fixup->done) continue;
         
         if (fixup->add_symbol) {
+            section_t symbol_section;
             struct symbol *symbol = fixup->add_symbol;
             
             /* Resolves symbols that have not been resolved yet (expression symbols). */
@@ -360,9 +361,19 @@ static void adjust_reloc_symbols_of_section (section_t section)
             if (symbol_force_reloc (symbol)) {
                 continue;
             }
+
+            symbol_section = symbol_get_section (symbol);
             
-            if (symbol_get_section (symbol) == absolute_section) {
+            if (symbol_section == absolute_section) {
                 continue;
+            }
+
+            /* Do not adjust fixups using .linkonce symbols,
+             * the .linkonce section might come from other object file. */
+            if (symbol_section != section) {
+                if (section_get_flags (symbol_section) & SECTION_FLAG_LINK_ONCE) {
+                    continue;
+                }
             }
             
             fixup->add_number += symbol_get_value (symbol);

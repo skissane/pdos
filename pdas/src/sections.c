@@ -22,7 +22,7 @@ struct section {
     struct frag_chain *frag_chain;
     struct section *next;
 
-    unsigned int flags;
+    flag_int flags;
     int alignment_power;
     
     void *object_format_dependent_data;
@@ -318,26 +318,29 @@ section_t section_find_by_number (unsigned int number) {
 
 }
 
-void section_set_flags (section_t section, unsigned int flags) {
-
+void section_set_flags (section_t section, flag_int flags)
+{
     section->flags = flags;
-
 }
 
-unsigned int section_get_flags (section_t section) {
-
+flag_int section_get_flags (section_t section)
+{
     return section->flags;
-
 }
 
-void section_set_alignment_power (section_t section, int alignment_power) {
-
+void section_set_alignment_power (section_t section, int alignment_power)
+{
     section->alignment_power = alignment_power;
-
 }
 
-int section_get_alignment_power (section_t section) {
-
+int section_get_alignment_power (section_t section)
+{
     return section->alignment_power;
+}
 
+void section_record_alignment_power (section_t section, int alignment_power)
+{
+    if (alignment_power > section->alignment_power) {
+        section->alignment_power = alignment_power;
+    }
 }
