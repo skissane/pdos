@@ -224,8 +224,8 @@ in memory) is 13k, the executable is about 200k, which gives us an
 end point above 50000 hex. */
 /* Switching to Visual C pushed the executable up to 250k, plus
    introduced a requirement for ss=ds, so the stack is now included,
-   which pushes the requiments close to 0x6000 */
-#define PDOS16_MEMSTART 0x6000
+   which pushes the requiments close to 0x7000 */
+#define PDOS16_MEMSTART 0x7000
 #else
 #define PDOS16_MEMSTART 0x5000
 #endif
