@@ -628,8 +628,57 @@ static int finalize_displacement (struct expr *expr, const char *disp_start)
     return 0;
 }
 
-static int att_parse_operand (char *operand_string) {
+static int parse_displacement (char *operand_string, char *displacement_string_end)
+{
+    int ret;
+    struct expr *expr;
+    unsigned int disp_type;
 
+    if ((instruction.types[instruction.operands] & BASE_INDEX)
+        || (instruction.types[instruction.operands] & JUMP_ABSOLUTE)
+        || ((current_templates->start->opcode_modifier & (JUMP | CALL)) == 0)) {
+        if (bits == 64) disp_type = DISP64 | DISP32S;
+        else if ((bits == 16) ^ instruction.prefixes[ADDR_PREFIX]) disp_type = DISP16;
+        else disp_type = DISP32;
+    } else {
+        if (bits == 32) {
+            disp_type = DISP32;
+        } else {
+            disp_type = DISP16;
+        }
+    }
+    
+    instruction.types[instruction.operands] |= disp_type;
+
+    expr = &operand_exprs[operand_exprs_count++];
+    instruction.disps[instruction.operands] = expr;
+    instruction.disp_operands++;
+    
+    {
+        char saved_ch;
+        char *disp_start;
+        
+        disp_start = operand_string;
+        
+        saved_ch = *displacement_string_end;
+        *displacement_string_end = '\0';
+        
+        expression_read_into (&operand_string, expr);
+        
+        if (*skip_whitespace (operand_string)) {
+            as_error ("junk '%s' after displacement expression", operand_string);
+        }
+        
+        ret = finalize_displacement (expr, disp_start);
+        
+        *displacement_string_end = saved_ch;
+    }
+
+    return ret;
+}
+
+static int att_parse_operand (char *operand_string)
+{
     const struct reg_entry *reg;
     char *end_p;
     
@@ -899,59 +948,19 @@ static int att_parse_operand (char *operand_string) {
         }
         
         if (operand_string != displacement_string_end) {
-        
-            struct expr *expr;
-            unsigned int disp_type;
-            
-            if (bits == 32) {
-                disp_type = DISP32;
-            } else {
-                disp_type = DISP16;
-            }
-            
-            expr = &operand_exprs[operand_exprs_count++];
-            
-            {
-            
-                char saved_ch;
-                char *disp_start;
-                
-                disp_start = operand_string;
-                
-                saved_ch = *displacement_string_end;
-                *displacement_string_end = '\0';
-                
-                expression_read_into (&operand_string, expr);
-                
-                if (*skip_whitespace (operand_string)) {
-                    as_error ("junk '%s' after displacement expression", operand_string);
-                }
-                
-                ret = finalize_displacement (expr, disp_start);
-                
-                *displacement_string_end = saved_ch;
-            
-            }
-            
-            instruction.types[instruction.operands] |= disp_type;
-            instruction.disps[instruction.operands] = expr;
-            
-            instruction.disp_operands++;
-        
+            if (parse_displacement (operand_string, displacement_string_end)) return 1;
         }
         
         instruction.operands++;
         instruction.mem_operands++;
         
         return ret;
-    
     }
     
     return 0;
-
 }
 
-flag_int smallest_imm_type (int_fast64_t number)
+static flag_int smallest_imm_type (int_fast64_t number)
 {
     flag_int type = IMM64;
     
@@ -968,35 +977,45 @@ flag_int smallest_imm_type (int_fast64_t number)
     return type;
 }
 
-static void optimize_size_of_disps (void) {
-
+static void optimize_size_of_disps (void)
+{
     int operand;
     
     for (operand = 0; operand < instruction.operands; operand++) {
-    
         if (instruction.types[operand] & DISP) {
-        
             if (instruction.disps[operand]->type == EXPR_TYPE_CONSTANT) {
-            
-                unsigned long disp = instruction.disps[operand]->add_number;
-                
-                if (instruction.types[operand] & DISP32) {
-                
-                    disp &= 0xffffffff;
-                    disp = (disp ^ (1UL << 31)) - (1UL << 31);
-                
+                offset_t disp = instruction.disps[operand]->add_number;
+
+                if (disp == 0 && (instruction.types[operand] & BASE_INDEX)) {
+                    instruction.types[operand] &= ~DISP;
+                    instruction.disps[operand] = NULL;
+                    instruction.disp_operands--;
+                    continue;
                 }
                 
-                if ((instruction.types[operand] & (DISP16 | DISP32)) && fits_in_signed_byte (disp)) {
+                if ((instruction.types[operand] & DISP32)
+                    && fits_in_unsigned_long (disp)) {
+                    disp = (disp ^ ((offset_t) 1 << 31)) - ((offset_t) 1 << 31);
+                    instruction.types[operand] &= ~DISP64;
+                    instruction.types[operand] |= DISP32;
+                }
+
+                if (bits == 64 && fits_in_signed_long (disp)) {
+                    instruction.types[operand] &= ~DISP64;
+                    instruction.types[operand] |= DISP32S;
+                }
+                
+                if ((instruction.types[operand] & (DISP16 | DISP32 | DISP32S)) && fits_in_signed_byte (disp)) {
                     instruction.types[operand] |= DISP8;
                 }
-            
-            }
-        
-        }
-    
-    }
 
+                instruction.disps[operand]->add_number = disp;
+            } else {
+                /* 64-bit displacement is supported only in constants (except for movabs). */
+                instruction.types[operand] &= ~DISP64;
+            }
+        }
+    }
 }
 
 static void optimize_size_of_imms (void)
@@ -1068,7 +1087,7 @@ static void optimize_size_of_imms (void)
     }
 }
 
-static unsigned int modrm_mode_from_disp_size (unsigned int type) {
+static unsigned int modrm_mode_from_disp_size (flag_int type){
     return ((type & DISP8) ? 1 : ((type & (DISP16 | DISP32)) ? 2 : 0));
 }
 
@@ -1107,6 +1126,21 @@ static value_t convert_number_to_size (value_t value, int size)
     return value;
 }
 
+static int disp_size (flag_int operand_type)
+{
+    int size = 4;
+    
+    if (operand_type & DISP8) {
+        size = 1;
+    } else if (operand_type & DISP16) {
+        size = 2;
+    } else if (operand_type & DISP64) {
+        size = 8;
+    }
+
+    return size;
+}
+
 static int imm_size (flag_int operand_type)
 {
     int size = 4;
@@ -1128,27 +1162,15 @@ static void output_disps (void)
     
     for (operand = 0; operand < instruction.operands; operand++) {
         if (instruction.types[operand] & DISP) {
+            int size = disp_size (instruction.types[operand]);
+            
             if (instruction.disps[operand]->type == EXPR_TYPE_CONSTANT) {
-                int size = 4;
-                unsigned long value;
-                
-                if (instruction.types[operand] & DISP8) {
-                    size = 1;
-                } else if (instruction.types[operand] & DISP16) {
-                    size = 2;
-                }
-                
+                value_t value;
+
                 value = convert_number_to_size (instruction.disps[operand]->add_number, size);
                 machine_dependent_number_to_chars (frag_increase_fixed_size (size), value, size);
             } else {
                 int pcrel = (instruction.special_types[operand] & OPERAND_PCREL) != 0;
-                int size = 4;
-                
-                if (instruction.types[operand] & DISP8) {
-                    size = 1;
-                } else if (instruction.types[operand] & DISP16) {
-                    size = 2;
-                }
 
                 if (pcrel) {
                     /* pcrel displacement is relative to the end of the instruction,
@@ -2484,7 +2506,7 @@ static void build_modrm (void)
                 
                 instruction.modrm.mode = modrm_mode_from_disp_size (instruction.types[operand]);
             
-            } else {
+            } else { /* 32-bit/64-bit base reg. */
                 if (bits == 16 && (instruction.types[operand] & BASE_INDEX)) {
                     add_prefix (ADDR_PREFIX_OPCODE);
                 }
@@ -2492,7 +2514,7 @@ static void build_modrm (void)
                 if (instruction.types[operand] & DISP) {
                     instruction.types[operand] &= ~DISP16;
                     instruction.types[operand] |= DISP32;
-                }                        
+                }             
                 
                 instruction.modrm.regmem = instruction.base_reg->number;
                 if (instruction.base_reg->type & REG_REX) instruction.rex |= REX_B;
@@ -2664,8 +2686,8 @@ static void swap_operands (void) {
 
 }
 
-char *machine_dependent_assemble_line (char *line) {
-
+char *machine_dependent_assemble_line (char *line)
+{
     memset (&instruction, 0, sizeof (instruction));
     memset (operand_exprs, 0, sizeof (operand_exprs));
     operand_exprs_count = 0;
@@ -2685,8 +2707,13 @@ char *machine_dependent_assemble_line (char *line) {
         swap_operands ();
     }
     
-    optimize_size_of_disps ();
+    
     optimize_size_of_imms ();
+
+    /* movabs takes only 64-bit displacement, so no optimization should be done. */
+    if (instruction.disp_operands
+        && (bits != 64
+            || strcmp (current_templates->name, "movabs"))) optimize_size_of_disps ();
     
     if (match_template () || process_suffix () || finalize_imms ()) {
         goto skip;

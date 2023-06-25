@@ -120,8 +120,10 @@ struct template {
 #define     DISP8                       (1LU << 17)
 #define     DISP16                      (1LU << 18)
 #define     DISP32                      (1LU << 19)
+#define     DISP32S                     (1LU << 20)
+#define     DISP64                      (1LU << 21)
     
-#define     DISP                        (DISP8 | DISP16 | DISP32)
+#define     DISP                        (DISP8 | DISP16 | DISP32 | DISP32S | DISP64)
 #define     BASE_INDEX                  (1LU << 22)
     
 /*
@@ -129,7 +131,7 @@ struct template {
  * encoding is allowed only in modrm.regmem (control register move).
  * */
 #define     INV_MEM                     (1LU << 23)
-#define     ANY_MEM                     (DISP8 | DISP16 | DISP32 | BASE_INDEX | INV_MEM)
+#define     ANY_MEM                     (DISP8 | DISP16 | DISP32 | DISP32S | DISP64 | BASE_INDEX | INV_MEM)
     
 #define     ACC                         (1LU << 25)
 #define     PORT                        (1LU << 26)
@@ -223,7 +225,7 @@ static const struct template template_table[] = {
 #define OPCODE_SIMD_INT_D   0x10
 
     /* Move instructions. */
-    { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32, ACC, 0 }, 0 },
+    { "mov", 2, 0xA0, NONE, BWL_SUF | D | W, { DISP16 | DISP32 | DISP64, ACC, 0 }, 0 },
     { "mov", 2, 0x88, NONE, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM, 0 }, 0 },
     { "mov", 2, 0xB0, NONE, BWL_SUF | W | SHORT_FORM, { IMM8 | IMM16 | IMM32 | IMM32S, REG8 | REG16 | REG32, 0 }, 0 },
     { "mov", 2, 0xC6, NONE, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM, 0 }, 0 },
@@ -246,6 +248,7 @@ static const struct template template_table[] = {
     { "mov", 2, 0x0F24, NONE, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM, 0 }, CPU_386 | CPU_NO64 },
 
     /* 64-bit only moves. */
+    { "movabs", 2, 0xA0, NONE, BWLQ_SUF | D | W, { DISP64, ACC, 0 }, CPU_64 },
     { "movabs", 2, 0xB8, NONE, Q_SUF | SHORT_FORM, { IMM64, REG64, 0 }, CPU_64 },
     
     /* Move with sign extend. */
