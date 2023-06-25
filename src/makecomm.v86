@@ -27,7 +27,7 @@
 # rearranging the order of object files so that they are not
 # in the order required for self-loading to complete
 
-CFLAGS=-Ox -f
+CFLAGS=-Ob1ceglnot
 
 COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo -Zp1
 CC=cl
