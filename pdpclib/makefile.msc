@@ -15,7 +15,7 @@ SZ4=-D__SZ4__
 
 
 
-CFLAGS=-Ox -f
+CFLAGS=-Ob1ceglnot
 
 COPTS=-c -I. $(SZ4) -D__MSDOS__ $(CFLAGS) -A$(MODELC) -Zl -Gs -nologo -Zp1 -DBUFSIZ=512
 CC=cl
