@@ -11,6 +11,8 @@
 /*                                                                   */
 /*********************************************************************/
 
+#include <string.h>
+
 int _fltused;
 
 int _ftol2_sse;
@@ -35,14 +37,14 @@ void _aFfcompp(void)
     return;
 }
 
-void _fmemset(void)
+void *_fmemset(void *s, int c, unsigned int n)
 {
-    return;
+    return (memset(s,c,n));
 }
 
-void _fmemcpy(void)
+void *_fmemcpy(void *s1, const void *s2, unsigned int n)
 {
-    return;
+    return (memcpy(s1,s2,n));
 }
 
 long _aFNauldiv(void)
