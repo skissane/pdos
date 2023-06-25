@@ -45,4 +45,9 @@ void _fmemcpy(void)
     return;
 }
 
+long _aFNauldiv(void)
+{
+    return (0);
+}
+
 #endif
