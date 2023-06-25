@@ -120,7 +120,7 @@ unsigned long rawprot(unsigned long csbase,
        twice. The offset of the TEXT32 segment will always be
        less than 16 I think */
     myc32base = myc32base & 0xfffffff0UL;
-#if defined(__WATCOMC__) && !defined(NEWMODEL)
+#if defined(__WATCOMC__) && defined(OLDMODEL)
     {
         /* for Watcom, the TEXT32 segment is not merged in
         with the TEXT segment, so protget32 is different, in
@@ -175,7 +175,7 @@ unsigned long rawprot(unsigned long csbase,
     parmlist.intloc = intloc;
     parmlist.userparm = userparm;
     parmlist_p = ADDR2ABS(&parmlist);
-#ifndef NEWMODEL
+#ifdef OLDMODEL
     parmlist_p -= dsbase;
 #endif
 
@@ -207,7 +207,7 @@ unsigned long runprot(unsigned long csbase,
     else
     {
         runparm.runreal = ((myc32base >> 16) << 4) + (unsigned short)rrfunc;
-#if defined(__WATCOMC__) && !defined(NEWMODEL)
+#if defined(__WATCOMC__) && defined(OLDMODEL)
         {
             unsigned long extra;
             extra = (unsigned long)(void (far *)())(rrfunc);
@@ -221,7 +221,7 @@ unsigned long runprot(unsigned long csbase,
     runparm.dorealint = (unsigned long)(void (far *)())drifunc;
     
     runparm_p = ADDR2ABS(&runparm);
-#ifndef NEWMODEL
+#ifdef OLDMODEL
     runparm_p -= dsbase;
 #endif
     
@@ -280,7 +280,7 @@ unsigned long runaout(char *fnm, unsigned long absaddr, unsigned long userparm)
     memcpy(&firstbit, buf, sizeof firstbit);
     while (1)
     {
-#ifdef NEWMODEL
+#ifndef OLDMODEL
         memcpy(FP_NORM(ABS2ADDR(curraddr)), buf, ret);
 #else
         for (y = 0; y < ret; y++)

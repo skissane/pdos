@@ -132,7 +132,7 @@ void pdosload(void)
     loads = 0x20000UL;
     psp = loads - 0x100;
     load = loads;
-#ifdef NEWMODEL
+#ifndef OLDMODEL
     /* was 0x7c00 but now relocated to 0x600 - ditto below */
     bpb = (unsigned char *)MK_FP(0, 0x600 + 11);
 #else

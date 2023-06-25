@@ -29,10 +29,8 @@
 #include "int13x.h"
 #include "unused.h"
 
-#ifdef NEED_DUMP
 void dumpbuf(unsigned char *buf, int len);
 void dumplong(unsigned long x);
-#endif
 
 typedef struct
 {
@@ -90,7 +88,7 @@ void dstart(int drive, char *edata)
    is complete. ie this is not normal C programming, so don't
    be surprised that it's a bit hairy. */
 
-#ifdef NEWMODEL
+#ifndef OLDMODEL
     loadIO(drive, edata);
 
     clrbss();
@@ -126,7 +124,7 @@ static void loadIO(int drive, char *edata)
     ReadLogical(&diskinfo, sector, p);
     p += 11;
 #endif
-#ifdef NEWMODEL
+#ifndef OLDMODEL
     p = ABS2ADDR(0x600);
     if (p[1] == 0x58)
     {
@@ -166,7 +164,7 @@ static void loadIO(int drive, char *edata)
         sector = (cluster - rootcluster) * sectors_per_cluster;
         sector += datastart;
     }
-#ifdef NEWMODEL
+#ifndef OLDMODEL
     p = ABS2ADDR(0x700);
     /* add 1 sector for good measure, and the clear of bss will
        fix up any mess */
@@ -292,7 +290,6 @@ static int BosDiskReset(unsigned int drive)
     return (regsout.x.cflag);
 }
 
-#ifdef NEED_DUMP
 void dumpbuf(unsigned char *buf, int len)
 {
     int x;
@@ -337,4 +334,3 @@ void dumplong(unsigned long x)
     dumpbuf(buf, 8);
     return;
 }
-#endif
