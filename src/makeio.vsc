@@ -34,9 +34,18 @@ CC=cl
 # rearranging the order of object files so that they are not
 # in the order required for self-loading to complete
 
-CFLAGS=-Ox -f
+# The out-of-memory error appears to be triggered by an attempt
+# to use a command line greater than something like 106 characters
+# in the command line (presumably after accounting for the
+# command to be executed you hit the DOS limit for command lines,
+# ie around 127).
+# Adding -f apparently prevents the call to the optimizing compiler,
+# but doubles the executable size, and presumably doesn't actually optimize.
+# Using @ doesn't get around the limit
 
-COPTS=-c -I. -I..\pdpclib -DNEWMODEL -D__SZ4__ -D__MSDOS__ -D$(TARG) -DNEED_DUMP $(CFLAGS) -AH -Zl -Gs -nologo
+CFLAGS=-Ob1ceglnot
+
+COPTS=-c -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
 AS=ml
 LD=link
 
