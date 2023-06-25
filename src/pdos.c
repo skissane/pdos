@@ -227,7 +227,9 @@ end point above 50000 hex. */
    which pushes the requiments close to 0x7000 */
 /* Using compile option -Ob2cegilnot -f -Gy on Visual C made the
    executable 280k pushing us up to 7800 */
-#define PDOS16_MEMSTART 0x7800
+/* Using -Ob1ceglnot got the executable down to 180k, so we are
+   down to 6000, because we still have the extra stack */
+#define PDOS16_MEMSTART 0x6000
 #else
 #define PDOS16_MEMSTART 0x5000
 #endif
