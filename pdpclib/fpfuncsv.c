@@ -47,9 +47,4 @@ void *_fmemcpy(void *s1, const void *s2, unsigned int n)
     return (memcpy(s1,s2,n));
 }
 
-long _aFNauldiv(void)
-{
-    return (0);
-}
-
 #endif
