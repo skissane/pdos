@@ -29,6 +29,7 @@ long _ftol(double x)
 #define CTYP
 #endif
 
+/* This seems to be the result of x / y */
 unsigned long CTYP __divide(unsigned long x, unsigned long y)
 {
     unsigned int a;
