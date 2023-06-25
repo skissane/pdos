@@ -22,18 +22,8 @@
 
 VPATH=..\pdpclib
 
-# Use -f to avoid an out of memory error
-# If you use -O2 instead of -Ox, you get a smaller executable
-# because -Gy seems to be in effect allowing the linker to
-# strip unreferenced functions. But it has the side-effect of
-# rearranging the order of object files so that they are not
-# in the order required for self-loading to complete
 
-# Actually we need -Gy for pdos.exe because fat.c is so big
-# that it takes more than 64k of code, so functions need to
-# be split into separate segments
-
-CFLAGS=-Ox -f -Gy
+CFLAGS=-Ob1ceglnot
 
 COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo -Zp1
 CC=cl
