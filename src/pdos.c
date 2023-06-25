@@ -225,7 +225,9 @@ end point above 50000 hex. */
 /* Switching to Visual C pushed the executable up to 250k, plus
    introduced a requirement for ss=ds, so the stack is now included,
    which pushes the requiments close to 0x7000 */
-#define PDOS16_MEMSTART 0x7000
+/* Using compile option -Ob2cegilnot -f -Gy on Visual C made the
+   executable 280k pushing us up to 7800 */
+#define PDOS16_MEMSTART 0x7800
 #else
 #define PDOS16_MEMSTART 0x5000
 #endif
