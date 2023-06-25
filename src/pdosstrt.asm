@@ -51,6 +51,11 @@ mov ax, cs
 mov ax, DGROUP
 mov ds, ax
 
+; Visual C requires SS=DS, so we have no real choice but to
+; follow suite
+mov ss, ax
+mov sp, 0fffeh
+
 ;;;call far ptr _displayc
 ;call displayc
 
