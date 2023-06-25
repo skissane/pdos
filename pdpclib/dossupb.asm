@@ -11,11 +11,23 @@
 public FIDRQQ
 public FIWRQQ
 public FIERQQ
+public FJARQQ
+public FIARQQ
+public FJCRQQ
+public FICRQQ
+public FJSRQQ
+public FISRQQ
 
 .data
 
 FIDRQQ  dw  ?
 FIWRQQ  dw  ?
 FIERQQ  dw  ?
+FJARQQ  dw  ?
+FIARQQ  dw  ?
+FJCRQQ  dw  ?
+FICRQQ  dw  ?
+FJSRQQ  dw  ?
+FISRQQ  dw  ?
 
 end
