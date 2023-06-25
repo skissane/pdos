@@ -19,6 +19,7 @@ $(TARGET): clean pdptest.o $(OBJS)
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $*.o $*.s
+#  pdas --oformat coff --64 -o $@ $*.s
   rm -f $*.s
 
 .asm.o:
