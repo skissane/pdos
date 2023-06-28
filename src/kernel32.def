@@ -6,7 +6,6 @@ EXPORTS CloseHandle
 EXPORTS CreateFileA
 EXPORTS CreateDirectoryA
 EXPORTS GetFileAttributesA
-EXPORTS PathFileExistsA
 EXPORTS CreateProcessA
 EXPORTS DeleteFileA
 EXPORTS GetCommandLineA
