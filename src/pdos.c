@@ -35,6 +35,9 @@
 #include "log.h"
 #include "helper.h"
 
+/* set this to 1 to convert bad sectors into hex 04 as eyecatcher */
+#define BADSECT 0
+
 #define NOHARD
 
 #ifdef __32BIT__
@@ -5956,6 +5959,14 @@ static int readAbs(void *buf,
         BosDiskReset(drive);
         tries++;
     }
+#if BADSECT
+    if (ret == -1)
+    {
+        memset(buf, 0x04, 512);
+        printf("set %d/%d/%d to hex 4\n", track, head, sect);
+        ret = 0;
+    }
+#endif
     return (ret);
 }
 
