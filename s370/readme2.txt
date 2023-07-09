@@ -289,3 +289,8 @@ compared to:
 This would be the only instruction that didn't already exist
 in S/370-XA. Although things like doing a BSM with x'01' didn't
 exist until z/Arch either.
+
+
+The listing of the building of z/PDOS, including the expanded
+macros, which would be useful for writing a C-callable replacement,
+has been made available as "listing.txt".
