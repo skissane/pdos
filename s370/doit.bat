@@ -57,6 +57,7 @@ rem links, plus iebcopy unloads, so we use MVS for that
 m4 -I . -I ../pdpclib pdos.m4 >pdos.jcl
 call runmvs pdos.jcl output.txt none pdos.zip
 
+loc2ebc output.txt listing.txt 0
 
 rem extract everything and put into expected names
 
