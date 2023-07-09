@@ -29,6 +29,7 @@ MVSUNZIP.EXE SEQ mvsunzip.exe CYL  1 1 0 PS U 0 18452
 MVSENDEC.EXE SEQ mvsendec.exe CYL  1 1 0 PS U 0 18452
 PDPI.ZIP     SEQ pdpi.zip     CYL  1 1 0 PS U 0 18452
 PDMAKE.EXE   SEQ pdmake.exe   CYL  1 1 0 PS U 0 18452
+E.EXE        SEQ memacs.exe   CYL  1 1 0 PS U 0 18452
 ANTITWIT.TXT SEQ antitwit.txt CYL  1 1 0 PS U 0 18452
 WTOWCOM.COM  SEQ wtowcom.com  CYL  1 1 0 PS U 0 18452
 PDOS.IMG     SEQ pdos.img     CYL  1 1 0 PS U 0 18452
