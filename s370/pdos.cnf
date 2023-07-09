@@ -24,10 +24,18 @@ CNSLPORT             3270
 #0009      3215-C     / noprompt
 #0009      3215       noprompt
 0009      3270
+
+
+# 1052 is ebcdic ansi with Hercules doing the translation to ascii
 #0009      1052       noprompt
+
 # 1052 + ebcdic creates what mfterm calls a 1057
 #0009      1052       ebcdic noprompt
+
+# This allows PDOS to display text, but currently isn't
+# supporting proper input
 #0009      1052-C      / noprompt
+
 
 # This is the IPL disk and can be any address
 
