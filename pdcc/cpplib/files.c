@@ -251,7 +251,7 @@ static int find_file_in_dir(cpp_reader *reader,
     if (path)
     {
         file->path = path;
-        if ((file->f = fopen((char *)(file->path), "rb")))
+        if ((file->f = fopen((char *)(file->path), "r")))
         {
             file->not_found = 0;
             return (1);
