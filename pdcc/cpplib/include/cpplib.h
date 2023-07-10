@@ -21,6 +21,7 @@
 #define cpp_get_token cppgett
 #define cpp_get_token_with_location cppgtwl
 #define cpp_interpret_int_suffix cppiis
+#define cpp_interpret_charconst cppicc
 #define cpp_token_as_text cpptat
 #define cpp_output_token cppot
 #define cpp_init_builtins cppib
