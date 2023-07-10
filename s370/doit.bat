@@ -89,6 +89,7 @@ copy diff.txt diff.exe
 copy uemacs.txt uemacs.exe
 copy edlin.txt edlin.exe
 copy pdmake.txt pdmake.exe
+copy pdcc.txt pdcc.exe
 copy memacs.txt memacs.exe
 copy gcc.txt gcc.exe
 copy copyfile.txt copyfile.exe
@@ -139,6 +140,6 @@ zip -9X pdospkg mvsendec.exe mvsunzip.exe hexdump.exe copyfile.exe
 zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
 zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c copycon.exe assemble.exe
 zip -9X pdospkg xychop.exe mfemul.exe zcalc.exe hex2dec.exe dec2hex.exe
-zip -9X pdospkg memacs.exe
+zip -9X pdospkg memacs.exe pdcc.exe
 
 rem Simply unzip the package into c:\pdos or whatever and it's done
