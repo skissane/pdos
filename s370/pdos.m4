@@ -1271,6 +1271,213 @@ XX
 //SYSIN    DD  DUMMY
 //SYSPRINT DD  SYSOUT=*
 //SYSTERM  DD  SYSOUT=*
+//OUT      DD  DSN=&&HEX(MSSUP),DISP=(OLD,PASS)
+//IN       DD  DATA,DLM=XX
+/* ***************************************************************** */
+/*                                                                   */
+/*  This code was written by Paul Edwards.                           */
+/*  Released to the Public Domain                                    */
+/*                                                                   */
+/* ***************************************************************** */
+/* ***************************************************************** */
+/*                                                                   */
+/*  mssup - some support routines useful to C programs using         */
+/*  the multisc (subset) C compiler on z/PDOS                        */
+/*                                                                   */
+/*  this is seen as a header file, so it looks like the normal       */
+/*  way of calling utility routines (with a separate link step)      */
+/*  but it is in fact inline C code, since we don't have a separate  */
+/*  linker at the moment.                                            */
+/*                                                                   */
+/* ***************************************************************** */
+
+int ret; /* must be this name */
+    /* reason being that the hash is calculated as:
+       ( (114-48)*100+(101-48)*10+(116-48) ) * 2 = 14396 = x'383c'
+       which you can see referenced in the assembler below,
+       and also in the startup code which is embedded in the compiler */
+
+void display()
+{
+    /* can't use r7 - points to base of code */
+    /* can't use r13 - points to save area */
+    /* all other registers are free to use */
+    
+    /* we want to load r9 with data at a fixed address (ret) from r7 */
+    
+    /* balr r15, 0 */
+    asm 5; asm 240; /* 05 f0 */
+    
+/* base1: */
+    
+    /* bal r14, 8(,r15) */ /* call bypass1 */
+    asm 69; asm 224; asm 240; asm 8; /* 45 e0 f0 08 */
+    
+    /* 6 * 0x10000 (DATASTART) + 0x7078 = 0x67078 */
+    /* this is where the "ret" variable goes */
+    asm 0; asm 6; asm 112; asm 120;
+
+/* bypass1: */
+        
+    /* l r9, 0(,r14) */
+    asm 88; asm 144; asm 224; asm 0; /* 58 90 e0 00 */
+
+    /* ar r9, r7 */
+    asm 26; asm 151; /* 1a 97 */
+        
+    /* l r9, 0(,r9) */
+    asm 88; asm 144; asm 144; asm 0; /* 58 90 90 00 */
+
+
+    /* now we have the data - store it where the WTO is */
+    /* reestablish addressability in case someone wants to
+       put more code above here */
+            
+    /* balr r15, 0 */
+    asm 5; asm 240; /* 05 f0 */
+
+/* base2: */
+        
+    /* stc r9, 12(,r15) */ 
+    asm 66; asm 144; asm 240; asm 12; /* 42 90 f0 0c */
+    
+    /* bal r1, 18(,r15) */  /* call bypass2 */
+    asm 69; asm 16; asm 240; asm 18; /* 45 10 f0 12 */
+    
+    /* this is the WTO parameters */
+    asm 0; asm 5; /* text length of 1 requires 5 */
+    asm 128; asm 0; /* mcs flags */
+    asm 231; /* placeholder ('X') */
+    asm 0; asm 0; /* descriptor codes */
+    asm 0; asm 32; /* routing codes */
+    asm 0; /* one byte padding to get 2-byte alignment because we
+              output a single character */
+    
+/* bypass2: */
+    
+    asm 10; asm 35; /* svc 35 */
+
+    /* asm 0; asm 0; */ /* dc h'0' to force a s0c1 abend - can't easily
+                           use ex 0,* to get s0c3 instead */
+    
+}
+XX
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//SYSIN    DD  DUMMY
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//OUT      DD  DSN=&&HEX(EXPROG),DISP=(OLD,PASS)
+//IN       DD  DATA,DLM=XX
+/* ***************************************************************** */
+/*                                                                   */
+/*  This Program Written by Paul Edwards.                            */
+/*  Released to the Public Domain                                    */
+/*                                                                   */
+/* ***************************************************************** */
+/* ***************************************************************** */
+/*                                                                   */
+/*  exprog - example C program                                       */
+/*                                                                   */
+/*  This program just prints HI using WTO                            */
+/*                                                                   */
+/*  compile like this:                                               */
+/*  pdmake -f exprog.mak                                             */
+/*                                                                   */
+/*  That produces exprog.com which can be executed by just           */
+/*  typing "exprog".                                                 */
+/*                                                                   */
+/* ***************************************************************** */
+
+/* I wanted to use angle brackets here, but that isn't working and needs
+   to be investigated (pdcc on z/PDOS says it can't find mssup.h) */
+#include "mssup.h"
+
+void main()
+{
+    ret = 200; /* 'H' in EBCDIC */ display();
+    ret = 201; /* 'I' in EBCDIC */ display();
+
+    ret = 0; /* return code to operating system */
+}
+XX
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//SYSIN    DD  DUMMY
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//OUT      DD  DSN=&&HEX(MSSTART),DISP=(OLD,PASS)
+//IN       DD  DATA,DLM=XX
+/* ***************************************************************** */
+/*                                                                   */
+/*  This code written by Paul Edwards.                               */
+/*  Released to the Public Domain                                    */
+/*                                                                   */
+/* ***************************************************************** */
+/* ***************************************************************** */
+/*                                                                   */
+/*  standard startup code required for multisc to work               */
+/*                                                                   */
+/* ***************************************************************** */
+
+void _start()
+{
+    main();
+}
+XX
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//SYSIN    DD  DUMMY
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//OUT      DD  DSN=&&HEX(EXPROGJ),DISP=(OLD,PASS)
+//IN       DD  DATA,DLM=XX
+/* ***************************************************************** */
+/*                                                                   */
+/*  This Program Written by Paul Edwards.                            */
+/*  Released to the Public Domain                                    */
+/*                                                                   */
+/* ***************************************************************** */
+/* ***************************************************************** */
+/*                                                                   */
+/*  exprogj - basically a dummy file designed to allow pdcc to       */
+/*  merge the actual code into a single file for multisc             */
+/*                                                                   */
+/*  (j = join)                                                       */
+/*                                                                   */
+/*  Used by exprog.mak                                               */
+/*                                                                   */
+/* ***************************************************************** */
+
+#include "exprog.c"
+#include "msstart.c"
+XX
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//SYSIN    DD  DUMMY
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
+//OUT      DD  DSN=&&HEX(EXPROGM),DISP=(OLD,PASS)
+//IN       DD  DATA,DLM=XX
+# Written by Paul Edwards and released to the public domain
+# Produce multisc z/PDOS .com file using multisc.
+
+all: exprog.com
+
+exprog.com:
+  pdcc -E -N -I . -o temp.c exprogj.c
+  multisc temp.c exprog.com
+XX
+//*
+//COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
+//STEPLIB  DD  DSN=PDPCLIB.LINKLIB,DISP=SHR
+//SYSIN    DD  DUMMY
+//SYSPRINT DD  SYSOUT=*
+//SYSTERM  DD  SYSOUT=*
 //OUT      DD  DSN=&&HEX(PDOSIN),DISP=(OLD,PASS)
 //IN       DD  *
 undivert(pdos.cnf)dnl

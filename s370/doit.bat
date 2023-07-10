@@ -97,6 +97,11 @@ copy hexdump.txt hexdump.exe
 copy mvsendec.txt mvsendec.exe
 copy mvsunzip.txt mvsunzip.exe
 copy wtowcom.txt wtowcom.com
+copy exprogm.txt exprog.mak
+copy exprogj.txt exprogj.c
+copy msstart.txt msstart.c
+copy exprog.txt exprog.c
+copy mssup.txt mssup.h
 
 rem create dummy batch file
 
@@ -141,5 +146,6 @@ zip -9X pdospkg pdmake.exe antitwit.txt pdos.img mkiplcrd.exe wtowcom.com
 zip -9X pdospkg exe2com.exe multisc.exe mvssamp.c copycon.exe assemble.exe
 zip -9X pdospkg xychop.exe mfemul.exe zcalc.exe hex2dec.exe dec2hex.exe
 zip -9X pdospkg memacs.exe pdcc.exe
+zip -9X pdospkg exprog.mak exprogj.c msstart.c exprog.c mssup.h
 
 rem Simply unzip the package into c:\pdos or whatever and it's done

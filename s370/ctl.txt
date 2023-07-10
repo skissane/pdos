@@ -35,5 +35,10 @@ ANTITWIT.TXT SEQ antitwit.txt CYL  1 1 0 PS U 0 18452
 WTOWCOM.COM  SEQ wtowcom.com  CYL  1 1 0 PS U 0 18452
 PDOS.IMG     SEQ pdos.img     CYL  1 1 0 PS U 0 18452
 LISTING.TXT  SEQ listing.txt  CYL 10 1 0 PS U 0 18452
+EXPROGJ.C    SEQ exprogj.c    CYL  1 1 0 PS U 0 18452
+MSSTART.C    SEQ msstart.c    CYL  1 1 0 PS U 0 18452
+MSSUP.H      SEQ mssup.h      CYL  1 1 0 PS U 0 18452
+EXPROG.MAK   SEQ exprog.mak   CYL  1 1 0 PS U 0 18452
+EXPROG.C     SEQ exprog.c     CYL  1 1 0 PS U 0 18452
 README.TXT   SEQ readmee.txt  CYL  1 1 0 PS U 0 18452
 HERCAUTO.ZIP SEQ hercauto.zip CYL 60 1 0 PS U 0 18452
