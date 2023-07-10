@@ -1433,7 +1433,7 @@ XX
 //SYSIN    DD  DUMMY
 //SYSPRINT DD  SYSOUT=*
 //SYSTERM  DD  SYSOUT=*
-//OUT      DD  DSN=&&HEX(EXPROGJ),DISP=(OLD,PASS)
+//OUT      DD  DSN=&&HEX(MSJOIN),DISP=(OLD,PASS)
 //IN       DD  DATA,DLM=XX
 /* ***************************************************************** */
 /*                                                                   */
@@ -1443,16 +1443,14 @@ XX
 /* ***************************************************************** */
 /* ***************************************************************** */
 /*                                                                   */
-/*  exprogj - basically a dummy file designed to allow pdcc to       */
+/*  msjoin - basically a dummy file designed to allow pdcc to        */
 /*  merge the actual code into a single file for multisc             */
 /*                                                                   */
-/*  (j = join)                                                       */
-/*                                                                   */
-/*  Used by exprog.mak                                               */
+/*  Used by a makefile, e.g. exprog.mak                              */
 /*                                                                   */
 /* ***************************************************************** */
 
-#include "exprog.c"
+#include "mstemp1.c"
 #include "msstart.c"
 XX
 //*
@@ -1469,8 +1467,9 @@ XX
 all: exprog.com
 
 exprog.com:
-  pdcc -E -N -I . -o temp.c exprogj.c
-  multisc temp.c exprog.com
+  copyfile exprog.c mstemp1.c
+  pdcc -E -N -I . -o mstemp2.c msjoin.c
+  multisc mstemp2.c exprog.com
 XX
 //*
 //COPYFILE EXEC PGM=COPYFILE,PARM='-tt dd:in dd:out'
