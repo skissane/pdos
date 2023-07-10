@@ -12,6 +12,8 @@
 #include "internal.h"
 #include "xmalloc.h"
 
+#define cpp_get_token_1 cppgt1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

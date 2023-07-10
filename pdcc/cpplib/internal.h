@@ -182,6 +182,12 @@ enum include_type {
 extern unsigned char _cpp_trigraph_map[0x100];
 
 /* lex.c */
+
+#define _cpp_lex_token_direct _cppltd
+#define _cpp_lex_token _cppltok
+#define _cpp_remaining_tokens_in_unknown2 _cpprtiu
+#define _cpp_init_tokenrow _cppitr
+
 void _cpp_init_tokenrow(tokenrow *row);
 void _cpp_clean_line(cpp_reader *reader);
 cpp_token *_cpp_lex_token_direct(cpp_reader *reader);
@@ -192,16 +198,28 @@ const cpp_token *_cpp_token_from_unknown2_at(cpp_unknown2 *unknown2,
                                              unsigned int index);
 
 /* core.c */
+
+#define _cpp_return_tokens _cpprtok
+#define _cpp_return_tokens_to_lexer _cpprttl
+#define _cpp_remove_unknown2 _cppru2
+
 int _cpp_equiv_tokens(const cpp_token *t1, const cpp_token *t2);
 void _cpp_remove_unknown2(cpp_reader *);
 void _cpp_return_tokens_to_lexer(cpp_reader *reader, unsigned int count);
 void _cpp_return_tokens(cpp_reader *reader, unsigned int count);
 
 /* macro.c */
+
+#define _cpp_define_macro _cppdm
+
 int _cpp_define_macro(cpp_reader *reader, cpp_unknown *unknown);
 void _cpp_undefine_macro(cpp_unknown *unknown);
 
 /* directs.c */
+
+#define _cpp_add_mffc _cppamffc
+#define _cpp_init_directives _cppidir
+
 void _cpp_init_directives(cpp_reader *reader);
 int _cpp_handle_directive(cpp_reader *reader);
 void _cpp_define_builtin(cpp_reader *reader, const char *);
@@ -212,6 +230,10 @@ void _cpp_change_file(cpp_reader *, enum cpp_reasons,
                       const char *, unsigned long);
 
 /* files.c */
+
+#define _cpp_add_file _cppaf
+#define _cpp_add_include _cppai
+
 typedef struct _cpp_file _cpp_file;
 _cpp_file *_cpp_find_file(cpp_reader *reader,
                           const char *name,
@@ -233,6 +255,9 @@ int _cpp_add_include(cpp_reader *reader,
                      location_t loc);
 
 /* expr.c */
+
+#define _cpp_process_expr _cpppe
+
 int _cpp_process_expr(cpp_reader *reader, int is_if);
 struct op *_cpp_expand_op_stack(cpp_reader *reader);
 

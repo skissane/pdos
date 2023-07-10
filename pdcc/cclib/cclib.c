@@ -19,6 +19,8 @@
 #include "support.h"
 #include "xmalloc.h"
 
+#define cc_parse_expression ccpexp
+
 /** Stores all the scoped blocks for lookup of symbols */
 static cc_expr *g_scoped_blocks = NULL;
 static size_t g_n_scoped_blocks = 0;

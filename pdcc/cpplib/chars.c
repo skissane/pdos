@@ -13,6 +13,8 @@
 #include "support.h"
 #include "xmalloc.h"
 
+#define cpp_interpret_charconst cppicc
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

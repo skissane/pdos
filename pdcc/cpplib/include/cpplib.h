@@ -13,6 +13,21 @@
 
 #include "symtab.h"
 
+#define cpp_get_help cppgh
+#define cpp_get_help2 cppgh2
+#define cpp_set_help2 cppsh2
+#define cpp_error_with_line cppewl
+#define cpp_interpret_integer cppii
+#define cpp_get_token cppgett
+#define cpp_get_token_with_location cppgtwl
+#define cpp_interpret_int_suffix cppiis
+#define cpp_token_as_text cpptat
+#define cpp_output_token cppot
+#define cpp_init_builtins cppib
+#define cpp_interpret_string cppis
+#define cpp_set_lang cppsl
+#define cpp_set_include_chains cppsic
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
