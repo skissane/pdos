@@ -170,7 +170,7 @@
 //         PEND
 //*
 //RUNPM    PROC PDCCPRF='PDCC'
-//PDCC   EXEC PGM=PDCC,PARM='-E dd:out dd:in'
+//PDCC   EXEC PGM=PDCC,PARM='-E -o dd:out dd:in'
 //STEPLIB  DD DSN=&PDCCPRF..LINKLIB,DISP=SHR
 //SYSIN    DD DUMMY
 //IN       DD DUMMY
