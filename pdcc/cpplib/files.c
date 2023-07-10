@@ -54,8 +54,12 @@ static char *dir_name_of_file(_cpp_file *file)
 {
     if (file->dir_name == NULL)
     {
-        size_t dllzhka = filename(file->path) - (file->path);
-        char *name = xstrndup(file->path, dllzhka + 1);
+        size_t len = filename(file->path) - (file->path);
+        char *name;
+
+        if (len || IS_PATH_SEPARATOR (file->path[0])) {
+            name = xstrndup (file->path, len + 1);
+        } else name = xstrdup ("");
         file->dir_name = name;
     }
 
@@ -69,9 +73,9 @@ static cpp_dir *make_cpp_dir(cpp_reader *reader,
 
     dir->next = reader->quote_include;
     {
-        size_t dllzhka = strlen(name);
-        dir->name = xmalloc(dllzhka + 1);
-        memcpy(dir->name, name, dllzhka + 1);
+        size_t len = strlen(name);
+        dir->name = xmalloc(len + 1);
+        memcpy(dir->name, name, len + 1);
     }
 
     return (dir);
