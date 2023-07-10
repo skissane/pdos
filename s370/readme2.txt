@@ -294,3 +294,12 @@ exist until z/Arch either.
 The listing of the building of z/PDOS, including the expanded
 macros, which would be useful for writing a C-callable replacement,
 has been made available as "listing.txt".
+
+The best way to write and build a C (subset) program is
+demonstrated by exprog.c and exprog.mak. Just do:
+type exprog.c
+type exprog.mak
+pdmake -f exprog.mak
+dir
+exprog
+to see it in action.
