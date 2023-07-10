@@ -553,7 +553,7 @@ static void cc_parse_call_params(cc_reader *reader, cc_expr *call)
 {
     while (reader->curr_token->type != CC_TOKEN_RPAREN)
     {
-        cc_expr expr = cc_parse_statment(reader);
+        cc_expr expr = cc_parse_statement(reader);
         if (reader->curr_token->type == CC_TOKEN_COMMA)
         {
             cc_consume_token(reader);
@@ -804,7 +804,7 @@ cc_expr cc_parse_expression(cc_reader *reader)
  * @param reader Reader object
  * @return cc_expr Expression resulting from parsing
  */
-cc_expr cc_parse_statment(cc_reader *reader)
+cc_expr cc_parse_statement(cc_reader *reader)
 {
     cc_expr expr = {0};
     expr.id = cc_get_unique_id(reader);
@@ -845,7 +845,7 @@ cc_expr cc_parse_statment(cc_reader *reader)
             *expr.data.if_else.body_expr = cc_parse_block_expr(reader);
         /* Single line block */
         else
-            *expr.data.if_else.body_expr = cc_parse_statment(reader);
+            *expr.data.if_else.body_expr = cc_parse_statement(reader);
         return expr;
     }
     /* Fallback to declaration :) */
@@ -875,7 +875,7 @@ static cc_expr cc_parse_block_expr(cc_reader *reader)
                                         (expr.data.block.n_exprs + 1)
                                         * sizeof(cc_expr));
         expr.data.block.exprs[expr.data.block.n_exprs++]
-            = cc_parse_statment(reader); /* Save statment into block */
+            = cc_parse_statement(reader); /* Save statement into block */
         if (reader->curr_token->type == CC_TOKEN_EOF)
             cc_report(reader, CC_DL_ERROR, "Expected a brace \"}\"");
     }
@@ -991,7 +991,7 @@ static void cc_parser_do(cc_reader *reader)
                                           (expr->data.block.n_exprs + 1)
                                           * sizeof(cc_expr));
         expr->data.block.exprs[expr->data.block.n_exprs++]
-            = cc_parse_statment(reader); /* Statment */
+            = cc_parse_statement(reader); /* Statement */
     }
 
     /* TODO: constant propagation, operator precedence,

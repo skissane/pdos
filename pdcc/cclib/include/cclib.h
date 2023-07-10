@@ -228,13 +228,13 @@ struct cc_reader {
 };
 
 #define cc_parse_variable ccparvar
-#define cc_parse_statment ccparstat
+#define cc_parse_statement ccparstat
 #define cc_parse_member ccparmem
 #define cc_parse_type ccpartype
 #define cc_parse_file ccparfile
 
 cc_variable cc_parse_variable(cc_reader *reader);
-cc_expr cc_parse_statment(cc_reader *reader);
+cc_expr cc_parse_statement(cc_reader *reader);
 cc_member cc_parse_member(cc_reader *reader);
 cc_type cc_parse_type(cc_reader *reader);
 int cc_parse_file(cc_reader *reader);
