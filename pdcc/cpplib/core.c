@@ -1389,12 +1389,7 @@ void cpp_output_token(const cpp_token *token, FILE *output)
 
             for (i = 0; i < UNKNOWN_LEN(token->value.unknown); i++)
             {
-                if (name[i] & ~0x7F)
-                {
-                    printf("+++FINISH cpp_output_token\n");
-                    return;
-                }
-                else putc(name[i], output);
+                putc(name[i], output);
             }
 
             break;
