@@ -142,12 +142,17 @@ mkiplmem dev1c2:
 Can be extracted with:
 hetget -n -b out.aws pdosmem.img 1 U 0 32760
 
+Also need to copy config.sys and pcomm.exe
+
 (note that in Hercules you can do ipl pdos.ins and wait a while - it
 looks like it has frozen because the instruction count remains as 0
 but it hasn't really)
 
 Create an IPL card deck using:
 mkiplcrd dev1c2:
+
+Can be extracted with:
+hetget -n -b out.aws iplcrd.dat 1 U 0 32760
 
 
 Note that if you are using a 3270 terminal, the only editor
