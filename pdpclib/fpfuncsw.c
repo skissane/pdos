@@ -47,3 +47,16 @@ int __cdmain(int argc, char **argv)
 {
     return (main(argc, argv));
 }
+
+
+#ifdef __OS2__
+#include <os2.h>
+
+void __myDosExit(int one, int two)
+{
+    DosExit(one, two);
+}
+
+int argc;
+
+#endif

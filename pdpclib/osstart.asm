@@ -9,11 +9,11 @@
 
 .386p
 
-.model flat
+.model flat, c
 
 ;.stack 4000h
 
-extrn __start:near, DosExit:near
+extrn __start:near, __myDosExit:near
 
 _DATA   segment dword public use32 'DATA'
 ifdef LINK386_FIX
@@ -52,7 +52,7 @@ __exita proc
         pop eax
         push eax
         push 1
-        call DosExit
+        call __myDosExit
         sub sp,8
 __exita endp
 
