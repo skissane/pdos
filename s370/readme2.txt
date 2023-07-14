@@ -118,6 +118,7 @@ quit
 copy out.aws ipltap.aws
 copy pdos00.ckd
 copy pdos.cnf
+copy readme2.txt to readme.txt
 manually inspect the pdos00.ckd to make sure zapcons.bat is accurate
 scratch.cckd was copied from a previous run of doit.bat
 
@@ -127,7 +128,7 @@ In separate runs of z/PDOS you can ...
 You can create an AWS tape with the disk image by:
 dsk2fil 1b9 tap1c2:
 
-But you don't need to do that, because tap1c1: points to
+You didn't previously need to do that, because tap1c1: points to
 the actual disk image already, making it a valid tape.
 
 However, because of the difficulty of creating an unlabeled AWS tape
@@ -137,6 +138,12 @@ image as an AWS tape.
 
 Create an IPL-from-memory (.ins) using:
 mkiplmem dev1c2:
+
+Can be extracted with:
+hetget -n -b out.aws pdosmem.img 1 U 0 32760
+
+Also need to copy config.sys and pcomm.exe
+
 (note that in Hercules you can do ipl pdos.ins and wait a while - it
 looks like it has frozen because the instruction count remains as 0
 but it hasn't really)
@@ -144,9 +151,13 @@ but it hasn't really)
 Create an IPL card deck using:
 mkiplcrd dev1c2:
 
+Can be extracted with:
+hetget -n -b out.aws iplcrd.dat 1 U 0 32760
+
 
 Note that if you are using a 3270 terminal, the only editor
-provided is edlin, which is copyrighted.
+available currently is edlin, which is copyrighted, so separately
+distributed.
 
 If you require a purely public domain distribution, you can
 still (barely) edit files, by using copycon, xychop and
@@ -303,3 +314,10 @@ pdmake -f exprog.mak
 dir
 exprog
 to see it in action.
+
+MicroEMACS 3.6 was still public domain, so a modified
+version of that is available as e.exe. So you can do e.g.:
+"e readme.txt" if you have an EBCDIC ANSI terminal (as mfterm
+on PDOS/386 is able to provide by using either 1052 or 1057.
+But you'll need to zap the config.sys to set 1052 as device
+9 or do an IPL override if available).
