@@ -47,7 +47,17 @@ CC=cl
 # but doubles the executable size, and presumably doesn't actually optimize.
 # Using @ doesn't get around the limit
 
-CFLAGS=-Ob1ceglnot
+# Ideally we would use these flags, but the command is too long
+# when adding a -DPDOS32, so we trim it to just -O. This needs
+# to be revisited. Also can't use -Ox because it enables intrinsics
+# which are incompatible with PDPCLIB (which has size_t as an
+# unsigned long for huge memory model). Also the length of the
+# spawned command doesn't appear to be 1:1. ie deleting one
+# character from a define, or even delete the whole word "nologo",
+# doesn't allow more optimization options (which may be being split)
+
+#CFLAGS=-Ob1ceglnot
+CFLAGS=-O
 
 COPTS=-c -nologo -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
 AS=ml
