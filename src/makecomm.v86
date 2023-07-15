@@ -7,8 +7,7 @@
 # without complying with any conditions
 # and by any means.
 
-# This makefile builds pcomm.exe for PDOS/86 on Windows,
-# using Visual Studio 1.52 plus exe2bin
+# This makefile builds pcomm.exe for PDOS/86 on Windows
 
 # makefile.msc should be run in PDPCLIB first
 
@@ -20,14 +19,12 @@
 # as we only need to specify the ones that are involved in
 # the self-loading process.
 
-# Use -f to avoid an out of memory error
-# If you use -O2 instead of -Ox, you get a smaller executable
-# because -Gy seems to be in effect allowing the linker to
-# strip unreferenced functions. But it has the side-effect of
-# rearranging the order of object files so that they are not
-# in the order required for self-loading to complete
+# I thought this used to work, but I am now getting errors
+# due to spawned command being too long it seems, so it
+# needs to be trimmed to just -O
 
-CFLAGS=-Ob1ceglnot
+#CFLAGS=-Ob1ceglnot
+CFLAGS=-O
 
 COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo -Zp1
 CC=cl

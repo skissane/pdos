@@ -22,8 +22,11 @@
 
 VPATH=..\pdpclib
 
-
-CFLAGS=-Ob1ceglnot
+# This used to work, but for some reason it is now too long and
+# needs to be trimmed to just -O to avoid overflowing the
+# maximum command line length of some spawned program
+#CFLAGS=-Ob1ceglnot
+CFLAGS=-O
 
 COPTS=-c -I. -I..\pdpclib -DMSC -DBUFSIZ=512 -D__SZ4__ -D__MSDOS__ $(CFLAGS) -AH -Zl -Gs -nologo -Zp1
 CC=cl
