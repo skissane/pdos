@@ -869,6 +869,7 @@ __PDPCLIB_API__ int atexit(void (*func)(void))
     return (-1);
 }
 
+#if !defined(__OS2__)
 static int ins_strncmp(const char *one, const char *two, size_t len)
 {
     size_t x = 0;
@@ -888,6 +889,7 @@ static int ins_strncmp(const char *one, const char *two, size_t len)
     if (x == len) return (0);
     return (toupper((unsigned char)*one) - toupper((unsigned char)*two));
 }
+#endif
 
 __PDPCLIB_API__ char *getenv(const char *name)
 {
