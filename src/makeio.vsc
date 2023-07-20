@@ -29,6 +29,15 @@ VPATH=..\pdpclib
 
 TARG=XPDOS32
 
+# See pdpclib makefile.msc for explanation
+# If you are using a newer version of masm, you will need
+# to add OMF=-omf or change the below
+
+OMF=
+#OMF=-omf
+
+
+
 CC=cl
 
 # Use -f to avoid an out of memory error
@@ -79,7 +88,7 @@ pload.com: $(OBJS)
   lib io /nologo +$@,,
 
 .asm.obj:
-  ml -c -omf -DMAKEPL -DMSC -DNEWMODEL -nologo -Dmemodel=huge -DNEED_DISPLAYC $<
+  ml -c $(OMF) -nologo -DMAKEPL -DMSC -DNEWMODEL -Dmemodel=huge -DNEED_DISPLAYC $<
   lib io /nologo +$@,,
 
 clean:
