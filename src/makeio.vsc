@@ -14,6 +14,8 @@
 # pdmake -f makeio.vsc TARG=PDOS32
 
 # The 16-bit just drop the TARG=
+# Note that when targeting 16-bit, the 32-bit assembler is
+# still assembled, but it is not referenced so not linked in.
 
 # You must run makefile.msc in pdpclib before running this
 
