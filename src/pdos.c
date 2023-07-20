@@ -37,6 +37,8 @@
 
 /* set this to 1 to convert bad sectors into hex 04 as eyecatcher */
 #define BADSECT 0
+/* set this to 1 to read a DMF disk with 21 sectors per track */
+#define DMF 0
 
 #define NOHARD
 
@@ -5480,6 +5482,15 @@ static int opendrv(int num, unsigned long numsects, int *handle)
         {
             return (-1);
         }
+
+#if DMF
+        if (sectors == 18)
+        {
+           printf("switching sectors from 18 to 21\n");
+           sectors = 21;
+        }
+#endif
+
         fhandle[x].sectors_per_track = sectors;
         fhandle[x].sectors_per_cylinder = sectors * heads;
     }
