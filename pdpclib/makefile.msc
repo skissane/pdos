@@ -14,6 +14,19 @@ MODELA=huge
 SZ4=-D__SZ4__
 
 
+# If you are using masm 6.11 or older, there is no -omf and you will get
+# a warning (which cannot be ignored as it consumes the next parameter).
+# 6.15 has -omf but defaults to omf.
+# 8.0 defaults to coff. If you have obtained a copy of Visual C++ 1.52C
+# or earlier, you need to marry it up with either the standalone masm 6.11
+# or obtain a later version of Visual C++ (7.0 or above - 6.0 is sort of
+# possible too - that's where the 6.15 reference comes from), and ignore
+# the (Windows-only) C compiler and just get the assembler. And you will
+# then need to add "OMF=-omf" to that more modern assembler when you run
+# pdmake. Or manually change the below.
+
+OMF=
+#OMF=-omf
 
 CFLAGS=-Ob1ceglnot
 
@@ -35,8 +48,13 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(CC) $(COPTS) $<
   lib msc /nologo +$@,,
 
+
+# Put the OMF before nologo so that if you get a warning about
+# omf not being recognized, the next parameter that gets consumed
+# is the nologo, so the only impact is you get verbose assembles
+
 .asm.obj:
-  ml -c -nologo -DMSC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) $<
+  ml -c $(OMF) -nologo -DMSC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) $<
   lib msc /nologo +$@,,
 
 clean:
