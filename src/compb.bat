@@ -9,3 +9,6 @@ rem wlink File pbootsec.obj Name pbootsec.com Form dos com Option quiet
 
 as86 -Dmemodel=tiny -o pbootsec.o pbootsec.asm
 ld86 -o pbootsec.com --oformat msdos pbootsec.o
+
+rem ml -c -Dmemodel=tiny pbootsec.asm
+rem wlink File pbootsec.obj Name pbootsec.com Form dos com Option quiet
