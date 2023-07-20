@@ -22,6 +22,11 @@
 
 VPATH=..\pdpclib
 
+# Read explanation in makefile.msc as to why you sometimes
+# need to use -omf
+OMF=
+#OMF=-omf
+
 # This used to work, but for some reason it is now too long and
 # needs to be trimmed to just -O to avoid overflowing the
 # maximum command line length of some spawned program
@@ -60,7 +65,7 @@ pdos.exe: $(OBJS)
   lib os /nologo +$@,,
 
 .asm.obj:
-  ml -c -omf -DMSC -nologo -Dmemodel=huge $<
+  ml -c -DMSC $(OMF) -nologo -Dmemodel=huge $<
   lib os /nologo +$@,,
 
 clean:
