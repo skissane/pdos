@@ -350,6 +350,41 @@ and you don't need kernel32.dll and msvcrt.dll.
 
 
 
+PC RECOMPILING - INDUSTRY STANDARD TOOLS
+----------------------------------------
+
+You can build at least the basic system using standard
+Visual C and MASM. Because there is a 16-bit component,
+you need to use Visual C++ 1.52C or some level below to
+do the 16-bit. Modern MASM still supports 16-bit OMF
+output. The last version of MASM to still work under
+MSDOS (6.11) also works. It is unknown how low you can
+go. Anyway, since PDOS/86 is all 16-bit, here is the
+procedure for building that using Microsoft tools:
+
+cd pdpclib
+pdmake -f makefile.msc
+cd ..\src
+pdmake -f makeio.vsc
+pdmake -f makepdos.v86
+pdmake -f makecomm.v86
+
+And for PDOS/386, start with the 16-bit tools
+cd pdpclib
+pdmake -f makefile.msc
+cd ..\src
+pdmake -f makeio.vsc TARG=PDOS32
+
+then switch to 32-bit tools (Visual Studio 2005 is known
+to work)
+cd pdpclib
+pdmake -f makefile.vsp
+cd ..\src
+pdmake -f makepdos.vsc
+pdmake -f makecomm.vsc
+
+
+
 HISTORY
 -------
 
