@@ -1,3 +1,5 @@
+rem makefile.wco in PDPCLIB should be run first
+
 wasm -zq -zcm -D__SZ4__ -Dmemodel=huge -DWATCOM pdosstrt.asm
 wasm -zq -zcm -D__SZ4__ -Dmemodel=huge support.asm
 
@@ -9,11 +11,13 @@ wasm -zq -zcm -D__SZ4__ -Dmemodel=huge handlers.asm
 rem ml -nologo -c -D__SZ4__ -Dmemodel=huge handlers.asm
 rem as86 -D__SZ4__ -Dmemodel=huge handlers.asm
 
-wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib memmgr.c patmat.c process.c
-wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib int21.c log.c helper.c
-wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib bos.c fat.c
+set OPT=-oneatx
+
+wcl %OPT% -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib memmgr.c patmat.c process.c
+wcl %OPT% -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib int21.c log.c helper.c
+wcl %OPT% -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib bos.c fat.c
 rem bcc -w- to switch off warnings
-wcl -oneatx -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib pdos.c
+wcl %OPT% -D__SZ4__ -zp1 -ecc -q -w -c -mh -zl -fpi87 -s -zdp -zu -D__MSDOS__ -DBUFSIZ=512 -I..\pdpclib pdos.c
 
 if exist os.lib del os.lib
 wlib -b -q os +bos.obj
