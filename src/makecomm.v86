@@ -19,6 +19,11 @@
 # as we only need to specify the ones that are involved in
 # the self-loading process.
 
+# See explanation in makefile.msc as to why you sometimes
+# need to assemble with -omf
+OMF=
+#OMF=-omf
+
 # I thought this used to work, but I am now getting errors
 # due to spawned command being too long it seems, so it
 # needs to be trimmed to just -O
@@ -46,7 +51,7 @@ pcomm.exe: $(OBJS)
   $(CC) $(COPTS) $<
 
 .asm.obj:
-  ml -c -omf -DMSC -nologo -Dmemodel=huge $<
+  ml -c -DMSC $(OMF) -nologo -Dmemodel=huge $<
 
 clean:
   rm -f *.obj
