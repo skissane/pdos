@@ -10,11 +10,11 @@
 /*                                                                   */
 /*********************************************************************/
 
-#include <stdio.h>
-
 #include <windows.h>
 
 LONG FAR PASCAL simpwin(HWND hwnd, WORD msg, WORD wparam, LONG lparam);
+
+/* What is going to call this? */
 
 int WINAPI _WinMainStart(IN HINSTANCE inst,
                    IN HINSTANCE previnst,
@@ -231,11 +231,3 @@ LONG FAR PASCAL simpwin(HWND hwnd, WORD msg, WORD wparam, LONG lparam)
     }
     return (ret);
 }
-
-
-#ifdef __WATCOMC__
-int __watcall main(int argc, int argv)
-{
-    return (0);
-}
-#endif
