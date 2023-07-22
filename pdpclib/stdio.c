@@ -2653,7 +2653,7 @@ static void fwriteSlowB(const void *ptr,
         iwrite(stream, (const char *)ptr + *actualWritten, left, &tempWritten);
         if (stream->errorInd) return;
         *actualWritten += tempWritten;
-        stream->bufStartR += *actualWritten;
+        stream->bufStartR += tempWritten;
     }
     else
     {
