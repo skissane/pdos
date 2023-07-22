@@ -230,7 +230,7 @@ static int read_and_append_char_in_ascii (char **pp) {
                 case '6':
                 case '7':
                 
-                    for (i = 0, number = 0; isdigit (ch) && (i < 3); (ch = *((*pp)++)), i++) {
+                    for (i = 0, number = 0; isdigit ((unsigned char)ch) && (i < 3); (ch = *((*pp)++)), i++) {
                         number = number * 8 + ch - '0';
                     }
                     
@@ -1170,7 +1170,7 @@ int process (const char *fname) {
                     struct pseudo_op_entry *poe;
 
                     for (p = start_p + 1; *p; p++) {
-                        *p = tolower (*p);
+                        *p = tolower ((unsigned char)*p);
                     }
 
                     poe = pseudo_op_find (start_p + 1);

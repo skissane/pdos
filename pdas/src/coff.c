@@ -760,7 +760,7 @@ static void handler_section (char **pp) {
 
             while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
 
-                if (isdigit (attribute)) {
+                if (isdigit ((unsigned char)attribute)) {
 
                     alignment = attribute - '0';
                     continue;
