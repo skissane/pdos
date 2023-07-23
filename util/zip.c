@@ -50,6 +50,8 @@ int main(int argc, char **argv)
         printf("zips up files into a zip archive\n");
         printf("e.g. zip -9rX \\download\\fred.zip *.c\n");
         printf("or zip -0rX \\download\\fred.zip mydir\n");
+        printf("note that this only runs under PDOS/386 because it uses\n");
+        printf("a 32-bit DTA which is not available in normal windows\n");
         return (EXIT_FAILURE);
     }
     dta = PosGetDTA();
