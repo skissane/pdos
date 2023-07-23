@@ -1198,7 +1198,7 @@ int process (const char *fname) {
                 saved_c = *(line = find_end_of_line (line));
                 *line = '\0';
                 
-                line = machine_dependent_assemble_line (skip_whitespace (start_p));
+                machine_dependent_assemble_line (skip_whitespace (start_p));
                 
                 *(line++) = saved_c;
                 

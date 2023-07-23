@@ -1,23 +1,50 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
 VPATH=src;src/hashtab
 CC=gccwin
+PREPROCESSOR=pdcc -E
 CFLAGS=-O2
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=ldwin
 LDFLAGS=
 AS=aswin
-COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I./src -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__
 
-OBJS=a_out.o as.o assemble.o bytearray.o cfi.o coff.o cstr.o elf.o error.o expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o int64sup.o
+OBJS=a_out.o as.o bytearray.o cfi.o coff.o cstr.o elf.o error.o \
+expr.o frags.o hashtab.o libas.o listing.o load_line.o process.o sections.o symbols.o write.o int64sup.o \
+i386_as.o
 
-all: clean pdas.exe
+TARGET=pdas.exe
 
-pdas.exe: $(OBJS)
-  rm -f pdas.a
-  $(LD) $(LDFLAGS) -o pdas.exe ../pdpclib/w32start.o $(OBJS) ../pdpclib/msvcrt.a
+all: clean generate $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.o $(OBJS) ../pdpclib/msvcrt.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $@ $*.s
   rm -f $*.s
 
-clean:
-  rm -f *.o pdas.exe
+clean: clean_generate
+  rm -f $(OBJS) $(TARGET)
+
+OBJS_GENERATE=i386_gen.o i386_opc.i
+
+generate: clean_generate $(OBJS_GENERATE)
+  $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/w32start.o i386_gen.o ../pdpclib/msvcrt.a
+  gen.exe i386_opc.i i386_tbl.h
+
+clean_generate:
+  rm -f $(OBJS_GENERATE) gen.exe i386_tbl.h
+
+.tbl.i:
+  $(PREPROCESSOR) $(COPTS) -o $@ $<
+

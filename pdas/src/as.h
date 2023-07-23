@@ -122,7 +122,7 @@ struct pseudo_op_entry {
 struct pseudo_op_entry *a_out_get_pseudo_op_table (void);
 void write_a_out_file (void);
 
-/* assemble.c */
+/* i386_as.c */
 struct pseudo_op_entry *machine_dependent_get_pseudo_op_table (void);
 const char *machine_dependent_get_line_separators (void);
 const char *machine_dependent_get_comment_at_the_start_of_line_beginners (void);
@@ -130,11 +130,11 @@ const char *machine_dependent_get_comment_at_the_start_of_line_beginners (void);
 char *machine_dependent_assemble_line (char *line);
 int machine_dependent_force_relocation_local (struct fixup *fixup);
 
-long machine_dependent_estimate_size_before_relax (struct frag *frag, section_t section);
-long machine_dependent_pcrel_from (struct fixup *fixup);
-long machine_dependent_relax_frag (struct frag *frag, section_t section, long change);
+offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, section_t section);
+offset_t machine_dependent_pcrel_from (struct fixup *fixup);
+offset_t machine_dependent_relax_frag (struct frag *frag, section_t section, offset_t change);
 
-void machine_dependent_apply_fixup (struct fixup *fixup, unsigned long value);
+void machine_dependent_apply_fixup (struct fixup *fixup, value_t value);
 void machine_dependent_finish_frag (struct frag *frag);
 void machine_dependent_init (void);
 void machine_dependent_destroy (void);
