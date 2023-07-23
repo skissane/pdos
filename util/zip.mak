@@ -12,25 +12,25 @@
 
 CC=gccwin
 CFLAGS=-O2
-LD=ldwin
+LD=pdld
 LDFLAGS=
-AS=aswin
-AR=arwin
+AS=as86
+AR=ar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN32__ -D__NOBIVA__ -D__32BIT__
 
 all: clean zip.exe
 
-zip.exe: zip.o ../src/pos.o ../src/support.o
-    $(LD) $(LDFLAGS) -s -o zip.exe ../pdpclib/w32start.o zip.o ../src/pos.o ../src/support.o ../pdpclib/msvcrt.a
+zip.exe: zip.obj ../src/pos.obj ../src/support.obj
+    $(LD) $(LDFLAGS) -s --no-insert-timestamp -o zip.exe ../pdpclib/w32start.obj zip.obj ../src/pos.obj ../src/support.obj ../pdpclib/msvcrt.lib
 
-.c.o:
+.c.obj:
     $(CC) $(COPTS) -o $*.s $<
-    $(AS) -o $@ $*.s
+    pdas --oformat coff -o $@ $*.s
     rm -f $*.s
 
-.s.o:
-    $(AS) -o $@ $<
+.asm.obj:
+    $(AS) -Dmemodel=flat -f coff -o $@ $<
 
 clean:
-    rm -f *.o
+    rm -f *.obj
     rm -f zip.s
