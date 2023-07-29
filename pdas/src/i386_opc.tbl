@@ -11,6 +11,11 @@
 /* Input for generator,
  * should be preprocessed before using (using -E compiler option). */
 
+#define REG8 Reg | Byte
+#define REG16 Reg | Word
+#define REG32 Reg | Dword
+#define REG64 Reg | Qword
+
 #define NO_SUF     NO_BSUF | NO_WSUF | NO_SSUF | NO_LSUF | NO_QSUF | NO_INTELSUF
 #define B_SUF      NO_WSUF | NO_SSUF | NO_LSUF | NO_QSUF | NO_INTELSUF
 #define W_SUF      NO_BSUF | NO_SSUF | NO_LSUF | NO_QSUF | NO_INTELSUF
@@ -29,7 +34,7 @@
 
 #define CPU_FP     CPU_8087 | CPU_287 | CPU_387
 
-#define ANY_MEM  DISP8 | DISP16 | DISP32 | DISP32S | DISP64 | BASE_INDEX | INV_MEM
+#define ANY_MEM  DISP8 | DISP16 | DISP32 | DISP32S | DISP64 | BASE_INDEX
 #define REG      REG8 | REG16 | REG32 | REG64
 
 /* CPU_SSE2 is temporarily disabled because SSE is far from finished. */
@@ -41,21 +46,21 @@
  * */
 
 /* Move instructions. */
-"mov", 0xA0, NONE, 0, BWL_SUF | D | W, { DISP16 | DISP32 | DISP64, ACC }
-"mov", 0x88, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
+"mov", 0xA0, NONE, 0, BWL_SUF | D | W, { DISP16 | DISP32 | DISP64 | Byte | Word | Dword | Qword, ACC | Byte | Word | Dword | Qword }
+"mov", 0x88, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
 "mov", 0xB0, NONE, 0, BWL_SUF | W | SHORT_FORM, { IMM8 | IMM16 | IMM32 | IMM32S, REG8 | REG16 | REG32 }
-"mov", 0xC6, NONE, 0, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
-    
+"mov", 0xC6, NONE, 0, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
+
 /* Move instructions for segment registers.
  * (NO_REX_W is there because REX_W prefix is possible but does not change behavior).*/
 "mov", 0x8C, NONE, 0, WL_SUF | MODRM | NO_REX_W, { SEGMENT1, REG16 | REG32 | REG64 | INV_MEM }
-"mov", 0x8C, NONE, 0, W_SUF | MODRM | IGNORE_SIZE, { SEGMENT1, ANY_MEM }
+"mov", 0x8C, NONE, 0, W_SUF | MODRM | IGNORE_SIZE, { SEGMENT1, ANY_MEM | Word }
 "mov", 0x8C, NONE, CPU_386, WL_SUF | MODRM | NO_REX_W, { SEGMENT2, REG16 | REG32 | REG64 | INV_MEM }
-"mov", 0x8C, NONE, CPU_386, W_SUF | MODRM | IGNORE_SIZE  | NO_REX_W, { SEGMENT2, ANY_MEM }
+"mov", 0x8C, NONE, CPU_386, W_SUF | MODRM | IGNORE_SIZE | NO_REX_W, { SEGMENT2, ANY_MEM | Word }
 "mov", 0x8E, NONE, 0, WL_SUF | MODRM | IGNORE_SIZE | NO_REX_W, { REG16 | REG32 | REG64 | INV_MEM, SEGMENT1 }
-"mov", 0x8E, NONE, 0, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT1 }
+"mov", 0x8E, NONE, 0, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM | Word, SEGMENT1 }
 "mov", 0x8E, NONE, CPU_386, WL_SUF | MODRM | IGNORE_SIZE | NO_REX_W, { REG16 | REG32 | REG64 | INV_MEM, SEGMENT2 }
-"mov", 0x8E, NONE, CPU_386, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM, SEGMENT2 }
+"mov", 0x8E, NONE, CPU_386, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM | Word, SEGMENT2 }
     
 /* Move instructions for control, debug and test registers. */
 "mov", 0x0F20, NONE, CPU_386 | CPU_NO64, L_SUF | D | MODRM | IGNORE_SIZE, { CONTROL, REG32 | INV_MEM }
@@ -65,32 +70,32 @@
 "mov", 0x0F24, NONE, CPU_386 | CPU_NO64, L_SUF | D | MODRM | IGNORE_SIZE, { TEST, REG32 | INV_MEM }
 
 /* 64-bit only moves. */
-"movabs", 0xA0, NONE, CPU_64, BWLQ_SUF | D | W, { DISP64, ACC }
+"movabs", 0xA0, NONE, CPU_64, BWLQ_SUF | D | W, { DISP64 | Byte | Word | Dword | Qword, ACC | Byte | Word | Dword | Qword }
 "movabs", 0xB8, NONE, CPU_64, Q_SUF | SHORT_FORM, { IMM64, REG64 }
 
 /* Move with sign extend. */
 /* "movsbl" and "movsbw" are not unified into "movsb" to prevent conflict with "movs". */
-"movsbl", 0x0FBE, NONE, CPU_386, NO_SUF | MODRM, { REG8 | ANY_MEM, REG32 }
-"movsbw", 0x0FBE, NONE, CPU_386, NO_SUF | MODRM, { REG8 | ANY_MEM, REG16 }
-"movswl", 0x0FBF, NONE, CPU_386, NO_SUF | MODRM, { REG16 | ANY_MEM, REG32 }
-"movsbq", 0x0FBE, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG8 | ANY_MEM, REG64 }
-"movswq", 0x0FBF, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG16 | ANY_MEM, REG64 }
-"movslq", 0x63, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG32 | ANY_MEM, REG64 }
+"movsbl", 0x0FBE, NONE, CPU_386, NO_SUF | MODRM, { REG8 | ANY_MEM | Byte, REG32 }
+"movsbw", 0x0FBE, NONE, CPU_386, NO_SUF | MODRM, { REG8 | ANY_MEM | Byte, REG16 }
+"movswl", 0x0FBF, NONE, CPU_386, NO_SUF | MODRM, { REG16 | ANY_MEM | Word, REG32 }
+"movsbq", 0x0FBE, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG8 | ANY_MEM | Byte, REG64 }
+"movswq", 0x0FBF, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG16 | ANY_MEM | Word, REG64 }
+"movslq", 0x63, NONE, CPU_64, NO_SUF | MODRM | SIZE64, { REG32 | ANY_MEM | Dword, REG64 }
 
 /* Alternative syntax. */
-"movsx", 0x0FBE, NONE, CPU_386, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, REG16 | REG32 | REG64 }
-"movsx", 0x63, NONE, CPU_64, L_SUF | MODRM, { REG32 | ANY_MEM, REG32 | REG64 }
+"movsx", 0x0FBE, NONE, CPU_386, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM | Byte | Word, REG16 | REG32 | REG64 }
+"movsx", 0x63, NONE, CPU_64, L_SUF | MODRM, { REG32 | ANY_MEM | Dword, REG32 | REG64 }
 
 /* Move with zero extend. */
-"movzb", 0x0FB6, NONE, CPU_386, WLQ_SUF | MODRM, { REG8 | ANY_MEM, REG16 | REG32 | REG64 }
-"movzw", 0x0FB7, NONE, CPU_386, LQ_SUF | MODRM, { REG16 | ANY_MEM, REG32 | REG64 }
+"movzb", 0x0FB6, NONE, CPU_386, WLQ_SUF | MODRM, { REG8 | ANY_MEM | Byte, REG16 | REG32 | REG64 }
+"movzw", 0x0FB7, NONE, CPU_386, LQ_SUF | MODRM, { REG16 | ANY_MEM | Word, REG32 | REG64 }
 
 /* Alternative syntax. */
-"movzx", 0x0FB6, NONE, CPU_386, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM, REG16 | REG32 | REG64 }
+"movzx", 0x0FB6, NONE, CPU_386, BW_SUF | W | MODRM, { REG8 | REG16 | ANY_MEM | Byte | Word, REG16 | REG32 | REG64 }
 
 /* Push instructions. */
 "push", 0x50, NONE, CPU_NO64, WL_SUF | SHORT_FORM, { REG16 | REG32 }
-"push", 0xFF, 6, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM }
+"push", 0xFF, 6, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM | Word | Dword }
 "push", 0x6A, NONE, CPU_186 | CPU_NO64, WL_SUF | DEFAULT_SIZE, { IMM8S }
 "push", 0x68, NONE, CPU_186 | CPU_NO64, WL_SUF | DEFAULT_SIZE, { IMM16 | IMM32 }
 
@@ -98,7 +103,7 @@
 "push", 0x0FA0, NONE, CPU_386 | CPU_NO64, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2 }
 
 "push", 0x50, NONE, CPU_64, WQ_SUF | SHORT_FORM | NO_REX_W, { REG16 | REG64 }
-"push", 0xFF, 6, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM }
+"push", 0xFF, 6, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | Word | Qword }
 "push", 0x6A, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM8S }
 "push", 0x68, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | NO_REX_W, { IMM16 | IMM32 }
 
@@ -108,32 +113,32 @@
 
 /* Pop instructions. */
 "pop", 0x58, NONE, CPU_NO64, WL_SUF | SHORT_FORM, { REG16 | REG32 }
-"pop", 0x8F, 0, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM }
+"pop", 0x8F, 0, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM | Word | Dword }
     
 "pop", 0x07, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT1 }
 "pop", 0x0FA1, NONE, CPU_386 | CPU_NO64, WL_SUF | DEFAULT_SIZE | SEGSHORTFORM, { SEGMENT2 }
 
 "pop", 0x58, NONE, CPU_64, WQ_SUF | SHORT_FORM | NO_REX_W, { REG16 | REG64 }
-"pop", 0x8F, 0, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM }
+"pop", 0x8F, 0, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | Word | Qword }
 
 "pop", 0x0FA1, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | SEGSHORTFORM | NO_REX_W, { SEGMENT2 }
     
 "popa", 0x61, NONE, CPU_186 | CPU_NO64, WL_SUF | DEFAULT_SIZE, {}
     
 /* Exchange instructions. */
-"xchg", 0x90, NONE, 0, WLQ_SUF | SHORT_FORM, { REG16 | REG32 | REG64, ACC }
-"xchg", 0x90, NONE, 0, WLQ_SUF | SHORT_FORM, { ACC, REG16 | REG32 | REG64 }
-"xchg", 0x86, NONE, 0, BWLQ_SUF | W | MODRM, { REG, REG | ANY_MEM }
-"xchg", 0x86, NONE, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, REG }
+"xchg", 0x90, NONE, 0, WLQ_SUF | SHORT_FORM, { REG16 | REG32 | REG64, ACC | Word | Dword | Qword }
+"xchg", 0x90, NONE, 0, WLQ_SUF | SHORT_FORM, { ACC | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"xchg", 0x86, NONE, 0, BWLQ_SUF | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"xchg", 0x86, NONE, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword, REG }
     
 /* In/out for ports. */
-"in", 0xE4, NONE, 0, BWL_SUF | W, { IMM8, ACC }
-"in", 0xEC, NONE, 0, BWL_SUF | W, { PORT, ACC }
+"in", 0xE4, NONE, 0, BWL_SUF | W, { IMM8, ACC | Byte | Word | Dword }
+"in", 0xEC, NONE, 0, BWL_SUF | W, { PORT, ACC | Byte | Word | Dword }
 "in", 0xE4, NONE, 0, BWL_SUF | W, { IMM8 }
 "in", 0xEC, NONE, 0, BWL_SUF | W, { PORT }
     
-"out", 0xE6, NONE, 0, BWL_SUF | W, { ACC, IMM8 }
-"out", 0xEE, NONE, 0, BWL_SUF | W, { ACC, PORT }
+"out", 0xE6, NONE, 0, BWL_SUF | W, { ACC | Byte | Word | Dword, IMM8 }
+"out", 0xEE, NONE, 0, BWL_SUF | W, { ACC | Byte | Word | Dword, PORT }
 "out", 0xE6, NONE, 0, BWL_SUF | W, { IMM8 }
 "out", 0xEE, NONE, 0, BWL_SUF | W, { PORT }
 
@@ -141,11 +146,11 @@
 "lea", 0x8D, NONE, 0, WLQ_SUF | MODRM, { ANY_MEM, REG16 | REG32 | REG64 }
 
 /* Load far pointer from memory. */
-"lds", 0xC5, NONE, CPU_NO64, WL_SUF | MODRM, { ANY_MEM, REG16 | REG32 }
-"les", 0xC4, NONE, CPU_NO64, WL_SUF | MODRM, { ANY_MEM, REG16 | REG32 }
-"lfs", 0x0FB4, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM, REG16 | REG32 }
-"lgs", 0x0FB5, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM, REG16 | REG32 }
-"lss", 0x0FB2, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM, REG16 | REG32 }
+"lds", 0xC5, NONE, CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Dword | Fword, REG16 | REG32 }
+"les", 0xC4, NONE, CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Dword | Fword, REG16 | REG32 }
+"lfs", 0x0FB4, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM | Dword | Fword, REG16 | REG32 }
+"lgs", 0x0FB5, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM | Dword | Fword, REG16 | REG32 }
+"lss", 0x0FB2, NONE, CPU_386, WL_SUF | MODRM, { ANY_MEM | Dword | Fword, REG16 | REG32 }
 
 /* Flags register instructions. */
 "cmc", 0xF5, NONE, 0, NO_SUF, {}
@@ -158,65 +163,67 @@
 "clts", 0x0F06, NONE, CPU_286, NO_SUF, {}
 "lahf", 0x9F, NONE, 0, NO_SUF, {}
 "sahf", 0x9E, NONE, 0, NO_SUF, {}
-"pushf", 0x9C, NONE, 0, WL_SUF | DEFAULT_SIZE, {}
-"popf", 0x9D, NONE, 0, WL_SUF | DEFAULT_SIZE, {}
+"pushf", 0x9C, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE, {}
+"pushf", 0x9C, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | NO_REX_W, {}
+"popf", 0x9D, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE, {}
+"popf", 0x9D, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | NO_REX_W, {}
 
 /* Arithmetic instructions. */
-"add", 0x00, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"add", 0x83, 0, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"add", 0x04, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"add", 0x80, 0, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"add", 0x00, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"add", 0x83, 0, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"add", 0x04, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"add", 0x80, 0, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
 "inc", 0x40, NONE, CPU_NO64, WL_SUF | SHORT_FORM, { REG16 | REG32 }
-"inc", 0xFE, 0, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"inc", 0xFE, 0, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"sub", 0x28, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"sub", 0x83, 5, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"sub", 0x2C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"sub", 0x80, 5, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"sub", 0x28, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sub", 0x83, 5, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"sub", 0x2C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"sub", 0x80, 5, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
 "dec", 0x48, NONE, CPU_NO64, WL_SUF | SHORT_FORM, { REG16 | REG32 }
-"dec", 0xFE, 1, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"dec", 0xFE, 1, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"sbb", 0x18, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"sbb", 0x83, 3, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"sbb", 0x1C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"sbb", 0x80, 3, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"sbb", 0x18, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sbb", 0x83, 3, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"sbb", 0x1C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"sbb", 0x80, 3, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"cmp", 0x38, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"cmp", 0x83, 7, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"cmp", 0x3C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"cmp", 0x80, 7, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"cmp", 0x38, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"cmp", 0x83, 7, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"cmp", 0x3C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"cmp", 0x80, 7, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"test", 0x84, NONE, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, REG }
-"test", 0x84, NONE, 0, BWLQ_SUF | W | MODRM, { REG, REG | ANY_MEM }
-"test", 0xA8, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"test", 0xF6, 0, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"test", 0x84, NONE, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword, REG }
+"test", 0x84, NONE, 0, BWLQ_SUF | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"test", 0xA8, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"test", 0xF6, 0, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"and", 0x20, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"and", 0x83, 4, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"and", 0x24, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"and", 0x80, 4, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"and", 0x20, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"and", 0x83, 4, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"and", 0x24, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"and", 0x80, 4, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"or", 0x08, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"or", 0x83, 1, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"or", 0x0C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"or", 0x80, 1, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"or", 0x08, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"or", 0x83, 1, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"or", 0x0C, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"or", 0x80, 1, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"xor", 0x30, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"xor", 0x83, 6, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"xor", 0x34, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"xor", 0x80, 6, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"xor", 0x30, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"xor", 0x83, 6, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"xor", 0x34, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"xor", 0x80, 6, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
 "clr", 0x30, NONE, 0, BWLQ_SUF | W | MODRM | REG_DUPLICATION, { REG }
     
-"adc", 0x10, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM }
-"adc", 0x83, 2, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM }
-"adc", 0x14, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC }
-"adc", 0x80, 2, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM }
+"adc", 0x10, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"adc", 0x83, 2, 0, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"adc", 0x14, NONE, 0, BWLQ_SUF | W, { IMM8 | IMM16 | IMM32 | IMM32S, ACC | Byte | Word | Dword | Qword }
+"adc", 0x80, 2, 0, BWLQ_SUF | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"neg", 0xF6, 3, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
-"not", 0xF6, 2, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"neg", 0xF6, 3, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
+"not", 0xF6, 2, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
 "aaa", 0x37, NONE, 0, NO_SUF, {}
 "aas", 0x3F, NONE, 0, NO_SUF, {}
@@ -246,78 +253,78 @@
 "cltd", 0x99, NONE, CPU_386, NO_SUF | SIZE32, {}
 "cqto", 0x99, NONE, CPU_64, NO_SUF | SIZE64, {}
 
-"mul", 0xF6, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"mul", 0xF6, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"imul", 0xF6, 5, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
-"imul", 0x0FAF, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"imul", 0x6B, NONE, CPU_186, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"imul", 0x69, NONE, CPU_186, WLQ_SUF | MODRM, { IMM16 | IMM32 | IMM32S, REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
+"imul", 0xF6, 5, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
+"imul", 0x0FAF, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"imul", 0x6B, NONE, CPU_186, WLQ_SUF | MODRM, { IMM8S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"imul", 0x69, NONE, CPU_186, WLQ_SUF | MODRM, { IMM16 | IMM32 | IMM32S, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
 "imul", 0x6B, NONE, CPU_186, WLQ_SUF | MODRM | REG_DUPLICATION, { IMM8S, REG16 | REG32 | REG64 }
 "imul", 0x69, NONE, CPU_186, WLQ_SUF | MODRM | REG_DUPLICATION, { IMM16 | IMM32 | IMM32S, REG16 | REG32 | REG64 }
     
-"div", 0xF6, 6, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
-"div", 0xF6, 6, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, ACC }
+"div", 0xF6, 6, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
+"div", 0xF6, 6, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword, ACC | Byte | Word | Dword | Qword }
     
-"idiv", 0xF6, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
-"idiv", 0xF6, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM, ACC }
+"idiv", 0xF6, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
+"idiv", 0xF6, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword, ACC | Byte | Word | Dword | Qword }
 
-"rol", 0xC0, 0, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"rol", 0xD2, 0, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"rol", 0xD0, 0, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"rol", 0xC0, 0, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rol", 0xD2, 0, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rol", 0xD0, 0, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"ror", 0xC0, 1, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"ror", 0xD2, 1, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"ror", 0xD0, 1, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"ror", 0xC0, 1, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"ror", 0xD2, 1, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"ror", 0xD0, 1, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"rcl", 0xC0, 2, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"rcl", 0xD2, 2, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"rcl", 0xD0, 2, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"rcl", 0xC0, 2, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rcl", 0xD2, 2, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rcl", 0xD0, 2, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"rcr", 0xC0, 3, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"rcr", 0xD2, 3, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"rcr", 0xD0, 3, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"rcr", 0xC0, 3, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rcr", 0xD2, 3, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"rcr", 0xD0, 3, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"sal", 0xC0, 4, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"sal", 0xD2, 4, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"sal", 0xD0, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"sal", 0xC0, 4, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sal", 0xD2, 4, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sal", 0xD0, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"shl", 0xC0, 4, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"shl", 0xD2, 4, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"shl", 0xD0, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"shl", 0xC0, 4, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"shl", 0xD2, 4, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"shl", 0xD0, 4, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"shr", 0xC0, 5, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"shr", 0xD2, 5, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"shr", 0xD0, 5, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"shr", 0xC0, 5, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"shr", 0xD2, 5, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"shr", 0xD0, 5, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"sar", 0xC0, 7, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM }
-"sar", 0xD2, 7, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM }
-"sar", 0xD0, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM }
+"sar", 0xC0, 7, CPU_186, BWLQ_SUF | W | MODRM, { IMM8, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sar", 0xD2, 7, 0, BWLQ_SUF | W | MODRM, { SHIFT_COUNT, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"sar", 0xD0, 7, 0, BWLQ_SUF | W | MODRM, { REG | ANY_MEM | Byte | Word | Dword | Qword }
     
-"shld", 0x0FA4, NONE, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"shld", 0x0FA5, NONE, CPU_386, WLQ_SUF | MODRM, { SHIFT_COUNT, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"shld", 0x0FA5, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
+"shld", 0x0FA4, NONE, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"shld", 0x0FA5, NONE, CPU_386, WLQ_SUF | MODRM, { SHIFT_COUNT, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"shld", 0x0FA5, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
     
-"shrd", 0x0FAC, NONE, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"shrd", 0x0FAD, NONE, CPU_386, WLQ_SUF | MODRM, { SHIFT_COUNT, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"shrd", 0x0FAD, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
+"shrd", 0x0FAC, NONE, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"shrd", 0x0FAD, NONE, CPU_386, WLQ_SUF | MODRM, { SHIFT_COUNT, REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"shrd", 0x0FAD, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
 
 /* Program control transfer instructions. */
 "call", 0xE8, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE | CALL, { DISP16 | DISP32 }
-"call", 0xE8, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | CALL | NO_REX_W, { DISP16 | DISP32 }
-"call", 0xFF, 2, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM | JUMP_ABSOLUTE }
-"call", 0xFF, 2, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | JUMP_ABSOLUTE }
+"call", 0xE8, NONE, CPU_64, WQ_SUF | DEFAULT_SIZE | CALL | NO_REX_W, { DISP16 | DISP32S }
+"call", 0xFF, 2, CPU_NO64, WL_SUF | DEFAULT_SIZE | MODRM, { REG16 | REG32 | ANY_MEM | Word | Dword | JUMP_ABSOLUTE }
+"call", 0xFF, 2, CPU_64, WQ_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | Word | Qword | JUMP_ABSOLUTE }
 "call", 0x9A, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32 }
-"call", 0xFF, 3, 0, INTEL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | JUMP_ABSOLUTE }
+"call", 0xFF, 3, 0, INTEL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | Dword | Fword | JUMP_ABSOLUTE }
 
 /* Alternative syntax. */
 "lcall", 0x9A, NONE, CPU_NO64, WL_SUF | DEFAULT_SIZE | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32 }
-"lcall", 0xFF, 3, 0, WL_SUF | DEFAULT_SIZE | MODRM, { ANY_MEM | JUMP_ABSOLUTE }
+"lcall", 0xFF, 3, 0, WL_SUF | DEFAULT_SIZE | MODRM | NO_REX_W, { ANY_MEM | JUMP_ABSOLUTE }
 
 "jmp", 0xEB, NONE, 0, NO_SUF | JUMP, { DISP8 | DISP16 | DISP32 | DISP32S }
-"jmp", 0xFF, 4, CPU_NO64, WL_SUF | MODRM, { REG16 | REG32 | ANY_MEM | JUMP_ABSOLUTE }
-"jmp", 0xFF, 4, CPU_64, WQ_SUF | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | JUMP_ABSOLUTE }
+"jmp", 0xFF, 4, CPU_NO64, WL_SUF | MODRM, { REG16 | REG32 | ANY_MEM | Word | Dword | JUMP_ABSOLUTE }
+"jmp", 0xFF, 4, CPU_64, WQ_SUF | MODRM | NO_REX_W, { REG16 | REG64 | ANY_MEM | Word | Qword | JUMP_ABSOLUTE }
 "jmp", 0xEA, NONE, CPU_NO64, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32 }
-"jmp", 0xFF, 5, 0, INTEL_SUF | MODRM, { ANY_MEM | JUMP_ABSOLUTE }
+"jmp", 0xFF, 5, 0, INTEL_SUF | MODRM, { ANY_MEM | Dword | Fword | JUMP_ABSOLUTE }
 
 /* Alternative syntax. */
 "ljmp", 0xEA, NONE, 0, WL_SUF | JUMPINTERSEGMENT, { IMM16, IMM16 | IMM32 }
@@ -387,7 +394,7 @@ Jcc ("jnle", 0x7F)
 "loopne", 0xE0, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
 
 /* Set byte on flag instructions. */
-#define SETcc(name, opcode) name, opcode, 0, CPU_386, B_SUF | MODRM, { REG8 | ANY_MEM }
+#define SETcc(name, opcode) name, opcode, 0, CPU_386, B_SUF | MODRM, { REG8 | ANY_MEM | Byte }
 
 SETcc ("seto", 0x0F90)
 SETcc ("setno", 0x0F91)
@@ -436,16 +443,16 @@ SETcc ("setg", 0x0F9F)
 "xlat", 0xD7, NONE, 0, B_SUF | IS_STRING, {}
 
 /* Bit manipulation instructions. */
-"bsf", 0x0FBC, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"bsr", 0x0FBD, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"bt", 0x0FA3, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"bt", 0x0FBA, 4, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM }
-"btc", 0x0FBB, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"btc", 0x0FBA, 7, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM }
-"btr", 0x0FB3, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"btr", 0x0FBA, 6, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM }
-"bts", 0x0FAB, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM }
-"bts", 0x0FBA, 5, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM }
+"bsf", 0x0FBC, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"bsr", 0x0FBD, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"bt", 0x0FA3, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"bt", 0x0FBA, 4, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"btc", 0x0FBB, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"btc", 0x0FBA, 7, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"btr", 0x0FB3, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"btr", 0x0FBA, 6, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"bts", 0x0FAB, NONE, CPU_386, WLQ_SUF | MODRM, { REG16 | REG32 | REG64, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
+"bts", 0x0FBA, 5, CPU_386, WLQ_SUF | MODRM, { IMM8, REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword }
 
 /* Interrupts. */
 "int", 0xCD, NONE, 0, NO_SUF, { IMM8 }
@@ -455,61 +462,61 @@ SETcc ("setg", 0x0F9F)
 "iret", 0xCF, NONE, 0, WLQ_SUF | DEFAULT_SIZE, {}
     
 "rsm", 0x0FAA, NONE, CPU_386, NO_SUF, {}
-"bound", 0x62, NONE, CPU_186 | CPU_NO64, WL_SUF | MODRM, { REG16 | REG32, ANY_MEM },
+"bound", 0x62, NONE, CPU_186 | CPU_NO64, WL_SUF | MODRM, { REG16 | REG32, ANY_MEM | Dword | Qword },
     
 "hlt", 0xF4, NONE, 0, NO_SUF, {}
 "nop", 0x90, NONE, 0, NO_SUF, {}
 
 /* Protection control. */
-"arpl", 0x63, NONE, CPU_286 | CPU_NO64, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM }
-"lar", 0x0F02, NONE, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"lgdt", 0x0F01, 2, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM }
-"lgdt", 0x0F01, 2, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM }
-"lidt", 0x0F01, 3, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM }
-"lidt", 0x0F01, 3, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM }
-"lldt", 0x0F00, 2, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM }
-"lmsw", 0x0F01, 6, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM }
-"lsl", 0x0F03, NONE, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
-"ltr", 0x0F00, 3, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM }
+"arpl", 0x63, NONE, CPU_286 | CPU_NO64, W_SUF | MODRM | IGNORE_SIZE, { REG16, REG16 | ANY_MEM | Word }
+"lar", 0x0F02, NONE, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"lgdt", 0x0F01, 2, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Fword }
+"lgdt", 0x0F01, 2, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Tbyte }
+"lidt", 0x0F01, 3, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Fword }
+"lidt", 0x0F01, 3, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Tbyte }
+"lldt", 0x0F00, 2, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM | Word }
+"lmsw", 0x0F01, 6, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM | Word }
+"lsl", 0x0F03, NONE, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
+"ltr", 0x0F00, 3, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM | Word }
 
-"sgdt", 0x0F01, 0, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM }
-"sgdt", 0x0F01, 0, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM }
-"sidt", 0x0F01, 1, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM }
-"sidt", 0x0F01, 1, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM }
+"sgdt", 0x0F01, 0, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Fword }
+"sgdt", 0x0F01, 0, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Tbyte }
+"sidt", 0x0F01, 1, CPU_286 | CPU_NO64, WL_SUF | MODRM, { ANY_MEM | Fword }
+"sidt", 0x0F01, 1, CPU_64, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Tbyte }
 "sldt", 0x0F00, 0, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | INV_MEM }
-"sldt", 0x0F00, 0, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM }
+"sldt", 0x0F00, 0, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM | Word }
 "smsw", 0x0F01, 4, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | INV_MEM }
-"smsw", 0x0F01, 4, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM }
+"smsw", 0x0F01, 4, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM | Word }
 "str", 0x0F00, 1, CPU_286, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | INV_MEM }
-"str", 0x0F00, 1, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM }
+"str", 0x0F00, 1, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { ANY_MEM | Word }
     
-"verr", 0x0F00, 4, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM }
-"verw", 0x0F00, 5, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM }
+"verr", 0x0F00, 4, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM | Word }
+"verw", 0x0F00, 5, CPU_286, W_SUF | MODRM | IGNORE_SIZE, { REG16 | ANY_MEM | Word }
 
 /* Floating point instructions. */
 /* Load. */
 "fld", 0xD9C0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fld", 0xD9, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fld", 0xDB, 5, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
-"fild", 0xDF, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fild", 0xDF, 5, CPU_FP, Q_SUF | MODRM, { ANY_MEM }
+"fld", 0xD9, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fld", 0xDB, 5, CPU_FP, INTEL_SUF | MODRM, { ANY_MEM | Tbyte }
+"fild", 0xDF, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
+"fild", 0xDF, 5, CPU_FP, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Qword }
 "fildll", 0xDF, 5, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
 "fldt", 0xDB, 5, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
-"fbld", 0xDF, 4, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
+"fbld", 0xDF, 4, CPU_FP, NO_SUF | MODRM, { ANY_MEM | Tbyte }
 /* Store without pop. */
 "fst", 0xDDD0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fst", 0xD9, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fist", 0xDF, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fst", 0xD9, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fist", 0xDF, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
     
 /* Store with pop. */
 "fstp", 0xDDD8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fstp", 0xD9, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fstp", 0xD9, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
 "fstp", 0xDB, 7, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
-"fistp", 0xDF, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fistp", 0xDF, 7, CPU_FP, Q_SUF | MODRM, { ANY_MEM }
+"fistp", 0xDF, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
+"fistp", 0xDF, 7, CPU_FP, Q_SUF | MODRM | NO_REX_W, { ANY_MEM | Qword }
 "fistpll", 0xDF, 7, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
 "fstpt", 0xDB, 7, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
-"fbstp", 0xDF, 6, CPU_FP, NO_SUF | MODRM, { ANY_MEM }
+"fbstp", 0xDF, 6, CPU_FP, INTEL_SUF | MODRM, { ANY_MEM | Tbyte }
 
 /* Exchange of %st(0) with %st(x). */
 "fxch", 0xD9C8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -519,14 +526,14 @@ SETcc ("setg", 0x0F9F)
 /* Comparison without pop. */
 "fcom", 0xD8D0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
 "fcom", 0xD8D1, NONE, CPU_FP, NO_SUF, {}
-"fcom", 0xD8, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"ficom", 0xDE, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fcom", 0xD8, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"ficom", 0xDE, 2, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 /* Comparison with pop. */
 "fcomp", 0xD8D8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
 "fcomp", 0xD8D9, NONE, CPU_FP, NO_SUF, {}
-"fcomp", 0xD8, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"ficomp", 0xDE, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fcomp", 0xD8, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"ficomp", 0xDE, 3, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 "fcompp", 0xDED9, NONE, CPU_FP, NO_SUF, {}
 
 /* Unordered comparison. */
@@ -552,8 +559,8 @@ SETcc ("setg", 0x0F9F)
 /* Add. */
 "fadd", 0xD8C0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fadd", 0xD8C0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fadd", 0xD8, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fiadd", 0xDE, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fadd", 0xD8, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fiadd", 0xDE, 0, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "faddp", 0xDEC0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "faddp", 0xDEC0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -562,8 +569,8 @@ SETcc ("setg", 0x0F9F)
 /* Subtract. */
 "fsub", 0xD8E0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fsub", 0xD8E0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fsub", 0xD8, 4, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fisub", 0xDE, 4, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fsub", 0xD8, 4, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fisub", 0xDE, 4, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "fsubp", 0xDEE0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "fsubp", 0xDEE0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -572,8 +579,8 @@ SETcc ("setg", 0x0F9F)
 /* Subtract reverse. */
 "fsubr", 0xD8E8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fsubr", 0xD8E8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fsubr", 0xD8, 5, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fisubr", 0xDE, 5, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fsubr", 0xD8, 5, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fisubr", 0xDE, 5, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "fsubrp", 0xDEE8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "fsubrp", 0xDEE8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -582,8 +589,8 @@ SETcc ("setg", 0x0F9F)
 /* Multiply. */
 "fmul", 0xD8C8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fmul", 0xD8C8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fmul", 0xD8, 1, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fimul", 0xDE, 1, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fmul", 0xD8, 1, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fimul", 0xDE, 1, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "fmulp", 0xDEC8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "fmulp", 0xDEC8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -592,8 +599,8 @@ SETcc ("setg", 0x0F9F)
 /* Divide. */
 "fdiv", 0xD8F0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fdiv", 0xD8F0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fdiv", 0xD8, 6, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fidiv", 0xDE, 6, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fdiv", 0xD8, 6, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fidiv", 0xDE, 6, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "fdivp", 0xDEF0, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "fdivp", 0xDEF0, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -602,8 +609,8 @@ SETcc ("setg", 0x0F9F)
 /* Divide reverse. */
 "fdivr", 0xD8F8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_REG, FLOAT_ACC }
 "fdivr", 0xD8F8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
-"fdivr", 0xD8, 7, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
-"fidivr", 0xDE, 7, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM }
+"fdivr", 0xD8, 7, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Dword | Qword }
+"fidivr", 0xDE, 7, CPU_FP, SL_SUF | FLOAT_MF | MODRM, { ANY_MEM | Word | Dword }
 
 "fdivrp", 0xDEF8, NONE, CPU_FP, NO_SUF | SHORT_FORM | FLOAT_D, { FLOAT_ACC, FLOAT_REG }
 "fdivrp", 0xDEF8, NONE, CPU_FP, NO_SUF | SHORT_FORM, { FLOAT_REG }
@@ -632,16 +639,16 @@ SETcc ("setg", 0x0F9F)
 /* Processor control instructions. */
 "fninit", 0xDBE3, NONE, CPU_FP, NO_SUF, {}
 "finit", 0xDBE3, NONE, CPU_FP, NO_SUF | ADD_FWAIT, {}
-"fldcw", 0xD9, 5, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM }
-"fnstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM }
-"fstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM }
+"fldcw", 0xD9, 5, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM | Word }
+"fnstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM | Word }
+"fstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM | Word }
 
 "fnstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | IGNORE_SIZE, { ACC }
-"fnstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM }
+"fnstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM | Word }
 "fnstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF, {}
 
 "fstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | ADD_FWAIT | IGNORE_SIZE, { ACC }
-"fstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM }
+"fstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM | Word }
 "fstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | ADD_FWAIT, {}
 
 "fnclex", 0xDBE2, NONE, CPU_FP, NO_SUF, {}
@@ -693,13 +700,13 @@ SETcc ("setg", 0x0F9F)
 "rex.w", 0x48, NONE, CPU_64, NO_SUF | IS_PREFIX, {}
 
 /* i486 extensions. */
-"bswap", 0x0FC8, NONE, CPU_486, L_SUF | SHORT_FORM, { REG32 }
+"bswap", 0x0FC8, NONE, CPU_486, LQ_SUF | SHORT_FORM, { REG32 | REG64 }
 
 /* Official undefined instruction. */
 "ud2", 0x0F0B, NONE, CPU_186, NO_SUF, {}
 
 /* i686 extensions. */
-#define CMOVcc(name, opcode) name, opcode, NONE, CPU_CMOV, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM, REG16 | REG32 | REG64 }
+#define CMOVcc(name, opcode) name, opcode, NONE, CPU_CMOV, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
 CMOVcc ("cmovo", 0x0F40)
 CMOVcc ("cmovno", 0x0F41)
 CMOVcc ("cmovb", 0x0F42)
@@ -731,45 +738,49 @@ CMOVcc ("cmovng", 0x0F4E)
 CMOVcc ("cmovg", 0x0F4F)
 CMOVcc ("cmovnle", 0x0F4F)
 
-"movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
+"movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
-"movaps", 0x0F28, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
+"movaps", 0x0F28, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
-"movss", 0xF30F11, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM, REG_XMM }
+"movss", 0xF30F10, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
 /* SSE2 instructions. */
-"movapd", 0x660F28, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
-"movsd", 0xF20F10, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM, REG_XMM }
-"comisd", 0x660F2F, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
+"movapd", 0x660F28, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"movsd", 0xF20F10, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+/* Conflicts with string movs with 'd' suffix. */
+"movsd", 0xA5, NONE, 0, NO_SUF | IS_STRING | SIZE32, {}
 
-"cvtsi2sd", 0xF20F2A, NONE, CPU_SSE2 | CPU_64, LQ_SUF | IGNORE_SIZE | MODRM | NO_REX_W, { REG32 | REG64 | ANY_MEM, REG_XMM }
-"cvttsd2si", 0xF20F2C, NONE, CPU_SSE2, LQ_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM, REG32 | REG64 }
-"cvtsd2ss", 0xF20F5A, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"cvtss2sd", 0xF30F5A, NONE, CPU_SSE2, NO_SUF | MODRM | IGNORE_SIZE | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
+"comisd", 0x660F2F, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 
-"movdqa", 0x660F6F, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
-"movdqu", 0xF30F6F, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
+"cvtsi2sd", 0xF20F2A, NONE, CPU_SSE2 | CPU_64, LQ_SUF | IGNORE_SIZE | MODRM, { REG32 | REG64 | ANY_MEM | Dword | Qword, REG_XMM }
+"cvttsd2si", 0xF20F2C, NONE, CPU_SSE2, LQ_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Qword, REG32 | REG64 }
+"cvtsd2ss", 0xF20F5A, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"cvtss2sd", 0xF30F5A, NONE, CPU_SSE2, NO_SUF | MODRM | IGNORE_SIZE | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 
-"andpd", 0x660F54, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
-"andnpd", 0x660F55, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
-"orpd", 0x660F56, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
-"addsd", 0xF20F58, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"cmpltsd", 0xF20FC2, 1, CPU_SSE2, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM, REG_XMM }
-"mulsd", 0xF20F59, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"subsd", 0xF20F5C, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"divsd", 0xF20F5E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
+"movdqa", 0x660F6F, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"movdqu", 0xF30F6F, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
-"ucomisd", 0x660F2E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"xorpd", 0x660F57, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
+"andpd", 0x660F54, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"andnpd", 0x660F55, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"orpd", 0x660F56, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"addsd", 0xF20F58, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"cmpltsd", 0xF20FC2, 1, CPU_SSE2, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"mulsd", 0xF20F59, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"subsd", 0xF20F5C, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"divsd", 0xF20F5E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+
+"ucomisd", 0x660F2E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+"xorpd", 0x660F57, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
 "pxor", 0x660FEF, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
 
-"movq", 0xF30F7E, NONE, CPU_SSE2 , NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM, REG_XMM }
-"movq", 0x660F6E, NONE, CPU_SSE2 | CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64 | ANY_MEM, REG_XMM },
+"movq", 0xF30F7E, NONE, CPU_SSE2 , NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword | Xmmword, REG_XMM }
+"movq", 0x660F6E, NONE, CPU_SSE2 | CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64 | ANY_MEM | Qword, REG_XMM },
 /* Above movq conflicts with non-SSE mov with 'q' suffix. */
-"movq", 0x89, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64, REG64 | ANY_MEM }
+"movq", 0xA1, NONE, CPU_64, NO_SUF | D | SIZE64, { DISP64 | Qword, ACC | Qword }
+"movq", 0x89, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64, REG64 | ANY_MEM | Qword }
+"movq", 0xC7, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM | Qword }
 "movq", 0xB8, NONE, CPU_64, NO_SUF | SHORT_FORM | SIZE64, { IMM64, REG64 }
-"movq", 0xC7, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM }
 
 ===REGISTER TABLE===
 

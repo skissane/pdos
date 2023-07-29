@@ -80,10 +80,7 @@ struct opcode_modifier {
 };
 
 #define GENERATOR_OPERAND_TYPE_LIST \
- GENERATOR_MACRO(reg8) \
- GENERATOR_MACRO(reg16) \
- GENERATOR_MACRO(reg32) \
- GENERATOR_MACRO(reg64)  \
+ GENERATOR_MACRO(reg) \
  GENERATOR_MACRO(segment1) \
  GENERATOR_MACRO(segment2) \
  GENERATOR_MACRO(control) \
@@ -113,6 +110,14 @@ struct opcode_modifier {
  GENERATOR_MACRO(disp32) \
  GENERATOR_MACRO(disp32s) \
  GENERATOR_MACRO(disp64) \
+\
+ GENERATOR_MACRO(byte) \
+ GENERATOR_MACRO(word) \
+ GENERATOR_MACRO(dword) \
+ GENERATOR_MACRO(fword) \
+ GENERATOR_MACRO(qword) \
+ GENERATOR_MACRO(tbyte) \
+ GENERATOR_MACRO(xmmword) \
 \
  GENERATOR_MACRO(base_index) \
  GENERATOR_MACRO(inv_mem)

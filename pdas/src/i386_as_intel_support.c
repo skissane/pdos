@@ -40,6 +40,9 @@ static struct {
 #define EXPR_TYPE_DWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_7
 #define EXPR_TYPE_FWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_8
 #define EXPR_TYPE_QWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_9
+#define EXPR_TYPE_TBYTE_PTR EXPR_TYPE_MACHINE_DEPENDENT_10
+
+#define EXPR_TYPE_XMMWORD_PTR EXPR_TYPE_MACHINE_DEPENDENT_11
 
 struct intel_type {
 
@@ -58,6 +61,8 @@ static const struct intel_type intel_types[] = {
     INTEL_TYPE (DWORD, 4),
     INTEL_TYPE (FWORD, 6),
     INTEL_TYPE (QWORD, 8),
+    INTEL_TYPE (TBYTE, 8),
+    INTEL_TYPE (XMMWORD, 16),
 
 #undef INTEL_TYPE
 
@@ -372,6 +377,8 @@ static int intel_simplify_expr (struct expr *expr)
         case EXPR_TYPE_DWORD_PTR:
         case EXPR_TYPE_FWORD_PTR:
         case EXPR_TYPE_QWORD_PTR:
+        case EXPR_TYPE_TBYTE_PTR:
+        case EXPR_TYPE_XMMWORD_PTR:
         case EXPR_TYPE_NEAR_PTR:
         case EXPR_TYPE_FAR_PTR:
             if (intel_state.operand_modifier == EXPR_TYPE_ABSENT) {
@@ -492,10 +499,12 @@ static int intel_parse_operand (char *operand_string)
         switch (intel_state.operand_modifier) {
 
             case EXPR_TYPE_BYTE_PTR:
+                instruction.types[instruction.operands].byte = 1;
                 suffix = BYTE_SUFFIX;
                 break;
 
             case EXPR_TYPE_WORD_PTR:
+                instruction.types[instruction.operands].word = 1;
                 if (intel_float_suffix_translation (current_templates->name) == 2) {
                     suffix = SHORT_SUFFIX;
                 } else {
@@ -504,10 +513,17 @@ static int intel_parse_operand (char *operand_string)
                break;
 
             case EXPR_TYPE_DWORD_PTR:
-                if (bits != 32
+                instruction.types[instruction.operands].dword = 1;
+                if ((current_templates->name[0] == 'l'
+                     && current_templates->name[1]
+                     && current_templates->name[2] == 's'
+                     && current_templates->name[3] == '\0')
+                    || current_templates->start->base_opcode == 0x62 /* bound */) {
+                    suffix = WORD_SUFFIX;
+                } else if (bits != 32
                     && (current_templates->start->opcode_modifier.jump
                         || current_templates->start->opcode_modifier.call)) {
-                    suffix = INTEL_SUFFIX;
+                    suffix = bits == 16 ? INTEL_SUFFIX : WORD_SUFFIX;
                 } else if (intel_float_suffix_translation (current_templates->name) == 1) {
                     suffix = SHORT_SUFFIX;
                 } else {
@@ -516,6 +532,7 @@ static int intel_parse_operand (char *operand_string)
                 break;
 
             case EXPR_TYPE_FWORD_PTR:
+                instruction.types[instruction.operands].fword = 1;
                 /* lgdt, lidt, sgdt, sidt accept fword ptr but ignore it. */
                 if ((current_templates->name[0] == 'l' || current_templates->name[0] == 's')
                     && (current_templates->name[1] == 'g' || current_templates->name[1] == 'i')
@@ -525,7 +542,12 @@ static int intel_parse_operand (char *operand_string)
                     break;
                 }
 
-                if (!intel_float_suffix_translation (current_templates->name)) {
+                if (current_templates->name[0] == 'l'
+                    && current_templates->name[1]
+                    && current_templates->name[2] == 's'
+                    && current_templates->name[3] == '\0') {
+                    suffix = DWORD_SUFFIX;
+                } else if (!intel_float_suffix_translation (current_templates->name)) {
                     if (bits == 16) {
                         add_prefix (DATA_PREFIX_OPCODE);
                     }
@@ -535,11 +557,24 @@ static int intel_parse_operand (char *operand_string)
                 break;
 
             case EXPR_TYPE_QWORD_PTR:
-                if (intel_float_suffix_translation (current_templates->name) == 1) {
+                instruction.types[instruction.operands].qword = 1;
+                if (current_templates->start->base_opcode == 0x62 /* bound */
+                    || intel_float_suffix_translation (current_templates->name) == 1) {
                     suffix = DWORD_SUFFIX;
                 } else {
                     suffix = QWORD_SUFFIX;
                 }
+                break;
+
+            case EXPR_TYPE_TBYTE_PTR:
+                instruction.types[instruction.operands].tbyte = 1;
+                if (intel_float_suffix_translation (current_templates->name) == 1) {
+                    suffix = INTEL_SUFFIX;
+                }
+                break;
+
+            case EXPR_TYPE_XMMWORD_PTR:
+                instruction.types[instruction.operands].xmmword = 1;
                 break;
 
             case EXPR_TYPE_FAR_PTR:
@@ -680,8 +715,8 @@ static int intel_parse_operand (char *operand_string)
 
         if (intel_state.base_reg
             && intel_state.index_reg
-            && intel_state.base_reg->type.reg16
-            && intel_state.index_reg->type.reg16
+            && intel_state.base_reg->type.word
+            && intel_state.index_reg->type.word
             && intel_state.base_reg->number >= 6
             && intel_state.index_reg->number < 6) {
             /* Converts [si + bp] to [bp + si] as addition is commutative
@@ -753,9 +788,9 @@ static int intel_parse_operand (char *operand_string)
             }
 
             if (reg_table[expr->add_number].number == REG_FLAT_NUMBER) {
-                instruction.segments[instruction.operands] = NULL;
+                instruction.segments[instruction.mem_operands] = NULL;
             } else {
-                instruction.segments[instruction.operands] = &reg_table[expr->add_number];
+                instruction.segments[instruction.mem_operands] = &reg_table[expr->add_number];
             }
         }
 

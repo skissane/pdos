@@ -127,7 +127,7 @@ struct pseudo_op_entry *machine_dependent_get_pseudo_op_table (void);
 const char *machine_dependent_get_line_separators (void);
 const char *machine_dependent_get_comment_at_the_start_of_line_beginners (void);
 
-char *machine_dependent_assemble_line (char *line);
+void machine_dependent_assemble_line (char *line);
 int machine_dependent_force_relocation_local (struct fixup *fixup);
 
 offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, section_t section);

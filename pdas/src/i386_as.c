@@ -49,6 +49,9 @@
 #define SIB_BASE_NO_BASE_REGISTER_16                    0x06
 #define SIB_INDEX_NO_INDEX_REGISTER                     0x04
 
+#define ESP_REG_NUM 4
+#define EBP_REG_NUM 5
+
 /**
  * Groups together instruction templates with the same name for hash table search.
  * Templates start at start (included) and end at end (not included).
@@ -245,8 +248,10 @@ struct relax_table_entry relax_table[] = {
 
 static const struct reg_entry *reg_esp;
 static const struct reg_entry *reg_st0;
+static const struct reg_entry *reg_ss;
+static const struct reg_entry *reg_ds;
 
-static const struct reg_entry bad_register = { "<bad>"};
+static const struct reg_entry bad_register = { "<bad>" };
 
 struct instruction {
 
@@ -283,6 +288,8 @@ struct instruction {
     const struct reg_entry *segments[MAX_OPERANDS];
     
     int force_short_jump;
+
+    const char *rep_prefix;
 
 };
 
@@ -394,8 +401,15 @@ void machine_dependent_init (void)
             reg_st0 = reg_entry;
         }
         
-        if (reg_entry->type.reg32 && reg_entry->number == 4) {
+        if (reg_entry->type.dword && reg_entry->number == 4) {
             reg_esp = reg_entry;
+        }
+
+        if (reg_entry->type.segment1) {
+            switch (reg_entry->number) {
+                case 2: reg_ss = reg_entry; break;
+                case 3: reg_ds = reg_entry; break;
+            }
         }
         
         if (hashtab_insert (reg_entry_hashtab, reg_entry)) {
@@ -530,7 +544,6 @@ static struct operand_type operand_type_and_not_disp (struct operand_type a)
 
 enum operand_type_group {
     reg,
-    simple_reg,
     imm,
     disp,
     anymem
@@ -540,22 +553,13 @@ int operand_type_check (struct operand_type a, enum operand_type_group g)
 {
     switch (g) {
         case reg:
-            return (a.reg8
-                    || a.reg16
-                    || a.reg32
-                    || a.reg64
+            return (a.reg
                     || a.segment1
                     || a.segment2
                     || a.control
                     || a.debug
                     || a.test
                     || a.reg_xmm);
-
-        case simple_reg:
-            return (a.reg8
-                    || a.reg16
-                    || a.reg32
-                    || a.reg64);
 
         case imm:
             return (a.imm8
@@ -623,13 +627,10 @@ static int add_prefix (unsigned char prefix)
     if (bits == 64
         && prefix >= REX_PREFIX_OPCODE
         && prefix < REX_PREFIX_OPCODE + 16) {
-        
         prefix_type = REX_PREFIX;
 
         if (instruction.prefixes[prefix_type] & prefix & ~REX_PREFIX_OPCODE) ret = 0;
-        
     } else {
-
         switch (prefix) {
         
             case CS_PREFIX_OPCODE:
@@ -638,49 +639,40 @@ static int add_prefix (unsigned char prefix)
             case FS_PREFIX_OPCODE:
             case GS_PREFIX_OPCODE:
             case SS_PREFIX_OPCODE:
-            
                 prefix_type = SEGMENT_PREFIX;
                 break;
             
             case REPNE_PREFIX_OPCODE:
             case REPE_PREFIX_OPCODE:
-            
                 prefix_type = REP_PREFIX;
                 
                 ret = 2;
                 break;
             
             case FWAIT_OPCODE:
-            
                 prefix_type = FWAIT_PREFIX;
                 break;
             
             case ADDR_PREFIX_OPCODE:
-            
                 prefix_type = ADDR_PREFIX;
                 break;
             
             case DATA_PREFIX_OPCODE:
-            
                 prefix_type = DATA_PREFIX;
                 break;
 
             default:
-            
                 as_internal_error_at_source (__FILE__, __LINE__, "add_prefix invalid case %i", prefix);
                 break;
         
         }
     
         if (instruction.prefixes[prefix_type]) ret = 0;
-
     }
     
     if (ret) {
-    
         instruction.prefix_count++;
         instruction.prefixes[prefix_type] |= prefix;
-    
     } else {
         as_error ("same type of prefix used twice");
     }
@@ -691,7 +683,7 @@ static int add_prefix (unsigned char prefix)
 static int check_reg (const struct reg_entry *reg)
 {
     if (!cpu_arch_flags.cpu_386
-        && (reg->type.reg32
+        && (reg->type.dword
             || reg->type.segment2
             || reg->type.control
             || reg->type.debug)) {
@@ -706,7 +698,7 @@ static int check_reg (const struct reg_entry *reg)
         return 0;
     }
 
-    if ((reg->type.reg64 || reg->type.reg_rex || reg->type.reg_rex64) && bits != 64) {
+    if ((reg->type.qword || reg->type.reg_rex || reg->type.reg_rex64) && bits != 64) {
         return 0;
     }
     
@@ -833,13 +825,13 @@ static int fits_in_unsigned_long (offset_t number)
 static int base_index_check (char *operand_string)
 {
     if (bits == 64) {
-        if ((instruction.base_reg && !instruction.base_reg->type.reg64 && instruction.base_reg->number != REG_IP_NUMBER)
-            || (instruction.index_reg && (!instruction.index_reg->type.base_index || !instruction.index_reg->type.reg64))) {
+        if ((instruction.base_reg && !instruction.base_reg->type.qword && instruction.base_reg->number != REG_IP_NUMBER)
+            || (instruction.index_reg && (!instruction.index_reg->type.base_index || !instruction.index_reg->type.qword))) {
             goto bad;
         }
     } else if (bits == 32) {
-        if ((instruction.base_reg && !instruction.base_reg->type.reg32)
-            || (instruction.index_reg && (!instruction.index_reg->type.base_index || !instruction.index_reg->type.reg32))) {
+        if ((instruction.base_reg && !instruction.base_reg->type.dword)
+            || (instruction.index_reg && (!instruction.index_reg->type.base_index || !instruction.index_reg->type.dword))) {
         bad:
             as_error ("'%s' is not a valid base/index expression", operand_string);
             return 1; 
@@ -847,10 +839,10 @@ static int base_index_check (char *operand_string)
     } else {
         if ((instruction.base_reg
              && (!instruction.base_reg->type.base_index
-                 || !instruction.base_reg->type.reg16))
+                 || !instruction.base_reg->type.word))
             || (instruction.index_reg
                 && (!instruction.index_reg->type.base_index
-                    || !instruction.index_reg->type.reg16
+                    || !instruction.index_reg->type.word
                     || !(instruction.base_reg
                          && instruction.base_reg->number < 6
                          && instruction.index_reg->number >= 6
@@ -970,7 +962,7 @@ static int att_parse_operand (char *operand_string)
         
         if (*operand_string == ':'
             && (reg->type.segment1 || reg->type.segment2)) {
-            instruction.segments[instruction.operands] = reg;
+            instruction.segments[instruction.mem_operands] = reg;
             
             operand_string = skip_whitespace (++operand_string);
             
@@ -1260,11 +1252,11 @@ static void optimize_size_of_imms (void)
          * Example: mov $1234, %al
          */
         for (operand = instruction.operands; --operand >= 0; ) {
-            if (operand_type_check (instruction.types[operand], simple_reg)) {
-                if (instruction.types[operand].reg8) guessed_suffix = BYTE_SUFFIX;
-                else if (instruction.types[operand].reg16) guessed_suffix = WORD_SUFFIX;
-                else if (instruction.types[operand].reg32) guessed_suffix = DWORD_SUFFIX;
-                else if (instruction.types[operand].reg64) guessed_suffix = QWORD_SUFFIX;
+            if (instruction.types[operand].reg) {
+                if (instruction.types[operand].byte) guessed_suffix = BYTE_SUFFIX;
+                else if (instruction.types[operand].word) guessed_suffix = WORD_SUFFIX;
+                else if (instruction.types[operand].dword) guessed_suffix = DWORD_SUFFIX;
+                else if (instruction.types[operand].qword) guessed_suffix = QWORD_SUFFIX;
 
                 break;
             }
@@ -1450,8 +1442,8 @@ static int check_byte_reg (void)
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
-        if (!operand_type_check (instruction.types[op], simple_reg)) continue;
-        if (instruction.types[op].reg8) continue;
+        if (!instruction.types[op].reg) continue;
+        if (instruction.types[op].byte) continue;
         if (instruction.template.operand_types[op].port) continue;
         
         as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
@@ -1466,20 +1458,22 @@ static int check_word_reg (void)
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
-        if (!operand_type_check (instruction.types[op], simple_reg)) continue;
+        if (!instruction.types[op].reg) continue;
     
-        if (instruction.types[op].reg8
-            && (instruction.template.operand_types[op].reg16
-                || instruction.template.operand_types[op].reg32
-                || instruction.template.operand_types[op].acc)) {
+        if (instruction.types[op].byte
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && (instruction.template.operand_types[op].word
+                || instruction.template.operand_types[op].dword)) {
             as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
             return 1;
         }
         
-        if ((instruction.types[op].reg32
-             || instruction.types[op].reg64)
-            && (instruction.template.operand_types[op].reg16
-                || instruction.template.operand_types[op].acc)) {
+        if ((instruction.types[op].dword
+             || instruction.types[op].qword)
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && instruction.template.operand_types[op].word) {
             as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
             return 1;
         }
@@ -1493,20 +1487,22 @@ static int check_dword_reg (void)
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
-        if (!operand_type_check (instruction.types[op], simple_reg)) continue;
+        if (!instruction.types[op].reg) continue;
     
-        if (instruction.types[op].reg8
-            && (instruction.template.operand_types[op].reg16
-                || instruction.template.operand_types[op].reg32
-                || instruction.template.operand_types[op].acc)) {
+        if (instruction.types[op].byte
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && (instruction.template.operand_types[op].word
+                || instruction.template.operand_types[op].dword)) {
             as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
             return 1;
         }
         
-        if ((instruction.types[op].reg16
-             || instruction.types[op].reg64)
-            && (instruction.template.operand_types[op].reg32
-                || instruction.template.operand_types[op].acc)) {
+        if ((instruction.types[op].word
+             || instruction.types[op].qword)
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && instruction.template.operand_types[op].dword) {
             as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
             return 1;
         }
@@ -1520,21 +1516,22 @@ static int check_qword_reg (void)
     int op;
     
     for (op = instruction.operands; --op >= 0; ) {
-        if (!operand_type_check (instruction.types[op], simple_reg)) continue;
+        if (!instruction.types[op].reg) continue;
     
-        if (instruction.types[op].reg8
-            && (instruction.template.operand_types[op].reg16
-                || instruction.template.operand_types[op].reg32
-                || instruction.template.operand_types[op].acc)) {
+        if (instruction.types[op].byte
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && (instruction.template.operand_types[op].word
+                || instruction.template.operand_types[op].dword)) {
             as_error ("'%%%s' not allowed with '%s%c'", instruction.regs[op]->name, instruction.template.name, instruction.suffix);
             return 1;
-        
         }
         
-        if ((instruction.types[op].reg16
-             || instruction.types[op].reg32)
-            && (instruction.template.operand_types[op].reg64
-                || instruction.template.operand_types[op].acc)) {
+        if ((instruction.types[op].word
+             || instruction.types[op].dword)
+            && (instruction.template.operand_types[op].reg
+                || instruction.template.operand_types[op].acc)
+            && instruction.template.operand_types[op].qword) {
             as_error ("incorrect register '%%%s' used with `%c' suffix", instruction.regs[op]->name, instruction.suffix);
             return 1;
         }
@@ -1554,7 +1551,7 @@ static int process_suffix (void)
     } else if (instruction.template.opcode_modifier.size64) {
         instruction.suffix = QWORD_SUFFIX;
     } else if (instruction.reg_operands
-               && (instruction.operands > 1 || operand_type_check (instruction.types[0], simple_reg))) {
+               && (instruction.operands > 1 || instruction.types[0].reg)) {
         int saved_operands = instruction.operands;
         
         is_movsx_or_movzx = (((instruction.template.base_opcode & 0xFF00) == 0x0F00
@@ -1564,7 +1561,9 @@ static int process_suffix (void)
         
         /* For movsx/movzx only the source operand is considered for the ambiguity checking.
          * The suffix is replaced to represent the destination later. */
-        if (is_movsx_or_movzx && instruction.template.opcode_modifier.w) {
+        if (is_movsx_or_movzx
+            && (instruction.template.opcode_modifier.w
+                || instruction.template.base_opcode == 0x63)) {
             instruction.operands--;
         }
         
@@ -1572,13 +1571,13 @@ static int process_suffix (void)
             int op;
 
             for (op = instruction.operands; --op >= 0; ) {
-                if (operand_type_check (instruction.types[op], simple_reg)
+                if (instruction.types[op].reg
                     && !instruction.template.operand_types[op].shift_count
                     && !instruction.template.operand_types[op].port) {
                 
-                    instruction.suffix = (instruction.types[op].reg8 ? BYTE_SUFFIX
-                                          : instruction.types[op].reg16 ? WORD_SUFFIX
-                                          : instruction.types[op].reg32 ? DWORD_SUFFIX
+                    instruction.suffix = (instruction.types[op].byte ? BYTE_SUFFIX
+                                          : instruction.types[op].word ? WORD_SUFFIX
+                                          : instruction.types[op].dword ? DWORD_SUFFIX
                                           : QWORD_SUFFIX);
                     break;
                 }
@@ -1588,34 +1587,33 @@ static int process_suffix (void)
             if (is_movsx_or_movzx && instruction.template.opcode_modifier.w && !instruction.suffix && !intel_syntax) {
                 instruction.suffix = BYTE_SUFFIX;
             }
+        } else if (instruction.suffix == BYTE_SUFFIX) {
+            if (intel_syntax
+                && (instruction.template.opcode_modifier.ignore_size)
+                && (instruction.template.opcode_modifier.no_bsuf)) {
+                instruction.suffix = 0;
+            } else if (check_byte_reg ()) return 1;
+        } else if (instruction.suffix == WORD_SUFFIX) {
+            if (intel_syntax
+                && (instruction.template.opcode_modifier.ignore_size)
+                && (instruction.template.opcode_modifier.no_wsuf)) {
+                instruction.suffix = 0;
+            } else if (check_word_reg ()) return 1;
+        } else if (instruction.suffix == DWORD_SUFFIX) {
+            if (intel_syntax
+                && (instruction.template.opcode_modifier.ignore_size)
+                && (instruction.template.opcode_modifier.no_lsuf)) {
+                instruction.suffix = 0;
+            } else if (check_dword_reg ()) return 1;
+        } else if (instruction.suffix == QWORD_SUFFIX) {
+            if (intel_syntax
+                && (instruction.template.opcode_modifier.ignore_size)
+                && (instruction.template.opcode_modifier.no_qsuf)) {
+                /* Strips the unnecessary suffix generated by QWORD PTR. */
+                instruction.suffix = 0;
+            } else if (check_qword_reg ()) return 1;
         } else {
-            int ret;
-            
-            switch (instruction.suffix) {
-            
-                case BYTE_SUFFIX:
-                    ret = check_byte_reg ();
-                    break;
-                
-                case WORD_SUFFIX:
-                    ret = check_word_reg ();
-                    break;
-                
-                case DWORD_SUFFIX:
-                    ret = check_dword_reg ();
-                    break;
-
-                case QWORD_SUFFIX:
-                    ret = check_qword_reg ();
-                    break;
-
-                default:
-                    as_internal_error_at_source (__FILE__, __LINE__, "process_suffix invalid case %i", instruction.suffix);
-                    break;
-            
-            }
-            
-            if (ret) return 1;
+            as_internal_error_at_source (__FILE__, __LINE__, "process_suffix invalid suffix %i", instruction.suffix);
         }
         
         /* Undoes the movsx/movzx change done above. */
@@ -1658,6 +1656,7 @@ static int process_suffix (void)
         && !instruction.template.opcode_modifier.default_size
         /* Explicit data size prefix allows determining the size. */
         && !instruction.prefixes[DATA_PREFIX]
+        && !(instruction.prefixes[REX_PREFIX] & REX_W)
         /* fldenv and similar instructions do not require a suffix. */
         && (instruction.template.opcode_modifier.no_ssuf
             || instruction.template.opcode_modifier.float_mf)) {
@@ -1713,10 +1712,12 @@ static int process_suffix (void)
         }
         
         /* Changes the suffix to represent the destination and turns off the W modifier as it was already used above. */
-        if (instruction.template.opcode_modifier.w || !instruction.suffix) {
-            if (instruction.types[1].reg16) {
+        if (instruction.template.opcode_modifier.w
+            || instruction.template.base_opcode == 0x63
+            || !instruction.suffix) {
+            if (instruction.types[1].word) {
                 instruction.suffix = WORD_SUFFIX;
-            } else if (instruction.types[1].reg64) {
+            } else if (instruction.types[1].qword) {
                 instruction.suffix = QWORD_SUFFIX;
             } else {
                 instruction.suffix = DWORD_SUFFIX;
@@ -1777,12 +1778,13 @@ static int process_suffix (void)
             /* Selects word/dword operation based on explicit data size prefix
              * if no suitable register are present. */
             if (instruction.template.opcode_modifier.w
-                && instruction.prefixes[DATA_PREFIX]
+                && (instruction.prefixes[DATA_PREFIX]
+                    || (instruction.prefixes[REX_PREFIX] & REX_W))
                 && (!instruction.reg_operands
                     || (instruction.reg_operands == 1
-                        && !instruction.template.operand_types[0].shift_count
-                        && !instruction.template.operand_types[0].port
-                        && !instruction.template.operand_types[1].port))) {
+                        && (instruction.template.operand_types[0].shift_count
+                            || instruction.template.operand_types[0].port
+                            || instruction.template.operand_types[1].port)))) {
                 instruction.template.base_opcode |= 1;
             }
 
@@ -2090,7 +2092,6 @@ static int intel_float_suffix_translation (const char *mnemonic)
 static char *parse_instruction (char *line)
 {
     const struct template *template;
-    const char *expecting_string_instruction = NULL;
     
     char *p2;
     char saved_ch;
@@ -2103,10 +2104,8 @@ static char *parse_instruction (char *line)
         p2 = line = skip_whitespace (line);
         
         while ((*p2 != ' ') && (*p2 != '\t') && (*p2 != '\0')) {
-        
             *p2 = tolower (*p2);
             p2++;
-        
         }
         
         saved_ch = *p2;
@@ -2114,7 +2113,7 @@ static char *parse_instruction (char *line)
         
         if (line == p2) {
             as_error ("expecting mnemonic; got nothing");
-            goto end;
+            return NULL;
         }
         
         current_templates = find_templates (line);
@@ -2128,18 +2127,16 @@ static char *parse_instruction (char *line)
                  || current_templates->start->opcode_modifier.size32)
                 && ((current_templates->start->opcode_modifier.size32 != 0) ^ (bits == 16))) {
                 as_error ("redundant %s prefix", current_templates->name);
-                current_templates = NULL;
-                goto end;
+                return NULL;
             }
             
             switch (add_prefix (current_templates->start->base_opcode)) {
             
                 case 0:
-                    current_templates = NULL;
-                    goto end;
+                    return NULL;
                 
                 case 2:
-                    expecting_string_instruction = current_templates->name;
+                    instruction.rep_prefix = current_templates->name;
                     break;
             
             }
@@ -2192,7 +2189,7 @@ static char *parse_instruction (char *line)
             
             default:
                 as_error ("no such instruction '%s'", line);
-                goto end;
+                return NULL;
         
         }
         
@@ -2200,21 +2197,18 @@ static char *parse_instruction (char *line)
         
         if (current_templates == NULL) {
             as_error ("no such instruction '%s'", line);
-            goto end;
-        }
-    }
-    
-    if (expecting_string_instruction) {
-        if (!current_templates->start->opcode_modifier.is_string) {
-            as_error ("expecting string instruction after '%s'", expecting_string_instruction);
-            goto end;
+            return NULL;
         }
     }
 
     match = 0;
     for (template = current_templates->start; template < current_templates->end; template++) {
         match |= cpu_flags_match (template);
-        if (match == CPU_FLAGS_PERFECT_MATCH) goto end;
+        if (match == CPU_FLAGS_PERFECT_MATCH) {
+            *p2 = saved_ch;
+            line = p2;
+            return line;
+        }
     }
 
     if (!(match & CPU_FLAGS_64BIT_MATCH)) {
@@ -2228,13 +2222,8 @@ static char *parse_instruction (char *line)
                   cpu_arch_name ? cpu_arch_name : DEFAULT_CPU_ARCH_NAME,
                   cpu_extensions_name ? cpu_extensions_name : "");
     }
-    current_templates = NULL;
-
-end:
-    *p2 = saved_ch;
-    line = p2;
     
-    return (line);
+    return NULL;
 }
 
 static int parse_operands (char **p_line)
@@ -2318,16 +2307,103 @@ static int parse_operands (char **p_line)
 enum x86_error {
     x86_error_number_of_operands_mismatch,
     x86_error_unsupported,
+    x86_error_operand_size_mismatch,
     x86_error_operand_type_mismatch,
     x86_error_invalid_instruction_suffix
 };
 
+static int match_operand_size (const struct template *template,
+                               unsigned int wanted,
+                               unsigned int given)
+{
+    return !((instruction.types[given].byte
+              && !template->operand_types[wanted].byte)
+             || (instruction.types[given].word
+              && !template->operand_types[wanted].word)
+             || (instruction.types[given].dword
+              && !template->operand_types[wanted].dword)
+             || (instruction.types[given].qword
+              && !template->operand_types[wanted].qword)
+             || (instruction.types[given].tbyte
+              && !template->operand_types[wanted].tbyte));
+}
+
+static int match_simd_size (const struct template *template,
+                            unsigned int wanted,
+                            unsigned int given)
+{
+    return !(instruction.types[given].xmmword
+             && !template->operand_types[wanted].xmmword);
+}
+
+static int match_mem_size (const struct template *template,
+                           unsigned int wanted,
+                           unsigned int given)
+{
+    return (match_operand_size (template, wanted, given)
+            && match_simd_size (template, wanted, given)
+            && !(instruction.types[given].fword
+                 && !template->operand_types[wanted].fword));
+}
+
+#define SIZE_MATCH_FORWARD 1
+#define SIZE_MATCH_REVERSE 2
+
+static unsigned int operand_size_match (const struct template *template)
+{
+    unsigned int i, match = SIZE_MATCH_FORWARD;
+
+    for (i = 0; i < instruction.operands; i++) {
+        if ((template->operand_types[i].reg
+             || template->operand_types[i].acc)
+            && !match_operand_size (template, i, i)) {
+            match = 0;
+            break;
+        }
+
+        if (operand_type_check (instruction.types[i], anymem)
+            && !match_mem_size (template, i, i)) {
+            match = 0;
+            break;
+        }
+    }
+
+    if (!template->opcode_modifier.d
+        && !template->opcode_modifier.float_d) {
+        return match;
+    }
+
+    for (i = 0; i < instruction.operands; i++) {
+        unsigned int given = instruction.operands - i - 1;
+        if ((template->operand_types[i].reg
+             || template->operand_types[i].acc)
+            && !match_operand_size (template, i, given)) {
+            match = 0;
+            break;
+        }
+
+        if (operand_type_check (instruction.types[given], anymem)
+            && !match_mem_size (template, i, given)) {
+            return match;
+        }
+    }
+    
+    return match | SIZE_MATCH_REVERSE;
+}
+
 static int operand_type_match (struct operand_type overlap, struct operand_type given)
 {
-    if (overlap.jump_absolute) {
-        if (overlap.jump_absolute != given.jump_absolute) return 0;
-        overlap.jump_absolute = 0;
-    }
+    if (given.jump_absolute
+        && overlap.jump_absolute != given.jump_absolute) return 0;
+    
+    overlap.jump_absolute = 0;
+    overlap.byte = 0;
+    overlap.word = 0;
+    overlap.dword = 0;
+    overlap.fword = 0;
+    overlap.qword = 0;
+    overlap.tbyte = 0;
+    overlap.xmmword = 0;
 
     if (operand_type_all_zero (&overlap)) return 0;
 
@@ -2336,7 +2412,7 @@ static int operand_type_match (struct operand_type overlap, struct operand_type 
     return 1;
 }
 
-static int match_template (void)
+static int match_template (char mnemonic_suffix)
 {
     const struct template *template;
     enum x86_error matching_error;
@@ -2344,7 +2420,7 @@ static int match_template (void)
     unsigned int found_reverse_match = 0;
     struct opcode_modifier suffix_check = {0};
     
-    switch (instruction.suffix) {
+    switch (mnemonic_suffix) {
     
         case BYTE_SUFFIX:
             suffix_check.no_bsuf = 1;
@@ -2376,6 +2452,7 @@ static int match_template (void)
     
     for (template = current_templates->start; template < current_templates->end; template++) {
         struct operand_type operand_type_overlap0, operand_type_overlap1;
+        unsigned int size_match;
         
         if (instruction.operands != template->operands) {
             continue;
@@ -2395,6 +2472,9 @@ static int match_template (void)
             || (template->opcode_modifier.no_intelsuf && suffix_check.no_intelsuf)) {
             continue;
         }
+
+        matching_error = x86_error_operand_size_mismatch;
+        if (!(size_match = operand_size_match (template))) continue;
 
         if (((instruction.suffix == QWORD_SUFFIX
              && bits != 64)
@@ -2421,6 +2501,8 @@ static int match_template (void)
             
             case 2:
             case 3:
+                if (!(size_match & SIZE_MATCH_FORWARD)) goto check_reverse_match;
+                
                 operand_type_overlap1 = operand_type_and (instruction.types[1], template->operand_types[1]);
                 
                 if (!operand_type_match (operand_type_overlap0, instruction.types[0])
@@ -2430,6 +2512,9 @@ static int match_template (void)
                         && !template->opcode_modifier.float_d) {
                         continue;
                     }
+                    
+                check_reverse_match:
+                    if (!(size_match & SIZE_MATCH_REVERSE)) continue;
                     
                     operand_type_overlap0 = operand_type_and (instruction.types[0], template->operand_types[1]);
                     operand_type_overlap1 = operand_type_and (instruction.types[1], template->operand_types[0]);
@@ -2479,6 +2564,10 @@ static int match_template (void)
                 error_msg = "invalid instruction suffix";
                 break;
 
+            case x86_error_operand_size_mismatch:
+                error_msg = "operand size mismatch";
+                break;
+
             case x86_error_operand_type_mismatch:
                 error_msg = "operands invalid";
                 break;
@@ -2505,8 +2594,10 @@ static int match_template (void)
     return 0;
 }
 
-static void build_modrm (void)
+static const struct reg_entry *build_modrm (void)
 {
+    const struct reg_entry *default_segment = NULL;
+    
     if (instruction.reg_operands == 2) {
         unsigned int source, dest;
         
@@ -2533,6 +2624,8 @@ static void build_modrm (void)
             
             for (operand = 0; operand < instruction.operands; operand++)
                 if (operand_type_check (instruction.types[operand], anymem)) break;
+
+            default_segment = reg_ds;
             
             if (instruction.base_reg == NULL) {
                 instruction.modrm.mode = 0;
@@ -2575,7 +2668,7 @@ static void build_modrm (void)
                 instruction.types[operand].disp32 = 1;
                 instruction.special_types[operand] |= OPERAND_PCREL;
                 if (instruction.disp_operands == 0) fake_zero_displacement = 1;
-            } else if (instruction.base_reg->type.reg16) {
+            } else if (instruction.base_reg->type.word) {
                 switch (instruction.base_reg->number) {
                 
                     case 3:
@@ -2587,7 +2680,8 @@ static void build_modrm (void)
                         
                         break;
                     
-                    case 5:
+                    case 5: /* (%bp) */
+                        default_segment = reg_ss;
                         if (instruction.index_reg == NULL) {
                             instruction.modrm.regmem = 6;
                             
@@ -2622,6 +2716,11 @@ static void build_modrm (void)
                 
                 instruction.sib.base = instruction.base_reg->number;
                 instruction.sib.scale = instruction.log2_scale_factor;
+
+                if (instruction.base_reg->number == ESP_REG_NUM
+                    || instruction.base_reg->number == EBP_REG_NUM) {
+                    default_segment = reg_ss;
+                }
                 
                 if (instruction.base_reg->number == 5 && instruction.disp_operands == 0) {
                     fake_zero_displacement = 1;
@@ -2673,10 +2772,14 @@ static void build_modrm (void)
             instruction.modrm.reg = instruction.template.extension_opcode;
         }
     }
+
+    return default_segment;
 }
 
 static int process_operands (void)
 {
+    const struct reg_entry *default_segment = NULL;
+    
     if (instruction.template.opcode_modifier.immext) {
         /* Some instructions have extension opcode encoded
          * as 1 byte immediate operand at the end of the instruction
@@ -2697,7 +2800,7 @@ static int process_operands (void)
     }
     
     if (instruction.template.opcode_modifier.reg_duplication) {
-        unsigned int first_reg_operand = operand_type_check (instruction.types[0], simple_reg) ? 0 : 1;
+        unsigned int first_reg_operand = instruction.types[0].reg ? 0 : 1;
         
         instruction.regs[first_reg_operand + 1] = instruction.regs[first_reg_operand];
         instruction.types[first_reg_operand + 1] = instruction.types[first_reg_operand];
@@ -2705,13 +2808,17 @@ static int process_operands (void)
     }
     
     if (instruction.template.opcode_modifier.short_form) {
-        int operand = (operand_type_check (instruction.types[0], simple_reg)
+        int operand = (instruction.types[0].reg
                        || instruction.types[0].float_reg) ? 0 : 1;
         instruction.template.base_opcode |= instruction.regs[operand]->number;
         if (instruction.regs[operand]->type.reg_rex) instruction.rex |= REX_B;
     }
     
-    if (instruction.template.opcode_modifier.modrm) build_modrm ();
+    if (instruction.template.opcode_modifier.modrm) default_segment = build_modrm ();
+
+    if ((instruction.template.base_opcode & ~3) == 0xA0 /* mov DISP32, %eax */) {
+        default_segment = reg_ds;
+    }
     
     if (instruction.template.opcode_modifier.segshortform) {
         if ((instruction.template.base_opcode == POP_SEGMENT_SHORT)
@@ -2723,15 +2830,10 @@ static int process_operands (void)
         instruction.template.base_opcode |= instruction.regs[0]->number << 3;
     }
     
-    {
-        int operand;
-        
-        for (operand = 0; operand < instruction.operands; operand++) {
-            if (instruction.segments[operand]) {
-                add_prefix (segment_prefixes[instruction.segments[operand]->number]);
-                break;
-            }
-        }
+    if (instruction.segments[0]
+        && instruction.segments[0] != default_segment
+        && segment_prefixes[instruction.segments[0]->number] != instruction.prefixes[SEGMENT_PREFIX]) {
+        if (!add_prefix (segment_prefixes[instruction.segments[0]->number])) return 1;
     }
     
     return 0;
@@ -2773,17 +2875,19 @@ static void swap_operands (void)
     }
 }
 
-char *machine_dependent_assemble_line (char *line)
+void machine_dependent_assemble_line (char *line)
 {
+    char mnemonic_suffix;
+
     memset (&instruction, 0, sizeof (instruction));
     memset (operand_exprs, 0, sizeof (operand_exprs));
     operand_exprs_count = 0;
     
     line = parse_instruction (line);
+    if (!line) return;
+    mnemonic_suffix = instruction.suffix;
     
-    if (current_templates == NULL || parse_operands (&line)) {
-        goto skip;
-    }
+    if (parse_operands (&line)) return;
     
     /* All Intel instructions have reversed operands except "bound" and some other.
      * "ljmp" and "lcall" with 2 immediate operands also do not have operands reversed. */
@@ -2801,12 +2905,19 @@ char *machine_dependent_assemble_line (char *line)
         && (bits != 64
             || strcmp (current_templates->name, "movabs"))) optimize_size_of_disps ();
     
-    if (match_template () || process_suffix () || finalize_imms ()) {
-        goto skip;
+    if (match_template (mnemonic_suffix) || process_suffix () || finalize_imms ()) {
+        return;
     }
     
     if (instruction.template.opcode_modifier.add_fwait) {
-        if (!add_prefix (FWAIT_OPCODE)) goto skip;
+        if (!add_prefix (FWAIT_OPCODE)) return;
+    }
+
+    if (instruction.prefixes[REP_PREFIX]
+        && !instruction.template.opcode_modifier.is_string) {
+        as_error ("invalid instruction '%s' after '%s'",
+                  instruction.template.name, instruction.rep_prefix);
+        return;
     }
     
     if (instruction.template.operand_types[0].acc
@@ -2820,7 +2931,7 @@ char *machine_dependent_assemble_line (char *line)
     }
     
     if (instruction.operands) {
-        if (process_operands ()) goto skip;
+        if (process_operands ()) return;
     }
 
     /* int $3 should be converted to the one byte INT3. */
@@ -2835,7 +2946,8 @@ char *machine_dependent_assemble_line (char *line)
         int operand;
 
         for (operand = 0; operand < MAX_OPERANDS; operand++) {
-            if (instruction.types[operand].reg8
+            if (instruction.types[operand].reg
+                && instruction.types[operand].byte
                 && instruction.regs[operand]->type.reg_rex64) {
                 instruction.rex |= REX_PREFIX_OPCODE;
                 break;
@@ -2847,7 +2959,8 @@ char *machine_dependent_assemble_line (char *line)
         int operand;
 
         for (operand = 0; operand < MAX_OPERANDS; operand++) {
-            if (instruction.types[operand].reg8
+            if (instruction.types[operand].reg
+                && instruction.types[operand].byte
                 && !instruction.regs[operand]->type.reg_rex64) {
                 /* %ah is replaced by %spl when REX prefix is used... */
                 if (instruction.regs[operand]->number > 3) {
@@ -2909,7 +3022,7 @@ char *machine_dependent_assemble_line (char *line)
             if (instruction.modrm.regmem == MODRM_REGMEM_TWO_BYTE_ADDRESSING
                 && instruction.modrm.mode != 3
                 && !(instruction.base_reg
-                     && instruction.base_reg->type.reg16)) {
+                     && instruction.base_reg->type.word)) {
                 frag_append_1_char (((instruction.sib.base << 0)
                                      | (instruction.sib.index << 3)
                                      | (instruction.sib.scale << 6)));
@@ -2919,26 +3032,6 @@ char *machine_dependent_assemble_line (char *line)
         output_disps ();
         output_imms ();
     }
-    
-    return line;
-    
-skip:
-
-    while (*line != '\0') {
-        if (line[0] == '#') {
-            break;
-        }
-        
-        if (line[0] == '/') {
-            if (line[1] == '/' || line[1] == '*') {
-                break;
-            }
-        }
-        
-        line++;
-    }
-    
-    return line;
 }
 
 int machine_dependent_force_relocation_local (struct fixup *fixup)
