@@ -643,11 +643,11 @@ SETcc ("setg", 0x0F9F)
 "fnstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM | Word }
 "fstcw", 0xD9, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM | Word }
 
-"fnstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | IGNORE_SIZE, { ACC }
+"fnstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | IGNORE_SIZE, { ACC | Word }
 "fnstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | MODRM, { ANY_MEM | Word }
 "fnstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF, {}
 
-"fstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | ADD_FWAIT | IGNORE_SIZE, { ACC }
+"fstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | ADD_FWAIT | IGNORE_SIZE, { ACC | Word }
 "fstsw", 0xDD, 7, CPU_FP, W_SUF | IGNORE_SIZE | ADD_FWAIT | MODRM, { ANY_MEM | Word }
 "fstsw", 0xDFE0, NONE, CPU_287 | CPU_387, NO_SUF | ADD_FWAIT, {}
 
