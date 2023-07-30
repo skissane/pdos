@@ -103,14 +103,12 @@ void add_listing_line (char *real_line, size_t real_line_len, const char *filena
 
 }
 
-void add_listing_message (char *message, const char *filename, unsigned long line_number) {
-
+void add_listing_message (char *message, const char *filename, unsigned long line_number)
+{
     struct ll *ll;
     
     for (ll = first_line; ll; ll = ll->next) {
-    
         if (ll->line_number == line_number && strcmp (ll->filename, filename) == 0) {
-        
             struct listing_message *lm = xmalloc (sizeof (*lm));
             
             lm->message = message;
@@ -124,11 +122,14 @@ void add_listing_message (char *message, const char *filename, unsigned long lin
             
             ll->last_message = lm;
             return;
-        
         }
-    
     }
-
+    /* It is possible that the listing line
+     * to which the message should belong
+     * does not actually exist
+     * (such case is warning "end of file not at end of line")
+     * and the message cannot be displayed, so it should be freed now. */
+    free (message);
 }
 
 void generate_listing (void) {
