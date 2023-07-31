@@ -61,10 +61,12 @@ void CTYP __close(int handle)
     return;
 }
 
-void CTYP __devginfo(int handle, unsigned int *info)
+int CTYP __devginfo(int handle, unsigned int *info)
 {
-    PosGetDeviceInformation(handle, info);
-    return;
+    int rc;
+
+    rc = PosGetDeviceInformation(handle, info);
+    return (rc);
 }
 
 void CTYP __devsinfo(int handle, unsigned int info)

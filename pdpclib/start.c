@@ -269,7 +269,7 @@ static unsigned int stdin_dw;
 #endif
 
 #if defined(__MSDOS__)
-extern void CTYP __devginfo(int handle, unsigned int *info);
+extern int CTYP __devginfo(int handle, unsigned int *info);
 extern void CTYP __devsinfo(int handle, unsigned int info);
 static unsigned int stdin_dw;
 #endif

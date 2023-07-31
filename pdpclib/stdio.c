@@ -114,7 +114,7 @@ extern int CTYP __seek(int handle, long offset, int whence);
 extern void CTYP __close(int handle);
 extern void CTYP __remove(const char *filename);
 extern void CTYP __rename(const char *old, const char *newnam);
-extern void CTYP __devginfo(int handle, unsigned int *info);
+extern int CTYP __devginfo(int handle, unsigned int *info);
 extern void CTYP __devsinfo(int handle, unsigned int info);
 #endif
 
