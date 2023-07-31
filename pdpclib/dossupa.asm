@@ -253,7 +253,7 @@ ret
 __close endp
 
 
-; extern void CTYP __devginfo(int handle, unsigned int *info);
+; extern int CTYP __devginfo(int handle, unsigned int *info);
 
 public __devginfo
 __devginfo proc uses ds bx dx, handle:word, info:ptr
@@ -264,13 +264,20 @@ mov bx, handle
 
 int 021h
 
+jc dgifail
+
 if @DataSize
 lds bx, info
 else
 mov bx, info
 endif
 
-mov word ptr [info], dx
+;mov word ptr [info], dx
+mov word ptr [bx], dx
+mov ax, 0
+ret
+
+dgifail:
 
 ret
 __devginfo endp
