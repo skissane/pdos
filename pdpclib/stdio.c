@@ -4085,6 +4085,15 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             dw &= 0xff;
             dw |= (1 << 5);
             __devsinfo(0, dw);
+            /* Although reading from MSDOS is not subject to line buffering
+               when in raw mode, the read will not return until the number
+               of bytes requested has been satisfied, so we need to reduce
+               buffer reads to 1 ourselves (at least as tested with
+               Freedos) */
+            stream->szfbuf = 1;
+            stream->endbuf = stream->fbuf + stream->szfbuf;
+            *stream->endbuf = '\n';
+            stream->upto = stream->endbuf;
         }
 #endif
         return (0);
