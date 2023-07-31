@@ -12,6 +12,13 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* Documentation for the El Torito spec can be found here:
+
+https://web.archive.org/web/20180112220141/
+https://download.intel.com/support/motherboards/desktop/sb/specscdrom.pdf
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
