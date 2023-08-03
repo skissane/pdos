@@ -194,6 +194,50 @@ void write_struct_optional_header (void *memory, struct optional_header_internal
     COPY(optional_header, NumberOfRvaAndSizes, 4);
 }
 
+void write_struct_optional_header_plus (void *memory, struct optional_header_plus_internal *optional_header_plus_internal)
+{
+    struct optional_header_plus_file *optional_header_plus_file = memory;
+
+    COPY(optional_header_plus, Magic, 2);
+    COPY(optional_header_plus, MajorLinkerVersion, 1);
+    COPY(optional_header_plus, MinorLinkerVersion, 1);
+    COPY(optional_header_plus, SizeOfCode, 4);
+    COPY(optional_header_plus, SizeOfInitializedData, 4);
+    COPY(optional_header_plus, SizeOfUninitializedData, 4);
+    COPY(optional_header_plus, AddressOfEntryPoint, 4);
+    COPY(optional_header_plus, BaseOfCode, 4);
+
+    COPY(optional_header_plus, ImageBase, 4);
+    COPY(optional_header_plus, ImageBase_hi, 4);
+    
+    COPY(optional_header_plus, SectionAlignment, 4);
+    COPY(optional_header_plus, FileAlignment, 4);
+    COPY(optional_header_plus, MajorOperatingSystemVersion, 2);
+    COPY(optional_header_plus, MinorOperatingSystemVersion, 2);
+    COPY(optional_header_plus, MajorImageVersion, 2);
+    COPY(optional_header_plus, MinorImageVersion, 2);
+    COPY(optional_header_plus, MajorSubsystemVersion, 2);
+    COPY(optional_header_plus, MinorSubsystemVersion, 2);
+    COPY(optional_header_plus, Win32VersionValue, 4);
+    COPY(optional_header_plus, SizeOfImage, 4);
+    COPY(optional_header_plus, SizeOfHeaders, 4);
+    COPY(optional_header_plus, CheckSum, 4);
+    COPY(optional_header_plus, Subsystem, 2);
+    COPY(optional_header_plus, DllCharacteristics, 2);
+    
+    COPY(optional_header_plus, SizeOfStackReserve, 4);
+    COPY(optional_header_plus, SizeOfStackReserve_hi, 4);
+    COPY(optional_header_plus, SizeOfStackCommit, 4);
+    COPY(optional_header_plus, SizeOfStackCommit_hi, 4);
+    COPY(optional_header_plus, SizeOfHeapReserve, 4);
+    COPY(optional_header_plus, SizeOfHeapReserve_hi, 4);
+    COPY(optional_header_plus, SizeOfHeapCommit, 4);
+    COPY(optional_header_plus, SizeOfHeapCommit_hi, 4);
+    
+    COPY(optional_header_plus, LoaderFlags, 4);
+    COPY(optional_header_plus, NumberOfRvaAndSizes, 4);
+}
+
 void write_struct_IMAGE_DATA_DIRECTORY (void *memory, struct IMAGE_DATA_DIRECTORY_internal *IMAGE_DATA_DIRECTORY_internal)
 {
     struct IMAGE_DATA_DIRECTORY_file *IMAGE_DATA_DIRECTORY_file = memory;

@@ -19,6 +19,7 @@ void read_struct_IMPORT_OBJECT_HEADER (struct IMPORT_OBJECT_HEADER_internal *IMP
 void write_struct_IMAGE_DOS_HEADER (void *memory, struct IMAGE_DOS_HEADER_internal *IMAGE_DOS_HEADER_internal);
 void write_struct_coff_header (void *memory, struct coff_header_internal *coff_header_internal);
 void write_struct_optional_header (void *memory, struct optional_header_internal *optional_header_internal);
+void write_struct_optional_header_plus (void *memory, struct optional_header_plus_internal *optional_header_plus_internal);
 void write_struct_IMAGE_DATA_DIRECTORY (void *memory, struct IMAGE_DATA_DIRECTORY_internal *IMAGE_DATA_DIRECTORY_internal);
 void write_struct_section_table_entry (void *memory, struct section_table_entry_internal *section_table_entry_internal);
 void write_struct_IMAGE_EXPORT_DIRECTORY (void *memory, struct IMAGE_EXPORT_DIRECTORY_internal *IMAGE_EXPORT_DIRECTORY_internal);

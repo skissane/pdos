@@ -70,6 +70,7 @@ struct coff_header_file {
 #define     IMAGE_FILE_EXECUTABLE_IMAGE                     0x0002
 #define     IMAGE_FILE_LINE_NUMS_STRIPPED                   0x0004 /* Deprecated, should be 0. */
 #define     IMAGE_FILE_LOCAL_SYMS_STRIPPED                  0x0008 /* Deprecated, should be 0. */
+#define     IMAGE_FILE_LARGE_ADDRESS_AWARE                  0x0020
 #define     IMAGE_FILE_32BIT_MACHINE                        0x0100
 #define     IMAGE_FILE_DEBUG_STRIPPED                       0x0200
 #define     IMAGE_FILE_DLL                                  0x2000
@@ -145,6 +146,93 @@ struct optional_header_file {
     unsigned char SizeOfStackCommit[4];
     unsigned char SizeOfHeapReserve[4];
     unsigned char SizeOfHeapCommit[4];
+    unsigned char LoaderFlags[4];
+    unsigned char NumberOfRvaAndSizes[4];
+
+};
+
+struct optional_header_plus_internal {
+
+    unsigned short Magic;
+    unsigned char MajorLinkerVersion;
+    unsigned char MinorLinkerVersion;
+    unsigned long SizeOfCode;
+    unsigned long SizeOfInitializedData;
+    unsigned long SizeOfUninitializedData;
+    unsigned long AddressOfEntryPoint;
+    unsigned long BaseOfCode;
+
+    /* Split into 2 fields so 64-bit int is not needed. */
+    unsigned long ImageBase;
+    unsigned long ImageBase_hi;
+    
+    unsigned long SectionAlignment;
+    unsigned long FileAlignment;
+    unsigned short MajorOperatingSystemVersion;
+    unsigned short MinorOperatingSystemVersion;
+    unsigned short MajorImageVersion;
+    unsigned short MinorImageVersion;
+    unsigned short MajorSubsystemVersion;
+    unsigned short MinorSubsystemVersion;
+    unsigned long Win32VersionValue; /* Reserved, must be 0. */
+    unsigned long SizeOfImage; /* Must be multiple of SectionAlignment. */
+    unsigned long SizeOfHeaders; /* Rounded up to FileAlignment. */
+    unsigned long CheckSum;
+    unsigned short Subsystem;
+    unsigned short DllCharacteristics;
+    
+    unsigned long SizeOfStackReserve;
+    unsigned long SizeOfStackReserve_hi;
+    unsigned long SizeOfStackCommit;
+    unsigned long SizeOfStackCommit_hi;
+    unsigned long SizeOfHeapReserve;
+    unsigned long SizeOfHeapReserve_hi;
+    unsigned long SizeOfHeapCommit;
+    unsigned long SizeOfHeapCommit_hi;
+    
+    unsigned long LoaderFlags; /* Reserved, must be 0. */
+    unsigned long NumberOfRvaAndSizes;
+
+};
+
+struct optional_header_plus_file {
+
+    unsigned char Magic[2];
+    unsigned char MajorLinkerVersion[1];
+    unsigned char MinorLinkerVersion[1];
+    unsigned char SizeOfCode[4];
+    unsigned char SizeOfInitializedData[4];
+    unsigned char SizeOfUninitializedData[4];
+    unsigned char AddressOfEntryPoint[4];
+    unsigned char BaseOfCode[4];
+
+    unsigned char ImageBase[4];
+    unsigned char ImageBase_hi[4];
+    
+    unsigned char SectionAlignment[4];
+    unsigned char FileAlignment[4];
+    unsigned char MajorOperatingSystemVersion[2];
+    unsigned char MinorOperatingSystemVersion[2];
+    unsigned char MajorImageVersion[2];
+    unsigned char MinorImageVersion[2];
+    unsigned char MajorSubsystemVersion[2];
+    unsigned char MinorSubsystemVersion[2];
+    unsigned char Win32VersionValue[4];
+    unsigned char SizeOfImage[4];
+    unsigned char SizeOfHeaders[4];
+    unsigned char CheckSum[4];
+    unsigned char Subsystem[2];
+    unsigned char DllCharacteristics[2];
+    
+    unsigned char SizeOfStackReserve[4];
+    unsigned char SizeOfStackReserve_hi[4];
+    unsigned char SizeOfStackCommit[4];
+    unsigned char SizeOfStackCommit_hi[4];
+    unsigned char SizeOfHeapReserve[4];
+    unsigned char SizeOfHeapReserve_hi[4];
+    unsigned char SizeOfHeapCommit[4];
+    unsigned char SizeOfHeapCommit_hi[4];
+    
     unsigned char LoaderFlags[4];
     unsigned char NumberOfRvaAndSizes[4];
 

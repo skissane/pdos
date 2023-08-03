@@ -41,6 +41,8 @@ static int convert_to_flat = 0;
 
 static address_type user_specified_base_address = 0;
 
+static unsigned short wanted_Machine = 0;
+
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
 static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
 static unsigned short MajorSubsystemVersion = 4;
@@ -665,11 +667,19 @@ void coff_before_link (void)
         section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
     }
 
-    size_of_headers = (sizeof (struct IMAGE_DOS_HEADER_file) + 4 /* "PE\0\0" */
-                       + sizeof (struct coff_header_file)
-                       + sizeof (struct optional_header_file)
-                       + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
-                       + sizeof (struct section_table_entry_file) * section_count ());
+    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        size_of_headers = (sizeof (struct IMAGE_DOS_HEADER_file) + 4 /* "PE\0\0" */
+                           + sizeof (struct coff_header_file)
+                           + sizeof (struct optional_header_plus_file)
+                           + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
+                           + sizeof (struct section_table_entry_file) * section_count ());
+    } else {
+        size_of_headers = (sizeof (struct IMAGE_DOS_HEADER_file) + 4 /* "PE\0\0" */
+                           + sizeof (struct coff_header_file)
+                           + sizeof (struct optional_header_file)
+                           + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
+                           + sizeof (struct section_table_entry_file) * section_count ());
+    }
     size_of_headers = ALIGN (size_of_headers, FileAlignment);
 
     /* .idata$2 contains Import Directory Table which needs to be terminated with null entry. */
@@ -921,6 +931,7 @@ void coff_write (const char *filename)
     struct IMAGE_DOS_HEADER_internal dos_hdr;
     struct coff_header_internal coff_hdr;
     struct optional_header_internal optional_hdr;
+    struct optional_header_plus_internal optional_hdr_plus;
 
     struct section *section;
 
@@ -961,7 +972,7 @@ void coff_write (const char *filename)
     memcpy (pos, "PE\0\0", 4);
     pos += 4;
 
-    coff_hdr.Machine = IMAGE_FILE_MACHINE_I386;
+    coff_hdr.Machine = wanted_Machine;
     coff_hdr.NumberOfSections = section_count ();
     
     if (insert_timestamp) {
@@ -976,61 +987,117 @@ void coff_write (const char *filename)
     
     coff_hdr.PointerToSymbolTable = 0;
     coff_hdr.NumberOfSymbols = 0;
-    coff_hdr.SizeOfOptionalHeader = (sizeof (struct optional_header_file)
-                                     + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file));
+    coff_hdr.SizeOfOptionalHeader = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                                     ? sizeof (struct optional_header_plus_file)
+                                     : sizeof (struct optional_header_file));   
+    coff_hdr.SizeOfOptionalHeader += NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file);
     
-    coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_DEBUG_STRIPPED;
+    coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DEBUG_STRIPPED;
+    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        coff_hdr.Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    } else {
+        coff_hdr.Characteristics |= IMAGE_FILE_32BIT_MACHINE;
+    }
+    
     if (ld_state->create_shared_library) coff_hdr.Characteristics |= IMAGE_FILE_DLL;
     if (!can_be_relocated) coff_hdr.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
 
     write_struct_coff_header (pos, &coff_hdr);
     pos += sizeof (struct coff_header_file);
 
-    memset (&optional_hdr, 0, sizeof (optional_hdr));
+    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        memset (&optional_hdr_plus, 0, sizeof (optional_hdr_plus));
 
-    optional_hdr.Magic = IMAGE_NT_OPTIONAL_HDR32_MAGIC;
-    optional_hdr.MajorLinkerVersion = LD_MAJOR_VERSION;
-    optional_hdr.MinorLinkerVersion = LD_MINOR_VERSION;
-    
-    /* Seems that these 3 fields should be rounded up to FileAlignment. */
-    optional_hdr.SizeOfCode = ALIGN (size_of_code, FileAlignment);
-    optional_hdr.SizeOfInitializedData = ALIGN (size_of_initialized_data, FileAlignment);
-    optional_hdr.SizeOfUninitializedData = ALIGN (size_of_uninitialized_data, FileAlignment);
+        optional_hdr_plus.Magic = PE32_PLUS_MAGIC;
+        optional_hdr_plus.MajorLinkerVersion = LD_MAJOR_VERSION;
+        optional_hdr_plus.MinorLinkerVersion = LD_MINOR_VERSION;
+        
+        /* Seems that these 3 fields should be rounded up to FileAlignment. */
+        optional_hdr_plus.SizeOfCode = ALIGN (size_of_code, FileAlignment);
+        optional_hdr_plus.SizeOfInitializedData = ALIGN (size_of_initialized_data, FileAlignment);
+        optional_hdr_plus.SizeOfUninitializedData = ALIGN (size_of_uninitialized_data, FileAlignment);
 
-    optional_hdr.AddressOfEntryPoint = ld_state->entry_point;
+        optional_hdr_plus.AddressOfEntryPoint = ld_state->entry_point;
 
-    optional_hdr.BaseOfCode = base_of_code;
-    optional_hdr.BaseOfData = base_of_data;
+        optional_hdr_plus.BaseOfCode = base_of_code;
 
-    optional_hdr.ImageBase = ld_state->base_address;
-    optional_hdr.SectionAlignment = SectionAlignment;
-    optional_hdr.FileAlignment = FileAlignment;
+        optional_hdr_plus.ImageBase = ld_state->base_address;
+        
+        optional_hdr_plus.SectionAlignment = SectionAlignment;
+        optional_hdr_plus.FileAlignment = FileAlignment;
 
-    optional_hdr.MajorOperatingSystemVersion = 4;
-    optional_hdr.MajorImageVersion = 1;
-    optional_hdr.MajorSubsystemVersion = MajorSubsystemVersion;
-    optional_hdr.MinorSubsystemVersion = MinorSubsystemVersion;
+        optional_hdr_plus.MajorOperatingSystemVersion = 4;
+        optional_hdr_plus.MajorImageVersion = 1;
+        optional_hdr_plus.MajorSubsystemVersion = MajorSubsystemVersion;
+        optional_hdr_plus.MinorSubsystemVersion = MinorSubsystemVersion;
 
-    if (last_section) optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
-    else optional_hdr.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
-    optional_hdr.SizeOfHeaders = size_of_headers;
+        if (last_section) optional_hdr_plus.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
+        else optional_hdr_plus.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
+        optional_hdr_plus.SizeOfHeaders = size_of_headers;
 
-    optional_hdr.Subsystem = Subsystem;
-    
-    optional_hdr.DllCharacteristics = 0;
-    if (nx_compat) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
-    if (can_be_relocated) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+        optional_hdr_plus.Subsystem = Subsystem;
+        
+        optional_hdr_plus.DllCharacteristics = 0;
+        if (nx_compat) optional_hdr_plus.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+        if (can_be_relocated) optional_hdr_plus.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
 
-    /* No idea how to determine the following. */
-    optional_hdr.SizeOfStackReserve = 0x200000;
-    optional_hdr.SizeOfStackCommit = 0x1000;
-    optional_hdr.SizeOfHeapReserve = 0x100000;
-    optional_hdr.SizeOfHeapCommit = 0x1000;
+        /* No idea how to determine the following. */
+        optional_hdr_plus.SizeOfStackReserve = 0x200000;
+        optional_hdr_plus.SizeOfStackCommit = 0x1000;
+        optional_hdr_plus.SizeOfHeapReserve = 0x100000;
+        optional_hdr_plus.SizeOfHeapCommit = 0x1000;
 
-    optional_hdr.NumberOfRvaAndSizes = NUMBER_OF_DATA_DIRECTORIES;
+        optional_hdr_plus.NumberOfRvaAndSizes = NUMBER_OF_DATA_DIRECTORIES;
 
-    write_struct_optional_header (pos, &optional_hdr);
-    pos += sizeof (struct optional_header_file);
+        write_struct_optional_header_plus (pos, &optional_hdr_plus);
+        pos += sizeof (struct optional_header_plus_file);
+    } else {
+        memset (&optional_hdr, 0, sizeof (optional_hdr));
+
+        optional_hdr.Magic = IMAGE_NT_OPTIONAL_HDR32_MAGIC;
+        optional_hdr.MajorLinkerVersion = LD_MAJOR_VERSION;
+        optional_hdr.MinorLinkerVersion = LD_MINOR_VERSION;
+        
+        /* Seems that these 3 fields should be rounded up to FileAlignment. */
+        optional_hdr.SizeOfCode = ALIGN (size_of_code, FileAlignment);
+        optional_hdr.SizeOfInitializedData = ALIGN (size_of_initialized_data, FileAlignment);
+        optional_hdr.SizeOfUninitializedData = ALIGN (size_of_uninitialized_data, FileAlignment);
+
+        optional_hdr.AddressOfEntryPoint = ld_state->entry_point;
+
+        optional_hdr.BaseOfCode = base_of_code;
+        optional_hdr.BaseOfData = base_of_data;
+
+        optional_hdr.ImageBase = ld_state->base_address;
+        optional_hdr.SectionAlignment = SectionAlignment;
+        optional_hdr.FileAlignment = FileAlignment;
+
+        optional_hdr.MajorOperatingSystemVersion = 4;
+        optional_hdr.MajorImageVersion = 1;
+        optional_hdr.MajorSubsystemVersion = MajorSubsystemVersion;
+        optional_hdr.MinorSubsystemVersion = MinorSubsystemVersion;
+
+        if (last_section) optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
+        else optional_hdr.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
+        optional_hdr.SizeOfHeaders = size_of_headers;
+
+        optional_hdr.Subsystem = Subsystem;
+        
+        optional_hdr.DllCharacteristics = 0;
+        if (nx_compat) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+        if (can_be_relocated) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+
+        /* No idea how to determine the following. */
+        optional_hdr.SizeOfStackReserve = 0x200000;
+        optional_hdr.SizeOfStackCommit = 0x1000;
+        optional_hdr.SizeOfHeapReserve = 0x100000;
+        optional_hdr.SizeOfHeapCommit = 0x1000;
+
+        optional_hdr.NumberOfRvaAndSizes = NUMBER_OF_DATA_DIRECTORIES;
+
+        write_struct_optional_header (pos, &optional_hdr);
+        pos += sizeof (struct optional_header_file);
+    }
 
     {
         int i;
@@ -1084,13 +1151,18 @@ void coff_write (const char *filename)
     }
 
     for (section = all_sections; section; section = section->next) {
-
         struct section_table_entry_internal *hdr = section->object_dependent_data;
 
         write_struct_section_table_entry (pos, hdr);
         pos += sizeof (struct section_table_entry_file);
 
         free (hdr);
+    }
+
+    if (convert_to_flat
+        && wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        ld_error ("--convert-to-flat is not supported for 64-bit");
+        convert_to_flat = 0;
     }
 
     if (convert_to_flat) {
@@ -1195,6 +1267,13 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     pos = file;
     CHECK_READ (pos, sizeof (struct coff_header_file));
     read_struct_coff_header (&coff_hdr, pos);
+
+    if (wanted_Machine && wanted_Machine != coff_hdr.Machine) {
+        ld_error ("Machine field mismatch between objects");
+        return;
+    }
+
+    wanted_Machine = coff_hdr.Machine;
 
     pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, sizeof (struct string_table_header_file));
@@ -1791,7 +1870,8 @@ static int read_coff_archive_member (unsigned char *file, size_t file_size, unsi
 
     CHECK_READ (pos, 2);
     bytearray_read_2_bytes (&Machine, pos, LITTLE_ENDIAN);
-    if (Machine == IMAGE_FILE_MACHINE_I386) {
+    if (Machine == IMAGE_FILE_MACHINE_I386
+        || Machine == IMAGE_FILE_MACHINE_AMD64) {
         read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
         ret = 1;
     } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
@@ -1914,8 +1994,10 @@ void coff_read (const char *filename)
 
     bytearray_read_2_bytes (&Machine, file, LITTLE_ENDIAN);
 
-    if (Machine == IMAGE_FILE_MACHINE_I386) read_coff_object (file, file_size, filename);
-    else if (memcmp (file, IMAGE_ARCHIVE_START, strlen (IMAGE_ARCHIVE_START)) == 0) {
+    if (Machine == IMAGE_FILE_MACHINE_I386
+        || Machine == IMAGE_FILE_MACHINE_AMD64) {
+        read_coff_object (file, file_size, filename);
+    } else if (memcmp (file, IMAGE_ARCHIVE_START, strlen (IMAGE_ARCHIVE_START)) == 0) {
         read_coff_archive (file, file_size, filename);
     } else ld_error ("unrecognized file format");
 
