@@ -615,7 +615,9 @@ static int check_reloc_section_needed_section_part (struct section_part *part)
     
     relocs = part->relocation_array;
     for (i = 0; i < part->relocation_count; i++) {
-        if (relocs[i].Type == IMAGE_REL_I386_DIR32) return 1;
+        if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+            if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64) return 1;
+        } else if (relocs[i].Type == IMAGE_REL_I386_DIR32) return 1;
     }
     
     return 0;
@@ -706,10 +708,107 @@ void coff_before_link (void)
     iat_last_part = part;
 }
 
+static void coff_relocate_part_64 (struct section_part *part)
+{
+    struct relocation_entry_internal *relocs;
+    size_t i;
+    
+    relocs = part->relocation_array;
+    for (i = 0; i < part->relocation_count; i++) {
+
+        struct symbol *symbol;
+
+        if (relocs[i].Type == IMAGE_REL_AMD64_ABSOLUTE) continue;
+
+        symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
+        if (symbol_is_undefined (symbol)) {
+            if ((symbol = symbol_find (symbol->name)) == NULL) {
+                ld_internal_error_at_source (__FILE__, __LINE__, "external symbol not found in hashtab");
+            }
+            if (symbol_is_undefined (symbol)) {
+                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
+                          part->of->filename,
+                          part->section->name,
+                          relocs[i].VirtualAddress,
+                          symbol->name);
+                continue;
+            }
+        }
+
+        switch (relocs[i].Type) {
+
+            case IMAGE_REL_AMD64_ADDR64:
+                {
+                    unsigned long result;
+
+                    /* It should be actually 8 bytes but 64-bit int is not yet available. */
+                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
+
+                    result += symbol_get_value_with_base (symbol);
+
+                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
+                }
+                break;
+
+            case IMAGE_REL_AMD64_ADDR32NB:
+                {
+                    unsigned long result;
+
+                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
+
+                    result += symbol_get_value_no_base (symbol);
+
+                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
+                }
+                break;
+
+            case IMAGE_REL_AMD64_REL32:
+                {
+                    unsigned long result;
+
+                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
+
+                    result += symbol_get_value_no_base (symbol) - (part->rva + relocs[i].VirtualAddress) - 4;
+
+                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
+                }
+                break;
+            
+            case IMAGE_REL_AMD64_ADDR32:
+            case IMAGE_REL_AMD64_REL32_1:
+            case IMAGE_REL_AMD64_REL32_2:
+            case IMAGE_REL_AMD64_REL32_3:
+            case IMAGE_REL_AMD64_REL32_4:
+            case IMAGE_REL_AMD64_REL32_5:
+            case IMAGE_REL_AMD64_SECTION:
+            case IMAGE_REL_AMD64_SECREL:
+            case IMAGE_REL_AMD64_SECREL7:
+            case IMAGE_REL_AMD64_TOKEN:
+            case IMAGE_REL_AMD64_SREL32:
+            case IMAGE_REL_AMD64_PAIR:
+            case IMAGE_REL_AMD64_SSPAN32:
+                ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", relocs[i].Type);
+                break;
+
+            default:
+                /* There is no point in continuing, the object is broken. */
+                ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", relocs[i].Type, part->of->filename);
+                break;
+
+        }
+        
+    }
+}
+
 void coff_relocate_part (struct section_part *part)
 {
     struct relocation_entry_internal *relocs;
     size_t i;
+
+    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        coff_relocate_part_64 (part);
+        return;
+    }
     
     relocs = part->relocation_array;
     for (i = 0; i < part->relocation_count; i++) {
@@ -838,14 +937,23 @@ static void generate_base_relocation_block (struct section *reloc_section,
 
             relocs = part->relocation_array;
             for (i = 0; i < part->relocation_count; i++) {
-                if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
+                unsigned short base_relocation_type;
+                
+                if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64) continue;
+                    base_relocation_type = IMAGE_REL_BASED_DIR64;
+                } else {
+                    if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
+                    base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
+                }
+                
                 if (part->rva + relocs[i].VirtualAddress < ibr_hdr_p->RVAOfBlock) continue;
 
                 {
                     unsigned short rel_word;
 
                     rel_word = (part->rva + relocs[i].VirtualAddress - ibr_hdr_p->RVAOfBlock) & 0xfff;
-                    rel_word |= IMAGE_REL_BASED_HIGHLOW << 12;
+                    rel_word |= base_relocation_type << 12;
 
                     bytearray_write_2_bytes (write_pos, rel_word, LITTLE_ENDIAN);
                     write_pos += 2;
@@ -889,7 +997,11 @@ void coff_after_link (void)
 
             relocs = part->relocation_array;
             for (i = 0; i < part->relocation_count; i++) {
-                if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
+                if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64) continue;
+                } else {
+                    if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
+                }
 
                 if (num_relocs
                     && part->rva + relocs[i].VirtualAddress >= ibr_hdr.RVAOfBlock + BASE_RELOCATION_PAGE_SIZE) {
