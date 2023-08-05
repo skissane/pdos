@@ -5,7 +5,7 @@ CC=x86_64-w64-mingw32-gcc
 CFLAGS=-O2
 COPTS=-S $(CFLAGS) -fno-common -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
-AR=x86_64-w64-mingw32-ar
+AR=ar
 AS=pdas
 LD=x86_64-w64-mingw32-ld
 
