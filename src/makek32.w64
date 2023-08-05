@@ -27,6 +27,8 @@ CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
 AS=x86_64-w64-mingw32-as
 LD=x86_64-w64-mingw32-ld
+#DLLTOOL=x86_64-w64-mingw32-dlltool
+DLLTOOL=dlltool
 
 EXPORT_OBJS=dllcrt.o kernel32.o
 OBJS=supportc.o pdossupc.o pos.o string.o
@@ -35,7 +37,7 @@ all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) -s -o kernel32.dll --shared --kill-at $(EXPORT_OBJS) $(OBJS)
-  dlltool -S x86_64-w64-mingw32-as -k --export-all-symbols -D kernel32.dll kernel32.o -l kernel32.a
+  $(DLLTOOL) -S $(AS) -k --export-all-symbols -D kernel32.dll kernel32.o -l kernel32.a
 
 dllcrt.o: ../pdpclib/dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
