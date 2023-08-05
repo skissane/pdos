@@ -30,7 +30,9 @@ void mainCRTStartup(void)
     return;
 }
 
+#ifndef NOUNDMAIN
 void __main(void)
 {
     return;
 }
+#endif
