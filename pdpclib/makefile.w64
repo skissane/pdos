@@ -5,23 +5,26 @@ CC=x86_64-w64-mingw32-gcc
 CFLAGS=-O2
 COPTS=-c $(CFLAGS) -fno-common -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
+AR=x86_64-w64-mingw32-ar
+AS=x86_64-w64-mingw32-as
+
 all: pdptest.exe
 
 pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o __memmgr.o x64supb.obj
   cmd /c if exist pdpwin64.a del pdpwin64.a
-  ar r pdpwin64.a p32start.o stdio.o string.o stdlib.o x64supb.obj
-  ar r pdpwin64.a start.o time.o errno.o assert.o signal.o
-  ar r pdpwin64.a locale.o ctype.o setjmp.o math.o __memmgr.o
-  ar s pdpwin64.a
+  $(AR) r pdpwin64.a p32start.o stdio.o string.o stdlib.o x64supb.obj
+  $(AR) r pdpwin64.a start.o time.o errno.o assert.o signal.o
+  $(AR) r pdpwin64.a locale.o ctype.o setjmp.o math.o __memmgr.o
+  $(AR) s pdpwin64.a
   $(CC) -s -nostdlib -o pdptest.exe p32start.o pdptest.o pdpwin64.a ../src/kernel32.a
 
 .c.o:
   $(CC) $(COPTS) $<
 
 .asm.obj:
-  as -o $@ $<
+  $(AS) -o $@ $<
 
 clean:
   rm -rf *.o
