@@ -1,0 +1,50 @@
+# This is the makefile for Win32 to build the 64-bit version
+# of msvcrt.dll using mingw64.
+#
+# The makefile uses spaces, which are normal for Windows
+# users, and Borland make, Microsoft nmake and others are
+# happy to accept them. If you are using Cygwin or a make
+# that unfortunately requires tabs, then simply edit this
+# file, change all spaces to tabs, and it will work, even
+# if the resultant file looks a bit silly.
+
+CC=x86_64-w64-mingw32-gcc
+AR=x86_64-w64-mingw32-ar
+AS=x86_64-w64-mingw32-as
+LD=x86_64-w64-mingw32-ld
+COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src -D__64BIT__
+
+all: pdptest.exe
+
+pdptest.exe: w32start.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o dllcrt.o x64supb.o
+  rm -f temp.a
+  $(AR) r temp.a stdio.o string.o stdlib.o x64supb.o
+  $(AR) r temp.a start.o time.o errno.o assert.o signal.o
+  $(AR) r temp.a locale.o ctype.o setjmp.o math.o
+  $(LD) -s -o msvcrt.dll --shared --out-implib msvcrt.a dllcrt.o temp.a ../src/kernel32.a
+  rm -f temp.a
+  $(LD) -s -nostdlib -o pdptest.exe w32start.o pdptest.o msvcrt.a
+
+pdptest.o: pdptest.c
+  $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+dllcrt.o: dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -o $*.s $*.c
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.o
+  rm -f pdptest.exe
