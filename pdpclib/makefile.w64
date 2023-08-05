@@ -6,7 +6,7 @@ CFLAGS=-O2
 COPTS=-S $(CFLAGS) -fno-common -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
 AR=x86_64-w64-mingw32-ar
-AS=x86_64-w64-mingw32-as
+AS=pdas
 LD=x86_64-w64-mingw32-ld
 
 all: pdptest.exe
@@ -23,11 +23,11 @@ pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
 
 .c.o:
   $(CC) $(COPTS) $<
-  pdas --64 --oformat coff -o $@ $*.s
+  $(AS) --64 --oformat coff -o $@ $*.s
   rm -f $*.s
 
 .asm.obj:
-  $(AS) -o $@ $<
+  $(AS) --64 --oformat coff -o $@ $<
 
 clean:
   rm -rf *.o
