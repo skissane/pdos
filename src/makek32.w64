@@ -1,0 +1,61 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds kernel32.dll and kernel32.a on Windows.
+
+# Note that failure to add "--kill-at" on the "ld" step will
+# cause the kernel32.dll to be invalid, even though everything
+# links correctly, and you won't know until you
+# attempt to run kernel32.dll on a system like PDOS/386 that actually uses it.
+
+# Also note that I attempted to use --out-implib to do a
+# one-shot dll and .a, but although that produced a valid
+# dll, when things were linked with the .a, I got errors at
+# runtime saying CloseHandle@4 was not found in the dll.
+# And if I added --kill-at, I instead got link time errors.
+
+VPATH=../pdpclib
+
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
+AS=x86_64-w64-mingw32-as
+LD=x86_64-w64-mingw32-ld
+
+EXPORT_OBJS=dllcrt.o kernel32.o
+OBJS=supportc.o pdossupc.o pos.o string.o
+
+all: clean kernel32.dll
+
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+  $(LD) -s -o kernel32.dll --shared --kill-at $(EXPORT_OBJS) $(OBJS)
+  dlltool -S x86_64-w64-mingw32-as -k --export-all-symbols -D kernel32.dll kernel32.o -l kernel32.a
+
+dllcrt.o: ../pdpclib/dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+kernel32.o: kernel32.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.c.o:
+  $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.s.o:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.o
+  rm -f kernel32.dll
+  rm -f kernel32.a
