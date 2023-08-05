@@ -1261,7 +1261,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
     if (runnum == 1)
     {
-#if !defined(__64BIT__)
+/* I think this only applies to EFI and should be changed */
+#if !defined(__64BIT__) || defined(__WIN32__)
     __exit(rc);
 #endif
     }
@@ -1294,7 +1295,8 @@ void __exit(int status)
     runnum--;
     /* and we can't go through another longjmp either */
     /* really? 64 bit needs a longjmp. */
-#ifdef __64BIT__
+    /* 64-bit EFI-only I think - needs to be rationalized */
+#if defined(__64BIT__) && !defined(__WIN32__)
     longjmp(jb, status);
 #endif
     return;
