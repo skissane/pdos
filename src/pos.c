@@ -1824,7 +1824,7 @@ int PosSetNamedFont(char *fontName)
     return regsout.x.ax;
 }
 
-#ifdef __32BIT__
+#if defined(__32BIT__) || defined(__64BIT__)
 /* F6,3D - Allocate Virtual Memory */
 void *PosVirtualAlloc(void *addr, size_t size)
 {
@@ -2035,7 +2035,7 @@ unsigned int PosScrncap(int disknum)
 #endif
 }
 
-#ifdef __32BIT__
+#if defined(__32BIT__) || defined(__64BIT__)
 /* F6,46 - GetStdHandle */
 void *PosGetStdHandle(unsigned int nStdHandle)
 {

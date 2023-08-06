@@ -3,7 +3,7 @@
 #ifndef SUPPORT_INCLUDED
 #define SUPPORT_INCLUDED
 
-#ifdef __32BIT__
+#if defined(__32BIT__) || defined(__64BIT__)
 typedef struct {
     unsigned int eax;
     unsigned int ebx;
@@ -83,7 +83,7 @@ union REGS
 {
     BYTEREGS h;
     WORDREGS x;
-#ifdef __32BIT__    
+#if defined(__32BIT__) || defined(__64BIT__)
     DWORDREGS d;
 #endif    
 };
@@ -96,7 +96,7 @@ struct SREGS
     unsigned short ds;
 };
 
-#ifdef __32BIT__
+#if defined(__32BIT__) || defined(__64BIT__)
 #define far
 void enable(void);
 void disable(void);
