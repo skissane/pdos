@@ -186,6 +186,7 @@ void subsection_append_section_part (struct subsection *subsection, struct secti
 struct object_file *object_file_make (size_t symbol_count, const char *filename);
 
 void sections_destroy (void);
+void sections_destroy_empty_before_collapse (void);
 
 /* symbols.c */
 void symbols_init (void);

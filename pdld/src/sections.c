@@ -213,3 +213,71 @@ void sections_destroy (void)
 
     }
 }
+
+static void free_section_before_collapse (struct section *section)
+{
+    struct subsection *subsection;
+    struct section_part *part, *next_part;
+
+    for (subsection = section->all_subsections; subsection; subsection = section->all_subsections) {
+        for (part = subsection->first_part; part; part = next_part) {
+            next_part = part->next;
+            free (part->content);
+            free (part->relocation_array);
+            free (part);
+        }
+        
+        section->all_subsections = subsection->next;
+        free (subsection->name);
+        free (subsection);
+    }
+
+    for (part = section->first_part; part; part = next_part) {
+        next_part = part->next;
+        free (part->content);
+        free (part->relocation_array);
+        free (part);
+    }
+
+    free (section->name);
+    free (section);
+}
+
+void sections_destroy_empty_before_collapse (void)
+{
+    struct section *section, **next_p;
+
+    for (next_p = &all_sections, section = *next_p;
+         section;
+         section = *next_p) {
+        struct subsection *subsection;
+        struct section_part *part;
+        int empty = 1;
+
+        for (part = section->first_part; part; part = part->next) {
+            if (part->content_size) {
+                empty = 0;
+                goto done_section;
+            }
+        }
+        
+        for (subsection = section->all_subsections; subsection; subsection = subsection->next) {
+            for (part = subsection->first_part; part; part = part->next) {
+                if (part->content_size) {
+                    empty = 0;
+                    goto done_section;
+                }
+            }
+        }
+        
+    done_section:
+        if (empty) {
+            *next_p = section->next;
+            free_section_before_collapse (section);
+        } else {
+            next_p = &section->next;
+        }
+    }
+
+    last_section_p = next_p;
+}

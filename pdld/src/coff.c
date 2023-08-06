@@ -1475,8 +1475,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         CHECK_READ (pos, sizeof (struct section_table_entry_file));
         read_struct_section_table_entry (&section_hdr, pos);
 
-        if ((section_hdr.Characteristics & IMAGE_SCN_LNK_REMOVE) || section_hdr.SizeOfRawData == 0) {
-            /* Empty section. */
+        if (section_hdr.Characteristics & IMAGE_SCN_LNK_REMOVE) {
             part_p_array[i + 1] = NULL;
             continue;
         }
@@ -1566,7 +1565,11 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
                 section->section_alignment = SectionAlignment;
                 section->flags = translate_Characteristics_to_section_flags (section_hdr.Characteristics);
-                if (section_hdr.PointerToRawData == 0) {
+                
+                /* Some object files define section without any data to get symbol
+                 * to the beginning of the section when content is read in from other object
+                 * but such definition must not make the section BSS. */
+                if (section_hdr.PointerToRawData == 0 && section_hdr.SizeOfRawData) {
                     section->is_bss = 1;
                     bss_section_number = i;
                 }
@@ -2161,7 +2164,9 @@ static void read_coff_archive (unsigned char *file, size_t file_size, const char
      * (Applies only to the traditional import library format,
      * for the short format whole .idata is automatically generated.)*/
     for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
-        if (strncmp (offset_name_table[i].name, "__head_", 7) == 0) {
+        if (strncmp (offset_name_table[i].name, "__head_", 7) == 0
+            || (wanted_Machine == IMAGE_FILE_MACHINE_AMD64
+                && strncmp (offset_name_table[i].name, "_head_", 6) == 0)) {
             start_header_object_offset = offset_name_table[i].offset;
         } else if (strlen (offset_name_table[i].name) > 6
                    && strcmp (offset_name_table[i].name + strlen (offset_name_table[i].name) - 6, "_iname") == 0) {

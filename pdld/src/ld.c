@@ -43,6 +43,8 @@ int main (int argc, char **argv)
         if (input_filenames[i]) coff_read (input_filenames[i]);
     }
 
+    sections_destroy_empty_before_collapse ();
+
     coff_before_link ();
 
     link ();
