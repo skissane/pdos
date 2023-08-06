@@ -337,6 +337,28 @@ static int output_relocation (FILE *outfile, struct fixup *fixup)
     return 0;
 }
 
+static void sort_symbols (void)
+{
+    /* According to the specification,
+     * COMDAT section symbol must be the first symbol
+     * with the SectionNumber of the COMDAT section.
+     * This simple sorting complies with the requirement
+     * until better sorting is implemented. */
+    struct symbol *symbol;
+    
+    for (symbol = symbols; symbol; symbol = symbol->next) {
+        struct symbol *next_symbol;
+        
+        for (next_symbol = symbol->next;
+             next_symbol && symbol_is_section_symbol (next_symbol);
+             next_symbol = symbol->next) {
+            symbol->next = next_symbol->next;
+            next_symbol->next = symbols;
+            symbols = next_symbol;
+        }
+    }
+}        
+
 void write_coff_file (void) {
 
     struct coff_header_internal header;
@@ -347,6 +369,7 @@ void write_coff_file (void) {
     section_t section;
     
     sections_number (1);
+    sort_symbols ();
     memset (&header, 0, sizeof (header));
     
     if ((outfile = fopen (state->outfile, "wb")) == NULL) {
