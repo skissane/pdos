@@ -1,0 +1,46 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This builds the 64-bit version of kernel32.dll
+
+VPATH=../pdpclib
+
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -fno-common -fno-builtin -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
+AS=pdas
+LD=pdld
+
+EXPORT_OBJS=dllcrt.obj kernel32.obj
+OBJS=pdossupc.obj pos.obj string.obj supportc.obj
+
+all: clean kernel32.dll
+
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+  $(LD) --no-insert-timestamp -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
+
+dllcrt.obj: ../pdpclib/dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) --64 -o $@ --oformat coff $*.s
+  rm -f $*.s
+
+kernel32.obj: kernel32.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) --64 -o $@ --oformat coff $*.s
+  rm -f $*.s
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) --64 -o $@ --oformat coff $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj
+  rm -f kernel32.dll
+  rm -f kernel32.lib
