@@ -723,7 +723,10 @@ static void coff_relocate_part_64 (struct section_part *part)
         symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
         if (symbol_is_undefined (symbol)) {
             if ((symbol = symbol_find (symbol->name)) == NULL) {
-                ld_internal_error_at_source (__FILE__, __LINE__, "external symbol not found in hashtab");
+                symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "external symbol '%s' not found in hashtab",
+                                             symbol->name);
             }
             if (symbol_is_undefined (symbol)) {
                 ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
@@ -1361,12 +1364,68 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
     free (temp_buf);
 }
 
+union sym_tab_entry {
+    struct symbol_table_entry_internal sym;
+    unsigned char aux[sizeof (struct symbol_table_entry_file)];
+};
+
+static union sym_tab_entry *read_symbol_table (unsigned char *file,
+                                               size_t file_size,
+                                               const char *filename,
+                                               const struct coff_header_internal *coff_hdr_p,
+                                               unsigned long *comdat_aux_symbol_indexes)
+{
+    union sym_tab_entry *read_symtab;
+    unsigned char *pos;
+    unsigned long i;
+    unsigned char aux_num = 0;
+
+    pos = file + coff_hdr_p->PointerToSymbolTable;
+    CHECK_READ (pos, sizeof (struct symbol_table_entry_file) * coff_hdr_p->NumberOfSymbols);
+
+    read_symtab = xmalloc (sizeof (*read_symtab) * coff_hdr_p->NumberOfSymbols);
+    
+    memset (comdat_aux_symbol_indexes, 0, sizeof (*comdat_aux_symbol_indexes) * coff_hdr_p->NumberOfSections);
+
+    for (i = 0; i < coff_hdr_p->NumberOfSymbols; i++, pos += sizeof (struct symbol_table_entry_file)) {
+        if (aux_num) {
+            memcpy (read_symtab[i].aux, pos, sizeof (read_symtab[i].aux));
+            aux_num--;
+            continue;
+        }
+        
+        read_struct_symbol_table_entry (&read_symtab[i].sym, pos);
+        
+        aux_num = read_symtab[i].sym.NumberOfAuxSymbols;
+
+        if (read_symtab[i].sym.SectionNumber > 0
+            && read_symtab[i].sym.SectionNumber <= coff_hdr_p->NumberOfSections) {
+            short sec_num = read_symtab[i].sym.SectionNumber - 1;
+
+            if (!comdat_aux_symbol_indexes[sec_num]) {
+                comdat_aux_symbol_indexes[sec_num] = i + 1;
+            }
+        }
+    }
+    
+    if (aux_num) {
+        ld_error ("incorrect NumberOfAuxSymbols, exceeds symbol table size");
+        free (read_symtab);
+        return NULL;
+    }    
+
+    return read_symtab;
+}
+
 static void read_coff_object (unsigned char *file, size_t file_size, const char *filename)
 {
     struct coff_header_internal coff_hdr;
     struct string_table_header_internal string_table_hdr;
     char *string_table = NULL;
     struct section_table_entry_internal section_hdr;
+    union sym_tab_entry *read_symtab = NULL;
+    unsigned long *comdat_aux_symbol_indexes;
+    struct section_part dummy_comdat_part_s;
 
     unsigned char *pos;
 
@@ -1400,6 +1459,15 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     of = object_file_make (coff_hdr.NumberOfSymbols, filename);
     bss_part = NULL;
     bss_section_number = 0;
+
+    comdat_aux_symbol_indexes = xmalloc (sizeof (*comdat_aux_symbol_indexes) * coff_hdr.NumberOfSections);
+    if (coff_hdr.NumberOfSymbols) {
+        read_symtab = read_symbol_table (file, file_size, filename, &coff_hdr, comdat_aux_symbol_indexes);
+        if (read_symtab == NULL) {
+            free (comdat_aux_symbol_indexes);
+            return;
+        }
+    }
 
     for (i = 0; i < coff_hdr.NumberOfSections; i++) {
 
@@ -1437,6 +1505,51 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                 if (p) {
                     *p = '\0';
                     p++;
+                }
+
+                if (section_hdr.Characteristics & IMAGE_SCN_LNK_COMDAT) {
+                    struct aux_section_symbol_internal aux_symbol;
+                    unsigned long sym_i = comdat_aux_symbol_indexes[i];
+                    
+                    if (!sym_i) {
+                        ld_error ("missing section symbol for COMDAT section '%s'",
+                                  section_name);
+                        return;
+                    }
+                    
+                    if (read_symtab[sym_i - 1].sym.Value != 0
+                        || read_symtab[sym_i - 1].sym.Type != IMAGE_SYM_TYPE_NULL
+                        || read_symtab[sym_i - 1].sym.StorageClass != IMAGE_SYM_CLASS_STATIC
+                        || read_symtab[sym_i - 1].sym.NumberOfAuxSymbols != 1) {
+                        ld_error ("invalid section symbol for COMDAT section '%s'",
+                                  section_name);
+                        return;
+                    }
+
+                    read_struct_aux_section_symbol (&aux_symbol, read_symtab[sym_i].aux);
+                    
+                    if (aux_symbol.Length != section_hdr.SizeOfRawData
+                        || aux_symbol.NumberOfRelocations != section_hdr.NumberOfRelocations
+                        || aux_symbol.NumberOfLinenumbers != section_hdr.NumberOfLinenumbers) {
+                        ld_warn ("section auxiliary symbol inconsistent with section header for COMDAT section '%s'",
+                                 section_name);
+                    }
+
+                    if (aux_symbol.Selection != IMAGE_COMDAT_SELECT_ANY) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "only IMAGE_COMDAT_SELECT_ANY Selection is supported for COMDAT");
+                    }
+
+                    section = section_find (section_name);
+                    if (section) {
+                        if (p) subsection = subsection_find (section, p);
+
+                        if (!p || subsection) {
+                            part_p_array[i + 1] = &dummy_comdat_part_s;
+                            free (section_name);
+                            continue;
+                        }
+                    }
                 }
 
                 if (strcmp (section_name, ".drectve") == 0) {
@@ -1513,28 +1626,34 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
     for (i = 0; i < coff_hdr.NumberOfSymbols; i++) {
 
-        struct symbol_table_entry_internal coff_symbol;
+        struct symbol_table_entry_internal *coff_symbol = &read_symtab[i].sym;
         struct symbol *symbol = of->symbol_array + i;
 
-        pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * i;
-        CHECK_READ (pos, sizeof (struct symbol_table_entry_file));
-        read_struct_symbol_table_entry (&coff_symbol, pos);
-
-        if (memcmp (coff_symbol.Name, "\0\0\0\0", 4) == 0) {
+        if (memcmp (coff_symbol->Name, "\0\0\0\0", 4) == 0) {
 
             unsigned long offset = 0;
 
-            bytearray_read_4_bytes (&offset, (unsigned char *)(coff_symbol.Name + 4), LITTLE_ENDIAN);
+            bytearray_read_4_bytes (&offset, (unsigned char *)(coff_symbol->Name + 4), LITTLE_ENDIAN);
 
             if (offset < string_table_hdr.StringTableSize) {
                 symbol->name = xstrdup (string_table + offset);
             } else ld_fatal_error ("invalid offset into string table");
             
-        } else symbol->name = xstrndup (coff_symbol.Name, 8);
+        } else symbol->name = xstrndup (coff_symbol->Name, 8);
+
+        if (coff_symbol->SectionNumber > 0
+            && coff_symbol->SectionNumber <= coff_hdr.NumberOfSections
+            && part_p_array[coff_symbol->SectionNumber] == &dummy_comdat_part_s) {
+            /* The COMDAT section was discarded,
+             * so all symbols defined there are now undefined. */
+            coff_symbol->SectionNumber = IMAGE_SYM_UNDEFINED;
+            coff_symbol->Value = 0;
+        }
         
-        symbol->value = coff_symbol.Value;
-        symbol->section_number = coff_symbol.SectionNumber;
-        if (coff_symbol.SectionNumber == IMAGE_SYM_UNDEFINED) {
+        symbol->value = coff_symbol->Value;
+        symbol->section_number = coff_symbol->SectionNumber;
+        
+        if (coff_symbol->SectionNumber == IMAGE_SYM_UNDEFINED) {
             if (symbol->value) {
                 /* It is a common symbol. */
                 if (bss_part == NULL) {
@@ -1559,38 +1678,37 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
             } else {
                 symbol->part = NULL;
             }
-        } else if (coff_symbol.SectionNumber > 0
-                   && coff_symbol.SectionNumber <= coff_hdr.NumberOfSections) {
-            symbol->part = part_p_array[coff_symbol.SectionNumber];
-        } else if (coff_symbol.SectionNumber == IMAGE_SYM_ABSOLUTE) {
+        } else if (coff_symbol->SectionNumber > 0
+                   && coff_symbol->SectionNumber <= coff_hdr.NumberOfSections) {
+            symbol->part = part_p_array[coff_symbol->SectionNumber];
+        } else if (coff_symbol->SectionNumber == IMAGE_SYM_ABSOLUTE) {
             symbol->section_number = ABSOLUTE_SECTION_NUMBER;
             symbol->part = NULL;
-        } else if (coff_symbol.SectionNumber == IMAGE_SYM_DEBUG) {
+        } else if (coff_symbol->SectionNumber == IMAGE_SYM_DEBUG) {
             symbol->section_number = DEBUG_SECTION_NUMBER;
             symbol->part = NULL;
-        } else if (coff_symbol.SectionNumber > coff_hdr.NumberOfSections) {
-            ld_error ("invalid symbol SectionNumber: %hi", coff_symbol.SectionNumber);
+        } else if (coff_symbol->SectionNumber > coff_hdr.NumberOfSections) {
+            ld_error ("invalid symbol SectionNumber: %hi", coff_symbol->SectionNumber);
             symbol->part = NULL;
         } else ld_internal_error_at_source (__FILE__, __LINE__,
                                             "+++not yet supported symbol SectionNumber: %hi",
-                                            coff_symbol.SectionNumber);
+                                            coff_symbol->SectionNumber);
 
-        if (coff_symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
+        if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
             symbol_record_external_symbol (symbol);
         }
 
-        if (coff_symbol.NumberOfAuxSymbols) {
-
-            for (i++; coff_symbol.NumberOfAuxSymbols; coff_symbol.NumberOfAuxSymbols--) {
-
+        if (coff_symbol->NumberOfAuxSymbols) {
+            for (i++; coff_symbol->NumberOfAuxSymbols; coff_symbol->NumberOfAuxSymbols--) {
                 symbol = of->symbol_array + i;
                 memset (symbol, 0, sizeof (*symbol));
                 symbol->auxiliary = 1;
-
             }
         }
     }
 
+    free (comdat_aux_symbol_indexes);
+    free (read_symtab);
     free (part_p_array);
 }
 

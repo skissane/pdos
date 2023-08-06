@@ -85,6 +85,21 @@ void read_struct_symbol_table_entry (struct symbol_table_entry_internal *symbol_
     COPY(symbol_table_entry, NumberOfAuxSymbols, 1);
 }
 
+void read_struct_aux_section_symbol (struct aux_section_symbol_internal *aux_section_symbol_internal, void *memory)
+{
+    struct aux_section_symbol_file *aux_section_symbol_file = memory;
+
+    COPY(aux_section_symbol, Length, 4);
+    COPY(aux_section_symbol, NumberOfRelocations, 2);
+    COPY(aux_section_symbol, NumberOfLinenumbers, 2);
+
+    COPY(aux_section_symbol, CheckSum, 4);
+    COPY(aux_section_symbol, Number, 2);
+    COPY(aux_section_symbol, Selection, 1);
+
+    COPY_CHAR_ARRAY(aux_section_symbol, Unused);
+}
+
 void read_struct_string_table_header (struct string_table_header_internal *string_table_header_internal, void *memory)
 {
     struct string_table_header_file *string_table_header_file = memory;

@@ -12,6 +12,7 @@ void read_struct_coff_header (struct coff_header_internal *coff_header_internal,
 void read_struct_section_table_entry (struct section_table_entry_internal *section_table_entry_internal, void *memory);
 void read_struct_relocation_entry (struct relocation_entry_internal *relocation_entry_internal, void *memory);
 void read_struct_symbol_table_entry (struct symbol_table_entry_internal *symbol_table_entry_internal, void *memory);
+void read_struct_aux_section_symbol (struct aux_section_symbol_internal *aux_section_symbol_internal, void *memory);
 void read_struct_string_table_header (struct string_table_header_internal *string_table_header_internal, void *memory);
 void read_struct_IMAGE_ARCHIVE_MEMBER_HEADER (struct IMAGE_ARCHIVE_MEMBER_HEADER_internal *IMAGE_ARCHIVE_MEMBER_HEADER_internal, void *memory);
 void read_struct_IMPORT_OBJECT_HEADER (struct IMPORT_OBJECT_HEADER_internal *IMPORT_OBJECT_HEADER_internal, void *memory);

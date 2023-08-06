@@ -422,6 +422,39 @@ struct symbol_table_entry_file {
 #define     IMAGE_SYM_CLASS_LABEL                           6
 #define     IMAGE_SYM_CLASS_FILE                            103
 
+struct aux_section_symbol_internal {
+
+    unsigned long Length;
+    unsigned short NumberOfRelocations;
+    unsigned short NumberOfLinenumbers;
+    
+    unsigned long CheckSum;
+    unsigned short Number;
+    unsigned char Selection;
+    
+    unsigned char Unused[3];
+
+};
+
+struct aux_section_symbol_file {
+
+    unsigned char Length[4];
+    unsigned char NumberOfRelocations[2];
+    unsigned char NumberOfLinenumbers[2];
+    
+    unsigned char CheckSum[4];
+    unsigned char Number[2];
+    unsigned char Selection[1];
+    
+    unsigned char Unused[3];
+
+};
+
+#define IMAGE_COMDAT_SELECT_NODUPLICATES 1
+#define IMAGE_COMDAT_SELECT_ANY 2
+#define IMAGE_COMDAT_SELECT_SAME_SIZE 3
+#define IMAGE_COMDAT_SELECT_EXACT_MATCH 4
+
 struct string_table_header_internal {
 
     unsigned long StringTableSize;
