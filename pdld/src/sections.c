@@ -125,6 +125,7 @@ struct section_part *section_part_new (struct section *section, struct object_fi
 
     part->content = NULL;
     part->content_size = 0;
+    part->alignment = 1;
 
     part->relocation_array = NULL;
     part->relocation_count = 0;

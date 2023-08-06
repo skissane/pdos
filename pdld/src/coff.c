@@ -85,8 +85,8 @@ struct export_name {
 static struct name_list *export_name_list = NULL;
 static struct name_list **last_export_name_list_p = &export_name_list;
 
-static unsigned long translate_section_flags_to_Characteristics (flag_int flags) {
-
+static unsigned long translate_section_flags_to_Characteristics (flag_int flags)
+{
     unsigned long Characteristics = 0;
 
     if (!(flags & SECTION_FLAG_READONLY)) {
@@ -129,8 +129,8 @@ static unsigned long translate_section_flags_to_Characteristics (flag_int flags)
     return Characteristics;
 }
 
-static flag_int translate_Characteristics_to_section_flags (unsigned long Characteristics) {
-
+static flag_int translate_Characteristics_to_section_flags (unsigned long Characteristics)
+{
     flag_int flags = 0;
 
     if (!(Characteristics & IMAGE_SCN_MEM_WRITE)) flags |= SECTION_FLAG_READONLY;
@@ -152,6 +152,30 @@ static flag_int translate_Characteristics_to_section_flags (unsigned long Charac
     if (Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) flags |= SECTION_FLAG_ALLOC;
 
     return flags;
+}
+
+static address_type translate_Characteristics_to_alignment (unsigned long Characteristics)
+{
+    unsigned long alignment = 1;
+
+    Characteristics &= IMAGE_SCN_ALIGN_8192BYTES;
+    
+    if (Characteristics == IMAGE_SCN_ALIGN_1BYTES) alignment = 1;
+    if (Characteristics == IMAGE_SCN_ALIGN_2BYTES) alignment = 2;
+    if (Characteristics == IMAGE_SCN_ALIGN_4BYTES) alignment = 4;
+    if (Characteristics == IMAGE_SCN_ALIGN_8BYTES) alignment = 8;
+    if (Characteristics == IMAGE_SCN_ALIGN_16BYTES) alignment = 16;
+    if (Characteristics == IMAGE_SCN_ALIGN_32BYTES) alignment = 32;
+    if (Characteristics == IMAGE_SCN_ALIGN_64BYTES) alignment = 64;
+    if (Characteristics == IMAGE_SCN_ALIGN_128BYTES) alignment = 128;
+    if (Characteristics == IMAGE_SCN_ALIGN_256BYTES) alignment = 256;
+    if (Characteristics == IMAGE_SCN_ALIGN_512BYTES) alignment = 512;
+    if (Characteristics == IMAGE_SCN_ALIGN_1024BYTES) alignment = 1024;
+    if (Characteristics == IMAGE_SCN_ALIGN_2048BYTES) alignment = 2048;
+    if (Characteristics == IMAGE_SCN_ALIGN_4096BYTES) alignment = 4096;
+    if (Characteristics == IMAGE_SCN_ALIGN_8192BYTES) alignment = 8192;
+
+    return alignment;
 }
 
 static void write_sections (unsigned char *file)
@@ -1582,6 +1606,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
             {
                 struct section_part *part = section_part_new (section, of);
+
+                part->alignment = translate_Characteristics_to_alignment (section_hdr.Characteristics);
 
                 part->content_size = section_hdr.SizeOfRawData;
                 if (section_hdr.PointerToRawData) {

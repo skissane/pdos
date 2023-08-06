@@ -44,6 +44,19 @@ static void calculate_section_sizes_and_rvas (void)
         
         section->total_size = 0;
         for (part = section->first_part; part; part = part->next) {
+
+            if (part->next && part->next->alignment > 1) {
+                address_type new_rva;
+
+                new_rva = ALIGN (rva + part->content_size, part->next->alignment);
+                if (new_rva != rva + part->content_size) {
+                    part->content = xrealloc (part->content, new_rva - rva);
+                    memset (part->content + part->content_size,
+                            0,
+                            new_rva - rva - part->content_size);
+                    part->content_size = new_rva - rva;
+                }
+            }
             
             part->rva = rva;
             section->total_size += part->content_size;

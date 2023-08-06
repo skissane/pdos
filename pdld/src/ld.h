@@ -77,6 +77,7 @@ struct section_part {
 
     unsigned char *content;
     address_type content_size;
+    address_type alignment;
 
     void *relocation_array;
     size_t relocation_count;
