@@ -9,7 +9,7 @@
  * complying with any conditions and by any means.
  *****************************************************************************/
 typedef unsigned char BOOLEAN;
-#ifdef __64BIT__
+#if defined(__64BIT__) && !defined(__SUBC__)
 typedef long long INTN;
 typedef unsigned long long UINTN;
 #else
@@ -66,16 +66,25 @@ typedef UINT64 EFI_LBA;
 #define EFI_NOT_FOUND 14
 #define EFI_ACCESS_DENIED 15
 
+#ifndef __SUBC__
 struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_INPUT_RESET) (IN struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This, IN BOOLEAN ExtendedVerification);
+#endif
 
 typedef struct {
     UINT16 ScanCode;
     CHAR16 UnicodeChar;
 } EFI_INPUT_KEY;
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_INPUT_READ_KEY) (IN struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This, OUT EFI_INPUT_KEY *Key);
+#endif
+
+#ifdef __SUBC__
+#define EFI_INPUT_RESET int
+#define EFI_INPUT_READ_KEY int
+#endif
 
 typedef struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
     EFI_INPUT_RESET Reset;
@@ -84,9 +93,16 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
 } EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
 
 
+#ifndef __SUBC__
 struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_TEXT_STRING) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This, IN CHAR16 *String);
+#endif
+
+
+#ifdef __SUBC__
+#define EFI_TEXT_STRING int
+#endif
 
 typedef struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL {
     void *Reset;
@@ -147,6 +163,7 @@ typedef struct {
     UINT64 Attribute;
 } EFI_MEMORY_DESCRIPTOR;
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_PAGES) (IN EFI_ALLOCATE_TYPE Type,
                                                  IN EFI_MEMORY_TYPE MemoryType,
                                                  IN UINTN Pages,
@@ -167,6 +184,7 @@ typedef EFI_STATUS (EFIAPI *EFI_EXIT_BOOT_SERVICES) (IN EFI_HANDLE ImageHandle, 
 typedef EFI_STATUS (EFIAPI *EFI_SET_WATCHDOG_TIMER) (IN UINTN Timeout, IN UINT64 WatchdogCode, IN UINTN DataSize, IN CHAR16 *WatchdogData);
 
 typedef EFI_STATUS (EFIAPI *EFI_HANDLE_PROTOCOL) (IN EFI_HANDLE Handle, IN EFI_GUID *Protocol, OUT void **Interface);
+#endif
 
 #define EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL  0x00000001
 #define EFI_OPEN_PROTOCOL_GET_PROTOCOL        0x00000002
@@ -175,6 +193,7 @@ typedef EFI_STATUS (EFIAPI *EFI_HANDLE_PROTOCOL) (IN EFI_HANDLE Handle, IN EFI_G
 #define EFI_OPEN_PROTOCOL_BY_DRIVER           0x00000010
 #define EFI_OPEN_PROTOCOL_EXCLUSIVE           0x00000020
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_OPEN_PROTOCOL) (IN EFI_HANDLE Handle,
                                                 IN EFI_GUID *Protocol,
                                                 OUT void **Interface OPTIONAL,
@@ -185,6 +204,21 @@ typedef EFI_STATUS (EFIAPI *EFI_CLOSE_PROTOCOL) (IN EFI_HANDLE Handle,
                                                  IN EFI_GUID *Protocol,
                                                  IN EFI_HANDLE AgentHandle,
                                                  IN EFI_HANDLE ControllerHandle);
+#endif
+
+#ifdef __SUBC__
+#define EFI_ALLOCATE_PAGES int
+#define EFI_FREE_PAGES int
+#define EFI_GET_MEMORY_MAP int
+#define EFI_ALLOCATE_POOL int
+#define EFI_FREE_POOL int
+#define EFI_WAIT_FOR_EVENT int
+#define EFI_HANDLE_PROTOCOL int
+#define EFI_EXIT_BOOT_SERVICES int
+#define EFI_SET_WATCHDOG_TIMER int
+#define EFI_OPEN_PROTOCOL int
+#define EFI_CLOSE_PROTOCOL int
+#endif
 
 typedef struct {
     EFI_TABLE_HEADER Hdr;
@@ -261,7 +295,9 @@ typedef struct {
     void *ConfigurationTable;
 } EFI_SYSTEM_TABLE;
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_IMAGE_ENTRY_POINT) (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable);
+#endif
 
 #define EFI_LOADED_IMAGE_PROTOCOL_GUID \
  {0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0x00,0xa0,0xc9,0x69,0x72,0x3b}}
@@ -292,7 +328,9 @@ typedef struct {
 #define EFI_FILE_PROTOCOL_REVISION2 0x00020000
 #define EFI_FILE_PROTOCOL_LATEST_REVISION EFI_FILE_PROTOCOL_REVISION2
 
+#ifndef __SUBC__
 struct _EFI_FILE_PROTOCOL;
+#endif
 
 #define EFI_FILE_MODE_READ   0x0000000000000001
 #define EFI_FILE_MODE_WRITE  0x0000000000000002
@@ -306,6 +344,7 @@ struct _EFI_FILE_PROTOCOL;
 #define EFI_FILE_ARCHIVE    0x0000000000000020
 #define EFI_FILE_VALID_ATTR 0x0000000000000037
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_FILE_OPEN) (IN struct _EFI_FILE_PROTOCOL *This,
                                             OUT struct _EFI_FILE_PROTOCOL **NewHandle,
                                             IN CHAR16 *FileName,
@@ -326,7 +365,18 @@ typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_POSITION) (IN struct _EFI_FILE_PROTOCOL
 
 
 typedef EFI_STATUS (EFIAPI *EFI_FILE_FLUSH) (IN struct _EFI_FILE_PROTOCOL *This);
+#endif
 
+#ifdef __SUBC__
+#define EFI_FILE_OPEN int
+#define EFI_FILE_CLOSE int
+#define EFI_FILE_DELETE int
+#define EFI_FILE_READ int
+#define EFI_FILE_WRITE int
+#define EFI_FILE_GET_POSITION int
+#define EFI_FILE_SET_POSITION int
+#define EFI_FILE_FLUSH int
+#endif
 
 typedef struct _EFI_FILE_PROTOCOL {
     UINT64 Revision;
@@ -351,10 +401,16 @@ typedef struct _EFI_FILE_PROTOCOL {
  {0x964e5b22,0x6459,0x11d2,{0x8e,0x39,0x00,0xa0,0xc9,0x69,0x72,0x3b}}
 #define EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_REVISION 0x00010000
 
+#ifndef __SUBC__
 struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_OPEN_VOLUME) (IN struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
                                                                           OUT EFI_FILE_PROTOCOL **Root);
+#endif
+
+#ifdef __SUBC__
+#define EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_OPEN_VOLUME int
+#endif
 
 typedef struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL {
     UINT64 Revision;
@@ -385,6 +441,7 @@ typedef struct {
     UINT32 OptimalTransferLengthGranularity;
 } EFI_BLOCK_MEDIA;
 
+#ifndef __SUBC__
 struct _EFI_BLOCK_IO_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_BLOCK_RESET) (IN struct _EFI_BLOCK_IO_PROTOCOL *This,
@@ -400,6 +457,15 @@ typedef EFI_STATUS (EFIAPI *EFI_BLOCK_WRITE) (IN struct _EFI_BLOCK_IO_PROTOCOL *
                                               IN UINTN BufferSize,
                                               IN void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_BLOCK_FLUSH) (IN struct _EFI_BLOCK_IO_PROTOCOL *This);
+#endif
+
+#ifdef __SUBC__
+#define EFI_BLOCK_MEDIA int
+#define EFI_BLOCK_RESET int
+#define EFI_BLOCK_READ int
+#define EFI_BLOCK_WRITE int
+#define EFI_BLOCK_FLUSH int
+#endif
 
 typedef struct _EFI_BLOCK_IO_PROTOCOL {
     UINT64 Revision;
@@ -420,12 +486,19 @@ typedef void *SHELL_FILE_HANDLE;
 #define EFI_SHELL_MAJOR_VERSION 2
 #define EFI_SHELL_MINOR_VERSION 2
 
+#ifndef __SUBC__
 typedef EFI_STATUS (EFIAPI *EFI_SHELL_READ_FILE) (IN SHELL_FILE_HANDLE FileHandle,
                                                   IN OUT UINTN *BufferSize,
                                                   OUT void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_SHELL_WRITE_FILE) (IN SHELL_FILE_HANDLE FileHandle,
                                                    IN OUT UINTN *BufferSize,
                                                    IN void *Buffer);
+#endif
+
+#ifdef __SUBC__
+#define EFI_SHELL_READ_FILE int
+#define EFI_SHELL_WRITE_FILE int
+#endif
 
 typedef struct _EFI_SHELL_PROTOCOL {
     void *Execute;
