@@ -70,7 +70,7 @@ eficall2:
 .globl efimain
 efimain:
 	sub	rsp, 40
-	call	efimain2
+	call	_efimain2
 	xor	eax, eax
 	add	rsp, 40
 	ret
