@@ -1,0 +1,27 @@
+# This builds EFI executables for x86_64
+# We put no-builtin to stop the optimizer from making memset call memset
+# Intended to eventually be used with SubC
+
+CC=x86_64-w64-mingw32-gcc
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-masm=intel -S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
+
+TARGET=pdptest.efi
+OBJS=efim1.obj efim2.obj
+
+$(TARGET): clean $(OBJS)
+  $(LD) -s -subsystem 10 -e efimain -nostdlib -o $(TARGET) $(OBJS)
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
