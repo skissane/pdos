@@ -12,7 +12,7 @@ CC=x86_64-w64-mingw32-gcc
 AR=x86_64-w64-mingw32-ar
 AS=x86_64-w64-mingw32-as
 LD=x86_64-w64-mingw32-ld
-COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src -D__64BIT__
+COPTS=-S -fno-common -fno-builtin -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src -D__64BIT__
 
 all: pdptest.exe
 
