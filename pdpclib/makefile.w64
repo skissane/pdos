@@ -5,10 +5,9 @@ CC=x86_64-w64-mingw32-gcc
 CFLAGS=-O2
 COPTS=-S $(CFLAGS) -fno-common -fno-builtin -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
-AR=ar
-AS=pdas
-#LD=x86_64-w64-mingw32-ld
-LD=pdld
+AR=x86_64-w64-mingw32-ar
+AS=x86_64-w64-mingw32-as
+LD=x86_64-w64-mingw32-ld
 
 all: pdptest.exe
 
@@ -20,15 +19,15 @@ pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r pdpwin64.a start.o time.o errno.o assert.o signal.o
   $(AR) r pdpwin64.a locale.o ctype.o setjmp.o math.o __memmgr.o
   $(AR) s pdpwin64.a
-  $(LD) -s --no-insert-timestamp -nostdlib -o pdptest.exe p32start.o pdptest.o pdpwin64.a ../src/kernel32.a
+  $(LD) -s -nostdlib -o pdptest.exe p32start.o pdptest.o pdpwin64.a ../src/kernel32.a
 
 .c.o:
   $(CC) $(COPTS) $<
-  $(AS) --64 --oformat coff -o $@ $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 .asm.obj:
-  $(AS) --64 --oformat coff -o $@ $<
+  $(AS) -o $@ $<
 
 clean:
   rm -rf *.o
