@@ -7,7 +7,7 @@ CFLAGS=-O2
 COPTS=-S $(CFLAGS) -fno-common -fno-builtin -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
 AR=ar
-AS=pdas
+AS=pdas --oformat coff --64
 LD=pdld
 
 all: pdptest.exe
@@ -24,11 +24,11 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 
 .c.obj:
   $(CC) $(COPTS) $<
-  $(AS) --64 --oformat coff -o $@ $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 .asm.obj:
-  $(AS) --64 --oformat coff -o $@ $<
+  $(AS) -o $@ $<
 
 clean:
   rm -rf *.obj

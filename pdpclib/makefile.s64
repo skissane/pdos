@@ -4,7 +4,7 @@
 
 CC=x86_64-w64-mingw32-gcc
 AR=ar
-AS=pdas
+AS=pdas --oformat coff --64
 LD=pdld
 COPTS=-S -fno-common -fno-builtin -ansi -O2 -D__WIN32__ -D__64BIT__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
 
@@ -24,21 +24,21 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 
 pdptest.obj: pdptest.c
   $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
-  $(AS) --64 -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 dllcrt.obj: dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -o $*.s $*.c
-  $(AS) --64 -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) --64 -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 .asm.obj:
-  $(AS) --64 -o $@ --oformat coff $<
+  $(AS) -o $@ $<
 
 clean:
   rm -f *.obj

@@ -14,7 +14,7 @@ VPATH=../pdpclib
 CC=x86_64-w64-mingw32-gcc
 CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -fno-common -fno-builtin -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
-AS=pdas
+AS=pdas --oformat coff --64
 LD=pdld
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
@@ -27,17 +27,17 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
 
 dllcrt.obj: ../pdpclib/dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
-  $(AS) --64 -o $@ --oformat coff $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 kernel32.obj: kernel32.c
   $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
-  $(AS) --64 -o $@ --oformat coff $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) --64 -o $@ --oformat coff $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 clean:
