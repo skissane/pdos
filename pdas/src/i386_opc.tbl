@@ -740,11 +740,32 @@ CMOVcc ("cmovnle", 0x0F4F)
 
 "movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
+"movhlps", 0x0F12, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM, REG_XMM }
+
+"movhps", 0x0F16, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { Qword | ANY_MEM, REG_XMM }
+
 "movaps", 0x0F28, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
 "movss", 0xF30F10, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
 /* SSE2 instructions. */
+"punpcklbw", 0x660F60, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"punpcklwd", 0x660F61, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"punpckldq", 0x660F62, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
+"punpcklqdq", 0x660F6C, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"punpckhqdq", 0x660F6D, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
+"pand", 0x660FDB, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
+"por", 0x660FEB, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"pxor", 0x660FEF, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
+"paddb", 0x660FFC, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"paddw", 0x660FFD, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"paddd", 0x660FFE, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+"paddq", 0x660FD4, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
 "movapd", 0x660F28, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "movsd", 0xF20F10, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 /* Conflicts with string movs with 'd' suffix. */
@@ -764,7 +785,6 @@ CMOVcc ("cmovnle", 0x0F4F)
 "andnpd", 0x660F55, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "orpd", 0x660F56, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "addsd", 0xF20F58, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
-"cmpltsd", 0xF20FC2, 1, CPU_SSE2, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 "mulsd", 0xF20F59, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 "subsd", 0xF20F5C, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 "divsd", 0xF20F5E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
@@ -773,7 +793,13 @@ CMOVcc ("cmovnle", 0x0F4F)
 "ucomisd", 0x660F2E, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 "xorpd", 0x660F57, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
-"pxor", 0x660FEF, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | ANY_MEM, REG_XMM }
+"pinsrw", 0x660FC4, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE | NO_REX_W, { IMM8, REG32 | REG64, REG_XMM },
+"pinsrw", 0x660FC4, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { IMM8, Word | ANY_MEM, REG_XMM },
+
+"shufpd", 0x660FC6, NONE, CPU_SSE2, NO_SUF | MODRM, { IMM8, REG_XMM | Xmmword | ANY_MEM, REG_XMM }
+
+"movd", 0x660F6E, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { REG32 | ANY_MEM, REG_XMM },
+"movd", 0x660F6E, NONE, CPU_SSE2 | CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64 | ANY_MEM, REG_XMM },
 
 "movq", 0xF30F7E, NONE, CPU_SSE2 , NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword | Xmmword, REG_XMM }
 "movq", 0x660F6E, NONE, CPU_SSE2 | CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64 | ANY_MEM | Qword, REG_XMM },
@@ -782,6 +808,28 @@ CMOVcc ("cmovnle", 0x0F4F)
 "movq", 0x89, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64, REG64 | ANY_MEM | Qword }
 "movq", 0xC7, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM | Qword }
 "movq", 0xB8, NONE, CPU_64, NO_SUF | SHORT_FORM | SIZE64, { IMM64, REG64 }
+
+#define to_str(a) #a
+#define CmpCCpd(cc, ext) to_str (cmp##cc##pd), 0x660FC2, ext, CPU_SSE2, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+#define CmpCCsd(cc, ext) to_str (cmp##cc##sd), 0xF20FC2, ext, CPU_SSE2, NO_SUF | MODRM | IMMEXT, { REG_XMM | ANY_MEM | Qword, REG_XMM }
+
+CmpCCpd (eq, 0)
+CmpCCpd (lt, 1)
+CmpCCpd (le, 2)
+CmpCCpd (unord, 3)
+CmpCCpd (neq, 4)
+CmpCCpd (nlt, 5)
+CmpCCpd (nle, 6)
+CmpCCpd (ord, 7)
+
+CmpCCsd (eq, 0)
+CmpCCsd (lt, 1)
+CmpCCsd (le, 2)
+CmpCCsd (unord, 3)
+CmpCCsd (neq, 4)
+CmpCCsd (nlt, 5)
+CmpCCsd (nle, 6)
+CmpCCsd (ord, 7)
 
 ===REGISTER TABLE===
 
