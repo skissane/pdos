@@ -995,6 +995,8 @@ section_t read_into (char **pp, struct expr *expr, unsigned int rank, enum expr_
                 /* Nothing is done. */
             } else if (ret_section == absolute_section) {
                 ret_section = right_section;
+            } else if (left_op == EXPR_TYPE_SUBTRACT) {
+                /* Nothing is done. */
             } else {
                 as_error ("operation combines symbols in different sections");
             }
