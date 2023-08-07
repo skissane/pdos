@@ -22,27 +22,30 @@ EFI_BOOT_SERVICES *__gBS;
 
 #define gST __gST
 
-int eficall2(EFI_STATUS (EFIAPI *func)(void *p1, void *p2),
+int eficall2(void *f,
     void *p1, void *p2);
 
 static EFI_STATUS print_string (char *str) {
 
     EFI_STATUS Status = EFI_SUCCESS;
-    CHAR16 onechar[2] = {0, '\0'};
+    CHAR16 onechar[2];
+
+    onechar[0] = 0;
+    onechar[1] = 0;
 
     while (*str) {
 
         if (*str == '\n') {
             
             onechar[0] = '\r';
-            if ((Status = eficall2(gST->ConOut->OutputString, gST->ConOut, onechar))) {
+            if ((Status = eficall2((void *)gST->ConOut->OutputString, gST->ConOut, onechar))) {
                 return Status;
             }
 
         }
 
         onechar[0] = *str;
-        if ((Status = eficall2(gST->ConOut->OutputString, gST->ConOut, onechar))) {
+        if ((Status = eficall2((void *)gST->ConOut->OutputString, gST->ConOut, onechar))) {
             return Status;
         }
         str++;
