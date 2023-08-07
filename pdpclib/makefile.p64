@@ -1,0 +1,35 @@
+# This is the makefile for Win32 to build pdpclib using
+# the mingw64 compiler and static linking. Use pdmake etc
+# And using the new standard tools
+
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2
+COPTS=-S $(CFLAGS) -fno-common -fno-builtin -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
+
+AR=ar
+AS=pdas
+LD=pdld
+
+all: pdptest.exe
+
+pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj x64supb.obj
+  cmd /c if exist pdpwin64.lib del pdpwin64.lib
+  $(AR) r pdpwin64.lib p32start.obj stdio.obj string.obj stdlib.obj x64supb.obj
+  $(AR) r pdpwin64.lib start.obj time.obj errno.obj assert.obj signal.obj
+  $(AR) r pdpwin64.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
+  $(AR) s pdpwin64.lib
+  $(LD) -s --no-insert-timestamp -nostdlib -o pdptest.exe p32start.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
+
+.c.obj:
+  $(CC) $(COPTS) $<
+  $(AS) --64 --oformat coff -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  $(AS) --64 --oformat coff -o $@ $<
+
+clean:
+  rm -rf *.obj
+  rm -rf pdptest.exe
