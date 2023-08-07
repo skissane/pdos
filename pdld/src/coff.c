@@ -42,6 +42,7 @@ static int convert_to_flat = 0;
 static address_type user_specified_base_address = 0;
 
 static unsigned short wanted_Machine = 0;
+static int leading_underscore = 0;
 
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
 static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
@@ -344,14 +345,17 @@ static void write_implib (struct export_name *export_names, size_t num_names, un
     for (i = 0; i < num_names; i++) {
         file_size += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
         file_size += sizeof (struct IMPORT_OBJECT_HEADER_file);
-        file_size += 1 + strlen (export_names[i].name) + 1;
+        if (leading_underscore) file_size++;
+        file_size += strlen (export_names[i].name) + 1;
         file_size += strlen (ld_state->output_filename) + 1;
 
         if (export_names[i].export_type == EXPORT_TYPE_CODE) {
-            linker_member_size += 4 + 1 + strlen (export_names[i].name) + 1;
+            if (leading_underscore) linker_member_size++;
+            linker_member_size += 4 + strlen (export_names[i].name) + 1;
             num_linker_member_offsets++;
         }
-        linker_member_size += 4 + IMP_PREFIX_LEN + 1 + strlen (export_names[i].name) + 1;
+        if (leading_underscore) linker_member_size++;
+        linker_member_size += 4 + IMP_PREFIX_LEN + strlen (export_names[i].name) + 1;
         num_linker_member_offsets++;
 
         file_size = ALIGN (file_size, 2);
@@ -384,7 +388,7 @@ static void write_implib (struct export_name *export_names, size_t num_names, un
             bytearray_write_4_bytes (offset_pos, pos - file, BIG_ENDIAN);
             offset_pos += 4;
             
-            string_table_pos++[0] = '_';
+            if (leading_underscore) string_table_pos++[0] = '_';
             strcpy ((char *)string_table_pos, export_names[i].name);
             string_table_pos += strlen (export_names[i].name) + 1;
         }
@@ -395,14 +399,15 @@ static void write_implib (struct export_name *export_names, size_t num_names, un
             
             memcpy (string_table_pos, IMP_PREFIX_STR, IMP_PREFIX_LEN);
             string_table_pos += IMP_PREFIX_LEN;
-            string_table_pos++[0] = '_';
+            if (leading_underscore) string_table_pos++[0] = '_';
             strcpy ((char *)string_table_pos, export_names[i].name);
             string_table_pos += strlen (export_names[i].name) + 1;
         }
 
         write_archive_member_header (pos, "IMPORT/",
                                      sizeof (struct IMPORT_OBJECT_HEADER_file)
-                                     + 1 + strlen (export_names[i].name) + 1
+                                     + (leading_underscore ? 1 : 0)
+                                     + strlen (export_names[i].name) + 1
                                      + strlen (ld_state->output_filename) + 1,
                                      lu_timestamp);
         pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
@@ -413,11 +418,12 @@ static void write_implib (struct export_name *export_names, size_t num_names, un
             import_hdr.Magic1 = IMAGE_FILE_MACHINE_UNKNOWN;
             import_hdr.Magic2 = IMPORT_OBJECT_HDR_MAGIC2;
             import_hdr.Version = 0;
-            import_hdr.Machine = IMAGE_FILE_MACHINE_I386;
+            import_hdr.Machine = wanted_Machine;
 
             import_hdr.TimeDateStamp = lu_timestamp;
             
-            import_hdr.SizeOfData = 1 + strlen (export_names[i].name) + 1 + strlen (ld_state->output_filename) + 1;
+            import_hdr.SizeOfData = strlen (export_names[i].name) + 1 + strlen (ld_state->output_filename) + 1;
+            if (leading_underscore) import_hdr.SizeOfData++;
             import_hdr.OrdinalHint = OrdinalBase + i;
             
             switch (export_names[i].export_type) {
@@ -425,13 +431,15 @@ static void write_implib (struct export_name *export_names, size_t num_names, un
                 case EXPORT_TYPE_DATA: import_hdr.Type = IMPORT_DATA; break;
                 case EXPORT_TYPE_CONST: import_hdr.Type = IMPORT_CONST; break;
             }
-            
-            import_hdr.Type |= (kill_at ? IMPORT_NAME_UNDECORATE : IMPORT_NAME_NOPREFIX) << 2;
+
+            if (kill_at) import_hdr.Type |= IMPORT_NAME_UNDECORATE << 2;
+            else if (leading_underscore) import_hdr.Type |= IMPORT_NAME_NOPREFIX << 2;
+            else import_hdr.Type |= IMPORT_NAME << 2;
 
             write_struct_IMPORT_OBJECT_HEADER (pos, &import_hdr);
             pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
 
-            pos++[0] = '_';
+            if (leading_underscore) pos++[0] = '_';
             strcpy ((char *)pos, export_names[i].name);
             pos += strlen (export_names[i].name) + 1;
             strcpy ((char *)pos, ld_state->output_filename);
@@ -570,7 +578,9 @@ static void generate_edata (void)
 
         for (i = 0; i < 4; i++) {
             relocs[i].SymbolTableIndex = 0;
-            relocs[i].Type = IMAGE_REL_I386_DIR32NB;
+            relocs[i].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                              ? IMAGE_REL_AMD64_ADDR32NB
+                              : IMAGE_REL_I386_DIR32NB);
         }
         relocs[0].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NameRVA);
         relocs[1].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, ExportAddressTableRVA);
@@ -584,11 +594,13 @@ static void generate_edata (void)
     name_table_offset += strlen (ld_state->output_filename) + 1;
     for (i = 0; i < num_names; i++) {
         {
-            /* This underscore problem is likely much more complex
-             * but this workaround should be enough for now. */
-            symbol->name = xmalloc (1 + strlen (export_names[i].name) + 1);
-            symbol->name[0] = '_';
-            strcpy (symbol->name + 1, export_names[i].name);
+            if (leading_underscore) {
+                symbol->name = xmalloc (1 + strlen (export_names[i].name) + 1);
+                symbol->name[0] = '_';
+                strcpy (symbol->name + 1, export_names[i].name);
+            } else {
+                symbol->name = xstrdup (export_names[i].name);
+            }
             symbol->value = 0;
             symbol->part = NULL;
             symbol->section_number = 0;
@@ -596,7 +608,9 @@ static void generate_edata (void)
             symbol++;
             relocs[0].VirtualAddress = ied.ExportAddressTableRVA + sizeof (struct EXPORT_Address_Table_file) * i;
             relocs[0].SymbolTableIndex = i + 1;
-            relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+            relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                              ? IMAGE_REL_AMD64_ADDR32NB
+                              : IMAGE_REL_I386_DIR32NB);
             relocs++;
         }
         {
@@ -607,7 +621,9 @@ static void generate_edata (void)
                                                     &npt);
             relocs[0].VirtualAddress = ied.NamePointerRVA + sizeof (struct EXPORT_Name_Pointer_Table_file) * i;
             relocs[0].SymbolTableIndex = 0;
-            relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+            relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                              ? IMAGE_REL_AMD64_ADDR32NB
+                              : IMAGE_REL_I386_DIR32NB);
             relocs++;
         }
         {
@@ -1369,6 +1385,10 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
                     *comma = '\0';
                 }
             }
+            /* Sometimes the name might be quoted (not sure why). */
+            if (*p == '"') p++;
+            if (p[strlen (p) - 1] == '"') p[strlen (p) - 1] = '\0';
+            
             {
                 struct name_list *name_list;
                 name_list = xmalloc (sizeof (*name_list));
@@ -1469,6 +1489,9 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     }
 
     wanted_Machine = coff_hdr.Machine;
+    if (wanted_Machine == IMAGE_FILE_MACHINE_I386) {
+        leading_underscore = 1;
+    }
 
     pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, sizeof (struct string_table_header_file));
@@ -1765,11 +1788,11 @@ static void import_generate_head (const char *dll_name, const char *filename)
         struct relocation_entry_internal *relocs;
         int i;
 
-        import_dt.ImportNameTableRVA = 4;
+        import_dt.ImportNameTableRVA = 0;
         import_dt.TimeDateStamp = 0;
         import_dt.ForwarderChain = 0;
         import_dt.NameRVA = 0;
-        import_dt.ImportAddressTableRVA = 4;
+        import_dt.ImportAddressTableRVA = 0;
 
         write_struct_IMPORT_Directory_Table (part->content, &import_dt);
 
@@ -1779,7 +1802,9 @@ static void import_generate_head (const char *dll_name, const char *filename)
 
         for (i = 0; i < 3; i++) {
             relocs[i].SymbolTableIndex = i;
-            relocs[i].Type = IMAGE_REL_I386_DIR32NB;
+            relocs[i].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                              ? IMAGE_REL_AMD64_ADDR32NB
+                              : IMAGE_REL_I386_DIR32NB);
         }
         relocs[0].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
         relocs[1].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportAddressTableRVA);
@@ -1789,9 +1814,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
-    part->content = xmalloc (part->content_size);
-    memset (part->content, 0, part->content_size);
+    part->content_size = 0;
 
     of->symbol_array[0].name = xstrdup (".idata$4");
     of->symbol_array[0].value = 0;
@@ -1801,9 +1824,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
-    part->content = xmalloc (part->content_size);
-    memset (part->content, 0, part->content_size);
+    part->content_size = 0;
 
     of->symbol_array[1].name = xstrdup (".idata$5");
     of->symbol_array[1].value = 0;
@@ -1847,7 +1868,7 @@ static void import_generate_import (const char *import_name,
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
+    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     
@@ -1855,13 +1876,15 @@ static void import_generate_import (const char *import_name,
     part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
     relocs = part->relocation_array;
     relocs[0].SymbolTableIndex = 1;
-    relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+    relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                      ? IMAGE_REL_AMD64_ADDR32NB
+                      : IMAGE_REL_I386_DIR32NB);
     relocs[0].VirtualAddress = 0;
 
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
+    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
@@ -1875,7 +1898,9 @@ static void import_generate_import (const char *import_name,
     part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
     relocs = part->relocation_array;
     relocs[0].SymbolTableIndex = 1;
-    relocs[0].Type = IMAGE_REL_I386_DIR32NB;
+    relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                      ? IMAGE_REL_AMD64_ADDR32NB
+                      : IMAGE_REL_I386_DIR32NB);
     relocs[0].VirtualAddress = 0;
 
     dot_idata5_part = part;
@@ -1948,7 +1973,9 @@ static void import_generate_import (const char *import_name,
         part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
         relocs = part->relocation_array;
         relocs[0].SymbolTableIndex = 0;
-        relocs[0].Type = IMAGE_REL_I386_DIR32;
+        relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                          ? IMAGE_REL_AMD64_REL32
+                          : IMAGE_REL_I386_DIR32);
         relocs[0].VirtualAddress = 2;
     }
     
@@ -1975,14 +2002,14 @@ static void import_generate_end (void)
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
+    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = 4;
+    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 }
@@ -2000,8 +2027,14 @@ static void read_import_object (unsigned char *file, size_t file_size, const cha
     read_struct_IMPORT_OBJECT_HEADER (&import_hdr, pos);
     pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
 
-    if (import_hdr.Machine != IMAGE_FILE_MACHINE_I386) {
+    if (import_hdr.Machine != IMAGE_FILE_MACHINE_AMD64
+        && import_hdr.Machine != IMAGE_FILE_MACHINE_I386) {
         ld_error ("unrecognized Machine in import header");
+        return;
+    }
+
+    if (wanted_Machine && wanted_Machine != import_hdr.Machine) {
+        ld_error ("Machine field mismatch between objects and imports");
         return;
     }
 
