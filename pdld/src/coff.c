@@ -1092,6 +1092,7 @@ static unsigned long calculate_checksum (const unsigned char *data, size_t check
         carry = sum > 0xFFFFFFFFLU - temp;
         sum += temp;
         sum += carry;
+        sum &= 0xFFFFFFFFLU;
     }
 
     sum = (sum >> 16) + (sum & 0xFFFF);
@@ -1099,6 +1100,7 @@ static unsigned long calculate_checksum (const unsigned char *data, size_t check
     sum &= 0xFFFF;
 
     sum += data_size;
+    sum &= 0xFFFFFFFFLU;
 
     return sum;
 }
