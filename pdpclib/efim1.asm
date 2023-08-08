@@ -57,8 +57,8 @@
 # function that takes a count of number of parameters and
 # then the function and parameters
 
-.globl	eficall2
-eficall2:
+.globl	_eficall2
+_eficall2:
 	sub	rsp, 40
 	mov	rax, rcx
 	mov	rcx, rdx
