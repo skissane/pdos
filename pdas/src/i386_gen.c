@@ -41,7 +41,7 @@ void *xrealloc (void *p, size_t size)
 
 #define READ_MEM_INCREMENT 60000 /* Arbitrary. */
 
-int read_file_into_memory (const char *filename, unsigned char **memory_p, size_t *size_p)
+int read_text_file_into_memory (const char *filename, unsigned char **memory_p, size_t *size_p)
 {
     size_t mem_size = READ_MEM_INCREMENT;
     size_t read_bytes = 0;
@@ -49,7 +49,7 @@ int read_file_into_memory (const char *filename, unsigned char **memory_p, size_
     unsigned char *memory;
     FILE *infile;
 
-    if ((infile = fopen (filename, "rb")) == NULL) return 1;
+    if ((infile = fopen (filename, "r")) == NULL) return 1;
 
     memory = xmalloc (mem_size + 2);
     while ((change = fread (memory + read_bytes, 1, mem_size - read_bytes, infile)) > 0) {
@@ -528,7 +528,7 @@ static int generate (FILE *outfile, const char *in_template_filename)
     size_t file_size;
     char *pos;
     
-    if (read_file_into_memory (in_template_filename, &real_file, &file_size)) return 1;
+    if (read_text_file_into_memory (in_template_filename, &real_file, &file_size)) return 1;
     pos = (char *)real_file;
 
     if (generate_start (outfile)) {
@@ -580,7 +580,7 @@ int main (int argc, char **argv)
     out_filename = argv[2];
 
     if (strcmp (out_filename, "-")) {
-        if (!(outfile = fopen (out_filename, "wb"))) {
+        if (!(outfile = fopen (out_filename, "w"))) {
             fprintf (stderr, "failed to open '%s'\n", out_filename);
             return EXIT_FAILURE;
         }
