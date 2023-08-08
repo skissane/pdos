@@ -18,9 +18,20 @@ typedef unsigned int UINTN;
 #endif
 
 typedef unsigned char UINT8;
-typedef unsigned short UINT16;
 
+#ifdef __SUBC__
+typedef struct {
+    UINT8 a;
+    UINT8 b;
+} UINT16;
+typedef struct {
+    UINT16 a;
+    UINT16 b;
+} UINT32;
+#else
+typedef unsigned short UINT16;
 typedef unsigned long UINT32;
+#endif
 
 typedef struct {
     UINT32 a;
