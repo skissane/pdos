@@ -9,7 +9,7 @@ LDFLAGS=--no-insert-timestamp -s
 AS=pdas --64 --oformat coff
 AR=ar
 
-COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -U__WIN32__ -I. -I./src -I./src/bytearray -I./src/hashtab -I../../pdos/pdpclib -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
+COPTS=$(CFLAGS) -S -mno-red-zone -D__64BIT__ -D__EFI__ -U__WIN32__ -I. -I./src -I./src/bytearray -I./src/hashtab -I../../pdos/pdpclib -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
 
 OBJS=bytearray.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj map.obj sections.obj symbols.obj xmalloc.obj
 
