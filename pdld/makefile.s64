@@ -1,0 +1,25 @@
+VPATH=src;src/bytearray;src/hashtab
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s -nostdlib
+AS=pdas --oformat coff --64
+COPTS=-S $(CFLAGS) -Wall -Wno-builtin-declaration-mismatch -ansi -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+
+OBJS=bytearray.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj map.obj sections.obj symbols.obj xmalloc.obj
+
+TARGET=pdld.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f $(OBJS) $(TARGET)
+
