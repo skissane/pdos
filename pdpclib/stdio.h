@@ -205,11 +205,15 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
  * are implemented using an array FILE _iob[]
  * where the first three members
  * are stdin, stdout and stderr.
- * In this array each member has size 32 bytes,
+ * In this array each member has size 32 bytes (32-bit) or 48 bytes (64-bit),
  * so __DUMMYFILE is used instead
  * and the pointers are converted
  * using __INTFILE macro. */
+#ifdef __64BIT__
+#define __DUMMYFILE_SIZE 48
+#else
 #define __DUMMYFILE_SIZE 32
+#endif
 
 typedef struct
 {
