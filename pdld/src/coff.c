@@ -1076,12 +1076,40 @@ void coff_after_link (void)
     }
 }
 
+static unsigned long calculate_checksum (const unsigned char *data, size_t checksum_offset, size_t data_size)
+{
+    unsigned long sum = 0;
+    size_t i;
+
+    for (i = 0; i < data_size / 4; i++) {
+        unsigned long temp;
+        int carry;
+
+        if (i == checksum_offset / 4) continue;
+
+        bytearray_read_4_bytes (&temp, data + i * 4, LITTLE_ENDIAN);
+        /* ULONG_MAX might be bigger than this value on some systems. */
+        carry = sum > 0xFFFFFFFFLU - temp;
+        sum += temp;
+        sum += carry;
+    }
+
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += sum >> 16;
+    sum &= 0xFFFF;
+
+    sum += data_size;
+
+    return sum;
+}
+
 void coff_write (const char *filename)
 {
     FILE *outfile;
     unsigned char *file;
     size_t file_size;
     unsigned char *pos;
+    unsigned char *checksum_pos;
 
     struct IMAGE_DOS_HEADER_internal dos_hdr;
     struct coff_header_internal coff_hdr;
@@ -1190,6 +1218,8 @@ void coff_write (const char *filename)
         else optional_hdr_plus.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
         optional_hdr_plus.SizeOfHeaders = size_of_headers;
 
+        checksum_pos = pos + offsetof (struct optional_header_plus_file, CheckSum);
+
         optional_hdr_plus.Subsystem = Subsystem;
         
         optional_hdr_plus.DllCharacteristics = 0;
@@ -1235,6 +1265,8 @@ void coff_write (const char *filename)
         if (last_section) optional_hdr.SizeOfImage = ALIGN (last_section->rva + last_section->total_size, SectionAlignment);
         else optional_hdr.SizeOfImage = ALIGN (size_of_headers, SectionAlignment);
         optional_hdr.SizeOfHeaders = size_of_headers;
+
+        checksum_pos = pos + offsetof (struct optional_header_file, CheckSum);
 
         optional_hdr.Subsystem = Subsystem;
         
@@ -1314,6 +1346,10 @@ void coff_write (const char *filename)
         free (hdr);
     }
 
+    bytearray_write_4_bytes (checksum_pos,
+                             calculate_checksum (file, checksum_pos - file, file_size),
+                             LITTLE_ENDIAN);
+
     if (convert_to_flat
         && wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
         ld_error ("--convert-to-flat is not supported for 64-bit");
@@ -1331,6 +1367,7 @@ void coff_write (const char *filename)
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
     }
+    
 
     free (file);
     fclose (outfile);
