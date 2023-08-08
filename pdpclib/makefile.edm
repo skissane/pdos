@@ -1,0 +1,25 @@
+# This builds the dummy EFI executables for x86_64
+# For use with SubC
+
+CC=sccx64
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -D__SUBC__ -Dunsigned= -Dlong=int -Dshort=int
+
+TARGET=efidummy.efi
+OBJS=efidummy.obj
+
+$(TARGET): clean $(OBJS)
+  $(LD) -s -subsystem 10 -e _efimain -nostdlib -o $(TARGET) $(OBJS)
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -S -o $*.s $*.i
+  rm -f $*.i
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
