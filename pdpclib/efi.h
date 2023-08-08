@@ -294,6 +294,9 @@ typedef struct {
     EFI_TABLE_HEADER Hdr;
     CHAR16 *FirmwareVendor;
     UINT32 FirmwareRevision;
+#ifdef __SUBC__
+    UINT32 dummy1; /* SubC doesn't seem to be aligning */
+#endif
     EFI_HANDLE ConsoleInHandle;
     EFI_SIMPLE_TEXT_INPUT_PROTOCOL *ConIn;
     EFI_HANDLE ConsoleOutHandle;
