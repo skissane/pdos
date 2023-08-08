@@ -60,9 +60,9 @@
 .globl	_eficall2
 _eficall2:
 	sub	rsp, 40
-	mov	rax, rcx
-	mov	rcx, rdx
-	mov	rdx, r8
+	mov	rax, 48[rsp]
+	mov	rcx, 56[rsp]
+	mov	rdx, 64[rsp]
 	call	rax
 	add	rsp, 40
 	ret
@@ -70,7 +70,10 @@ _eficall2:
 .globl efimain
 efimain:
 	sub	rsp, 40
+        push    rdx
+        push    rcx
 	call	_efimain2
+        add     rsp, 16
 	xor	eax, eax
 	add	rsp, 40
 	ret
