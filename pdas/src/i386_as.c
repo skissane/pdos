@@ -3282,7 +3282,6 @@ static void set_bits (int new_bits, int cause_fatal_error)
     bits = new_bits;
 
     if (bits == 64) {
-        as_warn ("64 bit support is unfinished and for testing only");
         cpu_arch_flags.cpu_no64 = 0;
         cpu_arch_flags.cpu_64 = 1;
     } else {
@@ -3560,7 +3559,6 @@ void machine_dependent_handle_option (const struct as_option *popt, const char *
 
         case AS_OPTION_BITS64:
             bits = 64;
-            as_warn_at (NULL, 0, "64 bit support is unfinished and for testing only");
             break;
 
         case AS_OPTION_MARCH: {
