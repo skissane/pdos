@@ -1,0 +1,44 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# Links against pdpclib created with makefile.es6
+
+# You should first run some other makefile, like makefile.std,
+# to generate the required i386_tbl.h
+
+VPATH=src;src/hashtab
+PREPROCESSOR=pdcc -E
+
+CC=x86_64-w64-mingw32-gcc 
+LD=pdld
+LDFLAGS=--no-insert-timestamp
+AS=pdas --64 --oformat coff
+AR=ar
+
+COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -U__WIN32__ -I. -I./src -I./src/hashtab -I../../pdos/pdpclib -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
+
+
+OBJS=a_out.obj as.obj bytearray.obj cfi.obj coff.obj cstr.obj elf.obj error.obj \
+expr.obj frags.obj hashtab.obj libas.obj listing.obj load_line.obj process.obj sections.obj symbols.obj write.obj int64sup.obj \
+i386_as.obj
+
+TARGET=pdas.efi
+
+all: i386_tbl.h clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -subsystem 10 -e efimain -o $(TARGET) ../pdpclib/efistart.obj $(OBJS) ../../pdos/pdpclib/pdpefi.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f $(OBJS) $(TARGET)
