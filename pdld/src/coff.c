@@ -193,7 +193,12 @@ static void write_sections (unsigned char *file)
         section->object_dependent_data = hdr;
 
         /* Names should be just truncated as no string table exists. */
-        strncpy (hdr->Name, section->name, sizeof (hdr->Name));
+        memset (hdr->Name, '\0', sizeof (hdr->Name));
+        memcpy (hdr->Name,
+                section->name,
+                (strlen (section->name) >= sizeof (hdr->Name))
+                ? sizeof (hdr->Name)
+                : strlen (section->name));
 
         hdr->VirtualSize = section->total_size;
         hdr->VirtualAddress = section->rva;
