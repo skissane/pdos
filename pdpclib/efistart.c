@@ -18,7 +18,9 @@ EFI_HANDLE *__gIH;
 EFI_SYSTEM_TABLE *__gST;
 EFI_BOOT_SERVICES *__gBS;
 
+#define gIH __gIH
 #define gST __gST
+#define gBS __gBS
 
 #define return_Status_if_fail(func) do { if ((Status = (func))) { return Status; }} while (0)
 
@@ -149,6 +151,83 @@ static EFI_STATUS block_test (EFI_HANDLE ImageHandle) {
 
 }
 
+static EFI_STATUS cursor_position_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    INT32 Mode;
+    UINTN max_column, max_row;
+    UINTN saved_column, saved_row;
+    int i;
+
+    return_Status_if_fail (gST->ConOut->ClearScreen (gST->ConOut));
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, 2));
+    return_Status_if_fail (print_string ("start of cursor_position_test"));
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, 3));
+    return_Status_if_fail (print_string ("drawing star box\n"));
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, 4));
+
+    Mode = gST->ConOut->Mode->Mode;
+    saved_column = gST->ConOut->Mode->CursorColumn;
+    saved_row = gST->ConOut->Mode->CursorRow;
+    
+    return_Status_if_fail (gST->ConOut->QueryMode (gST->ConOut, Mode, &max_column, &max_row));
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, 1));
+    for (i = 0; i < max_column - 2; i++) {
+        return_Status_if_fail (print_string ("*"));
+    }
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, max_row - 2));
+    for (i = 0; i < max_column - 2; i++) {
+        return_Status_if_fail (print_string ("*"));
+    }
+
+    for (i = 2; i < max_row - 2; i++) {
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, i));
+        return_Status_if_fail (print_string ("*"));
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, max_column - 2, i));
+        return_Status_if_fail (print_string ("*"));
+    }
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, saved_column, saved_row));
+
+    return_Status_if_fail (print_string ("deleting star box, press any key\n"));
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
+    return_Status_if_fail (wait_for_input ());
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
+
+    saved_column = gST->ConOut->Mode->CursorColumn;
+    saved_row = gST->ConOut->Mode->CursorRow;
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, 1));
+    for (i = 0; i < max_column - 2; i++) {
+        return_Status_if_fail (print_string (" "));
+    }
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, max_row - 2));
+    for (i = 0; i < max_column - 2; i++) {
+        return_Status_if_fail (print_string (" "));
+    }
+
+    for (i = 2; i < max_row - 2; i++) {
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 1, i));
+        return_Status_if_fail (print_string (" "));
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, max_column - 2, i));
+        return_Status_if_fail (print_string (" "));
+    }
+
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, saved_column, saved_row));
+    return_Status_if_fail (print_string ("end of cursor_position_test, press any key\n"));
+    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
+    return_Status_if_fail (wait_for_input ());
+
+    return_Status_if_fail (gST->ConOut->ClearScreen (gST->ConOut));
+
+    return Status;
+}
+
 #endif
 
 int __start(int argc, char **argv);
@@ -206,6 +285,10 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         wait_for_input ();
     }
+
+#if 0
+    return_Status_if_fail (cursor_position_test ());
+#endif
 
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)
     {
