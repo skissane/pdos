@@ -1904,6 +1904,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
     else
     {
+    tempRead = toread;
     Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Read(stream->hfile, &tempRead, ptr);
     if (Status != EFI_SUCCESS)
     {
