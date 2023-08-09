@@ -126,6 +126,7 @@ extern void CTYP __devsinfo(int handle, unsigned int info);
 #ifdef __EFI__
 #include "efi.h"
 EFI_FILE_PROTOCOL *__EfiRoot = NULL;
+static int stdin_buffered = 1;
 #ifdef __EFIBIOS__
 static EFI_BLOCK_IO_PROTOCOL *bio_protocol = NULL;
 #endif
@@ -1874,6 +1875,12 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             if (c == '\r')
             {
                 c = '\n';
+            }
+            if (!stdin_buffered)
+            {
+                *(((char *)ptr) + tempRead) = c;
+                tempRead++;
+                break;
             }
             if ((c != '\b') || (tempRead > 0))
             {
@@ -4170,6 +4177,11 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             dw &= 0xff;
             dw |= (1 << 5);
             PosSetDeviceInformation(0, dw);
+        }
+#elif defined(__EFI__)
+        if (stream == stdin)
+        {
+            stdin_buffered = 0;
         }
 #elif defined(__MSDOS__)
         if (stream == stdin)
