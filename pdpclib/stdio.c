@@ -1890,8 +1890,30 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             {
                 if (input.ScanCode == 0x17)
                 {
-                    c = 0x1b;
+                    numpending = 1;
+                    pending[0] = 0x1b;
                 }
+                else if (input.ScanCode == 0x01)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[A", 2);
+                }
+                else if (input.ScanCode == 0x02)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[B", 2);
+                }
+                else if (input.ScanCode == 0x03)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[C", 2);
+                }
+                else if (input.ScanCode == 0x04)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[D", 2);
+                }
+                c = 0x1b;
             }
             if (c == '\r')
             {
@@ -1901,11 +1923,6 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             {
                 *(((char *)ptr) + tempRead) = c;
                 tempRead++;
-                if (c == 0x1b)
-                {
-                    numpending = 1;
-                    pending[0] = 0x1b;
-                }
                 break;
             }
             if ((c != '\b') || (tempRead > 0))
