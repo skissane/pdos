@@ -1796,6 +1796,8 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __EFI__
     UINTN tempRead;
     EFI_STATUS Status;
+    static int numpending = 0;
+    static char pending[20];
 #ifdef __EFIBIOS__
     static EFI_LBA LBA = {1, 0};
 #endif
@@ -1864,6 +1866,18 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 
         for (tempRead = 0; tempRead < toread; tempRead++)
         {
+            if (!stdin_buffered)
+            {
+                if (numpending > 0)
+                {
+                    c = pending[0];
+                    *(((char *)ptr) + tempRead) = c;
+                    tempRead++;
+                    numpending--;
+                    memmove(pending, pending + 1, numpending);
+                    break;
+                }
+            }
             if ((__gST->BootServices->WaitForEvent (1, &__gST->ConIn->WaitForKey, &Index) != EFI_SUCCESS)
                 || (__gST->ConIn->ReadKeyStroke (__gST->ConIn, &input) != EFI_SUCCESS))
             {
@@ -1872,6 +1886,12 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 break;
             }
             c = input.UnicodeChar;
+            /* I am getting 0 for ESC and the cursor keys. For now, just
+               assume ESC */
+            if (c == 0)
+            {
+                c = 0x1b;
+            }
             if (c == '\r')
             {
                 c = '\n';
@@ -1880,6 +1900,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             {
                 *(((char *)ptr) + tempRead) = c;
                 tempRead++;
+                if (c == 0x1b)
+                {
+                    numpending = 1;
+                    pending[0] = 0x1b;
+                }
                 break;
             }
             if ((c != '\b') || (tempRead > 0))
