@@ -2414,12 +2414,16 @@ static void iwrite(FILE *stream,
                         }
                         else if (ch == 'K')
                         {
-#if 0
-                BosReadCursorPosition(currentPage,
-                    &cursorStart,&cursorEnd,&row,&column);
-                BosWriteCharAttrib(currentPage, ' ', currentAttrib,
-                    BosGetTextModeCols() - column);
-#endif
+                            int x;
+
+                            onechar[0] = ' ';
+                            for (x = __gST->ConOut->Mode->CursorColumn;
+                                 x < 80;
+                                 x++)
+                            {
+                                __gST->ConOut->OutputString(__gST->ConOut,
+                                                            onechar);
+                            }
                         }
                         else if (ch == 'm')
                         {
