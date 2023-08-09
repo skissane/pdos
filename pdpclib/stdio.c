@@ -2392,18 +2392,18 @@ static void iwrite(FILE *stream,
                         else if (ch == 'H')
                         {
                             char *p;
-                            column = atoi(ansibuf + 2);
-                            if (column == 0) column++;
-                            row = 0;
+                            row = atoi(ansibuf + 2);
+                            if (row == 0) row++;
+                            column = 0;
                             p = strchr(ansibuf + 2, ';');
                             if (p != NULL)
                             {
-                                row = atoi(p + 1);
+                                column = atoi(p + 1);
                             }
-                            if (row == 0) row++;
+                            if (column == 0) column++;
                             __gST->ConOut->SetCursorPosition(__gST->ConOut,
-                                                             row - 1,
-                                                             column - 1);
+                                                             column - 1,
+                                                             row - 1);
                         }
                         else if (ch == 'K')
                         {
