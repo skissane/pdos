@@ -268,6 +268,7 @@ typedef EFI_STATUS (EFIAPI *EFI_LOCATE_PROTOCOL) (IN EFI_GUID *Protocol, IN void
 #define EFI_SET_WATCHDOG_TIMER int
 #define EFI_OPEN_PROTOCOL int
 #define EFI_CLOSE_PROTOCOL int
+#define EFI_LOCATE_PROTOCOL int
 #endif
 
 typedef struct {
@@ -623,6 +624,7 @@ typedef struct _EFI_SHELL_PARAMETERS_PROTOCOL {
 #define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
  {0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
 
+#ifndef __SUBC__
 struct _EFI_GRAPHICS_OUTPUT_PROTOCOL;
 struct _EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION;
 
@@ -632,6 +634,12 @@ typedef EFI_STATUS (EFIAPI *EFI_GRAPHICS_OUTPUT_PROTOCOL_QUERY_MODE) (IN struct 
                                                                       OUT struct _EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION **Info);
 typedef EFI_STATUS (EFIAPI *EFI_GRAPHICS_OUTPUT_PROTOCOL_SET_MODE) (IN struct _EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
                                                                     IN UINT32 ModeNumber);
+#endif
+
+#ifdef __SUBC__
+#define EFI_GRAPHICS_OUTPUT_PROTOCOL_QUERY_MODE int
+#define EFI_GRAPHICS_OUTPUT_PROTOCOL_SET_MODE int
+#endif
 
 typedef enum {
     PixelRedGreenBlueReserved8BitColor,
