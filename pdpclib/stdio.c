@@ -2305,6 +2305,13 @@ static void iwrite(FILE *stream,
     size_t tempWritten;
     static CHAR16 onechar[2] = {0, '\0'};
     EFI_STATUS Status;
+    unsigned int cursorStart;
+    unsigned int cursorEnd;
+    unsigned int row;
+    unsigned int column;
+    static int numansi = 0;
+    static char ansibuf[50];
+    static int currentAttrib;
 #endif
 
 #ifdef __AMIGA__
@@ -2351,6 +2358,92 @@ static void iwrite(FILE *stream,
     {
         for (tempWritten = 0; tempWritten < towrite; tempWritten++)
         {
+            if (stream == stdout)
+            {
+                int ch;
+                
+                ch = *((unsigned char *)ptr + tempWritten);
+                if ((ch == 0x1b) && (numansi == 0))
+                {
+                    ansibuf[numansi++] = ch;
+                    continue;
+                }
+                if (numansi == 1)
+                {
+                    if (ch == '[')
+                    {
+                        ansibuf[numansi++] = ch;
+                        continue;
+                    }
+                    else
+                    {
+                        numansi = 0;
+                    }
+                }
+                if (numansi > 0)
+                {
+                    if ((ch >= 0x40) && (ch <= 0x7e))
+                    {
+                        ansibuf[numansi] = '\0';
+                        if (ch == 'J')
+                        {
+                            __gST->ConOut->ClearScreen(__gST->ConOut);
+                        }
+                        else if (ch == 'H')
+                        {
+                            char *p;
+                            row = atoi(ansibuf + 2);
+                            if (row == 0) row++;
+                            column = 0;
+                            p = strchr(ansibuf + 2, ';');
+                            if (p != NULL)
+                            {
+                                column = atoi(p + 1);
+                            }
+                            if (column == 0) column++;
+                            /* BosSetCursorPosition(currentPage,
+                                                    row-1,column-1); */
+                        }
+                        else if (ch == 'K')
+                        {
+#if 0
+                BosReadCursorPosition(currentPage,
+                    &cursorStart,&cursorEnd,&row,&column);
+                BosWriteCharAttrib(currentPage, ' ', currentAttrib,
+                    BosGetTextModeCols() - column);
+#endif
+                        }
+                        else if (ch == 'm')
+                        {
+                            int x;
+                            x = atoi(ansibuf + 2);
+                            if ((x >= 30) && (x <= 37))
+                            {
+                                /* set foreground color */
+                                currentAttrib &= 0xf0;
+                                currentAttrib |= (x - 30);
+                            }
+                            else if ((x >= 40) && (x <= 47))
+                            {
+                                /* set background color */
+                                currentAttrib = ((x - 40) << 4) 
+                                                 | (currentAttrib & 0x0f);
+                            }
+                        }
+                        numansi = 0;
+                        continue;
+                    }
+                    else
+                    {
+                        ansibuf[numansi++] = ch;
+                        if (numansi == sizeof ansibuf)
+                        {
+                            numansi = 0;
+                        }
+                        continue;
+                    }
+                } /* numansi > 0 */
+            } /* stdout */
             onechar[0] = *((unsigned char *)ptr + tempWritten);
             if (onechar[0] == '\n')
             {
@@ -2359,9 +2452,9 @@ static void iwrite(FILE *stream,
                 onechar[0] = '\n';
             }
             __gST->ConOut->OutputString(__gST->ConOut, onechar);
-        }
+        } /* for loop */
     }
-    else
+    else /* file rather than stdout/stderr */
     {
         tempWritten = towrite;
         Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->Write(stream->hfile, &tempWritten, ptr);
