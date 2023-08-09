@@ -1886,11 +1886,12 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 break;
             }
             c = input.UnicodeChar;
-            /* I am getting 0 for ESC and the cursor keys. For now, just
-               assume ESC */
             if (c == 0)
             {
-                c = 0x1b;
+                if (input.ScanCode == 0x17)
+                {
+                    c = 0x1b;
+                }
             }
             if (c == '\r')
             {
@@ -2441,14 +2442,22 @@ static void iwrite(FILE *stream,
                         {
                             int x;
 
+                            column = __gST->ConOut->Mode->CursorColumn;
+                            row = __gST->ConOut->Mode->CursorRow;
                             onechar[0] = ' ';
+                            /* I need 80 here, otherwise a character remains.
+                               But 80 causes the cursor to go to the next line
+                               and the screen to scroll */
                             for (x = __gST->ConOut->Mode->CursorColumn;
-                                 x < 80;
+                                 x < 79;
                                  x++)
                             {
                                 __gST->ConOut->OutputString(__gST->ConOut,
                                                             onechar);
                             }
+                            __gST->ConOut->SetCursorPosition(__gST->ConOut,
+                                                             column,
+                                                             row);
                         }
                         else if (ch == 'm')
                         {
