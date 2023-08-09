@@ -28,9 +28,14 @@ typedef struct {
     UINT16 a;
     UINT16 b;
 } UINT32;
+typedef struct {
+    UINT16 a;
+    UINT16 b;
+} INT32;
 #else
 typedef unsigned short UINT16;
 typedef unsigned long UINT32;
+typedef long INT32;
 #endif
 
 typedef struct {
@@ -107,24 +112,57 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
 #ifndef __SUBC__
 struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_RESET) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This, IN BOOLEAN ExtendedVerification);
 typedef EFI_STATUS (EFIAPI *EFI_TEXT_STRING) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This, IN CHAR16 *String);
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_TEST_STRING) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This, IN CHAR16 *String);
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_QUERY_MODE) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
+                                                  IN UINTN ModeNumber,
+                                                  OUT UINTN *Columns,
+                                                  OUT UINTN *Rows);
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_SET_MODE) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
+                                                IN UINTN ModeNumber);
+
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_CLEAR_SCREEN) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This);
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_SET_CURSOR_POSITION) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
+                                                           IN UINTN Column,
+                                                           IN UINTN Row);
+typedef EFI_STATUS (EFIAPI *EFI_TEXT_ENABLE_CURSOR) (IN struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
+                                                     IN BOOLEAN Visible);
+
 #endif
+
+typedef struct {
+    INT32 MaxMode;
+    INT32 Mode;
+    INT32 Attribute;
+    INT32 CursorColumn;
+    INT32 CursorRow;
+    BOOLEAN CursorVisible;
+} SIMPLE_TEXT_OUTPUT_MODE;
 
 
 #ifdef __SUBC__
+#define EFI_TEXT_RESET int
 #define EFI_TEXT_STRING int
+#define EFI_TEXT_TEST_STRING int
+#define EFI_TEXT_QUERY_MODE int
+#define EFI_TEXT_SET_MODE int
+#define EFI_TEXT_CLEAR_SCREEN int
+#define EFI_TEXT_SET_CURSOR_POSITION int
+#define EFI_TEXT_ENABLE_CURSOR int
 #endif
 
 typedef struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL {
-    void *Reset;
+    EFI_TEXT_RESET Reset;
     EFI_TEXT_STRING OutputString;
-    void *TestString;
-    void *QueryMode;
-    void *SetMode;
+    EFI_TEXT_TEST_STRING TestString;
+    EFI_TEXT_QUERY_MODE QueryMode;
+    EFI_TEXT_SET_MODE SetMode;
     void *SetAttribute;
-    void *ClearScreen;
-    void *SetCursorPosition;
-    void *Mode;
+    EFI_TEXT_CLEAR_SCREEN ClearScreen;
+    EFI_TEXT_SET_CURSOR_POSITION SetCursorPosition;
+    EFI_TEXT_ENABLE_CURSOR EnableCursor;
+    SIMPLE_TEXT_OUTPUT_MODE *Mode; /* Read-only, changed through functions above. */
 } EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 
 
