@@ -253,6 +253,7 @@ typedef EFI_STATUS (EFIAPI *EFI_CLOSE_PROTOCOL) (IN EFI_HANDLE Handle,
                                                  IN EFI_GUID *Protocol,
                                                  IN EFI_HANDLE AgentHandle,
                                                  IN EFI_HANDLE ControllerHandle);
+typedef EFI_STATUS (EFIAPI *EFI_LOCATE_PROTOCOL) (IN EFI_GUID *Protocol, IN void *Registration OPTIONAL, OUT void **Interface);
 #endif
 
 #ifdef __SUBC__
@@ -317,7 +318,7 @@ typedef struct {
 
     void *ProtocolsPerHandle;
     void *LocateHandleBuffer;
-    void *LocateProtocol;
+    EFI_LOCATE_PROTOCOL LocateProtocol;
     void *InstallMultipleProtocolInterfaces;
     void *UninstallMultipleProtocolInterfaces;
 
@@ -617,6 +618,61 @@ typedef struct _EFI_SHELL_PARAMETERS_PROTOCOL {
     SHELL_FILE_HANDLE StdOut;
     SHELL_FILE_HANDLE StdErr;
 } EFI_SHELL_PARAMETERS_PROTOCOL;
+
+
+#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
+ {0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
+
+struct _EFI_GRAPHICS_OUTPUT_PROTOCOL;
+struct _EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION;
+
+typedef EFI_STATUS (EFIAPI *EFI_GRAPHICS_OUTPUT_PROTOCOL_QUERY_MODE) (IN struct _EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
+                                                                      IN UINT32 ModeNumber,
+                                                                      OUT UINTN *SizeOfInfo,
+                                                                      OUT struct _EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION **Info);
+typedef EFI_STATUS (EFIAPI *EFI_GRAPHICS_OUTPUT_PROTOCOL_SET_MODE) (IN struct _EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
+                                                                    IN UINT32 ModeNumber);
+
+typedef enum {
+    PixelRedGreenBlueReserved8BitColor,
+    PixelBlueGreenRedReserved8BitColor,
+    PixelBitMask,
+    PixelBltOnly,
+    PixelFormatMax
+} EFI_GRAPHICS_PIXEL_FORMAT;
+
+typedef struct {
+    UINT32 RedMask;
+    UINT32 GreenMask;
+    UINT32 BlueMask;
+    UINT32 ReservedMask;
+} EFI_PIXEL_BITMASK;
+
+typedef struct _EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION {
+    UINT32 Version;
+    UINT32 HorizontalResolution;
+    UINT32 VerticalResolution;
+    EFI_GRAPHICS_PIXEL_FORMAT PixelFormat;
+    EFI_PIXEL_BITMASK PixelInformation;
+    UINT32 PixelsPerScanline;
+} EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION;
+
+typedef struct {
+    UINT32 MaxMode;
+    UINT32 Mode;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE_INFORMATION *Info;
+    UINTN SizeOfInfo;
+    EFI_PHYSICAL_ADDRESS FrameBufferBase;
+    UINTN FrameBufferSize;
+} EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE;
+
+typedef struct _EFI_GRAPHICS_OUTPUT_PROTOCOL {
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_QUERY_MODE QueryMode;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_SET_MODE SetMode;
+    void *Blt;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *Mode;
+} EFI_GRAPHICS_OUTPUT_PROTOCOL;
+
 
 
 extern EFI_HANDLE *__gIH;
