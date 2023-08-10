@@ -1729,7 +1729,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         /* The first 2 bytes are hint index,
                          * so they are skipped to get the name. */
                         hintname += 2;
-                        printf("hintname is X%sX\n", hintname);
+                        /* printf("hintname is X%sX\n", hintname); */
                         if (strcmp(hintname, "puts") == 0)
                         {
                             *thunk = (unsigned long long)puts;
