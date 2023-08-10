@@ -27,7 +27,11 @@
 #ifndef __SIZE_T_DEFINED
 #define __SIZE_T_DEFINED
 #if defined(__64BIT__)
+#ifdef __SUBC__
+typedef unsigned int size_t;
+#else
 typedef unsigned long long size_t;
+#endif
 #elif (defined(__OS2__) || defined(__MVS__) \
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__) \
     || defined(__ARM__) || defined(__gnu_linux__) \

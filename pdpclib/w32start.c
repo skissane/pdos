@@ -14,8 +14,10 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+#ifndef __SUBC__
 int __getmainargs(int *_Argc, char ***_Argv, char ***_Env, int _DoWildCard,
                   int *_StartInfo);
+#endif
 
 #ifdef __WATCOMC__
 int __watcall main(int argc, char **argv);
@@ -51,7 +53,9 @@ void mainCRTStartup(void)
     int startinfo = 0;
     int status;
 
+#ifndef __SUBC__
     __getmainargs(&argc, &argv, &environ, 1, &startinfo);
+#endif
 
 #ifdef __WATCOMC__
     status = __cdmain(argc, argv);

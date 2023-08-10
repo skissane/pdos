@@ -14,7 +14,11 @@
 #define __STDDEF_INCLUDED
 
 #if defined(__64BIT__)
+#ifdef __SUBC__
+typedef int ptrdiff_t;
+#else
 typedef long long ptrdiff_t;
+#endif
 #else
 typedef int ptrdiff_t;
 #endif
