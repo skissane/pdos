@@ -876,63 +876,56 @@ static void handler_rva (char **pp) {
     handler_constant (pp, 4, 1);
 }
 
-static void handler_space (char **pp) {
-
+static void handler_space (char **pp)
+{
     struct expr expr, val;
     offset_t repeat;
     
     machine_dependent_simplified_expression_read_into (pp, &expr);
     
     if (**pp == ',') {
-    
         ++(*pp);
         machine_dependent_simplified_expression_read_into (pp, &val);
         
         if (val.type != EXPR_TYPE_CONSTANT) {
-        
             as_error ("invalid value for .space");
             
             ignore_rest_of_line (pp);
             return;
-        
         }
-    
+
+        if (val.add_number > 0xff) {
+            as_warn ("fill value %#"PRIxVALUE" truncated to %#"PRIxVALUE,
+                     val.add_number,
+                     val.add_number & 0xff);
+            val.add_number &= 0xff;
+        }
     } else {
-    
         val.type = EXPR_TYPE_CONSTANT;
         val.add_number = 0;
-    
     }
     
     if (expr.type == EXPR_TYPE_CONSTANT) {
-    
         repeat = expr.add_number;
         
         if (repeat == 0) {
-        
             as_warn (".space repeat count is zero, ignored");
             goto end;
-        
         }
         
         if (repeat < 0) {
-        
             as_warn (".space repeat count is negative, ignored");
             goto end;
-        
         }
 
         memset (frag_increase_fixed_size (repeat), val.add_number, repeat);
-    
     } else {
-    
         struct symbol *expr_symbol = make_expr_symbol (&expr);
         
         unsigned char *p = frag_alloc_space (symbol_get_value (expr_symbol));
         *p = val.add_number;
         
         frag_set_as_variant (RELAX_TYPE_SPACE, 0, expr_symbol, 0, 0);
-    
     }
     
     if ((val.type != EXPR_TYPE_CONSTANT || val.add_number != 0) && current_section == bss_section) {
@@ -940,9 +933,7 @@ static void handler_space (char **pp) {
     }
     
 end:
-    
     demand_empty_rest_of_line (pp);
-
 }
 
 static void handler_text (char **pp) {
