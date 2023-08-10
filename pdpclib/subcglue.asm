@@ -135,6 +135,15 @@ _printf:
 #	add	rsp, 40
 #	ret
 
+# But this likely works
+.globl	___scexit
+___scexit:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	call	exit
+	add	rsp, 40
+	ret
+
 
 # This won't work at all
 .globl __imp___iob

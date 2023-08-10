@@ -72,6 +72,9 @@ void exit(int status) __attribute__((noreturn));
 #else
 __PDPCLIB_HEADFUNC void abort(void);
 __PDPCLIB_HEADFUNC void exit(int status);
+#if defined(__SUBC__) && defined(__64BIT__)
+#define exit(x) __scexit(x)
+#endif
 #endif
 
 #ifdef __SUBC__
