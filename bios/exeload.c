@@ -1462,6 +1462,8 @@ static int dummyfunc(void)
     return (0);
 }
 
+int getmainargs(int *_Argc, char ***_Argv);
+
 static int exeloadLoadPE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
@@ -1735,6 +1737,18 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp(hintname, "exit") == 0)
                         {
                             *thunk = (unsigned long long)exit;
+                        }
+                        else if (strcmp(hintname, "printf") == 0)
+                        {
+                            *thunk = (unsigned long long)printf;
+                        }
+                        else if (strcmp(hintname, "malloc") == 0)
+                        {
+                            *thunk = (unsigned long long)malloc;
+                        }
+                        else if (strcmp(hintname, "__getmainargs") == 0)
+                        {
+                            *thunk = (unsigned long long)getmainargs;
                         }
                         else
                         {
