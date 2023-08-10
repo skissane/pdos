@@ -18,7 +18,7 @@ $(TARGET): clean $(OBJS)
   $(CC) -S -o $*.s $*.i
   rm -f $*.i
   $(AS) -o $@ $*.s
-#  rm -f $*.s
+  rm -f $*.s
 
 .asm.obj:
   $(AS) -o $@ $<
