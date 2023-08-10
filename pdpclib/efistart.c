@@ -273,6 +273,53 @@ static EFI_STATUS cursor_position_test (void)
 
 #endif
 
+#if 0
+static EFI_STATUS ctrl_key_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID stiex_guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
+    EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *stiex;
+    int i;
+
+    return_Status_if_fail (print_string ("locating EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL\n"));
+
+    if ((Status = gBS->LocateProtocol (&stiex_guid, NULL, (void **)&stiex))) {
+        print_string ("failed to locate EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL\n");
+        return Status;
+    }
+
+    return_Status_if_fail (print_string ("success\n"));
+
+    return_Status_if_fail (stiex->Reset (stiex, 0));
+    
+    return_Status_if_fail (print_string ("press left-ctrl+d, you have 5 tries\n"));
+    for (i = 0; i < 5; i++) {
+        UINTN Index;
+        EFI_KEY_DATA KeyData;
+        
+        if ((gBS->WaitForEvent (1, &stiex->WaitForKeyEx, &Index) != EFI_SUCCESS)
+            || (stiex->ReadKeyStrokeEx (stiex, &KeyData) != EFI_SUCCESS)) {
+            return print_string ("error occured\n\n");
+        }
+
+        if (!(KeyData.KeyState.KeyShiftState & EFI_SHIFT_STATE_VALID)) {
+            return print_string ("device does not support KeyShiftState\n");
+        }
+
+        if (KeyData.Key.UnicodeChar == 'd') {
+            return_Status_if_fail (print_string ("'d' pressed\n"));
+            if (KeyData.KeyState.KeyShiftState & EFI_LEFT_CONTROL_PRESSED) {
+                return print_string ("you pressed left-ctrl+d, test finished\n");
+            }
+        }
+
+        return_Status_if_fail (print_string ("wrong, press left-ctrl+d\n"));
+    }
+
+    return Status;
+}
+#endif
+
 int __start(int argc, char **argv);
 
 void __exita(int status)
@@ -331,6 +378,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
 #if 0
     return_Status_if_fail (cursor_position_test ());
+    return_Status_if_fail (ctrl_key_test ());
 #endif
 
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)

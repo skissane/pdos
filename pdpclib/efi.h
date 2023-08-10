@@ -714,6 +714,64 @@ typedef struct _EFI_GRAPHICS_OUTPUT_PROTOCOL {
 } EFI_GRAPHICS_OUTPUT_PROTOCOL;
 
 
+#define EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID \
+ {0xdd9e7534,0x7762,0x4698,{0x8c,0x14,0xf5,0x85,0x17,0xa6,0x25,0xaa}}
+
+#ifndef __SUBC__
+struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
+
+typedef EFI_STATUS (EFIAPI *EFI_INPUT_RESET_EX) (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This, IN BOOLEAN ExtendedVerification);
+#endif
+
+typedef UINT8 EFI_KEY_TOGGLE_STATE;
+
+#define EFI_TOGGLE_STATE_VALID 0x80
+#define EFI_KEY_STATE_EXPOSED  0x40
+#define EFI_SCROLL_LOCK_ACTIVE 0x01
+#define EFI_NUM_LOCK_ACTIVE    0x02
+#define EFI_CAPS_LOCK_ACTIVE   0x04
+
+typedef struct {
+    UINT32 KeyShiftState;
+    EFI_KEY_TOGGLE_STATE KeyToggleState;
+} EFI_KEY_STATE;
+
+#define EFI_SHIFT_STATE_VALID     0x80000000
+#define EFI_RIGHT_SHIFT_PRESSED   0x00000001
+#define EFI_LEFT_SHIFT_PRESSED    0x00000002
+#define EFI_RIGHT_CONTROL_PRESSED 0x00000004
+#define EFI_LEFT_CONTROL_PRESSED  0x00000008
+#define EFI_RIGHT_ALT_PRESSED     0x00000010
+#define EFI_LEFT_ALT_PRESSED      0x00000020
+#define EFI_RIGHT_LOGO_PRESSED    0x00000040
+#define EFI_LEFT_LOGO_PRESSED     0x00000080
+#define EFI_MENU_KEY_PRESSED      0x00000100
+#define EFI_SYS_REQ_PRESSED       0x00000200
+
+typedef struct {
+    EFI_INPUT_KEY Key;
+    EFI_KEY_STATE KeyState;
+} EFI_KEY_DATA;
+
+#ifndef __SUBC__
+typedef EFI_STATUS (EFIAPI *EFI_INPUT_READ_KEY_EX) (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+                                                    OUT EFI_KEY_DATA *KeyData);
+#endif
+
+#ifdef __SUBC__
+#define EFI_INPUT_RESET_EX int
+#define EFI_INPUT_READ_KEY_EX int
+#endif
+
+typedef struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL {
+    EFI_INPUT_RESET_EX Reset;
+    EFI_INPUT_READ_KEY_EX ReadKeyStrokeEx;
+    EFI_EVENT WaitForKeyEx;
+    void *SetState;
+    void *RegisterKeyNotify;
+    void *UnregisterKeyNotify;
+} EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
+
 
 extern EFI_HANDLE *__gIH;
 extern EFI_SYSTEM_TABLE *__gST;
