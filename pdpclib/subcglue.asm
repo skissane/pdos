@@ -20,20 +20,106 @@
 .text
 
 
-# Three parameters are:
-# 1. Function to call.
-# 2. First parameter to that function
-# 3. Second parmater to that function
-
-# It is intended that this should be generalized into a
-# function that takes a count of number of parameters and
-# then the function and parameters
-
 .globl	_puts
 _puts:
 	sub	rsp, 40
 	mov	rcx, 48[rsp]
 	call	puts
+	add	rsp, 40
+	ret
+
+.globl	_malloc
+_malloc:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	call	malloc
+	add	rsp, 40
+	ret
+
+.globl	_ferror
+_ferror:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	call	ferror
+	add	rsp, 40
+	ret
+
+.globl	_fclose
+_fclose:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	call	fclose
+	add	rsp, 40
+	ret
+
+.globl	_strlen
+_strlen:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	call	strlen
+	add	rsp, 40
+	ret
+
+.globl	_strcpy
+_strcpy:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	call	strcpy
+	add	rsp, 40
+	ret
+
+.globl	_strcmp
+_strcmp:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	call	strcmp
+	add	rsp, 40
+	ret
+
+.globl	_fopen
+_fopen:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	call	fopen
+	add	rsp, 40
+	ret
+
+.globl	_fread
+_fread:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	mov	r8, 64[rsp]
+	mov	r9, 72[rsp]
+	call	fread
+	add	rsp, 40
+	ret
+
+.globl	_fwrite
+_fwrite:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	mov	r8, 64[rsp]
+	mov	r9, 72[rsp]
+	call	fwrite
+	add	rsp, 40
+	ret
+
+# We only have a maximum of 4 parameters supported at the
+# moment. And theoretically this could access memory beyond
+# what is allocated
+.globl	_printf
+_printf:
+	sub	rsp, 40
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	mov	r8, 64[rsp]
+	mov	r9, 72[rsp]
+	call	printf
 	add	rsp, 40
 	ret
 
@@ -49,4 +135,9 @@ _puts:
 #	add	rsp, 40
 #	ret
 
+
+# This won't work at all
+.globl __imp___iob
+__imp___iob:
+	ret
 
