@@ -45,8 +45,7 @@ extern int __start(char *p);
 int their_start(char *parm);
 
 #ifndef __SUBC__
-static int getmainargs(int *_Argc,
-                       char ***_Argv);
+int getmainargs(int *_Argc, char ***_Argv);
 #endif
 
 void *PosGetDTA(void);
@@ -319,8 +318,8 @@ int their_start(char *parm)
 #define MAXPARMS 50
 
 #ifndef __SUBC__
-static int getmainargs(int *_Argc,
-                       char ***_Argv)
+int getmainargs(int *_Argc,
+                char ***_Argv)
 {
     char *p;
     int x;
