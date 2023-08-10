@@ -2361,7 +2361,7 @@ static void iwrite(FILE *stream,
     unsigned int column;
     static int numansi = 0;
     static char ansibuf[50];
-    static int currentAttrib;
+    static int currentAttrib = 0;
 #endif
 
 #ifdef __AMIGA__
@@ -2480,18 +2480,18 @@ static void iwrite(FILE *stream,
                         {
                             int x;
                             x = atoi(ansibuf + 2);
-                            if ((x >= 30) && (x <= 37))
+                            if (x == 0)
                             {
-                                /* set foreground color */
-                                currentAttrib &= 0xf0;
-                                currentAttrib |= (x - 30);
+                                currentAttrib = EFI_LIGHTGRAY
+                                                | EFI_BACKGROUND_BLACK;
                             }
-                            else if ((x >= 40) && (x <= 47))
+                            else if (x == 7)
                             {
-                                /* set background color */
-                                currentAttrib = ((x - 40) << 4) 
-                                                 | (currentAttrib & 0x0f);
+                                currentAttrib = EFI_BLACK
+                                                | EFI_BACKGROUND_LIGHTGRAY;
                             }
+                            __gST->ConOut->SetAttribute(__gST->ConOut,
+                                                        currentAttrib);
                         }
                         numansi = 0;
                         continue;
