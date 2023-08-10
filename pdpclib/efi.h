@@ -181,6 +181,7 @@ typedef struct {
 #define EFI_TEXT_CLEAR_SCREEN int
 #define EFI_TEXT_SET_CURSOR_POSITION int
 #define EFI_TEXT_ENABLE_CURSOR int
+#define EFI_TEXT_SET_ATTRIBUTE int
 #endif
 
 typedef struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL {
