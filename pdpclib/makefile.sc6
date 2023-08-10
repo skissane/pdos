@@ -1,0 +1,28 @@
+# This builds Win64 executables for x86_64
+# For use with SubC
+
+CC=sccx64
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-D__64BIT__ -D__WIN32__ -I. -D__SUBC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int
+
+TARGET=pdptest.exe
+OBJS=w32start.obj subcglue.obj pdptest.obj
+
+$(TARGET): clean $(OBJS)
+  $(LD) -s -e _mainCRTStartup -nostdlib -o $(TARGET) $(OBJS) msvcrt.lib
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -S -o $*.s $*.i
+  rm -f $*.i
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
