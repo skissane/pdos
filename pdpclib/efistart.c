@@ -150,7 +150,9 @@ static EFI_STATUS block_test (EFI_HANDLE ImageHandle) {
     return Status;
 
 }
+#endif
 
+#if 0
 static EFI_STATUS cursor_position_test (void)
 {
     EFI_STATUS Status = EFI_SUCCESS;
@@ -193,7 +195,7 @@ static EFI_STATUS cursor_position_test (void)
 
     return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, saved_column, saved_row));
 
-    return_Status_if_fail (print_string ("deleting star box, press any key\n"));
+    return_Status_if_fail (print_string ("deleting star box\n"));
     return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
     return_Status_if_fail (wait_for_input ());
     return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
@@ -219,8 +221,49 @@ static EFI_STATUS cursor_position_test (void)
     }
 
     return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, saved_column, saved_row));
-    return_Status_if_fail (print_string ("end of cursor_position_test, press any key\n"));
-    return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, 2, gST->ConOut->Mode->CursorRow));
+
+    {
+        UINTN saved_attribute = gST->ConOut->Mode->Attribute;
+
+        return_Status_if_fail (print_string ("writing light magenta text on cyan background\n"));
+
+        return_Status_if_fail (gST->ConOut->SetAttribute (gST->ConOut, EFI_LIGHTMAGENTA | EFI_BACKGROUND_CYAN));
+        return_Status_if_fail (print_string ("The quick brown fox jumps over the lazy dog\n"));
+        return_Status_if_fail (gST->ConOut->SetAttribute (gST->ConOut, saved_attribute));
+        return_Status_if_fail (print_string ("done\n"));
+        return_Status_if_fail (wait_for_input ());
+    }
+
+    return_Status_if_fail (gST->ConOut->ClearScreen (gST->ConOut));
+
+    {
+        return_Status_if_fail (print_string ("deleting half of line test\n"));
+
+        saved_column = gST->ConOut->Mode->CursorColumn;
+        saved_row = gST->ConOut->Mode->CursorRow;
+
+        for (i = 0; i < max_column; i++) {
+            print_string ("A");
+        }
+
+        return_Status_if_fail (print_string ("wrote the line\n"));
+        return_Status_if_fail (wait_for_input ());
+
+        /* Deletes last char of line. */
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, max_column - 1, saved_row));
+        print_string (" \b");
+
+        return_Status_if_fail (gST->ConOut->SetCursorPosition (gST->ConOut, max_column - 1, saved_row));
+        for (i = 0; i < max_column / 2; i++) {
+            print_string ("\b");
+        }
+
+        print_string ("\n");
+
+        return_Status_if_fail (print_string ("deleted the half of line\n"));
+    }
+    
+    return_Status_if_fail (print_string ("end of cursor_position_test\n"));
     return_Status_if_fail (wait_for_input ());
 
     return_Status_if_fail (gST->ConOut->ClearScreen (gST->ConOut));
