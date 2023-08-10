@@ -109,6 +109,22 @@ _fwrite:
 	add	rsp, 40
 	ret
 
+# Not sure why the 5th parameter goes into the top of the
+# special 40-byte stack area. Maybe this is reserved for
+# 5 more parameters
+.globl	___getmainargs
+___getmainargs:
+	sub	rsp, 40
+        mov     rcx, 80[rsp]
+        movq    32[rsp], rcx
+	mov	rcx, 48[rsp]
+	mov	rdx, 56[rsp]
+	mov	r8, 64[rsp]
+	mov	r9, 72[rsp]
+	call	__getmainargs
+	add	rsp, 40
+	ret
+
 # We only have a maximum of 4 parameters supported at the
 # moment. And theoretically this could access memory beyond
 # what is allocated

@@ -17,6 +17,9 @@
 #ifndef __SUBC__
 int __getmainargs(int *_Argc, char ***_Argv, char ***_Env, int _DoWildCard,
                   int *_StartInfo);
+#else
+int __getmainargs(int *_Argc, void *_Argv, void *_Env, int _DoWildCard,
+                  int *_StartInfo);
 #endif
 
 #ifdef __WATCOMC__
@@ -48,17 +51,26 @@ int main(int argc, char **argv);
 void mainCRTStartup(void)
 {
     int argc;
+#ifndef __SUBC__
     char **argv;
     char **environ;
+#else
+    char *argv;
+    char *environ;
+#endif
     int startinfo = 0;
     int status;
 
 #ifndef __SUBC__
     __getmainargs(&argc, &argv, &environ, 1, &startinfo);
+#else
+    __getmainargs(&argc, &argv, &environ, 1, &startinfo);
 #endif
 
 #ifdef __WATCOMC__
     status = __cdmain(argc, argv);
+#elif defined(__SUBC__)
+    status = main(argc, (void *)argv);
 #else
     status = main(argc, argv);
 #endif
