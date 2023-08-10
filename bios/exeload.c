@@ -1456,6 +1456,12 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     return (2);
 }
 
+static int dummyfunc(void)
+{
+    printf("in dummyfunc\n");
+    return (0);
+}
+
 static int exeloadLoadPE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
@@ -1699,6 +1705,44 @@ static int exeloadLoadPE(unsigned char **entry_point,
              * and the array has a null terminator. */
             for (; import_desc->OriginalFirstThunk; import_desc++)
             {
+#ifdef W64HACK
+                unsigned long long *thunk;
+                
+                for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
+                     *thunk != 0;
+                     thunk++)
+                {
+                    if ((*thunk) & 0x8000000000000000ULL)
+                    {
+                        /* Bit 63 set, import by ordinal. */
+                        printf("ordinal import not supported\n");
+                        return (2);
+                    }
+                    else
+                    {
+                        /* Import by name. */
+                        unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffffffffffULL);
+                        int i;
+
+                        /* The first 2 bytes are hint index,
+                         * so they are skipped to get the name. */
+                        hintname += 2;
+                        printf("hintname is X%sX\n", hintname);
+                        if (strcmp(hintname, "puts") == 0)
+                        {
+                            *thunk = (unsigned long long)puts;
+                        }
+                        else if (strcmp(hintname, "exit") == 0)
+                        {
+                            *thunk = (unsigned long long)exit;
+                        }
+                        else
+                        {
+                            *thunk = (unsigned long long)dummyfunc;
+                        }
+                    }
+                }
+#else
                 ret = exeloadLoadPEDLL(exeStart, import_desc);
                 if (ret != 0)
                 {
@@ -1706,6 +1750,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                            exeStart + import_desc->Name, ret);
                     return (2);
                 }
+#endif
             }
         }
     }
