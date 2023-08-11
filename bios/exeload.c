@@ -1462,7 +1462,10 @@ static int dummyfunc(void)
     return (0);
 }
 
+#ifdef W64HACK
 int getmainargs(int *_Argc, char ***_Argv);
+void w64exit(int status);
+#endif
 
 static int exeloadLoadPE(unsigned char **entry_point,
                          FILE *fp,
@@ -1736,7 +1739,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         }
                         else if (strcmp(hintname, "exit") == 0)
                         {
-                            *thunk = (unsigned long long)exit;
+                            *thunk = (unsigned long long)w64exit;
                         }
                         else if (strcmp(hintname, "printf") == 0)
                         {
