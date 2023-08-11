@@ -50,6 +50,10 @@ int main(int argc, char **argv);
 /*__declspec(dllexport)*/
 void mainCRTStartup(void)
 {
+#ifdef __SUBC__
+    /* unclear why argc being on the stack is causing issues */
+    static
+#endif
     int argc;
 #ifndef __SUBC__
     char **argv;
