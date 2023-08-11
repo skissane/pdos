@@ -1746,6 +1746,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)malloc;
                         }
+                        else if (strcmp(hintname, "strcpy") == 0)
+                        {
+                            *thunk = (unsigned long long)strcpy;
+                        }
                         else if (strcmp(hintname, "__getmainargs") == 0)
                         {
                             *thunk = (unsigned long long)getmainargs;
