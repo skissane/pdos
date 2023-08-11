@@ -55,7 +55,8 @@ void mainCRTStartup(void)
        are expecting both long and int to be 32-bits. We can
        get away with this with care. In thise case, we need
        to ensure the upper 32 bits are initialized to 0 by
-       doing an explicit initialization */
+       doing an explicit initialization. This should probably
+       be moved to the subcglue.asm code */
     int argc = 0;
 #else
     int argc;
