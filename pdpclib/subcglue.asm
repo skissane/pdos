@@ -159,10 +159,3 @@ ___scexit:
 	call	exit
 	add	rsp, 40
 	ret
-
-
-# This won't work at all
-.globl __imp___iob
-__imp___iob:
-	ret
-

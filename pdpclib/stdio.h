@@ -228,7 +228,13 @@ typedef struct
 #if !defined(__SUBC__) && !defined(__NODECLSPEC__)
 __declspec(dllimport) __DUMMYFILE _iob[3];
 #else
+
+#ifdef __64BIT__
+extern __DUMMYFILE *_imp__iob;
+#else
 extern __DUMMYFILE *_imp___iob;
+#endif
+
 #endif
 #endif
 
@@ -237,9 +243,17 @@ extern __DUMMYFILE *_imp___iob;
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
 #else
+
+#ifdef __64BIT__
+#define stdin ((FILE *) &(_imp__iob[0]))
+#define stdout ((FILE *) &(_imp__iob[1]))
+#define stderr ((FILE *) &(_imp__iob[2]))
+#else
 #define stdin ((FILE *) &(_imp___iob[0]))
 #define stdout ((FILE *) &(_imp___iob[1]))
 #define stderr ((FILE *) &(_imp___iob[2]))
+#endif
+
 #endif
 
 #define __INTFILE(f) (((f) == stdin) ? __stdin : \
