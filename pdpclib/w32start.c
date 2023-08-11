@@ -50,11 +50,17 @@ int main(int argc, char **argv);
 /*__declspec(dllexport)*/
 void mainCRTStartup(void)
 {
-#ifdef __SUBC__
-    /* unclear why argc being on the stack is causing issues */
-    static
-#endif
+#if defined(__SUBC__) && defined(__64BIT__)
+    /* int is 64-bits in SubC, but the functions being called
+       are expecting both long and int to be 32-bits. We can
+       get away with this with care. In thise case, we need
+       to ensure the upper 32 bits are initialized to 0 by
+       doing an explicit initialization */
+    int argc = 0;
+#else
     int argc;
+#endif
+
 #ifndef __SUBC__
     char **argv;
     char **environ;
