@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <locale.h>
 #include <assert.h>
+#include <setjmp.h>
 
 #include "__os.h"
 #include "exeload.h"
@@ -63,6 +64,8 @@ int PosFindNext(void);
 
 static char buf[400];
 static char cmd[400];
+
+static jmp_buf jb;
 
 static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
@@ -246,12 +249,28 @@ int main(int argc, char **argv)
     }
 #endif
 
+#ifdef W64HACK
+    rc = setjmp(jb);
+    if (rc != 0)
+    {
+        /* we got exit via longjmp */
+        /* no action required */
+    }
+    else
+    {
+#endif
+
     printf("about to execute program\n");
 #if 1
     rc = genstart(&bios);
 #else
     rc = 0;
 #endif
+
+#ifdef W64HACK
+    }
+#endif
+
     if (!quiet)
     {
         printf("return from called program is %d\n", rc);
@@ -383,6 +402,14 @@ int getmainargs(int *_Argc,
     *_Argc = argc;
     *_Argv = argv;
     return (0);
+}
+#endif
+
+#ifdef W64HACK
+void w64exit(int status)
+{
+    longjmp(jb, status);
+    return;
 }
 #endif
 
