@@ -38,7 +38,13 @@ int main(int argc, char **argv)
 
     printf("welcome to pdptest\n");
 #ifndef SEGHACK
+
+#if defined(__SUBC__) && defined(__64BIT__)
+    printf("main function is at %p\n%s", main, "");
+#else
     printf("main function is at %p\n", main);
+#endif
+
 #endif
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     z = (char *)main;
@@ -53,19 +59,31 @@ int main(int argc, char **argv)
     printf("allocating 3 GiB\n");
     m1 = malloc(3U*1024*1024*1024);
 #endif
+#if defined(__SUBC__) && defined(__64BIT__)
+    printf("m1 is %p\n%s", m1, "");
+#else
     printf("m1 is %p\n", m1);
+#endif
     if (m1 != NULL)
     {
         strcpy(m1, "ABCDE");
     }
     printf("allocating 20 bytes\n");
     m2 = malloc(20);
+#if defined(__SUBC__) && defined(__64BIT__)
+    printf("m2 is %p\n%s", m2, "");
+#else
     printf("m2 is %p\n", m2);
+#endif
     if (m2 != NULL)
     {
         strcpy(m2, "1234");
     }
+#if defined(__SUBC__) && defined(__64BIT__)
+    printf("stack is around %p\n%s", &c, "");
+#else
     printf("stack is around %p\n", &c);
+#endif
 /*    printf("calling pdptst31\n");
     system("pdptst31");
     printf("done with pdptst31\n"); */
@@ -76,7 +94,11 @@ int main(int argc, char **argv)
     if ((argc > 1) && (argv[1][0] != '-'))
     {
         printf("printing arguments\n");
+#if defined(__SUBC__) && defined(__64BIT__)
+        printf("argc = %d\n%s" , argc, "");
+#else
         printf("argc = %d\n" , argc);
+#endif
         for (i = 0; i < argc; i++)
         {
             printf("arg %d is <%s>\n", i, argv[i]);
