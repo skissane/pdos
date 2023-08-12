@@ -32,6 +32,9 @@ int main(int argc, char **argv)
     char *m2;
     char *z;
     int i;
+#if defined(__SUBC__) && defined(__64BIT__)
+    int dummy; /* to get SubC to align stack on 16-byte boundary for SSE */
+#endif
 
     printf("welcome to pdptest\n");
 #ifndef SEGHACK
