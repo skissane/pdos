@@ -10,6 +10,29 @@
 /*                                                                   */
 /*********************************************************************/
 
+/*
+
+As originally conceived, the pseudo-bios would have minimal
+functionality. It would be a replacement for the PC BIOS, and only
+be responsible for loading a single sector, and that code would need
+to make callbacks to the provided callbacks to read more sectors
+(via an odd fread, possibly of an already-open disk file, but more
+likely requiring an fopen of "!BOOT" - it remains to be proven what
+can fit into a sector, and for that matter, a ROM).
+
+However, the pseudo-bios began life running under some existing OS,
+which meant that individual file access existed, allowing you to
+make use of the existing OS, including eventually UEFI as that OS.
+
+As such, it became convenient to turn the pseudo-bios into some sort
+of "OS converter", and included shell capabilities too.
+
+It is unclear if one day a new version needs to be created to create
+the original pseudo-bios concept, since this one has morphed into
+some sort of (useful) Frankenstein.
+
+*/
+
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
