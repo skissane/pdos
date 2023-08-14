@@ -1755,7 +1755,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                 /* It is a common symbol. */
                 struct symbol *old_symbol = symbol_find (symbol->name);
 
-                if (!old_symbol) {
+                if (!old_symbol || symbol_is_undefined (old_symbol)) {
                     struct section_part *bss_part;
                     
                     if (bss_section == NULL) {
