@@ -45,6 +45,7 @@ struct symbol {
 
     char *name;
     address_type value;
+    address_type size;
     struct section_part *part;
     
     long section_number; /* 1-based, 0 means undefined, negative numbers have special meaning. */

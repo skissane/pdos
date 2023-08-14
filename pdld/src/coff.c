@@ -1505,7 +1505,7 @@ static union sym_tab_entry *read_symbol_table (unsigned char *file,
     return read_symtab;
 }
 
-static void read_coff_object (unsigned char *file, size_t file_size, const char *filename)
+static int read_coff_object (unsigned char *file, size_t file_size, const char *filename)
 {
     struct coff_header_internal coff_hdr;
     struct string_table_header_internal string_table_hdr;
@@ -1519,7 +1519,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
     struct object_file *of;
     struct section_part **part_p_array;
-    struct section_part *bss_part;
+    struct section *bss_section;
     long bss_section_number;
     unsigned long i;
 
@@ -1528,8 +1528,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     read_struct_coff_header (&coff_hdr, pos);
 
     if (wanted_Machine && wanted_Machine != coff_hdr.Machine) {
-        ld_error ("Machine field mismatch between objects");
-        return;
+        ld_error ("%s: Machine field mismatch between objects", filename);
+        return 1;
     }
 
     wanted_Machine = coff_hdr.Machine;
@@ -1548,7 +1548,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
 
     part_p_array = xmalloc (sizeof (*part_p_array) * (coff_hdr.NumberOfSections + 1));
     of = object_file_make (coff_hdr.NumberOfSymbols, filename);
-    bss_part = NULL;
+    bss_section = NULL;
     bss_section_number = 0;
 
     comdat_aux_symbol_indexes = xmalloc (sizeof (*comdat_aux_symbol_indexes) * coff_hdr.NumberOfSections);
@@ -1556,7 +1556,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         read_symtab = read_symbol_table (file, file_size, filename, &coff_hdr, comdat_aux_symbol_indexes);
         if (read_symtab == NULL) {
             free (comdat_aux_symbol_indexes);
-            return;
+            return 1;
         }
     }
 
@@ -1604,7 +1604,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                     if (!sym_i) {
                         ld_error ("missing section symbol for COMDAT section '%s'",
                                   section_name);
-                        return;
+                        return 1;
                     }
                     
                     if (read_symtab[sym_i - 1].sym.Value != 0
@@ -1613,7 +1613,7 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                         || read_symtab[sym_i - 1].sym.NumberOfAuxSymbols != 1) {
                         ld_error ("invalid section symbol for COMDAT section '%s'",
                                   section_name);
-                        return;
+                        return 1;
                     }
 
                     read_struct_aux_section_symbol (&aux_symbol, read_symtab[sym_i].aux);
@@ -1662,7 +1662,6 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                  * but such definition must not make the section BSS. */
                 if (section_hdr.PointerToRawData == 0 && section_hdr.SizeOfRawData) {
                     section->is_bss = 1;
-                    bss_section_number = i;
                 }
 
                 if (p) subsection = subsection_find_or_make (section, p);
@@ -1685,7 +1684,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
                     memcpy (part->content, pos, part->content_size);
                 }
                 if (section->is_bss) {
-                    bss_part = part;
+                    bss_section_number = i + 1;
+                    bss_section = section;
                 }
 
                 if (section_hdr.PointerToRelocations && section_hdr.NumberOfRelocations) {
@@ -1747,30 +1747,41 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
         }
         
         symbol->value = coff_symbol->Value;
+        symbol->size = 0;
         symbol->section_number = coff_symbol->SectionNumber;
         
         if (coff_symbol->SectionNumber == IMAGE_SYM_UNDEFINED) {
             if (symbol->value) {
                 /* It is a common symbol. */
-                if (bss_part == NULL) {
-                    struct section *section;
+                struct symbol *old_symbol = symbol_find (symbol->name);
 
-                    section = section_find_or_make (".bss");
+                if (!old_symbol) {
+                    struct section_part *bss_part;
+                    
+                    if (bss_section == NULL) {
+                        bss_section = section_find_or_make (".bss");
 
-                    section->section_alignment = SectionAlignment;
-                    section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
-                    section->is_bss = 1;
-                    bss_section_number = coff_hdr.NumberOfSections ? coff_hdr.NumberOfSections : 1;
+                        bss_section->section_alignment = SectionAlignment;
+                        bss_section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
+                        bss_section->is_bss = 1;
+                        bss_section_number = coff_hdr.NumberOfSections ? coff_hdr.NumberOfSections : 1;
+                    }
+                    
+                    bss_part = section_part_new (bss_section, of);
+                    section_append_section_part (bss_section, bss_part);
 
-                    bss_part = section_part_new (section, of);
-                    bss_part->content_size = 0;
-                    section_append_section_part (section, bss_part);
+                    bss_part->content_size = symbol->size = symbol->value;
+                    symbol->part = bss_part;
+                    symbol->value = 0;
+                    symbol->section_number = bss_section_number;
+                } else {
+                    if (symbol->value > old_symbol->size) {
+                        old_symbol->part->content_size = old_symbol->size = symbol->value;
+                    }
+                    
+                    symbol->value = 0;
+                    symbol->part = NULL;
                 }
-                
-                symbol->part = bss_part;
-                bss_part->content_size += symbol->value;
-                symbol->value = bss_part->content_size - symbol->value;
-                symbol->section_number = bss_section_number;             
             } else {
                 symbol->part = NULL;
             }
@@ -1806,6 +1817,8 @@ static void read_coff_object (unsigned char *file, size_t file_size, const char 
     free (comdat_aux_symbol_indexes);
     free (read_symtab);
     free (part_p_array);
+
+    return 0;
 }
 
 static void import_generate_head (const char *dll_name, const char *filename)
@@ -2058,7 +2071,7 @@ static void import_generate_end (void)
     memset (part->content, 0, part->content_size);
 }
 
-static void read_import_object (unsigned char *file, size_t file_size, const char *filename)
+static int read_import_object (unsigned char *file, size_t file_size, const char *filename)
 {
     struct IMPORT_OBJECT_HEADER_internal import_hdr;
     char *import_name;
@@ -2074,12 +2087,12 @@ static void read_import_object (unsigned char *file, size_t file_size, const cha
     if (import_hdr.Machine != IMAGE_FILE_MACHINE_AMD64
         && import_hdr.Machine != IMAGE_FILE_MACHINE_I386) {
         ld_error ("unrecognized Machine in import header");
-        return;
+        return 1;
     }
 
     if (wanted_Machine && wanted_Machine != import_hdr.Machine) {
         ld_error ("Machine field mismatch between objects and imports");
-        return;
+        return 1;
     }
 
     if ((import_hdr.Type & 0x3) == IMPORT_CONST) {
@@ -2102,7 +2115,9 @@ static void read_import_object (unsigned char *file, size_t file_size, const cha
         import_generate_head (current_import_dll_name, filename);
     }
     
-    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2, filename);  
+    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2, filename);
+
+    return 0;
 }
 
 static void strip_trailing_spaces (char *str)
@@ -2208,18 +2223,17 @@ static int read_coff_archive_member (unsigned char *file, size_t file_size, unsi
     bytearray_read_2_bytes (&Machine, pos, LITTLE_ENDIAN);
     if (Machine == IMAGE_FILE_MACHINE_I386
         || Machine == IMAGE_FILE_MACHINE_AMD64) {
-        read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
-        ret = 1;
+        ret = !read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
     } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
         unsigned short Magic2;
         
         CHECK_READ (pos + 2, 2);
         bytearray_read_2_bytes (&Magic2, pos + 2, LITTLE_ENDIAN);
         if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) {
-            read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
+            ret = read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
         } else goto unrecognized;
 
-        ret = 2;
+        ret = 2 * !ret;
     } else {
 unrecognized:
         ld_error ("%s: unrecognized archive member object format", filename);
