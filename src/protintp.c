@@ -51,6 +51,7 @@ void inthdlr_A6(void);
 void inthdlr_AA(void);
 void inthdlr_B0(void);
 void inthdlr_B1(void);
+void inthdlr_BC(void);
 void inthdlr_BE(void);
 void int_enable(void);
 
@@ -206,6 +207,7 @@ unsigned long runprot_p(rawprot_parms *parmlist)
         { 0xAA, inthdlr_AA },
         { 0xB0, inthdlr_B0 },
         { 0xB1, inthdlr_B1 },
+        { 0xBC, inthdlr_BC },
         { 0xFF, 0 } };
 
     intloc = (void *)(parmlist->intloc);

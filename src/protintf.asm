@@ -37,6 +37,7 @@
         public inthdlr_AA
         public inthdlr_B0
         public inthdlr_B1
+        public inthdlr_BC
         public inthdlr_BE
         public int_enable
 
@@ -293,6 +294,15 @@ inthdlr_B1:
         mov    ds, ax
         push   intnum
         mov    intnum, 0B1h
+        jmp    inthdlr_q
+inthdlr_BC:
+        push   eax
+        mov    ax, ds
+        push   eax
+        mov    eax, 010h
+        mov    ds, ax
+        push   intnum
+        mov    intnum, 0BCh
         jmp    inthdlr_q
 inthdlr_BE:
         push   eax

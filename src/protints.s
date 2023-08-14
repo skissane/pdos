@@ -33,6 +33,7 @@
         .globl _inthdlr_AA
         .globl _inthdlr_B0
         .globl _inthdlr_B1
+        .globl _inthdlr_BC
         .globl _inthdlr_BE
         .globl _int_enable
 
@@ -289,6 +290,15 @@ _inthdlr_B1:
         mov    %ax, %ds
         push   intnum
         movl   $0xB1, intnum
+        jmp    _inthdlr_q
+_inthdlr_BC:
+        push   %eax
+        mov    %ds, %ax
+        push   %eax
+        mov    $0x10, %eax
+        mov    %ax, %ds
+        push   intnum
+        movl   $0xBC, intnum
         jmp    _inthdlr_q
 _inthdlr_BE:
         push   %eax
