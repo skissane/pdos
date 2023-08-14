@@ -320,6 +320,122 @@ static EFI_STATUS ctrl_key_test (void)
 }
 #endif
 
+#if 0
+
+#define STATUS_IS_ERROR(a) (!!((a) >> (sizeof (a) * 8 - 1)))
+#define STATUS_GET_CODE(a) (((a) << 1) >> 1)
+
+static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    UINTN Read, buf_size;
+    EFI_FILE_INFO *Buffer;
+
+    buf_size = sizeof (*Buffer) + 8 /* Just enough space for 5 CHAR16 FileName for demonstration. */;
+
+    return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+
+    while (1) {
+        Read = buf_size;
+        Status = dir->Read (dir, &Read, Buffer);
+        if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_BUFFER_TOO_SMALL) {
+            gBS->FreePool (Buffer);
+            buf_size = Read;
+            return_Status_if_fail (print_string ("HAD to increase size of buffer\n"));
+            return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+            return_Status_if_fail (dir->Read (dir, &buf_size, Buffer));
+        }
+
+        if (!Read) break;
+
+        return_Status_if_fail (print_string ("found directory entry: '"));
+        return_Status_if_fail (gST->ConOut->OutputString (gST->ConOut, Buffer->FileName));
+        return_Status_if_fail (print_string ("'\n"));
+    };
+
+    gBS->FreePool (Buffer);
+
+    return Status;
+}
+
+static EFI_STATUS directory_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    
+    EFI_FILE_PROTOCOL *EfiRoot;
+    EFI_FILE_PROTOCOL *dir, *dir2;
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 OpenModeDirCreateReadWrite = {0x3, 0x80000000};
+    static UINT64 Attributes = {0, 0};
+    static UINT64 DirCreateAttributes = {0x10, 0};
+
+    CHAR16 dir_name[] = {'a', 'b', 'c', '\0'};
+    CHAR16 dir2_name[] = {'n', 'e', 'w', 'd', '\0'};
+    CHAR16 dir3_name[] = {'d', 'e', 'l', 'd', '\0'};
+
+    return_Status_if_fail (print_string ("start of directory test\n"));
+
+    return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+    return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+    return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
+
+    return_Status_if_fail (print_string ("changing to directory 'abc'\n"));
+
+    Status = EfiRoot->Open (EfiRoot, &dir, dir_name, OpenModeDirReadWrite, Attributes);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
+        return_Status_if_fail (print_string ("directory 'abc' not found, create it and restart test\n"));
+        goto end;
+    }
+    if (Status) return Status;
+
+    return_Status_if_fail (print_string ("success\n"));
+
+    return_Status_if_fail (print_string ("creating/opening new directory 'newd'\n"));
+
+    return_Status_if_fail (dir->Open (dir, &dir2, dir2_name, OpenModeDirCreateReadWrite, DirCreateAttributes));
+    
+    return_Status_if_fail (print_string ("success\n"));
+
+    dir2->Close (dir2);
+
+    return_Status_if_fail (print_string ("trying to delete directory 'deld' in 'abc'\n"));
+
+    Status = dir->Open (dir, &dir2, dir3_name, OpenModeDirReadWrite, Attributes);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
+        return_Status_if_fail (print_string ("directory 'deld' not found in 'abc', create it and restart test\n"));
+        goto skip;
+    }
+    if (Status) return Status;
+
+    dir2->Delete (dir2);
+
+    return_Status_if_fail (print_string ("success\n"));
+
+skip:
+    return_Status_if_fail (print_string ("listing files in EfiRoot\n"));
+    return_Status_if_fail (dir_list (EfiRoot));
+    return_Status_if_fail (print_string ("success\n"));
+
+    return_Status_if_fail (print_string ("listing files in 'abc'\n"));
+    return_Status_if_fail (dir_list (dir));
+    return_Status_if_fail (print_string ("success\n"));
+
+    dir->Close (dir);
+end:
+    EfiRoot->Close (EfiRoot);
+
+    return_Status_if_fail (print_string ("end of directory test\n"));
+
+    return Status;
+}
+
+#endif
+
+
 int __start(int argc, char **argv);
 
 void __exita(int status)
@@ -379,6 +495,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #if 0
     return_Status_if_fail (cursor_position_test ());
     return_Status_if_fail (ctrl_key_test ());
+#endif
+#if 0
+    return_Status_if_fail (directory_test ());
 #endif
 
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)

@@ -29,12 +29,17 @@ typedef struct {
     UINT16 b;
 } UINT32;
 typedef struct {
+    UINT8 a;
+    UINT8 b;
+} INT16;
+typedef struct {
     UINT16 a;
     UINT16 b;
 } INT32;
 #else
 typedef unsigned short UINT16;
 typedef unsigned long UINT32;
+typedef short INT16;
 typedef long INT32;
 #endif
 
@@ -385,6 +390,25 @@ typedef struct {
 typedef EFI_STATUS (EFIAPI *EFI_IMAGE_ENTRY_POINT) (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable);
 #endif
 
+typedef struct {
+    UINT16 Year; /* 1990 - 9999 */
+    UINT8 Month; /* 1 - 12 */
+    UINT8 Day; /* 1 - 31 */
+    UINT8 Hour; /* 0 - 23 */
+    UINT8 Minute; /* 0 - 59 */
+    UINT8 Second; /* 0 - 59 */
+    UINT8 Pad1;
+    UINT32 Nanosecond; /* 0 - 999999999 */
+    INT16 TimeZone; /* -1440 - 1440 or EFI_UNSPECIFIED_TIMEZONE */
+    UINT8 Daylight;
+    UINT8 Pad2;
+} EFI_TIME;
+
+#define EFI_TIME_ADJUST_DAYLIGHT 0x01
+#define EFI_TIME_IN_DAYLIGHT 0x02
+
+#define EFI_UNSPECIFIED_TIMEZONE 0x07FF
+
 #define EFI_LOADED_IMAGE_PROTOCOL_GUID \
  {0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0x00,0xa0,0xc9,0x69,0x72,0x3b}}
 #define EFI_LOADED_IMAGE_PROTOCOL_REVISION 0x1000
@@ -413,6 +437,17 @@ typedef struct {
 #define EFI_FILE_PROTOCOL_REVISION  0x00010000
 #define EFI_FILE_PROTOCOL_REVISION2 0x00020000
 #define EFI_FILE_PROTOCOL_LATEST_REVISION EFI_FILE_PROTOCOL_REVISION2
+
+typedef struct {
+    UINT64 Size; /* Of the struct. */
+    UINT64 FileSize;
+    UINT64 PhysicalSize;
+    EFI_TIME CreateTime;
+    EFI_TIME LastAccessTime;
+    EFI_TIME ModificationTime;
+    UINT64 Attribute;
+    CHAR16 FileName[1];
+} EFI_FILE_INFO;
 
 #ifndef __SUBC__
 struct _EFI_FILE_PROTOCOL;
