@@ -401,7 +401,7 @@ void machine_dependent_init (void)
             reg_st0 = reg_entry;
         }
         
-        if (reg_entry->type.dword && reg_entry->number == 4) {
+        if (reg_entry->type.dword && reg_entry->number == 4 && !reg_entry->type.reg_rex) {
             reg_esp = reg_entry;
         }
 
