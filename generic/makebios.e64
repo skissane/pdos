@@ -10,7 +10,7 @@ AS=x86_64-w64-mingw32-as
 COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
     -I../pdpclib -I../bios \
     -fno-common -ansi -Wno-builtin-declaration-mismatch \
-    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK
+    -DXTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DXW64HACK -DW32HACK
 
 all: clean bios.exe
 
