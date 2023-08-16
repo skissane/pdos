@@ -1802,7 +1802,6 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         }
                         else if (strcmp(hintname, "puts") == 0)
                         {
-                            /* this needs to change to a stub */
                             *thunk = (unsigned long)w32puts;
                         }
 #if 0
