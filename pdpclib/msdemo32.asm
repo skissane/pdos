@@ -44,8 +44,14 @@ mainCRTStartup:
         mov     eax, offset puts
         jmp     eax
 retaddr1:
+        add     esp, 16
+        
+        sub     esp, 16
 	mov	dword ptr [esp], 0
-	call	exit
+        mov     eax, offset exit
+	jmp	eax
+retaddr2:
+        add     esp, 16
 
 lc0 db "hello, world 32", 0Ah, 00h
 
