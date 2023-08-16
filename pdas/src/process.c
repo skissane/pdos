@@ -238,6 +238,23 @@ static int read_and_append_char_in_ascii (char **pp) {
                     (*pp)--;
                     
                     break;
+
+                case 'x':
+                case 'X':
+                    ch = *((*pp)++);
+                    
+                    for (i = 0, number = 0;
+                         isxdigit ((unsigned char)ch) && (i < 3);
+                         (ch = *((*pp)++)), i++) {
+                        if (isdigit (ch)) number = number * 16 + ch - '0';
+                        else if (isupper (ch)) number = number * 16 + ch - 'A' + 10;
+                        else number = number * 16 + ch - 'a' + 10;
+                    }
+                    
+                    frag_append_1_char (number & 0xff);
+                    (*pp)--;
+                    
+                    break;
                 
                 case 'r':
                 
