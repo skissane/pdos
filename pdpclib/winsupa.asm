@@ -8,21 +8,10 @@
 
 .code
 
-; language C doesn't seem to be working for wasm
-
-ifdef WATCOM
-public ___setj
-public ___longj
-endif
-
 public __setj
 public __longj
 public __chkstk_ms
 public __switch
-
-ifdef WATCOM
-___setj:
-endif
 
 __setj proc
         mov eax, [esp+4]
@@ -47,10 +36,6 @@ __setj proc
 
         ret
 __setj endp
-
-ifdef WATCOM
-___longj:
-endif
 
 __longj proc
         mov eax, [esp+4]
