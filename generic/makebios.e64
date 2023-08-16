@@ -3,9 +3,13 @@
 # And we use makefile.p64 and makecomm.p64
 # which are PE
 
+# We need this executable to load below the 4 GiB mark.
+# So we use pdld which has a low default address
+
 CC=x86_64-w64-mingw32-gcc
 AR=x86_64-w64-mingw32-ar
-LD=x86_64-w64-mingw32-ld
+#LD=x86_64-w64-mingw32-ld
+LD=pdld
 AS=x86_64-w64-mingw32-as
 #AS=pdas --64 --oformat coff
 COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
