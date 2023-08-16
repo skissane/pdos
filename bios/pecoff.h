@@ -55,7 +55,11 @@ typedef struct {
     unsigned long BaseOfData;
 #endif
     /* Extension fields. */
+#ifdef W32HACK
+    unsigned long ImageBase;
+#else
     unsigned char *ImageBase;
+#endif
     unsigned long SectionAlignment;
     unsigned long FileAlignment;
     unsigned short MajorOperatingSystemVersion;
