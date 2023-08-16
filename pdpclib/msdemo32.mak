@@ -6,7 +6,6 @@ CC=gccwin
 AR=ar
 AS=pdas
 LD=pdld
-COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
 
 all: msdemo32.exe
 
@@ -14,7 +13,7 @@ msdemo32.exe: msdemo32.obj
   $(LD) -s -nostdlib --no-insert-timestamp -o msdemo32.exe msdemo32.obj msvcrt.lib
 
 msdemo32.obj: msdemo32.c
-  $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
+  $(CC) -S -masm=intel -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
   $(AS) -o $*.obj --oformat coff $*.s
   rm -f $*.s
 
