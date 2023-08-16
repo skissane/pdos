@@ -49,7 +49,7 @@
 "mov", 0xA0, NONE, 0, BWL_SUF | D | W, { DISP16 | DISP32 | DISP64 | Byte | Word | Dword | Qword, ACC | Byte | Word | Dword | Qword }
 "mov", 0x88, NONE, 0, BWLQ_SUF | D | W | MODRM, { REG, REG | ANY_MEM | Byte | Word | Dword | Qword }
 "mov", 0xB0, NONE, 0, BWL_SUF | W | SHORT_FORM, { IMM8 | IMM16 | IMM32 | IMM32S, REG8 | REG16 | REG32 }
-"mov", 0xC6, NONE, 0, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
+"mov", 0xC6, 0, 0, BWLQ_SUF | D | W | MODRM, { IMM8 | IMM16 | IMM32 | IMM32S, REG | ANY_MEM | Byte | Word | Dword | Qword }
 
 /* Move instructions for segment registers.
  * (NO_REX_W is there because REX_W prefix is possible but does not change behavior).*/
@@ -810,7 +810,7 @@ CMOVcc ("cmovnle", 0x0F4F)
 /* Above movq conflicts with non-SSE mov with 'q' suffix. */
 "movq", 0xA1, NONE, CPU_64, NO_SUF | D | SIZE64, { DISP64 | Qword, ACC | Qword }
 "movq", 0x89, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { REG64, REG64 | ANY_MEM | Qword }
-"movq", 0xC7, NONE, CPU_64, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM | Qword }
+"movq", 0xC7, 0, CPU_64, NO_SUF | D | MODRM | SIZE64, { IMM32S, REG64 | ANY_MEM | Qword }
 "movq", 0xB8, NONE, CPU_64, NO_SUF | SHORT_FORM | SIZE64, { IMM64, REG64 }
 
 #define to_str(a) #a
