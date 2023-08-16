@@ -36,7 +36,7 @@ dllcrt.obj: dllcrt.c
   wlib -b -q temp.lib +$@
 
 .asm.obj:
-  wasm -q -DWATCOM $<
+  wasm -q -zcm -DWATCOM $<
 #  as86 -f coff -o $@ $<
   wlib -b -q temp.lib +$@
 
