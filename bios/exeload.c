@@ -1462,6 +1462,10 @@ static int dummyfunc(void)
     return (0);
 }
 
+#ifdef W32HACK
+void w64exit(int status);
+#endif
+
 #ifdef W64HACK
 int getmainargs(int *_Argc, char ***_Argv);
 void w64exit(int status);
@@ -1638,7 +1642,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
             if (optional_hdr->ImageBase > exeStart)
             {
                 /* Image is loaded at lower address than preferred. */
+#ifdef W32HACK
+                image_diff = (unsigned char *)optional_hdr->ImageBase
+                             - exeStart;
+#else
                 image_diff = optional_hdr->ImageBase - exeStart;
+#endif
                 lower_exeStart = 1;
             }
             else
@@ -1760,6 +1769,70 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else
                         {
                             *thunk = (unsigned long long)dummyfunc;
+                        }
+                    }
+                }
+#elif defined(W32HACK)
+                unsigned long *thunk;
+                
+                for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
+                     *thunk != 0;
+                     thunk++)
+                {
+                    if ((*thunk) & 0x80000000UL)
+                    {
+                        /* Bit 31 set, import by ordinal. */
+                        printf("ordinal import not supported\n");
+                        return (2);
+                    }
+                    else
+                    {
+                        /* Import by name. */
+                        unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffUL);
+                        int i;
+
+                        /* The first 2 bytes are hint index,
+                         * so they are skipped to get the name. */
+                        hintname += 2;
+                        /* printf("hintname is X%sX\n", hintname); */
+                        if (strcmp(hintname, "exit") == 0)
+                        {
+                            *thunk = (unsigned long)w64exit;
+                        }
+                        else if (strcmp(hintname, "puts") == 0)
+                        {
+                            /* this needs to change to a stub */
+                            *thunk = (unsigned long)puts;
+                        }
+#if 0
+                        if (strcmp(hintname, "puts") == 0)
+                        {
+                            *thunk = (unsigned long long)puts;
+                        }
+                        else if (strcmp(hintname, "exit") == 0)
+                        {
+                            *thunk = (unsigned long long)w64exit;
+                        }
+                        else if (strcmp(hintname, "printf") == 0)
+                        {
+                            *thunk = (unsigned long long)printf;
+                        }
+                        else if (strcmp(hintname, "malloc") == 0)
+                        {
+                            *thunk = (unsigned long long)malloc;
+                        }
+                        else if (strcmp(hintname, "strcpy") == 0)
+                        {
+                            *thunk = (unsigned long long)strcpy;
+                        }
+                        else if (strcmp(hintname, "__getmainargs") == 0)
+                        {
+                            *thunk = (unsigned long long)getmainargs;
+                        }
+#endif
+                        else
+                        {
+                            *thunk = (unsigned long)dummyfunc;
                         }
                     }
                 }
@@ -2017,8 +2090,13 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
             if (optional_hdr->ImageBase > dllStart)
             {
                 /* Image is loaded  at lower address than preferred. */
+#ifdef W32HACK
+                image_diff = (unsigned char *)optional_hdr->ImageBase
+                             - dllStart;
+#else
                 image_diff = optional_hdr->ImageBase
                              - dllStart;
+#endif
                 lower_dllStart = 1;
             }
             else
