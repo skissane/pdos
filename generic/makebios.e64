@@ -7,6 +7,7 @@ CC=x86_64-w64-mingw32-gcc
 AR=x86_64-w64-mingw32-ar
 LD=x86_64-w64-mingw32-ld
 AS=x86_64-w64-mingw32-as
+#AS=pdas --64 --oformat coff
 COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
     -I../pdpclib -I../bios \
     -fno-common -ansi -Wno-builtin-declaration-mismatch \
@@ -14,7 +15,7 @@ COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
 
 all: clean bios.exe
 
-OBJS=../bios/exeload.o
+OBJS=../bios/exeload.o w32hack.o
 
 bios.exe: bios.o $(OBJS)
     $(LD) -s -subsystem 10 -e efimain -nostdlib -o bios.exe bios.o $(OBJS) ../pdpclib/pdpefi.a
@@ -23,6 +24,9 @@ bios.exe: bios.o $(OBJS)
     $(CC) $(COPTS) -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
+
+.asm.o:
+    $(AS) -o $@ $<
 
 clean:
     rm -f *.o bios.exe
