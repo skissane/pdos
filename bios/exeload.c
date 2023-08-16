@@ -1464,6 +1464,7 @@ static int dummyfunc(void)
 
 #ifdef W32HACK
 void w64exit(int status);
+void w32puts(void);
 #endif
 
 #ifdef W64HACK
@@ -1802,7 +1803,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp(hintname, "puts") == 0)
                         {
                             /* this needs to change to a stub */
-                            *thunk = (unsigned long)puts;
+                            *thunk = (unsigned long)w32puts;
                         }
 #if 0
                         if (strcmp(hintname, "puts") == 0)
