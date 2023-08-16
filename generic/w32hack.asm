@@ -21,9 +21,10 @@ xor rcx, rcx
 mov ecx, 12[rbp]
 
 # Ensure stack is 16-byte aligned
-push rax
+# by NOT padding, because we have an early push of rbp
+#push rax
 call puts
-pop rax
+#pop rax
 
 # return code 0
 xor rax,rax
