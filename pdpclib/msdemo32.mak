@@ -12,6 +12,7 @@ msdemo32.exe: msdemo32.obj
 
 msdemo32.obj: msdemo32.asm
   $(AS) -o $*.obj -f coff $<
+#  ml -c -coff -Fo$*.obj $<
 
 clean:
   rm -f *.obj
