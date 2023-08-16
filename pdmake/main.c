@@ -25,6 +25,8 @@ static int dry_run = 0; /* Run no commands. */
 static int ignore_errors = 0;
 static int silent = 0;
 
+static FILE *redirect_stdout;
+
 variable *default_goal_var;
 int doing_inference_rule_commands = 0;
 
@@ -45,7 +47,7 @@ int rule_run_command(const char *name, char *p, char *q) {
         s++;
     }
     
-    if (!is_silent) printf ("%s\n", new_cmds);
+    if (!is_silent) fprintf (redirect_stdout, "%s\n", new_cmds);
     if (!dry_run)
     {
         int error = system(s);
@@ -361,6 +363,9 @@ void help(void)
            "Run no commands, only print them.\n");
     printf("  -s, --silent, --quiet       "
            "Do not print commands.\n");
+    printf("  --redirect FILE             "
+           "Redirect stdout to FILE for command printing.\n"
+           "                              Temporary measure, will be removed in future!\n");
 }
 
 /* OS variable */
@@ -381,6 +386,7 @@ int main( int argc, char **argv)
     int i;
     int use_default_makefile = 1;
     char *goal = NULL;
+    char *redirect_filename = NULL;
 
     variables_init ();
     rules_init ();
@@ -486,6 +492,13 @@ int main( int argc, char **argv)
                         
                         silent = 1;
                         
+                    } else if (strcmp ("redirect", argv[i] + 2) == 0) {
+                        i++;
+                        if (i == argc) {
+                            printf ("option `--redirect' requires an argument\n");
+                            goto end;
+                        }
+                        redirect_filename = argv[i];
                     } else printf ("Unknown switch! Use -h for help.\n");
                     break;
 
@@ -550,7 +563,18 @@ int main( int argc, char **argv)
     /* No goal is set, so there is nothing to do. */
     if (strcmp (goal, "") == 0) goto end;
 
+    redirect_stdout = stdout;
+    if (redirect_filename) {
+        redirect_stdout = fopen (redirect_filename, "w");
+        if (redirect_stdout == NULL) {
+            fprintf (stderr, "Unable to open %s: %s\n", redirect_filename, strerror (errno));
+            goto end;
+        }
+    }
+
     rule_search_and_build (goal);
+
+    if (redirect_stdout != stdout) fclose (redirect_stdout);
 
 end:
     include_dirs_destroy ();
