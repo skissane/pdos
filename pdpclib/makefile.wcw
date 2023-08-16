@@ -17,7 +17,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   wlib -b -q watcomw.lib +$@
 
 .asm.obj:
-  wasm -q -DWATCOM $<
+  wasm -q -zcm -DWATCOM $<
 #  as86 -f coff -o $@ $<
 #  ml -nologo -c $<
   wlib -b -q watcomw.lib +$@
