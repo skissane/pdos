@@ -47,6 +47,10 @@ some sort of (useful) Frankenstein.
 #include "__os.h"
 #include "exeload.h"
 
+#if defined(W64HACK) || defined(W32HACK)
+void w64exit(int status);
+#endif
+
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
@@ -272,7 +276,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32HACK)
     rc = setjmp(jb);
     if (rc != 0)
     {
@@ -290,7 +294,7 @@ int main(int argc, char **argv)
     rc = 0;
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32HACK)
     }
 #endif
 
@@ -428,7 +432,7 @@ int getmainargs(int *_Argc,
 }
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32HACK)
 void w64exit(int status)
 {
     longjmp(jb, status);
