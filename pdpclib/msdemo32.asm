@@ -8,6 +8,9 @@
 
 .code
 
+extrn _imp__puts: ptr
+extrn _imp__exit: ptr
+
 ; When running in a 64-bit environment, there will potentially
 ; be 64-bit registers set to certain values, but we're not using
 ; any of them, so we can ignore that (and the caller doesn't
@@ -25,6 +28,12 @@
 ; potentially require the 32 to 64-bit "glue" code do the appropriate
 ; alignment, but for now, we do it.
 
+; If we simply call puts here, it will link to a stub routine,
+; which eventually resolves to the required import. This is not
+; conducive for a 64-bit environment where we cannot do a call in
+; the first place. So we do the manipulation of the import (_imp_)
+; functions directly
+
 public mainCRTStartup
 mainCRTStartup:
         sub     esp, 4
@@ -41,14 +50,16 @@ mainCRTStartup:
         mov     dword ptr [esp + 4], eax
         mov     eax, offset retaddr1
         mov     dword ptr [esp], eax
-        mov     eax, offset puts
+        mov     eax, offset _imp__puts
+        mov     eax, [eax]
         jmp     eax
 retaddr1:
         add     esp, 16
         
         sub     esp, 16
 	mov	dword ptr [esp], 0
-        mov     eax, offset exit
+        mov     eax, offset _imp__exit
+        mov     eax, [eax]
 	jmp	eax
 retaddr2:
         add     esp, 16
