@@ -114,6 +114,17 @@ __PDPCLIB_API__ void *malloc(size_t size)
     return (x + 1);
 #endif
 #ifdef __EFI__
+
+/* Note that at some point we probably want to constrain memory allocation to
+   keep memory below 4 GiB. Here is an example of memory being allocated
+   below 2 GiB - 5 pages of 4096 bytes each:
+   
+   EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
+   UINTN num_pages = 5;
+   if (__gBS->AllocatePages (AllocateMaxAddress, EfiLoaderData, num_pages, &mem))
+   if (__gBS->FreePages (mem, num_pages))
+*/
+
     size_t *x = NULL;
 
     if (__gBS->AllocatePool(EfiLoaderData, size + sizeof(size_t), (void **)&x)
