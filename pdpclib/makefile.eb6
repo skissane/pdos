@@ -2,9 +2,12 @@
 # We put no-builtin to stop the optimizer from making memset call memset
 
 CC=x86_64-w64-mingw32-gcc
-AR=x86_64-w64-mingw32-ar
-LD=x86_64-w64-mingw32-ld
-AS=x86_64-w64-mingw32-as
+#AR=x86_64-w64-mingw32-ar
+AR=ar
+#LD=x86_64-w64-mingw32-ld
+LD=pdld --no-insert-timestamp
+#AS=x86_64-w64-mingw32-as
+AS=pdas --64 --oformat coff
 COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
 
 TARGET=pdptest.efi
@@ -14,6 +17,7 @@ OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
   $(AR) r pdpefi.a $(OBJS)
+  $(AR) s pdpefi.a
   $(LD) -s -subsystem 10 -e efimain -nostdlib -o $(TARGET) pdptest.o $(OBJS)
 
 .c.o:
