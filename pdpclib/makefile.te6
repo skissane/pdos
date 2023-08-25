@@ -2,7 +2,7 @@
 # This builds EFI executables for x86_64
 # We put no-builtin to stop the optimizer from making memset call memset
 
-CC=gccw64 -D__LONG64__
+CC=gccx64 -D__LONG64__
 #CC=x86_64-w64-mingw32-gcc
 AR=ar
 #AR=x86_64-w64-mingw32-ar
