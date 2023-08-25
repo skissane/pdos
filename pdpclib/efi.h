@@ -38,7 +38,11 @@ typedef struct {
 } INT32;
 #else
 typedef unsigned short UINT16;
+#ifdef __LONG64__
+typedef unsigned int UINT32;
+#else
 typedef unsigned long UINT32;
+#endif
 typedef short INT16;
 typedef long INT32;
 #endif
