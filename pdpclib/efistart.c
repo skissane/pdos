@@ -52,6 +52,7 @@ static EFI_STATUS print_string (char *str) {
 
 }
 
+#if 0
 static EFI_STATUS wait_for_input (void) {
 
     EFI_STATUS Status;
@@ -66,6 +67,7 @@ static EFI_STATUS wait_for_input (void) {
     return Status;
 
 }
+#endif
 
 #if 0
 
@@ -445,7 +447,7 @@ void __exita(int status)
 
 EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
-
+#ifndef EFITEST
     EFI_STATUS Status, Status2;
     UINTN Index;
     UINT64 dummy_watchdog_code = {0, 0};
@@ -458,6 +460,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_SHELL_PROTOCOL *shell_protocol;
     int x;
     int y;
+#endif
 #if 0
     CHAR16 message[] = {'S','h','e','l','l',' ','t','e','s','t','\r','\n','\0'};
     UINTN message_size = sizeof (message);
@@ -467,6 +470,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __gST = SystemTable;
     __gBS = __gST->BootServices;
 
+#ifndef EFITEST
     if ((Status = __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0))) {
 
         switch (Status & 0xff) {
@@ -491,6 +495,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
         wait_for_input ();
     }
+#endif
 
 #if 0
     return_Status_if_fail (cursor_position_test ());
@@ -500,6 +505,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     return_Status_if_fail (directory_test ());
 #endif
 
+#ifndef EFITEST
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)
     {
         for (x = 0; x < sp_protocol->Argc; x++)
@@ -513,6 +519,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         __start(sp_protocol->Argc, (char **)sp_protocol->Argv);
         return (EFI_SUCCESS);
     }
+#endif
 
 #if 0
     __gBS->HandleProtocol (ImageHandle, &li_guid, (void **)&li_protocol);
@@ -520,7 +527,12 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     shell_protocol->WriteFile (sp_protocol->StdOut, &message_size, message);
 #endif
 
+#ifdef EFITEST
+    print_string("Hello from EFI\n");
+    for (;;) ;
+#else
     __start(1, argv);
+#endif
 
     return (EFI_SUCCESS);
 }
