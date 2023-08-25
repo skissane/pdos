@@ -5,6 +5,7 @@
 
 # We need this executable to load below the 4 GiB mark.
 # So we use pdld which has a low default address
+# Try adding --image-base 0x400000 and see if mingw64 ld works
 
 CC=x86_64-w64-mingw32-gcc
 #AR=x86_64-w64-mingw32-ar
