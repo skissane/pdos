@@ -798,6 +798,19 @@ static void coff_relocate_part_64 (struct section_part *part)
                 }
                 break;
 
+            case IMAGE_REL_AMD64_ADDR32:
+                {
+                    unsigned long result;
+
+                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
+
+                    /* +++Warn about truncation if the result exceeds 4 bytes. */
+                    result += symbol_get_value_with_base (symbol);
+
+                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
+                }
+                break;
+
             case IMAGE_REL_AMD64_ADDR32NB:
                 {
                     unsigned long result;
@@ -822,7 +835,6 @@ static void coff_relocate_part_64 (struct section_part *part)
                 }
                 break;
             
-            case IMAGE_REL_AMD64_ADDR32:
             case IMAGE_REL_AMD64_REL32_1:
             case IMAGE_REL_AMD64_REL32_2:
             case IMAGE_REL_AMD64_REL32_3:
