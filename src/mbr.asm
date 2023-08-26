@@ -103,6 +103,9 @@ mov bp,offset no_lba_extensions
 jc fatal_error
 cmp bx,0aa55h
 jnz fatal_error
+; Bit 1 says whether AH=42H is supported or not
+and cx, 1
+jz fatal_error
 
 ; Load volume boot record
 mov ax,[si+8]  ; put sector number into LBA packet
