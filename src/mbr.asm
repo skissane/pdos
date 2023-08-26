@@ -116,9 +116,17 @@ mov ah,042h
 mov si,offset lba_packet
 int 013h        ; BIOS LBA read (dl already set to disk number)
 jnc read_done
+ifdef DEBUG
+mov bx, ax
+endif
 mov ah,0
 int 013h        ; reset disk system
 loop try_read
+ifdef DEBUG
+mov cx, bx
+;mov cx, dx
+call dumpcx
+endif
 mov bp,offset read_failure
 jmp fatal_error
 read_done:
@@ -165,13 +173,21 @@ xx3        db "BIOS does not support LBA extensions!",0
 read_failure:
 xx4             db "Failed to read volume boot record!",0
 invalid_vbr:
-xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
+
+ifdef DEBUG
+xx5 db "V!",0
+else
+;xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
+endif
 
 ; LBA packet for BIOS disk read
 ; It was previously 8-byte aligned (with "align 8"), but that
 ; gives a warning
 ; from wasm (which gets treated as an error), and it seems
 ; that alignment is not actually required
+ifdef DEBUG
+align 8
+endif
 lba_packet:
 sz         db 010h
 reserved   db 0
@@ -181,6 +197,60 @@ segmnt     dw 0
 lbalow     dw 0
 lbahigh    dw 0
 lbapadding dd 0
+
+ifdef DEBUG
+; routine copied from public domain mon86 and modified
+dumpcx proc
+;Print out 16-bit value in CX in hex
+
+OUT16:
+push ax
+push bx
+	MOV	AL,CH		;High-order byte first
+	CALL	HEX
+	MOV	AL,CL		;Then low-order byte
+        CALL    HEX
+	MOV	AL," "
+	CALL	OUT2
+pop bx
+pop ax
+        RET
+
+;Output byte in AL as two hex digits
+
+HEX:
+	MOV	BL,AL		;Save for second digit
+;Shift high digit into low 4 bits
+	PUSH	CX
+	MOV	CL,4
+	SHR	AL,CL
+	POP	CX
+
+	CALL	DIGIT		;Output first digit
+HIDIG:
+	MOV	AL,BL		;Now do digit saved in BL
+DIGIT:
+	AND	AL,0FH		;Mask to 4 bits
+;Trick 6-byte hex conversion works on 8086 too.
+	ADD	AL,90H
+	DAA
+	ADC	AL,40H
+	DAA
+
+;Console output of character in AL
+
+OUT2:
+push bx
+mov bx, 0
+
+mov ah, 0eh
+int 10h
+pop bx
+ret
+
+dumpcx endp
+endif
+
 
 ; force padding to 440 bytes of code
 org 02b8h
