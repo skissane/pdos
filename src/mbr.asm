@@ -177,7 +177,7 @@ invalid_vbr:
 ifdef DEBUG
 xx5 db "V!",0
 else
-;xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
+xx5 db "Volume boot record is not bootable (missing 0xaa55 boot signature)!",0
 endif
 
 ; LBA packet for BIOS disk read
