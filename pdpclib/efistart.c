@@ -27,6 +27,14 @@ EFI_BOOT_SERVICES *__gBS;
 static EFI_STATUS print_string (char *str) {
 
     EFI_STATUS Status = EFI_SUCCESS;
+#ifdef EFITEST
+    /* On real hardware with SSE2 instructions, I believe this needs to
+       be aligned on a 16-byte boundary. Even 8 is not good enough. But
+       gccx64 appears to be doing 4-byte alignment. Making it a static
+       variable instead of a stack variable circumvents the issue. This
+       should be a temporary fix. */
+    static
+#endif
     CHAR16 onechar[2] = {0, '\0'};
 
     while (*str) {
