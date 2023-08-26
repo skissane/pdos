@@ -60,7 +60,7 @@ static EFI_STATUS print_string (char *str) {
 
 }
 
-#if 0
+#ifndef EFITEST
 static EFI_STATUS wait_for_input (void) {
 
     EFI_STATUS Status;
