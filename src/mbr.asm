@@ -198,31 +198,7 @@ xx2 db "Invalid part type",0
 read_failure:
 xx4             db "noread VBR",0
 invalid_vbr:
-
-ifdef DEBUG
-xx5 db "V!",0
-else
 xx5 db "VBR miss aa55",0
-endif
-
-; LBA packet for BIOS disk read
-; It was previously 8-byte aligned (with "align 8"), but that
-; gives a warning
-; from wasm (which gets treated as an error), and it seems
-; that alignment is not actually required
-ifdef DEBUG
-align 8
-endif
-lba_packet:
-sz         db 010h
-reserved   db 0
-sectors    dw 1
-offst      dw 07c00h
-segmnt     dw 0
-lbalow     dw 0
-lbahigh    dw 0
-lbapadding dd 0
-
 
 
 
@@ -319,7 +295,6 @@ ReadSingleSector endp
 
 
 
-ifdef DEBUG
 ; routine copied from public domain mon86 and modified
 dumpcx proc
 ;Print out 16-bit value in CX in hex
@@ -370,7 +345,6 @@ pop bx
 ret
 
 dumpcx endp
-endif
 
 
 SectorsPerTrack   dw 0     ;Sectors Per Track
