@@ -194,11 +194,11 @@ jmp hang
 no_active_partitions:
 xx1     db "No active partition found!",0
 active_partition_invalid:
-xx2 db "Invalid part type",0
+xx2 db "Active partition has invalid partition type!",0
 read_failure:
-xx4             db "noread VBR",0
+xx4             db "Failed to read VBR!",0
 invalid_vbr:
-xx5 db "VBR miss aa55",0
+xx5 db "VBR missing aa55 signature!",0
 
 
 
