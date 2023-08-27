@@ -146,7 +146,9 @@ mov ch, [si+3]
 donemanual:
 
 
-; es should still be 0
+; es may have been clobbered by the disk parameters call
+mov ax, 0
+mov es, ax
 mov bx, 07c00h
 
 ; ch, cl, dh must be set already
@@ -194,7 +196,7 @@ jmp hang
 no_active_partitions:
 xx1     db "No active partition found!",0
 active_partition_invalid:
-xx2 db "Active partition has invalid partition type!",0
+xx2 db "Active part has invalid partition type!",0
 read_failure:
 xx4             db "Failed to read VBR!",0
 invalid_vbr:
