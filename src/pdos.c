@@ -1371,6 +1371,8 @@ static void processPartition(int drive, unsigned char *prm)
     unsigned int sectors_per_track;
     unsigned int sectors_per_cylinder;
 
+    int override = 0;
+
     sector = prm[8]
             | ((unsigned long)prm[9] << 8)
             | ((unsigned long)prm[10] << 16)
@@ -1388,6 +1390,7 @@ static void processPartition(int drive, unsigned char *prm)
                        &drivetype);
     if (rc == 0)
     {
+        override = 1;
         sectors_per_track = sectors;
         sectors_per_cylinder = sectors * heads;
         track = sector / sectors_per_cylinder;
@@ -1447,6 +1450,13 @@ static void processPartition(int drive, unsigned char *prm)
         }
 #endif
         return;
+    }
+    if (override)
+    {
+        bpb[13] = sectors & 0xff;
+        bpb[14] = (sectors >> 8) & 0xff;
+        bpb[15] = heads & 0xff;
+        bpb[16] = (heads >> 8) & 0xff;
     }
     analyseBpb(&disks[lastDrive], bpb);
 
