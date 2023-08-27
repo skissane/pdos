@@ -1354,36 +1354,69 @@ static void processPartition(int drive, unsigned char *prm)
 {
     unsigned char buf[512];
     int rc;
-    int sectors = 1;
+    int num_sectors_to_read = 1;
     int track;
     int head;
     int sect;
     unsigned char *bpb;
     unsigned long sector;
 
-    head = prm[1];
-    sect = prm[2] & 0x3f;
-    track = (((unsigned int)prm[2] & 0xc0) << 2) | prm[3];
+    unsigned int tracks;
+    unsigned int sectors;
+    unsigned int heads;
+    unsigned int attached;
+    unsigned char *parmtable;
+    unsigned int drivetype;
+
+    unsigned int sectors_per_track;
+    unsigned int sectors_per_cylinder;
+
     sector = prm[8]
             | ((unsigned long)prm[9] << 8)
             | ((unsigned long)prm[10] << 16)
             | ((unsigned long)prm[11] << 24);
     sector += psector;
-    if (lba)
+
+    /* if we can get drive parameters, we will derive the
+       CHS from the LBA and ignore the values in the partition table */
+    rc = BosDriveParms(drive,
+                       &tracks,
+                       &sectors,
+                       &heads,
+                       &attached,
+                       &parmtable,
+                       &drivetype);
+    if (rc == 0)
+    {
+        sectors_per_track = sectors;
+        sectors_per_cylinder = sectors * heads;
+        track = sector / sectors_per_cylinder;
+        head = sector % sectors_per_cylinder;
+        sect = head % sectors_per_track + 1;
+        head = head / sectors_per_track;
+    }
+    else
+    {
+        head = prm[1];
+        sect = prm[2] & 0x3f;
+        track = (((unsigned int)prm[2] & 0xc0) << 2) | prm[3];
+    }
+        
+    if (lba || (track >= 1024))
     {
         rc = readLBA(buf,
-                    sectors,
-                    drive,
-                    sector);
+                     num_sectors_to_read,
+                     drive,
+                     sector);
     }
     else
     {
         rc = readAbs(buf,
-                    sectors,
-                    drive,
-                    track,
-                    head,
-                    sect);
+                     num_sectors_to_read,
+                     drive,
+                     track,
+                     head,
+                     sect);
     }
     if (rc != 0)
     {
