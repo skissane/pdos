@@ -5999,7 +5999,7 @@ static int readAbs(void *buf,
 
     unused(sectors);
     tries = 0;
-    while (tries < 10)
+    while (tries < 10 || (drive == bootDrivePhysical))
     {
         rc = BosDiskSectorRead(readbuf, 1, drive, track, head, sect);
         if (rc == 0)
