@@ -1743,27 +1743,27 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
-                        if (strcmp(hintname, "puts") == 0)
+                        if (strcmp((char *)hintname, "puts") == 0)
                         {
                             *thunk = (unsigned long long)puts;
                         }
-                        else if (strcmp(hintname, "exit") == 0)
+                        else if (strcmp((char *)hintname, "exit") == 0)
                         {
                             *thunk = (unsigned long long)w64exit;
                         }
-                        else if (strcmp(hintname, "printf") == 0)
+                        else if (strcmp((char *)hintname, "printf") == 0)
                         {
                             *thunk = (unsigned long long)printf;
                         }
-                        else if (strcmp(hintname, "malloc") == 0)
+                        else if (strcmp((char *)hintname, "malloc") == 0)
                         {
                             *thunk = (unsigned long long)malloc;
                         }
-                        else if (strcmp(hintname, "strcpy") == 0)
+                        else if (strcmp((char *)hintname, "strcpy") == 0)
                         {
                             *thunk = (unsigned long long)strcpy;
                         }
-                        else if (strcmp(hintname, "__getmainargs") == 0)
+                        else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
                             *thunk = (unsigned long long)getmainargs;
                         }
@@ -1878,7 +1878,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
     /* PE DLL is being loaded,
      * so it is loaded in the same way as PE executable,
      * but the MZ stage is integrated. */
-    name1 = exeStart + import_desc->Name;
+    name1 = (char *)exeStart + import_desc->Name;
     if ((strcmp(name1, "kernel32.dll") == 0)
         || (strcmp(name1, "KERNEL32.dll") == 0)
         || (strcmp(name1, "kernel32") == 0))
@@ -2196,7 +2196,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
                 hintname += 2;
                 for (i = 0; i < (export_dir->NumberOfNames); i++)
                 {
-                    if (strcmp(hintname, dllStart + (nameTable[i]))) continue;
+                    if (strcmp((char *)hintname, (char *)dllStart + (nameTable[i]))) continue;
                     break;
                 }
                 if (i == (export_dir->NumberOfNames))
