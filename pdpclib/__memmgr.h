@@ -102,7 +102,7 @@ typedef struct {
 
 /* do you want to crash whenever an integrity problem arises? */
 #ifndef MEMMGR_CRASH
-#define MEMMGR_CRASH 1
+#define MEMMGR_CRASH 0
 #endif
 
 #ifdef NICEASM
