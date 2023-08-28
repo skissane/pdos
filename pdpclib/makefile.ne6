@@ -1,0 +1,29 @@
+# This builds EFI executables for x86_64 using cc64
+
+CC=cc64
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I.
+
+TARGET=pdptest.efi
+OBJS=efistart.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
+    assert.obj signal.obj locale.obj ctype.obj setjmp.obj math.obj x64supb.obj
+
+$(TARGET): clean pdptest.obj $(OBJS)
+  rm -f pdpefi.lib
+  $(AR) r pdpefi.lib $(OBJS)
+  $(AR) s pdpefi.lib
+  $(LD) -s -subsystem 10 -e efimain -nostdlib -o $(TARGET) pdptest.obj $(OBJS)
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
