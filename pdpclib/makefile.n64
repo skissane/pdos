@@ -1,0 +1,45 @@
+# This is the new new standard (using cc64) for PDOS/x64
+# It produces an msvcrt.dll that allows you to run a
+# subset of Win64 executables
+
+CC=cc64
+AR=ar
+AS=pdas --oformat coff --64
+LD=pdld
+COPTS=-D__WIN32__ -D__64BIT__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
+
+all: pdptest.exe
+
+pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj dllcrt.obj x64supb.obj
+  rm -f temp.lib
+  $(AR) r temp.lib stdio.obj string.obj stdlib.obj x64supb.obj
+  $(AR) r temp.lib start.obj time.obj errno.obj assert.obj signal.obj
+  $(AR) r temp.lib locale.obj ctype.obj setjmp.obj math.obj
+  $(AR) s temp.lib
+  $(LD) -s --no-insert-timestamp -o msvcrt.dll --shared --out-implib msvcrt.lib dllcrt.obj temp.lib ../src/kernel32.lib
+  rm -f temp.lib
+  $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib
+
+pdptest.obj: pdptest.c
+  pdcc -E -D__WIN32__ -D__64BIT__ -I . -I ../src -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+dllcrt.obj: dllcrt.c
+  pdcc -E $(COPTS) -D__EXPORT__ -DNEED_START -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
