@@ -11,7 +11,8 @@ pcomm.exe: ../pdpclib/pgastart.o pcomm.o
   rm -f pcomm.exe
 #  link -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
 #  x86_64-w64-mingw32-ld -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
-  link /LARGEADDRESSAWARE:NO -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+#  link /LARGEADDRESSAWARE:NO -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  pdld --no-insert-timestamp -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
 
 .c.o:
   pdcc -E $(PP) -o $*.i $<
