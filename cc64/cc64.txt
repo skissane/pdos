@@ -1,0 +1,782 @@
+https://groups.google.com/g/comp.lang.c/c/m-fBt7dOkdc/m/fFVrTP71AQAJ
+
+Here's a public domain C compiler I made earlier (by adding a comment to
+that effect):
+
+https://raw.githubusercontent.com/sal55/langs/master/cc64.c
+
+Except it's not a very good one, and runs under Windows, requires
+msvcrt.dll (C runtime, which is part of Windows), and converts .c files
+to .exe.
+
+Since msvcrt.dll is closed source, it would reqire an external PD C library.
+
+
+
+https://raw.githubusercontent.com/sal55/langs/master/cc32.c
+
+The source uses c99 features so needs a recent compiler (I tested with
+tcc -m32).
+
+But: it will still compile to a 64-bit executable and require a 64-bit
+msvcrt.dll.
+
+You should still be able to use -e option (preprocess C code), and -s
+(generates .asm output file, for x64 processor). And generally see what
+it thinks of any given C file. (It probably won't like a lot of old
+code, even using the -old option.)
+
+
+
+Both cc64.c and cc32.c are for Windows and should compile like this:
+
+c:\xxx\> gcc -m32 cc32.c -obcc
+
+However, try one of these versions:
+
+https://raw.githubusercontent.com/sal55/langs/master/cc32u.c
+
+https://raw.githubusercontent.com/sal55/langs/master/cc32n.c
+
+
+cc32u.c is for Linux. Build as follows (I haven't tried it as it takes
+too long):
+
+gcc cc32u.c -obcc -lm -ldl
+
+Run as:
+
+./bcc
+
+cc32n.c is OS-neutral. Build as one of:
+
+gcc cc32n.c -obcc -lm # Linux
+gcc cc32n.c -obcc.exe # Windows
+
+With all -32 versions, only these options will work:
+
+bcc -e prog # preprocess prog.c to prog.i
+bcc -s prog # compile prog.c to prog.asm
+bcc -c prog # compile prog.c to prog.obj (COFF64 format)
+
+
+
+
+Cygwin is rather mysterious. If it has mingw, I don't know if that's the
+same as the one running directly under Windows, which can link to
+WinAPI, or one runs under Cygwin which uses Linux-like libraries.
+
+But you can test with this program:
+
+#include <windows.h>
+
+int main(void) {
+MessageBox(0,"World","Hello",0);
+}
+
+Under my mingw, this compiles with gcc like this:
+
+gcc prog.c # compile prog.c to a.exe
+
+and it should produce a pop-up window.
+
+If it doesn't work with either of these lines in cygwin:
+
+gcc prog.c
+gcc prog.c -lgdi32 -luser32 -lkernel32
+
+then it would explain the failure with cc32.c too.
+
+
+Your program works fine:
+
+C:\scratch\xxx6>i686-w64-mingw32-gcc prog.c
+
+C:\scratch\xxx6>a
+
+and produces the expected pop-up window.
+
+
+
+OK, so the problem is in my code. I think that is to do with the
+definitions of SetConsoleCtrlHandler and CreateProcessA, which have a
+mistake in one of the parameter types. (This is in the declarations in
+my language of those Win32 functions, where I use 'int', which is 64
+bits, but the correct BOOL type is 32 bits. That ends up in the C code.)
+
+In 32-bit Windows, link symbols are 'decorated' with a size which is the
+sum of the parameter sizes, so a suffix of '@8' became '@12', which did
+not match anything in the library.
+
+Anyway, I've updated the links.
+
+(The OS-neutral version, where these functions are not used, should also
+largely work, except for C input like this:
+
+#include <stdio.h>
+
+int main(void) {
+puts(__DATE__);
+puts(__TIME__);
+}
+
+where OS-functions are used to get these value rather than the C
+runtime. In cc32n.c, those functions are no-ops. Not that it matters
+much since no cc32*.c program can produce an executable.)
+
+
+
+
+cc32.c now builds correctly.
+
+The only issue is that if I do:
+
+cc32 -s world.c
+
+it produces a 0-byte "con" file as well,
+which I can't delete with the "del"
+command. I can delete it with "rm".
+
+I tried changing "con" to "con:" but then
+hit the micro-emacs bug with the 100k line.
+notepad was OK though. But then it created
+a file called conx, where x is a strange
+character. I tried making it "CON:" but
+that also gave me a file called CONx.
+
+The assembler was generated fine.
+
+
+
+
+This must be a peculiarity of the Cygwin subsystem.
+
+The original language of cc32.c creates a 'file' called "con" in order
+to obtain a file handle that can be used in a similar way to stdout in C
+(used for logging output). Under Windows, "con" is not an actual filename.
+
+Does the presence of that empty "con" file cause any problems? If "rm"
+deletes it, then perhaps you can wrap bcc in a batch file or script to
+remove it.
+
+Or you can try "bcc -debug hello.c", but that will create a bunch of
+stuff in bcc.log that you will have to delete instead.
+
+Alternatively, change line 11211 of cc32.c:
+
+return fopen((i8 *)((byte*)"con"),(i8 *)((byte*)"wb"));
+
+to:
+
+return 0;
+
+and rebuild cc32.c. For a routine compile, no logging info is produced
+so the handle is never used.
+
+
+
+
+> If hello.c works, try:
+>
+> bcc -s cc32.c
+
+Yes, it works, a 3 MB assembler file!
+
+
+
+
+https://groups.google.com/g/comp.lang.c/c/quZZQxcw9Ds/m/6_1ucqc8AwAJ
+
+-ext didn't work, as in allow me to provide my own stdio.h
+
+I didn't see an option to do -D to define things
+
+However, both problems were solved with pdcc as seen here:
+
+https://sourceforge.net/p/pdos/gitcode/ci/master/tree/generic/makecomm.c64
+
+I couldn't link with mingw64, but was able to link with Visual Studio, with an extra option.
+
+Not sure what that is about.
+
+That's fantastic progress.
+
+Let's see what this C compiler can do.
+
+
+
+It should work. How did it go wrong?
+
+cc64 does need a special header called bcc.h. With -ext, it needs to be
+able to find it elsewhere. The places it looks in for headers are:
+
+* The current directory
+* Any include paths set up using: -i:\path\
+* The path \cx\headers (the bcc development directory on my machine; it
+won't exist on yours so that's just skipped)
+
+To get a copy of bcc.h, try:
+
+cc64 -writeheaders
+
+This writes out all 30 or so headers from inside cc64.exe, as .hdr files
+(to avoid overwriting any existing headers). Copy bcc.hdr to bcc.h and
+delete the rest.
+
+Note that with -ext, all headers need to be loaded from some external file.
+
+
+> I didn't see an option to do -D to define things
+
+I vaguely remember trying to do something with this, but can't find any
+trace of it in the source code. But as a workaround, you can define -D
+macros inside bcc.h.
+
+> Let's see what this C compiler can do.
+Probably not much. It was withdrawn as there were too many problems, and
+since 2017 has falled into disuse. I use it as a private tool only.
+
+
+
+> It should work. How did it go wrong?
+
+You identified the problem - it was bcc.h that it couldn't find,
+and your workaround did in fact work.
+
+> > Let's see what this C compiler can do.
+
+> Probably not much. It was withdrawn as there were too many problems, and
+> since 2017 has falled into disuse. I use it as a private tool only.
+
+If I distribute a purely public domain disk that boots on
+an EFI-only machine, this will be the only C compiler
+available.
+
+I literally have nothing else at the moment.
+
+So it would be good if you could make the source formally
+available somewhere, even if it has a "not supported" notice
+on it or something. (on top of the existing released to the
+public domain notice).
+
+Thankyou for a very valuable tool. This provides hope.
+
+We already have a public domain assembler for 32-bit
+and 16-bit, and the author (Robert) has agreed to make
+it sufficiently good at 64-bit to assemble the small
+amount of assembler I use.
+
+After that, I need to look at linker availability. We have
+32-bit a.out. Not sure what else. 64-bit is new to me.
+
+
+
+
+I should emphasise that that C source file is not the true source code.
+You might notice that cc64.c is generated C code, so not maintainable.
+
+The true sources (which comprise 70 files of modules, support files and
+C header files), are in my systems language. The compiler for that is
+self-hosted, so there are no other dependencies, except that it needs an
+existing binary for it to bootstrap.
+
+Both compilers generate code for Win64 ABI.
+
+The set of tools I use under Windows can be summarised as:
+
+mm.exe Compiler for my systems language (.m modules)
+Output is EXE, or ASM (.asm files) in special syntax
+
+mc.exe A special version that compiles .m programs to a
+monolithic C source file. An older version of this
+was used to generate cc64.c.
+
+aa.exe Assembler/linker for my ASM syntax.
+Output is EXE, or OBJ (COFF format)
+
+bcc.exe C subset compiler, output is EXE or ASM (-s option)
+in the above syntax, as well as .i files (-e option)
+and .obj files (-c option).
+
+OBJ files (if they still work, as that has also fallen into disuse so
+might be buggy) will need an external linker to do anything further
+with. DLL output files from all my tools are known to be buggy.
+
+
+
+
+> I should emphasise that that C source file is not the true source code.
+> You might notice that cc64.c is generated C code, so not maintainable.
+
+I understand that.
+
+In the last 50 years, no-one has released a C90 compiler
+to the public domain.
+
+Maybe in the next 50 years, someone will do it.
+
+Although in that timeframe we might be seeing some
+copyrights expire. I'm not sure who would be tracking
+that.
+
+But right now - we have your C compiler.
+
+Although I realized that I can't make an executable available
+on my boot disk unless I do a bit of work to get rid of the
+sys/types etc which don't exist on my system. I may also
+hit a problem if you have used C99 features of the C library.
+The compiler I don't care about, because cc64 takes care
+of that itself.
+
+I told someone about the compiler yesterday and he asked
+me if I was sure it was public domain, because he couldn't
+find an official source of it, and pointed me to a historical
+bcc.c in your repository that didn't have a PD notice.
+
+You may not think cc64 is important/useful, but for me, it
+seems that it is. I need to do some more proving, in case
+there's something I'm missing.
+
+> OBJ files (if they still work, as that has also fallen into disuse so
+> might be buggy) will need an external linker to do anything further
+> with. DLL output files from all my tools are known to be buggy.
+
+I don't use DLLs, and yes, I am expecting to provide a linker.
+We already have a public domain linker, but as far as I know
+it doesn't produce COFF executables, nor is 64-bit, but we
+don't necessarily need COFF output. I might be able to switch
+to a.out. These things will be investigated.
+
+I have watched some enthusiastic people try to build a C
+compiler and fail. I'm not an expert myself, but it seems that
+a C compiler is a whole different category to creating a linker.
+
+cc64 exists. Not much else does. SubC is the only other
+possibility, but that needs work to be a 64-bit contender
+for my purpose too.
+
+
+
+
+cc64 relies on an exernal C runtime library, which is contained within
+msvcrt.dll that is part of every Windows system.
+
+To lose that dependency, you will need some open source version written
+in C. (I don't know if some aspects require assembly.)
+
+
+
+
+I have a 32-bit version of msvcrt.dll already (PDPCLIB can
+produce that).
+
+But even a 64-bit version doesn't give me what I want, because
+I don't want to use msvcrt.
+
+I think msvcrt is only relevant if I try to use cc64 to link,
+and cc64 thus resolves fopen() into a call to CreateFile()
+or whatever. Is that correct?
+
+If I instead provide my own stdio.h where fopen resolves
+to something else, and do my own links, can I just create
+dummy functions to satisfy the calls to CreateFile etc
+contained in cc64?
+
+I noticed these link errors:
+
+link /LARGEADDRESSAWARE:NO -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+pcomm.o : error LNK2001: unresolved external symbol toupper
+pcomm.o : error LNK2001: unresolved external symbol tolower
+pcomm.o : error LNK2001: unresolved external symbol puts
+pcomm.o : error LNK2001: unresolved external symbol GetStdHandle
+pcomm.o : error LNK2001: unresolved external symbol SetConsoleCtrlHandler
+pcomm.o : error LNK2001: unresolved external symbol SetConsoleMode
+pcomm.o : error LNK2001: unresolved external symbol CreateProcessA
+pcomm.o : error LNK2001: unresolved external symbol GetLastError
+pcomm.o : error LNK2001: unresolved external symbol WaitForSingleObject
+pcomm.o : error LNK2001: unresolved external symbol GetExitCodeProcess
+pcomm.o : error LNK2001: unresolved external symbol CloseHandle
+pcomm.o : error LNK2001: unresolved external symbol GetNumberOfConsoleInputEvents
+pcomm.o : error LNK2001: unresolved external symbol FlushConsoleInputBuffer
+pcomm.o : error LNK2001: unresolved external symbol LoadLibraryA
+pcomm.o : error LNK2001: unresolved external symbol GetProcAddress
+pcomm.o : error LNK2001: unresolved external symbol LoadCursorA
+pcomm.o : error LNK2001: unresolved external symbol RegisterClassExA
+pcomm.o : error LNK2001: unresolved external symbol DefWindowProcA
+pcomm.o : error LNK2001: unresolved external symbol ReadConsoleInputA
+pcomm.o : error LNK2001: unresolved external symbol system
+pcomm.o : error LNK2001: unresolved external symbol Sleep
+pcomm.o : error LNK2001: unresolved external symbol GetModuleFileNameA
+pcomm.o : error LNK2001: unresolved external symbol CreateFileA
+pcomm.o : error LNK2001: unresolved external symbol GetFileTime
+pcomm.o : error LNK2001: unresolved external symbol GetLocalTime
+pcomm.o : error LNK2001: unresolved external symbol MessageBoxA
+pcomm.o : error LNK2001: unresolved external symbol QueryPerformanceCounter
+pcomm.o : error LNK2001: unresolved external symbol QueryPerformanceFrequency
+pcomm.o : error LNK2001: unresolved external symbol GetTickCount
+pcomm.o : error LNK2001: unresolved external symbol PeekMessageA
+pcomm.o : error LNK2001: unresolved external symbol strtod
+pcomm.o : error LNK2001: unresolved external symbol labs
+pcomm.o : error LNK2001: unresolved external symbol sqrt
+pcomm.o : error LNK2001: unresolved external symbol __getmainargs
+pcomm.exe : fatal error LNK1120: 34 unresolved externals
+[pcomm.exe] Error 1120: Unknown error
+
+Some of them (toupper/puts etc) are ones that I will solve myself,
+as they haven't been fleshed out yet (for the specific target that I
+used above).
+
+
+
+
+> I noticed these link errors:
+>
+> link /LARGEADDRESSAWARE:NO -nologo -fixed:no -nodefaultlib
+-entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
+> pcomm.o : error LNK2001: unresolved external symbol toupper
+> pcomm.o : error LNK2001: unresolved external symbol tolower
+> pcomm.o : error LNK2001: unresolved external symbol puts
+> pcomm.o : error LNK2001: unresolved external symbol GetStdHandle
+<snip>
+
+> pcomm.o : error LNK2001: unresolved external symbol __getmainargs
+> pcomm.exe : fatal error LNK1120: 34 unresolved externals
+> [pcomm.exe] Error 1120: Unknown error
+>
+> Some of them (toupper/puts etc) are ones that I will solve myself,
+> as they haven't been fleshed out yet (for the specific target that I
+> used above).
+
+The ones starting with a capital letter are some functions from Win32
+API, used by a library module in the implementation language of the true
+sources of cc64.c.
+
+The tool I used to generate cc64.c used one of these 3 options:
+
+-windows For compiling under Windows
+-linux For compiling under Linux
+-nos For compiling under a neutral OS
+
+The last allows code that runs on any OS, provided the application being
+transpiled does not use any functions in the OS-specific module (where,
+for example, os_getprocaddress calls GetProcAddress() in Windows,
+dlsym() in Linux, and is a dummy function (mostly) for -nos.
+
+Presumably cc64.c was transpiled with -windows.
+
+I no longer have those tools. The C transpiler I use now is different. I
+can try and re-generate cc64.c (and reinstate that -nos dummy
+OS-module), and you can see if that's any better.
+
+> pcomm.o : error LNK2001: unresolved external symbol __getmainargs
+
+Unlike Linux, an entry point like C's main(nargs, args) does not
+automatically have those two (actually 3) arguments on the stack. That
+needs to be emulated.
+
+Here I rename main() in the C program, as _main(), but still have an
+entry point main(), with no parameters, which calls __getmainargs, and
+then calls _main(nargs, args).
+
+You need to supply a similar routine that accesses the command line and
+parses it into separate parameters as main(nargs, args) expects.
+
+/OR/ you run the programs in an environment where those parameters ARE
+on the stack when control passes to main. But that could need a tweak to
+bcc.
+
+(My bcc product was not intended for a free-standing environment, but
+mainly aimed at Windows. And the transpiler used to create cc64.c was
+not specifically for a C compiler (which would still target Win64 ABI
+even if run on Linux), but for any kinds of applications.)
+
+
+
+
+
+Sorry, I'm still confused.
+
+I only need cc64 to take C code and generate object code.
+I can't stop at the assembly because the assembly appears
+to be non-standard, so I don't and won't have my own
+assembler to handle that.
+
+The object code appears to be standard coff, and I have
+successfully linked with visual studio 2005's linker, with
+an extra option added. (I don't know what that extra
+option actually does).
+
+The cc64 executable (like all other executables) that I will
+be running, will be linked against PDPCLIB.
+
+PDPCLIB will be responsible for ensuring argc and argv are
+on the stack, before it hits your main().
+
+getmainargs is not required unless you are deliberately
+calling that for something.
+
+I know that you need to call it if you are generating an
+executable, but I won't be using cc64 to create an executable.
+
+Note that the Win32 dynamic target of PDPCLIB links against
+msvcrt (only), and PDPCLIB does indeed have that getmainargs,
+but that's not relevant to the 64-bit PDOS-generic target which is
+my current interest.
+
+So - my question remains - can I just provide dummy functions
+to the unresolved externals that are part of Win32? Don't worry
+about the C90 functions, I will fix pdpclib to provide them for
+this target.
+
+
+
+
+It will be needed when compilng any C program like this:
+
+#include <stdio.h>
+
+int main (int n, char** a) {
+
+for (int i=1; i<=n; ++i) {
+printf("%d: %s\n",i,*a);
+++a;
+}
+}
+
+
+Use cc64 -s on this, and look at the assembly. It calls __getmainargs so
+that it can get the parameters that main expects.
+
+So you'll need to provide some __getmainargs function (or edit cc64.c to
+change the name) that obtains the necessary info: the list of command
+line parameters, as that doesn't magically just happen as it apparently
+does on Linux.
+
+This is independent of how it ends up as an executable.
+
+> Note that the Win32 dynamic target of PDPCLIB links against
+> msvcrt (only), and PDPCLIB does indeed have that getmainargs,
+> but that's not relevant to the 64-bit PDOS-generic target which is
+> my current interest.
+>
+> So - my question remains - can I just provide dummy functions
+> to the unresolved externals that are part of Win32? Don't worry
+> about the C90 functions, I will fix pdpclib to provide them for
+> this target.
+
+The Win32 function are likely not needed. You can provide dummy ones, or
+just comment out calls to them in cc64.c.
+
+
+(I am currently looking at fixing the OBJ output of my latest bcc
+sources. Having your version of cc64.c to compare outputs with, helps
+with that. Then I may be able to upgrade the compiler to remove OS
+dependencies.
+
+It would still need an external C library however, which acts as the
+interface between a C program and the OS or machine it will run under.)
+
+
+
+
+
+> It will be needed when compilng any C program like this:
+>
+> #include <stdio.h>
+>
+> int main (int n, char** a) {
+
+> Use cc64 -s on this, and look at the assembly. It calls __getmainargs so
+> that it can get the parameters that main expects.
+
+Ok, so that means you have special knowledge of the "main"
+function and are generating an extra call.
+
+So I just need to suppress the word "main" in cc64.c,
+perhaps changing it to Zmain.
+
+I had to do that for some other stuff too, e.g. change "time"
+to "Ztime" as a variable name, as it clashes with my
+implementation of the C90 runtime library.
+
+Note that my implementation - unrelated to Unix - will have
+startup code that calls main() with the required arguments.
+
+> The Win32 function are likely not needed. You can provide dummy ones, or
+> just comment out calls to them in cc64.c.
+
+Ok, cool.
+
+> (I am currently looking at fixing the OBJ output of my latest bcc
+> sources. Having your version of cc64.c to compare outputs with, helps
+> with that. Then I may be able to upgrade the compiler to remove OS
+> dependencies.
+
+Well that's pretty amazing that squirreling away what you
+gave me ended up being useful to you.
+
+> It would still need an external C library however, which acts as the
+> interface between a C program and the OS or machine it will run under.)
+
+Sure. A C90 library I have. I have been developing it since 1994.
+
+So can you elaborate on what you are hoping to produce?
+
+I'm only interested in public domain C code. And so long
+as it is self-compiling, I don't care if it is C99 instead of
+C90. It will be annoying if it requires a C99 library instead
+of a C90 library, but that may or may not be an issue.
+
+So are you likely to be providing something useful to me,
+or should I just forge ahead with the above hacks and see
+what happens?
+
+
+
+
+I think it's best to forget my compiler:
+
+* I've lost interest in C and in implementing it. (It seems mainly
+a tool for raising my blood pressure.)
+
+* The compiler is non conforming in many ways, and buggy
+
+* It's not written in C, and the tool used to create a C rendering
+is being deprecated
+
+* Its output is anyway not usually an object file; it is ASM in
+a special format, directly assembled into EXE files
+
+* There was a .OBJ format that could be produced, but that is no
+longer viable, as my compiler's code is intended for low memory
+(within first 2GB) at a fixed address. But modern OSes and linkers
+now like to load at arbitrary, high addresses, which only works with
+position-independent code.
+
+I may anyway, at any time, decide to just delete the lot. I just don't
+want any external pressures or responsibilities.
+
+However there must be 100s of small, amateur C compilers out there, you
+just have to look for them. Tiny C is open source and one of the best.
+
+
+
+
+> * There was a .OBJ format that could be produced, but that is no
+> longer viable, as my compiler's code is intended for low memory
+> (within first 2GB) at a fixed address. But modern OSes and linkers
+> now like to load at arbitrary, high addresses, which only works with
+> position-independent code.
+
+We aren't using what you would presumably call "modern
+OSes and linkers". Even though they are only hours/days
+old, loading below 2 GB is not an issue - we control all
+components except EFI, but you can request EFI to
+provide memory below a certain point, which is all that is
+needed.
+
+> I may anyway, at any time, decide to just delete the lot. I just don't
+> want any external pressures or responsibilities.
+
+Ok, sorry to hear your interests have changed.
+
+> However there must be 100s of small, amateur C compilers out there, you
+> just have to look for them. Tiny C is open source and one of the best.
+
+Almost all of them are copyrighted.
+
+I believe yours is the most advanced public domain one,
+and then there is SubC.
+
+As you noted - your version can't really be maintained, so the
+challenge would be on to bring SubC up to your (C90) level.
+
+
+
+
+
+> I may anyway, at any time, decide to just delete the lot. I just don't
+> want any external pressures or responsibilities.
+
+It's pretty much gone now together with other tools associated with C
+(converting to C or from C). It only exists now as an archived ZIP on a
+pen drive. I'll give it a week to see what to do about that.
+
+It's a relief!
+
+
+
+
+> It's a relief!
+
+Ok, you don't intend to challenge the legal status of the code
+already released though, do you?
+
+I ask because someone asked me "are you sure it's public
+domain?" and I wasn't sure how to answer that.
+
+Below is what it says - no sign of an author, but that's not
+really a problem - I have other code included in PDOS
+where the author wishes to remain anonymous (even
+though I know his name) for some reason (which I've
+never asked).
+
+I can ask him why he has a specific concern about this
+code, but I think I already know the answer - he looked
+where bcc came from and noted that it wasn't public
+domain, and had a known author. So people may ask
+more questions - well - one person already has.
+
+Anything you can say to help me address his concerns
+(before we start using this in full knowledge that it is
+unsupported and not expected to be maintainable)?
+
+Thanks. Paul.
+
+
+
+Toy C compiler for Windows.
+
+This code is placed in the Public Domain.
+
+Generated C code (not original non-C sources); build with gcc or tcc.
+
+--------------------------------------
+
+'BCC' Compiler for 'C'-like language.
+
+
+
+
+
+> I can ask him why he has a specific concern about this
+> code, but I think I already know the answer - he looked
+> where bcc came from and noted that it wasn't public
+> domain, and had a known author.
+
+Was that the Borland C Compiler?
+
+If so that's nothing to do with me.
+
+The file you have remains as public domain.
+
+You can add the name 'Bart' or 'Bart C', but I don't want to divulge my
+surname as it will likely be unique worldwide.
+
+
+
+
+
+> You can add the name 'Bart' or 'Bart C', but I don't want to divulge my
+> surname as it will likely be unique worldwide.
+
+Thankyou sir!
+
+BFN. Paul.
+
+
+
+
+
+
+
