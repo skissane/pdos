@@ -228,7 +228,7 @@ int main(int argc, char **argv)
             {
                 break;
             }
-            p = strchr(buf, '\n');
+            p = (unsigned char *)strchr(buf, '\n');
             if (p != NULL)
             {
                 *p = '\0';
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
             }
             strcpy(cmd, buf);
             prog_name = buf;
-            p = strchr(buf, ' ');
+            p = (unsigned char *)strchr(buf, ' ');
             if (p != NULL)
             {
                 *p = '\0';
