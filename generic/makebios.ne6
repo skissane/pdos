@@ -1,0 +1,34 @@
+# Produces EFI executable.
+# We link with the library produced by makefile.ne6
+# And we use makefile.p64 and makecomm.p64
+# which are PE
+
+# We need this executable to load below the 4 GiB mark.
+# So we use the image-base keyword on the link step
+
+CC=cc64
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
+    -I../pdpclib -I../bios -I. \
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -DXW32HACK
+
+all: clean bios.exe
+
+OBJS=../bios/exeload.obj
+# w32hack.obj
+
+bios.exe: bios.obj $(OBJS)
+    $(LD) -s -subsystem 10 -e efimain -nostdlib --image-base 0x400000 -o bios.exe bios.obj $(OBJS) ../pdpclib/pdpefi.lib
+
+.c.obj:
+    pdcc -E $(COPTS) -o $*.i $<
+    $(CC) -c -out:$@ $*.i
+    rm -f $*.i
+
+.asm.obj:
+    $(AS) -o $@ $<
+
+clean:
+    rm -f *.obj bios.exe
