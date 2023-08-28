@@ -14,5 +14,5 @@
 
 int __errno = 0;
 
-__PDPCLIB_API__ int *_errno()
+__PDPCLIB_API__ int *_errno(void)
     { return(&__errno); }
