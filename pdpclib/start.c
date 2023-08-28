@@ -523,8 +523,15 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stdin->bufTech = _IOLBF;
     __stdin->intBuffer = buffer1;
     __stdin->fbuf = __stdin->intBuffer + 2;
+#ifdef __CC64__
+    *__stdin->fbuf = '\0';
+    __stdin->fbuf++;
+    *__stdin->fbuf = '\0';
+    __stdin->fbuf++;
+#else
     *__stdin->fbuf++ = '\0';
     *__stdin->fbuf++ = '\0';
+#endif
     __stdin->szfbuf = BUFSIZ;
     __stdin->endbuf = __stdin->fbuf + __stdin->szfbuf;
     *__stdin->endbuf = '\n';
@@ -544,8 +551,15 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stdout->bufTech = _IOLBF;
     __stdout->intBuffer = buffer2;
     __stdout->fbuf = __stdout->intBuffer;
+#ifdef __CC64__
+    *__stdout->fbuf = '\0';
+    __stdout->fbuf++;
+    *__stdout->fbuf = '\0';
+    __stdout->fbuf++;
+#else
     *__stdout->fbuf++ = '\0';
     *__stdout->fbuf++ = '\0';
+#endif
     __stdout->szfbuf = BUFSIZ;
     __stdout->endbuf = __stdout->fbuf + __stdout->szfbuf;
     *__stdout->endbuf = '\n';
@@ -565,8 +579,15 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stderr->bufTech = _IOLBF;
     __stderr->intBuffer = buffer3;
     __stderr->fbuf = __stderr->intBuffer;
+#ifdef __CC64__
+    *__stderr->fbuf = '\0';
+    __stderr->fbuf++;
+    *__stderr->fbuf = '\0';
+    __stderr->fbuf++;
+#else
     *__stderr->fbuf++ = '\0';
     *__stderr->fbuf++ = '\0';
+#endif
     __stderr->szfbuf = BUFSIZ;
     __stderr->endbuf = __stderr->fbuf + __stderr->szfbuf;
     *__stderr->endbuf = '\n';
