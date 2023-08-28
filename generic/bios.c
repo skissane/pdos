@@ -289,7 +289,11 @@ int main(int argc, char **argv)
 
     printf("about to execute program\n");
 #if 1
+#ifdef __CC64__
+    rc = (*genstart)(&bios);
+#else
     rc = genstart(&bios);
+#endif
 #else
     rc = 0;
 #endif
