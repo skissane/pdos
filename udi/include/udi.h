@@ -861,7 +861,7 @@ typedef const struct {
 typedef const struct {
     udi_index_t meta_ops_num;
     udi_ubit8_t relationship;
-    const udi_mei_op_template_t *op_template_list;
+    udi_mei_op_template_t *op_template_list;
 } udi_mei_ops_vec_template_t;
 
 #define UDI_MEI_REL_INITIATOR (1U << 0)
