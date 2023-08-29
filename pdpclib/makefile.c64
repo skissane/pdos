@@ -10,6 +10,7 @@ AR=ar
 #AS=pdas --oformat coff --64
 AS=x86_64-w64-mingw32-as
 LD=pdld
+#LD=x86_64-w64-mingw32-ld
 
 all: pdptest.exe
 
@@ -21,7 +22,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(AR) r pdpwin64.lib start.obj time.obj errno.obj assert.obj signal.obj
   $(AR) r pdpwin64.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   $(AR) s pdpwin64.lib
-  $(LD) -s --no-insert-timestamp -nostdlib -o pdptest.exe p32start.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
+  $(LD) -s --no-insert-timestamp --image-base 0x400000 -nostdlib -o pdptest.exe p32start.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
 
 .c.obj:
   pdcc -E $(COPTS) -o $*.i $<
