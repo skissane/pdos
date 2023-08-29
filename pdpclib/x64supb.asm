@@ -10,23 +10,11 @@
 # plus return address
 # And first location is reserved for return value
 # (second is for return address)
-# After getting an issue, added rsi and rdi to preserve
+# After getting an issue (with EFI), added rsi and rdi to preserve
 # That didn't fix the problem, so I added r10-r15
 # That didn't fix the problem, so I added rbp
 # That fixed the problem, and I just left everything in,
 # as that is probably the best thing to do anyway
-# That solved EFI, but broke Windows, so I added a WINDOWS
-# define to put things back to basically how it used to be
-# Note that it is just rdi and rbp that Windows doesn't like
-# me interfering with
-# Actually, it's the POSITION. I can save rbp if I put it in slot 8.
-# Actually, it looks like a bug with pdas, as mingw64 works
-# Actually, under different circumstances, mingw64 has the same issue.
-# It seems that Windows reserves these other registers so they
-# shouldn't be disturbed. It doesn't matter where in the buffer you
-# write to.
-# Actually it ended up being a bug in pdld and now everything is
-# preserved again
 
 .globl __setj
 __setj:
