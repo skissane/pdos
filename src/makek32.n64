@@ -15,7 +15,7 @@ VPATH=../pdpclib
 CPP=pdcc
 CC=cc64
 CFLAGS=
-COPTS=$(CFLAGS) -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
+COPTS=$(CFLAGS) -D__WIN32__ -D__STATIC__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
 AS=pdas --oformat coff --64
 LD=pdld
 
