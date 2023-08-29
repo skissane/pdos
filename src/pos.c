@@ -371,7 +371,7 @@ void PosTerminateAndStayResident(int exitCode, int paragraphs)
 }
 
 /* func 33, subfunc 00 - get Ctrl+Break checking flag status */
-int PosGetBreakFlag()
+int PosGetBreakFlag(void)
 {
     union REGS regsin;
     union REGS regsout;
@@ -1217,7 +1217,7 @@ int PosGetCurrentProcessId(void)
 }
 
 /* func 54 - get read-after-write verification flag */
-int PosGetVerifyFlag()
+int PosGetVerifyFlag(void)
 {
     union REGS regsin;
     union REGS regsout;
