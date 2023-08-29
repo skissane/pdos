@@ -5828,7 +5828,10 @@ static void accessDisk(int drive)
        And on other real hardware, a normal floppy says that it
        is capable of LBA, and succeeds when you try to read
        using LBA, but actually it was a failure and you need
-       to use CHS.
+       to use CHS. Note - this was almost certainly because the
+       low bit of "support" (ie cx) was not checked to see if the
+       extended read function was supported, so this logic needs
+       to be revisited.
 
        To work around these dual attempts to drive me nuts (too
        late assholes), what we do is use CHS for the first sector,
