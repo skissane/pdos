@@ -970,7 +970,8 @@ static void generate_base_relocation_block (struct section *reloc_section,
                                             struct IMAGE_BASE_RELOCATION_internal *ibr_hdr_p,
                                             unsigned long num_relocs,
                                             struct section *saved_section,
-                                            struct section_part *saved_part)
+                                            struct section_part *saved_part,
+                                            size_t saved_i)
 {
     struct section_part *reloc_part;
     unsigned char *write_pos;
@@ -996,7 +997,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
             size_t i;
 
             relocs = part->relocation_array;
-            for (i = 0; i < part->relocation_count; i++) {
+            for (i = ((part == saved_part) ? saved_i : 0); i < part->relocation_count; i++) {
                 unsigned short base_relocation_type;
                 
                 if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
@@ -1005,9 +1006,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 } else {
                     if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
-                }
-                
-                if (part->rva + relocs[i].VirtualAddress < ibr_hdr_p->RVAOfBlock) continue;
+                };
 
                 {
                     unsigned short rel_word;
@@ -1022,6 +1021,8 @@ static void generate_base_relocation_block (struct section *reloc_section,
             }
         }
     }
+
+    ld_internal_error_at_source (__FILE__, __LINE__, "num_reloc mismatch while generating .reloc section");
     
 finish:
     section_append_section_part (reloc_section, reloc_part);
@@ -1034,6 +1035,7 @@ void coff_after_link (void)
     unsigned long num_relocs;
     struct section *saved_section;
     struct section_part *saved_part;
+    size_t saved_i;
     struct section *reloc_section;
     struct section *section;
 
@@ -1047,6 +1049,7 @@ void coff_after_link (void)
     num_relocs = 0;
     saved_section = NULL;
     saved_part = NULL;
+    saved_i = 0;
 
     for (section = all_sections; section; section = section->next) {
         struct section_part *part;
@@ -1063,13 +1066,18 @@ void coff_after_link (void)
                     if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
                 }
 
+                /* Relocations can be listed in any order, so it must not be assumed they have ascending RVAs.
+                 * This workaround sometimes produces suboptimal results but the results should be always correct.
+                 * Probably better solution would be creating a list of relocations and sorting it by RVA. */
                 if (num_relocs
-                    && part->rva + relocs[i].VirtualAddress >= ibr_hdr.RVAOfBlock + BASE_RELOCATION_PAGE_SIZE) {
+                    && (part->rva + relocs[i].VirtualAddress >= ibr_hdr.RVAOfBlock + BASE_RELOCATION_PAGE_SIZE
+                        || part->rva + relocs[i].VirtualAddress < ibr_hdr.RVAOfBlock)) {
                     generate_base_relocation_block (reloc_section,
                                                     &ibr_hdr,
                                                     num_relocs,
                                                     saved_section,
-                                                    saved_part);
+                                                    saved_part,
+                                                    saved_i);
                     num_relocs = 0;
                 }
 
@@ -1077,6 +1085,7 @@ void coff_after_link (void)
                     ibr_hdr.RVAOfBlock = FLOOR_TO (part->rva + relocs[i].VirtualAddress, BASE_RELOCATION_PAGE_SIZE);
                     saved_section = section;
                     saved_part = part;
+                    saved_i = i;
                 }
 
                 num_relocs++;                    
@@ -1089,7 +1098,8 @@ void coff_after_link (void)
                                         &ibr_hdr,
                                         num_relocs,
                                         saved_section,
-                                        saved_part);
+                                        saved_part,
+                                        saved_i);
     }
 }
 
