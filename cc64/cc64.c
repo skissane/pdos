@@ -116,10 +116,12 @@ For further instructions try one of:
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+/*#include <sys/types.h>*/
+/*#include <sys/stat.h>*/
 
+#if 0
 #pragma pack(1)
+#endif
 
 typedef int8_t i8;
 typedef int16_t i16;
@@ -139,8 +141,10 @@ typedef void* var;
 #define CALLBACK
 #endif
 
+#if 0
 #if (UINTPTR_MAX<0xFFFFFFFFFFFFFFFF)
 	#error "Need 64-bit target. Try -m64"
+#endif
 #endif
 
 /* Forward Struct Declarations */
