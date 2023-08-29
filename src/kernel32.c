@@ -31,7 +31,7 @@ BOOL WINAPI WriteFile(HANDLE hFile,
                       LPDWORD lpNumberOfBytesWritten,
                       LPOVERLAPPED lpOverlapped)
 {
-    size_t written;
+    unsigned int written;
     int ret;
 
     ret = PosWriteFile((int)hFile, lpBuffer,
@@ -119,7 +119,7 @@ BOOL WINAPI CreateProcessA(
     {
         return (1);
     }
-    parmblock.cmdtail = (char *)lpCommandLine;
+    parmblock.cmdtail = (unsigned char *)lpCommandLine;
     PosExec((char *)lpApplicationName, &parmblock);
     return (1);
 }
