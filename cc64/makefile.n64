@@ -1,0 +1,30 @@
+# This is the new new standard (using cc64) for PDOS/x64
+# It builds cc64 itself - you need to choose whether you
+# want a version that is "generic" in nature or the
+# standalone version that can produce an executable all
+# by itself. At the moment the standalone version can't
+# be built with this procedure.
+
+CC=cc64
+AR=ar
+AS=pdas --oformat coff --64
+LD=pdld
+COPTS=-DBLDGENERIC -D__WIN32__ -D__64BIT__ -I . -I ../pdpclib
+
+all: cc64-new.exe
+
+cc64-new.exe: cc64.obj junk.obj
+  $(LD) -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o $@ ../pdpclib/w32start.obj cc64.obj junk.obj ../pdpclib/msvcrt.lib ../src/kernel32.lib
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+#  $(CC) -c -out:$@ $<
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f cc64-new.exe
