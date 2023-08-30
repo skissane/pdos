@@ -89,10 +89,12 @@ void mainCRTStartup(void)
     exit(status);
 }
 
+#ifndef NOUNDMAIN
 void __main(void)
 {
     return;
 }
+#endif
 
 #if defined(__MSC__)
 int _fltused;
