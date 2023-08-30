@@ -10,6 +10,11 @@
 # This builds the 64-bit version of kernel32.dll
 # using cc64
 
+# Note that we export all symbols because cc64 isn't
+# generating the required .drectve section. We may
+# revisit this situation at a later date. If not by
+# changing cc64 then perhaps allowing a definition file.
+
 VPATH=../pdpclib
 
 CPP=pdcc
@@ -18,7 +23,6 @@ CFLAGS=
 COPTS=$(CFLAGS) -D__WIN32__ -D__STATIC__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
 AS=pdas --oformat coff --64
 LD=pdld
-#LD=x86_64-w64-mingw32-ld
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
 OBJS=pdossupc.obj pos.obj string.obj supportc.obj
@@ -26,7 +30,7 @@ OBJS=pdossupc.obj pos.obj string.obj supportc.obj
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
-  $(LD) --no-insert-timestamp --image-base 0x400000 -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
+  $(LD) --export-all-symbols --no-insert-timestamp --image-base 0x400000 -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
 
 dllcrt.obj: ../pdpclib/dllcrt.c
   $(CPP) -E $(COPTS) -D__EXPORT__ -o $*.i $<
