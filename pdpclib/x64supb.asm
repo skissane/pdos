@@ -79,3 +79,8 @@ _fltused:
 .p2align 2
 m$ufloat_r64u32:
 .space 4
+
+.globl m$ufloat_r64u64
+.p2align 2
+m$ufloat_r64u64:
+.space 4
