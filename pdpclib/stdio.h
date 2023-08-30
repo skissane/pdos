@@ -225,11 +225,15 @@ typedef struct
 } __DUMMYFILE;
 
 #ifndef __PDPCLIB_DLL
-#if !defined(__SUBC__) && !defined(__NODECLSPEC__)
+#if !defined(__SUBC__) && !defined(__NODECLSPEC__) && !defined(__CC64__)
+
 __declspec(dllimport) __DUMMYFILE _iob[3];
+
 #else
 
-#ifdef __64BIT__
+#if defined(__CC64__)
+extern __DUMMYFILE *__imp__iob;
+#elif defined(__64BIT__)
 extern __DUMMYFILE *_imp__iob;
 #else
 extern __DUMMYFILE *_imp___iob;
@@ -238,13 +242,18 @@ extern __DUMMYFILE *_imp___iob;
 #endif
 #endif
 
-#if !defined(__SUBC__) && !defined(__NODECLSPEC__)
+#if !defined(__SUBC__) && !defined(__NODECLSPEC__) && \
+    !(defined(__CC64__) && !defined(__PDPCLIB_DLL))
 #define stdin ((FILE *) &(_iob[0]))
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
 #else
 
-#ifdef __64BIT__
+#if defined(__CC64__)
+#define stdin ((FILE *) &(__imp__iob[0]))
+#define stdout ((FILE *) &(__imp__iob[1]))
+#define stderr ((FILE *) &(__imp__iob[2]))
+#elif defined(__64BIT__)
 #define stdin ((FILE *) &(_imp__iob[0]))
 #define stdout ((FILE *) &(_imp__iob[1]))
 #define stderr ((FILE *) &(_imp__iob[2]))
