@@ -232,7 +232,7 @@ __declspec(dllimport) __DUMMYFILE _iob[3];
 #else
 
 #if defined(__CC64__)
-extern __DUMMYFILE *__imp__iob;
+extern __DUMMYFILE *__iob_func(void);
 #elif defined(__64BIT__)
 extern __DUMMYFILE *_imp__iob;
 #else
@@ -250,9 +250,9 @@ extern __DUMMYFILE *_imp___iob;
 #else
 
 #if defined(__CC64__)
-#define stdin ((FILE *) &(__imp__iob[0]))
-#define stdout ((FILE *) &(__imp__iob[1]))
-#define stderr ((FILE *) &(__imp__iob[2]))
+#define stdin ((FILE *) __iob_func())
+#define stdout ((FILE *) (__iob_func() + 1))
+#define stderr ((FILE *) (__iob_func() + 2))
 #elif defined(__64BIT__)
 #define stdin ((FILE *) &(_imp__iob[0]))
 #define stdout ((FILE *) &(_imp__iob[1]))
