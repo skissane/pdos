@@ -5,7 +5,6 @@
 ++CreateFileA.kernel32._CreateFileA@28
 ++CreateDirectoryA.kernel32._CreateDirectoryA@8
 ++GetFileAttributesA.kernel32._GetFileAttributesA@4
-++PathFileExistsA.kernel32._PathFileExistsA@4
 ++CreateProcessA.kernel32._CreateProcessA@40
 ++DeleteFileA.kernel32._DeleteFileA@4
 ++GetCommandLineA.kernel32._GetCommandLineA@0
