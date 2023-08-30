@@ -197,6 +197,7 @@ struct symbol *symbol_find (const char *name);
 void symbol_add_to_hashtab (struct symbol *symbol);
 void symbol_remove_from_hashtab (struct symbol *symbol);
 void symbol_record_external_symbol (struct symbol *symbol);
-int symbol_is_undefined (struct symbol *symbol);
+int symbol_is_undefined (const struct symbol *symbol);
 address_type symbol_get_value_with_base (struct symbol *symbol);
 address_type symbol_get_value_no_base (struct symbol *symbol);
+void symbols_for_each_global (void (*symbol_callback) (struct symbol *));

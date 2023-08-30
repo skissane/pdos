@@ -97,7 +97,7 @@ void symbol_record_external_symbol (struct symbol *symbol)
              old_symbol->value);
 }
         
-int symbol_is_undefined (struct symbol *symbol)
+int symbol_is_undefined (const struct symbol *symbol)
 {
     return (symbol->section_number == UNDEFINED_SECTION_NUMBER);
 }
@@ -112,4 +112,9 @@ address_type symbol_get_value_no_base (struct symbol *symbol)
 {
     if (symbol->part) return symbol->part->rva + symbol->value;
     else return symbol->value - ld_state->base_address;
+}
+
+void symbols_for_each_global (void (*symbol_callback) (struct symbol *))
+{
+    hashtab_for_each_element (symbol_hashtab, (void (*) (void *))symbol_callback);
 }

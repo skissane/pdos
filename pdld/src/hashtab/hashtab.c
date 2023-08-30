@@ -262,6 +262,18 @@ found:
     }
 }
 
+void hashtab_for_each_element (struct hashtab *hashtab, void (*element_callback) (void *))
+{
+    struct hashtab_entry *entry;
+    size_t i;
+    
+    for (i = hashtab->size + hashtab->probe_limit, entry = hashtab->entries; i; i--, entry++) {
+        if (entry->distance_from_desired != EMPTY_ENTRY_DISTANCE) {
+            element_callback ((void *) entry->element);
+        }
+    }
+}
+
 void hashtab_destroy_hashtab (struct hashtab *hashtab)
 {
     hashtab->free_func (hashtab->entries);

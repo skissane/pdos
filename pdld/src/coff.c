@@ -32,6 +32,7 @@
 #define IMP_PREFIX_LEN 6
 
 static int insert_timestamp = 1;
+static int export_all_symbols = 0;
 static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int can_be_relocated = 0;
@@ -246,6 +247,40 @@ address_type coff_get_base_address (void)
 address_type coff_get_first_section_rva (void)
 {
     return ALIGN (size_of_headers, SectionAlignment);
+}
+
+static void export_symbol_callback (struct symbol *symbol)
+{
+    if (symbol_is_undefined (symbol)) return;
+
+    {
+        struct name_list *name_list;
+        name_list = xmalloc (sizeof (*name_list));
+        name_list->name = xstrdup (symbol->name);
+        /* Not sure if this guessing is the correct way
+         * of determing whether symbol should be exported as data. */
+        name_list->info = (symbol->part->section->flags & SECTION_FLAG_CODE) ? 0 : 1;
+        name_list->next = NULL;
+        *last_export_name_list_p = name_list;
+        last_export_name_list_p = &name_list->next;
+    }
+}
+
+static void export_all_generate_names (void)
+{
+    struct name_list *name_list, *next_name_list;
+
+    for (name_list = export_name_list;
+         name_list;
+         name_list = next_name_list) {
+        next_name_list = name_list->next;
+        free (name_list);
+    }
+
+    export_name_list = NULL;
+    last_export_name_list_p = &export_name_list;
+    
+    symbols_for_each_global (&export_symbol_callback);    
 }
 
 static char *unprefix_name (const char *orig_name)
@@ -696,8 +731,12 @@ void coff_before_link (void)
     struct subsection *subsection;
     struct section_part *part;
 
+    if (export_all_symbols) export_all_generate_names ();
+
     if (export_name_list) {
         generate_edata ();
+    } else if (ld_state->output_implib_filename) {
+        write_implib (NULL, 0, 0);
     }
 
     /* Certain OS rejects executables with empty .reloc section,
@@ -1006,7 +1045,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 } else {
                     if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
-                };
+                }
 
                 {
                     unsigned short rel_word;
@@ -2321,7 +2360,7 @@ static void read_coff_archive (unsigned char *file, size_t file_size, const char
 
         for (i = 0; i < NumberOfSymbols; i++) {
             int ret;
-            struct symbol *symbol = symbol_find (offset_name_table[i].name);
+            const struct symbol *symbol = symbol_find (offset_name_table[i].name);
 
             if (symbol == NULL) continue;
             if (!symbol_is_undefined (symbol)) continue;
@@ -2389,6 +2428,7 @@ enum option_index {
     COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
+    COFF_OPTION_EXPORT_ALL_SYMBOLS,
     COFF_OPTION_KILL_AT,
     COFF_OPTION_ENABLE_RELOC_SECTION,
     COFF_OPTION_DISABLE_RELOC_SECTION,
@@ -2407,6 +2447,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
+    { STR_AND_LEN("export-all-symbols"), COFF_OPTION_EXPORT_ALL_SYMBOLS, OPTION_NO_ARG},
     { STR_AND_LEN("kill-at"), COFF_OPTION_KILL_AT, OPTION_NO_ARG},
     { STR_AND_LEN("enable-reloc-section"), COFF_OPTION_ENABLE_RELOC_SECTION, OPTION_NO_ARG},
     { STR_AND_LEN("disable-reloc-section"), COFF_OPTION_DISABLE_RELOC_SECTION, OPTION_NO_ARG},
@@ -2427,6 +2468,7 @@ void coff_print_help (void)
     printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
+    printf ("  --export-all-symbols               Automatically export all globals to DLL\n");
     printf ("  --kill-at                          Remove @nn from exported symbols\n");
     printf ("  --enable-reloc-section             Create the base relocation table\n");
     printf ("  --disable-reloc-section            Do not create the base relocation table\n");
@@ -2520,6 +2562,10 @@ static void use_option (enum option_index option_index, char *arg)
 
         case COFF_OPTION_NO_INSERT_TIMESTAMP:
             insert_timestamp = 0;
+            break;
+
+        case COFF_OPTION_EXPORT_ALL_SYMBOLS:
+            export_all_symbols = 1;
             break;
 
         case COFF_OPTION_KILL_AT:

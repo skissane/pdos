@@ -26,6 +26,7 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size,
 const void *hashtab_find (struct hashtab *hashtab, const void *element);
 
 void hashtab_delete (struct hashtab *hashtab, const void *element);
+void hashtab_for_each_element (struct hashtab *hashtab, void (*element_callback) (void *));
 void hashtab_destroy_hashtab (struct hashtab *hashtab);
 
 /** The return value is the element that was not possible to insert into the table. */
