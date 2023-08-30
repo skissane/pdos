@@ -1,0 +1,26 @@
+VPATH=./hashtab
+CPP=pdcc
+CC=cc64
+CFLAGS=
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp --image-base 0x400000
+AS=pdas --oformat coff --64
+COPTS=-I. -I./hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+
+OBJS=main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj ../pdpclib/x64supb.obj
+
+TARGET=pdmake.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CPP) -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+clean:
+  rm -f $(OBJS) $(TARGET)
+
