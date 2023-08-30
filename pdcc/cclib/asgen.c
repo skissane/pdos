@@ -153,7 +153,7 @@ static void cc_i386gen_return(cc_reader *reader, const cc_expr *expr)
 
 static void cc_i386gen_decl(cc_reader *reader, const cc_variable *var)
 {
-    size_t size = cc_get_variable_size(var);
+    size_t size = cc_get_variable_size(reader, var);
     stack_size += size;
     fprintf(reader->output, "\tsubl $%u, %%esp #_%s, %u\n", size, var->name,
             stack_size);
