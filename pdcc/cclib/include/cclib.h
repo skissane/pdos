@@ -239,6 +239,8 @@ cc_member cc_parse_member(cc_reader *reader);
 cc_type cc_parse_type(cc_reader *reader);
 int cc_parse_file(cc_reader *reader);
 
+size_t cc_get_variable_size(cc_reader *reader, const cc_variable *var);
+
 /**
  * @brief Grabs the name/string field from a token and ensures to take
  * ownership from it, this to avoid extra XSTRDUPs
