@@ -748,6 +748,10 @@ CMOVcc ("cmovnle", 0x0F4F)
 
 "movss", 0xF30F10, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
+"cvtsi2ss", 0xF30F2A, NONE, CPU_SSE | CPU_64, LQ_SUF | IGNORE_SIZE | MODRM, { REG32 | REG64 | ANY_MEM | Dword | Qword, REG_XMM }
+
+"addss", 0xF30F58, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
+
 /* SSE2 instructions. */
 "punpcklbw", 0x660F60, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
 "punpcklwd", 0x660F61, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
