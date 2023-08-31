@@ -8,14 +8,15 @@ AS=pdas --oformat coff --64
 #AS=x86_64-w64-mingw32-as
 COPTS=-I. -I./hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__
 
-OBJS=main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj ../pdpclib/x64supb.obj
+OBJS=main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj
+OBJS2=../pdpclib/x64supb.obj
 
 TARGET=pdmake.exe
 
 all: clean $(TARGET)
 
-$(TARGET): $(OBJS)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+$(TARGET): $(OBJS) $(OBJS2)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib $(OBJS2)
 
 .c.obj:
   $(CPP) -E $(COPTS) -o $*.i $<
