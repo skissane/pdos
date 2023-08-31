@@ -29,17 +29,17 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 
 pdptest.obj: pdptest.c
   pdcc -E -D__WIN32__ -D__CC64__ -D__64BIT__ -I . -I ../src -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 dllcrt.obj: dllcrt.c
   pdcc -E $(COPTS) -D__EXPORT__ -DNEED_START -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 .c.obj:
   pdcc -E $(COPTS) -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 .asm.obj:
