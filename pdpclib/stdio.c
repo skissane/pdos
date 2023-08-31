@@ -284,7 +284,7 @@ __PDPCLIB_API__ __DUMMYFILE _iob[3];
    instead of directly accessing the _iob. cc64 was the
    first compiler that REQUIRED this, which is the first
    time I knew that the function even existed. */
-#if defined(__CC64__)
+#if defined(__64BIT__)
 __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 {
     return (_iob);
