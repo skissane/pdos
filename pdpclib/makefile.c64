@@ -24,7 +24,7 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 
 .c.obj:
   pdcc -E $(COPTS) -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 .asm.obj:
