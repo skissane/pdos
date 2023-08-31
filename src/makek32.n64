@@ -34,17 +34,17 @@ kernel32.dll: $(EXPORT_OBJS) $(OBJS)
 
 dllcrt.obj: ../pdpclib/dllcrt.c
   $(CPP) -E $(COPTS) -D__EXPORT__ -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 kernel32.obj: kernel32.c
   $(CPP) -E $(COPTS) -D__EXPORT__ -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 .c.obj:
   $(CPP) -E $(COPTS) -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 
 clean:
