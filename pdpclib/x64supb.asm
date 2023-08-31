@@ -77,53 +77,50 @@ _fltused:
 
 # These routines were copied (and then modified) from bcclib.asm generated
 # by the public domain cc64, and are used for cc64
-
-#Float routines for unsigned
-#Input passed in D10
-#Output in XMM15
+# (Converted to PDAS .intel_syntax noprefix by guessing.)
 
 .globl m$ufloat_r64u32
 m$ufloat_r64u32:
-#	mov D10,D10					# clear top half (already done if value just moved there)
-#	cvtsi2sd XMM15,D10
+	mov ecx, ecx					# clear top half (already done if value just moved there)
+	cvtsi2sd xmm15, rcx
 	ret
 
 .globl m$ufloat_r32u32
 m$ufloat_r32u32:
-#	mov D10,D10
-#	cvtsi2ss XMM15,D10
+	mov ecx, ecx
+	cvtsi2ss xmm15, rcx
 	ret
 
 .globl m$ufloat_r64u64
 m$ufloat_r64u64:
-#	cmp D10,0
+	cmp ecx, 0
 	jl fl1
 #number is positive, so can treat like i64
-#	cvtsi2sd XMM15,D10
+	cvtsi2sd xmm15, rcx
 	ret
 fl1:						#negative value
-#	and D10,[mask63]		#clear top bit (subtract 2**63)
-#	cvtsi2sd XMM15,D10
-#	addsd XMM15,[offset64]	#(add 2**63 back to result)
+	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+	cvtsi2sd xmm15, rcx
+	addsd xmm15, QWORD PTR offset64[rip]	#(add 2**63 back to result)
 	ret
 
 .globl m$ufloat_r32u64
 m$ufloat_r32u64:
-#	cmp D10,0
+	cmp ecx, 0
 	jl fl2
 #number is positive, so can treat like i64
-#	cvtsi2ss XMM15,D10
+	cvtsi2ss xmm15, rcx
 	ret
 fl2:						#negative value
-#	and D10,[mask63]		#clear top bit (subtract 2**63)
-#	cvtsi2ss XMM15,D10
-#	addss XMM15,[offset32]	#(add 2**63 back to result)
+	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+	cvtsi2ss xmm15, rcx
+	addss xmm15, DWORD PTR offset32[rip]	#(add 2**63 back to result)
 	ret
 
-.data
+.section rdata
 mask63:
-#	dq 0x7fffffffffffffff
+	.quad 0x7fffffffffffffff
 offset64:
-#	dq 9223372036854775808.0		# 2**63 as r64
+	.quad 9223372036854775808		# 2**63 as r64
 offset32:
-#	dd 9223372036854775808.0		# 2**63 as r32
+	.quad 9223372036854775808		# 2**63 as r32
