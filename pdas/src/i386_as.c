@@ -2633,8 +2633,10 @@ static const struct reg_entry *build_modrm (void)
                 if (instruction.disp_operands == 0) {
                     fake_zero_displacement = 1;
                 }
-                
+
                 if (instruction.index_reg == NULL) {
+                    instruction.types[operand] = operand_type_and_not_disp (instruction.types[operand]);
+                    
                     if (bits == 64) {
                         /* In 64 bit mode default addressing is %rip relative addressing
                          * instead of absolute addresing. */
