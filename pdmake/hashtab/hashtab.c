@@ -140,8 +140,11 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size,
                                         hashtab_malloc_func_t malloc_func,
                                         hashtab_free_func_t free_func)
 {
+#ifdef __CC64__
+    struct hashtab *hashtab = (*malloc_func) (sizeof (*hashtab));
+#else
     struct hashtab *hashtab = malloc_func (sizeof (*hashtab));
-    
+#endif
     if (hashtab == NULL) {
         return NULL;
     }
