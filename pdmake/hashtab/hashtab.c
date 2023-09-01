@@ -296,7 +296,11 @@ void hashtab_for_each_element (struct hashtab *hashtab, void (*element_callback)
     
     for (i = hashtab->size + hashtab->probe_limit, entry = hashtab->entries; i; i--, entry++) {
         if (entry->distance_from_desired != EMPTY_ENTRY_DISTANCE) {
+#ifdef __CC64__
+            (*element_callback) ((void *) entry->element);
+#else
             element_callback ((void *) entry->element);
+#endif
         }
     }
 }
