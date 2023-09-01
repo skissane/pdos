@@ -68,9 +68,23 @@ enum {
 
 #define D(name, ename, flags) {do_##name, #name, \
                                sizeof (#name) - 1, flags},
+
+/* cc64 goes haywire when this is a const - it treats the array as
+   a character array, so indexing goes up by 1 character instead of
+   element size. And sizeof returns the padded size, but the data
+   is stored without padding, which made diagnosing very difficult */
+#ifdef __CC64__
+#define const
+#endif
+
 static const directive directives[] = {
     DIRECTIVE_TABLE
 };
+
+#ifdef __CC64__
+#undef const
+#endif
+
 #undef D
 
 static const directive dir_linemarker = {
