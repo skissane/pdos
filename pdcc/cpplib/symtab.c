@@ -81,7 +81,11 @@ void symtab_destroy_symtab(symtab *tab, void (*free_cell)(symtab_cell *))
         for (; cell; cell = next_cell)
         {
             next_cell = cell->next;
+#ifdef __CC64__
+            (*free_cell)(cell);
+#else
             free_cell(cell);
+#endif
         }
     }
 
