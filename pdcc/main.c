@@ -237,7 +237,7 @@ static void c_finish_options(global_core *core)
 static void c_end(global_core *core)
 {
     int i;
-    cpp_destroy_reader(core->reader);
+    if (core->reader) cpp_destroy_reader(core->reader);
     for (i = 0; i < 4; i++)
     {
         cpp_dir *d = core->ic->tails[i];
