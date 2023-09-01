@@ -44,18 +44,11 @@ typedef struct {
 global_core *global_create_core(void)
 {
     global_core *core = xmalloc(sizeof(*core));
-    core->reader = NULL;
-    core->cc_reader = NULL;
-    core->ic = NULL;
-    core->input_names = NULL;
-    core->input_name_count = 0;
-    core->output_name = NULL;
+
+    memset (core, 0, sizeof (*core));
+    
     core->preprocess_flag = 1;
     core->compile_flag = 1;
-
-    core->deferred_options = NULL;
-    core->deferred_count = 0;
-
     core->hosted = 1;
 
     return (core);
@@ -251,10 +244,7 @@ static void c_end(global_core *core)
     }
 
     free(core->ic);
-    if (core->preprocess_flag)
-    {
-        free(core->processor);
-    }
+    free(core->processor);
 }
 
 static void compile_file(cc_reader *reader)
