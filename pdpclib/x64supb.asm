@@ -68,13 +68,6 @@ ret
 __main:
 	ret
 
-.data
-
-.globl _fltused
-.p2align 2
-_fltused:
-.space 4
-
 # These routines were copied (and then modified) from bcclib.asm generated
 # by the public domain cc64, and are used for cc64
 # (Converted to PDAS .intel_syntax noprefix by guessing.)
@@ -93,6 +86,12 @@ m$ufloat_r32u32:
 
 .globl m$ufloat_r64u64
 m$ufloat_r64u64:
+#jjj: jmp jjj
+#mov rax, 0x1234567
+#mov rax, 1234567
+#xorpd xmm15, xmm15
+#ret
+
 	cmp ecx, 0
 	jl fl1
 #number is positive, so can treat like i64
@@ -116,6 +115,13 @@ fl2:						#negative value
 	cvtsi2ss xmm15, rcx
 	addss xmm15, DWORD PTR offset32[rip]	#(add 2**63 back to result)
 	ret
+
+.data
+
+.globl _fltused
+.p2align 2
+_fltused:
+.space 4
 
 .section rdata
 mask63:
