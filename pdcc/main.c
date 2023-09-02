@@ -227,24 +227,11 @@ static void c_finish_options(global_core *core)
     }
 }
 
-static void c_end(global_core *core)
+static void c_end (global_core *core)
 {
-    int i;
     if (core->reader) cpp_destroy_reader(core->reader);
-    for (i = 0; i < 4; i++)
-    {
-        cpp_dir *d = core->ic->tails[i];
-        core->ic->tails[i] = 0;
-        while (d != NULL)
-        {
-            cpp_dir *dn = d->next;
-            ic_free_cpp_dir(d);
-            d = dn;
-        }
-    }
-
-    free(core->ic);
-    free(core->processor);
+    if (core->ic) ic_destroy_include_paths (core->ic);
+    free (core->processor);
 }
 
 static void compile_file(cc_reader *reader)
@@ -314,8 +301,12 @@ int main(int argc, char **argv)
                     }
                     else
                     {
+                        if (++i == argc) {
+                            printf ("option requires an argument -- I\n");
+                            goto end;
+                        }
                         ic_add_path(core->ic,
-                                    xstrdup(argv[++i]),
+                                    xstrdup(argv[i]),
                                     INCLUDE_PATH_ANGLED);
                     }
                     break;
@@ -326,7 +317,11 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-                        core->output_name = argv[++i];
+                        if (++i == argc) {
+                            printf ("option requires an argument -- o\n");
+                            goto end;
+                        }
+                        core->output_name = argv[i];
                     }
                     break;
                 case 'D':
@@ -336,7 +331,11 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-                        defer_option(core, OPT_D, argv[++i]);
+                        if (++i == argc) {
+                            printf ("option requires an argument -- D\n");
+                            goto end;
+                        }
+                        defer_option(core, OPT_D, argv[i]);
                     }
                     break;
             }
