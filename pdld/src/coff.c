@@ -1862,7 +1862,10 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                             "+++not yet supported symbol SectionNumber: %hi",
                                             coff_symbol->SectionNumber);
 
-        if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
+        if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_EXTERNAL
+            /* Undefined and common symbols do not have to have only IMAGE_SYM_CLASS_EXTERNAL StorageClass,
+             * they are allowed to have different StorageClass too. */
+            || coff_symbol->SectionNumber == IMAGE_SYM_UNDEFINED) {
             symbol_record_external_symbol (symbol);
         }
 
