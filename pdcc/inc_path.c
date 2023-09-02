@@ -26,7 +26,25 @@ include_paths *ic_create_include_paths(void)
         ic->tails[i] = NULL;
     }
 
+    ic->to_free_chain = NULL;
+
     return (ic);
+}
+
+void ic_destroy_include_paths (include_paths *ic)
+{
+    if (ic == NULL) return;
+
+    {
+        cpp_dir *d = ic->to_free_chain;
+        while (d != NULL) {
+            cpp_dir *dn = d->next_to_free;
+            ic_free_cpp_dir (d);
+            d = dn;
+        }
+    }
+
+    free (ic);
 }
 
 void ic_add_cpp_dir_to_chain(include_paths *ic,
@@ -41,8 +59,8 @@ void ic_add_cpp_dir_to_chain(include_paths *ic,
 
 void ic_free_cpp_dir(cpp_dir *dir)
 {
-    if (dir->name != NULL) free(dir->name);
-    free(dir);
+    free (dir->name);
+    free (dir);
 }
 
 /* path must point to permanently allocated string. */
@@ -64,6 +82,8 @@ void ic_add_path(include_paths *ic,
     }
 
     dir = xmalloc(sizeof(*dir));
+    dir->next_to_free = ic->to_free_chain;
+    ic->to_free_chain = dir;
     dir->next = NULL;
     dir->name = path;
 

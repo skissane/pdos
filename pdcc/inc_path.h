@@ -21,9 +21,11 @@ enum include_path_type {
 typedef struct {
     cpp_dir *heads[INCLUDE_PATH_MAX];
     cpp_dir *tails[INCLUDE_PATH_MAX];
+    cpp_dir *to_free_chain;
 } include_paths;
 
 include_paths *ic_create_include_paths(void);
+void ic_destroy_include_paths (include_paths *ic);
     
 void ic_add_cpp_dir_to_chain(include_paths *ic,
                              cpp_dir *dir,
