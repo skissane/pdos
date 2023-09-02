@@ -253,7 +253,8 @@ struct cpp_options {
 };
 
 struct cpp_dir {
-    /* NULL terminated chain. */
+    /* NULL terminated chains. */
+    struct cpp_dir *next_to_free;
     struct cpp_dir *next;
 
     /* '\0' terminated name. */
