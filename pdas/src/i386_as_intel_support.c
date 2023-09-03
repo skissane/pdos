@@ -702,7 +702,10 @@ static int intel_parse_operand (char *operand_string)
                         instruction.disp_operands = 0;
                         instruction.operands = 2;
 
+#ifdef __CC64__
+#else
                         instruction.types[0] = operand_type_and_not_disp (instruction.types[0]);
+#endif
 
                         return 0;
                     }

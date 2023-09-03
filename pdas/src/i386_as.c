@@ -978,9 +978,12 @@ static int att_parse_operand (char *operand_string)
             as_error ("junk '%s' after register", operand_string);
             return 1;
         }
-        
+
+#ifdef __CC64__
+#else
         instruction.types[instruction.operands] = operand_type_or (instruction.types[instruction.operands],
                                                                    reg->type);
+#endif
         instruction.types[instruction.operands].base_index = 0;
         instruction.regs[instruction.operands] = reg;
         
