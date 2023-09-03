@@ -116,6 +116,37 @@ fl2:						#negative value
 	addss xmm15, DWORD PTR offset32[rip]	#(add 2**63 back to result)
 	ret
 
+.globl m$pushcallback
+m$pushcallback:
+	incd [ncallbacks]
+	mov ebx,[ncallbacks]
+	shl ebx,6					#8x8 bytes is size per entry
+	lea rbx,[rbx+callbackstack]
+
+	mov [rbx],rbx
+	mov [rbx+8],rsi
+	mov [rbx+16],rdi
+	mov [rbx+24],r12
+	mov [rbx+32],r13
+	mov [rbx+40],r14
+	mov [rbx+48],r15
+	ret
+
+.globl m$popcallback
+m$popcallback:
+	mov ebx,[ncallbacks]
+	shl ebx,6					#8x8 bytes is size per entry
+	lea rbx,[rbx+callbackstack]
+	mov rbx,[rbx]
+	mov rsi,[rbx+8]
+	mov rdi,[rbx+16]
+	mov r12,[rbx+24]
+	mov r13,[rbx+32]
+	mov r14,[rbx+40]
+	mov r15,[rbx+48]
+	decd [ncallbacks]
+	ret
+
 .data
 
 .globl _fltused
@@ -130,3 +161,12 @@ offset64:
 	.quad 9223372036854775808		# 2**63 as r64
 offset32:
 	.quad 9223372036854775808		# 2**63 as r32
+
+
+.bss
+callbackstack:
+	.space 576			#8-level stack
+#	resb 5'120'000
+
+ncallbacks:
+	.space 4
