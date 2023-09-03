@@ -12,7 +12,7 @@ OBJS=main.obj c_ppout.obj inc_path.obj \
           cpplib/idents.obj cpplib/init.obj cpplib/lex.obj \
           cpplib/macro.obj cpplib/support.obj cpplib/symtab.obj \
           cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
-          xmalloc.obj
+          xmalloc.obj ../pdpclib/x64supb.obj
 
 TARGET=pdcc.exe
 
@@ -20,11 +20,23 @@ all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
   $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+#  pdcc -E abc.c
 
 .c.obj:
   $(CPP) -E $(COPTS) -o $*.i $<
   $(CC) -c -out:$@ $*.i
   rm -f $*.i
+
+# This calls atexit with global_exit, so needs to be compiled
+# with the callback option - or else pragma $callback needs to
+# be used
+main.obj: main.c
+  $(CPP) -E $(COPTS) -o $*.i $<
+  $(CC) -callback -c -out:$@ $*.i
+  rm -f $*.i
+
+.asm.obj:
+  $(AS) -o $@ $<
 
 clean:
   rm -f $(OBJS) $(TARGET)
