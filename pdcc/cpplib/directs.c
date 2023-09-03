@@ -788,7 +788,13 @@ int _cpp_handle_directive(cpp_reader *reader)
     }
 
     reader->directive = dir;
-    if (dir) reader->directive->handler(reader);
+    if (dir) {
+        if (dir->handler == do_pragma) {
+            /* Oversimplified solution for pragma for now. */
+            _cpp_return_tokens(reader, 1);
+            skip = 0;
+        } else reader->directive->handler(reader);
+    }
 
     end_directive(reader, skip);
     if (collected_arguments)
