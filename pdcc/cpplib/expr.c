@@ -589,9 +589,6 @@ static cpp_number evaluate_token(cpp_reader *reader,
                 }
                 result.high = ~(cpp_number_part)0;
                 result = number_trim(result, CPP_OPTION(reader, precision));
-#ifdef __CC64__
-                goto myend;
-#endif
             }
             break;
         }
@@ -846,7 +843,11 @@ static cpp_number number_binary_op(cpp_reader *reader,
                                    (number_positive(num1, precision)
                                     != number_positive(result, precision)));
             }
+#ifdef __CC64__
+            goto myend2;
+#else
             return (result);
+#endif
 
         case CPP_MINUS:
             result.low = num1.low - num2.low;
@@ -856,10 +857,7 @@ static cpp_number number_binary_op(cpp_reader *reader,
             result.unsignedp = num1.unsignedp || (num2.unsignedp);
             result.overflow = 0;
 
-#ifdef __CC64__
-#else
             result = number_trim(result, precision);
-#endif
             if (!(result.unsignedp))
             {
                 result.overflow = ((number_positive(num1, precision)
@@ -868,7 +866,11 @@ static cpp_number number_binary_op(cpp_reader *reader,
                                    (number_positive(num1, precision)
                                     != number_positive(result, precision)));
             }
+#ifdef __CC64__
+            goto myend2;
+#else
             return (result);
+#endif
         
         case CPP_LSHIFT:
         case CPP_RSHIFT: {
@@ -877,25 +879,14 @@ static cpp_number number_binary_op(cpp_reader *reader,
             {
                 /* Negative shift one way is positive shift the other way. */
                 op = op == CPP_LSHIFT ? CPP_RSHIFT : CPP_LSHIFT;
-#ifdef __CC64__
-#else
                 num2 = number_negate(num2, precision);
-#endif
             }
             if (num2.high) n = ~0;
             else n = num2.low;
             if (op == CPP_LSHIFT)
-#ifdef __CC64__
-;
-#else
                 num1 = number_lshift(num1, precision, n);
-#endif
             else
-#ifdef __CC64__
-;
-#else
                 num1 = number_rshift(num1, precision, n);
-#endif
             break;
         }
 
@@ -912,7 +903,13 @@ static cpp_number number_binary_op(cpp_reader *reader,
             break;
     }
 
+#ifdef __CC64__
+    result = num1;
+myend2:
+    return (result);
+#else
     return (num1);
+#endif
 }
 
 /* Returns 1, if num1 >= num2. */
@@ -1185,26 +1182,25 @@ static cpp_number number_div_op(cpp_reader *reader,
                                 0,
                                 "division by zero in preprocessor expression");
         }
+#ifdef __CC64__
+        result = num1;
+        goto myend3;
+#else
         return (num1);
+#endif
     }
 
     num1.unsignedp = 1;
     num2.unsignedp = 1;
     i = precision - i - 1;
-#ifdef __CC64__
-#else
     sub = number_lshift(num2, precision, i);
-#endif
 
     result.high = result.low = 0;
     for (;;)
     {
         if (number_greater_eq(num1, sub, precision))
         {
-#ifdef __CC64__
-#else
             num1 = number_binary_op(reader, num1, sub, CPP_MINUS);
-#endif
             if (i >= PART_PRECISION)
                 result.high |= ((cpp_number_part)1) << (i - PART_PRECISION);
             else
@@ -1222,24 +1218,22 @@ static cpp_number number_div_op(cpp_reader *reader,
             result.overflow = 0;
             if (!unsignedp)
             {
-#ifdef __CC64__
-#else
                 if (negate) result = number_negate(result, precision);
-#endif
                 result.overflow = ((number_positive(result, precision)
                                     ^ !negate)
                                    && !number_zerop(result));
             }
 
+#ifdef __CC64__
+            goto myend3;
+#else
             return (result);
+#endif
 
         case CPP_MODULO:
             num1.unsignedp = unsignedp;
             num1.overflow = 0;
-#ifdef __CC64__
-#else
             if (negate_num1) num1 = number_negate(num1, precision);
-#endif
             break;
                 
         default:
@@ -1248,7 +1242,13 @@ static cpp_number number_div_op(cpp_reader *reader,
             break;
     }
 
+#ifdef __CC64__
+    result = num1;
+myend3:
+    return (result);
+#else
     return (num1);
+#endif
 }
 
 static struct op *reduce(cpp_reader *reader,
