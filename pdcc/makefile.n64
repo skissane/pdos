@@ -4,7 +4,10 @@ CFLAGS=
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp --image-base 0x400000
 AS=pdas --oformat coff --64
-COPTS=-Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__
+
+# cc64 goes haywire in multiple places if const is used
+# so we suppress it
+COPTS=-Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__ -Dconst=
 
 OBJS=main.obj c_ppout.obj inc_path.obj \
           cpplib/core.obj cpplib/directs.obj cpplib/errors.obj \
