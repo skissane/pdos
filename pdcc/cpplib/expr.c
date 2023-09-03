@@ -555,7 +555,12 @@ static cpp_number evaluate_token(cpp_reader *reader,
                     break;
 
                 case CPP_NUMBER_INTEGER:
+#ifdef __CC64__
+                    result = cpp_interpret_integer(reader, token, type);
+                    goto myend;
+#else
                     return (cpp_interpret_integer(reader, token, type));
+#endif
 
                 case CPP_NUMBER_INVALID:
                     break;
@@ -583,9 +588,9 @@ static cpp_number evaluate_token(cpp_reader *reader,
                                     >> (PART_PRECISION - 32));
                 }
                 result.high = ~(cpp_number_part)0;
-#ifdef __CC64__
-#else
                 result = number_trim(result, CPP_OPTION(reader, precision));
+#ifdef __CC64__
+                goto myend;
 #endif
             }
             break;
@@ -594,7 +599,8 @@ static cpp_number evaluate_token(cpp_reader *reader,
         case CPP_IDENT:
             if (token->value.unknown == (reader->spec_unknowns.n_defined))
 #ifdef __CC64__
-                return result;
+                result = handle_defined(reader);
+                goto myend;
 #else
                 return (handle_defined(reader));
 #endif
@@ -607,6 +613,9 @@ static cpp_number evaluate_token(cpp_reader *reader,
             return result;
     }
 
+#ifdef __CC64__
+myend:
+#endif
     return (result);
 }
 
