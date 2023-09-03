@@ -1261,10 +1261,19 @@ static struct op *reduce(cpp_reader *reader,
     {
         cpp_error(reader, CPP_DL_INTERNAL_ERROR,
                   "impossible operator '%u'", top->op);
+#ifdef __CC64__
+        top = NULL;
+        goto myend4;
+#else
         return (NULL);
+#endif
     }
 
+#ifdef __CC64__
+    if (op == CPP_LPAREN) goto myend4;
+#else
     if (op == CPP_LPAREN) return (top);
+#endif
 
     priority = (optab[op].priority
                 - ((optab[op].flags & LEFT_ASSOCIATIVE) != 0));
@@ -1279,12 +1288,9 @@ static struct op *reduce(cpp_reader *reader,
             case CPP_UMINUS:
             case CPP_NOT:
             case CPP_COMPLEMENT:
-#ifdef __CC64__
-#else
                 top[-1].value = number_unary_op(reader,
                                                 top->value,
                                                 top->op);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
@@ -1293,13 +1299,10 @@ static struct op *reduce(cpp_reader *reader,
             case CPP_LSHIFT:
             case CPP_RSHIFT:
             case CPP_COMMA:
-#ifdef __CC64__
-#else
                 top[-1].value = number_binary_op(reader,
                                                  top[-1].value,
                                                  top->value,
                                                  top->op);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
@@ -1307,61 +1310,46 @@ static struct op *reduce(cpp_reader *reader,
             case CPP_LESS:
             case CPP_GREATER_EQ:
             case CPP_LESS_EQ:
-#ifdef __CC64__
-#else
                 top[-1].value = number_inequality_op(reader,
                                                      top[-1].value,
                                                      top->value,
                                                      top->op);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
             case CPP_EQ_EQ:
             case CPP_NOT_EQ:
-#ifdef __CC64__
-#else
                 top[-1].value = number_equality_op(reader,
                                                    top[-1].value,
                                                    top->value,
                                                    top->op);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
             case CPP_AND:
             case CPP_OR:
             case CPP_XOR:
-#ifdef __CC64__
-#else
                 top[-1].value = number_bitwise_op(reader,
                                                   top[-1].value,
                                                   top->value,
                                                   top->op);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
             case CPP_STAR:
-#ifdef __CC64__
-#else
                 top[-1].value = number_multiply(reader,
                                                 top[-1].value,
                                                 top->value);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
             case CPP_DIV:
             case CPP_MODULO:
-#ifdef __CC64__
-#else
                 top[-1].value = number_div_op(reader,
                                               top[-1].value,
                                               top->value,
                                               top->op,
                                               top->loc);
-#endif
                 top[-1].loc = top->loc;
                 break;
 
@@ -1447,7 +1435,10 @@ static struct op *reduce(cpp_reader *reader,
                   "missing '(' in expression");
         return (NULL);
     }
-    
+
+#ifdef __CC64__
+myend4:
+#endif
     return (top);
 }
 
