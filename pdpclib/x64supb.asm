@@ -119,6 +119,7 @@ fl2:						#negative value
 .globl m$pushcallback
 m$pushcallback:
 	incd [ncallbacks]
+        xor rbx, rbx
 	mov ebx,[ncallbacks]
 	shl ebx,6					#8x8 bytes is size per entry
 	lea rbx,[rbx+callbackstack]
@@ -134,6 +135,7 @@ m$pushcallback:
 
 .globl m$popcallback
 m$popcallback:
+        xor rbx,rbx
 	mov ebx,[ncallbacks]
 	shl ebx,6					#8x8 bytes is size per entry
 	lea rbx,[rbx+callbackstack]
