@@ -27,14 +27,6 @@ $(TARGET): $(OBJS)
   $(CC) -c -out:$@ $*.i
   rm -f $*.i
 
-# This calls atexit with global_exit, so needs to be compiled
-# with the callback option - or else pragma $callback needs to
-# be used
-main.obj: main.c
-  $(CPP) -E $(COPTS) -o $*.i $<
-  $(CC) -callback -c -out:$@ $*.i
-  rm -f $*.i
-
 .asm.obj:
   $(AS) -o $@ $<
 
