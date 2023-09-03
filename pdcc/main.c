@@ -240,6 +240,12 @@ static void compile_file(cc_reader *reader)
 }
 
 static global_core *core = NULL;
+
+#ifdef __CC64__
+/* This is given to atexit, so is called by msvcrt.dll at exit,
+   so needs the proper ABI to handle that */
+$callback
+#endif
 static void global_exit(void)
 {
     if (core != NULL)
