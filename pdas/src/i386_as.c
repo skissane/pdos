@@ -2470,6 +2470,10 @@ static int match_template (char mnemonic_suffix)
     
     for (template = current_templates->start; template < current_templates->end; template++) {
         struct operand_type operand_type_overlap0, operand_type_overlap1;
+#ifdef __CC64__
+        struct operand_type temp;
+        #define operand_type_and(a, b) (operand_type_and)(temp = (a), (b))
+#endif
         unsigned int size_match;
         
         if (instruction.operands != template->operands) {
