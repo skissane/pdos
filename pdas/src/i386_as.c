@@ -949,6 +949,7 @@ static int att_parse_operand (char *operand_string)
 {
     const struct reg_entry *reg;
     char *end_p;
+    int ret;
     
     if (*operand_string == ABSOLUTE_PREFIX) {
         operand_string = skip_whitespace (operand_string + 1);
@@ -956,7 +957,15 @@ static int att_parse_operand (char *operand_string)
     }
     
     if ((reg = parse_register (operand_string, &end_p)) != NULL) {
-        if (reg == &bad_register) return 1;
+        if (reg == &bad_register)
+        {
+#ifdef __CC64__
+            ret = 1;
+            goto myret;
+#else
+            return 1;
+#endif
+        }
         
         operand_string = skip_whitespace (end_p);
         
@@ -976,14 +985,16 @@ static int att_parse_operand (char *operand_string)
         
         if (*operand_string) {
             as_error ("junk '%s' after register", operand_string);
+#ifdef __CC64__
+            ret = 1;
+            goto myret;
+#else
             return 1;
+#endif
         }
 
-#ifdef __CC64__
-#else
         instruction.types[instruction.operands] = operand_type_or (instruction.types[instruction.operands],
                                                                    reg->type);
-#endif
         instruction.types[instruction.operands].base_index = 0;
         instruction.regs[instruction.operands] = reg;
         
@@ -997,7 +1008,6 @@ static int att_parse_operand (char *operand_string)
         section_t section_of_expr;
         
         char *imm_start;
-        int ret;
         
         operand_string++;
         
@@ -1030,7 +1040,6 @@ static int att_parse_operand (char *operand_string)
         return ret;
     } else {
         char *base_string, *displacement_string_end, *p2;
-        int ret;
         
     do_memory_reference:
         
@@ -1163,8 +1172,14 @@ static int att_parse_operand (char *operand_string)
         
         return ret;
     }
-    
+
+#ifdef __CC64__
+    ret = 0;
+myret:
+    return ret;
+#else
     return 0;
+#endif
 }
 
 static struct operand_type smallest_imm_type (offset_t number)
