@@ -479,7 +479,12 @@ static int intel_parse_operand (char *operand_string)
     operand_string = skip_whitespace (operand_string);
     if (*operand_string) {
         as_error ("junk '%s' after expression", operand_string);
+#ifdef __CC64__
+        ret = 1;
+        goto myret;
+#else
         return 1;
+#endif
     } else if (!intel_state.has_offset
                && operand_string > operand_start
                && strrchr (operand_start, ']')
@@ -488,7 +493,15 @@ static int intel_parse_operand (char *operand_string)
         intel_state.is_indirect = 1;
     }
 
+#ifdef __CC64__
+    if (!ret)
+    {
+        ret = 1;
+        goto myret;
+    }
+#else
     if (!ret) return 1;
+#endif
 
     ret = 0;
 
@@ -590,7 +603,12 @@ static int intel_parse_operand (char *operand_string)
             instruction.suffix = suffix;
         } else if (instruction.suffix != suffix) {
             as_error ("conficting operand size modifiers");
+#ifdef __CC64__
+            ret = 1;
+            goto myret;
+#else
             return 1;
+#endif
         }
     }
 
@@ -627,7 +645,12 @@ static int intel_parse_operand (char *operand_string)
                         }
 
                         as_error ("cannot infer the segment part of the operand");
+#ifdef __CC64__
+                        ret = 1;
+                        goto myret;
+#else
                         return 1;
+#endif
                     } else if (symbol_get_section (intel_state.segment) == reg_section) {
                         is_absolute_jump = 1;
                     } else {
@@ -639,7 +662,12 @@ static int intel_parse_operand (char *operand_string)
                         resolve_expression (instruction.imms[instruction.operands]);
                         
                         if (finalize_immediate (instruction.imms[instruction.operands], operand_start)) {
+#ifdef __CC64__
+                            ret = 1;
+                            goto myret;
+#else
                             return 1;
+#endif
                         }
 
                         instruction.operands++;
@@ -702,10 +730,7 @@ static int intel_parse_operand (char *operand_string)
                         instruction.disp_operands = 0;
                         instruction.operands = 2;
 
-#ifdef __CC64__
-#else
                         instruction.types[0] = operand_type_and_not_disp (instruction.types[0]);
-#endif
 
                         return 0;
                     }
@@ -811,6 +836,9 @@ static int intel_parse_operand (char *operand_string)
     
     instruction.operands++;
 
+#ifdef __CC64__
+myret:
+#endif
     return ret;
 }
 
