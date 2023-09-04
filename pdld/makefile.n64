@@ -5,7 +5,8 @@ CFLAGS=
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp --image-base 0x400000
 AS=pdas --oformat coff --64
-COPTS=-I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__
+# cc64 goes haywire if const is used in some places, so we kill it
+COPTS=-I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__ -Dconst=
 
 OBJS=bytearray.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj map.obj sections.obj symbols.obj xmalloc.obj ../pdpclib/x64supb.obj
 
