@@ -136,8 +136,12 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size,
                                         hashtab_malloc_func_t malloc_func,
                                         hashtab_free_func_t free_func)
 {
+#ifdef __CC64__
+    struct hashtab *hashtab = (*malloc_func) (sizeof (*hashtab));
+#else
     struct hashtab *hashtab = malloc_func (sizeof (*hashtab));
-    
+#endif
+
     if (hashtab == NULL) return NULL;
     
     hashtab->max_load_factor = 0.5;
@@ -150,7 +154,11 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size,
     hashtab->size = 0;
     
     if (rehash (hashtab, starting_size)) {
+#ifdef __CC64__
+        (*free_func) (hashtab);
+#else
         free_func (hashtab);
+#endif
         return NULL;
     
     }
