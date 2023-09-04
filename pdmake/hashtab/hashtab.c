@@ -159,7 +159,11 @@ struct hashtab *hashtab_create_hashtab (size_t starting_size,
     hashtab->size = 0;
     
     if (rehash (hashtab, starting_size)) {
+#ifdef __CC64__
+        (*free_func) (hashtab);
+#else
         free_func (hashtab);
+#endif
         return NULL;
     }
     
