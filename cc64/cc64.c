@@ -22166,11 +22166,6 @@ static void cc_genmcl_genprocentry(i64 fbytes,i64 pbytes) {
         if (!!(fbytes)) {
             cc_libmcl_pushstack(cc_libmcl_roundto(fbytes,(i64)16));
         };
-#ifdef FUDGE
-        /* 1 is rax, 5 is r10, 3 is rsi, 4 is rdi */
-        cc_libmcl_genmc((i64)6,cc_libmcl_genreg((i64)4,(i64)8),(struct cc_libmcl_opndrec *)(0));
-        cc_libmcl_genmc((i64)6,cc_libmcl_genreg((i64)4,(i64)8),(struct cc_libmcl_opndrec *)(0));
-#endif
     } else {
         cc_libmcl_pushstack((i64)8);
     };
@@ -22975,12 +22970,6 @@ void cc_libmcl_genreturn(i64 fbytes,i64 pbytes) {
     iscallback = cc_libmcl_iscallbackfn(cc_decls_currproc);
     cc_libmcl_retbeforeblock = (i64)1;
     if ((!!(fbytes) || !!(pbytes))) {
-#ifdef FUDGE
-        /* first parameter: 6 is push, 7 is pop */
-        /* second parameter: 4 is rdi */
-        cc_libmcl_genmc((i64)7,cc_libmcl_genreg((i64)4,(i64)8),(struct cc_libmcl_opndrec *)(0));
-        cc_libmcl_genmc((i64)7,cc_libmcl_genreg((i64)4,(i64)8),(struct cc_libmcl_opndrec *)(0));
-#endif
         if (!!(fbytes)) {
             cc_libmcl_popstack(cc_libmcl_roundto(fbytes,(i64)16));
         };
