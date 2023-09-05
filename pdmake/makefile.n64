@@ -17,7 +17,7 @@ TARGET=pdmake.exe
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(OBJS2)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib $(OBJS2)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) $(OBJS2) ../pdpclib/msvcrt.lib
 
 .c.obj:
   $(CPP) -E $(COPTS) -o $*.i $<
