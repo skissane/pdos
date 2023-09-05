@@ -505,7 +505,7 @@ cpp_number handle_defined(cpp_reader *reader)
     else
     {
         cpp_error(reader, CPP_DL_ERROR,
-                  "operat \"defined\" requires an identifier");
+                  "operator \"defined\" requires an identifier");
     }
 
     if (unknown)
