@@ -596,8 +596,10 @@ static cpp_number evaluate_token(cpp_reader *reader,
         case CPP_IDENT:
             if (token->value.unknown == (reader->spec_unknowns.n_defined))
 #ifdef __CC64__
+            {
                 result = handle_defined(reader);
                 goto myend;
+            }
 #else
                 return (handle_defined(reader));
 #endif
