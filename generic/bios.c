@@ -62,7 +62,11 @@ extern int (*__genmain)(int argc, char **argv);
 #define PATH "/storage/emulated/0/Download/"
 #endif
 
+#ifdef __64BIT__
+#define MEMAMT 100*1000*1000
+#else
 #define MEMAMT 24*1000*1000
+#endif
 
 #if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
 extern int __start(int argc, char **argv);
@@ -254,7 +258,11 @@ int main(int argc, char **argv)
             }
         }
 
+#ifdef __64BIT__
+    p = calloc(1, 50000000);
+#else
     p = calloc(1, 5000000);
+#endif
     if (p == NULL)
     {
         printf("insufficient memory\n");
