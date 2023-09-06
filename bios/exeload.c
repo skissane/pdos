@@ -1456,12 +1456,18 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     return (2);
 }
 
+#ifdef __CC64__
+$callback
+#endif
 static int dummyfunc(void)
 {
     printf("in dummyfunc\n");
     return (0);
 }
 
+#ifdef __CC64__
+$callback
+#endif
 static void undmain(void)
 {
     return;
