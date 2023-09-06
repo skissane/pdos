@@ -1,0 +1,25 @@
+# Produce Windows executables
+# links with PDPCLIB created by makefile.msv
+
+VPATH=./hashtab
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib
+AS=pdas --oformat coff
+AR=ar
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -D__WIN32__
+
+all: clean pdmake.exe
+
+pdmake.exe: main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj
+  $(LD) $(LDFLAGS) -s -o pdmake.exe ../pdpclib/w32start.obj main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj pdmake.exe
