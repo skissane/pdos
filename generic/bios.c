@@ -368,6 +368,9 @@ int their_start(char *parm)
 #define MAXPARMS 50
 
 #ifndef __SUBC__
+#ifdef __CC64__
+$callback
+#endif
 int getmainargs(int *_Argc,
                 char ***_Argv)
 {
@@ -437,6 +440,9 @@ int getmainargs(int *_Argc,
 #endif
 
 #if defined(W64HACK) || defined(W32HACK)
+#ifdef __CC64__
+$callback
+#endif
 void w64exit(int status)
 {
     longjmp(jb, status);
