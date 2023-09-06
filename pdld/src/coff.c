@@ -696,7 +696,8 @@ static int check_reloc_section_needed_section_part (struct section_part *part)
     relocs = part->relocation_array;
     for (i = 0; i < part->relocation_count; i++) {
         if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-            if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64) return 1;
+            if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64
+                || relocs[i].Type == IMAGE_REL_AMD64_ADDR32) return 1;
         } else if (relocs[i].Type == IMAGE_REL_I386_DIR32) return 1;
     }
     
@@ -1040,8 +1041,9 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 unsigned short base_relocation_type;
                 
                 if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64) continue;
-                    base_relocation_type = IMAGE_REL_BASED_DIR64;
+                    if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64) base_relocation_type = IMAGE_REL_BASED_DIR64;
+                    else if (relocs[i].Type == IMAGE_REL_AMD64_ADDR32) base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
+                    else continue;
                 } else {
                     if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
@@ -1100,7 +1102,8 @@ void coff_after_link (void)
             relocs = part->relocation_array;
             for (i = 0; i < part->relocation_count; i++) {
                 if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64) continue;
+                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64
+                        && relocs[i].Type != IMAGE_REL_AMD64_ADDR32) continue;
                 } else {
                     if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
                 }
