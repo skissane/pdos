@@ -1462,6 +1462,11 @@ static int dummyfunc(void)
     return (0);
 }
 
+static void undmain(void)
+{
+    return;
+}
+
 #ifdef W32HACK
 void w64exit(int status);
 void w32puts(void);
@@ -1767,8 +1772,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)getmainargs;
                         }
+                        /* mingw64 is generating this, so it must be in msvcrt.dll */
+                        else if (strcmp((char *)hintname, "__main") == 0)
+                        {
+                            *thunk = (unsigned long long)undmain;
+                        }
                         else
                         {
+                            /* printf("unknown hintname %s\n", hintname); */
                             *thunk = (unsigned long long)dummyfunc;
                         }
                     }
