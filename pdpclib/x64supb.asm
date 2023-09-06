@@ -119,33 +119,33 @@ fl2:						#negative value
 .globl m$pushcallback
 m$pushcallback:
 	incd [ncallbacks]
-        xor rbx, rbx
-	mov ebx,[ncallbacks]
-	shl ebx,6					#8x8 bytes is size per entry
-	lea rbx,[rbx+callbackstack]
+#       xor r11, r11
+	mov r11,[ncallbacks]
+	shl r11,6					#8x8 bytes is size per entry
+	lea r11,[r11+callbackstack]
 
-	mov [rbx],rbx
-	mov [rbx+8],rsi
-	mov [rbx+16],rdi
-	mov [rbx+24],r12
-	mov [rbx+32],r13
-	mov [rbx+40],r14
-	mov [rbx+48],r15
+	mov [r11],rbx
+	mov [r11+8],rsi
+	mov [r11+16],rdi
+	mov [r11+24],r12
+	mov [r11+32],r13
+	mov [r11+40],r14
+	mov [r11+48],r15
 	ret
 
 .globl m$popcallback
 m$popcallback:
-        xor rbx,rbx
-	mov ebx,[ncallbacks]
-	shl ebx,6					#8x8 bytes is size per entry
-	lea rbx,[rbx+callbackstack]
-	mov rbx,[rbx]
-	mov rsi,[rbx+8]
-	mov rdi,[rbx+16]
-	mov r12,[rbx+24]
-	mov r13,[rbx+32]
-	mov r14,[rbx+40]
-	mov r15,[rbx+48]
+#       xor r11,r11
+	mov r11,[ncallbacks]
+	shl r11,6					#8x8 bytes is size per entry
+	lea r11,[r11+callbackstack]
+	mov rbx,[r11]
+	mov rsi,[r11+8]
+	mov rdi,[r11+16]
+	mov r12,[r11+24]
+	mov r13,[r11+32]
+	mov r14,[r11+40]
+	mov r15,[r11+48]
 	decd [ncallbacks]
 	ret
 
@@ -171,4 +171,4 @@ callbackstack:
 #	resb 5'120'000
 
 ncallbacks:
-	.space 4
+	.space 8
