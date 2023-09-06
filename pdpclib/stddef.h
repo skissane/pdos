@@ -51,6 +51,8 @@ typedef char wchar_t;
 
 #if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
 #define __PDPCLIB_API__ __declspec(dllexport)
+#elif defined(__CC64OS__)
+#define __PDPCLIB_API__ $callback
 #else
 #define __PDPCLIB_API__
 #endif
