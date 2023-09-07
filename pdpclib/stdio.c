@@ -1939,7 +1939,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             if ((c != '\b') || (tempRead > 0))
             {
                 printf("%c", c);
-                fflush(stdout);
+                fflush(__stdout);
             }
             *(((char *)ptr) + tempRead) = c;
             if (c == '\n')
@@ -2419,7 +2419,7 @@ static void iwrite(FILE *stream,
     {
         for (tempWritten = 0; tempWritten < towrite; tempWritten++)
         {
-            if (stream == stdout)
+            if (stream == __stdout)
             {
                 int ch;
                 
@@ -4245,7 +4245,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             PosSetDeviceInformation(0, dw);
         }
 #elif defined(__EFI__)
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             stdin_buffered = 0;
         }
