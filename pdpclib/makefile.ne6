@@ -4,7 +4,7 @@ CC=cc64
 AR=ar
 LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
-COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -D__CC64OS__
+COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -D__CC64__ -D__CC64OS__
 
 TARGET=pdptest.efi
 OBJS=efistart.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
