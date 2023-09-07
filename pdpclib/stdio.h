@@ -204,7 +204,7 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
 #define __stdout (*(__gtout()))
 #define __stderr (*(__gterr()))
 
-#if defined(__WIN32__) && !defined(__STATIC__)
+#if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__)
 /* For Windows stdin, stdout and stderr macros
  * are implemented using an array FILE _iob[]
  * where the first three members
@@ -224,7 +224,7 @@ typedef struct
     char filler[__DUMMYFILE_SIZE];
 } __DUMMYFILE;
 
-#ifndef __PDPCLIB_DLL
+#if !defined(__PDPCLIB_DLL) && !defined(__CC64OS__)
 #if !defined(__SUBC__) && !defined(__NODECLSPEC__) && !defined(__CC64__)
 
 __declspec(dllimport) __DUMMYFILE _iob[3];
@@ -243,13 +243,18 @@ extern __DUMMYFILE *_imp___iob;
 #endif
 
 #if !defined(__SUBC__) && !defined(__NODECLSPEC__) && \
-    !(defined(__CC64__) && !defined(__PDPCLIB_DLL))
+    !(defined(__CC64__) && !defined(__PDPCLIB_DLL)) && \
+    !defined(__CC64OS__)
 #define stdin ((FILE *) &(_iob[0]))
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
 #else
 
 #if defined(__CC64__)
+#if defined(__CC64OS__)
+extern __DUMMYFILE _iob[3];
+extern __DUMMYFILE *__iob_func(void);
+#endif
 #define stdin ((FILE *) __iob_func())
 #define stdout ((FILE *) (__iob_func() + 1))
 #define stderr ((FILE *) (__iob_func() + 2))
