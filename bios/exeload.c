@@ -1851,6 +1851,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fputc;
                         }
+                        else if (strcmp((char *)hintname, "tmpfile") == 0)
+                        {
+                            *thunk = (unsigned long long)tmpfile;
+                        }
                         else if (strcmp((char *)hintname, "vfprintf") == 0)
                         {
                             *thunk = (unsigned long long)vfprintf;
