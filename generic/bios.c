@@ -574,17 +574,15 @@ static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
         if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_BUFFER_TOO_SMALL) {
             __gBS->FreePool (Buffer);
             buf_size = Read;
-            printf("HAD to increase size of buffer\n");
+            /* printf("HAD to increase size of buffer\n"); */
             return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
             return_Status_if_fail (dir->Read (dir, &buf_size, Buffer));
         }
 
         if (!Read) break;
 
-        printf("found directory entry: '");
-        fflush(stdout);
         return_Status_if_fail (__gST->ConOut->OutputString (__gST->ConOut, Buffer->FileName));
-        printf("'\n");
+        printf("\n");
     };
 
     __gBS->FreePool (Buffer);
@@ -601,16 +599,6 @@ static EFI_STATUS directory_test (void)
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
     
     EFI_FILE_PROTOCOL *EfiRoot;
-    EFI_FILE_PROTOCOL *dir, *dir2;
-    static UINT64 OpenModeDirReadWrite = {0x3, 0};
-    static UINT64 OpenModeDirCreateReadWrite = {0x3, 0x80000000};
-    static UINT64 Attributes = {0, 0};
-    static UINT64 DirCreateAttributes = {0x10, 0};
-
-    CHAR16 dir_name[] = {'a', 'b', 'c', '\0'};
-    CHAR16 dir2_name[] = {'n', 'e', 'w', 'd', '\0'};
-    CHAR16 dir3_name[] = {'d', 'e', 'l', 'd', '\0'};
-
 
     return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
     return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
