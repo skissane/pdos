@@ -74,6 +74,10 @@ extern int __start(int argc, char **argv);
 extern int __start(char *p);
 #endif
 
+#ifdef __CC64OS__
+extern long long __ncallbacks;
+#endif
+
 int their_start(char *parm);
 
 #ifndef __SUBC__
@@ -285,6 +289,9 @@ int main(int argc, char **argv)
 #endif
 
 #if defined(W64HACK) || defined(W32HACK)
+#ifdef __CC64OS__
+    __ncallbacks = 0;
+#endif
     rc = setjmp(jb);
     if (rc != 0)
     {
