@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <ctype.h>
+#include <errno.h>
+#include <math.h>
 
 #include "exeload.h"
 
@@ -1774,6 +1777,90 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)strcpy;
                         }
+                        else if (strcmp((char *)hintname, "strcmp") == 0)
+                        {
+                            *thunk = (unsigned long long)strcmp;
+                        }
+                        else if (strcmp((char *)hintname, "strerror") == 0)
+                        {
+                            *thunk = (unsigned long long)strerror;
+                        }
+                        else if (strcmp((char *)hintname, "strlen") == 0)
+                        {
+                            *thunk = (unsigned long long)strlen;
+                        }
+                        else if (strcmp((char *)hintname, "strncmp") == 0)
+                        {
+                            *thunk = (unsigned long long)strncmp;
+                        }
+                        else if (strcmp((char *)hintname, "strrchr") == 0)
+                        {
+                            *thunk = (unsigned long long)strrchr;
+                        }
+                        else if (strcmp((char *)hintname, "strstr") == 0)
+                        {
+                            *thunk = (unsigned long long)strstr;
+                        }
+                        else if (strcmp((char *)hintname, "system") == 0)
+                        {
+                            *thunk = (unsigned long long)system;
+                        }
+                        else if (strcmp((char *)hintname, "fgets") == 0)
+                        {
+                            *thunk = (unsigned long long)fgets;
+                        }
+                        else if (strcmp((char *)hintname, "fopen") == 0)
+                        {
+                            *thunk = (unsigned long long)fopen;
+                        }
+                        else if (strcmp((char *)hintname, "fprintf") == 0)
+                        {
+                            *thunk = (unsigned long long)fprintf;
+                        }
+                        else if (strcmp((char *)hintname, "free") == 0)
+                        {
+                            *thunk = (unsigned long long)free;
+                        }
+                        else if (strcmp((char *)hintname, "isspace") == 0)
+                        {
+                            *thunk = (unsigned long long)isspace;
+                        }
+                        else if (strcmp((char *)hintname, "memcpy") == 0)
+                        {
+                            *thunk = (unsigned long long)memcpy;
+                        }
+                        else if (strcmp((char *)hintname, "memmove") == 0)
+                        {
+                            *thunk = (unsigned long long)memmove;
+                        }
+                        else if (strcmp((char *)hintname, "realloc") == 0)
+                        {
+                            *thunk = (unsigned long long)realloc;
+                        }
+                        else if (strcmp((char *)hintname, "strcat") == 0)
+                        {
+                            *thunk = (unsigned long long)strcat;
+                        }
+                        else if (strcmp((char *)hintname, "strchr") == 0)
+                        {
+                            *thunk = (unsigned long long)strchr;
+                        }
+                        else if (strcmp((char *)hintname, "ceil") == 0)
+                        {
+                            *thunk = (unsigned long long)ceil;
+                        }
+                        else if (strcmp((char *)hintname, "fclose") == 0)
+                        {
+                            *thunk = (unsigned long long)fclose;
+                        }
+                        else if (strcmp((char *)hintname, "__iob_func") == 0)
+                        {
+                            *thunk = (unsigned long long)__iob_func;
+                        }
+                        else if (strcmp((char *)hintname, "_errno") == 0)
+                        {
+                            *thunk = (unsigned long long)_errno;
+                        }
                         else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
                             *thunk = (unsigned long long)getmainargs;
@@ -1785,7 +1872,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         }
                         else
                         {
-                            /* printf("unknown hintname %s\n", hintname); */
+                            printf("unknown hintname %s\n", hintname);
                             *thunk = (unsigned long long)dummyfunc;
                         }
                     }
