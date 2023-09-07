@@ -1847,6 +1847,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fwrite;
                         }
+                        else if (strcmp((char *)hintname, "fflush") == 0)
+                        {
+                            *thunk = (unsigned long long)fflush;
+                        }
+                        else if (strcmp((char *)hintname, "setvbuf") == 0)
+                        {
+                            *thunk = (unsigned long long)setvbuf;
+                        }
                         else if (strcmp((char *)hintname, "fputc") == 0)
                         {
                             *thunk = (unsigned long long)fputc;
@@ -1878,6 +1886,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "toupper") == 0)
                         {
                             *thunk = (unsigned long long)toupper;
+                        }
+                        else if (strcmp((char *)hintname, "iscntrl") == 0)
+                        {
+                            *thunk = (unsigned long long)iscntrl;
                         }
                         else if (strcmp((char *)hintname, "isdigit") == 0)
                         {
