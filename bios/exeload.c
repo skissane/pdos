@@ -1809,6 +1809,66 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fgets;
                         }
+                        else if (strcmp((char *)hintname, "feof") == 0)
+                        {
+                            *thunk = (unsigned long long)feof;
+                        }
+                        else if (strcmp((char *)hintname, "ferror") == 0)
+                        {
+                            *thunk = (unsigned long long)ferror;
+                        }
+                        else if (strcmp((char *)hintname, "fread") == 0)
+                        {
+                            *thunk = (unsigned long long)fread;
+                        }
+                        else if (strcmp((char *)hintname, "fseek") == 0)
+                        {
+                            *thunk = (unsigned long long)fseek;
+                        }
+                        else if (strcmp((char *)hintname, "ftell") == 0)
+                        {
+                            *thunk = (unsigned long long)ftell;
+                        }
+                        else if (strcmp((char *)hintname, "fwrite") == 0)
+                        {
+                            *thunk = (unsigned long long)fwrite;
+                        }
+                        else if (strcmp((char *)hintname, "vfprintf") == 0)
+                        {
+                            *thunk = (unsigned long long)vfprintf;
+                        }
+                        else if (strcmp((char *)hintname, "vsprintf") == 0)
+                        {
+                            *thunk = (unsigned long long)vsprintf;
+                        }
+                        else if (strcmp((char *)hintname, "tolower") == 0)
+                        {
+                            *thunk = (unsigned long long)tolower;
+                        }
+                        else if (strcmp((char *)hintname, "toupper") == 0)
+                        {
+                            *thunk = (unsigned long long)toupper;
+                        }
+                        else if (strcmp((char *)hintname, "isdigit") == 0)
+                        {
+                            *thunk = (unsigned long long)isdigit;
+                        }
+                        else if (strcmp((char *)hintname, "islower") == 0)
+                        {
+                            *thunk = (unsigned long long)islower;
+                        }
+                        else if (strcmp((char *)hintname, "isprint") == 0)
+                        {
+                            *thunk = (unsigned long long)isprint;
+                        }
+                        else if (strcmp((char *)hintname, "isupper") == 0)
+                        {
+                            *thunk = (unsigned long long)isupper;
+                        }
+                        else if (strcmp((char *)hintname, "isxdigit") == 0)
+                        {
+                            *thunk = (unsigned long long)isxdigit;
+                        }
                         else if (strcmp((char *)hintname, "fopen") == 0)
                         {
                             *thunk = (unsigned long long)fopen;
@@ -1816,6 +1876,18 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "fprintf") == 0)
                         {
                             *thunk = (unsigned long long)fprintf;
+                        }
+                        else if (strcmp((char *)hintname, "sprintf") == 0)
+                        {
+                            *thunk = (unsigned long long)sprintf;
+                        }
+                        else if (strcmp((char *)hintname, "remove") == 0)
+                        {
+                            *thunk = (unsigned long long)remove;
+                        }
+                        else if (strcmp((char *)hintname, "rewind") == 0)
+                        {
+                            *thunk = (unsigned long long)rewind;
                         }
                         else if (strcmp((char *)hintname, "free") == 0)
                         {
@@ -1828,6 +1900,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "memcpy") == 0)
                         {
                             *thunk = (unsigned long long)memcpy;
+                        }
+                        else if (strcmp((char *)hintname, "memcmp") == 0)
+                        {
+                            *thunk = (unsigned long long)memcmp;
+                        }
+                        else if (strcmp((char *)hintname, "memset") == 0)
+                        {
+                            *thunk = (unsigned long long)memset;
                         }
                         else if (strcmp((char *)hintname, "memmove") == 0)
                         {
@@ -1844,6 +1924,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "strchr") == 0)
                         {
                             *thunk = (unsigned long long)strchr;
+                        }
+                        else if (strcmp((char *)hintname, "strcspn") == 0)
+                        {
+                            *thunk = (unsigned long long)strcspn;
                         }
                         else if (strcmp((char *)hintname, "ceil") == 0)
                         {
