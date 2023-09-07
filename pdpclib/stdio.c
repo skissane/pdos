@@ -4271,6 +4271,15 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 #endif
         return (0);
     }
+#if defined(__EFI__)
+    /* ignore any attempt to change stdin, other than to put
+       back line buffering */
+    if ((stream == __stdin) && (mode == _IOLBF))
+    {
+        stdin_buffered = 1;
+        return (0);
+    }
+#endif
     if (buf == NULL)
     {
         if (size < 2)
