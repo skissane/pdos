@@ -12,7 +12,7 @@ LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -D__CC64__ \
     -I../pdpclib -I../bios -I. \
-    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -DXW32HACK
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -DXW32HACK -D__CC64OS__
 
 all: clean bios.exe
 
