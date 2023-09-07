@@ -118,9 +118,9 @@ fl2:						#negative value
 
 .globl m$pushcallback
 m$pushcallback:
-	incd [ncallbacks]
+	incd [__ncallbacks]
 #       xor r11, r11
-	mov r11,[ncallbacks]
+	mov r11,[__ncallbacks]
 	shl r11,6					#8x8 bytes is size per entry
 	lea r11,[r11+callbackstack]
 
@@ -136,7 +136,7 @@ m$pushcallback:
 .globl m$popcallback
 m$popcallback:
 #       xor r11,r11
-	mov r11,[ncallbacks]
+	mov r11,[__ncallbacks]
 	shl r11,6					#8x8 bytes is size per entry
 	lea r11,[r11+callbackstack]
 	mov rbx,[r11]
@@ -146,7 +146,7 @@ m$popcallback:
 	mov r13,[r11+32]
 	mov r14,[r11+40]
 	mov r15,[r11+48]
-	decd [ncallbacks]
+	decd [__ncallbacks]
 	ret
 
 .data
@@ -170,5 +170,6 @@ callbackstack:
 	.space 576			#8-level stack
 #	resb 5'120'000
 
-ncallbacks:
+.globl __ncallbacks
+__ncallbacks:
 	.space 8
