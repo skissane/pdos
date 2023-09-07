@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <math.h>
 #include <time.h>
+#include <assert.h>
 
 #include "exeload.h"
 
@@ -1774,6 +1775,18 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)malloc;
                         }
+                        else if (strcmp((char *)hintname, "abort") == 0)
+                        {
+                            *thunk = (unsigned long long)abort;
+                        }
+                        else if (strcmp((char *)hintname, "atexit") == 0)
+                        {
+                            *thunk = (unsigned long long)atexit;
+                        }
+                        else if (strcmp((char *)hintname, "atoi") == 0)
+                        {
+                            *thunk = (unsigned long long)atoi;
+                        }
                         else if (strcmp((char *)hintname, "strcpy") == 0)
                         {
                             *thunk = (unsigned long long)strcpy;
@@ -1834,6 +1847,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fwrite;
                         }
+                        else if (strcmp((char *)hintname, "fputc") == 0)
+                        {
+                            *thunk = (unsigned long long)fputc;
+                        }
                         else if (strcmp((char *)hintname, "vfprintf") == 0)
                         {
                             *thunk = (unsigned long long)vfprintf;
@@ -1841,6 +1858,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "vsprintf") == 0)
                         {
                             *thunk = (unsigned long long)vsprintf;
+                        }
+                        else if (strcmp((char *)hintname, "isalnum") == 0)
+                        {
+                            *thunk = (unsigned long long)isalnum;
+                        }
+                        else if (strcmp((char *)hintname, "isalpha") == 0)
+                        {
+                            *thunk = (unsigned long long)isalpha;
                         }
                         else if (strcmp((char *)hintname, "tolower") == 0)
                         {
@@ -1882,6 +1907,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fgetc;
                         }
+                        else if (strcmp((char *)hintname, "putc") == 0)
+                        {
+                            *thunk = (unsigned long long)putc;
+                        }
                         else if (strcmp((char *)hintname, "getchar") == 0)
                         {
                             *thunk = (unsigned long long)getchar;
@@ -1901,6 +1930,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "remove") == 0)
                         {
                             *thunk = (unsigned long long)remove;
+                        }
+                        else if (strcmp((char *)hintname, "qsort") == 0)
+                        {
+                            *thunk = (unsigned long long)qsort;
                         }
                         else if (strcmp((char *)hintname, "rewind") == 0)
                         {
@@ -1946,6 +1979,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)strcspn;
                         }
+                        else if (strcmp((char *)hintname, "strtoul") == 0)
+                        {
+                            *thunk = (unsigned long long)strtoul;
+                        }
                         else if (strcmp((char *)hintname, "strncpy") == 0)
                         {
                             *thunk = (unsigned long long)strncpy;
@@ -1962,9 +1999,21 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)labs;
                         }
+                        else if (strcmp((char *)hintname, "sqrt") == 0)
+                        {
+                            *thunk = (unsigned long long)sqrt;
+                        }
                         else if (strcmp((char *)hintname, "clock") == 0)
                         {
                             *thunk = (unsigned long long)clock;
+                        }
+                        else if (strcmp((char *)hintname, "time") == 0)
+                        {
+                            *thunk = (unsigned long long)time;
+                        }
+                        else if (strcmp((char *)hintname, "localtime") == 0)
+                        {
+                            *thunk = (unsigned long long)localtime;
                         }
                         else if (strcmp((char *)hintname, "fclose") == 0)
                         {
@@ -1977,6 +2026,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "_errno") == 0)
                         {
                             *thunk = (unsigned long long)_errno;
+                        }
+                        else if (strcmp((char *)hintname, "_assert") == 0)
+                        {
+                            *thunk = (unsigned long long)_assert;
                         }
                         else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
