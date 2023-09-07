@@ -277,7 +277,7 @@ __PDPCLIB_API__ FILE **__gtout(void)
 __PDPCLIB_API__ FILE **__gterr(void)
     { return(&__stderr_ptr); }
 
-#if defined(__WIN32__) && !defined(__STATIC__)
+#if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__)
 __PDPCLIB_API__ __DUMMYFILE _iob[3];
 
 /* Note that all compilers should probably be using this
