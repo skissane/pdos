@@ -262,6 +262,15 @@ int main(int argc, char **argv)
             }
         }
 
+#ifdef W64HACK
+    if (strcmp(prog_name, "dir") == 0)
+    {
+        printf("dir capability coming soon hopefully\n");
+        printf("enter another command, enter to exit\n");
+        continue;
+    }
+#endif
+
 #ifdef __64BIT__
     p = calloc(1, 50000000);
 #else
