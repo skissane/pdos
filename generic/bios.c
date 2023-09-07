@@ -44,6 +44,12 @@ some sort of (useful) Frankenstein.
 #include <assert.h>
 #include <setjmp.h>
 
+#ifdef W64HACK
+#include <efi.h>
+static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
+static EFI_STATUS directory_test (void);
+#endif
+
 #include "__os.h"
 #include "exeload.h"
 
@@ -265,7 +271,7 @@ int main(int argc, char **argv)
 #ifdef W64HACK
     if (strcmp(prog_name, "dir") == 0)
     {
-        printf("dir capability coming soon hopefully\n");
+        directory_test();
         printf("enter another command, enter to exit\n");
         continue;
     }
@@ -540,6 +546,81 @@ int PosRemoveDir(const char *dname)
 void *PosGetDTA(void)
 {
     return (NULL);
+}
+
+#endif
+
+
+#ifdef W64HACK
+
+#define STATUS_IS_ERROR(a) (!!((a) >> (sizeof (a) * 8 - 1)))
+#define STATUS_GET_CODE(a) (((a) << 1) >> 1)
+
+#define return_Status_if_fail(func) do { if ((Status = (func))) { return Status; }} while (0)
+
+static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    UINTN Read, buf_size;
+    EFI_FILE_INFO *Buffer;
+
+    buf_size = sizeof (*Buffer) + 8 /* Just enough space for 5 CHAR16 FileName for demonstration. */;
+
+    return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+
+    while (1) {
+        Read = buf_size;
+        Status = dir->Read (dir, &Read, Buffer);
+        if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_BUFFER_TOO_SMALL) {
+            __gBS->FreePool (Buffer);
+            buf_size = Read;
+            printf("HAD to increase size of buffer\n");
+            return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+            return_Status_if_fail (dir->Read (dir, &buf_size, Buffer));
+        }
+
+        if (!Read) break;
+
+        printf("found directory entry: '");
+        fflush(stdout);
+        return_Status_if_fail (__gST->ConOut->OutputString (__gST->ConOut, Buffer->FileName));
+        printf("'\n");
+    };
+
+    __gBS->FreePool (Buffer);
+
+    return Status;
+}
+
+static EFI_STATUS directory_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    
+    EFI_FILE_PROTOCOL *EfiRoot;
+    EFI_FILE_PROTOCOL *dir, *dir2;
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 OpenModeDirCreateReadWrite = {0x3, 0x80000000};
+    static UINT64 Attributes = {0, 0};
+    static UINT64 DirCreateAttributes = {0x10, 0};
+
+    CHAR16 dir_name[] = {'a', 'b', 'c', '\0'};
+    CHAR16 dir2_name[] = {'n', 'e', 'w', 'd', '\0'};
+    CHAR16 dir3_name[] = {'d', 'e', 'l', 'd', '\0'};
+
+
+    return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+    return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+    return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
+
+    return_Status_if_fail (dir_list (EfiRoot));
+    
+    EfiRoot->Close (EfiRoot);
+
+    return Status;
 }
 
 #endif
