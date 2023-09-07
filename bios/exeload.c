@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
+#include <time.h>
 
 #include "exeload.h"
 
@@ -1877,6 +1878,22 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fprintf;
                         }
+                        else if (strcmp((char *)hintname, "fgetc") == 0)
+                        {
+                            *thunk = (unsigned long long)fgetc;
+                        }
+                        else if (strcmp((char *)hintname, "getchar") == 0)
+                        {
+                            *thunk = (unsigned long long)getchar;
+                        }
+                        else if (strcmp((char *)hintname, "ungetc") == 0)
+                        {
+                            *thunk = (unsigned long long)ungetc;
+                        }
+                        else if (strcmp((char *)hintname, "sscanf") == 0)
+                        {
+                            *thunk = (unsigned long long)sscanf;
+                        }
                         else if (strcmp((char *)hintname, "sprintf") == 0)
                         {
                             *thunk = (unsigned long long)sprintf;
@@ -1929,9 +1946,25 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)strcspn;
                         }
+                        else if (strcmp((char *)hintname, "strncpy") == 0)
+                        {
+                            *thunk = (unsigned long long)strncpy;
+                        }
+                        else if (strcmp((char *)hintname, "strtod") == 0)
+                        {
+                            *thunk = (unsigned long long)strtod;
+                        }
                         else if (strcmp((char *)hintname, "ceil") == 0)
                         {
                             *thunk = (unsigned long long)ceil;
+                        }
+                        else if (strcmp((char *)hintname, "labs") == 0)
+                        {
+                            *thunk = (unsigned long long)labs;
+                        }
+                        else if (strcmp((char *)hintname, "clock") == 0)
+                        {
+                            *thunk = (unsigned long long)clock;
                         }
                         else if (strcmp((char *)hintname, "fclose") == 0)
                         {
