@@ -275,6 +275,22 @@ int main(int argc, char **argv)
         printf("enter another command, enter to exit\n");
         continue;
     }
+    else if (strcmp(prog_name, "type") == 0)
+    {
+        FILE *fp;
+        fp = fopen((char *)p + 1, "r");
+        if (fp != NULL)
+        {
+            int c;
+            while ((c = getc(fp)) != EOF)
+            {
+                putc(c, stdout);
+            }
+            fclose(fp);
+        }
+        printf("enter another command, enter to exit\n");
+        continue;
+    }
 #endif
 
 #ifdef __64BIT__
