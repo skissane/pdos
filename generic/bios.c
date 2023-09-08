@@ -147,6 +147,7 @@ int main(int argc, char **argv)
     int shell = 0;
     FILE *scr = NULL;
     int quiet = 0;
+    char new_prog_name[FILENAME_MAX];
 
     bios.mem_amt = MEMAMT;
     bios.Xstdin = stdin;
@@ -291,6 +292,15 @@ int main(int argc, char **argv)
         printf("enter another command, enter to exit\n");
         continue;
     }
+#endif
+
+#ifdef __CC64OS__
+    strcpy(new_prog_name, prog_name);
+    if (strstr(new_prog_name, ".exe") == NULL)
+    {
+        strcat(new_prog_name, ".exe");
+    }
+    prog_name = new_prog_name;
 #endif
 
 #ifdef __64BIT__
