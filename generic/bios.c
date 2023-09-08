@@ -250,6 +250,9 @@ int main(int argc, char **argv)
                 break;
 #endif
             }
+#ifdef __CC64OS__
+            if (scr != stdin) printf("%s", buf);
+#endif
             p = (unsigned char *)strchr(buf, '\n');
             if (p != NULL)
             {
