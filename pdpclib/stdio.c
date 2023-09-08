@@ -1871,9 +1871,26 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     {
     if (stream->hfile == NULL)
     {
+        EFI_STATUS Status;
         UINTN Index;
         EFI_INPUT_KEY input;
+        EFI_KEY_DATA KeyData;
         char c;
+        static EFI_GUID stiex_guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
+        static EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *stiex = NULL;
+
+        if (stiex == NULL)
+        {
+            if ((__gBS->LocateProtocol (&stiex_guid, NULL, (void **)&stiex)
+                 != EFI_SUCCESS)
+                || (stiex->Reset (stiex, 0) != EFI_SUCCESS)
+               )
+            {
+                *actualRead = 0;
+                stream->errorInd = 1;
+                return;
+            }
+        }
 
         for (tempRead = 0; tempRead < toread; tempRead++)
         {
@@ -1889,15 +1906,38 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                     break;
                 }
             }
-            if ((__gST->BootServices->WaitForEvent (1, &__gST->ConIn->WaitForKey, &Index) != EFI_SUCCESS)
-                || (__gST->ConIn->ReadKeyStroke (__gST->ConIn, &input) != EFI_SUCCESS))
+            if ((__gST->BootServices->WaitForEvent
+                        (1, &stiex->WaitForKeyEx, &Index) != EFI_SUCCESS)
+                || (stiex->ReadKeyStrokeEx (stiex, &KeyData)
+                    != EFI_SUCCESS))
             {
-                *actualRead = 0;
+                /* *actualRead = 0;
                 stream->errorInd = 1;
-                break;
+                break; */
+                /* I don't know why we are getting an error sometimes,
+                   just ignore and try again */
+                tempRead--;
+                continue;
             }
+            input = KeyData.Key;
             c = input.UnicodeChar;
-            if (c == 0)
+            if ((KeyData.KeyState.KeyShiftState & EFI_SHIFT_STATE_VALID)
+                 && ((KeyData.KeyState.KeyShiftState
+                      & EFI_LEFT_CONTROL_PRESSED)
+                     || (KeyData.KeyState.KeyShiftState
+                         & EFI_RIGHT_CONTROL_PRESSED))
+                )
+            {
+                c = toupper((unsigned char)input.UnicodeChar);
+                /* ignore any control keys without a valid associated key */
+                if ((c < 0x40) || (c >= 0x60))
+                {
+                    tempRead--;
+                    continue;
+                }
+                c -= 0x40;
+            }
+            else if (c == 0)
             {
                 if (input.ScanCode == 0x17)
                 {
