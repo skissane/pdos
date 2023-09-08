@@ -252,7 +252,11 @@ int main(int argc, char **argv)
             {
                 if (scr == stdin)
                 {
+#ifdef __CC64OS__
+                    continue;
+#else
                     break;
+#endif
                 }
                 continue;
             }
