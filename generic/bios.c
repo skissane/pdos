@@ -301,6 +301,18 @@ int main(int argc, char **argv)
         strcat(new_prog_name, ".exe");
     }
     prog_name = new_prog_name;
+    {
+        FILE *fp;
+
+        fp = fopen(prog_name, "rb");
+        if (fp == NULL)
+        {
+            printf("no such program %s\n", prog_name);
+            printf("enter another command\n");
+            continue;
+        }
+        fclose(fp);
+    }
 #endif
 
 #ifdef __64BIT__
