@@ -1976,7 +1976,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 tempRead++;
                 break;
             }
-            if ((c != '\b') || (tempRead > 0))
+            if (c != '\b')
             {
                 printf("%c", c);
                 fflush(__stdout);
@@ -1993,6 +1993,10 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 {
                     /* delete the backspace, unless we only have a backspace */
                     tempRead--;
+                    printf("%c", c);
+                    printf(" ");
+                    printf("%c", c);
+                    fflush(__stdout);
                 }
                 tempRead--; /* account for the previous character
                                - may go negative */
