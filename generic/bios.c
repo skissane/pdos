@@ -241,7 +241,14 @@ int main(int argc, char **argv)
         {
             if (fgets(buf, sizeof buf, scr) == NULL)
             {
+#ifdef __CC64OS__
+                if (scr == stdin) break;
+                fclose(scr);
+                scr = stdin;
+                continue;
+#else
                 break;
+#endif
             }
             p = (unsigned char *)strchr(buf, '\n');
             if (p != NULL)
@@ -315,6 +322,20 @@ int main(int argc, char **argv)
         fp = fopen(prog_name, "rb");
         if (fp == NULL)
         {
+            char *zzz;
+
+            zzz = strstr(prog_name, ".exe");
+            if (zzz != NULL)
+            {
+                strcpy(zzz, ".bat");
+                fp = fopen(prog_name, "r");
+                if (fp != NULL)
+                {
+                    scr = fp;
+                    continue;
+                }
+                strcpy(zzz, ".exe");
+            }
             printf("no such program %s\n", prog_name);
             printf("enter another command\n");
             continue;
