@@ -280,6 +280,10 @@ int main(int argc, char **argv)
         printf("enter another command, enter to exit\n");
         continue;
     }
+    else if (strcmp(prog_name, "exit") == 0)
+    {
+        break;
+    }
     else if (strcmp(prog_name, "type") == 0)
     {
         FILE *fp;
@@ -384,7 +388,11 @@ int main(int argc, char **argv)
         {
             break;
         }
+#ifdef __CC64OS__
+    printf("enter another command, exit to exit\n");
+#else
     printf("enter another command, enter to exit\n");
+#endif
     } while (1);
 
     if (need_usage)
