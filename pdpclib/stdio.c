@@ -839,6 +839,10 @@ static void osfopen(void)
     else
 #endif
     {
+    if (strncmp(fnm, "./", 2) == 0)
+    {
+        fnm += 2;
+    }
     x = 0;
     do {
         file_name[x] = (CHAR16)fnm[x];
