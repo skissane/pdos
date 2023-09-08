@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * @file            efitest.c
  *
@@ -534,6 +535,8 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __gBS->HandleProtocol (li_protocol->ParentHandle, &shell_guid, (void **)&shell_protocol);
     shell_protocol->WriteFile (sp_protocol->StdOut, &message_size, message);
 #endif
+
+    __gST->ConOut->EnableCursor (gST->ConOut, 1);
 
 #ifdef EFITEST
     print_string("Hello from EFI\n");
