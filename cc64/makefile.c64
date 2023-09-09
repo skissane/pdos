@@ -1,0 +1,26 @@
+# Static link to test pdpclib
+
+CC=cc64
+AR=ar
+AS=pdas --oformat coff --64
+LD=pdld
+COPTS=-DBLDGENERIC -D__WIN32__ -D__STATIC__ -D__64BIT__ -DNOUNDMAIN -I . -I ../pdpclib
+
+all: cc64.exe
+
+cc64.exe: cc64.obj junk.obj
+  $(LD) -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o $@ ../pdpclib/p32start.obj cc64.obj junk.obj ../pdpclib/pdpwin64.lib ../src/kernel32.lib
+#  cc64 -c -out:stdlib.obj stdlib.i
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+#  $(CC) -c -out:$@ $<
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f cc64.exe
