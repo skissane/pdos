@@ -82,6 +82,9 @@ extern int __start(char *p);
 
 #ifdef __CC64OS__
 extern long long __ncallbacks;
+
+extern char __cwd[FILENAME_MAX];
+
 #endif
 
 int their_start(char *parm);
@@ -293,6 +296,29 @@ int main(int argc, char **argv)
     else if (strcmp(prog_name, "exit") == 0)
     {
         break;
+    }
+    else if (strcmp(prog_name, "cd") == 0)
+    {
+        p++;
+        if (p[0] == '\\')
+        {
+            strcpy(__cwd, (char *)p + 1);
+        }
+        else
+        {
+            if (__cwd[0] == '\0')
+            {
+                strcpy(__cwd, (char *)p);
+            }
+            else
+            {
+                /* +++ check overflow here */
+                strcat(__cwd, "\\");
+                strcat(__cwd, (char *)p);
+            }
+        }
+        printf("enter another command, exit to exit\n");
+        continue;
     }
     else if (strcmp(prog_name, "type") == 0)
     {
