@@ -145,7 +145,14 @@ typedef unsigned long fpos_t;
 
 #define NULL ((void *)0)
 #define FILENAME_MAX 260
+
+#ifdef __CC64OS__
+/* hack for file leak and no cleanup */
+#define FOPEN_MAX 25600
+#else
 #define FOPEN_MAX 256
+#endif
+
 #define _IOFBF 1
 #define _IOLBF 2
 #define _IONBF 3
