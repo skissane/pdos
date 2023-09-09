@@ -8,6 +8,7 @@ int DefWindowProcA(void) { return (0); }
 int RegisterClassExA(void) { return (0); }
 int LoadCursorA(void) { return (0); }
 
+#ifndef __STATIC__
 int GetTickCount(void) { return (0); }
 int QueryPerformanceFrequency(void) { return (0); }
 int QueryPerformanceCounter(void) { return (0); }
@@ -28,3 +29,4 @@ int CreateProcessA(void) { return (0); }
 int SetConsoleMode(void) { return (0); }
 int SetConsoleCtrlHandler(void) { return (0); }
 int GetStdHandle(void) { return (0); }
+#endif
