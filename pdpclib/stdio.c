@@ -6792,7 +6792,13 @@ static void dblcvt(double num, int cnvtype, int nwidth,
 
     if ( num < 0 )
     {
-        b = -num;
+        /* When using cc64, this line caused a crash */
+        /* I'm not sure if you can take a negative of a negative
+           number to make it positive, but regardless, I just did
+           a multiplication of -1.0 instead. I don't know if this
+           is applicable to other compilers. */
+        /* b = -num; */
+        b = num * -1.0;
         sign = '-';
     }
     else
