@@ -1994,6 +1994,12 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                     numpending = 2;
                     memcpy(pending, "[D", 2);
                 }
+                else
+                {
+                    /* holding down shift key gets here - ignore */
+                    tempRead--;
+                    continue;
+                }
                 c = 0x1b;
             }
             if (c == '\r')
