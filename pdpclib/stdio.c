@@ -738,6 +738,10 @@ static void checkMode(void)
     return;
 }
 
+#ifdef __EFI__
+char __cwd[FILENAME_MAX] = "";
+#endif
+
 static void osfopen(void)
 {
 #ifdef __AMIGA__
@@ -839,14 +843,36 @@ static void osfopen(void)
     else
 #endif
     {
-    if (strncmp(fnm, "./", 2) == 0)
-    {
-        fnm += 2;
-    }
+    /* note that __cwd starts as empty, and if it has something put in it,
+       it should have \ as path separators, and there is no need for a
+       trailing \
+       Also note that UEFI probably has a way of maintaining a cwd which is
+       how the shell likely works, but I don't know what the mechanism is,
+       and we are simply bypassing it if it exists */
     x = 0;
+    if ((fnm[0] != '\\') && (fnm[0] != '/'))
+    {
+        if (__cwd[x] != '\0')
+        {
+            while (__cwd[x] != '\0')
+            {
+                file_name[x] = (CHAR16)__cwd[x];
+                x++;
+            }
+            file_name[x++] = (CHAR16)'\\';
+        }
+    }
     do {
-        file_name[x] = (CHAR16)fnm[x];
-    } while (fnm[x++] != 0);
+        if (*fnm == '/')
+        {
+            file_name[x] = (CHAR16)'\\';
+        }
+        else
+        {
+            file_name[x] = (CHAR16)*fnm;
+        }
+        x++;
+    } while (*fnm++ != '\0');
 
     if (mode)
     {
