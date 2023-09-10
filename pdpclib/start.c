@@ -1472,3 +1472,33 @@ __PDPCLIB_API__ void (*_onexit(void (*func)(void)))(void)
     return (func);
 }
 #endif
+
+void __G_debug(void *ptr)
+{
+    int x;
+    unsigned char *p;
+
+    if (__G_ptr == NULL)
+    {
+        __G_live = 1;
+#if 0
+        __G_ptr = (void *)0x2cee948;
+#else
+        __G_ptr = (void *)0x33334444;
+#endif
+    }
+    if (__G_live)
+    {
+#if 1
+        p = __G_ptr;
+        printf("%p ", p);
+        for (x = 0; x < 16; x++)
+        {
+            printf(" %02X", p[x]);
+        }
+        printf("\n");
+#endif
+        printf("parm is %p\n", ptr);
+    }
+    return;
+}
