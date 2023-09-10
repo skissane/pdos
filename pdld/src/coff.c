@@ -160,7 +160,7 @@ static address_type translate_Characteristics_to_alignment (unsigned long Charac
 {
     unsigned long alignment = 1;
 
-    Characteristics &= IMAGE_SCN_ALIGN_8192BYTES;
+    Characteristics &= IMAGE_SCN_ALIGN_8192BYTES | IMAGE_SCN_ALIGN_1BYTES;
     
     if (Characteristics == IMAGE_SCN_ALIGN_1BYTES) alignment = 1;
     if (Characteristics == IMAGE_SCN_ALIGN_2BYTES) alignment = 2;
