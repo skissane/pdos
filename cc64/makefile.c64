@@ -4,7 +4,7 @@ CC=cc64
 AR=ar
 AS=pdas --oformat coff --64
 LD=pdld
-COPTS=-DBLDGENERIC -D__WIN32__ -D__STATIC__ -D__64BIT__ -DNOUNDMAIN -I . -I ../pdpclib
+COPTS=-DBLDGENERIC -D__WIN32__ -D__STATIC__ -D__64BIT__ -D__CC64__ -DNOUNDMAIN -I . -I ../pdpclib
 
 all: cc64.exe
 
