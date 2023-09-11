@@ -382,7 +382,7 @@ int main(int argc, char **argv)
         }
         if (fp == NULL)
         {
-            printf("no such program %s\n", prog_name);
+            printf("no such program %s\n", prog_name + 5);
             printf("enter another command\n");
             continue;
         }
