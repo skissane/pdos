@@ -876,6 +876,18 @@ static void osfopen(void)
 
     if (mode)
     {
+        if (mode == 1)
+        {
+            /* if the file exists, we want to overwrite it, so we need to
+               delete it. An error from Open is not actually an error, so
+               it is simply ignored */
+            Status = __EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes);
+            if ((Status == EFI_SUCCESS) && (new_file != NULL))
+            {
+                return_Status_if_fail (new_file->Delete (new_file));
+                /* I believe it is not necessary to do a close after delete */
+            }
+        }
         return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeWrite, Attributes));
     }
     else
