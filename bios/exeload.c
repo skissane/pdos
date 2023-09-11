@@ -1823,6 +1823,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fgets;
                         }
+                        else if (strcmp((char *)hintname, "fputs") == 0)
+                        {
+                            *thunk = (unsigned long long)fputs;
+                        }
                         else if (strcmp((char *)hintname, "feof") == 0)
                         {
                             *thunk = (unsigned long long)feof;
