@@ -108,8 +108,8 @@ int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
 #endif
 
-static char buf[400];
-static char cmd[400];
+static char buf[600];
+static char cmd[600];
 
 static jmp_buf jb;
 
