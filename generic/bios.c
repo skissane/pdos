@@ -48,6 +48,8 @@ some sort of (useful) Frankenstein.
 #include <efi.h>
 static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
 static EFI_STATUS directory_test (void);
+
+static int globrc = 0;
 #endif
 
 #include "__os.h"
@@ -422,7 +424,8 @@ int main(int argc, char **argv)
     if (rc != 0)
     {
         /* we got exit via longjmp */
-        /* no action required */
+        /* true return code is in global */
+        rc = globrc;
     }
     else
     {
@@ -590,6 +593,7 @@ $callback
 #endif
 void w64exit(int status)
 {
+    globrc = status;
     longjmp(jb, status);
     return;
 }
