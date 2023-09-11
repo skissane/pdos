@@ -22,5 +22,8 @@ $(TARGET): $(OBJS)
   $(CC) -c -out:$@ $*.i
   rm -f $*.i
 
+.asm.obj:
+  $(AS) -o $@ $<
+
 clean:
   rm -f $(OBJS) $(TARGET)
