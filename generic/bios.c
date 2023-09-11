@@ -365,6 +365,21 @@ int main(int argc, char **argv)
                 }
                 strcpy(zzz, ".exe");
             }
+        }
+        if (fp == NULL)
+        {
+            memmove(prog_name + 1, prog_name, strlen(prog_name) + 1);
+            prog_name[0] = '\\';
+            fp = fopen(prog_name, "rb");
+        }
+        if (fp == NULL)
+        {
+            memmove(prog_name + 4, prog_name, strlen(prog_name) + 1);
+            memcpy(prog_name, "\\DOS", 4);
+            fp = fopen(prog_name, "rb");
+        }
+        if (fp == NULL)
+        {
             printf("no such program %s\n", prog_name);
             printf("enter another command\n");
             continue;
