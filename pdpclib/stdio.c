@@ -3512,6 +3512,9 @@ __PDPCLIB_API__ int fputs(const char *s, FILE *stream)
 }
 #endif
 
+#define return1_Status_if_fail(func) do { if ((Status = (func))) { err = 1; \
+        errno = Status; return (1); }} while (0)
+
 __PDPCLIB_API__ int remove(const char *filename)
 {
     int ret;
@@ -3570,6 +3573,75 @@ __PDPCLIB_API__ int remove(const char *filename)
 #ifdef __CMS__
     ret = cmsremove(filename);
 #endif
+
+#ifdef __EFI__
+
+    int mode;
+    EFI_STATUS Status = EFI_SUCCESS;
+    static EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    static EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    static UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
+    EFI_FILE_PROTOCOL *new_file;
+    static UINT64 Attributes = {0, 0};
+    CHAR16 file_name[FILENAME_MAX];
+    int x;
+    static EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
+    const char *fnm = filename; /* same name as osfopen */
+
+    if (__EfiRoot == NULL)
+    {
+        return1_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+        return1_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+        return1_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &__EfiRoot));
+#ifdef __EFIBIOS__
+        return1_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &block_io_guid, (void **)&bio_protocol));
+#endif
+    }
+
+    {
+    /* note that __cwd starts as empty, and if it has something put in it,
+       it should have \ as path separators, and there is no need for a
+       trailing \
+       Also note that UEFI probably has a way of maintaining a cwd which is
+       how the shell likely works, but I don't know what the mechanism is,
+       and we are simply bypassing it if it exists */
+    x = 0;
+    if ((fnm[0] != '\\') && (fnm[0] != '/'))
+    {
+        if (__cwd[x] != '\0')
+        {
+            while (__cwd[x] != '\0')
+            {
+                file_name[x] = (CHAR16)__cwd[x];
+                x++;
+            }
+            file_name[x++] = (CHAR16)'\\';
+        }
+    }
+    do {
+        if (*fnm == '/')
+        {
+            file_name[x] = (CHAR16)'\\';
+        }
+        else
+        {
+            file_name[x] = (CHAR16)*fnm;
+        }
+        x++;
+    } while (*fnm++ != '\0');
+
+    return1_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes));
+    }
+
+    if (new_file != NULL)
+    {
+        return1_Status_if_fail (new_file->Delete (new_file));
+    }
+    ret = 0;
+#endif
+
     return (ret);
 }
 
