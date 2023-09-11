@@ -18,7 +18,7 @@ cc64.exe: cc64.obj junk.obj
 
 .c.obj:
   pdcc -E $(COPTS) -o $*.i $<
-  $(CC) -c -out:$@ $*.i
+  $(CC) -q -c -out:$@ $*.i
   rm -f $*.i
 #  $(CC) -c -out:$@ $<
 
