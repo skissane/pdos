@@ -2567,9 +2567,13 @@ static void iwrite(FILE *stream,
                             onechar[0] = ' ';
                             /* I need 80 here, otherwise a character remains.
                                But 80 causes the cursor to go to the next line
-                               and the screen to scroll */
+                               and the screen to scroll on qemu. But since
+                               Virtualbox is fine, I am going to keep it at 80
+                               instead of 79 and put the onus on qemu to stop
+                               scrolling if I haven't actually exceeded the
+                               capability of a single line. */
                             for (x = __gST->ConOut->Mode->CursorColumn;
-                                 x < 79;
+                                 x < 80;
                                  x++)
                             {
                                 __gST->ConOut->OutputString(__gST->ConOut,
