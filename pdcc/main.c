@@ -136,7 +136,7 @@ void c_after_options(global_core *core)
 {
     ic_register_include_chains(core->ic, core->reader);
     
-    if (core->preprocess_flag)
+    if (core->preprocess_flag && !core->compile_flag)
     {
         FILE *output;
         if ((core->output_name == NULL)
@@ -167,20 +167,31 @@ void c_after_options(global_core *core)
         core->cc_reader = xmalloc(sizeof(*core->cc_reader));
         memset(core->cc_reader, 0, sizeof(*core->cc_reader));
         
+        if (core->preprocess_flag) {
+            core->cc_reader->cpp_reader = core->reader;
+            if (cpp_read_main_file (core->reader, core->input_names[0]) == NULL)
+            {
+                printf ("+++Error c_after_options\n");
+                return;
+            }
+        } else {
+            core->cc_reader->input = fopen(core->input_names[0], "r");
+            if (core->cc_reader->input == NULL)
+            {
+                printf("+++Can't open %s\n", core->input_names[0]);
+                return;
+            }
+        }        
+
         core->cc_reader->output = output;
         core->cc_reader->file = xstrdup(core->input_names[0]);
-        core->cc_reader->input = fopen(core->input_names[0], "r");
+
         core->cc_reader->char_bits = 8;
         core->cc_reader->short_bits = 16;
         core->cc_reader->int_bits = 32;
         core->cc_reader->long_bits = 64;
         core->cc_reader->llong_bits = 64;
         core->cc_reader->ptr_bits = 32;
-        if (core->cc_reader->input == NULL)
-        {
-            printf("+++Can't open %s\n", core->input_names[0]);
-            return;
-        }
     }
 }
 
@@ -194,9 +205,10 @@ static void c_finish_options(global_core *core)
         loc.file = "<built-in>";
         loc.line = 1;
         loc.column = 0;
-        cpp_get_callbacks(core->reader)->file_change(core->reader,
-                                                    loc,
-                                                    CPP_REASON_RENAME);
+        if (cpp_get_callbacks(core->reader)->file_change)
+            cpp_get_callbacks(core->reader)->file_change (core->reader,
+                                                          loc,
+                                                          CPP_REASON_RENAME);
 
         cpp_force_token_locations(core->reader, loc);
         cpp_init_builtins(core->reader, core->hosted);
@@ -204,9 +216,10 @@ static void c_finish_options(global_core *core)
         loc.file = "<command-line>";
         loc.line = 1;
         loc.column = 0;
-        cpp_get_callbacks(core->reader)->file_change(core->reader,
-                                                    loc,
-                                                    CPP_REASON_RENAME);
+        if (cpp_get_callbacks(core->reader)->file_change)
+            cpp_get_callbacks(core->reader)->file_change (core->reader,
+                                                          loc,
+                                                          CPP_REASON_RENAME);
 
         cpp_force_token_locations(core->reader, loc);
 
@@ -361,12 +374,12 @@ int main(int argc, char **argv)
         printf("Error: no input files.\nUse --help for help.\n");
         goto end;
     }
-    
+
     c_after_options(core);
 
     /* Call for each file. */
     c_finish_options(core);
-    if (core->preprocess_flag)
+    if (core->preprocess_flag && !core->compile_flag)
         preprocess_file(core->processor, core->reader);
     if (core->compile_flag)
         compile_file(core->cc_reader);

@@ -1071,9 +1071,14 @@ static void cc_parser_do(cc_reader *reader)
 
 int cc_parse_file(cc_reader *reader)
 {
-    char line[80];
-    while (fgets(line, sizeof(line), reader->input) != 0)
-        cc_lex_line(reader, line);
+    if (reader->input == NULL) {
+        cc_lex_with_preprocess (reader);
+    } else {
+        char line[80];
+        
+        while (fgets(line, sizeof(line), reader->input) != 0)
+            cc_lex_line(reader, line);
+    }
 #ifdef DEBUG
     cc_dump_tokens(reader);
 #endif

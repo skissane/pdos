@@ -208,6 +208,7 @@ struct cc_expr {
 };
 
 struct cc_reader {
+    cpp_reader *cpp_reader;
     FILE *input;
     FILE *output;
     char *file; /* Input filename */

@@ -236,7 +236,9 @@ static char *cc_interpret_string(cc_reader *reader, const char *src)
         }
         *p2 = *p;
     }
-    return (dest);
+    
+    *p2 = '\0';
+    return dest;
 }
 
 /**
@@ -483,6 +485,230 @@ int cc_lex_line(cc_reader *reader, const char *line)
     return 0;
 }
 
+int cc_lex_with_preprocess (cc_reader *reader)
+{
+    while (1)
+    {        
+        location_t loc;
+        const cpp_token *token = cpp_get_token_with_location (reader->cpp_reader, &loc);
+
+        cc_token tok = {0};
+        char spelled_token[100];
+        const char *p;
+        
+        if (token == NULL) break;
+        if (token->type == CPP_END) break;
+        if (token->type == CPP_PADDING) continue;
+        
+        tok.loc = loc;
+        cpp_spell_token (reader->cpp_reader, token, spelled_token, 1)[0] = '\0';
+        p = spelled_token;
+        
+        switch (*p++)
+        {
+        case '{':
+            tok.type = CC_TOKEN_LBRACE;
+            break;
+        case '}':
+            tok.type = CC_TOKEN_RBRACE;
+            break;
+        case '(':
+            tok.type = CC_TOKEN_LPAREN;
+            break;
+        case ')':
+            tok.type = CC_TOKEN_RPAREN;
+            break;
+        case '[':
+            tok.type = CC_TOKEN_LBRACKET;
+            break;
+        case ']':
+            tok.type = CC_TOKEN_RBRACKET;
+            break;
+        case '=':
+            tok.type = CC_TOKEN_ASSIGN;
+            if (*p == '=')
+            {
+                tok.type = CC_TOKEN_EQ;
+            }
+            break;
+        case '+':
+            tok.type = CC_TOKEN_PLUS;
+            if (*p == '=')
+            {
+                tok.type |= CC_TOKEN_ASSIGN;
+            }
+            else if (*p == '+')
+            {
+                tok.type |= CC_TOKEN_INCREMENT;
+            }
+            break;
+        case '-':
+            tok.type = CC_TOKEN_MINUS;
+            if (*p == '=')
+            {
+                tok.type |= CC_TOKEN_ASSIGN;
+            }
+            else if (*p == '-')
+            {
+                tok.type |= CC_TOKEN_DECREMENT;
+            }
+            else if (*p == '>')
+            {
+                tok.type |= CC_TOKEN_ARROW;
+            }
+            break;
+        case '/':
+            tok.type = CC_TOKEN_DIV;
+            if (*p == '=')
+            {
+                tok.type |= CC_TOKEN_ASSIGN;
+            }
+            break;
+        case '%':
+            tok.type = CC_TOKEN_REM;
+            if (*p == '=')
+            {
+                tok.type |= CC_TOKEN_ASSIGN;
+            }
+            break;
+        case '*':
+            tok.type = CC_TOKEN_ASTERISK;
+            if (*p == '=')
+            {
+                tok.type = CC_TOKEN_MUL | CC_TOKEN_ASSIGN;
+            }
+            break;
+        case '?':
+            tok.type = CC_TOKEN_TERNARY;
+            break;
+        case ':':
+            tok.type = CC_TOKEN_COLON;
+            break;
+        case ';':
+            tok.type = CC_TOKEN_SEMICOLON;
+            break;
+        case ',':
+            tok.type = CC_TOKEN_COMMA;
+            break;
+        case '.':
+            tok.type = CC_TOKEN_DOT;
+            if (p[0] == '.' && p[1] == '.')
+            {
+                tok.type = CC_TOKEN_ELLIPSIS;
+            }
+            break;
+        case '>':
+            tok.type = CC_TOKEN_GT;
+            if (*p == '=')
+            {
+                tok.type = CC_TOKEN_GTE;
+            }
+            break;
+        case '<':
+            tok.type = CC_TOKEN_LT;
+            if (*p == '=')
+            {
+                tok.type = CC_TOKEN_LTE;
+            }
+            break;
+        case '!':
+            tok.type = CC_TOKEN_NOT;
+            if (*p == '=')
+            {
+                tok.type |= CC_TOKEN_NEQ;
+            }
+            break;
+        case '|':
+            tok.type = CC_TOKEN_BIT_OR;
+            if (*p == '|')
+            {
+                tok.type = CC_TOKEN_OR;
+            }
+            break;
+        case '&':
+            tok.type = CC_TOKEN_AMPERSAND;
+            if (*p == '&')
+            {
+                tok.type = CC_TOKEN_AND;
+            }
+            break;
+        case '\'':
+        case '\"':
+            {
+                const char *start = p;
+                char term = *(p - 1);
+                tok.type = term == '\'' ? CC_TOKEN_LITERAL : CC_TOKEN_STRING;
+                for ( ; *p != term && *p != '\0'; p++)
+                    if (*p == '\\')
+                        p++;
+
+                if (*p == term)
+                {
+                    size_t len = (size_t)(p - start);
+                    char *non_escaped, *escaped;
+                    non_escaped = xstrndup(start, len);
+                    /* Escape the string */
+                    escaped = cc_interpret_string(reader, non_escaped);
+                    tok.data.string = escaped;
+                    free(non_escaped);
+                }
+                else
+                    cc_report(reader, CC_DL_ERROR, "Unterminated string");
+            }
+            break;
+        default:
+            p--;
+            if (isalpha(*p))
+            {
+                const char *start = p;
+                char is_keyword = 0;
+                size_t len, i;
+                while (is_ident(*p))
+                    p++;
+                len = (size_t)(p - start);
+                
+                tok.type = CC_TOKEN_KW;
+                for (i = CC_TOKEN_KW; i < CC_NUM_TOKENS; i++)
+                {
+                    if (strlen(g_token_info[i].name) == len
+                     && !strncmp(g_token_info[i].name, start, len))
+                    {
+                        tok.type = g_token_info[i].type;
+                        is_keyword = 1;
+                        break;
+                    }
+                }
+
+                /* Identifier */
+                if (!is_keyword)
+                {
+                    tok.type = CC_TOKEN_IDENT;
+                    tok.data.name = xstrndup(start, len);
+                }
+            }
+            else if (isdigit(*p))
+            {
+                const char *start = p;
+                char *numstr;
+                size_t len;
+                while (isalnum(*p) || *p == '.') /* Lex first, parse later */
+                    p++;
+                
+                len = (size_t)(p - start);
+                numstr = xstrndup(start, len);
+                /* TODO: more advanced number parsing */
+                tok.type = CC_TOKEN_NUMBER;
+                tok.data.numval = atoi(numstr);
+                free(numstr);
+            }
+            break;
+        }
+        cc_add_token(reader, tok);
+    }
+    reader->line++;
+    return 0;
+}
+
 void cc_dump_tokens(cc_reader *reader)
 {
     size_t i;
@@ -495,7 +721,7 @@ void cc_dump_tokens(cc_reader *reader)
         else if(tok->type == CC_TOKEN_IDENT && tok->data.name)
             printf("\"%s\"", tok->data.name);
         else if (tok->type == CC_TOKEN_NUMBER)
-            printf("(%u)", tok->data.numval);
+            printf("(%lu)", tok->data.numval);
         printf("%s ", g_token_info[tok->type].name);
 
         if (i % 8 == 0 && i)

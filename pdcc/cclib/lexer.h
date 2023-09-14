@@ -123,6 +123,7 @@ extern struct cc_token_info {
 
 cc_token cc_consume_token(cc_reader *reader);
 int cc_lex_line(cc_reader *reader, const char *line);
+int cc_lex_with_preprocess (cc_reader *reader);
 void cc_dump_tokens(cc_reader *reader);
 
 #endif
