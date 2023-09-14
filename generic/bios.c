@@ -338,6 +338,47 @@ int main(int argc, char **argv)
         printf("enter another command, enter to exit\n");
         continue;
     }
+    else if (strcmp(prog_name, "copy") == 0)
+    {
+        FILE *fp;
+        FILE *fq;
+        char *q;
+        int c;
+
+        q = strchr((char *)p + 1, ' ');
+        if (q == NULL)
+        {
+            printf("two filenames required\n");
+        }
+        else
+        {
+            *q = '\0';
+            fp = fopen((char *)p + 1, "rb");
+            if (fp == NULL)
+            {
+                printf("can't open %s\n", p + 1);
+            }
+            else
+            {
+                fq = fopen(q + 1, "wb");
+                if (fq == NULL)
+                {
+                    printf("can't open %s\n", q + 1);
+                }
+                else
+                {
+                    while ((c = getc(fp)) != EOF)
+                    {
+                        putc(c, fq);
+                    }
+                    fclose(fq);
+                }
+                fclose(fp);
+            }
+        }
+        printf("enter another command, enter to exit\n");
+        continue;
+    }
 #endif
 
 #ifdef __CC64OS__
