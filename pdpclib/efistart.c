@@ -443,6 +443,100 @@ end:
     return Status;
 }
 
+static EFI_STATUS rename_file (EFI_FILE_PROTOCOL *file, const char *new_name)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID information_guid = EFI_FILE_INFO_GUID;
+    UINTN Read, buf_size;
+    EFI_FILE_INFO *Buffer;
+
+    buf_size = sizeof (*Buffer) + 2 /* Just enough space for 2 CHAR16 FileName for demonstration. */;
+
+    return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+
+    Read = buf_size;
+    Status = file->GetInfo (file, &information_guid, &Read, Buffer);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_BUFFER_TOO_SMALL) {
+        gBS->FreePool (Buffer);
+        buf_size = Read;
+        return_Status_if_fail (print_string ("had to increase size of buffer\n"));
+        return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+        return_Status_if_fail (file->GetInfo (file, &information_guid, &Read, Buffer));
+    }
+
+    return_Status_if_fail (print_string ("old name: '"));
+    return_Status_if_fail (gST->ConOut->OutputString (gST->ConOut, Buffer->FileName));
+    return_Status_if_fail (print_string ("'\n"));
+
+    {
+        UINTN new_buf_size;
+        EFI_FILE_INFO *new_Buffer;
+        int i;
+
+        new_buf_size = sizeof (*new_Buffer) + strlen (new_name) * 2;
+        return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, new_buf_size, (void **)&new_Buffer));
+
+        *new_Buffer = *Buffer;
+
+        for (i = 0; i < strlen (new_name) + 1; i++) {
+            new_Buffer->FileName[i] = new_name[i];
+        }
+
+        return_Status_if_fail (file->SetInfo (file, &information_guid, new_buf_size, new_Buffer));
+
+        gBS->FreePool (new_Buffer);
+    }
+
+    gBS->FreePool (Buffer);
+
+    return Status;
+}
+
+static EFI_STATUS rename_file_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    
+    EFI_FILE_PROTOCOL *EfiRoot;
+    EFI_FILE_PROTOCOL *dir;
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 Attributes = {0, 0};
+
+    CHAR16 dir_name[] = {'a', 'b', 'c', '\0'};
+
+    return_Status_if_fail (print_string ("start of rename file test\n"));
+
+    return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+    return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+    return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
+
+    return_Status_if_fail (print_string ("opening directory 'abc'\n"));
+
+    Status = EfiRoot->Open (EfiRoot, &dir, dir_name, OpenModeDirReadWrite, Attributes);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
+        return_Status_if_fail (print_string ("directory 'abc' not found, create it and restart test\n"));
+        goto end;
+    }
+    if (Status) return Status;
+
+    return_Status_if_fail (print_string ("success\n"));
+
+    return_Status_if_fail (print_string ("renaming directory to 'MnOp234'\n"));
+    rename_file (dir, "MnOp234");
+    return_Status_if_fail (print_string ("success\n"));
+
+    dir->Close (dir);
+end:
+    EfiRoot->Close (EfiRoot);
+
+    return_Status_if_fail (print_string ("end of rename file test\n"));
+
+    return Status;
+}
+
 #endif
 
 
@@ -511,6 +605,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #endif
 #if 0
     return_Status_if_fail (directory_test ());
+#endif
+#if 0
+    return_Status_if_fail (rename_file_test ());
 #endif
 
 #ifndef EFITEST
