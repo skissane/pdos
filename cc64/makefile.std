@@ -1,0 +1,22 @@
+# Compile a 32-bit version of cc64
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s
+AS=pdas --oformat coff
+COPTS=-S -fno-common -DBLDGENERIC -D__WIN32__ -D__CC64__ -I . -I ../pdpclib
+
+all: cc64.exe
+
+cc64.exe: cc32n.obj
+  $(LD) -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o $@ ../pdpclib/w32start.obj cc32n.obj ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj
+  rm -f cc64.exe
