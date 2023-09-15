@@ -442,6 +442,9 @@ typedef struct {
 #define EFI_FILE_PROTOCOL_REVISION2 0x00020000
 #define EFI_FILE_PROTOCOL_LATEST_REVISION EFI_FILE_PROTOCOL_REVISION2
 
+#define EFI_FILE_INFO_GUID \
+ {0x09576e92,0x6d3f,0x11d2,{0x8e,0x39,0x00,0xa0,0xc9,0x69,0x72,0x3b}}
+ 
 typedef struct {
     UINT64 Size; /* Of the struct. */
     UINT64 FileSize;
@@ -487,8 +490,14 @@ typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_POSITION) (IN struct _EFI_FILE_PROTOCOL
                                                     OUT UINT64 *Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
                                                     IN UINT64 Position);
-
-
+typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_INFO) (IN struct _EFI_FILE_PROTOCOL *This,
+                                                IN EFI_GUID *InformationType,
+                                                IN OUT UINTN *BufferSize,
+                                                OUT void *Buffer);
+typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_INFO) (IN struct _EFI_FILE_PROTOCOL *This,
+                                                IN EFI_GUID *InformationType,
+                                                IN UINTN BufferSize,
+                                                IN void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_FLUSH) (IN struct _EFI_FILE_PROTOCOL *This);
 #endif
 
@@ -512,8 +521,8 @@ typedef struct _EFI_FILE_PROTOCOL {
     EFI_FILE_WRITE Write;
     EFI_FILE_GET_POSITION GetPosition;
     EFI_FILE_SET_POSITION SetPosition;
-    void *GetInfo;
-    void *SetInfo;
+    EFI_FILE_GET_INFO GetInfo;
+    EFI_FILE_SET_INFO SetInfo;
     EFI_FILE_FLUSH Flush;
     /* Added with revision 2. */
     void *OpenEx;
