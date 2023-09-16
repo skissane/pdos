@@ -214,7 +214,13 @@ int main(int argc, char **argv)
     }
     if (!quiet && !need_usage)
     {
-        printf("bios starting\n");
+        printf("\nbios starting\n");
+#ifdef W64HACK
+        printf("type in \"dir\" to get a list of files\n");
+        printf("type in \"type\" to show the contents of a file\n");
+        printf("type in \"me file.txt\" to edit a file\n");
+        printf("ctrl-x, ctrl-s saves; ctrl-x, ctrl-c quits\n");
+#endif
     }
     if (!valid && !need_usage)
     {
