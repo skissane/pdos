@@ -4417,7 +4417,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
         {
             stdin_buffered = 0;
         }
-#elif defined(__MSDOS__)
+#elif defined(__MSDOS__) && !defined(__ARM__) && !defined(__gnu_linux__)
         if (stream == stdin)
         {
             unsigned int dw;
@@ -4482,7 +4482,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
                 PosSetDeviceInformation(0, dw);
             }
         }
-#elif defined(__MSDOS__)
+#elif defined(__MSDOS__) && !defined(__ARM__) && !defined(__gnu_linux__)
         if (mode == _IOLBF)
         {
             if (stream == stdin)
