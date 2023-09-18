@@ -84,9 +84,10 @@ extern int __start(char *p);
 
 #ifdef __CC64OS__
 extern long long __ncallbacks;
+#endif
 
+#ifdef W64HACK
 extern char __cwd[FILENAME_MAX];
-
 #endif
 
 int their_start(char *parm);
@@ -252,7 +253,7 @@ int main(int argc, char **argv)
         {
             if (fgets(buf, sizeof buf, scr) == NULL)
             {
-#ifdef __CC64OS__
+#ifdef W64HACK
                 if (scr == stdin) break;
                 fclose(scr);
                 scr = stdin;
@@ -261,7 +262,7 @@ int main(int argc, char **argv)
                 break;
 #endif
             }
-#ifdef __CC64OS__
+#ifdef W64HACK
             if (scr != stdin) printf("%s", buf);
 #endif
             p = (unsigned char *)strchr(buf, '\n');
@@ -273,7 +274,7 @@ int main(int argc, char **argv)
             {
                 if (scr == stdin)
                 {
-#ifdef __CC64OS__
+#ifdef W64HACK
                     continue;
 #else
                     break;
@@ -387,7 +388,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#ifdef __CC64OS__
+#ifdef W64HACK
     strcpy(new_prog_name, prog_name);
     if (strstr(new_prog_name, ".exe") == NULL)
     {
@@ -503,7 +504,7 @@ int main(int argc, char **argv)
         {
             break;
         }
-#ifdef __CC64OS__
+#ifdef W64HACK
     printf("enter another command, exit to exit\n");
 #else
     printf("enter another command, enter to exit\n");
