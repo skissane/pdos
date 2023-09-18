@@ -132,7 +132,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
     size_t *x = NULL;
 
-#if 0
+#if 1
     if (__gBS->AllocatePool(EfiLoaderData, size + sizeof(size_t), (void **)&x)
         != EFI_SUCCESS)
     {
@@ -378,7 +378,7 @@ __PDPCLIB_API__ void free(void *ptr)
     if (ptr != NULL)
     {
         ptr = (char *)ptr - sizeof(size_t);
-#if 0
+#if 1
         __gBS->FreePool(ptr);
 #else
         {
