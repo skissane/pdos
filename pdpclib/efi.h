@@ -258,7 +258,8 @@ typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_PAGES) (IN EFI_ALLOCATE_TYPE Type,
                                                  IN EFI_MEMORY_TYPE MemoryType,
                                                  IN UINTN Pages,
                                                  IN OUT EFI_PHYSICAL_ADDRESS *Memory);
-typedef EFI_STATUS (EFIAPI *EFI_FREE_PAGES) (IN EFI_PHYSICAL_ADDRESS Memory, IN UINTN Pages);
+typedef EFI_STATUS (EFIAPI *EFI_FREE_PAGES)
+    (IN void * /* EFI_PHYSICAL_ADDRESS */ Memory, IN UINTN Pages);
 typedef EFI_STATUS (EFIAPI *EFI_GET_MEMORY_MAP) (IN OUT UINTN *MemoryMapSize,
                                                  OUT EFI_MEMORY_DESCRIPTOR *MemoryMap,
                                                  OUT UINTN *MapKey,
