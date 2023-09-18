@@ -118,21 +118,48 @@ __PDPCLIB_API__ void *malloc(size_t size)
 /* Note that at some point we probably want to constrain memory allocation to
    keep memory below 4 GiB. Here is an example of memory being allocated
    below 2 GiB - 5 pages of 4096 bytes each:
-   
+
    EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
    UINTN num_pages = 5;
    if (__gBS->AllocatePages (AllocateMaxAddress, EfiLoaderData, num_pages, &mem))
    if (__gBS->FreePages (mem, num_pages))
+
+   Note that apparently cc64 generates object files that expect the program
+   to be loaded under 2 GiB. It may be the lea is getting the sign bit from
+   a 32-bit computed value propagated into the upper 32 bits. So it is time
+   to constrain, and the constraint will be 2 GiB, not 4 Gib.
 */
 
     size_t *x = NULL;
 
+#if 0
     if (__gBS->AllocatePool(EfiLoaderData, size + sizeof(size_t), (void **)&x)
         != EFI_SUCCESS)
     {
         return (NULL);
     }
     *x = size;
+#else
+    EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
+    size_t num_pages;
+
+    num_pages = size + sizeof(size_t);
+    if ((num_pages % 4096) != 0)
+    {
+        num_pages += 4096;
+    }
+    num_pages /= 4096;
+    if (__gBS->AllocatePages(AllocateMaxAddress,
+                             EfiLoaderData,
+                             (UINTN)num_pages,
+                             &mem)
+        != EFI_SUCCESS)
+    {
+        return (NULL);
+    }
+    x = (void *)(UINTN)mem;
+    *x = num_pages * 4096;
+#endif
     return (x + 1);
 #endif
 #ifdef __OS2__
@@ -347,7 +374,16 @@ __PDPCLIB_API__ void free(void *ptr)
     if (ptr != NULL)
     {
         ptr = (char *)ptr - sizeof(size_t);
+#if 0
         __gBS->FreePool(ptr);
+#else
+        {
+            UINTN num_pages;
+
+            num_pages = *(size_t *)ptr / 4096;
+            __gBS->FreePages(ptr, num_pages);
+        }
+#endif
     }
 #endif
 #ifdef __OS2__
