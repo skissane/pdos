@@ -211,7 +211,11 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
 #define __stdout (*(__gtout()))
 #define __stderr (*(__gterr()))
 
-#if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__)
+
+/* the W64SHELL should replace CC64OS */
+
+#if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__) \
+    || defined(__W64SHELL__)
 /* For Windows stdin, stdout and stderr macros
  * are implemented using an array FILE _iob[]
  * where the first three members
@@ -232,13 +236,14 @@ typedef struct
 } __DUMMYFILE;
 
 #if !defined(__PDPCLIB_DLL) && !defined(__CC64OS__)
-#if !defined(__SUBC__) && !defined(__NODECLSPEC__) && !defined(__CC64__)
+#if !defined(__SUBC__) && !defined(__NODECLSPEC__) && !defined(__CC64__) \
+    && !defined(__W64SHELL__)
 
 __declspec(dllimport) __DUMMYFILE _iob[3];
 
 #else
 
-#if defined(__CC64__)
+#if defined(__CC64__) || defined(__W64SHELL__)
 extern __DUMMYFILE *__iob_func(void);
 #elif defined(__64BIT__)
 extern __DUMMYFILE *_imp__iob;
@@ -251,14 +256,14 @@ extern __DUMMYFILE *_imp___iob;
 
 #if !defined(__SUBC__) && !defined(__NODECLSPEC__) && \
     !(defined(__CC64__) && !defined(__PDPCLIB_DLL)) && \
-    !defined(__CC64OS__)
+    !defined(__CC64OS__) && !defined(__W64SHELL__)
 #define stdin ((FILE *) &(_iob[0]))
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
 #else
 
-#if defined(__CC64__)
-#if defined(__CC64OS__)
+#if defined(__CC64__) || defined(__W64SHELL__)
+#if defined(__CC64OS__) || defined(__W64SHELL__)
 extern __DUMMYFILE _iob[3];
 extern __DUMMYFILE *__iob_func(void);
 #endif
