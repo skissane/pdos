@@ -984,6 +984,7 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "p2align",    &handler_p2align        },
     { "quad",       &handler_quad           },
     { "rva",        &handler_rva            },
+    { "set",        &handler_equ            },
     { "space",      &handler_space          },
     { "text",       &handler_text           },
     { "word",       &handler_word           },
