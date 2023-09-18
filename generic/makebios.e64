@@ -9,18 +9,19 @@
 CC=x86_64-w64-mingw32-gcc
 #AR=x86_64-w64-mingw32-ar
 AR=ar
-#LD=x86_64-w64-mingw32-ld
-LD=pdld --no-insert-timestamp
-#AS=x86_64-w64-mingw32-as
-AS=pdas --64 --oformat coff
+LD=x86_64-w64-mingw32-ld
+#LD=pdld --no-insert-timestamp
+AS=x86_64-w64-mingw32-as
+#AS=pdas --64 --oformat coff
 COPTS=-S -O2 -mno-red-zone -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
     -I../pdpclib -I../bios \
     -fno-common -ansi \
-    -DXTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DXW64HACK -DW32HACK
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -DXW32HACK -D__W64SHELL__
 
 all: clean bios.exe
 
-OBJS=../bios/exeload.o w32hack.o
+OBJS=../bios/exeload.o
+# w32hack.o
 
 bios.exe: bios.o $(OBJS)
     $(LD) -s -subsystem 10 -e efimain -nostdlib --image-base 0x400000 -o bios.exe bios.o $(OBJS) ../pdpclib/pdpefi.a
