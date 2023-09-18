@@ -149,15 +149,19 @@ __PDPCLIB_API__ void *malloc(size_t size)
         num_pages += 4096;
     }
     num_pages /= 4096;
+    x = *(size_t **)&mem;
     if (__gBS->AllocatePages(AllocateMaxAddress,
                              EfiLoaderData,
                              (UINTN)num_pages,
-                             &mem)
+                             (void *)&x)
         != EFI_SUCCESS)
     {
         return (NULL);
     }
-    x = (void *)(UINTN)mem;
+    if (x == NULL)
+    {
+        return (NULL);
+    }
     *x = num_pages * 4096;
 #endif
     return (x + 1);
