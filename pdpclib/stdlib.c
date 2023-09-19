@@ -132,7 +132,11 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
     size_t *x = NULL;
 
-#if 1
+/* for some reason the old algorithm works, even though it is returning
+   8-byte alignment which is probably wrong when SSE2 instructions are
+   involved. New algorithm requires 16-byte alignment for some things
+   at least */
+#if 0
     if (__gBS->AllocatePool(EfiLoaderData, size + sizeof(size_t), (void **)&x)
         != EFI_SUCCESS)
     {
@@ -143,7 +147,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
     EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
     size_t num_pages;
 
-    num_pages = size + sizeof(size_t);
+    num_pages = size + sizeof(size_t) * 2;
     if ((num_pages % 4096) != 0)
     {
         num_pages += 4096;
@@ -162,6 +166,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
     {
         return (NULL);
     }
+    x++;
     *x = num_pages * 4096;
 #endif
     return (x + 1);
@@ -378,14 +383,14 @@ __PDPCLIB_API__ void free(void *ptr)
     if (ptr != NULL)
     {
         ptr = (char *)ptr - sizeof(size_t);
-#if 1
+#if 0
         __gBS->FreePool(ptr);
 #else
         {
             UINTN num_pages;
 
             num_pages = *(size_t *)ptr / 4096;
-            __gBS->FreePages(ptr, num_pages);
+            __gBS->FreePages((char *)ptr - sizeof(size_t), num_pages);
         }
 #endif
     }
