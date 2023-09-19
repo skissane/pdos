@@ -1927,6 +1927,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)fgetc;
                         }
+                        else if (strcmp((char *)hintname, "getc") == 0)
+                        {
+                            *thunk = (unsigned long long)getc;
+                        }
                         else if (strcmp((char *)hintname, "putc") == 0)
                         {
                             *thunk = (unsigned long long)putc;
