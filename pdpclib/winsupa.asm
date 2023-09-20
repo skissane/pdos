@@ -136,7 +136,7 @@ L4:
     mov     dword ptr [ebp - 48],   ecx
     mov     dword ptr [ebp - 44],   ebx
     
-    sal     dword ptr [ebp - 24]
+    sal     dword ptr [ebp - 24], 1
 
 L2:
 
@@ -195,13 +195,13 @@ L7:
 
 L6:
 
-    shr     dword ptr [ebp - 24]
+    shr     dword ptr [ebp - 24], 1
     
     mov     eax,    dword ptr [ebp - 48]
     mov     edx,    dword ptr [ebp - 44]
     
     shrd    eax,    edx,    1
-    shr     edx
+    shr     edx, 1
     
     mov     dword ptr [ebp - 48],   eax
     mov     dword ptr [ebp - 44],   edx
