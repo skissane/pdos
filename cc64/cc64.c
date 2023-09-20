@@ -22449,6 +22449,7 @@ void cc_libmcl_genmc(i64 opcode,struct cc_libmcl_opndrec * a,struct cc_libmcl_op
     struct cc_libmcl_mclrec *  m;
     struct cc_libmcl_mclrec *  oldm;
     m = (struct cc_libmcl_mclrec *)(mlib_pcm_alloc((i64)32));
+    (*m).nextmcl = NULL; /* paul added this - should allocz be used instead? */
     (*m).lineno = cc_decls_clineno;
     (*m).opcode = (u64)(opcode);
     (*m).a = a;
