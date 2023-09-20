@@ -159,6 +159,9 @@ __PDPCLIB_API__ void *malloc(size_t size)
     }
     num_pages /= 4096;
     x = *(size_t **)&mem;
+#if 0
+    printf("requesting %d bytes\n", (int)size);
+#endif
     if (__gBS->AllocatePages(AllocateMaxAddress,
                              EfiLoaderData,
                              (UINTN)num_pages,
@@ -171,9 +174,19 @@ __PDPCLIB_API__ void *malloc(size_t size)
     {
         return (NULL);
     }
+#if 0
+    /* this can be useful to check for uninitialized memory.
+       Force it to a consistent value, and an odd number so
+       that it may generate an alignment issue */
+    memset(x, '\x99', num_pages * 4096);
+#endif
     *x = num_pages * 4096;
     x++;
     *x = size;
+#if 0
+    printf("returning %p\n", x + 1);
+#endif
+
 #endif
     return (x + 1);
 #endif
@@ -388,7 +401,11 @@ __PDPCLIB_API__ void free(void *ptr)
 #ifdef __EFI__
     if (ptr != NULL)
     {
+#if 0
+        printf("freeing %p\n", ptr);
+#endif
         ptr = (char *)ptr - sizeof(size_t) * 2;
+
 #if 0
         __gBS->FreePool(ptr);
 #else
@@ -399,6 +416,14 @@ __PDPCLIB_API__ void free(void *ptr)
                by the user (realloc needs this) plus the size we
                actually requested from EFI (we now need this) */
             num_pages = *(size_t *)ptr / 4096;
+#if 0
+            /* this may be useful for debugging purposes - trash
+	       the memory being freed before freeing it, with a
+	       consistent and odd value, so that if anyone attempts
+	       to use it after freeing they will hopefully get an
+	       alignment error */
+            memset(ptr, '\x77', num_pages * 4096);
+#endif
             __gBS->FreePages(ptr, num_pages);
         }
 #endif
