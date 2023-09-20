@@ -17,7 +17,7 @@ compete with the Microsoft/IBM monopolies.
 INTRODUCTION
 ------------
 
-PDOS currently comes in 6 quite different flavors, in
+PDOS currently comes in some quite different flavors, in
 two broad categories (3 mainframe systems, 3 PC systems):
 
 
