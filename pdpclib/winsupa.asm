@@ -12,6 +12,10 @@ public __setj
 public __longj
 public __chkstk_ms
 public __switch
+public __umoddi3
+public __udivdi3
+public __moddi3
+public __divdi3
 
 __setj proc
         mov eax, [esp+4]
@@ -93,4 +97,209 @@ no:	loop	next
 	jmp	eax
 
 
+udivmodsi3:
+
+    push    ebp
+    mov     ebp,    esp
+    
+    push    edi
+    push    esi
+    push    ebx
+    
+    sub     esp,    36
+    
+    mov     ecx,    dword ptr [ebp + 8]
+    mov     dword ptr [ebp - 40],   ecx
+    
+    mov     ecx,    dword ptr [ebp + 12]
+    mov     dword ptr [ebp - 36],   ecx
+    
+    mov     ecx,    dword ptr [ebp + 16]
+    mov     dword ptr [ebp - 48],   ecx
+    
+    mov     ecx,    dword ptr [ebp + 20]
+    mov     dword ptr [ebp - 44],   ecx
+    
+    mov     dword ptr [ebp - 24],   1
+    mov     dword ptr [ebp - 20],   0
+    
+    jmp     L2
+
+L4:
+
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
+    
+    shld    ebx,    ecx,    1
+    add     ecx,    ecx
+    
+    mov     dword ptr [ebp - 48],   ecx
+    mov     dword ptr [ebp - 44],   ebx
+    
+    sal     dword ptr [ebp - 24]
+
+L2:
+
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
+    
+    cmp     ecx,    dword ptr [ebp - 40]
+    sbb     ebx,    dword ptr [ebp - 36]
+    jnc     L5
+    
+    cmp     dword ptr [ebp - 24],   0
+    jnb     L5
+    
+    mov     ecx,    dword ptr [ebp - 48]
+    and     ecx,    -2147483648
+    
+    mov     eax,    ecx
+    mov     ecx,    dword ptr [ebp - 44]
+    and     ch,     -1
+    
+    mov     edi,    ecx
+    mov     ebx,    eax
+    xor     bh,     0
+    
+    mov     edi,    ebx
+    mov     ebx,    edx
+    xor     bh,     0
+    
+    mov     edi,    ebx
+    mov     ecx,    edi
+    or      ecx,    esi
+    
+    test    ecx,    ecx
+    jna     L4
+    
+    jmp     L5
+
+L7:
+
+    mov     eax,    dword ptr [ebp - 40]
+    mov     edx,    dword ptr [ebp - 36]
+    
+    cmp     eax,    dword ptr [ebp - 48]
+    mov     eax,    edx
+    sbb     eax,    dword ptr [ebp - 44]
+    jc      L6
+    
+    mov     eax,    dword ptr [ebp - 48]
+    mov     edx,    dword ptr [ebp - 44]
+    
+    sub     dword ptr [ebp - 40],   eax
+    sbb     dword ptr [ebp - 36],   edx
+    
+    mov     eax,    dword ptr [ebp - 24]
+    or      dword ptr [ebp - 20],   eax
+
+L6:
+
+    shr     dword ptr [ebp - 24]
+    
+    mov     eax,    dword ptr [ebp - 48]
+    mov     edx,    dword ptr [ebp - 44]
+    
+    shrd    eax,    edx,    1
+    shr     edx
+    
+    mov     dword ptr [ebp - 48],   eax
+    mov     dword ptr [ebp - 44],   edx
+
+L5:
+
+    cmp     dword ptr [ebp - 24],   0
+    jne     L7
+    
+    cmp     dword ptr [ebp + 24],   0
+    je      L8
+    
+    mov     eax,    dword ptr [ebp - 40]
+    mov     edx,    dword ptr [ebp - 36]
+    
+    jmp     L9
+
+L8:
+
+    mov     eax,    dword ptr [ebp - 20]
+    xor     edx,    edx
+
+L9:
+
+    add     esp,    36
+    pop     ebx
+    pop     esi
+    pop     edi
+    pop     ebp
+    ret
+
+
+__umoddi3:
+
+    push    ebp
+    mov     ebp,    esp
+    
+    push    dword ptr 1
+    push    dword ptr [ebp + 20]
+    push    dword ptr [ebp + 16]
+    push    dword ptr [ebp + 12]
+    push    dword ptr [ebp + 8]
+
+    call    udivmodsi3
+    add     esp,    20
+   
+    pop     ebp
+    ret
+
+__udivdi3:
+
+    push    ebp
+    mov     ebp,    esp
+
+    push    dword ptr 0
+    push    dword ptr [ebp + 20]
+    push    dword ptr [ebp + 16]
+    push    dword ptr [ebp + 12]
+    push    dword ptr [ebp + 8]
+
+    call    udivmodsi3
+    add     esp,    20
+
+    pop     ebp
+    ret
+    
+__moddi3:
+
+    push    ebp
+    mov     ebp,    esp
+    
+    push    dword ptr 1
+    push    dword ptr [ebp + 20]
+    push    dword ptr [ebp + 16]
+    push    dword ptr [ebp + 12]
+    push    dword ptr [ebp + 8]
+
+    call    udivmodsi3
+    add     esp,    20
+   
+    pop     ebp
+    ret
+
+__divdi3:
+
+    push    ebp
+    mov     ebp,    esp
+
+    push    dword ptr 0
+    push    dword ptr [ebp + 20]
+    push    dword ptr [ebp + 16]
+    push    dword ptr [ebp + 12]
+    push    dword ptr [ebp + 8]
+
+    call    udivmodsi3
+    add     esp,    20
+
+    pop     ebp
+    ret
+    
 end
