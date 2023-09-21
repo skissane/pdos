@@ -539,6 +539,63 @@ end:
 
 #endif
 
+#if 0
+static EFI_STATUS all_disks_block_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
+    EFI_HANDLE *handles = NULL;
+    UINTN BufferSize = 0;
+    UINTN i;
+
+    return_Status_if_fail (print_string ("all_disks_block_test\n"));
+
+    Status = gBS->LocateHandle (ByProtocol, &block_io_guid, NULL, &BufferSize, handles);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_BUFFER_TOO_SMALL) {
+        return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, BufferSize, (void **)&handles));
+        return_Status_if_fail (gBS->LocateHandle (ByProtocol, &block_io_guid, NULL, &BufferSize, handles));
+    } else {
+       return_Status_if_fail (print_string ("Failed\n"));
+       return Status;
+    }
+
+    return_Status_if_fail (print_string ("looping over found handles with block IO protocols:\n"));
+    for (i = 0; i < BufferSize / sizeof (*handles); i++) {
+        EFI_BLOCK_IO_PROTOCOL *bio_protocol;
+
+        return_Status_if_fail (print_string ("obtaining block IO protocol\n"));
+        return_Status_if_fail (gBS->HandleProtocol (handles[i], &block_io_guid, (void **)&bio_protocol));
+        return_Status_if_fail (print_string ("done\n"));
+
+        return_Status_if_fail (print_string ("trying to read a block\n"));
+        {
+            void *buffer;
+            EFI_LBA LBA = {1, 0};
+            
+            return_Status_if_fail (print_string ("Allocating buffer with size of a block\n"));
+            return_Status_if_fail (gBS->AllocatePool (EfiLoaderData, bio_protocol->Media->BlockSize, &buffer));
+
+            return_Status_if_fail (print_string ("Reading a block at LBA 1\n"));
+            return_Status_if_fail (bio_protocol->ReadBlocks (bio_protocol,
+                                                             bio_protocol->Media->MediaId,
+                                                             LBA,
+                                                             bio_protocol->Media->BlockSize,
+                                                             buffer));
+
+            return_Status_if_fail (print_string ("Freeing buffer\n"));
+            return_Status_if_fail (gBS->FreePool (buffer));
+        }
+        return_Status_if_fail (print_string ("success reading\n"));
+    }
+    return_Status_if_fail (print_string ("done looping\n"));
+
+    return_Status_if_fail (gBS->FreePool (handles));
+    return_Status_if_fail (print_string ("success\n"));
+
+    return Status;
+}
+#endif
+
 
 int __start(int argc, char **argv);
 
@@ -608,6 +665,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #endif
 #if 0
     return_Status_if_fail (rename_file_test ());
+#endif
+#if 0
+    return_Status_if_fail (all_disks_block_test());
 #endif
 
 #ifndef EFITEST
