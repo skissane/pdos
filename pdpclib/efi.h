@@ -270,6 +270,18 @@ typedef EFI_STATUS (EFIAPI *EFI_FREE_POOL) (IN void *Buffer);
 
 typedef EFI_STATUS (EFIAPI *EFI_WAIT_FOR_EVENT) (IN UINTN NumberOfEvents, IN EFI_EVENT *Event, OUT UINTN *Index);
 
+typedef enum {
+    AllHandles,
+    ByRegisterNotify,
+    ByProtocol
+} EFI_LOCATE_SEARCH_TYPE;
+
+typedef EFI_STATUS (EFIAPI *EFI_LOCATE_HANDLE) (IN EFI_LOCATE_SEARCH_TYPE SearchType,
+                                                IN EFI_GUID *Protocol OPTIONAL,
+                                                IN void *SearchKey OPTIONAL,
+                                                IN OUT UINTN *BufferSize,
+                                                OUT EFI_HANDLE *Buffer);
+
 typedef EFI_STATUS (EFIAPI *EFI_EXIT_BOOT_SERVICES) (IN EFI_HANDLE ImageHandle, IN UINTN MapKey);
 
 typedef EFI_STATUS (EFIAPI *EFI_SET_WATCHDOG_TIMER) (IN UINTN Timeout, IN UINT64 WatchdogCode, IN UINTN DataSize, IN CHAR16 *WatchdogData);
@@ -338,7 +350,7 @@ typedef struct {
     EFI_HANDLE_PROTOCOL HandleProtocol;
     void *Reserved;
     void *RegisterProtocolNotify;
-    void *LocateHandle;
+    EFI_LOCATE_HANDLE LocateHandle;
     void *LocateDevicePath;
     void *InstallConfigurationTable;
 
