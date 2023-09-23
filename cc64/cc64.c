@@ -18169,8 +18169,12 @@ L608 :;
                 t = (!!((u64)(d.isunsigned))?(i64)8:(i64)3);
             } else if (!!((u64)(d.islong))) {
                 if (!!(cc_decls_wintarget)) {
-                    t = (!!((u64)(d.isunsigned))?(i64)9:(i64)4);
-                } else {
+#ifndef LONG64
+    			t = (!!((u64)(d.isunsigned))?(i64)9:(i64)4);
+#else
+			t = (!!((u64)(d.isunsigned))?(i64)10:(i64)5);
+#endif
+		} else {
                     t = (!!((u64)(d.isunsigned))?(i64)10:(i64)5);
                 };
             } else if (!!((u64)(d.isllong))) {
