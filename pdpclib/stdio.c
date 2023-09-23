@@ -3480,7 +3480,9 @@ __PDPCLIB_API__ int fputc(int c, FILE *stream)
             {
                 if (stream->bufTech == _IOFBF)
                 {
+#if !defined(__ARM__) && !defined(__gnu_linux__)
                     *stream->upto++ = '\r';
+#endif
                     *stream->upto++ = '\n';
                 }
                 else
