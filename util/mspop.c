@@ -179,7 +179,15 @@ static int DriverSB_SetChannel(int base, signed int channel,
     if (channel == 0)
         channel = -1;
     /* Get linear address of data pointer */
+#ifdef __32BIT__
+    /* copy data to lower 640k - address range
+       0x80000-0x90000 is hopefully unused */
+    addr = 0x80000;
+    memcpy((char *)addr, (char *)def_addr, len);
+#else
     addr = ((def_addr >> 16) * 16) + (def_addr & 0xFFFF);
+#endif
+    outb(0x82 + channel, (addr >> 16) & 0xFF);
     addr = (addr & 0xFFFE);
     /* Output the stuff to the SB16 ports */
     outb(0x01 + channel, (addr & 0xFF));
