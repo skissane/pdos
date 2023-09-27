@@ -795,10 +795,16 @@ static void osfopen(void)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     static EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    EFI_FILE_PROTOCOL *new_file;
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static UINT64 OpenModeRead = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
+    static UINT64 OpenModeWrite = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE;
+    static UINT64 Attributes = 0;
+#else
     static UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
     static UINT64 OpenModeWrite = {0x3, 0x80000000}; /* Read+Write+Create */
-    EFI_FILE_PROTOCOL *new_file;
     static UINT64 Attributes = {0, 0};
+#endif
     CHAR16 file_name[FILENAME_MAX];
     int x;
     static EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
@@ -1853,7 +1859,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     static int numpending = 0;
     static char pending[20];
 #ifdef __EFIBIOS__
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static EFI_LBA LBA = 1;
+#else
     static EFI_LBA LBA = {1, 0};
+#endif
 #endif
 #endif
 #ifdef __OS2__
@@ -1893,7 +1903,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             printf("but sector is %d\n", (int)bio_protocol->Media->BlockSize);
             for (;;) ;
         }
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+        LBA = stream->sector;
+#else
         LBA.a = stream->sector;
+#endif
         Status = bio_protocol->ReadBlocks (bio_protocol,
                                            bio_protocol->Media->MediaId,
                                            LBA,
@@ -3601,9 +3615,14 @@ __PDPCLIB_API__ int remove(const char *filename)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     static EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
-    static UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
     EFI_FILE_PROTOCOL *new_file;
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static UINT64 OpenModeRead = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
+    static UINT64 Attributes = 0;
+#else
+    static UINT64 OpenModeRead = {0x3, 0}; /* Read+Write */
     static UINT64 Attributes = {0, 0};
+#endif
     CHAR16 file_name[FILENAME_MAX];
     int x;
     static EFI_GUID block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
@@ -4188,7 +4207,12 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         else
         {
 #endif
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+        Position = newpos;
+#else
         Position.a = newpos;
+        Position.b = 0;
+#endif
         Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, Position);
         if (Status != EFI_SUCCESS)
         {

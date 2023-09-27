@@ -29,6 +29,10 @@ typedef struct {
     UINT16 b;
 } UINT32;
 typedef struct {
+    UINT32 a;
+    UINT32 b;
+} UINT64;
+typedef struct {
     UINT8 a;
     UINT8 b;
 } INT16;
@@ -38,19 +42,25 @@ typedef struct {
 } INT32;
 #else
 typedef unsigned short UINT16;
+typedef short INT16;
 #ifdef __LONG64__
 typedef unsigned int UINT32;
+typedef int INT32;
+typedef unsigned long UINT64;
 #else
 typedef unsigned long UINT32;
-#endif
-typedef short INT16;
 typedef long INT32;
-#endif
-
+#ifndef __NO_LONG_LONG__
+typedef unsigned long long UINT64;
+#else
+#define __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
 typedef struct {
     UINT32 a;
     UINT32 b;
 } UINT64;
+#endif
+#endif
+#endif
 
 typedef char CHAR8;
 typedef short CHAR16;

@@ -609,7 +609,6 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #ifndef EFITEST
     EFI_STATUS Status, Status2;
     UINTN Index;
-    UINT64 dummy_watchdog_code = {0, 0};
     char *argv[2] = { "prog", NULL };
     static EFI_GUID sp_guid = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
     EFI_SHELL_PARAMETERS_PROTOCOL *sp_protocol;
@@ -619,6 +618,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_SHELL_PROTOCOL *shell_protocol;
     int x;
     int y;
+#ifdef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static UINT64 dummy_watchdog_code = {0, 0};
+#endif
 #endif
 #if 0
     CHAR16 message[] = {'S','h','e','l','l',' ','t','e','s','t','\r','\n','\0'};
@@ -630,8 +632,12 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     __gBS = __gST->BootServices;
 
 #ifndef EFITEST
-    if ((Status = __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0))) {
-
+#ifdef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    if ((Status = __gST->BootServices->SetWatchdogTimer (0, dummy_watchdog_code, 0, (CHAR16 *)0)))
+#else
+    if ((Status = __gST->BootServices->SetWatchdogTimer (0, 0, 0, (CHAR16 *)0)))
+#endif
+    {
         switch (Status & 0xff) {
 
             case EFI_INVALID_PARAMETER:

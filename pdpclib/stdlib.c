@@ -149,7 +149,11 @@ __PDPCLIB_API__ void *malloc(size_t size)
     x++;
     *x = size;
 #else
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    EFI_PHYSICAL_ADDRESS mem = 0x80000000;
+#else
     EFI_PHYSICAL_ADDRESS mem = {0x80000000, 0};
+#endif
     size_t num_pages;
 
     num_pages = size + sizeof(size_t) * 2;
