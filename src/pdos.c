@@ -994,13 +994,15 @@ void pdosRun(void)
     /* We don't want to use the region 0x100000 to 0x110000 in case
     someone else wants to use it for 16-bit device drivers etc.
     And while we're at it, we'll skip 0x110000 to 0x200000 in case
-    the A20 line is disabled, so this way they get at least 1 meg
-    they can use. */
+    the A20 line is disabled, so this way they get at least 0.5 meg
+    which should be enough to load the command processor. We should
+    really allow the command processor to be loaded in the first
+    640k even. */
     memavail = BosExtendedMemorySize();
     printf("detected %lu bytes of extended memory\n", memavail);
-    if (memavail < 4L*1024*1024)
+    if (memavail < 2621440L)
     {
-        printf("less than 4 MiB available - system halting\n");
+        printf("less than 2.5 MiB available - system halting\n");
         for (;;) ;
     }
 #if 0
