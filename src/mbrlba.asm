@@ -103,7 +103,7 @@ mov bp,offset no_lba_extensions
 jc fatal_error
 cmp bx,0aa55h
 jnz fatal_error
-; Bit 1 says whether AH=42H is supported or not
+; Bit 0 says whether AH=42H is supported or not
 and cx, 1
 jz fatal_error
 
