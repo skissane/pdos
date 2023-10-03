@@ -998,13 +998,20 @@ void pdosRun(void)
     which should be enough to load the command processor. We should
     really allow the command processor to be loaded in the first
     640k even. */
+    /* According to RBIL, this is supposed to return the amount
+       of memory above 1 MiB, but I suspect some BIOSes are
+       returning memory above 640k. We assume 1 MiB here. */
     memavail = BosExtendedMemorySize();
     printf("detected %lu bytes of extended memory\n", memavail);
-    if (memavail < 2621440L)
+    /* We're looking for 1.5 MiB above 1 MiB */
+    if (memavail < 1572864L)
     {
-        printf("less than 2.5 MiB available - system halting\n");
+        printf("less than 2.5 MiB total available - system halting\n");
         for (;;) ;
     }
+    /* We actually want total memory for further calculations,
+       so add the 1 MiB low memory that is assumed to exist. */
+    memavail += 1048576L;
 #if 0
     printf("map return is %x\n", BosSystemMemoryMap(transferbuf, 20, 0));
     printf("first block %08X %08X\n", *(int *)(transferbuf + 8),
