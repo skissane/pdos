@@ -925,3 +925,5 @@ domain, if you create a new source file, include
 an explicit PD notice.  It is my intention to build
 up a completely public domain system for use by EVERYONE,
 including commercial vendors of operating systems.
+Note that there is a Discord group that the author runs,
+see link at the bottom of http://pdos.org
