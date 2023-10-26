@@ -50,6 +50,8 @@ static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
 static unsigned short MajorSubsystemVersion = 4;
 static unsigned short MinorSubsystemVersion = 0;
 static unsigned short Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+static unsigned long SizeOfStackReserve = 0x200000;
+static unsigned long SizeOfStackCommit = 0x1000;
 
 static long size_of_headers;
 
@@ -1297,9 +1299,9 @@ void coff_write (const char *filename)
         if (nx_compat) optional_hdr_plus.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
         if (can_be_relocated) optional_hdr_plus.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
 
+        optional_hdr_plus.SizeOfStackReserve = SizeOfStackReserve;
+        optional_hdr_plus.SizeOfStackCommit = SizeOfStackCommit;
         /* No idea how to determine the following. */
-        optional_hdr_plus.SizeOfStackReserve = 0x200000;
-        optional_hdr_plus.SizeOfStackCommit = 0x1000;
         optional_hdr_plus.SizeOfHeapReserve = 0x100000;
         optional_hdr_plus.SizeOfHeapCommit = 0x1000;
 
@@ -1345,9 +1347,9 @@ void coff_write (const char *filename)
         if (nx_compat) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
         if (can_be_relocated) optional_hdr.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
 
+        optional_hdr.SizeOfStackReserve = SizeOfStackReserve;
+        optional_hdr.SizeOfStackCommit = SizeOfStackCommit;
         /* No idea how to determine the following. */
-        optional_hdr.SizeOfStackReserve = 0x200000;
-        optional_hdr.SizeOfStackCommit = 0x1000;
         optional_hdr.SizeOfHeapReserve = 0x100000;
         optional_hdr.SizeOfHeapCommit = 0x1000;
 
@@ -2206,7 +2208,7 @@ struct archive_member_header {
     unsigned long size;
 };
 
-static void read_archive_member_header (unsigned char *pos, struct archive_member_header *hdr)
+static void read_archive_member_header (const unsigned char *pos, struct archive_member_header *hdr)
 {
     struct IMAGE_ARCHIVE_MEMBER_HEADER_internal member_header;
     char *tmp;
@@ -2431,6 +2433,7 @@ enum option_index {
     COFF_OPTION_FILE_ALIGNMENT,
     COFF_OPTION_IMAGE_BASE,
     COFF_OPTION_SECTION_ALIGNMENT,
+    COFF_OPTION_STACK_COMMIT,
     COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
@@ -2450,6 +2453,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("file-alignment"), COFF_OPTION_FILE_ALIGNMENT, OPTION_HAS_ARG},
     { STR_AND_LEN("image-base"), COFF_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
     { STR_AND_LEN("section-alignment"), COFF_OPTION_SECTION_ALIGNMENT, OPTION_HAS_ARG},
+    { STR_AND_LEN("stack-commit"), COFF_OPTION_STACK_COMMIT, OPTION_HAS_ARG},
     { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
@@ -2471,6 +2475,7 @@ void coff_print_help (void)
     printf ("  --file-alignment <size>            Set file alignment\n");
     printf ("  --image-base <address>             Set base address of the executable\n");
     printf ("  --section-alignment <size>         Set section alignment\n");
+    printf ("  --stack-commit <size>              Set size of the initial stack commit\n");
     printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
@@ -2536,6 +2541,23 @@ static void use_option (enum option_index option_index, char *arg)
 
                 if (SectionAlignment < FileAlignment) {
                     ld_warn ("section alignment must be greater than or equal to file alignment according to the specification");
+                }
+            }
+            break;
+
+        case COFF_OPTION_STACK_COMMIT:
+            {
+                char *p;
+                
+                SizeOfStackCommit = strtoul (arg, &p, 0);
+                if (SizeOfStackCommit == 0) SizeOfStackCommit = 0x1000;
+                if (*p != '\0') {
+                    ld_error ("invalid stack commit size number '%s'", arg);
+                    break;
+                }
+
+                if (SizeOfStackCommit > SizeOfStackReserve) {
+                    SizeOfStackReserve = SizeOfStackCommit;
                 }
             }
             break;
