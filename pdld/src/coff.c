@@ -2433,7 +2433,7 @@ enum option_index {
     COFF_OPTION_FILE_ALIGNMENT,
     COFF_OPTION_IMAGE_BASE,
     COFF_OPTION_SECTION_ALIGNMENT,
-    COFF_OPTION_STACK_COMMIT,
+    COFF_OPTION_STACK,
     COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
@@ -2453,7 +2453,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("file-alignment"), COFF_OPTION_FILE_ALIGNMENT, OPTION_HAS_ARG},
     { STR_AND_LEN("image-base"), COFF_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
     { STR_AND_LEN("section-alignment"), COFF_OPTION_SECTION_ALIGNMENT, OPTION_HAS_ARG},
-    { STR_AND_LEN("stack-commit"), COFF_OPTION_STACK_COMMIT, OPTION_HAS_ARG},
+    { STR_AND_LEN("stack"), COFF_OPTION_STACK, OPTION_HAS_ARG},
     { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
@@ -2475,7 +2475,8 @@ void coff_print_help (void)
     printf ("  --file-alignment <size>            Set file alignment\n");
     printf ("  --image-base <address>             Set base address of the executable\n");
     printf ("  --section-alignment <size>         Set section alignment\n");
-    printf ("  --stack-commit <size>              Set size of the initial stack commit\n");
+    printf ("  --stack <reserve size>[,<commit size>]\n"
+            "                                     Set size of the initial stack\n");
     printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
@@ -2545,19 +2546,25 @@ static void use_option (enum option_index option_index, char *arg)
             }
             break;
 
-        case COFF_OPTION_STACK_COMMIT:
+        case COFF_OPTION_STACK:
             {
                 char *p;
+
+                if (*arg != ',') {
+                    SizeOfStackReserve = strtoul (arg, &p, 0);
+                    if (*p == 0) break;
+                    if (*p != ',') {
+                        ld_error ("invalid stack reserve size number '%s'", arg);
+                        break;
+                    }
+                    arg = p;
+                }
                 
+                arg++;
                 SizeOfStackCommit = strtoul (arg, &p, 0);
-                if (SizeOfStackCommit == 0) SizeOfStackCommit = 0x1000;
                 if (*p != '\0') {
                     ld_error ("invalid stack commit size number '%s'", arg);
                     break;
-                }
-
-                if (SizeOfStackCommit > SizeOfStackReserve) {
-                    SizeOfStackReserve = SizeOfStackCommit;
                 }
             }
             break;
