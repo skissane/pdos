@@ -13,7 +13,7 @@
 
 typedef struct {
     unsigned char magic[2]; /* "MZ" or "ZM". */ /* 0 */
-    unsigned short num_last_page_bytes; /* 2 */
+    unsigned short num_last_page_bytes; /* 2 */ /* page = 512 bytes */
     unsigned short num_pages; /* 4 */
     unsigned short num_reloc_entries; /* 6 */
     unsigned short header_size; /* In paragraphs (16 byte). */ /* 8 */
