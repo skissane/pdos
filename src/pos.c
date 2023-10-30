@@ -1014,6 +1014,10 @@ int PosGetCurDir(int drive, char *dir)
     }
 }
 
+/* This function has used the wrong word - it is paragraphs
+   (ie 16 bytes) that are being allocated, not pages (512 bytes).
+   Should be corrected one day */
+
 void *PosAllocMemPages(unsigned int pages, unsigned int *maxpages)
 {
     union REGS regsin;
