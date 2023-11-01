@@ -131,6 +131,14 @@ void read_struct_optional_header_plus (struct optional_header_plus_internal *opt
     COPY(optional_header_plus, NumberOfRvaAndSizes, 4);
 }
 
+void read_struct_IMAGE_DATA_DIRECTORY (struct IMAGE_DATA_DIRECTORY_internal *IMAGE_DATA_DIRECTORY_internal, const void *memory)
+{
+    const struct IMAGE_DATA_DIRECTORY_file *IMAGE_DATA_DIRECTORY_file = memory;
+
+    COPY(IMAGE_DATA_DIRECTORY, VirtualAddress, 4);
+    COPY(IMAGE_DATA_DIRECTORY, Size, 4);
+}
+
 void read_struct_section_table_entry (struct section_table_entry_internal *section_table_entry_internal, const void *memory)
 {
     const struct section_table_entry_file *section_table_entry_file = memory;
@@ -202,6 +210,14 @@ void read_struct_string_table_header (struct string_table_header_internal *strin
     const struct string_table_header_file *string_table_header_file = memory;
 
     COPY(string_table_header, StringTableSize, 4);
+}
+
+void read_struct_IMAGE_BASE_RELOCATION (struct IMAGE_BASE_RELOCATION_internal *IMAGE_BASE_RELOCATION_internal, const void *memory)
+{
+    const struct IMAGE_BASE_RELOCATION_file *IMAGE_BASE_RELOCATION_file = memory;
+
+    COPY(IMAGE_BASE_RELOCATION, RVAOfBlock, 4);
+    COPY(IMAGE_BASE_RELOCATION, SizeOfBlock, 4);
 }
 
 void read_struct_IMAGE_ARCHIVE_MEMBER_HEADER (struct IMAGE_ARCHIVE_MEMBER_HEADER_internal *IMAGE_ARCHIVE_MEMBER_HEADER_internal, const void *memory)
