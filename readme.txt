@@ -896,6 +896,20 @@ fix soft tabs in uemacs
 get NT version of uemacs working
 get NT WriteConsoleOutput working properly
 
+Another thing I want to do is have a FAT32- file system
+that supports files bigger than 4 GiB. The chaining
+mechanism already allows that, so it's just the directory
+entry that can't report the new size. What I would like is
+that if the file size is (4 GiB - 1 MiB) or more, then the
+file size % (4 GiB - 1 MiB) is the number of bytes used in
+the last cluster, unless it is 0 in which case the last
+cluster is full. 1 MiB is for 256 sectors per cluster with
+a sector size of 4096. If sector size ever gets bigger than
+this then the 1 MiB value will get bigger too. Note that
+FAT32+ is another (unimplemented I think) proposal, hence
+FAT32-.
+
+
 
 
 OBTAINING
