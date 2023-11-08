@@ -24,6 +24,7 @@
  GENERATOR_MACRO(cpu_387) \
  GENERATOR_MACRO(cpu_687) \
  GENERATOR_MACRO(cpu_cmov) \
+ GENERATOR_MACRO(cpu_fxsr) \
  GENERATOR_MACRO(cpu_sse) \
  GENERATOR_MACRO(cpu_sse2) \
 \

@@ -148,6 +148,7 @@ static const struct cpu_arch_entry cpu_extensions[] = {
     {"387", CPU_387_INITIALIZER},
     {"687", CPU_687_INITIALIZER},
     {"cmov", CPU_CMOV_INITIALIZER},
+    {"fxsr", CPU_FXSR_INITIALIZER},
     {"sse", CPU_SSE_INITIALIZER}
 };
 
@@ -158,6 +159,7 @@ static const struct cpu_arch_entry cpu_no_extensions[] = {
     {"no387", CPU_387_INITIALIZER},
     {"no687", CPU_NO687_INITIALIZER},
     {"nocmov", CPU_CMOV_INITIALIZER},
+    {"nofxsr", CPU_FXSR_INITIALIZER},
     {"nosse", CPU_SSE_INITIALIZER}
 };
 
