@@ -14,18 +14,22 @@
 #define UINT16_MAX 0xffff
 #define UINT32_MAX 0xffffffff
 
-typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef signed short int16_t;
 typedef unsigned short uint16_t;
-typedef signed long int32_t;
 typedef unsigned long uint32_t;
-typedef signed long long int64_t;
 typedef unsigned long long uint64_t;
-typedef signed long intmax_t;
 typedef unsigned long uintmax_t;
-typedef signed long intptr_t;
 typedef unsigned long uintptr_t;
+
+typedef long intptr_t;
+
+#ifndef __NOCWINTTYPES
+typedef char int8_t;
+typedef short int16_t;
+typedef int int32_t;
+typedef long long int64_t;
+typedef long intmax_t;
+#endif
 
 #define INTMAX_MIN INT32_MIN
 #define INTMAX_MAX INT32_MAX
