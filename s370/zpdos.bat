@@ -24,7 +24,7 @@ rem properly, apparently because that is x'7f' in
 rem EBCDIC and is being recognized as DEL instead of
 rem being passed through and translated. But if you
 rem do a "hexdump" of autoexec.bat the double-quotes
-are fine
+rem are fine
 
 set HERCULES_RC=zpdos.rc
 hercules -f pdos.cnf >hercules.log
