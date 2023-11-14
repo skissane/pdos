@@ -119,6 +119,8 @@ copy out.aws ipltap.aws
 copy pdos00.ckd
 copy pdos.cnf
 copy readme2.txt to readme.txt
+copy zpdos.bat (for use with Cygwin hercules.exe)
+copy zpdos.rc (for use with zpdos.bat)
 manually inspect the pdos00.ckd to make sure zapcons.bat is accurate
 scratch.cckd was copied from a previous run of doit.bat
 
