@@ -53,6 +53,10 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 # so that the calculations in dosstart.asm are accurate with regard to
 # releasing memory.
   wlink File dosstart.obj,pdptest.obj Name pdptest.exe Form dos Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose,dosseg
+# Use this instead for an NE executable
+#  wasm -zcm -q -DPDOS86 ..\src\needpdos.asm
+#  wlink File needpdos.obj Name needpdos.exe Form dos Option quiet,dosseg
+#  wlink File dosstart.obj,pdptest.obj Name pdptest.exe Form windows Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose,dosseg,stub=needpdos.exe
 
 .c.obj:
   $(CC) $(COPTS) $<
