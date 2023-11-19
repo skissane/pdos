@@ -14,7 +14,11 @@
 ; make it bigger. Unless you change other stuff as well.
 
 .data
+ifdef PDOS86
+msg  db  "This program needs PDOS/86 or equivalent"
+else
 msg  db  "Install HX or upgrade to PDOS/386 or Wine etc"
+endif
 msg2 db  0DH
 msg3 db  0AH
 msg4 db "$"
