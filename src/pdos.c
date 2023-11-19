@@ -277,6 +277,8 @@ static unsigned int *lastflags;
 static int autotrace = 0;
 static unsigned char *storage_watch = NULL;
 
+static int doing_ne = 0;
+
 #define HANDTYPE_FILE 0
 #define HANDTYPE_COMM 1
 #define HANDTYPE_DRIVE 2
@@ -3396,6 +3398,10 @@ int PosReallocPages(void *ptr, unsigned int newpages, unsigned int *maxp)
     int ret;
     void *oldptr = ptr;
 
+    if (doing_ne)
+    {
+        return 8;
+    }
     ptr = translateProcessPtr(ptr);
     if (ptr != oldptr)
     {
@@ -3429,6 +3435,14 @@ int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 
 void PosTerminate(int rc)
 {
+#ifdef NEDEMO
+    /* NE is not working properly yet */
+    if (doing_ne)
+    {
+        printf("got terminate request of NE - freezing\n");
+        for (;;) ;
+    }
+#endif
     callwithbypass(rc);
     return;
 }
@@ -4791,7 +4805,19 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     unsigned char *bss;
     int isexe = 0;
     DTA *olddta;
+    int oldne;
 
+    oldne = doing_ne;
+#ifdef NEDEMO
+    if (curPCB != NULL)
+    {
+        pcb = NULL;
+        ret = exeloadDoload(&exeEntry, prog, &pcb);
+        doing_ne = 1;
+    }
+#endif
+    if (!doing_ne)
+    {
     if (fileOpen(prog, &fno)) return (1);
     fileRead(fno, firstbit, sizeof firstbit, &readbytes);
     if (memcmp(firstbit, "MZ", 2) == 0)
@@ -4803,6 +4829,7 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         memcpy(header, firstbit, sizeof firstbit);
         fileRead(fno, header + sizeof firstbit, headerLen - sizeof firstbit,
                  &readbytes);
+    }
     }
 
     /* If curPCB == NULL, we are launching init process (PCOMM),
@@ -4823,6 +4850,8 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         envptr = envCopy(curPCB->envBlock,prog);
     }
 
+    if (!doing_ne)
+    {
     if (isexe)
     {
         exeLen = *(unsigned int *)&header[4];
@@ -4861,6 +4890,11 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         return (2);
     }
     pcb = pdos16MemmgrAllocPages(&memmgr, (exeLen + extraLen) / 16, 0);
+    }
+    else
+    {
+        /* pcb is already the loadaddr */
+    }
     if (pcb != NULL)
     {
         psp = pcb + PDOS_PROCESS_SIZE;
@@ -4894,6 +4928,8 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         memcpy(psp + 0x80, parmblock->cmdtail, parmblock->cmdtail[0] + 1 + 1);
     }
 
+    if (!doing_ne)
+    {
     exeStart = psp + 0x100;
     exeStart = (unsigned char *)FP_NORM(exeStart);
 
@@ -4961,9 +4997,16 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
         *(unsigned int *)MK_FP(ss, sp) = 0;
         exeEntry = psp + 0x100;
     }
+    }
+    else
+    {
+        ss = (((unsigned long)(exeEntry + 65536U) >> 16) & 0xffffU);
+        sp = 0xffd0U;
+    }
 
     /* printf("exeEntry: %lx, psp: %lx, ss: %x, sp: %x\n",
         exeEntry, psp, ss, sp); */
+    /* printf("first byte %x\n", *(unsigned char *)exeEntry); */
 
     /* Before executing program, set tsrFlag = 0.
      * If program is a TSR, it will change this to non-zero.
@@ -4987,6 +5030,7 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     loadaddr = exeStart;
     entry_point = exeEntry;
     memId += 256;
+    /* printf("calling with psp\n"); */
     ret = callwithpsp(exeEntry, psp, ss, sp);
     if (showret)
     {
@@ -5031,6 +5075,15 @@ static int loadExe(char *prog, POSEXEC_PARMBLOCK *parmblock)
     /* Set TSR flag back to 0 */
     tsrFlag = 0;
 
+#ifdef NEDEMO
+    if (doing_ne)
+    {
+        printf("program terminated - now freezing\n");
+        for (;;) ;
+    }
+#endif
+
+    doing_ne = oldne;
     return (0);
 #endif
 }
