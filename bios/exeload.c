@@ -64,6 +64,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
                          unsigned long e_lfanew);
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
+                         unsigned char **loadloc,
                          unsigned long e_lfanew);
 
 /* Support function for loading DLLs. */
@@ -1450,7 +1451,7 @@ static int exeloadLoadMZ(unsigned char **entry_point,
         if (ret == 1)
             ret = exeloadLoadLX(entry_point, fp, firstbit.e_lfanew);
         if (ret == 1)
-            ret = exeloadLoadNE(entry_point, fp, firstbit.e_lfanew);
+            ret = exeloadLoadNE(entry_point, fp, loadloc, firstbit.e_lfanew);
         if (ret == 1)
             printf("Unknown MZ extension\n");
         return (ret);
@@ -2591,11 +2592,26 @@ static int exeloadLoadLX(unsigned char **entry_point,
 
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
+                         unsigned char **loadloc,
                          unsigned long e_lfanew)
 {
-    unsigned char firstbit[2];
+    unsigned char firstbit[0x40];
     long newpos;
     size_t readbytes;
+    unsigned char segtable[8];
+    unsigned long offs1;
+    unsigned int len1;
+    unsigned long offs2;
+    unsigned int len2;
+    unsigned char numreloc[2];
+    unsigned char reloc[8];
+    unsigned char *codeptr;
+    unsigned char *dataptr;
+    int nr;
+    int x;
+    unsigned int lloffs;
+    unsigned char zzz[2];
+    unsigned int zzz_num;
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -2603,9 +2619,114 @@ static int exeloadLoadNE(unsigned char **entry_point,
     {
         return (1);
     }
-    printf("NE is not supported\n");
+    
+    fread(segtable, sizeof(segtable), 1, fp);
+    offs1 = segtable[0] | (segtable[1] << 8);
+    offs1 *= 2;
+    len1 = segtable[2] | (segtable[3] << 8);
 
-    return (2);
+    fread(segtable, sizeof(segtable), 1, fp);
+    offs2 = segtable[0] | (segtable[1] << 8);
+    offs2 *= 2;
+    len2 = segtable[2] | (segtable[3] << 8);
+
+    if (*loadloc == NULL)
+    {
+        *loadloc = malloc(65536UL * 2 + 0x100 + 48 + 12);
+        if (*loadloc == NULL)
+        {
+            printf("alloc failed\n");
+            return (1);
+        }
+        *loadloc += 12;
+    }
+    fseek(fp, offs1, SEEK_SET);
+    fread(*loadloc + 0x100 + 48, len1, 1, fp);
+
+    fseek(fp, offs2, SEEK_SET);
+    fread(*loadloc + 65536UL + 0x100 + 48, len2, 1, fp);
+
+    codeptr = *loadloc + 0x100 + 48;
+
+    dataptr = codeptr + 65536UL;
+
+    fseek(fp, offs1 + len1, SEEK_SET);
+    fread(numreloc, sizeof numreloc, 1, fp);
+    
+    nr = numreloc[0] | (numreloc[1] << 8);
+    
+    for (x = 0; x < nr; x++)
+    {
+        fread(reloc, sizeof reloc, 1, fp);
+        lloffs = reloc[2] | (reloc[3] << 8);
+        while (1)
+        {
+            memcpy(zzz, codeptr + lloffs, 2);
+            zzz_num = zzz[0] | (zzz[1] << 8);
+            if (reloc[4] == 1) /* code */
+            {
+                (codeptr + lloffs)[0] = ((unsigned long)codeptr >> 16) & 0xff;
+                (codeptr + lloffs)[1] = ((unsigned long)codeptr >> 24) & 0xff;
+            }
+            else if (reloc[4] == 2) /* data */
+            {
+                (codeptr + lloffs)[0] = ((unsigned long)dataptr >> 16) & 0xff;
+                (codeptr + lloffs)[1] = ((unsigned long)dataptr >> 24) & 0xff;
+            }
+            if (zzz_num = 0xffffU) break;
+            lloffs = zzz_num;
+        }
+    }
+
+    fseek(fp, offs2 + len2, SEEK_SET);
+    fread(numreloc, sizeof numreloc, 1, fp);
+    nr = numreloc[0] | (numreloc[1] << 8);
+    
+    for (x = 0; x < nr; x++)
+    {
+        fread(reloc, sizeof reloc, 1, fp);
+        lloffs = reloc[2] | (reloc[3] << 8);
+        while (1)
+        {
+            memcpy(zzz, dataptr + lloffs, 2);
+            zzz_num = zzz[0] | (zzz[1] << 8);
+            if (reloc[1] == 0x04)
+            {
+                if (reloc[4] == 1) /* code */
+                {
+                    *(unsigned int *)(dataptr + lloffs + 2)
+                        = (((unsigned long)codeptr >> 16) & 0xffffU);
+                }
+                else if (reloc[4] == 2) /* data */
+                {
+                    *(unsigned int *)(dataptr + lloffs + 2)
+                        = (((unsigned long)dataptr >> 16) & 0xffffU);
+                }
+                memcpy(dataptr + lloffs, &reloc[6], 2);
+                break;
+            }
+            if (reloc[1] != 0x00)
+            {
+                printf("unknown reloc type %x\n", reloc[1]);
+                for (;;) ;
+            }
+            if (reloc[4] == 1) /* code */
+            {
+                (dataptr + lloffs)[2] = ((unsigned long)codeptr >> 16) & 0xff;
+                (dataptr + lloffs)[3] = ((unsigned long)codeptr >> 24) & 0xff;
+            }
+            else if (reloc[4] == 2) /* data */
+            {
+                (dataptr + lloffs)[2] = ((unsigned long)dataptr >> 16) & 0xff;
+                (dataptr + lloffs)[3] = ((unsigned long)dataptr >> 24) & 0xff;
+            }
+            memcpy(dataptr + lloffs, &reloc[6], 2);
+            if (zzz_num = 0xffffU) break;
+            lloffs = zzz_num;
+        }
+    }
+    *entry_point = codeptr;
+    return (0);
 }
 
 #endif /* NEED_MZ */
