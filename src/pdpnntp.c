@@ -92,9 +92,13 @@ int main(int argc, char **argv)
             printf("read and write both require an associated filename\n");
             return (EXIT_FAILURE);
         }
+    }
+    if (strcmp(readnum, "") != 0)
+    {
         if (strcmp(group, "") == 0)
         {
-            printf("read and write both require a relevant group\n");
+            printf("read requires a relevant group\n");
+            return (EXIT_FAILURE);
         }
     }
 
@@ -163,8 +167,8 @@ int main(int argc, char **argv)
         getline(comm, buf, sizeof buf);
         printf("%s\n", buf);
     }
-    
-    if (readnum != 0)
+
+    if (strcmp(readnum, "") != 0)
     {
         printf("reading article\n");
         fseek(comm, 0, SEEK_CUR);
@@ -199,6 +203,116 @@ int main(int argc, char **argv)
                 }
                 fclose(fq);
             }
+        }
+    }
+
+    /* When writing a message, include the newsgroup in
+       the file itself - no need to select the newsgroup
+       as a parameter.
+       Subject and From are the only things required on
+       top of that */
+       
+#if 0
+
+So this (which is easy to edit - just change the subject):
+
+Subject: test 2, please ignore
+Newsgroups: eternal-september.test
+From: Joe Bloggs <joe@bloggs.comm>
+
+TEST NUMBER 2
+line nr two
+Do not read this.
+Go away.
+
+
+Gets converted (by INN) into:
+
+Path: eternal-september.org!news.eternal-september.org!.POSTED!not-for-mail
+From: Joe Bloggs <joe@bloggs.comm>
+Newsgroups: eternal-september.test
+Subject: test 2, please ignore
+Date: Mon, 20 Nov 2023 13:04:48 -0000 (UTC)
+Organization: A noiseless patient Spider
+Lines: 4
+Message-ID: <ujflhf$aoii$1@dont-email.me>
+Injection-Date: Mon, 20 Nov 2023 13:04:48 -0000 (UTC)
+Injection-Info: dont-email.me; posting-host="d768e5f4df19c52b9564161c184d27b3";
+	logging-data="352850"; mail-complaints-to="abuse@eternal-september.org";	posting-account="U2FsdGVkX18Z8DNUHrp7zidBcJ9jtyd24MEwUx1VE1A="
+Cancel-Lock: sha1:suX8JLIyn9VU6eVGq2gb7U3yty0=
+Xref: news.eternal-september.org eternal-september.test:11624
+
+TEST NUMBER 2
+line nr two
+Do not read this.
+Go away.
+
+
+#endif
+
+    if (writemsg)
+    {
+        printf("posting article\n");
+        fseek(comm, 0, SEEK_CUR);
+        putline(comm, "POST");
+        fseek(comm, 0, SEEK_CUR);
+        getline(comm, buf, sizeof buf);
+        printf("%s\n", buf);
+        /* 340 Ok, recommended Message-ID <ujfhd5$a4jb$1@dont-email.me>
+        I used: Message-ID: <1.joe@bloggs.comm>
+        exit(0); */
+        if (strncmp(buf, "340", 3) == 0)
+        {
+            FILE *fp;
+            char *p;
+
+            fp = fopen(fnm, "r");
+            if (fp == NULL)
+            {
+                printf("failed to open %s for reading\n", fnm);
+            }
+            else
+            {
+                while (1)
+                {
+                    if (fgets(buf, sizeof buf, fp) == NULL)
+                    {
+                        printf("unexpected EOF\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    p = strchr(buf, '\n');
+                    if (p != NULL)
+                    {
+                        *p = '\0';
+                    }
+                    putline(comm, buf);
+                    if (strcmp(p, "") == 0) break;
+                }
+                while (1)
+                {
+                    if (fgets(buf, sizeof buf, fp) == NULL)
+                    {
+                        putline(comm, ".");
+                        break;
+                    }
+                    p = strchr(buf, '\n');
+                    if (p != NULL)
+                    {
+                        *p = '\0';
+                    }
+                    if (strcmp(buf, ".") == 0)
+                    {
+                        put(comm, ".");
+                    }
+                    putline(comm, buf);
+                }
+                fclose(fp);
+            }
+            printf("finished sending from here\n");
+            fseek(comm, 0, SEEK_CUR);
+            getline(comm, buf, sizeof buf);
+            printf("%s\n", buf);
+            /* 240 Article received <ujfkdm$ajes$1@dont-email.me> */
         }
     }
 
