@@ -19,7 +19,7 @@ qemu-system-i386 -drive file=pdos.vhd,index=0,media=disk,format=raw -serial tcp:
 
 Then do:
 
-pdpnntp com1: username password
+pdpnntp -uusername -ppassword com1:
 
 #endif
 
@@ -30,8 +30,13 @@ pdpnntp com1: username password
 static FILE *comm;
 static char buf[1000];
 
-static char user[50];
-static char password[50];
+static char user[50] = "";
+static char password[50] = "";
+static char group[100] = "";
+static char fnm[FILENAME_MAX] = "";
+static char readnum[50] = "";
+static int writemsg = 0;
+static int list = 1;
 
 #define OPTINT 1
 #define OPTSTR 2
@@ -47,6 +52,10 @@ opt_t opttable[] =
 {
     { "u", OPTSTR, user },
     { "p", OPTSTR, password },
+    { "g", OPTSTR, group },
+    { "r", OPTSTR, readnum },
+    { "w", OPTBOOL, &writemsg },
+    { "f", OPTSTR, fnm },
     { NULL, 0, NULL }
 };
 
@@ -69,6 +78,25 @@ int main(int argc, char **argv)
         printf("usage: pdpnntp [-u<user>] [-p<password>] <comm channel>\n");
         return (EXIT_FAILURE);
     }
+    
+    if ((strcmp(readnum, "") != 0) && writemsg)
+    {
+        printf("can't use read and write at same time\n");
+        return (EXIT_FAILURE);
+    }
+    
+    if ((strcmp(readnum, "") != 0) || writemsg)
+    {
+        if (strcmp(fnm, "") == 0)
+        {
+            printf("read and write both require an associated filename\n");
+            return (EXIT_FAILURE);
+        }
+        if (strcmp(group, "") == 0)
+        {
+            printf("read and write both require a relevant group\n");
+        }
+    }
 
 #ifdef __MVS__
     comm = fopen(*(argv + optup), "rb");
@@ -87,17 +115,20 @@ int main(int argc, char **argv)
     printf("%s\n", buf);
 
 #ifndef __MVS__
-    fseek(comm, 0, SEEK_CUR);
-
-    putline(comm, "LIST");
-
-    fseek(comm, 0, SEEK_CUR);
-
-    while (1)
+    if (list)
     {
-        getline(comm, buf, sizeof buf);
-        if (buf[0] == '.') break;
-        printf("%s\n", buf);
+        fseek(comm, 0, SEEK_CUR);
+
+        putline(comm, "LIST");
+
+        fseek(comm, 0, SEEK_CUR);
+
+        while (1)
+        {
+            getline(comm, buf, sizeof buf);
+            if (buf[0] == '.') break;
+            printf("%s\n", buf);
+        }
     }
 #endif
     if (strcmp(user, "") != 0)
@@ -121,6 +152,56 @@ int main(int argc, char **argv)
             printf("%s\n", buf);
         }
     }
+
+    if (strcmp(group, "") != 0)
+    {
+        printf("selecting group\n");
+        fseek(comm, 0, SEEK_CUR);
+        put(comm, "GROUP ");
+        putline(comm, group);
+        fseek(comm, 0, SEEK_CUR);
+        getline(comm, buf, sizeof buf);
+        printf("%s\n", buf);
+    }
+    
+    if (readnum != 0)
+    {
+        printf("reading article\n");
+        fseek(comm, 0, SEEK_CUR);
+        put(comm, "ARTICLE ");
+        putline(comm, readnum);
+        fseek(comm, 0, SEEK_CUR);
+        getline(comm, buf, sizeof buf);
+        printf("%s\n", buf);
+        if (strncmp(buf, "423", 3) != 0)
+        {
+            FILE *fq;
+
+            fq = fopen(fnm, "w");
+            if (fq == NULL)
+            {
+                printf("failed to open %s for writing\n", fnm);
+            }
+            else
+            {
+                while (1)
+                {
+                    getline(comm, buf, sizeof buf);
+                    printf("%s\n", buf);
+                    if (strcmp(buf, ".") == 0) break;
+                    if (strcmp(buf, "..") == 0)
+                    {
+                        /* is this correct or do all beginning
+                           dots get doubled? */
+                        buf[1] = '\0';
+                    }
+                    fprintf(fq, "%s\n", buf);
+                }
+                fclose(fq);
+            }
+        }
+    }
+
     printf("doing quit\n");
     fseek(comm, 0, SEEK_CUR);
     putline(comm, "QUIT");
