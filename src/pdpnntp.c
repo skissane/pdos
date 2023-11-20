@@ -30,6 +30,29 @@ pdpnntp com1: username password
 static FILE *comm;
 static char buf[1000];
 
+static char user[50];
+static char password[50];
+
+#define OPTINT 1
+#define OPTSTR 2
+#define OPTBOOL 3
+#define OPTLONG 4
+#define OPTFLOAT 5
+typedef struct {char *sw;
+               int opttyp;
+               void *var;} opt_t;
+static int getopts(int argc, char **argv, opt_t opttable[]);
+
+opt_t opttable[] =
+{
+    { "u", OPTSTR, user },
+    { "p", OPTSTR, password },
+    { NULL, 0, NULL }
+};
+
+static int optup;
+
+
 static char *getline(FILE *comm, char *buf, size_t szbuf);
 static char *put(FILE *comm, char *buf);
 static char *putline(FILE *comm, char *buf);
@@ -38,28 +61,23 @@ static int tasc(int loc);
 
 int main(int argc, char **argv)
 {
-    char *user = NULL;
-    char *pw = NULL;
-
-    if (argc == 4)
+    optup = getopts(argc,argv,opttable);
+    /* if we have exhausted all arguments, positional parameter
+       must not exist */
+    if (optup == argc)
     {
-        user = *(argv + 2);
-        pw = *(argv + 3);
-    }
-    else if (argc != 2)
-    {
-        printf("usage: pdpnntp <comm channel> [user] [password]\n");
+        printf("usage: pdpnntp [-u<user>] [-p<password>] <comm channel>\n");
         return (EXIT_FAILURE);
     }
 
 #ifdef __MVS__
-    comm = fopen(*(argv + 1), "rb");
+    comm = fopen(*(argv + optup), "rb");
 #else
-    comm = fopen(*(argv + 1), "r+b");
+    comm = fopen(*(argv + optup), "r+b");
 #endif
     if (comm == NULL)
     {
-        printf("can't open %s\n", *(argv + 1));
+        printf("can't open %s\n", *(argv + optup));
         return (EXIT_FAILURE);
     }
 
@@ -82,7 +100,7 @@ int main(int argc, char **argv)
         printf("%s\n", buf);
     }
 #endif
-    if (user != NULL)
+    if (strcmp(user, "") != 0)
     {
         printf("putting user\n");
         fseek(comm, 0, SEEK_CUR);
@@ -91,13 +109,17 @@ int main(int argc, char **argv)
         fseek(comm, 0, SEEK_CUR);
         getline(comm, buf, sizeof buf);
         printf("%s\n", buf);
-        printf("putting password\n");
-        fseek(comm, 0, SEEK_CUR);
-        put(comm, "AUTHINFO PASS ");
-        putline(comm, pw);
-        fseek(comm, 0, SEEK_CUR);
-        getline(comm, buf, sizeof buf);
-        printf("%s\n", buf);
+
+        if (strcmp(password, "") != 0)
+        {
+            printf("putting password\n");
+            fseek(comm, 0, SEEK_CUR);
+            put(comm, "AUTHINFO PASS ");
+            putline(comm, password);
+            fseek(comm, 0, SEEK_CUR);
+            getline(comm, buf, sizeof buf);
+            printf("%s\n", buf);
+        }
     }
     printf("doing quit\n");
     fseek(comm, 0, SEEK_CUR);
@@ -390,4 +412,103 @@ static int tasc(int loc)
     case '~'  : return (0x7e);
     default   : return(0);
   }
+}
+
+/*********************************************************************/
+/*                                                                   */
+/*  getopts - scan the command line for switches.                    */
+/*                                                                   */
+/*  This program takes the following parameters:                     */
+/*                                                                   */
+/*  1) argc (which was given to main)                                */
+/*  2) argv (which was given to main)                                */
+/*  3) Array of options                                              */
+/*                                                                   */
+/*  Returns the number of the argument that is next to be processed  */
+/*  that wasn't recognised as an option.                             */
+/*  Example of use:                                                  */
+/*                                                                   */
+/*  #include <getopts.h>                                             */
+/*  int baud = 2400;                                                 */
+/*  char fon[13] = "telix.fon";                                      */
+/*  opt_t opttable[] =                                               */
+/*  {                                                                */
+/*    { "b", OPTINT, &baud },                                        */
+/*    { "f", OPTSTR, fon },                                          */
+/*    { NULL, 0, NULL }                                              */
+/*  };                                                               */
+/*  optup = getopts(argc,argv,opttable);                             */
+/*                                                                   */
+/*  The OPTINT means that an integer is being supplied.  OPTSTR      */
+/*  means a string (with no check for overflow).  Also there is      */
+/*  OPTBOOL which means it is a switch that is being passed, and an  */
+/*  OPTLONG to specify a long.  Also OPTFLOAT for float.             */
+/*                                                                   */
+/*  This program was inspired by a description of a getargs function */
+/*  written by Dr Dobbs Small-C Handbook.  Naturally I didn't get    */
+/*  to see the code, otherwise I wouldn't be writing this!           */
+/*                                                                   */
+/*  This program is dedicated to the public domain.  It would be     */
+/*  nice but not necessary if you gave me credit for it.  I would    */
+/*  like to thank the members of the International C Conference      */
+/*  (in Fidonet) for the help they gave me in writing this.          */
+/*                                                                   */
+/*  Written 16-Feb-1990.                                             */
+/*                                                                   */
+/*********************************************************************/
+
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+
+static int getopts(int argc, char **argv, opt_t opttable[])
+{
+    int i, j;
+
+    argv++;
+    argc--;
+    for (i = 1; i <= argc; i++)
+    {
+        if ((*(*argv) != '-') && (*(*argv) != '/'))
+            return (i);
+        for (j = 0; opttable[j].sw != NULL; j++)
+        {
+            if (strncmp(*argv + 1, opttable[j].sw,
+                        strlen(opttable[j].sw)) == 0)
+            {
+                switch ((int)opttable[j].opttyp)
+                {
+                case OPTINT:
+                    *((int *)opttable[j].var) =
+                        (int)strtol(*argv + 1 + strlen(opttable[j].sw), NULL, 10);
+                    if (errno == ERANGE)
+                        return (i);
+                    break;
+                case OPTSTR:
+                    strcpy((char *)opttable[j].var,
+                           *argv + 1 + strlen((char *)opttable[j].sw));
+                    break;
+                case OPTBOOL:
+                    *((int *)opttable[j].var) = 1;
+                    break;
+                case OPTLONG:
+                    *((long *)opttable[j].var) =
+                        strtol(*argv + 1 + strlen(opttable[j].sw), NULL, 10);
+                    if (errno == ERANGE)
+                        return (i);
+                    break;
+#ifdef DOFLOAT
+                case OPTFLOAT:
+                    *((float *)opttable[j].var) =
+                        (float)strtod(*argv + 1 + strlen(opttable[j].sw), NULL);
+                    break;
+#endif
+                }
+                break;
+            }
+        }
+        argv++;
+    }
+    return (i);
 }
