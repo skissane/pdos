@@ -24,6 +24,7 @@ Then run pdpnntp.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static FILE *comm;
 static char buf[1000];
