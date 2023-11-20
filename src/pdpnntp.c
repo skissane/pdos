@@ -250,6 +250,10 @@ Go away.
 
 #endif
 
+/* This may be useful one day:
+strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S +0000", gmtime(&tt));
+*/
+
     if (writemsg)
     {
         printf("posting article\n");
