@@ -2658,12 +2658,42 @@ static int exeloadLoadNE(unsigned char **entry_point,
     for (x = 0; x < nr; x++)
     {
         fread(reloc, sizeof reloc, 1, fp);
+        if ((reloc[0] != 2) && (reloc[0] != 5))
+        {
+            printf("unknown3 reloc type %x\n", reloc[0]);
+            for (;;) ;
+        }
+        if ((reloc[1] != 0x00) && (reloc[1] != 0x02))
+        {
+            printf("unknown4 reloc type %x\n", reloc[1]);
+            for (;;) ;
+        }
         lloffs = reloc[2] | (reloc[3] << 8);
         while (1)
         {
             memcpy(zzz, codeptr + lloffs, 2);
             zzz_num = zzz[0] | (zzz[1] << 8);
-            if (reloc[4] == 1) /* code */
+            if (reloc[0] == 5)
+            {
+                /* only support an offset that is a reference
+                   to AHINCR - not sure if AHSHIFT is also
+                   required - if it is, need more work to find
+                   out which variable this is */
+                /* And for use on an 8086, the AHINCR is 0x1000,
+                   which represents 64k when used as a segment
+                   increment */
+                /* AHSHIFT is 12 decimal - how many bits to shift
+                   left to get to 0x1000 */
+                /* Also note that although Windows returns a segment
+                   of FFFF for its AHINCR and AHSHIFT functions, that
+                   is not actually used for anything, so no effort has
+                   been made to reproduce that. Also note that these
+                   functions have two underscores in front of them
+                   I think */
+                (codeptr + lloffs)[0] = 0x00;
+                (codeptr + lloffs)[1] = 0x10;
+            }
+            else if (reloc[4] == 1) /* code */
             {
                 (codeptr + lloffs)[0] = ((unsigned long)codeptr >> 16) & 0xff;
                 (codeptr + lloffs)[1] = ((unsigned long)codeptr >> 24) & 0xff;
@@ -2685,6 +2715,11 @@ static int exeloadLoadNE(unsigned char **entry_point,
     for (x = 0; x < nr; x++)
     {
         fread(reloc, sizeof reloc, 1, fp);
+        if (reloc[0] != 3)
+        {
+            printf("unknown1 reloc type %x\n", reloc[0]);
+            for (;;) ;
+        }
         lloffs = reloc[2] | (reloc[3] << 8);
         while (1)
         {
@@ -2707,7 +2742,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             if (reloc[1] != 0x00)
             {
-                printf("unknown reloc type %x\n", reloc[1]);
+                printf("unknown2 reloc type %x\n", reloc[1]);
                 for (;;) ;
             }
             if (reloc[4] == 1) /* code */
