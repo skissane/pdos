@@ -17,9 +17,7 @@ For example, do this:
 
 qemu-system-i386 -drive file=pdos.vhd,index=0,media=disk,format=raw -serial tcp:news.eternal-september.org:119
 
-Then do:
-
-pdpnntp -uusername -ppassword com1:
+Then run pdpnntp.
 
 #endif
 
@@ -76,6 +74,10 @@ int main(int argc, char **argv)
     if (optup == argc)
     {
         printf("usage: pdpnntp [-u<user>] [-p<password>] <comm channel>\n");
+	printf("also [-w] [-f<file>] [-r<number>] [-g<group>]\n");
+	printf("e.g. pdpnntp -w -ftosend.txt -umyid -pmypass com1:\n");
+	printf("e.g. pdpnntp -r11624 -ffile.txt -umyid -pmypass "
+	       "-geternal-september.test com1:\n");
         return (EXIT_FAILURE);
     }
     
