@@ -105,11 +105,7 @@ int main(int argc, char **argv)
         }
     }
 
-#ifdef __MVS__
-    comm = fopen(*(argv + optup), "rb");
-#else
     comm = fopen(*(argv + optup), "r+b");
-#endif
     if (comm == NULL)
     {
         printf("can't open %s\n", *(argv + optup));
@@ -121,15 +117,16 @@ int main(int argc, char **argv)
     getline(comm, buf, sizeof buf); 
     printf("%s\n", buf);
 
-#ifndef __MVS__
     if (list)
     {
         fseek(comm, 0, SEEK_CUR);
 
+        printf("requesting list\n");
         putline(comm, "LIST");
 
         fseek(comm, 0, SEEK_CUR);
 
+        printf("waiting for list\n");
         while (1)
         {
             getline(comm, buf, sizeof buf);
@@ -137,7 +134,7 @@ int main(int argc, char **argv)
             printf("%s\n", buf);
         }
     }
-#endif
+
     if (strcmp(user, "") != 0)
     {
         printf("putting user\n");
