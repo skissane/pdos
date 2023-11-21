@@ -2159,7 +2159,17 @@ static void pdosProcessSVC(PDOS *pdos)
                8);
         if (memcmp((void *)pdos->context->regs[1], "SYS", 3) != 0)
         {
-            ((char *)pdos->context->regs[0])[2] = 0;
+            /* we used to use 0 here, which is basically an unknown
+               device type, and mvssupa.asm supports read and write
+               on any device type. However, it only allows INOUT on
+               disk and tape, so for now we're setting it to tape.
+               That is UCB3TAPE:
+               UCB3TAPE EQU   X'80' -             TAPE
+               in iefucbob.mac.
+               We probably instead want to lift the restrictions in
+               mvssupa.asm, as it probably shouldn't be second-guessing
+               what is allowed - assuming that's what it is doing. */
+            ((char *)pdos->context->regs[0])[2] = 0x80; /* tape */
         }
         pdos->context->regs[15] = 0;
     }
