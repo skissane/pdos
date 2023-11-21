@@ -2320,6 +2320,14 @@ static void pdosProcessSVC(PDOS *pdos)
 #endif
             gendcb->u1.dcbgetput = (int)dwrite;
         }
+        else if (ocode == 0x83) /* inout */
+        {
+            printf("opening for inout\n");
+	    /* this needs to be changed (everything should be using a
+	       generic read/write routine), but for now at least allow
+	       the open and first read to succeed */
+            gendcb->u1.dcbgetput = (int)dread;
+        }
         else /* don't understand - refuse to open */
         {
             pdos->context->regs[15] = 12; /* is this correct? */
