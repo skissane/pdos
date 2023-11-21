@@ -1100,6 +1100,12 @@ static void osfopen(void)
     {
         mode = 1; /* writing */
     }
+    else if (modeType == 10)
+    {
+        fprintf(stderr, "we don't have the ability to do update, "
+                "but trying inout anyway\n");
+        mode = 4;
+    }
     else if (modeType == 11)
     {
         fprintf(stderr, "we don't have the ability to do update, "
