@@ -19,6 +19,10 @@
 # as we only need to specify the ones that are involved in
 # the self-loading process.
 
+# Note that I had to change /nologo to just /nol to get
+# under the approx 127 character limit on program execution
+# when running an MSDOS version of link.exe
+
 # See explanation in makefile.msc as to why you sometimes
 # need to assemble with -omf
 OMF=
@@ -45,7 +49,7 @@ support.obj
 all: clean pcomm.exe
 
 pcomm.exe: $(OBJS)
-  link /cp:1 /noe /noi /nod /map /nologo /dosseg pcomm.obj+pos.obj+dostime.obj+support.obj,pcomm.exe,pcomm.map,..\pdpclib\msc.lib,,
+  link /cp:1 /noe /noi /nod /map /nol /dosseg pcomm.obj+pos.obj+dostime.obj+support.obj,pcomm.exe,pcomm.map,..\pdpclib\msc.lib,,
 
 .c.obj:
   $(CC) $(COPTS) $<
