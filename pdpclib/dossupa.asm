@@ -1119,6 +1119,10 @@ f_lxlsh@ endp
 ; shift dx:ax right by cl
 
 ifdef MSC
+public _aFNaulshr
+_aFNaulshr:
+public _aFFaulshr
+_aFFaulshr:
 public _aFulshr
 _aFulshr:
 public _aFlshr
