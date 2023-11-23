@@ -20,6 +20,8 @@
 #include <liballoc.h>
 #endif
 
+static DWORD lasterr = 0;
+
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle)
 {
     return PosGetStdHandle(nStdHandle);
@@ -154,7 +156,7 @@ BOOL WINAPI GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
 
 DWORD WINAPI GetLastError(void)
 {
-    return (0);
+    return (lasterr);
 }
 
 HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
@@ -249,6 +251,7 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE HandlerRoutine, BOOL Add)
 
 void WINAPI SetLastError(DWORD dwErrCode)
 {
+    lasterr = dwErrCode;
     return;
 }
 
@@ -335,7 +338,11 @@ BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData)
     int ret;
 
     ret = PosFindNext();
-    if (ret != 0) return (0);
+    if (ret != 0)
+    {
+        lasterr = ERROR_NO_MORE_FILES;
+        return (0);
+    }
     strcpy(FindFileData->cFileName, dta->file_name);
     FindFileData->nFileSizeLow = dta->file_size;
     return (1);
@@ -381,6 +388,28 @@ BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir)
     ret = PosChangeDir(dir);
     return (ret == 0);
 }
+
+BOOL WINAPI GetFileTime(HANDLE h,
+                        FILETIME *a,
+                        FILETIME *b,
+                        FILETIME *c)
+{
+    return 0; /* failure */
+}                        
+
+BOOL WINAPI SetFileTime(HANDLE h,
+                        FILETIME *a,
+                        FILETIME *b,
+                        FILETIME *c)
+{
+    return 0; /* failure */
+}                        
+
+void WINAPI GetSystemTimeAsFileTime(FILETIME *a)
+{
+    return;
+}
+
 
 /* auto-genned dummy functions */
 
@@ -862,12 +891,6 @@ void WINAPI GetSystemInfo(void)
 {
     unsigned int len = 29;
     PosWriteFile(1, "GetSystemInfo unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetSystemTimeAsFileTime(void)
-{
-    unsigned int len = 39;
-    PosWriteFile(1, "GetSystemTimeAsFileTime unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetSystemWindowsDirectoryW(void)
@@ -1624,12 +1647,6 @@ void WINAPI SetEnvironmentVariableA(void)
 {
     unsigned int len = 39;
     PosWriteFile(1, "SetEnvironmentVariableA unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI SetFileTime(void)
-{
-    unsigned int len = 27;
-    PosWriteFile(1, "SetFileTime unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI SetHandleCount(void)

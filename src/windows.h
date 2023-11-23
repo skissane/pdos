@@ -30,6 +30,7 @@
 #define STD_OUTPUT_HANDLE ((DWORD)-11)
 #define STD_ERROR_HANDLE ((DWORD)-12)
 #define INVALID_HANDLE_VALUE ((HANDLE)-1)
+#define ERROR_NO_MORE_FILES 18
 
 #define FALSE 0
 #define TRUE  1
@@ -47,6 +48,8 @@
 #define OPEN_EXISTING 3
 #define OPEN_ALWAYS 4
 #define TRUNCATE_EXISTING 5
+
+#define FILE_WRITE_ATTRIBUTES 0x100
 
 #define FILE_SHARE_DELETE 0x00000004
 #define FILE_SHARE_READ   0x00000001
@@ -137,6 +140,22 @@ typedef short SHORT;
 typedef void VOID;
 #endif
 typedef unsigned short USHORT;
+
+#ifndef __SUBC__
+typedef unsigned long long ULONGLONG;
+#endif
+
+/* this is just a guess */
+typedef struct {
+  char buf[8];
+} FILETIME;
+
+/* guess */
+typedef struct {
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+} BY_HANDLE_FILE_INFORMATION;
 
 typedef struct _SECURITY_ATTRIBUTES {
     DWORD nLength;
@@ -410,3 +429,15 @@ DWORD WINAPI GetTempPathA(DWORD d, LPTSTR lpbuffer);
 
 #define SetCurrentDirectory SetCurrentDirectoryA
 BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir);
+
+BOOL WINAPI GetFileTime(HANDLE h,
+                        FILETIME *a,
+                        FILETIME *b,
+                        FILETIME *c);
+
+BOOL WINAPI SetFileTime(HANDLE h,
+                        FILETIME *a,
+                        FILETIME *b,
+                        FILETIME *c);
+
+void WINAPI GetSystemTimeAsFileTime(FILETIME *a);
