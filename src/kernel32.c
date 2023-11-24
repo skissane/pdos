@@ -326,7 +326,11 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
 
     dta = PosGetDTA();
     ret = PosFindFirst((char *)lpFileName, 0x10);
-    if (ret == 2) return (INVALID_HANDLE_VALUE);
+    if (ret != 0)
+    {
+        lasterr = ERROR_FILE_NOT_FOUND;
+        return (INVALID_HANDLE_VALUE);
+    }
     strcpy(FindFileData->cFileName, dta->file_name);
     FindFileData->nFileSizeLow = dta->file_size;
     return ((HANDLE)dta);

@@ -31,6 +31,7 @@
 #define STD_ERROR_HANDLE ((DWORD)-12)
 #define INVALID_HANDLE_VALUE ((HANDLE)-1)
 #define ERROR_NO_MORE_FILES 18
+#define ERROR_FILE_NOT_FOUND 2
 
 #define FALSE 0
 #define TRUE  1
