@@ -337,7 +337,14 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
         lasterr = ERROR_FILE_NOT_FOUND;
         return (INVALID_HANDLE_VALUE);
     }
-    strcpy(FindFileData->cFileName, dta->file_name);
+    if (dta->lfn[0] != '\0')
+    {
+        strcpy(FindFileData->cFileName, dta->lfn);
+    }
+    else
+    {
+        strcpy(FindFileData->cFileName, dta->file_name);
+    }
     FindFileData->nFileSizeLow = dta->file_size;
     return ((HANDLE)dta);
 }
@@ -353,7 +360,14 @@ BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData)
         lasterr = ERROR_NO_MORE_FILES;
         return (0);
     }
-    strcpy(FindFileData->cFileName, dta->file_name);
+    if (dta->lfn[0] != '\0')
+    {
+        strcpy(FindFileData->cFileName, dta->lfn);
+    }
+    else
+    {
+        strcpy(FindFileData->cFileName, dta->file_name);
+    }
     FindFileData->nFileSizeLow = dta->file_size;
     return (1);
 }
