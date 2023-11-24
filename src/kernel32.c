@@ -95,6 +95,12 @@ BOOL WINAPI CreateDirectoryA(
     return (PosMakeDir(lpPathName));
 }
 
+BOOL WINAPI RemoveDirectoryA(
+    LPCSTR lpPathName)
+{
+    return (PosRemoveDir(lpPathName));
+}
+
 DWORD WINAPI GetFileAttributesA(
     LPCSTR lpFileName)
 {

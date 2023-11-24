@@ -311,6 +311,10 @@ BOOL WINAPI CreateDirectoryA(
     LPCSTR lpPathName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
+#define RemoveDirectory RemoveDirectoryA
+BOOL WINAPI RemoveDirectoryA(
+    LPCSTR lpPathName);
+
 #define GetFileAttributes GetFileAttributesA
 DWORD WINAPI GetFileAttributesA(
     LPCSTR lpFileName);
