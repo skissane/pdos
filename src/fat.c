@@ -1555,6 +1555,18 @@ long fatSeek(FAT *fat, FATFILE *fatfile, long offset, int whence)
  * is also set so other functions have more information.
  */
 
+/* If you are looking for
+\FRED\MARY\JOHN.TXT
+you must call fatPosition wit:
+FRED\MARY\JOHN.TXT
+It can't handle a leading backslash. Maybe that
+should be changed though, rather than burdening
+every function. But that may have implications
+because I think then you can't use just a single
+backslash to prepare to open
+the root directory (to read directory contents).
+*/
+
 static void fatPosition(FAT *fat, const char *fnm)
 {
     fat->notfound = 0;
@@ -2631,10 +2643,14 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     }
 
     fatPosition(fat,fnm);
+
+    /* if file exists, we should be returning a different error to
+       "not found" - fix this one day */
     if(!fat->notfound) return(POS_ERR_FILE_NOT_FOUND);
+
     /* Stores length of LFN so it can be used later. */
     lfn_len = fat->lfn_search_len;
-    if (!lfn_len)
+    if (lfn_len == 0)
     {
         /* fatPosition generates 8.3 name for us, so we just take it. */
         memcpy(fat->new_file, fat->search, 11);
@@ -2643,7 +2659,7 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     else memcpy(fat->new_file, new, lfn_len);
     fatPosition(fat, old);
     if(fat->notfound) return(POS_ERR_FILE_NOT_FOUND);
-    if (!lfn_len && !fat->lfn_search_len)
+    if ((lfn_len == 0) && (fat->lfn_search_len == 0))
     {
         /* It is 8.3 to 8.3 rename, so no entries are created or deleted. */
         memcpy(fat->de->file_name, fat->new_file, 11);
@@ -2663,7 +2679,8 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     if (fat->lfn_search_len)
     {
         /* Stores the old LFN. */
-        memcpy(old_lfn, strchr(fat->corrected_path, '\0') - old_lfn_len - 1,
+        memcpy(old_lfn,
+               strchr(fat->corrected_path, '\0') - old_lfn_len - 1,
                old_lfn_len);
         /* Original has LFN, so LFN entries must be deleted. */
         deleteLFNs(fat);
@@ -2671,14 +2688,14 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     /* Deletes the original DIRENT and writes data to disk. */
     fat->de->file_name[0]=DIRENT_DEL;
     fatWriteLogical(fat, fat->dirSect, fat->dbuf);
-    /* fatPosition is ran again to
+    /* fatPosition is run again to
      * set FAT variables to proper values. */
     fatPosition(fat,fnm);
-    if (lfn_len)
+    if (lfn_len != 0)
     {
         /* If the new name is LFN, LFN entries are created. */
         ret = createLFNs(fat, fat->new_file, lfn_len);
-        if (ret)
+        if (ret != 0)
         {
             /* If createLFNs had any problems (full root/disk),
              * we must restore old entry/entries. */
