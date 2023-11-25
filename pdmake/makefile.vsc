@@ -1,0 +1,21 @@
+# Produce Windows executables
+# Uses Visual Studio
+
+VPATH=./hashtab
+
+CC=cl
+CFLAGS=-O2
+LD=cl
+LDFLAGS=-nologo
+COPTS=-c -nologo $(CFLAGS) -I. -I./hashtab
+
+all: clean pdmake.exe
+
+pdmake.exe: main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab/hashtab.obj
+  $(LD) $(LDFLAGS) -Fepdmake.exe main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab/hashtab.obj
+
+.c.obj:
+  $(CC) $(COPTS) -Fo$@ $<
+
+clean:
+  rm -f *.obj pdmake.exe
