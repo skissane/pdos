@@ -3469,6 +3469,12 @@ int PosFindFirst(char *pat, int attrib)
     make_ff(pat);
     ret = fileOpen(ff_path, &ff_handle);
     if (ret) return (3);
+    if (!fhandle[ff_handle].fatfile.dir)
+    {
+        /* there is a file by this name, not a directory */
+        fileClose(ff_handle);
+        return (4);
+    }
     ret = ff_search();
     if (ret == 0x12)
     {
