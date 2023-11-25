@@ -334,7 +334,14 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
     ret = PosFindFirst((char *)lpFileName, 0x10);
     if (ret != 0)
     {
-        lasterr = ERROR_FILE_NOT_FOUND;
+        if (ret == 2)
+        {
+            lasterr = ERROR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            lasterr = -1;
+        }
         return (INVALID_HANDLE_VALUE);
     }
     if (dta->lfn[0] != '\0')
