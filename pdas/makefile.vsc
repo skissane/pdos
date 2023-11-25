@@ -1,0 +1,47 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+VPATH=src;src/hashtab
+CC=cl
+PREPROCESSOR=cl
+CFLAGS=-O2 -nologo
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+LD=cl
+LDFLAGS=-nologo
+COPTS=-c $(CFLAGS) -I. -I./src -I./src/hashtab
+
+OBJS=a_out.obj as.obj bytearray.obj cfi.obj coff.obj cstr.obj \
+elf.obj error.obj expr.obj frags.obj hashtab.obj libas.obj \
+listing.obj load_line.obj process.obj sections.obj symbols.obj \
+write.obj int64sup.obj i386_as.obj
+
+TARGET=pdas.exe
+
+all: clean generate $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -Fe$(TARGET) $(OBJS)
+
+.c.obj:
+  $(CC) $(COPTS) -Fo$@ $<
+
+clean: clean_generate
+  rm -f $(OBJS) $(TARGET)
+
+OBJS_GENERATE=i386_gen.obj i386_opc.i
+
+generate: clean_generate $(OBJS_GENERATE)
+  $(LD) $(LDFLAGS) -Fegen.exe i386_gen.obj
+  gen.exe i386_opc.i i386_tbl.h
+
+clean_generate:
+  rm -f $(OBJS_GENERATE) gen.exe i386_tbl.h
+
+.tbl.i:
+  $(PREPROCESSOR) -nologo -P $<
