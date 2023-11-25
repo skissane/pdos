@@ -2626,6 +2626,23 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     int ret;
     /* +++Add support for moving files. */
 
+    /* the caller is (currently) allowed to do a rename from say
+       \A\B\C to \A\B\D
+       We only want the "D" bit and (currently) assume that the
+       first bit is the same. They are also (currently) allowed
+       to do a rename of \A\B\C to just D, and again, the \A\B is implied */
+
+    p = strrchr(new, '\\');
+    if (p != NULL)
+    {
+        new = p + 1;
+    }
+    p = strrchr(new, '/');
+    if (p != NULL)
+    {
+        new = p + 1;
+    }
+
     if ((old[0] == '\\') || (old[0] == '/'))
     {
         old++;
