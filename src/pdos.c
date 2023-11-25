@@ -3974,6 +3974,8 @@ static void scrunchf(char *dest, char *new)
     char *p;
     int drive;
 
+    if (strncmp(new, ".\\", 2) == 0) new += 2;
+    if (strncmp(new, "./", 2) == 0) new += 2;
     strcpy(dest, "");
     mycwd = cwd;
     if (strchr(new, ':') != NULL)
