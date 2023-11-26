@@ -350,6 +350,14 @@ and you don't need kernel32.dll and msvcrt.dll.
 
 
 
+PC RECOMPILING - MODERN - MARK II
+---------------------------------
+
+The PDOS/386 distribution comes with a misc\master.bat
+that contains the procedure now used to actually build.
+
+
+
 PC RECOMPILING - INDUSTRY STANDARD TOOLS
 ----------------------------------------
 
@@ -382,6 +390,144 @@ pdmake -f makefile.vsp
 cd ..\src
 pdmake -f makepdos.vsc
 pdmake -f makecomm.vsc
+
+
+
+BOOTSTRAPPING
+-------------
+
+In order to recompile from source, you need an existing
+C compiler capable of building an executable. This is then
+used to build the "standard tools" used by PDOS. Those tools
+can then be used to produce the PDOS executables, which should
+be byte-exact. The only exception is pload.com (io.sys) which
+needs to be built with either Open Watcom or Visual C++ (a
+version capable of producing 16-bit executables), as we don't
+yet have a compiler (capable of being built under PDOS/386
+from source code) capable of producing 16-bit code.
+
+There are makefiles available assuming you wish to go through
+this process starting with Visual Studio 2005. Each executable
+that is built should be put in some directory, e.g. c:\winpath,
+that you have put in your PATH. The required source code is
+all on the PDOS/386 disk, but you may obtain it from other
+sources, ie Sourceforge and pdos.org. You will need to extract
+the gcc source code from custom.zip in c:\misc. The procedure
+(to be run under Windows) is:
+
+cd \devel\ozpd\c
+cl rm.c
+copy rm.exe \winpath
+
+cd \devel\pdos\pdmake
+nmake -f makefile.vsc
+copy pdmake.exe \winpath
+
+cd \devel\gcc\gcc
+pdmake -f makefile.vsc
+copy gcc-new.exe \winpath\gccwin.exe
+
+cd \devel\pdos\pdas
+pdmake -f makefile.vsc
+copy pdas.exe \winpath
+
+cd \devel\pdos\pdld
+pdmake -f makefile.vsc
+copy pdld.exe \winpath
+
+cd \devel\xar
+pdmake -f makefile.vsc
+copy xar.exe \winpath
+
+cd \devel\as86
+pdmake -f makefile.vsc
+copy as86.exe \winpath
+
+cd \devel\pdos\src
+pdmake -f makek32.std
+cd \devel\pdos\pdpclib
+ren pdptest.c pdptest.bak
+copy \devel\ozpd\c\rm.c pdptest.c
+pdmake -f makefile.std
+copy pdptest.exe \winpath\rm.exe
+
+cd \devel\pdos\pdmake
+del pdmake.exe
+pdmake -f makefile.std
+copy pdmake.exe \winpath
+
+cd \devel\gcc\gcc
+pdmake -f windows.mak
+copy gcc-new.exe \winpath\gccwin.exe
+
+cd \devel\pdos\pdcc
+pdmake -f makefile.std
+copy pdcc.exe \winpath
+
+cd \devel\pdos\pdas
+pdmake -f makefile.std
+copy pdas.exe \winpath
+
+cd \devel\pdos\pdld
+pdmake -f makefile.std
+copy pdld.exe \winpath
+
+cd \devel\xar
+pdmake -f makefile.std
+copy xar.exe \winpath
+
+cd \devel\as86
+pdmake -f makefile.std
+copy as86.exe \winpath
+
+That actually completes the tools, but now we need
+to verify everything.
+
+cd \devel\pdos\src
+pdmake -f makek32.std
+cd \devel\pdos\pdpclib
+pdmake -f makefile.std
+fc /b \winpath\rm.exe pdptest.exe
+del pdptest.c
+ren pdptest.bak pdptest.c
+
+cd \devel\pdos\pdmake
+del pdmake.exe
+pdmake -f makefile.std
+fc /b \winpath\pdmake.exe pdmake.exe
+
+cd \devel\gcc\gcc
+pdmake -f windows.mak
+fc /b \winpath\gccwin.exe gcc-new.exe
+
+cd \devel\pdos\pdcc
+pdmake -f makefile.std
+fc /b \winpath\pdcc.exe pdcc.exe
+
+cd \devel\pdos\pdas
+pdmake -f makefile.std
+fc /b \winpath\pdas.exe pdas.exe
+
+cd \devel\pdos\pdld
+pdmake -f makefile.std
+fc /b \winpath\pdld.exe pdld.exe
+
+cd \devel\xar
+pdmake -f makefile.std
+fc /b \winpath\xar.exe xar.exe
+
+cd \devel\as86
+pdmake -f makefile.std
+fc /b \winpath\as86.exe as86.exe
+
+And now that you have the tools you can compile
+the individual elements of PDOS, ie:
+
+cd \devel\pdos\src
+comp4w
+comp5w
+comp6w
+
 
 
 
