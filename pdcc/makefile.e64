@@ -15,7 +15,7 @@ CFLAGS=-O2
 LD=pdld
 LDFLAGS=--no-insert-timestamp -s
 AS=pdas --64 --oformat coff
-AR=ar
+AR=xar
 
 COPTS=$(CFLAGS) -S -mno-red-zone -D__64BIT__ -D__EFI__ -U__WIN32__ -Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -fno-builtin -fno-common -ansi -Wno-builtin-declaration-mismatch
 
