@@ -24,6 +24,7 @@ TARG=XPDOS32
 CC=wcl
 CFLAGS=-oneatx
 COPTS=-ecc -q -w -c -I. -I..\pdpclib -DNEWMODEL -mh -D__SZ4__ -zl -D__MSDOS__ -D$(TARG) -DNEED_DUMP -fpi87 -s -zdp -zu $(CFLAGS)
+AR=xar
 
 OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
     lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj \
@@ -32,7 +33,7 @@ OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
 all: clean pload.com
 
 pload.com: $(OBJS)
-  ar s watcom.lib
+  $(AR) s watcom.lib
   ld86 -Map map.txt -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj dossupa.obj dossupc.obj bos.obj watcom.lib
 
 .c.obj:
@@ -40,11 +41,11 @@ pload.com: $(OBJS)
   wdis -a -l=$*.tas $*.obj
   as86 -o $@ $*.tas
   rm -f $*.tas
-  ar r watcom.lib $@
+  $(AR) r watcom.lib $@
 
 .asm.obj:
   as86 -Dmemodel=huge -DNEWMODEL -DWATCOMC -DNEED_DISPLAYC -o $@ $<
-  ar r watcom.lib $@
+  $(AR) r watcom.lib $@
 
 clean:
   rm -f *.obj
