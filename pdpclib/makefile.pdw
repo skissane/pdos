@@ -3,16 +3,17 @@
 
 CC=gccwin
 COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
+AR=xar
 
 pdptest.exe: pdosst32.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj pos.obj supportf.obj pdossupc.obj
   rm -f pdos.lib
-  ar r pdos.lib pdosst32.obj stdio.obj string.obj stdlib.obj
-  ar r pdos.lib start.obj time.obj errno.obj assert.obj signal.obj
-  ar r pdos.lib locale.obj ctype.obj setjmp.obj math.obj
-  ar r pdos.lib pos.obj supportf.obj pdossupc.obj
-  ar s pdos.lib
+  $(AR) r pdos.lib pdosst32.obj stdio.obj string.obj stdlib.obj
+  $(AR) r pdos.lib start.obj time.obj errno.obj assert.obj signal.obj
+  $(AR) r pdos.lib locale.obj ctype.obj setjmp.obj math.obj
+  $(AR) r pdos.lib pos.obj supportf.obj pdossupc.obj
+  $(AR) s pdos.lib
   pdld --no-insert-timestamp -s -e ___pdosst32 -o pdptest.exe pdosst32.obj pdptest.obj pdos.lib
 
 pos.obj: ../src/pos.c
