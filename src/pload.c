@@ -32,6 +32,18 @@
 void dumpbuf(unsigned char *buf, int len);
 void dumplong(unsigned long x);
 
+#define BosDiskSectorRead intBosDiskSectorRead
+#define BosDiskReset intBosDiskReset
+
+static int BosDiskSectorRead(void        *buffer,
+                             unsigned int sectors,
+                             unsigned int drive,
+                             unsigned int track,
+                             unsigned int head,
+                             unsigned int sector);
+
+static int BosDiskReset(unsigned int drive);
+
 typedef struct
 {
     unsigned long hidden;
