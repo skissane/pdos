@@ -1,0 +1,61 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds pload.com for PDOS/386 on Windows,
+# using SubC small memory model. The executable builds,
+# but has no chance of working currently. And it is probably
+# more appropriate to get SubC to generate huge memory model
+# code, with 32-bit ints, rather than emulate bits of that
+# all over the place in assembler. You will need to switch
+# to NEWMODEL in both compiler and assembler too.
+
+# Note that if you are doing debugging using dumpbuf etc,
+# you will need to load more sectors in the boot sector.
+# May as well just make it the max of 58
+
+# To produce the 32-bit version, do this:
+# pdmake -f makeio.std TARG=PDOS32
+
+VPATH=..\pdpclib
+
+TARG=XPDOS32
+
+CC=sccdos
+CFLAGS=
+COPTS=-E -Dfar= -D__SUBC__ -I. -I..\pdpclib -D__MSDOS__ -D$(TARG) -DNEED_DUMP \
+    -DOLDMODEL -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(CFLAGS)
+AR=xar
+
+#    lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj
+
+OBJS=support.obj bos.obj dossupc.obj minifat.obj string.obj pdosload.obj \
+    lldos.obj protinta.obj file.obj protint.obj pload.obj \
+    ploadst.obj int13x.obj dossupa.obj
+
+all: clean pload.com
+
+pload.com: $(OBJS)
+  $(AR) s subc.lib
+  ld86 -Map map.txt -o pload.com --oformat binary -Ttext 0x700 ploadst.obj pload.obj int13x.obj dossupa.obj dossupc.obj bos.obj subc.lib
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -S $*.i
+  as86 -o $@ $*.s
+  rm -f $*.s
+  $(AR) r subc.lib $@
+
+.asm.obj:
+  as86 -Dmemodel=small -DNEED_DISPLAYC -o $@ $<
+  $(AR) r subc.lib $@
+
+clean:
+  rm -f *.obj
+  rm -f pload.com
+  rm -f subc.lib
