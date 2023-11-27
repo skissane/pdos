@@ -64,12 +64,18 @@ static void picRemap(int master_offset, int slave_offset);
 /* we should use readLogical etc directly, but Watcom is
    generating code that is not suitable for a.out */
 
+#ifdef __SUBC__
+static void (*rlfunc)(void *diskptr, unsigned long sector, void *buf);
+static unsigned long (*drfunc)(unsigned long parm);
+static void (*dpfunc)(void);
+static void (*dbfunc)(unsigned long drive);
+#else
 static void (*rlfunc)(void *diskptr, unsigned long sector, void *buf)
     = readLogical;
 static unsigned long (*drfunc)(unsigned long parm) = doreboot;
 static void (*dpfunc)(void) = dopoweroff;
 static void (*dbfunc)(unsigned long drive) = doboot;
-
+#endif
 
 void pdosload(void)
 {
@@ -100,6 +106,13 @@ void pdosload(void)
 #endif
     char *name = "PDOS.SYS";
     unsigned int flags = 0;
+
+#ifdef __SUBC__
+    rlfunc = readLogical;
+    drfunc = doreboot;
+    dpfunc = dopoweroff;
+    dbfunc = doboot;
+#endif
 
 #ifdef PDOS32
     /* Copies BIOS interrupt vectors and remaps IRQs
@@ -141,13 +154,19 @@ void pdosload(void)
     diskinfo.drive = bpb[-9]; /* drive number is stored in NOP */
     analyseBpb(&diskinfo, bpb);
     fatDefaults(&gfat);
-    fatInit(&gfat, bpb, rlfunc, 0, &diskinfo, 0);
+    fatInit(&gfat, bpb, rlfunc, (void *)0, &diskinfo, (void *)0);
 #ifdef PDOS32    
     a20e(); /* enable a20 line */
     pp.transferbuf = ADDR2ABS(transferbuf);
+#ifdef __SUBC__
+    pp.doreboot = (unsigned long)drfunc;
+    pp.dopoweroff = (unsigned long)dpfunc;
+    pp.doboot = (unsigned long)dbfunc;
+#else
     pp.doreboot = (unsigned long)(void (far *)())drfunc;
     pp.dopoweroff = (unsigned long)(void (far *)())dpfunc;
     pp.doboot = (unsigned long)(void (far *)())dbfunc;
+#endif
     pp.bpb = ADDR2ABS(bpb);
     loadp = ABS2ADDR(loads);
     fp = fopen(name, "rb");
@@ -385,8 +404,13 @@ static void ivtCopyEntries(int dest, int orig, int count)
     unsigned long far *new_ivt;
     unsigned long far *old_ivt;
 
+#ifdef __SUBC__
+    new_ivt = (unsigned long far *) (dest * sizeof(unsigned long));
+    old_ivt = (unsigned long far *) (orig * sizeof(unsigned long));
+#else
     new_ivt = (unsigned long far *) (long)(dest * sizeof(unsigned long));
     old_ivt = (unsigned long far *) (long)(orig * sizeof(unsigned long));
+#endif
     for (; count > 0; count--)
     {
         *new_ivt = *old_ivt;
@@ -444,4 +468,28 @@ static void picRemap(int master_offset, int slave_offset)
     wportb(PIC1_DATA, master_mask);
     wportb(PIC2_DATA, slave_mask);
 }
+#endif
+
+
+#ifdef __SUBC__
+
+#include <string.h>
+
+/* avoid dragging in ctype.c when we just need this one function,
+   and ctype doesn't build under SubC currently */
+
+int toupper(int x)
+{
+    char *p;
+    char *l = "abcdefghijklmnopqrstuvwxyz";
+    char *u = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    p = strchr(l, x);
+    if (p != NULL)
+    {
+        x = u[p  - l];
+    }
+    return (x);
+}
+
 #endif
