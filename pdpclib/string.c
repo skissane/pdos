@@ -10,8 +10,8 @@
 /*                                                                   */
 /*********************************************************************/
 
-#include "stdio.h"
 #include "string.h"
+#include "stdio.h"
 #include "stddef.h"
 
 #if defined(__PDOSGEN__)
