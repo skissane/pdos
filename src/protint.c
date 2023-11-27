@@ -51,6 +51,9 @@ static struct {
     descriptor small_data;
     descriptor spawn_code;
     descriptor spawn_data;
+#ifdef __SUBC__
+} descriptors;
+#else
 } descriptors = { 
   {0},
   { 0xffff, 0x0, 0xff, 0x9a, 0xcf, 0xff },
@@ -60,6 +63,7 @@ static struct {
   { 0xffff, 0x0, 0x00, 0x9a, 0xcf, 0x00 },
   { 0xffff, 0x0, 0xff, 0x92, 0xcf, 0xff }
 };
+#endif
 
 typedef struct {
     unsigned short len;
@@ -87,6 +91,15 @@ static unsigned long dorealint(unsigned long parm);
 /* we shouldn't need these intermediate function pointers,
    but I am working around the fact that Watcom generates
    the seg keyword which is unsuitable for the a.out format */
+#ifdef __SUBC__
+static void (*rs2)(void);
+static unsigned long (*rpfunc)(unsigned long corsubr,
+                       unsigned long codecor,
+                       unsigned long newsp,
+                       unsigned long parmlist);
+static unsigned long (*rrfunc)(int intno, unsigned short *regs);
+static unsigned long (*drifunc)(unsigned long parm);
+#else
 static void (*rs2)(void) = rtop_stage2;
 static unsigned long (*rpfunc)(unsigned long corsubr,
                        unsigned long codecor,
@@ -94,7 +107,7 @@ static unsigned long (*rpfunc)(unsigned long corsubr,
                        unsigned long parmlist) = rawprota;
 static unsigned long (*rrfunc)(int intno, unsigned short *regs) = runreal;
 static unsigned long (*drifunc)(unsigned long parm) = dorealint;
-
+#endif
 
 unsigned long rawprot(unsigned long csbase,
                       unsigned long ip,
@@ -109,10 +122,74 @@ unsigned long rawprot(unsigned long csbase,
     rawprot_parms parmlist;
     unsigned long myc32base;
 
+#ifdef __SUBC__
+
+  /* {0}, */
+    descriptors.null_descriptor.limit = 0;
+    descriptors.null_descriptor.base15_0 = 0;
+    descriptors.null_descriptor.base23_16 = 0;
+    descriptors.null_descriptor.access = 0;
+    descriptors.null_descriptor.gran_limit = 0;
+    descriptors.null_descriptor.base31_24 = 0;
+
+  /* { 0xffff, 0x0, 0xff, 0x9a, 0xcf, 0xff }, */
+    descriptors.os_code.limit = 0xffff;
+    descriptors.os_code.base15_0 = 0;
+    descriptors.os_code.base23_16 = 0xff;
+    descriptors.os_code.access = 0x9a;
+    descriptors.os_code.gran_limit = 0xcf;
+    descriptors.os_code.base31_24 = 0xff;
+
+  /* { 0xffff, 0x0, 0xff, 0x92, 0xcf, 0xff}, */
+    descriptors.os_data.limit = 0xffff;
+    descriptors.os_data.base15_0 = 0;
+    descriptors.os_data.base23_16 = 0xff;
+    descriptors.os_data.access = 0x92;
+    descriptors.os_data.gran_limit = 0xcf;
+    descriptors.os_data.base31_24 = 0xff;
+
+  /* { 0xffff, 0x0, 0x00, 0x9a, 0x00, 0x00 }, */
+    descriptors.small_code.limit = 0xffff;
+    descriptors.small_code.base15_0 = 0;
+    descriptors.small_code.base23_16 = 0;
+    descriptors.small_code.access = 0x9a;
+    descriptors.small_code.gran_limit = 0;
+    descriptors.small_code.base31_24 = 0;
+
+  /* { 0xffff, 0x0, 0x00, 0x92, 0x00, 0x00 }, */
+    descriptors.small_data.limit = 0xffff;
+    descriptors.small_data.base15_0 = 0;
+    descriptors.small_data.base23_16 = 0;
+    descriptors.small_data.access = 0x92;
+    descriptors.small_data.gran_limit = 0;
+    descriptors.small_data.base31_24 = 0;
+
+  /* { 0xffff, 0x0, 0x00, 0x9a, 0xcf, 0x00 }, */
+    descriptors.spawn_code.limit = 0xffff;
+    descriptors.spawn_code.base15_0 = 0;
+    descriptors.spawn_code.base23_16 = 0;
+    descriptors.spawn_code.access = 0x9a;
+    descriptors.spawn_code.gran_limit = 0xcf;
+    descriptors.spawn_code.base31_24 = 0;
+
+  /* { 0xffff, 0x0, 0xff, 0x92, 0xcf, 0xff } */
+    descriptors.spawn_data.limit = 0xffff;
+    descriptors.spawn_data.base15_0 = 0;
+    descriptors.spawn_data.base23_16 = 0xff;
+    descriptors.spawn_data.access = 0x92;
+    descriptors.spawn_data.gran_limit = 0xcf;
+    descriptors.spawn_data.base31_24 = 0xff;
+
+#endif
+
     myc32base = protget32();
     if (myc32base == 0)
     {
+#ifdef __SUBC__
+        myc32base = (unsigned long)(rs2);
+#else
         myc32base = (unsigned long)(void (far *)())(rs2);
+#endif
     }
     myc32base = ADDR2ABS(myc32base);
     /* this masking is because the offsets in protinta already
@@ -141,10 +218,18 @@ unsigned long rawprot(unsigned long csbase,
     }
 #endif
 
+#ifdef __SUBC__
+    mycbase = (unsigned long)rpfunc;
+#else
     mycbase = (unsigned long)(void (far *)())rpfunc;
+#endif
     mycbase = (mycbase >> 16) << 4;
 
+#ifdef __SUBC__
+    mydbase = (unsigned long)((void far *)&newstack);
+#else
     mydbase = (unsigned long)(void far *)&newstack;
+#endif
     mydbase = (mydbase >> 16) << 4;
 
     descriptors.os_code.base15_0 = (unsigned short)csbase;
@@ -194,6 +279,13 @@ unsigned long runprot(unsigned long csbase,
     unsigned long myc32base;
     unsigned long interrupts[256*2]; /* allow room for 256 interrupts */
     
+#ifdef __SUBC__
+    rs2 = rtop_stage2;
+    rpfunc = rawprota;
+    rrfunc = runreal;
+    drifunc = dorealint;
+#endif
+
     intloc = ADDR2ABS(interrupts);
     
     runparm.userparm = userparm;    
@@ -218,7 +310,11 @@ unsigned long runprot(unsigned long csbase,
 #endif
     }
 
+#ifdef __SUBC__
+    runparm.dorealint = (unsigned long)drifunc;
+#else
     runparm.dorealint = (unsigned long)(void (far *)())drifunc;
+#endif
     
     runparm_p = ADDR2ABS(&runparm);
 #ifdef OLDMODEL
@@ -434,9 +530,16 @@ unsigned long runaout(char *fnm, unsigned long absaddr, unsigned long userparm)
 unsigned long realsub(unsigned long func, unsigned long parm)
 {
     unsigned long (*functocall)(unsigned long parm);
-    
+
+#ifdef __SUBC__
+    unsigned long xxx;
+    functocall = (unsigned long (*)())func;
+    xxx = (unsigned long)functocall(parm);
+    return (xxx);
+#else
     functocall = (unsigned long (*)(unsigned long))func;
     return (functocall(parm));
+#endif
 }
 
 static unsigned long dorealint(unsigned long parm)
