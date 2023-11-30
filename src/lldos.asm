@@ -11,32 +11,40 @@ public reboot, putabs, getabs, poweroff, boot
         .code
 getfar proc, address: dword
         push ds
+        push bx
         lds bx,address
         mov ah,0
         mov al,[bx]
+        pop bx
         pop ds
         ret
 getfar endp
 
 putfar proc, address2: dword, character: word
         push ds
+        push bx
         lds bx,address2           ;We recieve a word yet
         mov al,byte ptr character ;we only put a char.
         mov [bx],al
+        pop bx
         pop ds
         ret
 putfar endp
 
 rportb proc, port: word
+        push dx
         mov dx,port
         in al,dx
+        pop dx
         ret
 rportb endp
 
 wportb proc, port2: word, outbyte: byte
+        push dx
         mov dx,port2
         mov al,outbyte
         out dx,al
+        pop dx
         ret
 wportb endp
 
