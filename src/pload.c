@@ -62,6 +62,10 @@ typedef struct
     unsigned int rootsize;
 } DISKINFO;
 
+#ifdef __SUBC__
+unsigned int dseg;
+#endif
+
 void pdosload(void);
 static void loadIO(int drive, char *edata);
 static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
@@ -83,7 +87,11 @@ int main(void)
 }
 
 /* we need to enter here to avoid Watcom name mangling of main() */
+#ifdef __SUBC__
+void dstart(int drive, char *edata, int seg)
+#else
 void dstart(int drive, char *edata)
+#endif
 {
 
 /* Until we have loaded all the sectors, we can't rely on the
@@ -100,10 +108,20 @@ void dstart(int drive, char *edata)
    is complete. ie this is not normal C programming, so don't
    be surprised that it's a bit hairy. */
 
+#ifdef __SUBC__
+int tempseg;
+dseg = seg;
+tempseg = seg;
+#endif
+
 #ifndef OLDMODEL
     loadIO(drive, edata);
 
     clrbss();
+
+#ifdef __SUBC__
+    dseg = tempseg;
+#endif
     /* now you can do debugging with dumplong/dumpbuf, without
        needing to adjust the boot sector to load more sectors */
 #endif
@@ -118,6 +136,11 @@ static void loadIO(int drive, char *edata)
     unsigned char *p;
     DISKINFO diskinfo;
     int x;
+#ifdef __SUBC__
+    int y;
+    int myseg;
+    int tempdseg;
+#endif
     int numsects = 0;
     int fat32 = 0;
     unsigned long datastart;
@@ -136,7 +159,27 @@ static void loadIO(int drive, char *edata)
     ReadLogical(&diskinfo, sector, p);
     p += 11;
 #endif
-#ifndef OLDMODEL
+
+#if defined(__SUBC__)
+
+/* we are using small memory model, and we need to
+   access an address out of range, needing a far
+   pointer. So we copy the sector into a stack variable */
+
+   p = secbuf;
+   for (x = 0x600; x < 0x600 + 512; x++)
+   {
+       /* offset comes first, then segment */
+       *p++ = xgetfar(x, 0);
+   }
+   if (secbuf[1] == 0x58)
+   {
+       fat32 = 1;
+   }
+   p = secbuf + 11;
+
+#elif !defined(OLDMODEL)
+
     p = ABS2ADDR(0x600);
     if (p[1] == 0x58)
     {
@@ -146,6 +189,7 @@ static void loadIO(int drive, char *edata)
 #else
     p = (unsigned char *)(0x600 - 0x600 + 11);
 #endif
+
     AnalyseBpb(&diskinfo, p);
     diskinfo.drive = drive;
     sector = diskinfo.filestart;
@@ -176,7 +220,16 @@ static void loadIO(int drive, char *edata)
         sector = (cluster - rootcluster) * sectors_per_cluster;
         sector += datastart;
     }
-#ifndef OLDMODEL
+#ifdef __SUBC__
+    /* code is more than 32k, so we need to avoid overflowing
+       and getting a negative number */
+    /* numsects = ((dseg << 4) + (unsigned int)edata - 0x700) / 512 + 1; */
+    numsects = dseg / (512/16);
+    numsects += (unsigned int)edata / 512;
+    numsects -= 0x700 / 512;
+    numsects++;
+    myseg = 0x70;
+#elif !defined(OLDMODEL)
     p = ABS2ADDR(0x700);
     /* add 1 sector for good measure, and the clear of bss will
        fix up any mess */
@@ -191,10 +244,23 @@ static void loadIO(int drive, char *edata)
     /* It has been relocated now */
     for (x = 0; x < numsects; x++) /* was 58 */
     {
-#if 1 /* (!defined(USING_EXE)) */
+#ifdef __SUBC__
+        /* any of these reads could clobber dseg, so preserve */
+        /* it's actually the xputfar that could clobber it */
+        /* and note that the BosDiskSectorRead function requires
+           dseg to be preserved */
+        tempdseg = dseg;
+        ReadLogical(&diskinfo, sector + x, secbuf);
+        for (y = 0; y < 512; y++)
+        {
+            xputfar(y, myseg, secbuf[y]);
+        }
+        dseg = tempdseg;
+        myseg += 0x20;
+#else
         ReadLogical(&diskinfo, sector + x, p);
-#endif        
         p += 512;
+#endif
     }
     return;
 }
@@ -281,7 +347,11 @@ static int BosDiskSectorRead(void        *buffer,
     regsin.h.cl |= (((unsigned int)track & 0x0300U) >> 2);
     regsin.h.dh = (unsigned char)head;
     regsin.h.dl = (unsigned char)drive;
+#ifdef __SUBC__
+    sregs.es = dseg;
+#else
     sregs.es = FP_SEG(buffer);
+#endif
     regsin.x.bx = FP_OFF(buffer);
 #ifdef __32BIT__
     regsin.d.ebx = (unsigned int)buffer;
