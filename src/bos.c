@@ -13,6 +13,10 @@
 #include "bos.h"
 #include "support.h"
 
+#ifdef SMALLMODEL
+extern int dseg;
+#endif
+
 #ifdef __32BIT__
 #define BIOS_INT_OFFSET 0x90 /* BIOS interrupt 0x10 is moved to 0xA0. */
 #else
@@ -591,7 +595,11 @@ int BosDiskSectorRead(void         *buffer,
     regsin.h.cl |= (((unsigned int)track & 0x0300U) >> 2);
     regsin.h.dh = (unsigned char)head;
     regsin.h.dl = (unsigned char)drive;
+#ifdef SMALLMODEL
+    sregs.es = dseg;
+#else
     sregs.es = FP_SEG(buffer);
+#endif
     regsin.x.bx = FP_OFF(buffer);
 #ifdef __32BIT__
     sregs.es = (((unsigned long)buffer) >> 4) & 0xffffU;
