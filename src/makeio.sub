@@ -29,7 +29,7 @@ TARG=XPDOS32
 CC=sccdos
 CFLAGS=
 COPTS=-E -Dfar= -D__SUBC__ -I. -I..\pdpclib -D__MSDOS__ -D$(TARG) -DNEED_DUMP \
-    -DOLDMODEL -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(CFLAGS)
+    -DNEWMODEL -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int $(CFLAGS)
 AR=xar
 
 #    lldos.obj protinta.obj file.obj protint.obj ctype.obj pload.obj
@@ -52,7 +52,7 @@ pload.com: $(OBJS)
   $(AR) r subc.lib $@
 
 .asm.obj:
-  as86 -Dmemodel=small -DNEED_DISPLAYC -o $@ $<
+  as86 -Dmemodel=small -DNEWMODEL -DNEED_DISPLAYC -o $@ $<
   $(AR) r subc.lib $@
 
 clean:
