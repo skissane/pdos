@@ -93,6 +93,14 @@ void pdosload(void)
     char *loadp;
     size_t rets;
     long progret;
+
+#ifdef __SUBC__
+    unsigned char bpb2[512];
+    unsigned char buf2[512];
+    int z;
+    int myseg;
+#endif
+
 #else
     FATFILE fatfile;
     static char buf[512];
@@ -115,6 +123,7 @@ void pdosload(void)
 #endif
 
 #ifdef PDOS32
+#ifndef __SUBC__
     /* Copies BIOS interrupt vectors and remaps IRQs
      * so they do not conflict with protected mode exceptions. */
     {
@@ -129,6 +138,7 @@ void pdosload(void)
         enable();
     }
 #endif
+#endif
 
     /* this dummy code allows us to do debugging in the future if a
        problem arises where any code change makes the problem go away */
@@ -142,14 +152,31 @@ void pdosload(void)
     /* start loading PDOS straight after PLOAD, ie 0x600 + 64k */
     /* now need to allow for more stack space, so add another 64k */
     /* actually - no reason not to start on a 64k boundary */
+#ifdef __SUBC__
+    myseg = 0x2000;
+#else
     loads = 0x20000UL;
+#endif
     psp = loads - 0x100;
     load = loads;
+
 #ifndef OLDMODEL
+
+#ifdef __SUBC__
+    for (z = 0; z < 512; z++)
+    {
+        bpb2[z] = xgetfar(0x600 + z, 0);
+    }
+    bpb = bpb2 + 11;
+#else
     /* was 0x7c00 but now relocated to 0x600 - ditto below */
     bpb = (unsigned char *)MK_FP(0, 0x600 + 11);
+#endif
+
 #else
+
     bpb = (unsigned char *)(0x600 - 0x600 + 11);
+
 #endif
     diskinfo.drive = bpb[-9]; /* drive number is stored in NOP */
     analyseBpb(&diskinfo, bpb);
@@ -177,8 +204,21 @@ void pdosload(void)
     }
     do
     {
+#ifdef __SUBC__
+        /* this is only loading 32k currently.
+           we need to do something (in fat.c) to get the full
+           180k or whatever loaded. It is however
+           enough to do a PM32 demo */
+        rets = fread(buf2, 1, 0x200, fp);
+        for (z = 0; z < rets; z++)
+        {
+            xputfar(z, myseg, buf2[z]);
+        }
+        myseg += 0x20;
+#else
         rets = fread(loadp, 1, 0x200, fp);
         loadp += rets;
+#endif
     } while (rets == 0x200);
     fclose(fp);
 
