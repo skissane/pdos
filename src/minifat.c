@@ -367,6 +367,7 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
     int bytesAvail;
     unsigned int sectorsAvail;
 
+#ifndef __SUBC__
     if (fatfile->currpos < 0)
     {
         /* Position is before the file,
@@ -375,6 +376,8 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
         /* +++Find out what error should be returned. */
         return (POS_ERR_ACCESS_DENIED);
     }
+#endif
+
     if (!(fatfile->dir))
     {
         /* +++Remove (unsigned long) after support routine

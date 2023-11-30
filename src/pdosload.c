@@ -205,10 +205,6 @@ void pdosload(void)
     do
     {
 #ifdef __SUBC__
-        /* this is only loading 32k currently.
-           we need to do something (in fat.c) to get the full
-           180k or whatever loaded. It is however
-           enough to do a PM32 demo */
         rets = fread(buf2, 1, 0x200, fp);
         for (z = 0; z < rets; z++)
         {
