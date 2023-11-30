@@ -140,6 +140,12 @@ int fatInit(FAT *fat,
     {
         fat->fat_type = 32;
     }
+#ifdef __SUBC__
+    else if (1)
+    {
+        fat->fat_type = 16;
+    }
+#endif
     else if ((fat->sectors_per_disk / fat->sectors_per_cluster) < 4087)
     {
         fat->fat_type = 12;
@@ -205,10 +211,17 @@ static int fatEndCluster(FAT *fat, unsigned long cluster)
 {
     if (fat->fat_type == 16)
     {
+#ifdef __SUBC__
+        if (cluster < 0x2U)
+        {
+            return (1);
+        }
+#else
         if ((cluster >= 0xfff8U) || (cluster < 0x2U))
         {
             return (1);
         }
+#endif
     }
     else if (fat->fat_type == 12)
     {
@@ -831,12 +844,21 @@ static void fatDirSectorSearch(FAT *fat,
     DIRENT *p;
     int i;
 
+/* there appears to be a SubC compiler bug.
+   this is appearing as size 0x22 instead of 0x20 */
+/* dumplong(sizeof(DIRENT)); */
+/* I have hacked around that below */
+
     buf = fat->dbuf;
     for (x = 0; x < numsectors; x++)
     {
         fatReadLogical(fat, startSector + x, buf);
         for (p = (DIRENT *) buf; (unsigned char *) p < buf + fat->sector_size;
+#ifdef __SUBC__
+             p = (DIRENT *)((char *)p + 0x20))
+#else
              p++)
+#endif
         {
             /* Order of the conditionals is important,
              * because deleted LFNs exist and "empty"
@@ -925,8 +947,14 @@ static void fatDirSectorSearch(FAT *fat,
                 else if (memcmp(p->file_name, search, 11) == 0)
                 {
                     fat->fnd=1;
+#ifdef __SUBC__
+                    /* total hack because of incorrect offsets */
+                    fat->currcluster = p->last_moddate[1]
+                        | ((unsigned long) p->last_moddate[2] << 8);
+#else
                     fat->currcluster = p->start_cluster[0]
                         | ((unsigned long) p->start_cluster[1] << 8);
+#endif
                     if (fat->fat_type == 32)
                     {
                         fat->currcluster = fat->currcluster |
