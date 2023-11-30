@@ -34,6 +34,12 @@ public sethigh
 public gethigh
 
 .data
+
+ifdef SUBC
+public interrupts
+interrupts dd 512 dup(?)
+endif
+
 ; used for initial protected mode jump
 joffs   dd ?
 
@@ -225,6 +231,7 @@ runreal_stage2:
 rtop:
         cli
         mov esp, newstack
+
         lgdt fword ptr gdtinfo
         lidt fword ptr idtinfo
         mov eax, cr0
