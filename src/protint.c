@@ -23,16 +23,23 @@
 #include "a_out.h"
 #include "unused.h"
 
+#ifndef __SUBC__
 unsigned long rawprota(unsigned long corsubr, 
                        unsigned long codecor,
                        unsigned long newsp,
                        unsigned long parmlist);
+#endif
 
 unsigned long runreal(int intno, unsigned short *regs);
 void rtop_stage2(void);
 unsigned long protget32(void);
 
 extern unsigned long newstack;
+
+#ifdef __SUBC__
+extern long interrupts[];
+extern int dseg;
+#endif
 
 typedef struct {
     unsigned short limit;
@@ -68,15 +75,30 @@ static struct {
 typedef struct {
     unsigned short len;
     unsigned long absaddr;
+#ifdef __SUBC__
+    unsigned int dummy;
+#endif
 } descptr;
 
-descptr gdtinfo = { 0x37 };
+descptr gdtinfo = { 0x37 
+#ifdef __SUBC__
+,0,0
+#endif
+};
 
-descptr idtinfo = { 0x7ff };
+descptr idtinfo = { 0x7ff
+#ifdef __SUBC__
+,0,0
+#endif
+};
 
 /* this real mode idt pointer points to the standard real mode
    interrupts.  We allow room for 256 interrupts. */
-descptr ridtinfo = { 0x3ff, 0L };
+descptr ridtinfo = { 0x3ff, 0L
+#ifdef __SUBC__
+,0
+#endif
+};
 
 /* interrupt number, 6 registers, cflag, flags, 4 segment registers,
    4 high halves of eax, ebx, ecx, edx */
@@ -246,9 +268,17 @@ unsigned long rawprot(unsigned long csbase,
     descriptors.small_data.base23_16 = (unsigned char)(mydbase >> 16);
     descriptors.small_data.base31_24 = (unsigned char)(mydbase >> 24);
     
+#ifdef __SUBC__
+    absgdt = (int)&descriptors;
+    /* this will actually go negative, but the rules of
+       maths apparently don't care */
+    absgdt += (dseg << 4);
+#else
     absgdt = ADDR2ABS(&descriptors);    
+#endif
+
     gdtinfo.absaddr = absgdt;
-    
+
     idtinfo.absaddr = intloc;
     
     codecor = myc32base - csbase;
@@ -264,7 +294,15 @@ unsigned long rawprot(unsigned long csbase,
     parmlist_p -= dsbase;
 #endif
 
+#ifdef __SUBC__
+    /* the 9 puts the stack at 0x90000, leaving plenty of
+       room for pdos.sys to load */
+    return (rawprota(0, 0x2, 0, 0, 0, 0x9, parmlist_p));
+
+    /* return (rawprota(ip, codecor, prot_sp, parmlist_p)); */
+#else
     return (rpfunc(ip, codecor, prot_sp, parmlist_p));
+#endif
 }
 
 unsigned long runprot(unsigned long csbase,
@@ -277,7 +315,9 @@ unsigned long runprot(unsigned long csbase,
     runprot_parms runparm;
     unsigned long runparm_p;
     unsigned long myc32base;
+#ifndef __SUBC__
     unsigned long interrupts[256*2]; /* allow room for 256 interrupts */
+#endif
     
 #ifdef __SUBC__
     rs2 = rtop_stage2;
@@ -287,7 +327,11 @@ unsigned long runprot(unsigned long csbase,
 #endif
 
     intloc = ADDR2ABS(interrupts);
-    
+#ifdef __SUBC__
+    /* it doesn't seem to matter that this becomes negative */
+    intloc += (dseg << 4);
+#endif
+
     runparm.userparm = userparm;    
     runparm.intbuffer = ADDR2ABS(intbuffer);
 
