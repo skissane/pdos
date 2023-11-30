@@ -75,7 +75,7 @@ mov bx, dx ; preserve drive number
 ; the BPB - to address 0x600 before it gets clobbered
 ; Do this before setting sp, to give flexibility of setting a value of
 ; sp that may clobber 7c00
-; no need to prreserve any of the below registers
+; no need to preserve any of the below registers
 
 mov dx, 0
 mov ds, dx
@@ -244,6 +244,33 @@ cstart_:
 ret
 endif
 endif
+
+; Two routines needed for SubC
+public xgetfar
+
+xgetfar proc, xaddr: dword
+        push ds
+        push bx
+        lds bx,xaddr
+        mov ah,0
+        mov al,[bx]
+        pop bx
+        pop ds
+        ret
+xgetfar endp
+
+public xputfar
+
+xputfar proc, address2: dword, character: word
+        push ds
+        push bx
+        lds bx,address2           ;We receive a word yet
+        mov al,byte ptr character ;we only put a char.
+        mov [bx],al
+        pop bx
+        pop ds
+        ret
+xputfar endp
 
 
 end top
