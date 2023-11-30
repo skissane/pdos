@@ -241,8 +241,15 @@ ignorec:
 ; good measure. Using proper optimization put the requirement
 ; down to 8, but I put it back to 9 for good measure. If you
 ; wish to do debugging
-; using dumpbuf/dumplong, you will need more sectors - may as
-; well max it out with 58
+; using dumpbuf/dumplong during the load of pload.com itself,
+; you will need more sectors - may as
+; well max it out with 58. Basically you need to at least have
+; bos.c loaded so that you can write to the screen. Or we
+; could copy that function into the mainline. Even with the
+; full 58 sectors, that may not be enough for dumpbuf, because
+; the literals could be beyond that. You can use dumplong though,
+; as that has been written to not require literals anymore.
+; Note that SubC needs 7 sectors loaded
  mov  cx, 9        ;Load 9 sectors (was 55, was 58, was 3)
 ; I had dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
