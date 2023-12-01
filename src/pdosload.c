@@ -199,16 +199,15 @@ void pdosload(void)
     a20e(); /* enable a20 line */
 #ifdef __SUBC__
     memset(&pp, 0x00, sizeof pp);
-    pp.transferbuf = ADDR2ABS(transferbuf);
     pp.doreboot = (unsigned long)drfunc;
     pp.dopoweroff = (unsigned long)dpfunc;
     pp.doboot = (unsigned long)dbfunc;
 #else
-    pp.transferbuf = ADDR2ABS(transferbuf);
     pp.doreboot = (unsigned long)(void (far *)())drfunc;
     pp.dopoweroff = (unsigned long)(void (far *)())dpfunc;
     pp.doboot = (unsigned long)(void (far *)())dbfunc;
 #endif
+    pp.transferbuf = ADDR2ABS(transferbuf);
     pp.bpb = ADDR2ABS(bpb);
     loadp = ABS2ADDR(loads);
     fp = fopen(name, "rb");
@@ -234,11 +233,7 @@ void pdosload(void)
     fclose(fp);
 
     /* stack of 0x8000 */
-#ifdef __SUBC__
-    progret = runprot(0, loads, 0, ADDR2ABS(loadp) + 0x8000, ((dseg << 4) + (int)&pp));
-#else
     progret = runprot(0, loads, 0, ADDR2ABS(loadp) + 0x8000, ADDR2ABS(&pp));
-#endif
     dumplong((long)progret);
     for (;;) ;
     /* runaout(name, load, ADDR2ABS(&pp)); */
