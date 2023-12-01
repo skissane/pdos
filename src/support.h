@@ -106,7 +106,7 @@ void disable(void);
 #define ADDR2ABS(x) ((unsigned long)(x))
 #define ABS2ADDR(x) ((void *)(x))
 #elif defined(__SUBC__)
-#define ADDR2ABS(x) ((unsigned long)(x))
+#define ADDR2ABS(x) ((unsigned long)(x) + (dseg << 4))
 #define ABS2ADDR(x) ((void *)(x))
 #define CADDR2ABS(x) ((((int)(x) >> 16) << 4) \
                    +  ((int)(x) & 0xffffU))
