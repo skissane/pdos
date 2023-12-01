@@ -206,6 +206,12 @@ runreal_stage2:
         
         push esi
         push edi
+; If we are using SubC, only ax will be set
+; so we clear the whole register now
+; And actually, even in non-SubC, it would be
+; dx:ax that has the 32-bit return, so don't rely
+; on this return code currently
+        xor eax, eax
         call realsub
         add sp, 8
         
