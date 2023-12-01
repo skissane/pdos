@@ -11,6 +11,7 @@
 /*********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "protint.h"
 #include "fat.h"
@@ -33,6 +34,10 @@ static DISKINFO diskinfo;
 FAT gfat;
 
 int G_live = 0;
+
+#ifdef __SUBC__
+extern int dseg;
+#endif
 
 int readAbs(void *buf, int sectors, int drive, int track, int head, int sect);
 
@@ -77,6 +82,10 @@ static void (*dpfunc)(void) = dopoweroff;
 static void (*dbfunc)(unsigned long drive) = doboot;
 #endif
 
+#ifdef __SUBC__
+static pdos_parms pp;
+#endif
+
 void pdosload(void)
 {
     unsigned long psp;
@@ -88,7 +97,9 @@ void pdosload(void)
        a sector plus 16 bytes for the parameter
        block, required by BosDiskSectorRLBA */
     static unsigned char transferbuf[512+16];
+#ifndef __SUBC__
     pdos_parms pp;
+#endif
     FILE *fp;
     char *loadp;
     size_t rets;
@@ -119,6 +130,10 @@ void pdosload(void)
     rlfunc = readLogical;
     drfunc = doreboot;
     dpfunc = dopoweroff;
+    /* we do NOT adjust code pointers by 0x700 because they
+       are designed to have a cs of 0, so all code pointers
+       already have 0x700 added */
+    /* dpfunc += 0x700; */
     dbfunc = doboot;
 #endif
 
@@ -184,12 +199,14 @@ void pdosload(void)
     fatInit(&gfat, bpb, rlfunc, (void *)0, &diskinfo, (void *)0);
 #ifdef PDOS32    
     a20e(); /* enable a20 line */
-    pp.transferbuf = ADDR2ABS(transferbuf);
 #ifdef __SUBC__
+    memset(&pp, 0x00, sizeof pp);
+    pp.transferbuf = ADDR2ABS(transferbuf);
     pp.doreboot = (unsigned long)drfunc;
     pp.dopoweroff = (unsigned long)dpfunc;
     pp.doboot = (unsigned long)dbfunc;
 #else
+    pp.transferbuf = ADDR2ABS(transferbuf);
     pp.doreboot = (unsigned long)(void (far *)())drfunc;
     pp.dopoweroff = (unsigned long)(void (far *)())dpfunc;
     pp.doboot = (unsigned long)(void (far *)())dbfunc;
@@ -219,7 +236,11 @@ void pdosload(void)
     fclose(fp);
 
     /* stack of 0x8000 */
+#ifdef __SUBC__
+    progret = runprot(0, loads, 0, ADDR2ABS(loadp) + 0x8000, ((dseg << 4) + (int)&pp));
+#else
     progret = runprot(0, loads, 0, ADDR2ABS(loadp) + 0x8000, ADDR2ABS(&pp));
+#endif
     dumplong((long)progret);
     for (;;) ;
     /* runaout(name, load, ADDR2ABS(&pp)); */
