@@ -254,6 +254,11 @@ unsigned long rawprot(unsigned long csbase,
 #endif
     mydbase = (mydbase >> 16) << 4;
 
+#ifdef __SUBC__
+    mycbase = 0x0;
+    mydbase = dseg;
+#endif
+
     descriptors.os_code.base15_0 = (unsigned short)csbase;
     descriptors.os_code.base23_16 = (unsigned char)(csbase >> 16);
     descriptors.os_code.base31_24 = (unsigned char)(csbase >> 24);
@@ -264,9 +269,15 @@ unsigned long rawprot(unsigned long csbase,
     descriptors.small_code.base15_0 = (unsigned short)mycbase;
     descriptors.small_code.base23_16 = (unsigned char)(mycbase >> 16);
     descriptors.small_code.base31_24 = (unsigned char)(mycbase >> 24);
+#ifdef __SUBC__
+    descriptors.small_data.base15_0 = (unsigned short)(mydbase << 4);
+    descriptors.small_data.base23_16 = (unsigned char)(mydbase >> 12);
+    descriptors.small_data.base31_24 = 0;
+#else
     descriptors.small_data.base15_0 = (unsigned short)mydbase;
     descriptors.small_data.base23_16 = (unsigned char)(mydbase >> 16);
     descriptors.small_data.base31_24 = (unsigned char)(mydbase >> 24);
+#endif
     
 #ifdef __SUBC__
     absgdt = (int)&descriptors;
