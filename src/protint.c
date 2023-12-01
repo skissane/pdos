@@ -131,6 +131,10 @@ static unsigned long (*rrfunc)(int intno, unsigned short *regs) = runreal;
 static unsigned long (*drifunc)(unsigned long parm) = dorealint;
 #endif
 
+#ifdef __SUBC__
+static rawprot_parms parmlist;
+#endif
+
 unsigned long rawprot(unsigned long csbase,
                       unsigned long ip,
                       unsigned long dsbase,
@@ -141,7 +145,9 @@ unsigned long rawprot(unsigned long csbase,
     unsigned long absgdt;
     unsigned long codecor;
     unsigned long parmlist_p;
+#ifndef __SUBC__
     rawprot_parms parmlist;
+#endif
     unsigned long myc32base;
 
 #ifdef __SUBC__
@@ -293,7 +299,11 @@ unsigned long rawprot(unsigned long csbase,
     idtinfo.absaddr = intloc;
     
     codecor = myc32base - csbase;
-    
+
+#ifdef __SUBC__
+    memset(&parmlist, 0x00, sizeof parmlist);
+#endif
+
     parmlist.dsbase = dsbase;
     parmlist.gdt = absgdt;
     parmlist.freem_start = prot_sp; /* free memory in 1 MiB range starts
@@ -306,15 +316,22 @@ unsigned long rawprot(unsigned long csbase,
 #endif
 
 #ifdef __SUBC__
+    parmlist_p = (dseg << 4) + (int)&parmlist;
+
     /* the 9 puts the stack at 0x90000, leaving plenty of
        room for pdos.sys to load */
-    return (rawprota(0, 0x2, 0, 0, 0, 0x9, parmlist_p));
+    return (rawprota(0, 0x2, 0, 0, 0, 0x9, parmlist_p, 0));
 
     /* return (rawprota(ip, codecor, prot_sp, parmlist_p)); */
 #else
     return (rpfunc(ip, codecor, prot_sp, parmlist_p));
 #endif
 }
+
+#ifdef __SUBC__
+    /* keep variables in the first 64k of RAM */
+static runprot_parms runparm;
+#endif
 
 unsigned long runprot(unsigned long csbase,
                       unsigned long ip,
@@ -323,7 +340,9 @@ unsigned long runprot(unsigned long csbase,
                       unsigned long userparm)
 {
     unsigned long intloc;
+#ifndef __SUBC__
     runprot_parms runparm;
+#endif
     unsigned long runparm_p;
     unsigned long myc32base;
 #ifndef __SUBC__
@@ -334,6 +353,9 @@ unsigned long runprot(unsigned long csbase,
     rs2 = rtop_stage2;
     rpfunc = rawprota;
     rrfunc = runreal;
+    /* because runreal is in TEXT32, we apparently need
+       to cope with the relocation correction ourselves */
+    rrfunc += 0x700;
     drifunc = dorealint;
 #endif
 
@@ -343,10 +365,16 @@ unsigned long runprot(unsigned long csbase,
     intloc += (dseg << 4);
 #endif
 
+#ifdef __SUBC__
+    memset(&runparm, 0x00, sizeof runparm);
+#endif
     runparm.userparm = userparm;    
     runparm.intbuffer = ADDR2ABS(intbuffer);
 
     myc32base = protget32();
+#ifdef __SUBC__
+    runparm.runreal = (int)rrfunc;
+#else
     if (myc32base == 0)
     {
         runparm.runreal = CADDR2ABS(rrfunc);
@@ -364,14 +392,17 @@ unsigned long runprot(unsigned long csbase,
         }
 #endif
     }
+#endif
+
 
 #ifdef __SUBC__
     runparm.dorealint = (unsigned long)drifunc;
+    runparm_p = (dseg << 4) + (int)&runparm;
 #else
     runparm.dorealint = (unsigned long)(void (far *)())drifunc;
+    runparm_p = ADDR2ABS(&runparm);
 #endif
     
-    runparm_p = ADDR2ABS(&runparm);
 #ifdef OLDMODEL
     runparm_p -= dsbase;
 #endif
@@ -582,16 +613,22 @@ unsigned long runaout(char *fnm, unsigned long absaddr, unsigned long userparm)
 #endif
 }
 
-unsigned long realsub(unsigned long func, unsigned long parm)
-{
-    unsigned long (*functocall)(unsigned long parm);
-
 #ifdef __SUBC__
+unsigned long realsub(unsigned long func, int one, unsigned long parm, int two)
+#else
+unsigned long realsub(unsigned long func, unsigned long parm)
+#endif
+{
+#ifdef __SUBC__
+    unsigned long (*functocall)(unsigned long parm, unsigned long two);
     unsigned long xxx;
+
     functocall = (unsigned long (*)())func;
-    xxx = (unsigned long)functocall(parm);
+    xxx = (unsigned long)functocall(parm, two);
     return (xxx);
 #else
+    unsigned long (*functocall)(unsigned long parm);
+
     functocall = (unsigned long (*)(unsigned long))func;
     return (functocall(parm));
 #endif
