@@ -285,14 +285,9 @@ unsigned long rawprot(unsigned long csbase,
     descriptors.small_data.base31_24 = (unsigned char)(mydbase >> 24);
 #endif
     
-#ifdef __SUBC__
-    absgdt = (int)&descriptors;
-    /* this will actually go negative, but the rules of
+    /* For SubC, this will actually go negative, but the rules of
        maths apparently don't care */
-    absgdt += (dseg << 4);
-#else
     absgdt = ADDR2ABS(&descriptors);    
-#endif
 
     gdtinfo.absaddr = absgdt;
 
@@ -316,8 +311,6 @@ unsigned long rawprot(unsigned long csbase,
 #endif
 
 #ifdef __SUBC__
-    parmlist_p = (dseg << 4) + (int)&parmlist;
-
     /* the 9 puts the stack at 0x90000, leaving plenty of
        room for pdos.sys to load */
     return (rawprota(0, 0x2, 0, 0, 0, 0x9, parmlist_p, 0));
@@ -359,11 +352,8 @@ unsigned long runprot(unsigned long csbase,
     drifunc = dorealint;
 #endif
 
+    /* for SubC, it doesn't seem to matter that this becomes negative */
     intloc = ADDR2ABS(interrupts);
-#ifdef __SUBC__
-    /* it doesn't seem to matter that this becomes negative */
-    intloc += (dseg << 4);
-#endif
 
 #ifdef __SUBC__
     memset(&runparm, 0x00, sizeof runparm);
@@ -397,12 +387,12 @@ unsigned long runprot(unsigned long csbase,
 
 #ifdef __SUBC__
     runparm.dorealint = (unsigned long)drifunc;
-    runparm_p = (dseg << 4) + (int)&runparm;
 #else
     runparm.dorealint = (unsigned long)(void (far *)())drifunc;
-    runparm_p = ADDR2ABS(&runparm);
 #endif
     
+    runparm_p = ADDR2ABS(&runparm);
+
 #ifdef OLDMODEL
     runparm_p -= dsbase;
 #endif
