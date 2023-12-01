@@ -55,18 +55,48 @@ unsigned long runaout(char *fnm,
 
 typedef struct {
     unsigned long runreal;
+#ifdef __SUBC__
+    int dummy1;
+#endif
     unsigned long intbuffer;
+#ifdef __SUBC__
+    int dummy2;
+#endif
     unsigned long dorealint;
+#ifdef __SUBC__
+    int dummy3;
+#endif
     unsigned long userparm;    
+#ifdef __SUBC__
+    int dummy4;
+#endif
 } runprot_parms;
 
 typedef struct {
     unsigned long gdt;
+#ifdef __SUBC__
+    int dummy1;
+#endif
     unsigned long freem_start;
+#ifdef __SUBC__
+    int dummy2;
+#endif
     unsigned long intloc;
+#ifdef __SUBC__
+    int dummy3;
+#endif
     unsigned long csbase;
+#ifdef __SUBC__
+    int dummy4;
+#endif
     unsigned long dsbase;
+#ifdef __SUBC__
+    int dummy5;
+#endif
     unsigned long userparm;
+#ifdef __SUBC__
+    int dummy6;
+#endif
 } rawprot_parms;
 
 extern unsigned long (*runreal_p)(unsigned long func, unsigned short *regs);
