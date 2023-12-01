@@ -106,7 +106,7 @@ void pdosload(void)
     long progret;
 
 #ifdef __SUBC__
-    unsigned char bpb2[512];
+    static unsigned char bpb2[512];
     unsigned char buf2[512];
     int z;
     int myseg;
