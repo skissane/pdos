@@ -138,7 +138,6 @@ void pdosload(void)
 #endif
 
 #ifdef PDOS32
-#ifndef __SUBC__
     /* Copies BIOS interrupt vectors and remaps IRQs
      * so they do not conflict with protected mode exceptions. */
     {
@@ -152,7 +151,6 @@ void pdosload(void)
         picRemap(0xB0, 0xB8);
         enable();
     }
-#endif
 #endif
 
     /* this dummy code allows us to do debugging in the future if a
@@ -457,23 +455,27 @@ static void doboot(unsigned long drivenum)
 #ifdef PDOS32
 static void ivtCopyEntries(int dest, int orig, int count)
 {
+#ifdef __SUBC__
+    int x;
+
+    for (x = 0; x < count * 4; x++)
+    {
+        xputfar(dest * 4 + x, 0, xgetfar(orig * 4 + x, 0));
+    }
+#else
     /* To access the IVT far pointers must be used. */
     unsigned long far *new_ivt;
     unsigned long far *old_ivt;
 
-#ifdef __SUBC__
-    new_ivt = (unsigned long far *) (dest * sizeof(unsigned long));
-    old_ivt = (unsigned long far *) (orig * sizeof(unsigned long));
-#else
     new_ivt = (unsigned long far *) (long)(dest * sizeof(unsigned long));
     old_ivt = (unsigned long far *) (long)(orig * sizeof(unsigned long));
-#endif
     for (; count > 0; count--)
     {
         *new_ivt = *old_ivt;
         new_ivt++;
         old_ivt++;
     }
+#endif
 }
 
 /* Code for remapping Programmable Interrupt Controller (PIC). */
