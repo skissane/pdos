@@ -245,7 +245,20 @@ ret
 endif
 endif
 
-; Two routines needed for SubC
+; Routines needed for SubC
+
+public getedata
+getedata proc
+        mov ax, offset DGROUP:_edata
+getedata endp
+
+
+public getend
+getend proc
+        mov ax, offset DGROUP:_end
+getend endp
+
+
 public xgetfar
 
 xgetfar proc, xaddr: dword
@@ -258,6 +271,7 @@ xgetfar proc, xaddr: dword
         pop ds
         ret
 xgetfar endp
+
 
 public xputfar
 
