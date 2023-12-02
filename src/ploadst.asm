@@ -250,12 +250,14 @@ endif
 public getedata
 getedata proc
         mov ax, offset DGROUP:_edata
+        ret
 getedata endp
 
 
 public getend
 getend proc
         mov ax, offset DGROUP:_end
+        ret
 getend endp
 
 
