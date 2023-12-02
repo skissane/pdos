@@ -33,7 +33,14 @@ typedef struct {
 static DISKINFO diskinfo;
 FAT gfat;
 
-int G_live = 0;
+int G_live = 3;
+
+#ifdef __SUBC__
+int G_seg = 4;
+int G_offs = 5;
+#else
+char *G_ptr = (char *)6;
+#endif
 
 #ifdef __SUBC__
 extern int dseg;
@@ -155,7 +162,18 @@ void pdosload(void)
 
     /* this dummy code allows us to do debugging in the future if a
        problem arises where any code change makes the problem go away */
-    if (G_live) dumplong(0x123L);
+    if (G_live)
+    {
+        dumplong(0x11L);
+#ifdef __SUBC__
+        dumplong(dseg);
+        dumplong((long)xgetfar(G_offs, G_seg));
+        dumplong((long)xgetfar(G_offs + 1, G_seg));
+#else
+        dumplong((long)*G_ptr);
+        dumplong((long)*(G_ptr + 1));
+#endif
+    }
 
     BosGetKeyboardShiftStatus(&flags);
     if (flags & (1 << 0))
@@ -210,6 +228,7 @@ void pdosload(void)
     pp.transferbuf = ADDR2ABS(transferbuf);
     pp.bpb = ADDR2ABS(bpb);
     loadp = ABS2ADDR(loads);
+
     fp = fopen(name, "rb");
     if (fp == NULL)
     {
