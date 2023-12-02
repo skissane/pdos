@@ -141,28 +141,18 @@ int fatInit(FAT *fat,
         fat->fat_type = 32;
     }
 #ifdef __SUBC__
-/* activating this code appears to trigger some tool bug */
-#if 0
     else if (memcmp(bpb + 0x39 - 11, "12", 2) == 0)
     {
         fat->fat_type = 12;
     }
-#endif
     else if (memcmp(bpb + 0x39 - 11, "16", 2) == 0)
     {
         fat->fat_type = 16;
     }
-    /* so this hack is used instead */
-    else if (1)
-    {
-        fat->fat_type = 12;
-    }
-#if 0
     else if (memcmp(bpb + 0x39 - 11, "32", 2) == 0)
     {
         fat->fat_type = 32;
     }
-#endif
 #endif
     else if ((fat->sectors_per_disk / fat->sectors_per_cluster) < 4087)
     {
