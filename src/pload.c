@@ -66,6 +66,15 @@ typedef struct
 unsigned int dseg;
 #endif
 
+extern int G_live;
+
+#ifdef __SUBC__
+extern int G_seg;
+extern int G_offs;
+#else
+extern char *G_ptr;
+#endif
+
 void pdosload(void);
 static void loadIO(int drive, char *edata);
 static void AnalyseBpb(DISKINFO *diskinfo, unsigned char *bpb);
@@ -109,19 +118,54 @@ void dstart(int drive, char *edata)
    be surprised that it's a bit hairy. */
 
 #ifdef __SUBC__
-int tempseg;
-dseg = seg;
-tempseg = seg;
+    int tempseg;
+
+    dseg = seg;
+    tempseg = seg;
 #endif
 
 #ifndef OLDMODEL
     loadIO(drive, edata);
 
-    clrbss();
-
 #ifdef __SUBC__
     dseg = tempseg;
 #endif
+
+    G_live -= 3; /* use 3 to switch off debugging, 2 to set debugging */
+
+    if (G_live)
+    {
+#ifdef __SUBC__
+        dumplong(0x1111L);
+        dumplong(dseg);
+        dumplong(0x2222L);
+        dumplong((long)getedata());
+        dumplong(0x3333L);
+        dumplong((long)getend());
+        dumplong(0x4444L);
+        dumplong((long)xgetfar(G_offs, G_seg));
+        dumplong(0x5555L);
+        dumplong((long)xgetfar(G_offs + 1, G_seg));
+        dumplong(0x6666L);
+#else
+        dumplong((long)*G_ptr);
+        dumplong((long)*(G_ptr + 1));
+#endif
+    }
+
+    clrbss();
+
+    if (G_live)
+    {
+#ifdef __SUBC__
+        dumplong((long)xgetfar(G_offs, G_seg));
+        dumplong((long)xgetfar(G_offs + 1, G_seg));
+#else
+        dumplong((long)*G_ptr);
+        dumplong((long)*(G_ptr + 1));
+#endif
+    }
+
     /* now you can do debugging with dumplong/dumpbuf, without
        needing to adjust the boot sector to load more sectors */
 #endif
