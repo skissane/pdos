@@ -94,6 +94,9 @@ static void *src;
 #define TO_WORD(d, s) (*(WORD *)d = (s))
 #define FROM_WORD(s) (*(WORD *)s)
 
+#define TO_BYTE(d, s) (*(BYTE *)d = (s))
+#define FROM_BYTE(s) (*(BYTE *)s)
+
 #define GET_DEST_REG(y) \
    { \
    if (y == REG_SI) dest = &regs.x.si; \
@@ -102,9 +105,18 @@ static void *src;
    else if (y == REG_BX) dest = &regs.x.bx; \
    else if (y == REG_CX) dest = &regs.x.cx; \
    else if (y == REG_DX) dest = &regs.x.dx; \
+   else if (y == REG_AL) dest = &regs.h.al; \
+   else if (y == REG_BL) dest = &regs.h.bl; \
+   else if (y == REG_CL) dest = &regs.h.cl; \
+   else if (y == REG_DL) dest = &regs.h.dl; \
+   else if (y == REG_AH) dest = &regs.h.ah; \
+   else if (y == REG_BH) dest = &regs.h.bh; \
+   else if (y == REG_CH) dest = &regs.h.ch; \
+   else if (y == REG_DH) dest = &regs.h.dh; \
    else if (y == REG_DS) dest = &sregs.ds; \
    else if (y == REG_ES) dest = &sregs.es; \
    else if (y == REG_SS) dest = &sregs.ss; \
+   else if (y == REG_CS) dest = &sregs.cs; \
    else if (y == REG_SP) dest = &sp; \
    else { fprintf(logf, "unknown\n"); exit(0); } \
    }
@@ -117,9 +129,18 @@ static void *src;
    else if (y == REG_BX) src = &regs.x.bx; \
    else if (y == REG_CX) src = &regs.x.cx; \
    else if (y == REG_DX) src = &regs.x.dx; \
+   else if (y == REG_AL) src = &regs.h.al; \
+   else if (y == REG_BL) src = &regs.h.bl; \
+   else if (y == REG_CL) src = &regs.h.cl; \
+   else if (y == REG_DL) src = &regs.h.dl; \
+   else if (y == REG_AH) src = &regs.h.ah; \
+   else if (y == REG_BH) src = &regs.h.bh; \
+   else if (y == REG_CH) src = &regs.h.ch; \
+   else if (y == REG_DH) src = &regs.h.dh; \
    else if (y == REG_DS) src = &sregs.ds; \
    else if (y == REG_ES) src = &sregs.es; \
    else if (y == REG_SS) src = &sregs.ss; \
+   else if (y == REG_CS) src = &sregs.cs; \
    else if (y == REG_SP) src = &sp; \
    else { fprintf(logf, "unknown\n"); exit(0); } \
    }
@@ -134,6 +155,15 @@ typedef size_t FLATAMT;
         base[toamt] = (BYTE)(val & 0xff); \
         base[toamt + 1] = (BYTE)((val >> 8) & 0xff); \
     }
+
+#define BYTE_TO_MEM(toamt, val) \
+    (base[toamt] = (BYTE)(val))
+
+#define WORD_AT_MEM(fromamt) \
+    ((WORD)((base[fromamt + 1] << 8) | base[fromamt]))
+
+#define BYTE_AT_MEM(fromamt) \
+    ((BYTE)base[fromamt])
 
 static int x1;
 static int x2;
@@ -380,10 +410,196 @@ static void doemul(void)
             offs = FROM_WORD(src);
 
             toamt = GET_FLATAMT(seg, offs);
+            toamt -= 2;
 
             fprintf(logf, "push %s\n", namesw[REG_AX]);
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) - 2);
             WORD_TO_MEM(toamt, val);
             p++;
+        }
+        /* CB              0023     retf */
+        else if (instr == 0xcb)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            WORD newoffs;
+            WORD newseg;
+            FLATAMT fromamt;
+            FLATAMT newamt;
+                
+            fprintf(logf, "retf\n");
+            
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_AX);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            newoffs = WORD_AT_MEM(fromamt);
+            newseg = WORD_AT_MEM(fromamt + 2);
+            
+            dest = src;
+            TO_WORD(dest, offs + 4);
+            
+            GET_DEST_REG(REG_CS);
+            TO_WORD(dest, newseg);
+
+            newamt = GET_FLATAMT(newseg, newoffs);
+            p = base + newamt;
+        }
+        /* 0E              0024     push cs */
+        else if (instr == 0x0e)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+                
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_CS);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            toamt = GET_FLATAMT(seg, offs);
+            toamt -= 2;
+
+            fprintf(logf, "push %s\n", namesw[REG_CS]);
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) - 2);
+            WORD_TO_MEM(toamt, val);
+            p++;
+        }
+        /* 1F              0025     pop ds */
+        else if (instr == 0x1f)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+                
+            fprintf(logf, "pop %s\n", namesw[REG_DS]);
+            
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            val = WORD_AT_MEM(fromamt);
+            
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) + 2);
+
+            GET_DEST_REG(REG_DS);
+            TO_WORD(dest, val);
+
+            p++;
+        }
+        /* 8816B501 mov  [BootDisk], dl */
+        /* 01B5 is address, offset from ds */
+        /* actually 02B5 in mbr.com file because of org 100h */
+        else if (instr == 0x88)
+        {
+            BYTE val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+                
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_DL);
+            val = FROM_BYTE(src);
+
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            offs = (p[3] << 8) | p[2];
+
+            toamt = GET_FLATAMT(seg, offs);
+
+            if (p[1] != 0x16)
+            {
+                printf("unknown register %x\n", p[1]);
+            }
+            fprintf(logf, "mov [%05Xh], %s\n", toamt, namesb[REG_DL]);
+            
+            BYTE_TO_MEM(toamt, val);
+            p += 4;
+        }
+        /* F60480          0030     test byte ptr [si],080h */
+        else if (instr == 0xf6)
+        {
+            BYTE val;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+                
+            if (p[1] != 0x04)
+            {
+                printf("unknown register %x\n", p[1]);
+            }
+            
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_SI);
+            offs = FROM_WORD(src);
+
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            val = BYTE_AT_MEM(fromamt);
+            
+            fprintf(logf, "test byte ptr [si], 0%02Xh\n", p[2]);
+            
+            val &= p[2];
+            
+            zero = (val == 0);
+            
+            p += 3;
+        }
+        /* 750A            0033     jnz found_active */
+        else if (instr == 0x75)
+        {
+            BYTE val;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+            int dir;
+
+            if (p[1] >= 0x80)
+            {
+                dir = -(0x100 - p[1]);
+            }
+            else
+            {
+                dir = p[1];
+            }
+            fprintf(logf, "jnz 0%05lXh\n", (unsigned long)((p - base) + 2 + dir));
+
+            if (!zero)
+            {
+                p = p + 2 + dir;
+            }
+            else
+            {
+                p += 2; /* this is a 2-byte instruction */
+            }
         }
         else
         {
