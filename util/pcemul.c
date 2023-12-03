@@ -24,12 +24,35 @@ static int instr;
 static int r1;
 static int r2;
 
+#define REG_AL 0
+#define REG_AH 1
+#define REG_BL 2
+#define REG_BH 3
+#define REG_CL 4
+#define REG_CH 5
+#define REG_DL 6
+#define REG_DH 7
+
 #define REG_AX 0
 #define REG_SS 8
 #define REG_DS 9
 #define REG_ES 10
 
-static char *names[] = {
+typedef unsigned char BYTE;
+typedef unsigned short WORD;
+
+static char *namesb[] = {
+    "al",
+    "ah",
+    "bl",
+    "bh",
+    "cl",
+    "ch",
+    "dl",
+    "dh",
+};
+
+static char *namesw[] = {
     "ax",
     "bx",
     "cx",
@@ -43,6 +66,22 @@ static char *names[] = {
     "es",
     "cs",
 };
+
+int regsize = 0;
+
+#define BYTE_SIZE 1
+#define WORD_SIZE 2
+
+#if 0
+static BYTE *destb;
+static BYTE *srcb;
+
+static WORD *destw;
+static WORD *srcw;
+#endif
+
+static void *dest;
+static void *src;
 
 static int x1;
 static int x2;
@@ -113,8 +152,17 @@ static void doemul(void)
     while (1)
     {
         instr = *p;
+        fprintf(logf, "\n");
         fprintf(logf, "instr is %02X at %08X watching %02X\n",
                instr, p - base, *watching);
+        fprintf(logf,
+                "ax %04X, bx %04X, cx %04X, dx %04X, di %04X, si %04X\n",
+                regs.x.ax, regs.x.bx, regs.x.cx, regs.x.dx,
+                regs.x.di, regs.x.si);
+        fprintf(logf,
+                "ss %04X, sp %04X, cs %04X, ip %04X, ds %04X, es %04X\n",
+                sregs.ss, sp, sregs.cs, (unsigned int)(p - base), sregs.ds, sregs.es);
+
         if (instr == 0xfa)
         {
             fprintf(logf, "cli\n");
@@ -132,34 +180,12 @@ static void doemul(void)
         /* 8EC0            0005     mov es,ax */
         else if (instr == 0x8e)
         {
-            unsigned short *dest;
-            unsigned short *src;
-            
+
+            regsize = WORD_SIZE;
             splitregs(*(p + 1));
-            fprintf(logf, "mov %s,%s\n", names[r1], names[r2]);
+            fprintf(logf, "mov %s,%s\n", namesw[r1], namesw[r2]);
 
-            if (r1 == REG_DS)
-            {
-                dest = &sregs.ds;
-            }
-            else if (r1 == REG_ES)
-            {
-                dest = &sregs.es;
-            }
-
-            if (r2 == REG_DS)
-            {
-                src = &sregs.ds;
-            }
-            else if (r2 == REG_ES)
-            {
-                src = &sregs.es;
-            }
-            else if (r2 == REG_AX)
-            {
-               src = &regs.x.ax;
-            }
-            *dest = *src;
+            *(WORD *)dest = *(WORD *)src;
             p += 2;
         }
         else
@@ -205,4 +231,31 @@ static void splitregs(unsigned int raw)
         fprintf(logf, "unknown second register %x\n", raw);
         exit(EXIT_FAILURE);
     }
+
+    if (regsize == WORD_SIZE)
+    {
+        if (r1 == REG_DS)
+        {
+            dest = &sregs.ds;
+        }
+        else if (r1 == REG_ES)
+        {
+            dest = &sregs.es;
+        }
+
+        if (r2 == REG_DS)
+        {
+            src = &sregs.ds;
+        }
+        else if (r2 == REG_ES)
+        {
+            src = &sregs.es;
+        }
+        else if (r2 == REG_AX)
+        {
+            src = &regs.x.ax;
+        }
+    }
+
+    return;
 }
