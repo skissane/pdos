@@ -34,9 +34,17 @@ static int r2;
 #define REG_DH 7
 
 #define REG_AX 0
+#define REG_BX 1
+#define REG_CX 2
+#define REG_DX 3
+#define REG_DI 4
+#define REG_SI 5
+#define REG_SP 6
+#define REG_IP 7
 #define REG_SS 8
 #define REG_DS 9
 #define REG_ES 10
+#define REG_CS 11
 
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
@@ -83,6 +91,50 @@ static WORD *srcw;
 static void *dest;
 static void *src;
 
+#define TO_WORD(d, s) (*(WORD *)d = (s))
+#define FROM_WORD(s) (*(WORD *)s)
+
+#define GET_DEST_REG(y) \
+   { \
+   if (y == REG_SI) dest = &regs.x.si; \
+   else if (y == REG_DI) dest = &regs.x.di; \
+   else if (y == REG_AX) dest = &regs.x.ax; \
+   else if (y == REG_BX) dest = &regs.x.bx; \
+   else if (y == REG_CX) dest = &regs.x.cx; \
+   else if (y == REG_DX) dest = &regs.x.dx; \
+   else if (y == REG_DS) dest = &sregs.ds; \
+   else if (y == REG_ES) dest = &sregs.es; \
+   else if (y == REG_SS) dest = &sregs.ss; \
+   else if (y == REG_SP) dest = &sp; \
+   else { fprintf(logf, "unknown\n"); exit(0); } \
+   }
+
+#define GET_SRC_REG(y) \
+   { \
+   if (y == REG_SI) src = &regs.x.si; \
+   else if (y == REG_DI) src = &regs.x.di; \
+   else if (y == REG_AX) src = &regs.x.ax; \
+   else if (y == REG_BX) src = &regs.x.bx; \
+   else if (y == REG_CX) src = &regs.x.cx; \
+   else if (y == REG_DX) src = &regs.x.dx; \
+   else if (y == REG_DS) src = &sregs.ds; \
+   else if (y == REG_ES) src = &sregs.es; \
+   else if (y == REG_SS) src = &sregs.ss; \
+   else if (y == REG_SP) src = &sp; \
+   else { fprintf(logf, "unknown\n"); exit(0); } \
+   }
+
+typedef size_t FLATAMT;
+
+#define GET_FLATAMT(seg, offs) \
+    (((FLATAMT)seg << 4) + offs)
+
+#define WORD_TO_MEM(toamt, val) \
+    { \
+        base[toamt] = (BYTE)(val & 0xff); \
+        base[toamt + 1] = (BYTE)((val >> 8) & 0xff); \
+    }
+
 static int x1;
 static int x2;
 static int t;
@@ -103,7 +155,7 @@ static FILE *logf;
 
 static union REGS regs;
 static struct SREGS sregs;
-static unsigned int sp;
+static WORD sp;
 
 static void doemul(void);
 static void splitregs(unsigned int raw);
@@ -185,8 +237,153 @@ static void doemul(void)
             splitregs(*(p + 1));
             fprintf(logf, "mov %s,%s\n", namesw[r1], namesw[r2]);
 
-            *(WORD *)dest = *(WORD *)src;
+            TO_WORD(dest, FROM_WORD(src));
             p += 2;
+        }
+        /* B85000          0007     mov ax, 050h */
+        else if (instr == 0xb8)
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            r1 = REG_AX;
+            dest = &regs.x.ax;
+            val = p[2] << 8 | p[1];
+            fprintf(logf, "mov %s,0%04Xh\n", namesw[r1], (int)val);
+            TO_WORD(dest, val);
+            p += 3;
+        }
+        /* BC0077          000C     mov sp,07700h */
+        else if (instr == 0xbc)
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            r1 = REG_SP;
+            dest = &sp;
+            val = p[2] << 8 | p[1];
+            fprintf(logf, "mov %s,0%04Xh\n", namesw[r1], (int)val);
+            TO_WORD(dest, val);
+            p += 3;
+        }
+        /* FB              000F     sti */
+        else if (instr == 0xfb)
+        {
+            fprintf(logf, "sti\n");
+            int_enable = 1;
+            p++;
+        }
+        /* BE007C          0010     mov si,07c00h */
+        else if (instr == 0xbe)
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            GET_DEST_REG(REG_SI);
+            val = p[2] << 8 | p[1];
+            fprintf(logf, "mov %s,0%04Xh\n", namesw[REG_SI], (int)val);
+            TO_WORD(dest, val);
+            p += 3;
+        }
+        /* BF0006          0013     mov di,0600h */
+        else if (instr == 0xbf)
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            GET_DEST_REG(REG_DI);
+            val = p[2] << 8 | p[1];
+            fprintf(logf, "mov %s,0%04Xh\n", namesw[REG_DI], (int)val);
+            TO_WORD(dest, val);
+            p += 3;
+        }
+        /* B90001          0016     mov cx,0100h */
+        else if (instr == 0xb9)
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            GET_DEST_REG(REG_CX);
+            val = p[2] << 8 | p[1];
+            fprintf(logf, "mov %s,0%04Xh\n", namesw[REG_CX], (int)val);
+            TO_WORD(dest, val);
+            p += 3;
+        }
+        /* F3A5            0019     rep movsw */
+        /* di is target. guessing target segment register is es.
+        /* si is source. guessing source segment register is ds */
+        /* length is cx */
+        else if (instr == 0xf3)
+        {
+            if (p[1] == 0xa5)
+            {
+                WORD len;
+                WORD seg;
+                WORD offs;
+                FLATAMT fromamt;
+                FLATAMT toamt;
+                unsigned char *from;
+                unsigned char *to;
+                
+                GET_SRC_REG(REG_CX);
+                len = FROM_WORD(src);
+                
+                GET_SRC_REG(REG_ES);
+                seg = FROM_WORD(src);
+                
+                GET_SRC_REG(REG_DI);
+                offs = FROM_WORD(src);
+
+                toamt = GET_FLATAMT(seg, offs);
+                to = base + toamt;
+                
+                GET_SRC_REG(REG_DS);
+                seg = FROM_WORD(src);
+                
+                GET_SRC_REG(REG_SI);
+                offs = FROM_WORD(src);
+                
+                fromamt = GET_FLATAMT(seg, offs);
+                from = base + fromamt;
+
+#if 0
+                printf("base %p, from %p, to %p, len %d\n", base, from, to, len * 2);
+                exit(0);
+#endif
+                fprintf(logf, "rep movsw\n");
+                memcpy(to, from, len * 2);
+                
+                p += 2;
+            }
+            else
+            {
+                fprintf(logf, "unknown f3\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        /* 50              001E     push ax */
+        else if (instr == 0x50)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+                
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_AX);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            toamt = GET_FLATAMT(seg, offs);
+
+            fprintf(logf, "push %s\n", namesw[REG_AX]);
+            WORD_TO_MEM(toamt, val);
+            p++;
         }
         else
         {
@@ -200,21 +397,26 @@ static void doemul(void)
 
         /* 8ED8            0003     mov ds,ax */
         /* 8EC0            0005     mov es,ax */
+        /* 8ED0            000A     mov ss,ax */
 static void splitregs(unsigned int raw)
 {
     unsigned int first;
     unsigned int second;
     
-    first = raw >> 4;
+    first = raw >> 3;
     second = raw & 0x7;
     
-    if (first == 0xd)
+    if (first == (0xd8 >> 3))
     {
         r1 = REG_DS;
     }
-    else if (first == 0xc)
+    else if (first == (0xc0 >> 3))
     {
         r1 = REG_ES;
+    }
+    else if (first == (0xd0 >> 3))
+    {
+        r1 = REG_SS;
     }
     else
     {
