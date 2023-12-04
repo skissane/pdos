@@ -298,8 +298,10 @@ static void doemul(void)
             TO_WORD(dest, FROM_WORD(src) ^ FROM_WORD(src));
             p += 2;
         }
+        
         /* 8ED8            0003     mov ds,ax */
         /* 8EC0            0005     mov es,ax */
+        /* 8EDA            0023     mov ds, dx */
         else if (instr == 0x8e)
         {
             regsize = WORD_SIZE;
@@ -896,6 +898,33 @@ static void doemul(void)
             WORD_TO_MEM(toamt, val);
             p++;
         }
+        /* 57              0042     push di */
+        else if (instr == 0x57)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+                
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_DI);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            toamt = GET_FLATAMT(seg, offs);
+            toamt -= 2;
+
+            fprintf(logf, "push %s\n", names[REG_DI]);
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) - 2);
+            WORD_TO_MEM(toamt, val);
+            p++;
+        }
         /* 06              0167      push es */
         else if (instr == 0x06)
         {
@@ -918,6 +947,33 @@ static void doemul(void)
             toamt -= 2;
 
             fprintf(logf, "push %s\n", names[REG_ES]);
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) - 2);
+            WORD_TO_MEM(toamt, val);
+            p++;
+        }
+        /* 1E              003E     push ds */
+        else if (instr == 0x1e)
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+                
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_DS);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            toamt = GET_FLATAMT(seg, offs);
+            toamt -= 2;
+
+            fprintf(logf, "push %s\n", names[REG_DS]);
             dest = src;
             TO_WORD(dest, FROM_WORD(src) - 2);
             WORD_TO_MEM(toamt, val);
@@ -1341,10 +1397,23 @@ static void doemul(void)
 
             GET_DEST_REG(REG_BP);
             GET_SRC_REG(REG_SI);
-            TO_BYTE(dest, FROM_BYTE(src));
+            TO_WORD(dest, FROM_WORD(src));
             
             p += 2;
         }
+        /* 8BDA            001E     mov bx, dx */
+        else if ((instr == 0x8b) && (p[1] == 0xda))
+        {
+            regsize = WORD_SIZE;
+            fprintf(logf, "mov %s,%s\n", names[REG_BX], names[REG_DX]);
+
+            GET_DEST_REG(REG_BX);
+            GET_SRC_REG(REG_DX);
+            TO_WORD(dest, FROM_WORD(src));
+            
+            p += 2;
+        }
+        
         /* 8B4408          0071     mov ax,[si+8] */
         /* 8B540A          0074     mov dx,[si+10] */
         else if (instr == 0x8b)
@@ -2267,6 +2336,20 @@ static void doemul(void)
                 p += 2; /* this is a 2-byte instruction */
             }
         }
+        /* 8D1E1E00 lea bx, newstart */
+        /* not sure why this instruction is any different from mov -
+           maybe it just doesn't generate relocation info */
+        else if ((instr == 0x8d) && (p[1] == 0x1e))
+        {
+            WORD val;
+
+            regsize = WORD_SIZE;
+            GET_DEST_REG(REG_BX);
+            val = p[3] << 8 | p[2];
+            fprintf(logf, "lea %s,0%04Xh\n", names[REG_BX], (unsigned int)val);
+            TO_WORD(dest, val);
+            p += 4;
+        }
         else
         {
             fprintf(logf, "unknown instruction %02X at %08X\n", p[0],
@@ -2277,9 +2360,10 @@ static void doemul(void)
     return;
 }
 
-        /* 8ED8            0003     mov ds,ax */
-        /* 8EC0            0005     mov es,ax */
-        /* 8ED0            000A     mov ss,ax */
+        /* 8ED8            mov ds,ax */
+        /* 8EC0            mov es,ax */
+        /* 8ED0            mov ss,ax */
+        /* 8EDA            mov ds,dx */
 static void splitregs(unsigned int raw)
 {
     unsigned int first;
@@ -2306,9 +2390,13 @@ static void splitregs(unsigned int raw)
         exit(EXIT_FAILURE);
     }
 
-    if (second == 0)
+    if (second == 0x0)
     {
         r2 = REG_AX;
+    }
+    else if (second == 0x2)
+    {
+        r2 = REG_DX;
     }
     else
     {
