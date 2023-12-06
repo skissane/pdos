@@ -63,7 +63,7 @@ random members of the public to assist your project, then how
 about doing the courtesy of letting the public actually own
 the code that they are funding, by making it public domain.
 
-GPL code will eventually become as useful as public domain code - 70 
+GPL code will eventually become as useful as public domain code - 70
 years after the death of the original author, when it becomes public 
 domain!  That's a long time to have to wait.  Until then, unless your
 lawyer informs you that the 2756 license agreement conditions don't 
