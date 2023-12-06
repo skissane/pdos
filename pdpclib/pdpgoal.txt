@@ -1,8 +1,8 @@
           GOALS OF THE PUBLIC DOMAIN PROJECT
           ----------------------------------
             
-Version:  1.8
-Date:     2018-11-21
+Version:  1.9
+Date:     2023-12-06
 Author:   Paul Edwards
 Internet: mutazilah@gmail.com
 Status:   This document is released to the public domain
@@ -63,11 +63,19 @@ random members of the public to assist your project, then how
 about doing the courtesy of letting the public actually own
 the code that they are funding, by making it public domain.
 
-GPL code will eventually become as useful as public domain code - 50 
+GPL code will eventually become as useful as public domain code - 70 
 years after the death of the original author, when it becomes public 
 domain!  That's a long time to have to wait.  Until then, unless your
 lawyer informs you that the 2756 license agreement conditions don't 
 affect you, the GPL work is only useful as reference material.
+
+Basically I am only willing to read, understand and debug someone
+else's copyrighted shit if I am being paid a lot of money. However,
+if I am equal owner to the code - as a member of the public - then
+the buck stops here. I lead by example by making public domain
+code available that I encourage others to maintain (the buck stops
+with you too), as well as debugging public domain code written by
+others that I have a use for.
 
 Note that when a company makes a sovereign decision to not release
 source code for their product, that is their innate right. When you
