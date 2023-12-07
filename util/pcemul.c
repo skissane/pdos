@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x18b50; /* 0x1894c + 0x96; */
+    unsigned char *watching = base + 0x902e; /* 0x188FE; */
     
     regs.h.dl = 0x80;
     p = base + 0x7c00;
@@ -2318,7 +2318,14 @@ static void doemul(void)
             GET_SRC_REG(r);
             offs = FROM_WORD(src);
 
-            GET_SRC_REG(REG_DS);
+            if (r == REG_BP)
+            {
+                GET_SRC_REG(REG_SS);
+            }
+            else
+            {
+                GET_SRC_REG(REG_DS);
+            }
             seg = FROM_WORD(src);
 
             fromamt = GET_FLATAMT(seg, offs);
@@ -2431,7 +2438,14 @@ static void doemul(void)
             GET_SRC_REG(r);
             offs = FROM_WORD(src);
 
-            GET_SRC_REG(REG_DS);
+            if (r == REG_BP)
+            {
+                GET_SRC_REG(REG_SS);
+            }
+            else
+            {
+                GET_SRC_REG(REG_DS);
+            }
             seg = FROM_WORD(src);
 
             fromamt = GET_FLATAMT(seg, offs);
@@ -2956,6 +2970,9 @@ static void doemul(void)
             p += 7;
         }
         /* 837E0408 cmp intnum, 08h */
+        /* this is 7E for BP apparently, offset 4 */
+        /* and it is a word comparison even though the
+           comparator is just 1 byte */
         else if (instr == 0x83)
         {
             BYTE val;
@@ -2964,18 +2981,33 @@ static void doemul(void)
             WORD offs;
             FLATAMT fromamt;
                 
-            regsize = BYTE_SIZE;
+            if (p[1] != 0x7e)
+            {
+                printf("unknown register %x\n", p[1]);
+                exit(EXIT_FAILURE);
+            }
+            
+            regsize = WORD_SIZE;
             
             val = p[3];
             
-            GET_SRC_REG(REG_DS);
+            GET_SRC_REG(REG_SS);
             seg = FROM_WORD(src);
 
-            offs = (p[2] << 8) | p[1];
+            GET_SRC_REG(REG_BP);
+            offs = FROM_WORD(src);
+            
+            if (p[2] >= 0x80)
+            {
+                printf("not sure if this is signed\n");
+                exit(EXIT_FAILURE);
+            }
+            
+            offs += p[2];
 
             fromamt = GET_FLATAMT(seg, offs);
 
-            fprintf(logf, "cmp byte ptr [%04Xh], 0%02Xh\n", offs, val);
+            fprintf(logf, "cmp word ptr [bp+0%02Xh], 0%02Xh\n", p[2], val);
             
             val2 = WORD_AT_MEM(fromamt);
             
@@ -3522,7 +3554,7 @@ static void doemul(void)
             
             val = (p[4] << 8) | p[3];
             
-            GET_SRC_REG(REG_DS);
+            GET_SRC_REG(REG_SS);
             seg = FROM_WORD(src);
 
             offs = (p[2] << 8) | p[1];
@@ -3588,14 +3620,57 @@ static void doemul(void)
         /* 9c pushf */
         else if (instr == 0x9c)
         {
-            fprintf(logf, "pushf - nop for now\n");
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+            
+            fprintf(logf, "pushf - semi-nop for now\n");
+                
+            regsize = WORD_SIZE;
+            val = 0;
+
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            toamt = GET_FLATAMT(seg, offs);
+            toamt -= 2;
+
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) - 2);
+            WORD_TO_MEM(toamt, val);
             p++;
         }
         /* 9d popf */
         else if (instr == 0x9d)
         {
-            fprintf(logf, "popf - nop for now\n");
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+                
+            fprintf(logf, "popf - semi-nop for now\n");
+            
+            regsize = WORD_SIZE;
+            GET_SRC_REG(REG_SS);
+            seg = FROM_WORD(src);
+                
+            GET_SRC_REG(REG_SP);
+            offs = FROM_WORD(src);
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            val = WORD_AT_MEM(fromamt);
+            /* need to store this somewhere */
+            cflag = 0; /* +++ temporarily clear carry */
+            
+            dest = src;
+            TO_WORD(dest, FROM_WORD(src) + 2);
             p++;
+
         }
         /* 99              0637           cwd */
         else if (instr == 0x99)
@@ -3903,10 +3978,17 @@ static void dobios(int intnum)
         /* get drive parms */
         if (regs.h.ah == 0x08)
         {
+            printf("GEOMETRY CHECK\n");
             regs.h.cl = 63; /* sectors */
             regs.h.dh = 255-1; /* 255 heads */
             /* ch and cl again should have tracks */
         }
+#if 0
+        else if (regs.h.ah == 0x00)
+        {
+            printf("READING failed???\n");
+        }
+#endif
         /* read */
         else if (regs.h.ah == 0x02)
         {
@@ -3939,6 +4021,7 @@ static void dobios(int intnum)
         }
         else if (regs.h.ah == 0x41)
         {
+            printf("NO GENUINE LBA CAPABILITY\n");
             regs.x.bx = 0xaa55; /* signify we know the call */
             regs.x.cx = 0; /* but no capabilities for now */
         }
