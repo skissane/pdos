@@ -98,7 +98,7 @@ typedef struct {
                                       *2 high bytes of start cluster (fat32)*/
     unsigned char last_modtime[2];   /*last modified time (0x16)*/
     unsigned char last_moddate[2];   /*last modified date (0x18)*/
-    unsigned char start_cluster[2];  /*Size of file in clusters (0x1A)*/
+    unsigned char start_cluster[2];  /*Start cluster number (0x1A)*/
     unsigned char file_size[4];      /*Size of file in bytes (0x1C) */
 }DIRENT;
 /**/
