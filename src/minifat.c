@@ -241,6 +241,12 @@ static int fatEndCluster(FAT *fat, unsigned long cluster)
     }
     if (fat->fat_type == 32)
     {
+#ifdef __SUBC__
+        if (cluster < 0x2U)
+        {
+            return (1);
+        }
+#else
         /* "UL" at the end makes it unsigned long,
          * the same type as the variable. */
         if (((cluster & 0x0fffffff) >= 0x0ffffff8UL)
@@ -248,6 +254,7 @@ static int fatEndCluster(FAT *fat, unsigned long cluster)
         {
             return (1);
         }
+#endif
     }
     return (0);
 }
