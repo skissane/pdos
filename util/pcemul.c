@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x902e; /* 0x188FE; */
+    unsigned char *watching = base + 0x9e09 + 0x700; /* 0xa4c5; */
     
     regs.h.dl = 0x80;
     p = base + 0x7c00;
@@ -2561,7 +2561,7 @@ static void doemul(void)
 
             if (p[2] >= 0x80)
             {
-                dir = (int)-(0x10000UL - ((unsigned int)p[2] << 8) | p[1]);
+                dir = (int)-(0x10000UL - (((unsigned int)p[2] << 8) | p[1]));
             }
             else
             {
