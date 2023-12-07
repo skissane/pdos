@@ -269,9 +269,11 @@ static void loadIO(int drive, char *edata)
        and getting a negative number */
     /* numsects = ((dseg << 4) + (unsigned int)edata - 0x700) / 512 + 1; */
     numsects = dseg / (512/16);
+    /* this is likely to truncate and thus need a +1 compensation */
     numsects += (unsigned int)edata / 512;
+    /* this is definitely going to truncate so will need a +1 compensation */
     numsects -= 0x700 / 512;
-    numsects++;
+    numsects += 2; /* two compensations, dutifully applied */
     myseg = 0x70;
 #elif !defined(OLDMODEL)
     p = ABS2ADDR(0x700);
