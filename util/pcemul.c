@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x9e09 + 0x700; /* 0xa4c5; */
+    unsigned char *watching = base + 0x18b50; /* 9e09 + 0x700; */ /* 0xa4c5; */
     
     regs.h.dl = 0x80;
     p = base + 0x7c00;
