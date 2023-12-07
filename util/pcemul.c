@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x796;
+    unsigned char *watching = base + 0x18b50; /* 0x1894c + 0x96; */
     
     regs.h.dl = 0x80;
     p = base + 0x7c00;
@@ -484,8 +484,20 @@ static void doemul(void)
             offs = FROM_WORD(src);
             offs += p[2];
 
-            GET_SRC_REG(REG_DS); /* I think this should be SS and thus mbr.asm has a bug */
-                                 /* maybe not? */
+            /* I have confirmed via testing that SS should be used
+               to access bp. The mbr.asm potential bug is where it
+               loads bp and then seemingly relies on ds rather than
+               ss to point to the error message to be printed. The
+               potential bug is not normally seen because the data
+               is normally correct. So need to do a test by zapping
+               the AA55 signature to invoke an error and see if the
+               message is printed, and if so, delete this comment
+               as there is no bug. Also other code will need to
+               change as I have used DS when I should have used SS
+               in multiple places and it's not trivial to change
+               and nor is it a priority. */
+            GET_SRC_REG(REG_SS);
+
             seg = FROM_WORD(src);
 
             fromamt = GET_FLATAMT(seg, offs);
@@ -2023,6 +2035,73 @@ static void doemul(void)
             WORD_TO_MEM(toamt, val);
             p += 3;
         }
+        /* 8986CCFD mov     [bp-564],ax */
+        else if ((instr == 0x89) && (p[1] == 0x86))
+        {
+            WORD val;
+            WORD seg;
+            WORD offs;
+            FLATAMT toamt;
+            int rr;
+            int rl;
+                
+            /* right */
+            if (p[1] == 0x86)
+            {
+                rr = REG_AX;
+            }
+            else
+            {
+                printf("unknown register %x\n", p[1]);
+                exit(EXIT_FAILURE);
+            }
+            
+            /* left */
+            if (p[1] == 0x86)
+            {
+                rl = REG_BP;
+            }
+            else
+            {
+                printf("unknown register %x\n", p[1]);
+                exit(EXIT_FAILURE);
+            }
+            
+            regsize = WORD_SIZE;
+
+            GET_SRC_REG(rr);
+            val = FROM_WORD(src);
+
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            GET_SRC_REG(rl);
+            offs = FROM_WORD(src);
+
+            if (p[3] >= 0x80)
+            {
+                offs -= (0x10000UL - (((unsigned int)p[3] << 8) | p[2]));
+                fprintf(logf, "mov [%s-0%04Xh], %s\n",
+                        names[rl],
+                        (unsigned int)(0x10000UL 
+                                       - (((unsigned int)p[3] << 8) | p[2])),
+                        names[rr]);
+            }
+            else
+            {
+                offs += (((unsigned int)p[3] << 8) | p[2]);
+                fprintf(logf, "mov [%s+0%04Xh], %s\n",
+                        names[rl],
+                        (((unsigned int)p[3] << 8) | p[2]),
+                        names[rr]);
+            }
+
+            toamt = GET_FLATAMT(seg, offs);
+
+            WORD_TO_MEM(toamt, val);
+            p += 4;
+        }
+        
         /* 8916B301 mov [Heads], dx */
         /* 890EB101 mov [SectorsPerTrack], cx */
         /* 01B1 is target */
@@ -2201,6 +2280,70 @@ static void doemul(void)
             TO_WORD(dest, WORD_AT_MEM(fromamt));
             
             p += 2;
+        }
+        
+        /* 8B86CCFD mov     ax,[bp-564] */
+        else if ((instr == 0x8b) && (p[1] == 0x86))
+        {
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+            int r;
+            int r2;
+                
+            regsize = WORD_SIZE;
+            
+            /* check for right-hand register */
+            if (p[1] == 0x86)
+            {
+                r = REG_BP;
+            }
+            else
+            {
+                printf("unknown register %x\n", p[1]);
+                exit(EXIT_FAILURE);
+            }
+            
+            /* check for left hand */
+            if (p[1] == 0x86)
+            {
+                r2 = REG_AX;
+            }
+            else
+            {
+                printf("unknown register %x\n", p[1]);
+                exit(EXIT_FAILURE);
+            }
+            
+            GET_SRC_REG(r);
+            offs = FROM_WORD(src);
+
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            if (p[3] >= 0x80)
+            {
+                fromamt -= (0x10000UL - (((unsigned int)p[3] << 8) | p[2]));
+                fprintf(logf, "mov %s, [%s-0%04Xh]\n",
+                        names[r2],
+                        names[r],
+                        (0x10000UL - (((unsigned int)p[3] << 8) | p[2])));
+            }
+            else
+            {
+                fromamt += (((unsigned int)p[3] << 8) | p[2]);
+                fprintf(logf, "mov %s, [%s+0%02Xh]\n",
+                        names[r2],
+                        names[r],
+                        (((unsigned int)p[3] << 8) | p[2]));
+            }
+            
+            GET_DEST_REG(r2);
+            TO_WORD(dest, WORD_AT_MEM(fromamt));
+            
+            p += 4;
         }
         
         /* 8B4408          0071     mov ax,[si+8] */
@@ -2812,6 +2955,54 @@ static void doemul(void)
             WORD_TO_MEM(toamt, val);
             p += 7;
         }
+        /* 837E0408 cmp intnum, 08h */
+        else if (instr == 0x83)
+        {
+            BYTE val;
+            WORD val2;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+                
+            regsize = BYTE_SIZE;
+            
+            val = p[3];
+            
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            offs = (p[2] << 8) | p[1];
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            fprintf(logf, "cmp byte ptr [%04Xh], 0%02Xh\n", offs, val);
+            
+            val2 = WORD_AT_MEM(fromamt);
+            
+            zero = 0;
+            /* is this the right way around? */
+            if (val == val2)
+            {
+                lt = 0;
+                gt = 0;
+                eq = 1;
+                zero = 1; /* it seems that equal also sets zero */
+            }
+            else if (val < val2)
+            {
+                lt = 1;
+                gt = 0;
+                eq = 0;
+            }
+            else
+            {
+                lt = 0;
+                gt = 1;
+                eq = 0;
+            }
+            
+            p += 4;
+        }
         /* 26813EFE  7D55AA   cmp word ptr es:[07dfeh],0aa55h */
         else if ((instr == 0x26) && (p[1] == 0x81))
         {
@@ -3279,7 +3470,7 @@ static void doemul(void)
             p += 4;
         }
         /* 81FB55AA cmp bx,0aa55h */
-        else if (instr == 0x81)
+        else if ((instr == 0x81) && (p[1] == 0xfb))
         {
             WORD val;
             WORD val2;
@@ -3318,6 +3509,54 @@ static void doemul(void)
             }
             p += 4;
         }
+        /* 817E04A0 00       cmp intnum, 0A0h */
+        else if (instr == 0x81)
+        {
+            WORD val;
+            WORD val2;
+            WORD seg;
+            WORD offs;
+            FLATAMT fromamt;
+                
+            regsize = BYTE_SIZE;
+            
+            val = (p[4] << 8) | p[3];
+            
+            GET_SRC_REG(REG_DS);
+            seg = FROM_WORD(src);
+
+            offs = (p[2] << 8) | p[1];
+
+            fromamt = GET_FLATAMT(seg, offs);
+
+            fprintf(logf, "cmp byte ptr [%04Xh], 0%04Xh\n", offs, val);
+            
+            val2 = WORD_AT_MEM(fromamt);
+            
+            zero = 0;
+            /* is this the right way around? */
+            if (val == val2)
+            {
+                lt = 0;
+                gt = 0;
+                eq = 1;
+                zero = 1; /* it seems that equal also sets zero */
+            }
+            else if (val < val2)
+            {
+                lt = 1;
+                gt = 0;
+                eq = 0;
+            }
+            else
+            {
+                lt = 0;
+                gt = 1;
+                eq = 0;
+            }
+            
+            p += 5;
+        }
         /* 87DB            00B7     xchg bx,bx */
         else if ((instr == 0x87) && (p[1] == 0xdb))
         {
@@ -3344,6 +3583,18 @@ static void doemul(void)
         else if (instr == 0x90)
         {
             fprintf(logf, "nop\n");
+            p++;
+        }
+        /* 9c pushf */
+        else if (instr == 0x9c)
+        {
+            fprintf(logf, "pushf - nop for now\n");
+            p++;
+        }
+        /* 9d popf */
+        else if (instr == 0x9d)
+        {
+            fprintf(logf, "popf - nop for now\n");
             p++;
         }
         /* 99              0637           cwd */
@@ -3701,7 +3952,7 @@ static void dobios(int intnum)
     {
         if (regs.h.ah == 0x0e)
         {
-            printf("%c", regs.h.al);
+            printf("CHAR %c\n", regs.h.al);
         }
         else
         {
