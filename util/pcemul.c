@@ -496,6 +496,8 @@ static void doemul(void)
                change as I have used DS when I should have used SS
                in multiple places and it's not trivial to change
                and nor is it a priority. */
+            /* I have confirmed that the MBR works fine and prints
+               an error message correctly, so I must have misdiagnosed */
             GET_SRC_REG(REG_SS);
 
             seg = FROM_WORD(src);
