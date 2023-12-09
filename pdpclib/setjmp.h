@@ -94,15 +94,15 @@ __PDPCLIB_HEADFUNC void longjmp(jmp_buf env, int val);
 #define setjmp(x) __setj(x)
 int __setj(jmp_buf env);
 
-#elif defined(__EFI__)
-#define setjmp(x) __setj(x)
-int __setj(jmp_buf env);
-
 #elif defined(__ARM__) || defined(__ARMGEN__)
 /* it appears that gcc has _setjmp as a known keyword which
    is causing issues on ARM, so we change the name */
 #define setjmp(x) __Ysetjmp(x)
 int __Ysetjmp(jmp_buf env);
+
+#elif defined(__EFI__)
+#define setjmp(x) __setj(x)
+int __setj(jmp_buf env);
 
 #elif defined(__MSDOS__)
 #define setjmp(x) __setj(x)
