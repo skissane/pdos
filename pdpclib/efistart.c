@@ -787,6 +787,35 @@ Executable should be called:
 
 armtest\efi\boot\bootarm.efi
 
+On a modern Pinebook Pro if you want to enable KVM
+for near-native speeds, try:
+
+echo 0 > /sys/devices/system/cpu/cpu0/online
+echo 0 > /sys/devices/system/cpu/cpu1/online
+echo 0 > /sys/devices/system/cpu/cpu2/online
+echo 0 > /sys/devices/system/cpu/cpu3/online
+
+to allow KVM to have the necessary processors
+(use 1 to return them to the system)
+
+~/bin/qemu-system-aarch64 -enable-kvm \
+  -cpu host,aarch64=off -M virt -m 512 -nographic \
+  -pflash QEMU_EFI-pflash.raw -drive file=fat:rw:armtest \
+  -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
+
+You can't use qemu-system-arm if you want to enable kvm.
+Nor can you use qemu-arm (ie "user").
+You need aarch64 and then switch it off.
+
+The "nographic" stops a separate window from being
+opened and appears to be much faster.
+
+You may also wish to use edk2-arm-vars.fd but I don't
+know of any specific benefit it might bring and
+haven't tried it myself. Actually it looks to me like
+edk2-arm-code.fd is more likely to be correct. And
+presumably the syntax is the same as for the 80386.
+
 
 For 80386 you need:
 
@@ -797,6 +826,11 @@ qemu-system-i386 -drive if=pflash,format=raw,file=edk2-i386-code.fd -drive file=
 Executable should be called:
 
 386test\efi\boot\bootia32.efi
+
+You can also try adding -enable-kvm on some systems to
+use the KVM hypervisor for near-native speeds
+
+Also try -nographic to not open a separate window
 
 
 For x64 you need:
