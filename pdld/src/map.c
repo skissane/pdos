@@ -14,6 +14,31 @@
 
 #include "ld.h"
 
+static int symbol_compare (const void *a, const void *b)
+{
+    const struct symbol *sa = a;
+    const struct symbol *sb = b;
+
+    /* Put all auxiliary symbols at the end because they are just fillers and not displayed anyway. */
+    if (sa->auxiliary && sb->auxiliary) return 0;
+    if (sa->auxiliary) return 1;
+    if (sb->auxiliary) return -1;
+
+    if (symbol_get_value_with_base (sa) < symbol_get_value_with_base (sb)) return -1;
+    if (symbol_get_value_with_base (sa) > symbol_get_value_with_base (sb)) return 1;
+
+    return 0;
+}
+
+static void sort_symbols (void)
+{
+    struct object_file *of;
+
+    for (of = all_object_files; of; of = of->next) {
+        qsort (of->symbol_array, of->symbol_count, sizeof (*of->symbol_array), &symbol_compare);
+    }
+}
+
 void map_write (const char *filename)
 {
     FILE *outfile;
@@ -24,6 +49,10 @@ void map_write (const char *filename)
         ld_error ("cannot open '%s' for writing", filename);
         return;
     }
+
+    /* After this point indexes into symbol arrays become invalid
+     * but that is fine because all linking was already done. */
+    sort_symbols ();
 
     for (section = all_sections; section; section = section->next) {
         struct section_part *part;

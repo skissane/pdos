@@ -102,13 +102,13 @@ int symbol_is_undefined (const struct symbol *symbol)
     return (symbol->section_number == UNDEFINED_SECTION_NUMBER);
 }
 
-address_type symbol_get_value_with_base (struct symbol *symbol)
+address_type symbol_get_value_with_base (const struct symbol *symbol)
 {
     if (symbol->part) return ld_state->base_address + symbol->part->rva + symbol->value;
     else return symbol->value;
 }
 
-address_type symbol_get_value_no_base (struct symbol *symbol)
+address_type symbol_get_value_no_base (const struct symbol *symbol)
 {
     if (symbol->part) return symbol->part->rva + symbol->value;
     else return symbol->value - ld_state->base_address;
