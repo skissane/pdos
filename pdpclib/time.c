@@ -170,7 +170,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #endif
 #if defined(__MVS__) || defined(__CMS__)
     tt = __getclk(clk);
-#elif defined(__ARM__)
+#elif defined(__ARM__) && !defined(__EFI__)
     tt = __time();
 #elif defined(__gnu_linux__)
     __time(&tt);
