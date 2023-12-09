@@ -19,7 +19,9 @@
 
         .globl  __Ysetjmp
         .globl  ___Ysetjmp
+.if ELF
         .type  __Ysetjmp, %function
+.endif
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
@@ -45,7 +47,9 @@ ___Ysetjmp:
 
         .globl  longjmp
         .globl  _longjmp
+.if ELF
         .type longjmp, %function
+.endif
         .align  2
 longjmp:
 _longjmp:
@@ -76,7 +80,9 @@ _longjmp:
 
         .globl  __exita
         .globl  ___exita
+.if ELF
         .type  __exita, %function
+.endif
         .align  2
 __exita:
 ___exita:
@@ -337,9 +343,13 @@ ___main:
 
         .globl  __udivsi3
         .globl  ___udivsi3
+.if ELF
         .type  __udivsi3, %function
+.endif
         .globl  __aeabi_uidiv
+.if ELF
         .type  __aeabi_uidiv, %function
+.endif
         .align  2
 __udivsi3:
 ___udivsi3:
@@ -360,9 +370,13 @@ __aeabi_uidiv:
 
         .globl  __divsi3
         .globl  ___divsi3
+.if ELF
         .type  __divsi3, %function
+.endif
         .globl  __aeabi_idiv
+.if ELF
         .type  __aeabi_idiv, %function
+.endif
         .align  2
 __divsi3:
 ___divsi3:
@@ -394,9 +408,13 @@ divz:   mov     r0,#8           @ SIGFPE
 
         .globl  __modsi3
         .globl  ___modsi3
+.if ELF
         .type  __modsi3, %function
+.endif
         .globl  __aeabi_idivmod
+.if ELF
         .type  __aeabi_idivmod, %function
+.endif
         .align  2
 __modsi3:
 ___modsi3:
@@ -416,9 +434,13 @@ __aeabi_idivmod:
 
         .globl  __umodsi3
         .globl  ___umodsi3
+.if ELF
         .type  __umodsi3, %function
+.endif
         .globl  __aeabi_uidivmod
+.if ELF
         .type  __aeabi_uidivmod, %function
+.endif
         .align  2
 __umodsi3:
 ___umodsi3:
