@@ -4,10 +4,12 @@ CC=gccprm
 AR=arprm
 LD=ldprm
 AS=asprm
-COPTS=-S -O0 -mapcs-32 -D__ARM__ -D__NOBIVA__ -I.
+COPTS=-S -O0 -mapcs-32 -fno-common -D__ARM__ -D__NOBIVA__ -I. -DEFITEST
 
-pdptest.exe: efistart.o
-  $(LD) -s -subsystem efi -e _efimain -nostdlib -o pdptest.exe efistart.o
+TARGET=pdptest.efi
+
+$(TARGET): efistart.o
+  $(LD) -s -subsystem efi -e _efimain -nostdlib -o $(TARGET) efistart.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
