@@ -103,7 +103,7 @@ __POSGENOS__ - I give up.
 #include "__memmgr.h"
 #endif
 
-#ifdef __ARM__
+#if defined(__ARM__) && !defined(__EFI__)
 #define __gnu_linux__
 #endif
 
