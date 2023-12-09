@@ -4,12 +4,17 @@ CC=gccprm
 AR=arprm
 LD=ldprm
 AS=asprm
-COPTS=-S -O0 -mapcs-32 -fno-common -D__ARM__ -D__NOBIVA__ -I. -DEFITEST
+
+COPTS=-DEFITEST -S -O0 -fno-common -mapcs-32 -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__
 
 TARGET=pdptest.efi
+OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
+    assert.o signal.o locale.o ctype.o math.o armsupa.o
 
-$(TARGET): efistart.o
-  $(LD) -s -subsystem efi -e _efimain -nostdlib -o $(TARGET) efistart.o
+$(TARGET): clean pdptest.o $(OBJS)
+  rm -f pdpefi.a
+  $(AR) r pdpefi.a $(OBJS)
+  $(LD) -s -subsystem efi -e _efimain -nostdlib -o $(TARGET) pdptest.o $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
@@ -17,4 +22,8 @@ $(TARGET): efistart.o
   rm -f $*.s
 
 .asm.o:
-  $(AS) -o $@ $<
+  $(AS) --defsym LINUX=0 --defsym ELF=0 -o $@ $<
+
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
