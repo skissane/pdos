@@ -14,7 +14,13 @@ typedef long long INTN;
 typedef unsigned long long UINTN;
 #else
 typedef int INTN;
+
+#ifdef __ARM__
+typedef unsigned long UINTN;
+#else
 typedef unsigned int UINTN;
+#endif
+
 #endif
 
 typedef unsigned char UINT8;
