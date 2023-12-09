@@ -94,7 +94,9 @@
 /* Note that PDOS is for the 32-bit version, since the 16-bit
    version uses the MSDOS version since it is compatible with it */
 /* linux is pretty similar too */
-#if defined(__PDOS386__) || defined(__gnu_linux__) || defined(__SMALLERC__) \
+#if defined(__EFI__)
+/* don't define MSDOS for any EFI build */
+#elif defined(__PDOS386__) || defined(__gnu_linux__) || defined(__SMALLERC__) \
     || defined(__ARM__)
 #define __MSDOS__
 #endif
@@ -148,7 +150,7 @@ static EFI_BLOCK_IO_PROTOCOL *bio_protocol = NULL;
 #define VARIABLE_TEXT 3
 #endif
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__EFI__))
 
 extern int __open(const char *a, int b, int c);
 extern int __write(int a, const void *b, int c);
