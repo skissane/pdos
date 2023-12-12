@@ -34,8 +34,12 @@
 
 extrn __start:proc
 
+ifdef POLLUTE
+extrn __clrbss:proc
+else
 extrn _end:byte
 extrn _edata:byte
+endif
 
 public __psp
 public __envptr
@@ -159,6 +163,10 @@ mov sp, bp
 ; We can use rep stos to clear the memory, which initializes
 ; using the byte in al, starting at es:di, for a length of cx
 
+ifdef POLLUTE
+call __clrbss
+else
+
 mov cx, offset DGROUP:_end
 mov di, offset DGROUP:_edata
 sub cx, di
@@ -167,6 +175,9 @@ push ds
 pop es
 mov al, 0
 rep stosb
+
+endif
+
 
 ; The psp and envptr variables are only accessible with a far
 ; pointer, nominally not available in small data memory models
