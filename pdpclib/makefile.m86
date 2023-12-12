@@ -1,0 +1,64 @@
+# Produce MSDOS executable using Microsoft C 6.0
+# Build with pdmake -f makefile.m86
+
+# Choose T (tiny), S (small), M (medium), C (compact), L (large), H (huge)
+MODELC=H
+# Choose long form of above name, required by masm instead of cl
+MODELA=huge
+
+# If you want to produce a COM file, uncommment this, and follow the
+# instructions further down (when written)
+#MAKECOM=-DMAKECOM
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+
+# If you are using masm 6.11 or older, there is no -omf and you will get
+# a warning (which cannot be ignored as it consumes the next parameter).
+# 6.15 has -omf but defaults to omf.
+# 8.0 defaults to coff. If you have obtained a copy of Visual C++ 1.52C
+# or earlier, you need to marry it up with either the standalone masm 6.11
+# or obtain a later version of Visual C++ (7.0 or above - 6.0 is sort of
+# possible too - that's where the 6.15 reference comes from), and ignore
+# the (Windows-only) C compiler and just get the assembler. And you will
+# then need to add "OMF=-omf" to that more modern assembler when you run
+# pdmake. Or manually change the below.
+
+OMF=
+#OMF=-omf
+
+CFLAGS=-Oceglnt
+
+COPTS=-c -I. $(SZ4) -D__MSDOS__ $(CFLAGS) -A$(MODELC) -Zl -Gs -nologo -Zp1 -DBUFSIZ=512
+CC=cl
+AS=ml
+LD=link
+
+
+all: clean pdptest.exe
+
+pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj dossupc.obj dossupa.obj fpfuncsv.obj \
+       dossupb.obj dossupd.obj
+  link /stack:8192 /cp:1 /noe /noi /nod /map /nologo /dosseg dosstart.obj+pdptest.obj+dossupd.obj,pdptest.exe,pdptest.map,msc.lib,,
+
+.c.obj:
+  $(CC) $(COPTS) $<
+  lib msc /nologo +$@,,
+
+
+# Put the OMF before nologo so that if you get a warning about
+# omf not being recognized, the next parameter that gets consumed
+# is the nologo, so the only impact is you get verbose assembles
+
+.asm.obj:
+  ml -DPOLLUTE -c $(OMF) -nologo -DMSC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) $<
+  lib msc /nologo +$@,,
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
+  rm -f msc.lib
+  lib msc /nologo ,
