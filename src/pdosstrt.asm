@@ -7,8 +7,12 @@
 
 extrn __start:proc
 
+ifndef POLLUTE
 extrn _end:byte
 extrn _edata:byte
+else
+extrn __clrbss:proc
+endif
 
 ; Although we don't use this stack, it needs to be at least 200h
 ; so that wlink doesn't make it 1000h when it appears in the map
@@ -59,6 +63,7 @@ mov sp, 0fffeh
 ;;;call far ptr _displayc
 ;call displayc
 
+ifndef POLLUTE
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
 ; which can be referenced as _end, and the end of the
@@ -72,7 +77,9 @@ sub cx, di
 mov es, ax ; we still have that set from above
 mov al, 0
 rep stosb
-
+else
+call __clrbss
+endif
 
 xor ax,ax
 push ax
