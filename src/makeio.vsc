@@ -19,6 +19,7 @@
 # still assembled, but it is not referenced so not linked in.
 
 # You must run makefile.msc in pdpclib before running this
+# Or else makefile.m86 if using Microsoft C 6.0
 
 # Note that it is necessary to add the "noe" linker option
 # to stop the extended dictionary from being used and giving
@@ -39,6 +40,10 @@ TARG=XPDOS32
 OMF=
 #OMF=-omf
 
+# If you are using Microsoft C 6.0, it pollutes the
+# namespace with edata and end (no underscore)
+POLLUTE=-DPOLLUTE
+#POLLUTE=
 
 
 CC=cl
@@ -76,7 +81,9 @@ CC=cl
 # doesn't allow more optimization options (which may be being split)
 
 #CFLAGS=-Ob1ceglnot
-CFLAGS=-O
+#CFLAGS=-O
+# And if you are using MSC 6.0, define that too
+CFLAGS=-O -DMSC6
 
 COPTS=-c -nologo -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
 AS=ml
@@ -99,7 +106,7 @@ pload.com: $(OBJS)
   lib io /nologo +$@,,
 
 .asm.obj:
-  ml -c $(OMF) -nologo -DMAKEPL -DMSC -DNEWMODEL -Dmemodel=huge -DNEED_DISPLAYC $<
+  ml -c $(OMF) -nologo $(POLLUTE) -DMAKEPL -DMSC -DNEWMODEL -Dmemodel=huge -DNEED_DISPLAYC $<
   lib io /nologo +$@,,
 
 clean:
