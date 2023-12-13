@@ -11,6 +11,7 @@
 # using Visual Studio 1.52 plus exe2bin
 
 # makefile.msc should be run in PDPCLIB first
+# Or else makefile.m86 if using Microsoft C 6.0
 
 # Note that it is necessary to add the "noe" linker option
 # to stop the extended dictionary from being used and giving
@@ -26,6 +27,11 @@ VPATH=..\pdpclib
 # need to use -omf
 OMF=
 #OMF=-omf
+
+# If using Microsoft C 6.0, need the version that
+# pollutes the namespace
+POLLUTE=-DPOLLUTE
+#POLLUTE=
 
 # This used to work, but for some reason it is now too long and
 # needs to be trimmed to just -O to avoid overflowing the
@@ -65,7 +71,7 @@ pdos.exe: $(OBJS)
   lib os /nologo +$@,,
 
 .asm.obj:
-  ml -c -DMSC $(OMF) -nologo -Dmemodel=huge $<
+  ml -c $(POLLUTE) -DMSC $(OMF) -nologo -Dmemodel=huge $<
   lib os /nologo +$@,,
 
 clean:
