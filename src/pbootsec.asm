@@ -250,7 +250,11 @@ ignorec:
 ; the literals could be beyond that. You can use dumplong though,
 ; as that has been written to not require literals anymore.
 ; Note that SubC needs 7 sectors loaded
+ifdef MSC6
+ mov cx, 19 ; Need to investigate why MSC 6.0 needs so many
+else
  mov  cx, 9        ;Load 9 sectors (was 55, was 58, was 3)
+endif
 ; I had dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
  mov  bx, 0700h     ;Loaded to es:bx (0x00:0x0700)
@@ -261,7 +265,11 @@ ignorec:
  mov  dx, 0
  mov  dl, [BootDisk]
 
+ifdef MSC6
+ mov  ax, 0071h
+else
  mov  ax, 0070h
+endif
  push ax
  mov  ax, 0
  push ax
