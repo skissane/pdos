@@ -7,8 +7,12 @@
 
 extrn dstart:proc
 
+ifndef POLLUTE
 extrn _end:byte
 extrn _edata:byte
+else
+extrn edata:byte
+endif
 
 ifndef MAKECOM
 .stack 1000h
@@ -65,7 +69,14 @@ endif
 lea bx, newstart
 push ax
 push bx
+
+; Microsoft C 6.0 also unnecessarily (I think) makes
+; AHSHIFT occupy space in the executable that screws
+; up this previous logic
+ifndef POLLUTE
 retf ; should return to next instruction
+endif
+
 newstart:
 
 mov bx, dx ; preserve drive number
@@ -123,7 +134,11 @@ bypass:
 ; This is where we need to load up to
 ifdef NEWMODEL
 push ds
+ifdef POLLUTE
+mov di, offset DGROUP:edata
+else
 mov di, offset DGROUP:_edata
+endif
 push di
 endif
 
@@ -151,6 +166,7 @@ call _exita
 _startup endp
 
 
+ifndef POLLUTE
 ; This nop is required for the same reason as displayc needs it
 nop ; for good measure
 
@@ -202,7 +218,7 @@ pop es
 ret
 
 clrbss endp
-
+endif
 
 
 ; There appears to be a bug in wasm in Open Watcom 1.6
@@ -247,6 +263,7 @@ endif
 
 ; Routines needed for SubC
 
+ifndef POLLUTE
 public getedata
 getedata proc
         mov ax, offset DGROUP:_edata
@@ -259,7 +276,7 @@ getend proc
         mov ax, offset DGROUP:_end
         ret
 getend endp
-
+endif
 
 public xgetfar
 
