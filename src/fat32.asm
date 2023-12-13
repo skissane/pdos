@@ -177,7 +177,14 @@ call CalculateCluster ; Take our cluster # stored in si:di, and return sector in
 
 ; If you are doing debugging (with dumpbuf/dumplong), you will need
 ; to load more sectors than this, and may as well do the maximum of 58
+; Microsoft C 6.0 bumped the requirement up to 19
+; I suspect it is because pload is making use of
+; routines in dossupa.asm. Needs to be investigated
+ifdef MSC6
+mov cx, 19
+else
 mov cx, 9 ; Load 9 sectors (was 55, was 58, was 3)
+endif
 ; I dropped down to 55 in case we have a cdrom with 2048 byte
 ; sectors of which just the first 512 bytes are populated
 mov bx, 0700h ;Loaded to es:bx (0x00:0x0700)
@@ -188,7 +195,11 @@ call ReadSectors ;Read the actual sectors
 mov  dx, 0
 mov  dl, [BootDisk]
 
+ifdef MSC6
+mov  ax, 0071h
+else
 mov  ax, 0070h
+endif
 push ax
 mov  ax, 0
 push ax
