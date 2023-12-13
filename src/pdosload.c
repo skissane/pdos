@@ -271,7 +271,15 @@ void pdosload(void)
     } while (rets == 0x200);
     fclose(fp);
 
+#if defined(MSC6)
+    /* This appears to be failing because the dossupa.asm
+       routines are not yet fleshed out - fix when they are */
+    /* callfar((long)MK_FP(0x2001, 0)); */
+    callfar(0x20010000UL);
+#else
     callfar((long)ABS2ADDR(loads));
+#endif
+
 #endif
 
 #if 0
