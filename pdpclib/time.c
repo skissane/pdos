@@ -31,9 +31,17 @@
 #ifdef __AMIGA__
 #include <clib/dos_protos.h>
 #endif
+
 #ifdef __OS2__
-#include <os2.h>
+#ifdef __16BIT__
+#undef NULL
 #endif
+#include <os2.h>
+#ifdef __16BIT__
+typedef USHORT APIRET;
+#endif
+#endif
+
 #ifdef __WIN32__
 #include <windows.h>
 #endif

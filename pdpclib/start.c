@@ -114,6 +114,9 @@ extern void (*__userExit[__NATEXIT])(void);
 #define MAXPARMS 50 /* maximum number of arguments we can handle */
 
 #ifdef __OS2__
+#ifdef __16BIT__
+#undef NULL
+#endif
 #define INCL_DOS
 #include <os2.h>
 #endif
@@ -1081,7 +1084,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 #endif
 
-#ifdef __OS2__
+#if defined(__OS2__) && !defined(__16BIT__)
     reqFH = 0;
     DosSetRelMaxFH(&reqFH, &maxFH);
     if (maxFH < (FOPEN_MAX + 10))

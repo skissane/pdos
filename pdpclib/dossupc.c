@@ -21,7 +21,7 @@ long _ftol(double x)
 }
 #endif
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) || defined(__OS2__)
 
 #ifdef __WATCOMC__
 #define CTYP __cdecl
@@ -117,23 +117,38 @@ unsigned long CTYP __subhphp(unsigned int bx,
     return (first - second);
 }
 
+unsigned int __shift = 12;
+unsigned int __incr = 0x1000;
+
 #ifdef __WATCOMC__
 /* dx:ax is a huge pointer to which a long is added, and
-   the return should be a normalized huge pointer */
+   the return should be a normalized huge pointer.
+   Actually to support PM16 we need to preserve the
+   segment (selector) as priority. So the offset is
+   maximized, not minimized. That's the new normalized */
 unsigned long CTYP __addhpi(unsigned int dx,
                             unsigned int ax,
                             unsigned int cx,
                             unsigned int bx)
 {
     unsigned long first;
-
+   
     first = (unsigned long)ax + bx;
-    ax = first & 0x0f;
+    
+    ax = first & 0xffffU;
+    
+    if (first >= 0x10000UL)
+    {
+        first = __incr;
+    }
+    else
+    {
+        first = 0;
+    }
 
-    first >>= 4;
     first += dx;
-    first += ((unsigned long)cx << 12);
-    first <<= 16;
+    first += (cx << __shift);
+    first <<= 16U;
     first += ax;
 
     return (first);
@@ -170,8 +185,8 @@ int CTYP __cmphphp(unsigned int dx,
     unsigned long first;
     unsigned long second;
 
-    first = ((unsigned long)dx << 4) + ax;
-    second = ((unsigned long)cx << 4) + bx;
+    first = ((unsigned long)dx << (16 - __shift)) + ax;
+    second = ((unsigned long)cx << (16 - __shift)) + bx;
 
     if (first < second) return (1);
     else if (first == second) return (2);

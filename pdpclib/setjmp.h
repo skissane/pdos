@@ -57,7 +57,8 @@ typedef struct {
     int r8;
     int r9;
     int r10;
-#elif defined(__WIN32__) || defined(__32BIT__) || defined(__OS2__) \
+#elif defined(__WIN32__) || defined(__32BIT__) \
+    || (defined(__OS2__) && !defined(__16BIT__)) \
     || defined(__PDOS386__) || defined(__gnu_linux__) || defined(__EFI__)
     int ebx;
     int ecx;
@@ -68,7 +69,8 @@ typedef struct {
     int ebp;
     int retaddr;
     int extra[7]; /* for compatibility with MSVCRT */
-#elif defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC)
+#elif defined(__OS2__) || defined(__MSDOS__) || defined(__DOS__) \
+      || defined(__POWERC)
     int bx;
     int cx;
     int dx;
@@ -104,7 +106,7 @@ int __Ysetjmp(jmp_buf env);
 #define setjmp(x) __setj(x)
 int __setj(jmp_buf env);
 
-#elif defined(__MSDOS__)
+#elif defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))
 #define setjmp(x) __setj(x)
 #if defined(__WATCOMC__)
 int __cdecl __setj(jmp_buf env);

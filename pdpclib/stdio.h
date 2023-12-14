@@ -73,10 +73,11 @@ typedef unsigned int size_t;
 
 typedef struct
 {
-#if (defined(__OS2__) || defined(__32BIT__) || defined(__PDOS386__))
+#if ((defined(__OS2__) && !defined(__16BIT__)) \
+    || defined(__32BIT__) || defined(__PDOS386__))
     unsigned long hfile;  /* OS/2 file handle */
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
-    || defined(__SMALLERC__))
+    || defined(__SMALLERC__) || defined(__OS2__))
     int hfile; /* dos file handle */
 #elif defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__)
     void *hfile;

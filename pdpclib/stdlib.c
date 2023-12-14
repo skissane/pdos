@@ -41,7 +41,13 @@
 #ifdef __OS2__
 #define INCL_DOSMISC
 #define INCL_DOSPROCESS
+#ifdef __16BIT__
+#undef NULL
+#endif
 #include <os2.h>
+#ifdef __16BIT__
+typedef USHORT APIRET;
+#endif
 #endif
 
 #ifdef __WIN32__
@@ -201,7 +207,12 @@ __PDPCLIB_API__ void *malloc(size_t size)
     APIRET rc;
 
     ulObjectSize = size + sizeof(size_t);
+#ifdef __16BIT__
+    /* we need to stop calling allocmem - it don't think it exists */
+    ulAllocationFlags = 0;
+#else
     ulAllocationFlags = PAG_COMMIT | PAG_WRITE | PAG_READ;
+#endif
     rc = DosAllocMem(&BaseAddress, ulObjectSize, ulAllocationFlags);
     if (rc != 0) return (NULL);
     *(size_t *)BaseAddress = size;

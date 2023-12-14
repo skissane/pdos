@@ -135,7 +135,13 @@ static EFI_BLOCK_IO_PROTOCOL *bio_protocol = NULL;
 #endif
 
 #ifdef __OS2__
+#ifdef __16BIT__
+#undef NULL
+#endif
 #include <os2.h>
+#ifdef __16BIT__
+typedef USHORT APIRET;
+#endif
 #endif
 
 #ifdef __WIN32__
@@ -917,7 +923,11 @@ static void osfopen(void)
 
 #ifdef __OS2__
     APIRET rc;
+#ifdef __16BIT__
+    USHORT action;
+#else
     ULONG  action;
+#endif
     ULONG  newsize = 0;
     ULONG  fileAttr = 0;
     ULONG  openAction = 0;
@@ -1874,10 +1884,16 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #endif
 #endif
 #endif
+
 #ifdef __OS2__
     APIRET rc;
+#ifdef __16BIT__
+    USHORT tempRead;
+#else
     ULONG tempRead;
 #endif
+#endif
+
 #ifdef __WIN32__
     BOOL rc;
     DWORD tempRead;
@@ -2465,10 +2481,16 @@ static void iwrite(FILE *stream,
 #ifdef __AMIGA__
     long tempWritten;
 #endif
+
 #ifdef __OS2__
+#ifdef __16BIT__
+    USHORT tempWritten;
+#else
     ULONG tempWritten;
+#endif
     APIRET rc;
 #endif
+
 #ifdef __WIN32__
     DWORD tempWritten;
     BOOL rc;
@@ -3570,8 +3592,13 @@ __PDPCLIB_API__ int remove(const char *filename)
     DeleteFile(filename);
     ret = 0;
 #endif
+
 #ifdef __OS2__
+#ifdef __16BIT__
+    rc = DosDelete((PSZ)filename, 0);
+#else
     rc = DosDelete((PSZ)filename);
+#endif
     if (rc != 0)
     {
         ret = 1;
@@ -3582,6 +3609,7 @@ __PDPCLIB_API__ int remove(const char *filename)
         ret = 0;
     }
 #endif
+
 #ifdef __WIN32__
     rc = DeleteFile(filename);
     if (!rc)
@@ -3705,8 +3733,13 @@ __PDPCLIB_API__ int rename(const char *old, const char *newnam)
     Rename(old, newnam);
     ret = 0;
 #endif
+
 #ifdef __OS2__
+#ifdef __16BIT__
+    rc = DosMove((PSZ)old, (PSZ)newnam, 0);
+#else
     rc = DosMove((PSZ)old, (PSZ)newnam);
+#endif
     if (rc != 0)
     {
         ret = 1;
@@ -3717,6 +3750,7 @@ __PDPCLIB_API__ int rename(const char *old, const char *newnam)
         ret = 0;
     }
 #endif
+
 #ifdef __WIN32__
     rc = MoveFile(old, newnam);
     if (!rc)
