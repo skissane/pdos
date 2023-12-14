@@ -170,8 +170,8 @@ ifndef POLLUTE
 ; This nop is required for the same reason as displayc needs it
 nop ; for good measure
 
-public clrbss
-clrbss proc
+public __clrbss
+__clrbss proc
 
 ; we are responsible for clearing our own BSS
 ; in Watcom at least, the BSS is at the end of the DGROUP
@@ -217,7 +217,7 @@ pop es
 
 ret
 
-clrbss endp
+__clrbss endp
 endif
 
 
