@@ -56,7 +56,11 @@ pdptest.exe: dosstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 # Use this instead for an NE executable
 #  wasm -zcm -q -DPDOS86 ..\src\needpdos.asm
 #  wlink File needpdos.obj Name needpdos.exe Form dos Option quiet,dosseg
-#  wlink File dosstart.obj,pdptest.obj Name pdptest.exe Form windows Library watcom.lib Option quiet,stack=8192,start=___asmstart,map,verbose,dosseg,stub=needpdos.exe
+#  rm -f kernel.lib
+#  echo ++__AHINCR.KERNEL.__AHINCR >temp.wat
+#  echo ++__AHSHIFT.KERNEL.__AHSHIFT >>temp.wat
+#  wlib -q kernel @temp.wat
+#  wlink File dosstart.obj,pdptest.obj Name pdptest.exe Form windows Library watcom.lib,kernel.lib Option quiet,stack=8192,start=___asmstart,map,verbose,dosseg,stub=needpdos.exe
 
 .c.obj:
   $(CC) $(COPTS) $<
