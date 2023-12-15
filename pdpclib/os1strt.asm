@@ -8,39 +8,42 @@
 .stack 4000h
 
 extrn __start:proc, __myDosExit:proc
-extrn DosHugeShift:proc
-extrn DosHugeIncr:proc
+extrn __myDosHugeShift:proc
+extrn __myDosHugeIncr:proc
 extrn __shift:word
 extrn __incr:word
 
 .data
 banner  db  "PDPCLIB"
 
-parm db "X Y"
-
 .code
 
 top:
 
+; at entry, apparently ax is the selector to
+; the environment, bx is the offset of the
+; commandline within the environment, and
+; cx is the size of the data segment
 
 public __main
 public __intstart
 __intstart proc
-;        mov ax, [sp+16]
-;        push ax
         mov dx,DGROUP
         mov ds,dx
-        mov ax, offset DosHugeShift ; aka AHSHIFT
+
+; push far pointer to __start
+        push ax
+        push bx
+
+; DosHugeShift is also known as _AHSHIFT
+        call __myDosHugeShift
         mov __shift, ax
-        mov ax, offset DosHugeIncr ; aka AHINCR
+; DosHugeIncr is also known as _AHINCR
+        call __myDosHugeIncr
         mov __incr, ax
-        mov ax, seg parm
-        push ax
-        mov ax, offset parm
-        push ax
         call __start
-        sub sp,4
-        mov ax, 3
+        add sp,4
+        mov ax, 0
         push ax
         call __exita
 __intstart endp
