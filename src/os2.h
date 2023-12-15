@@ -55,8 +55,8 @@ void APIENTRY DosHugeIncr(void);
 void APIENTRY DosHugeShift(void);
 void APIENTRY DosExit(int a, int b);
 USHORT APIENTRY DosOpen(char *fnm, USHORT *handle, USHORT *action1,
-               USHORT newsize, USHORT fileattr, USHORT action2,
-               USHORT mode, void *junk);
+               ULONG newsize, USHORT fileattr, USHORT action2,
+               USHORT mode, ULONG resvd);
 USHORT APIENTRY DosClose(short handle);
 USHORT APIENTRY DosRead(USHORT hfile, void *ptr,
                         USHORT toread, USHORT *tempRead);
