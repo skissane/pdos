@@ -205,16 +205,30 @@ __PDPCLIB_API__ void *malloc(size_t size)
     ULONG ulObjectSize;
     ULONG ulAllocationFlags;
     APIRET rc;
+#ifdef __16BIT__
+    USHORT numsegs;
+    USHORT numbytes;
+    USHORT sel;
+#endif
 
     ulObjectSize = size + sizeof(size_t);
 #ifdef __16BIT__
-    /* we need to stop calling allocmem - it don't think it exists */
-    ulAllocationFlags = 0;
+    numsegs = ulObjectSize / 65536U;
+    numbytes = ulObjectSize % 65536U;
+    if (numbytes != 0)
+    {
+        numsegs++;
+    }
+    if (DosAllocHuge(numsegs, numbytes, &sel, 0, 0) != 0)
+    {
+        return (NULL);
+    }
+    BaseAddress = (void *)((unsigned long)sel << 16);
 #else
     ulAllocationFlags = PAG_COMMIT | PAG_WRITE | PAG_READ;
-#endif
     rc = DosAllocMem(&BaseAddress, ulObjectSize, ulAllocationFlags);
     if (rc != 0) return (NULL);
+#endif
     *(size_t *)BaseAddress = size;
     BaseAddress = (char *)BaseAddress + sizeof(size_t);
     return ((void *)BaseAddress);
@@ -448,7 +462,11 @@ __PDPCLIB_API__ void free(void *ptr)
     if (ptr != NULL)
     {
         ptr = (char *)ptr - sizeof(size_t);
+#ifdef __16BIT__
+        DosFreeSeg((unsigned long)ptr >> 16);
+#else
         DosFreeMem((PVOID)ptr);
+#endif
     }
 #endif
 #ifdef __MSDOS__
@@ -998,13 +1016,25 @@ static int ins_strncmp(const char *one, const char *two, size_t len)
 
 __PDPCLIB_API__ char *getenv(const char *name)
 {
-#ifdef __OS2__
+#if defined(__OS2__) && !defined(__16BIT__)
     PSZ result;
 
     if (DosScanEnv((void *)name, (void *)&result) == 0)
     {
         return ((char *)result);
     }
+#elif defined(__OS2__)
+    USHORT seg, junk;
+    char *env;
+
+    if (DosGetEnv(&seg, &junk) != 0)
+    {
+        return (NULL);
+    }
+    /* this far pointer construction is unfortunate, but
+       it allows us to use only Family API which may be
+       useful to some */
+    env = (unsigned long)seg << 16;
 #endif
 #if defined(__MSDOS__) || defined(__WIN32__)
     char *env;
