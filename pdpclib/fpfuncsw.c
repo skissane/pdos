@@ -52,8 +52,8 @@ int __cdmain(int argc, char **argv)
 #ifdef __OS2__
 #include <os2.h>
 
-void * APIENTRY DosHugeShift(void);
-void * APIENTRY DosHugeIncr(void);
+void APIENTRY DosHugeShift(void);
+void APIENTRY DosHugeIncr(void);
 
 void __myDosExit(int one, int two)
 {
