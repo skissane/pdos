@@ -2590,6 +2590,9 @@ static int exeloadLoadLX(unsigned char **entry_point,
     return (2);
 }
 
+extern int __shift;
+extern int __incr;
+
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
@@ -2641,12 +2644,28 @@ static int exeloadLoadNE(unsigned char **entry_point,
         *loadloc += 12;
     }
     fseek(fp, offs1, SEEK_SET);
+
+#if 0
+    /* PDOS/86 needs this currently */
     fread(*loadloc + 0x100 + 48, len1, 1, fp);
+#else
+    fread(*loadloc, len1, 1, fp);
+#endif
 
     fseek(fp, offs2, SEEK_SET);
+#if 0
+    /* PDOS/86 needs this currently */
     fread(*loadloc + 65536UL + 0x100 + 48, len2, 1, fp);
+#else
+    fread(*loadloc + 65536UL, len2, 1, fp);
+#endif
 
+#if 0
+    /* PDOS/86 needs this currently */
     codeptr = *loadloc + 0x100 + 48;
+#else
+    codeptr = *loadloc;
+#endif
 
     dataptr = codeptr + 65536UL;
 
@@ -2663,7 +2682,15 @@ static int exeloadLoadNE(unsigned char **entry_point,
             printf("unknown3 reloc type %x\n", reloc[0]);
             for (;;) ;
         }
-        if ((reloc[1] != 0x00) && (reloc[1] != 0x02))
+#if 0        
+        printf("0 is %02X\n", reloc[0]);
+        printf("1 is %02X\n", reloc[1]);
+#endif
+        /* 0 = internal reference */
+        /* 1 = import ordinal */
+        /* 2 = import name */
+        if ((reloc[1] != 0x00) && (reloc[1] != 0x02)
+            && (reloc[1] != 0x01))
         {
             printf("unknown4 reloc type %x\n", reloc[1]);
             for (;;) ;
@@ -2690,8 +2717,32 @@ static int exeloadLoadNE(unsigned char **entry_point,
                    been made to reproduce that. Also note that these
                    functions have two underscores in front of them
                    I think */
+#if 0
                 (codeptr + lloffs)[0] = 0x00;
                 (codeptr + lloffs)[1] = 0x10;
+#endif
+                if (reloc[1] == 1)
+                {
+                    unsigned int ordnum;
+                    
+                    ordnum = (reloc[7] << 8) | reloc[6];
+                    /* printf("ordnum is %u\n", ordnum); */
+                    if (ordnum == 135) /* AHSHIFT or DosHugeShift */
+                    {
+                        (codeptr + lloffs)[0] = __shift & 0xff;
+                        (codeptr + lloffs)[1] = __shift >> 8;
+                    }
+                    else if (ordnum == 136) /* AHINCR or DosHugeIncr */
+                    {
+                        (codeptr + lloffs)[0] = __incr & 0xff;
+                        (codeptr + lloffs)[1] = __incr >> 8;
+                    }
+                    else
+                    {
+                        printf("unknown/unsupported ordinal %u\n", ordnum);
+                        for (;;) ;
+                    }
+                }
             }
             else if (reloc[4] == 1) /* code */
             {
@@ -2715,7 +2766,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
     for (x = 0; x < nr; x++)
     {
         fread(reloc, sizeof reloc, 1, fp);
-        if (reloc[0] != 3)
+        /* 2 = segment, 3 = far addres */
+        if ((reloc[0] != 3) && (reloc[0] != 2))
         {
             printf("unknown1 reloc type %x\n", reloc[0]);
             for (;;) ;
@@ -2725,6 +2777,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
         {
             memcpy(zzz, dataptr + lloffs, 2);
             zzz_num = zzz[0] | (zzz[1] << 8);
+            
+            /* 4 = additive */
             if (reloc[1] == 0x04)
             {
                 if (reloc[4] == 1) /* code */
@@ -2740,6 +2794,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
                 memcpy(dataptr + lloffs, &reloc[6], 2);
                 break;
             }
+            /* 0 = internal reference */
             if (reloc[1] != 0x00)
             {
                 printf("unknown2 reloc type %x\n", reloc[1]);
@@ -2754,6 +2809,11 @@ static int exeloadLoadNE(unsigned char **entry_point,
             {
                 (dataptr + lloffs)[2] = ((unsigned long)dataptr >> 16) & 0xff;
                 (dataptr + lloffs)[3] = ((unsigned long)dataptr >> 24) & 0xff;
+            }
+            else
+            {
+                printf("unknown reloc4 %x\n", reloc[4]);
+                for (;;) ;
             }
             memcpy(dataptr + lloffs, &reloc[6], 2);
             if (zzz_num = 0xffffU) break;
