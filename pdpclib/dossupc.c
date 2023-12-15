@@ -102,6 +102,9 @@ unsigned long CTYP __modulo(unsigned long x, unsigned long y)
     return (x);
 }
 
+unsigned int __shift = 12;
+unsigned int __incr = 0x1000;
+
 /* dx:ax and cx:bx are huge pointers, and the return should be
    the number of bytes between the two */
 unsigned long CTYP __subhphp(unsigned int bx,
@@ -112,13 +115,10 @@ unsigned long CTYP __subhphp(unsigned int bx,
     unsigned long first;
     unsigned long second;
 
-    second = ((unsigned long)dx << 4) + ax;
-    first = ((unsigned long)cx << 4) + bx;
+    second = ((unsigned long)dx << (16 - __shift)) + ax;
+    first = ((unsigned long)cx << (16 - __shift)) + bx;
     return (first - second);
 }
-
-unsigned int __shift = 12;
-unsigned int __incr = 0x1000;
 
 #ifdef __WATCOMC__
 /* dx:ax is a huge pointer to which a long is added, and
@@ -156,6 +156,7 @@ unsigned long CTYP __addhpi(unsigned int dx,
 
 /* dx:ax is a huge pointer to which a long is subtracted, and
    the return should be a normalized huge pointer */
+/* now we attempt to preserve the segment for PM16 */
 unsigned long CTYP __subhpi(unsigned int dx,
                             unsigned int ax,
                             unsigned int cx,
@@ -163,12 +164,14 @@ unsigned long CTYP __subhpi(unsigned int dx,
 {
     unsigned long first;
 
-    first = (unsigned long)ax - bx;
-    ax = first & 0x0f;
+    first = dx;
+    if (ax < bx)
+    {
+        first -= __incr;
+    }
+    ax -= bx;
 
-    first >>= 4;
-    first += dx;
-    first -= ((unsigned long)cx << 12);
+    first -= (cx << (16 - __shift));
     first <<= 16;
     first += ax;
 
