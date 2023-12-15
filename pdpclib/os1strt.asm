@@ -51,13 +51,14 @@ __intstart endp
 
 public __exita
 __exita proc
-        pop ax
-        pop ax
+        pop ax ; offset of return address
+        pop ax ; segment of return address
+        pop ax ; desired return code
         push ax
-        mov cx, 1
-        push cx
+        mov ax, 1 ; terminate all threads
+        push ax
         call __myDosExit
-        sub sp,4
+        add sp,4
 __exita endp
 
 
