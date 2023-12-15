@@ -1,0 +1,22 @@
+# Produces OS/2 1.x executable.
+# Links against library produced by makefile.oss
+
+CC=wcl
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=h
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+COPTS=$(SZ4) -zdf -D__16BIT__ -I. -oneatx \
+      -I..\pdpclib -I..\bios -I..\src -DNEED_MZ -DNO_DLLENTRY \
+      -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__OS2__ -fpi87 -s -zu
+
+all: clean bios.exe
+
+bios.exe: bios.obj ..\bios\exeload.obj
+  wlink File ..\pdpclib\os1strt.obj,bios.obj,exeload.obj Name bios.exe Form os2 Library ..\pdpclib\watcom.lib,..\pdpclib\os2.lib Option quiet,stack=8192,start=___intstart,map,verbose,dosseg,stub=..\pdpclib\needpdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+    rm -f *.obj bios.exe
