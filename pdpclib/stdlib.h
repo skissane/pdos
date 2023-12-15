@@ -124,7 +124,11 @@ __PDPCLIB_HEADFUNC void *bsearch(const void *key, const void *base,
 #endif
 
 #ifdef __WATCOMC__
+#if defined(__OS2__) && defined(__16BIT__)
+/* do nothing */
+#else
 #pragma intrinsic (abs,labs,div,ldiv)
+#endif
 #endif
 
 #if defined(__IBMC__) && defined(__OS2__)
