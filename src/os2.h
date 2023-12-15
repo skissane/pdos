@@ -73,3 +73,4 @@ USHORT APIENTRY DosAllocHuge(USHORT numsegs, USHORT numbytes, USHORT *sel,
                     USHORT junk1, USHORT junk2);
 USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
                               int dir, ULONG *retpos);
+USHORT APIENTRY DosGetDateTime(DATETIME *dt);
