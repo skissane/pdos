@@ -623,6 +623,7 @@ ifdef WATCOMC
 public _U4D
 _U4D proc
 
+push ds
 push cx
 push bx
 push dx
@@ -636,6 +637,7 @@ mov cx, dx
 mov bx, ax
 call f_ludiv@
 
+pop ds
 ret
 _U4D endp
 endif
@@ -676,6 +678,7 @@ _PIS proc
 ; need to preserve these, as Watcom C apparently doesn't
 push bx
 push cx
+push ds
 
 push bx
 push cx
@@ -685,6 +688,7 @@ push dx
 call __subhpi
 add sp,8
 
+pop ds
 pop cx
 pop bx
 
@@ -719,6 +723,7 @@ _PTS proc
 ; need to preserve these, as Watcom C apparently doesn't
 push bx
 push cx
+push ds
 
 push cx
 push bx
@@ -728,6 +733,7 @@ push ax
 call __subhphp
 add sp,8
 
+pop ds
 pop cx
 pop bx
 
@@ -823,6 +829,7 @@ mov bp,sp
 ; and we call a C routine later
 push bx
 push cx
+push ds
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne ludiv_full
@@ -849,6 +856,7 @@ add sp, 8
 
 ludiv_fin:
 
+pop ds
 pop cx
 pop bx
 pop bp
@@ -861,6 +869,7 @@ f_ludiv@ endp
 ifdef WATCOMC
 public _I4D
 _I4D proc
+push ds
 push cx
 push bx
 push dx
@@ -873,6 +882,7 @@ call f_lmod@
 mov cx, dx
 mov bx, ax
 call f_ldiv@
+pop ds
 ret
 _I4D endp
 endif
@@ -884,6 +894,7 @@ f_ldiv@ proc
 push bp
 mov bp,sp
 
+push ds
 ; I don't know why we need to preserve dx. I expected
 ; the return value to be a dx:ax pair. Maybe it works
 ; in conjunction with the f_lmod call, and the return
@@ -918,6 +929,7 @@ ldiv_fin:
 pop cx
 pop bx
 pop dx
+pop ds
 pop bp
 ret 8
 f_ldiv@ endp
@@ -932,6 +944,7 @@ mov bp,sp
 ; and we call a C routine later
 push bx
 push cx
+push ds
 
 cmp word ptr [bp + 10 + @CodeSize * 2], 0
 jne lmod_full
@@ -955,6 +968,7 @@ add sp, 8
 
 lmod_fin:
 
+pop ds
 pop cx
 pop bx
 pop bp
