@@ -925,13 +925,16 @@ static void osfopen(void)
     APIRET rc;
 #ifdef __16BIT__
     USHORT action;
+    USHORT fileAttr = 0;
+    USHORT openAction = 0;
+    USHORT openMode = 0;
 #else
     ULONG  action;
-#endif
-    ULONG  newsize = 0;
     ULONG  fileAttr = 0;
     ULONG  openAction = 0;
     ULONG  openMode = 0;
+#endif
+    ULONG  newsize = 0;
 
     if ((modeType == 1) || (modeType == 4) || (modeType == 7)
         || (modeType == 10))
@@ -978,7 +981,7 @@ static void osfopen(void)
                  fileAttr,
                  openAction,
                  openMode,
-                 NULL);
+                 (ULONG)0);
     if (rc != 0)
     {
         err = 1;
