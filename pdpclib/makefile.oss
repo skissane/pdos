@@ -18,7 +18,7 @@ SZ4=-D__SZ4__
 
 
 CC=wcl
-COPTS=$(SZ4) -zdf -D__16BIT__ -I. -I\watcom\h\os21x -oneatx \
+COPTS=$(SZ4) -zdf -D__16BIT__ -I. -I..\src -oneatx \
       -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__OS2__ -fpi87 -s -zu
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
