@@ -1,0 +1,24 @@
+# This builds a PDOS-generic executable
+# A 16-bit NE suitable for running under
+# the executable produced by makebios.o16
+
+CC=wcl
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=h
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+COPTS=$(SZ4) -zdf -D__16BIT__ -I. -oneatx \
+      -I..\pdpclib -I..\src -D__PDOSGEN__ \
+      -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__OS2__ -fpi87 -s -zu
+
+all: clean pcomm.exe
+
+pcomm.exe: ..\pdpclib\pgastart.obj pcomm.obj
+  rm -f pcomm.exe
+  wlink File pgastart.obj,pcomm.obj Name pcomm.exe Form os2 Library ..\pdpclib\watcom.lib,..\pdpclib\os2.lib Option quiet,stack=8192,start=___crt0,map,verbose,dosseg,stub=..\pdpclib\needpdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f pcomm.exe
