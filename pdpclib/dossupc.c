@@ -194,13 +194,19 @@ int CTYP __cmphphp(unsigned int dx,
 }
 #endif
 
+
 #ifdef __WATCOMC__
+
+#if defined(__OS2__) && defined(__16BIT__)
+/* do nothing */
+#else
 void __watcall _cstart(void)
 {
     return;
 }
 
 int _argc, _8087;
+#endif
 
 #endif
 
