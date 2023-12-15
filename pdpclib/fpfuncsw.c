@@ -59,10 +59,12 @@ int __cdmain(int argc, char **argv)
 void APIENTRY DosHugeShift(void);
 void APIENTRY DosHugeIncr(void);
 
+#ifndef __PDOSGEN__
 void __myDosExit(int one, int two)
 {
     DosExit(one, two);
 }
+#endif
 
 void *__myDosHugeShift(void)
 {
@@ -75,5 +77,14 @@ void *__myDosHugeIncr(void)
 }
 
 int argc;
+
+extern unsigned int __shift;
+extern unsigned int __incr;
+
+void __fixhuge(void)
+{
+    __shift = (unsigned int)(unsigned long)__myDosHugeShift();
+    __incr = (unsigned int)(unsigned long)__myDosHugeIncr();
+}
 
 #endif
