@@ -649,6 +649,7 @@ _PIA proc
 ; need to preserve these, as Watcom C apparently doesn't
 push bx
 push cx
+push ds
 
 push bx
 push cx
@@ -658,6 +659,7 @@ push dx
 call __addhpi
 add sp,8
 
+pop ds
 pop cx
 pop bx
 
@@ -742,6 +744,7 @@ _PTC proc
 ; need to preserve these, as Watcom C apparently doesn't
 push bx
 push cx
+push ds
 
 push bx
 push cx
@@ -751,6 +754,7 @@ push dx
 call __cmphphp
 add sp,8
 
+pop ds
 pop cx
 pop bx
 
