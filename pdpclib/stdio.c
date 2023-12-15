@@ -3238,7 +3238,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         {
             precision = 1;
         }
-#if defined(__MSDOS__) && \
+#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
@@ -3277,7 +3277,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         {
             neg = 0;
         }
-#if defined(__MSDOS__) && \
+#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
@@ -3301,7 +3301,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         }
         if (specifier == 'p')
         {
-#if defined(__MSDOS__) && \
+#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
@@ -3331,7 +3331,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
                 }
             }
             x++;
-#if defined(__MSDOS__) && \
+#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
@@ -3344,7 +3344,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
 #endif
             ulvalue = ulvalue / base;
         }
-#if defined(__MSDOS__) && \
+#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
@@ -4278,7 +4278,11 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 
 
 #ifdef __OS2__
+#ifdef __16BIT__
+        rc = DosChgFilePtr(stream->hfile, newpos, 0, &retpos);
+#else
         rc = DosSetFilePtr(stream->hfile, newpos, FILE_BEGIN, &retpos);
+#endif
         if ((rc != 0) || (retpos != newpos))
         {
             errno = rc;
