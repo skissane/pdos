@@ -30,6 +30,11 @@ use it. */
 int __crt0(OS *os)
 {
     __os = os;
+
+#ifdef __16BIT__
+    __fixhuge();
+#endif
+
 #ifdef __WATCOMC__
     *__os->main = __dummain;
 #else
