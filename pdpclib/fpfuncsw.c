@@ -30,10 +30,14 @@ void __STOSD(void)
     return;
 }
 
+#if defined(__OS2__) && defined(__16BIT__)
+/* do nothing */
+#else
 void _CHP(void)
 {
     return;
 }
+#endif
 
 void cstart_(void)
 {
