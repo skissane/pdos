@@ -778,6 +778,8 @@ endif
 
 ifdef MSC
 ;long _aFNauldiv(long *a, unsigned long b)
+public _aFFauldiv
+_aFFauldiv:
 public _aFNauldiv
 _aFNauldiv proc
 ; The pointer is just an offset
