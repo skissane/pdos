@@ -10,6 +10,28 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* Note that the EBCDIC ANSI protocol works in that mfterm
+   solicits input from the keyboard, but won't interpret an
+   ANSI X3.64 escape sequence. It just passes it to the
+   mainframe. The mainframe hasn't yet completed a
+   recognized escape sequence so it solicits more input.
+   Hercules/380 sees the read request and sends an XON
+   before waiting. That then wakes up mfterm. This protocol
+   will need to be changed for a real mainframe that supports
+   EBCDIC ANSI - z/PDOS will need to send an XON itself. I
+   guess either side can send an XON to say "I don't know
+   what the situation is - I need data from you because an
+   app has done a read request and I'm about to enter into
+   a wait - you'll need to wake me up with an XON from your
+   end". Another thing is that to avoid the (presumed) issue
+   with qemu sending a packet immediately because I only
+   write 1 character to the COM port, mfterm could first send
+   an XOFF and some intermediate program could recognize that
+   as a halt in transmission and buffer characters until I
+   send an XON to release it. In this situation the XON would
+   not be sent onwards as it is assumed that the other end
+   knows what to do with this sequence already. */
+
 /* alternate form of extended - used by zPDT (aka z1090/zOPD) IBM
    hardware emulator */
 /* normal extended is z/VM */
