@@ -41,6 +41,7 @@
 #ifdef __OS2__
 #define INCL_DOSMISC
 #define INCL_DOSPROCESS
+#define INCL_DOSMEMMGR
 #ifdef __16BIT__
 #undef NULL
 #endif
@@ -1046,7 +1047,7 @@ __PDPCLIB_API__ char *getenv(const char *name)
     /* this far pointer construction is unfortunate, but
        it allows us to use only Family API which may be
        useful to some */
-    env = (unsigned long)seg << 16;
+    env = (char *)((unsigned long)seg << 16);
 #endif
 #if defined(__MSDOS__) || defined(__WIN32__)
     char *env;
