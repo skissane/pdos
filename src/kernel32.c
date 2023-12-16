@@ -197,7 +197,7 @@ BOOL WINAPI ReadFile(
     LPOVERLAPPED lpOverlapped)
 {
     return (!PosReadFile((int)hFile, lpBuffer,
-                         nNumberOfBytesToRead, lpNumberOfBytesRead));
+                         nNumberOfBytesToRead, (unsigned int *)lpNumberOfBytesRead));
 }
 
 DWORD WINAPI SetFilePointer(
@@ -420,18 +420,18 @@ BOOL WINAPI SetCurrentDirectoryA(LPCTSTR dir)
     return (ret == 0);
 }
 
-BOOL WINAPI GetFileTime(HANDLE h,
-                        FILETIME *a,
-                        FILETIME *b,
-                        FILETIME *c)
+BOOL WINAPI GetFileTime (HANDLE hFile,
+                         LPFILETIME lpCreationTime,
+                         LPFILETIME lpLastAccessTime,
+                         LPFILETIME lpLastWriteTime)
 {
     return 0; /* failure */
 }                        
 
-BOOL WINAPI SetFileTime(HANDLE h,
-                        FILETIME *a,
-                        FILETIME *b,
-                        FILETIME *c)
+BOOL WINAPI SetFileTime (HANDLE hFile,
+                         const FILETIME *lpCreationTime,
+                         const FILETIME *lpLastAccessTime,
+                         const FILETIME *lpLastWriteTime)
 {
     return 0; /* failure */
 }                        
@@ -441,6 +441,65 @@ void WINAPI GetSystemTimeAsFileTime(FILETIME *a)
     return;
 }
 
+/* auto-genned dummy functions made compatible with current windows.h */
+BOOL WINAPI ConnectNamedPipe (HANDLE hNamedPipe,
+                              LPOVERLAPPED lpOverlapped)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "ConnectNamedPipe unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HANDLE WINAPI CreateNamedPipeA (LPCSTR lpName,
+                                DWORD dwOpenMode,
+                                DWORD dwPipeMode,
+                                DWORD nMaxInstances,
+                                DWORD nOutBufferSize,
+                                DWORD nInBufferSize,
+                                DWORD nDefaultTimeOut,
+                                LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "CreateNamedPipeA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "GetModuleHandleA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI ReadFileEx (HANDLE hFile,
+                        LPVOID lpBuffer,
+                        DWORD nNumberOfBytesToRead,
+                        LPOVERLAPPED lpOverlapped,
+                        LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    unsigned int len = 26;
+    PosWriteFile(1, "ReadFileEx unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI TerminateProcess (HANDLE hProcess,
+                              UINT uExitCode)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "TerminateProcess unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI WriteFileEx (HANDLE hFile,
+                         LPCVOID lpBuffer,
+                         DWORD nNumberOfBytesToWrite,
+                         LPOVERLAPPED lpOverlapped,
+                         LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    unsigned int len = 27;
+    PosWriteFile(1, "WriteFileEx unimplemented\r\n", len, &len);
+    for (;;) ;
+}
 
 /* auto-genned dummy functions */
 
@@ -493,22 +552,10 @@ void WINAPI CompareStringW(void)
     PosWriteFile(1, "CompareStringW unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI ConnectNamedPipe(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "ConnectNamedPipe unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI CreateFileW(void)
 {
     unsigned int len = 27;
     PosWriteFile(1, "CreateFileW unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI CreateNamedPipeA(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "CreateNamedPipeA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI CreatePipe(void)
@@ -850,12 +897,6 @@ void WINAPI GetModuleFileNameW(void)
 {
     unsigned int len = 34;
     PosWriteFile(1, "GetModuleFileNameW unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetModuleHandleA(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "GetModuleHandleA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetModuleHandleExW(void)
@@ -1420,12 +1461,6 @@ void WINAPI SwitchToThread(void)
 {
     unsigned int len = 30;
     PosWriteFile(1, "SwitchToThread unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI TerminateProcess(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "TerminateProcess unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI TerminateThread(void)
