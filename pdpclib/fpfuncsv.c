@@ -20,7 +20,7 @@ int _ftol2_sse;
 
 /* I don't know what these are */
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) || defined(__OS2__)
 
 void _aFftol(void)
 {
