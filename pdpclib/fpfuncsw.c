@@ -45,19 +45,30 @@ void cstart_(void)
 }
 
 
+#ifdef __WATCOMC__
 int __watcall main(int argc, char **argv);
 
 int __cdmain(int argc, char **argv)
 {
     return (main(argc, argv));
 }
+#endif
 
 
 #ifdef __OS2__
 #include <os2.h>
 
+/* Attempting to use the function that MSC 6.0
+   uses results in either a link error or a bind
+   error, so this MSC code is currently disabled
+   and issue is worked around in the makefile */
+#ifdef __XMSC__
+void APIENTRY __AHSHIFT(void);
+void APIENTRY __AHINCR(void);
+#else
 void APIENTRY DosHugeShift(void);
 void APIENTRY DosHugeIncr(void);
+#endif
 
 #ifndef __PDOSGEN__
 void __myDosExit(int one, int two)
@@ -68,12 +79,20 @@ void __myDosExit(int one, int two)
 
 void *__myDosHugeShift(void)
 {
+#ifdef __XMSC__
+    return (void *)__AHSHIFT;
+#else
     return (void *)DosHugeShift;
+#endif
 }
 
 void *__myDosHugeIncr(void)
 {
+#ifdef __XMSC__
+    return (void *)__AHINCR;
+#else
     return (void *)DosHugeIncr;
+#endif
 }
 
 int argc;
