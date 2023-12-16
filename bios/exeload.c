@@ -24,6 +24,10 @@
 #include <time.h>
 #include <assert.h>
 
+#ifdef __OS2__
+#include <os2.h>
+#endif
+
 #include "exeload.h"
 
 /* Headers for executable support. */
@@ -2615,6 +2619,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
     unsigned int lloffs;
     unsigned char zzz[2];
     unsigned int zzz_num;
+    unsigned char *csalias;
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -2635,45 +2640,83 @@ static int exeloadLoadNE(unsigned char **entry_point,
 
     if (*loadloc == NULL)
     {
+#if 0
         *loadloc = malloc(65536UL * 2 + 0x100 + 48 + 12);
+#else
+        *loadloc = malloc(65000UL);
+        if (*loadloc != NULL)
+        {
+            unsigned short seg;
+            seg = (unsigned long)(*loadloc) >> 16;
+            if (DosCreateCSAlias(seg, &seg) != 0)
+            {
+                printf("failed to create executable memory\n");
+                for (;;) ;
+            }
+            csalias = (void *)
+                      (((unsigned long)seg << 16) | (unsigned int)*loadloc);
+            /* printf("new load is %p\n", csalias); */
+        }
+#endif
         if (*loadloc == NULL)
         {
             printf("alloc failed\n");
             return (1);
         }
+#if 0
         *loadloc += 12;
+#endif
     }
-    fseek(fp, offs1, SEEK_SET);
+    
+    codeptr = *loadloc;
+    /* printf("codeptr is %p\n", codeptr); */
+    dataptr = malloc(65000UL);
+    /* printf("dataptr is %p\n", dataptr); */
+    if (dataptr == NULL)
+    {
+        printf("malloc2 failed\n");
+        return (1);
+    }
+    
+    codeptr -= 4;
+    dataptr -= 4;
+    
+    /* skip first 4 bytes of code - should be NOPs */
+    fseek(fp, offs1 + 4, SEEK_SET);
 
 #if 0
     /* PDOS/86 needs this currently */
     fread(*loadloc + 0x100 + 48, len1, 1, fp);
 #else
-    fread(*loadloc, len1, 1, fp);
+    fread(codeptr + 4, len1 - 4, 1, fp);
 #endif
 
-    fseek(fp, offs2, SEEK_SET);
+    /* skip first 4 bytes of data - should be filler */
+    fseek(fp, offs2 + 4, SEEK_SET);
 #if 0
     /* PDOS/86 needs this currently */
     fread(*loadloc + 65536UL + 0x100 + 48, len2, 1, fp);
 #else
-    fread(*loadloc + 65536UL, len2, 1, fp);
+    fread(dataptr + 4, len2 - 4, 1, fp);
 #endif
 
 #if 0
     /* PDOS/86 needs this currently */
     codeptr = *loadloc + 0x100 + 48;
 #else
-    codeptr = *loadloc;
+    /* codeptr = *loadloc; */
 #endif
 
+#if 0
     dataptr = codeptr + 65536UL;
+#endif
 
     fseek(fp, offs1 + len1, SEEK_SET);
     fread(numreloc, sizeof numreloc, 1, fp);
     
     nr = numreloc[0] | (numreloc[1] << 8);
     
+    /* printf("nr is %d\n", nr); */
     for (x = 0; x < nr; x++)
     {
         fread(reloc, sizeof reloc, 1, fp);
@@ -2682,7 +2725,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
             printf("unknown3 reloc type %x\n", reloc[0]);
             for (;;) ;
         }
-#if 0        
+#if 0
         printf("0 is %02X\n", reloc[0]);
         printf("1 is %02X\n", reloc[1]);
 #endif
@@ -2746,8 +2789,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             else if (reloc[4] == 1) /* code */
             {
-                (codeptr + lloffs)[0] = ((unsigned long)codeptr >> 16) & 0xff;
-                (codeptr + lloffs)[1] = ((unsigned long)codeptr >> 24) & 0xff;
+                (codeptr + lloffs)[0] = ((unsigned long)csalias >> 16) & 0xff;
+                (codeptr + lloffs)[1] = ((unsigned long)csalias >> 24) & 0xff;
             }
             else if (reloc[4] == 2) /* data */
             {
@@ -2784,7 +2827,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
                 if (reloc[4] == 1) /* code */
                 {
                     *(unsigned int *)(dataptr + lloffs + 2)
-                        = (((unsigned long)codeptr >> 16) & 0xffffU);
+                        = (((unsigned long)csalias >> 16) & 0xffffU);
                 }
                 else if (reloc[4] == 2) /* data */
                 {
@@ -2802,8 +2845,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             if (reloc[4] == 1) /* code */
             {
-                (dataptr + lloffs)[2] = ((unsigned long)codeptr >> 16) & 0xff;
-                (dataptr + lloffs)[3] = ((unsigned long)codeptr >> 24) & 0xff;
+                (dataptr + lloffs)[2] = ((unsigned long)csalias >> 16) & 0xff;
+                (dataptr + lloffs)[3] = ((unsigned long)csalias >> 24) & 0xff;
             }
             else if (reloc[4] == 2) /* data */
             {
@@ -2820,7 +2863,11 @@ static int exeloadLoadNE(unsigned char **entry_point,
             lloffs = zzz_num;
         }
     }
+#if 0
     *entry_point = codeptr;
+#else
+    *entry_point = csalias;
+#endif
     return (0);
 }
 
