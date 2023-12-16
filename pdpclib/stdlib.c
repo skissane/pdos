@@ -213,15 +213,27 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
     ulObjectSize = size + sizeof(size_t);
 #ifdef __16BIT__
-    numsegs = ulObjectSize / 65536U;
-    numbytes = ulObjectSize % 65536U;
-    if (numbytes != 0)
+    /* note that we could make this test 65536
+       and then adjust the request to 0 */
+    if (ulObjectSize <= 65535U)
     {
-        numsegs++;
+        if (DosAllocSeg((USHORT)ulObjectSize, &sel, 0) != 0)
+        {
+            return (NULL);
+        }
     }
-    if (DosAllocHuge(numsegs, numbytes, &sel, 0, 0) != 0)
+    else
     {
-        return (NULL);
+        numsegs = ulObjectSize / 65536U;
+        numbytes = ulObjectSize % 65536U;
+        if (numbytes != 0)
+        {
+            numsegs++;
+        }
+        if (DosAllocHuge(numsegs, numbytes, &sel, 0, 0) != 0)
+        {
+            return (NULL);
+        }
     }
     BaseAddress = (void *)((unsigned long)sel << 16);
 #else
