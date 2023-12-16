@@ -440,14 +440,19 @@ int main(int argc, char **argv)
 
 #ifdef __64BIT__
     p = calloc(1, 50000000);
+#elif defined(__OS2__)
+    p = NULL;
 #else
     p = calloc(1, 5000000);
 #endif
+
+#ifndef __OS2__
     if (p == NULL)
     {
         printf("insufficient memory\n");
         return (EXIT_FAILURE);
     }
+#endif
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
