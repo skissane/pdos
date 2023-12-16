@@ -1058,3 +1058,7 @@ BOOL WINAPI ShowWindow (HWND hWnd,
 BOOL WINAPI TranslateMessage (const MSG *lpMsg);
 
 BOOL WINAPI UpdateWindow (HWND hWnd);
+
+/* Subheader: libloaderapi.h */
+#define GetModuleHandle GetModuleHandleA
+HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName);
