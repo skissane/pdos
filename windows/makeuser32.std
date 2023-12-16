@@ -1,0 +1,50 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+VPATH=../src;../pdpclib
+
+CC=gccwin
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -D__WIN32__ -I../pdpclib -I../src -I. -DNOLIBALLOC
+AS=pdas --oformat coff
+LD=pdld
+
+EXPORT_OBJS=dllcrt.obj user32.obj
+OBJS=pdossupc.obj pos.obj supportf.obj
+
+TARGET=user32.dll
+TARGET_IMPLIB=user32.lib
+
+all: clean $(TARGET)
+
+$(TARGET): $(EXPORT_OBJS) $(OBJS)
+  $(LD) -s -o $(TARGET) --shared --kill-at --out-implib $(TARGET_IMPLIB) $(EXPORT_OBJS) $(OBJS)
+
+dllcrt.obj: ../pdpclib/dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+user32.obj: user32.c
+  $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.c.obj:
+  $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  as86 -o $@ -f coff $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
+  rm -f $(TARGET_IMPLIB)
