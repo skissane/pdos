@@ -1,0 +1,119 @@
+# Produce OS/2 1.x (16-bit) executable using Microsoft C
+# This has the C library statically-linked
+# Build with pdmake -f makefile.mos
+
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=H
+# Choose long form of above name, required by wasm instead of wcl
+MODELA=huge
+
+# If you want to produce a COM file, uncommment this, and follow the
+# instructions further down
+#MAKECOM=-DMAKECOM
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+# If you are using masm 6.11 or older, there is no -omf and you will get
+# a warning (which cannot be ignored as it consumes the next parameter).
+# 6.15 has -omf but defaults to omf.
+# 8.0 defaults to coff. If you have obtained a copy of Visual C++ 1.52C
+# or earlier, you need to marry it up with either the standalone masm 6.11
+# or obtain a later version of Visual C++ (7.0 or above - 6.0 is sort of
+# possible too - that's where the 6.15 reference comes from), and ignore
+# the (Windows-only) C compiler and just get the assembler. And you will
+# then need to add "OMF=-omf" to that more modern assembler when you run
+# pdmake. Or manually change the below.
+
+OMF=
+#OMF=-omf
+
+CFLAGS=-Oceglnt
+
+COPTS=-c -I. -I..\src $(SZ4) -D__OS2__ -D__16BIT__ $(CFLAGS) -A$(MODELC) \
+    -Zl -Gs -nologo -Zp1 -DBUFSIZ=512 -Au -D__MSC__
+CC=cl
+AS=ml
+LD=link
+
+all: clean pdptest.exe
+
+pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj dossupa.obj dossupc.obj fpfuncsw.obj fpfuncsv.obj
+  if exist msc.lib del msc.lib
+  lib msc /nologo ,
+  lib msc /nologo +os1strt.obj,,
+  lib msc /nologo +stdio.obj,,
+  lib msc /nologo +string.obj,,
+  lib msc /nologo +stdlib.obj,,
+  lib msc /nologo +start.obj,,
+  lib msc /nologo +time.obj,,
+  lib msc /nologo +errno.obj,,
+  lib msc /nologo +assert.obj,,
+  lib msc /nologo +signal.obj,,
+  lib msc /nologo +locale.obj,,
+  lib msc /nologo +ctype.obj,,
+  lib msc /nologo +setjmp.obj,,
+  lib msc /nologo +math.obj,,
+  lib msc /nologo +dossupa.obj,,
+  lib msc /nologo +dossupc.obj,,
+  lib msc /nologo +fpfuncsw.obj,,
+  lib msc /nologo +fpfuncsv.obj,,
+# Stub for NE executable
+# No idea why the stub executable produced is so large
+  ml -c $(OMF) -DMSC -nologo -Dmemodel=tiny -DPDOS86 ..\src\needpdos.asm
+  link /cp:1 /noe /noi /nod /map /nologo /dosseg needpdos.obj,needpdos.exe,,,,
+# Note that all of these functions are in the "family API"
+# from my testing (even though the Huge Incr and Shift may
+# not have been originally - they seem to be now). So you
+# can run "bind" on the executable if you want.
+  rm -f os2.lib
+  echo LIBRARY DOSCALLS >temp.def
+  echo EXPORTS >>temp.def
+  echo DOSHUGEINCR @136 >>temp.def
+  echo DOSHUGESHIFT @135 >>temp.def
+  echo DOSEXIT @5 >>temp.def
+  echo DOSOPEN @70 >>temp.def
+  echo DOSCLOSE @59 >>temp.def
+  echo DOSREAD=DOSREAD @137 >>temp.def
+  echo DOSWRITE @138 >>temp.def
+  echo DOSDELETE @60 >>temp.def
+  echo DOSMOVE @67 >>temp.def
+  echo DOSGETENV @91 >>temp.def
+  echo DOSEXECPGM @144 >>temp.def
+  echo DOSFREESEG @39 >>temp.def
+  echo DOSALLOCHUGE @40 >>temp.def
+  echo DOSCHGFILEPTR @58 >>temp.def
+  echo DOSGETDATETIME @33 >>temp.def
+  echo DOSALLOCSEG @34 >>temp.def
+  echo DOSCREATECSALIAS @43 >>temp.def
+  implib /nologo os2.lib temp.def
+# Note sure if there is a better way of doing this.
+# I either get an error on link or an error on bind
+# via my preferred method
+  rm -f os2b.lib
+  echo LIBRARY DOSCALLS >tempb.def
+  echo EXPORTS >>tempb.def
+  echo __AHINCR @136 >>tempb.def
+  echo __AHSHIFT @135 >>tempb.def
+  implib /nologo os2b.lib tempb.def
+  echo STUB 'needpdos.exe' >tempc.def
+  link /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
+# No reason to bind for now, as that will drag in
+# presumably copyrighted code until that is replaced,
+# which isn't a priority (although there is no sign
+# of a copyright notice in the family API support binary code)
+#  bind pdptest.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  ml -DPOLLUTE -c $(OMF) -nologo -DMSC -DOS2 $(SZ4) -Dmemodel=$(MODELA) $<
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
+  rm -f msc.lib
+  lib msc /nologo ,
