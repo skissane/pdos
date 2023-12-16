@@ -69,8 +69,10 @@ USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                            char *string, void *junk1, RESULTCODES *results,
                            char *string2);
 void APIENTRY DosFreeSeg(USHORT seg);
+#ifdef INCL_DOSMEMMGR
 USHORT APIENTRY DosAllocHuge(USHORT numsegs, USHORT numbytes, USHORT *sel,
                     USHORT junk1, USHORT junk2);
+#endif
 USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
                               int dir, ULONG *retpos);
 USHORT APIENTRY DosGetDateTime(DATETIME *dt);
