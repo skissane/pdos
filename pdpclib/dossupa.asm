@@ -34,10 +34,12 @@ _acrtused dw ?
 endif
 
 ifdef MSC
+ifndef OS2
 public _AHINCR
 public _AHSHIFT
 _AHINCR equ 1000H
 _AHSHIFT equ 12
+endif
 endif
 
 .code
