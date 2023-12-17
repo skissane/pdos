@@ -1,0 +1,34 @@
+# Produces OS/2 1.x executable using Microsoft C 6.0.
+# Links against library produced by makefile.mos
+
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=H
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+#CFLAGS=-Oceglnt
+CFLAGS=-O
+
+COPTS=-c $(SZ4) -D__OS2__ -D__16BIT__ $(CFLAGS) -A$(MODELC) \
+    -Zl -Gs -Zp1 -Au -D__MSC__ \
+    -I..\pdpclib -I..\bios -I..\src -I.
+
+# The command line is too long, so these have
+# been moved to exeload.c for MSC
+#    -DNEED_MZ -DNO_DLLENTRY
+
+CC=cl
+AS=ml
+LD=link
+
+all: clean bios.exe
+
+bios.exe: bios.obj ..\bios\exeload.obj
+  echo STUB '..\pdpclib\needpdos.exe' >temp.def
+  link /noe /noi /nod /map /nologo /dosseg ..\pdpclib\os1strt.obj+bios.obj+exeload.obj,bios.exe,bios.map,..\pdpclib\msc.lib+..\pdpclib\os2.lib+..\pdpclib\os2b.lib,temp.def
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+    rm -f *.obj bios.exe
