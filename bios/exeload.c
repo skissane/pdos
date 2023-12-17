@@ -24,6 +24,13 @@
 #include <time.h>
 #include <assert.h>
 
+/* moved these defines here to reduce pressure on
+   the size of command line */
+#if defined(__MSC__) && defined(__OS2__) && defined(__16BIT__)
+#define NEED_MZ 1
+#define NO_DLLENTRY 1
+#endif
+
 #ifdef __OS2__
 #include <os2.h>
 #endif
@@ -2670,7 +2677,10 @@ static int exeloadLoadNE(unsigned char **entry_point,
     
     codeptr = *loadloc;
     /* printf("codeptr is %p\n", codeptr); */
-    dataptr = malloc(65000UL);
+    /* first 65536 is wasted - for alignment */
+    /* second 65536 is for data */
+    /* third 65535 is for "far" BSS */
+    dataptr = calloc(1, 65536UL + 65536UL + 65536UL);
     /* printf("dataptr is %p\n", dataptr); */
     if (dataptr == NULL)
     {
@@ -2679,7 +2689,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
     }
     
     codeptr -= 4;
-    dataptr -= 4;
+    dataptr += (65536UL - 4);
     
     /* skip first 4 bytes of code - should be NOPs */
     fseek(fp, offs1 + 4, SEEK_SET);
@@ -2691,13 +2701,12 @@ static int exeloadLoadNE(unsigned char **entry_point,
     fread(codeptr + 4, len1 - 4, 1, fp);
 #endif
 
-    /* skip first 4 bytes of data - should be filler */
-    fseek(fp, offs2 + 4, SEEK_SET);
+    fseek(fp, offs2, SEEK_SET);
 #if 0
     /* PDOS/86 needs this currently */
     fread(*loadloc + 65536UL + 0x100 + 48, len2, 1, fp);
 #else
-    fread(dataptr + 4, len2 - 4, 1, fp);
+    fread(dataptr, len2, 1, fp);
 #endif
 
 #if 0
@@ -2720,7 +2729,9 @@ static int exeloadLoadNE(unsigned char **entry_point,
     for (x = 0; x < nr; x++)
     {
         fread(reloc, sizeof reloc, 1, fp);
-        if ((reloc[0] != 2) && (reloc[0] != 5))
+        if ((reloc[0] != 2)
+            && (reloc[0] != 3)
+            && (reloc[0] != 5))
         {
             printf("unknown3 reloc type %x\n", reloc[0]);
             for (;;) ;
@@ -2789,41 +2800,60 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             else if (reloc[4] == 1) /* code */
             {
-                (codeptr + lloffs)[0] = ((unsigned long)csalias >> 16) & 0xff;
-                (codeptr + lloffs)[1] = ((unsigned long)csalias >> 24) & 0xff;
+                codeptr[lloffs] = ((unsigned long)csalias >> 16) & 0xff;
+                codeptr[lloffs + 1] = ((unsigned long)csalias >> 24) & 0xff;
             }
             else if (reloc[4] == 2) /* data */
             {
-                (codeptr + lloffs)[0] = ((unsigned long)dataptr >> 16) & 0xff;
-                (codeptr + lloffs)[1] = ((unsigned long)dataptr >> 24) & 0xff;
+                codeptr[lloffs] = ((unsigned long)dataptr >> 16) & 0xff;
+                codeptr[lloffs + 1] = ((unsigned long)dataptr >> 24) & 0xff;
             }
-            if (zzz_num = 0xffffU) break;
+            if (zzz_num == 0xffffU) break;
             lloffs = zzz_num;
         }
     }
 
     fseek(fp, offs2 + len2, SEEK_SET);
+    memset(numreloc, 0x00, sizeof numreloc);
     fread(numreloc, sizeof numreloc, 1, fp);
     nr = numreloc[0] | (numreloc[1] << 8);
+    /* printf("nr is %x\n", nr); */
     
     for (x = 0; x < nr; x++)
     {
+        unsigned int adjust = 0; /* zero? */
+        
         fread(reloc, sizeof reloc, 1, fp);
-        /* 2 = segment, 3 = far addres */
-        if ((reloc[0] != 3) && (reloc[0] != 2))
+        /* 2 = segment, 3 = far address */
+        /* MSC only uses 2 */
+        /* Watcom unknown */
+        if (reloc[0] != 2)
         {
             printf("unknown1 reloc type %x\n", reloc[0]);
             for (;;) ;
         }
-        lloffs = reloc[2] | (reloc[3] << 8);
+        if (reloc[0] == 3)
+        {
+            adjust = 0; /* make this 2? */
+        }
+        /* 0 = internal reference */
+        if (reloc[1] != 0x0)
+        {
+            printf("unknown7 flag %x\n", reloc[1]);
+            for (;;) ;
+        }
+        lloffs = reloc[2] | ((unsigned int)reloc[3] << 8);
         while (1)
         {
-            memcpy(zzz, dataptr + lloffs, 2);
-            zzz_num = zzz[0] | (zzz[1] << 8);
+            memcpy(zzz, dataptr + lloffs + adjust, 2);
+
+            zzz_num = zzz[0] | ((unsigned int)zzz[1] << 8);
             
             /* 4 = additive */
             if (reloc[1] == 0x04)
             {
+                printf("not accepting additive for now\n");
+                for (;;) ;
                 if (reloc[4] == 1) /* code */
                 {
                     *(unsigned int *)(dataptr + lloffs + 2)
@@ -2845,21 +2875,25 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             if (reloc[4] == 1) /* code */
             {
-                (dataptr + lloffs)[2] = ((unsigned long)csalias >> 16) & 0xff;
-                (dataptr + lloffs)[3] = ((unsigned long)csalias >> 24) & 0xff;
+                dataptr[lloffs + adjust] = ((unsigned long)csalias >> 16) & 0xff;
+                dataptr[lloffs + adjust + 1] = ((unsigned long)csalias >> 24) & 0xff;
             }
             else if (reloc[4] == 2) /* data */
             {
-                (dataptr + lloffs)[2] = ((unsigned long)dataptr >> 16) & 0xff;
-                (dataptr + lloffs)[3] = ((unsigned long)dataptr >> 24) & 0xff;
+                dataptr[lloffs + adjust] = ((unsigned long)dataptr >> 16) & 0xff;
+                dataptr[lloffs + 1 + adjust] = ((unsigned long)dataptr >> 24) & 0xff;
+            }
+            else if (reloc[4] == 3) /* bss */
+            {
+                dataptr[lloffs + adjust] = ((unsigned long)(dataptr + 65536UL) >> 16) & 0xff;
+                dataptr[lloffs + 1 + adjust] = ((unsigned long)(dataptr + 65536UL) >> 24) & 0xff;
             }
             else
             {
                 printf("unknown reloc4 %x\n", reloc[4]);
                 for (;;) ;
             }
-            memcpy(dataptr + lloffs, &reloc[6], 2);
-            if (zzz_num = 0xffffU) break;
+            if (zzz_num == 0xffffU) break;
             lloffs = zzz_num;
         }
     }
