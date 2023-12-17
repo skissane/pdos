@@ -1175,11 +1175,54 @@ ret
 f_lxlsh@ endp
 
 
+ifdef MSC
+
+;long _aFNaulshr(long *a, unsigned int b)
+
+public _aFNaulshr
+_aFNaulshr proc
+; The pointer is just an offset
+; Values will be on stack
+; *a needs to be updated with *a / b
+; return (of same value, ie *a) may need to be in dx:ax
+; but that is yet to be proven, so at the moment they
+; are instead preserved
+; procedure needs to fix stack
+; only the low byte has a shift value, so clear cx first
+push bp
+mov bp,sp
+push bx
+push cx
+push dx
+push ax
+
+xor cx, cx
+mov cl, byte ptr [bp + 6 + @CodeSize * 2]
+
+mov bx, [bp + 4 + @CodeSize * 2]
+
+mov dx, [bx + 2]
+mov ax, [bx]
+
+call f_lxursh@
+
+mov [bx + 2], dx
+mov [bx], ax
+
+pop ax
+pop dx
+pop cx
+pop bx
+pop bp
+ret 4
+_aFNaulshr endp
+
+endif
+
+
 ; shift dx:ax right by cl
 
 ifdef MSC
-public _aFNaulshr
-_aFNaulshr:
 public _aFFaulshr
 _aFFaulshr:
 public _aFulshr
