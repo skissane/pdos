@@ -81,9 +81,7 @@ CC=cl
 # doesn't allow more optimization options (which may be being split)
 
 #CFLAGS=-Ob1ceglnot
-#CFLAGS=-O
-# And if you are using MSC 6.0, define that too
-CFLAGS=-O -DMSC6
+CFLAGS=-O
 
 COPTS=-c -nologo -I. -I..\pdpclib -D__SZ4__ -D__MSDOS__ -D$(TARG) $(CFLAGS) -AH -Zl -Gs
 AS=ml
