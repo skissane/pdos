@@ -37,6 +37,7 @@ void _aFfcompp(void)
     return;
 }
 
+#ifndef __PDOSGEN__
 void *_fmemset(void *s, int c, unsigned int n)
 {
     return (memset(s,c,n));
@@ -46,5 +47,6 @@ void *_fmemcpy(void *s1, const void *s2, unsigned int n)
 {
     return (memcpy(s1,s2,n));
 }
+#endif
 
 #endif
