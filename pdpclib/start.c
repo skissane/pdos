@@ -1094,8 +1094,27 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 #endif
 #ifdef __OS2__
-    argv[0] = p;
-    p += strlen(p) + 1;
+    if (runnum == 1)
+    {
+        argv[0] = p;
+        p += strlen(p) + 1;
+    }
+    else
+    {
+        /* we are exporting PDOS-generic format here
+           rather than OS/2 */
+        argv[0] = p;
+        p = strchr(p, ' ');
+        if (p == NULL)
+        {
+            p = "";
+        }
+        else
+        {
+            *p = '\0';
+            p++;
+        }
+    }
 #endif
 #if defined(__WIN32__) || defined(__PDOS386__)
     /* Windows and PDOS-32 get the full command line string. */
