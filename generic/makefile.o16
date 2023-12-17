@@ -1,0 +1,35 @@
+# produce 16-bit NE pdos.exe
+# Links against pdosgeno.lib built with makefile.go6
+# And makefile.oss needs to have been run too
+
+# The PDOS386 define is a misnomer. It is the
+# PDOS-generic OS and should probably be renamed
+# to PDOSGENOS. Can't use PDOSGEN - that's for apps.
+# The OS2 define is because exeload.c has some
+# platform-specific code
+
+CC=wcl
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=h
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+COPTS=$(SZ4) -zdf -D__16BIT__ -I. -oneatx \
+      -I..\pdpclib -I..\src -D__PDOS386__ \
+      -D__OS2__ \
+      -I..\bios -DNEED_MZ -DNO_DLLENTRY \
+      -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -fpi87 -s -zu
+
+all: clean pdos.exe
+
+pdos.exe: genstart.obj pdos.obj ..\bios\exeload.obj ..\pdpclib\__memmgr.obj ..\src\fat.obj
+  wlink File genstart.obj,pdos.obj,exeload.obj,__memmgr.obj,fat.obj Name pdos.exe Form os2 Library ..\pdpclib\pdosgeno.lib,..\pdpclib\os2.lib Option quiet,stack=8192,start=___crt0,map,verbose,dosseg,stub=..\pdpclib\needpdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  wasm -zcm -q -DWATCOM -DWATCOMC $(SZ4) -Dmemodel=huge $<
+
+clean:
+  rm -f pdos.exe
