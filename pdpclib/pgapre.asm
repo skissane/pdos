@@ -19,8 +19,8 @@ __eyepad db 'XXXXXXXXXXXXXXXX'
 
 top:
 
-public __intstart
-__intstart proc
+public __intstart2
+__intstart2 proc
 nop
 nop
 nop
@@ -38,6 +38,6 @@ nop
 nop
 nop
 jmp __crt0
-__intstart endp
+__intstart2 endp
 
 end top
