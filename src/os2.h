@@ -78,3 +78,9 @@ USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
 USHORT APIENTRY DosGetDateTime(DATETIME *dt);
 USHORT APIENTRY DosAllocSeg(USHORT bytes, USHORT *seg, USHORT flags);
 USHORT APIENTRY DosCreateCSAlias(USHORT dseg, USHORT *cseg);
+
+
+/* this is not a family API function, but it does
+   exist in OS/2 1.x, so you could for example do:
+   DosSetMaxFH(FOPEN_MAX + 10); */
+USHORT APIENTRY DosSetMaxFH(USHORT nfiles);
