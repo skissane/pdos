@@ -21,7 +21,7 @@ long _ftol(double x)
 }
 #endif
 
-#if defined(__MSDOS__) || defined(__OS2__)
+#if defined(__MSDOS__) || defined(__OS2__) || defined(__PDOS386__)
 
 #ifdef __WATCOMC__
 #define CTYP __cdecl
