@@ -1,0 +1,62 @@
+# This builds a PDOS-generic executable
+# A 16-bit NE suitable for running under
+# the executable produced by makebios.m16
+# You still need to have run makefile.mos
+
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=H
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+# If you are using masm 6.11 or older, there is no -omf and you will get
+# a warning (which cannot be ignored as it consumes the next parameter).
+# 6.15 has -omf but defaults to omf.
+# 8.0 defaults to coff. If you have obtained a copy of Visual C++ 1.52C
+# or earlier, you need to marry it up with either the standalone masm 6.11
+# or obtain a later version of Visual C++ (7.0 or above - 6.0 is sort of
+# possible too - that's where the 6.15 reference comes from), and ignore
+# the (Windows-only) C compiler and just get the assembler. And you will
+# then need to add "OMF=-omf" to that more modern assembler when you run
+# pdmake. Or manually change the below.
+
+OMF=
+#OMF=-omf
+
+#CFLAGS=-Oceglnt
+CFLAGS=-O
+
+# The __16BIT__ was removed to save space
+# -D__OS2__ 
+
+COPTS=-D__16BIT__ -c -I. -I..\pdpclib -I..\src $(SZ4) $(CFLAGS) -A$(MODELC) \
+    -Zl -Gs -Zp1 -Au -D__MSC__ -D__PDOSGEN__
+CC=cl
+AS=ml
+LD=link
+
+
+all: clean pcomm.exe
+
+pcomm.exe: ..\pdpclib\pgapre.obj ..\pdpclib\pgastart.obj ..\pdpclib\fpfuncsv.obj pcomm.obj
+  rm -f pcomm.exe
+  echo STUB '..\pdpclib\needpdos.exe' >temp.def
+# We should put /dosseg back. I have removed it so
+# that farbss (unused?) is moved to the third segment
+# to temporarily simplify the exeload processing
+# And don't use our stub for now, it's currently too big for exeload
+# exeload needs to be fixed
+# remove this alignment (which matches Watcom)
+# once we start checking the value properly
+# offset x'32' in the NE header is set to 1,
+# as 2 is 2 to the power of 1
+  link /ALIGNMENT:2 /noe /noi /nod /map /nologo pgapre.obj+pgastart.obj+fpfuncsv.obj+pcomm.obj,pcomm.exe,pcomm.map,..\pdpclib\msc.lib+..\pdpclib\os2.lib+..\pdpclib\os2b.lib,,
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  ml -DPOLLUTE -c $(OMF) -nologo -DMSC -DOS2 $(SZ4) -Dmemodel=huge $<
+
+clean:
+  rm -f pcomm.exe
