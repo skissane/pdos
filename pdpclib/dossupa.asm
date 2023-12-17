@@ -22,6 +22,10 @@ public FIDRQQ
 public FIWRQQ
 public FIERQQ
 
+ifdef PDOSGENOS
+.stack 1000h
+endif
+
 .data
 
 FIDRQQ  dw  ?
