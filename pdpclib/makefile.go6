@@ -1,0 +1,54 @@
+# This builds an NE library for use by PDOS-generic
+# OS for 16-bit (8086, 80286 etc)
+
+
+# Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
+MODELC=h
+# Choose long form of above name, required by wasm instead of wcl
+MODELA=huge
+
+# If you want to produce a COM file, uncommment this, and follow the
+# instructions further down
+#MAKECOM=-DMAKECOM
+
+# If you want to use a 32-bit size_t in huge memory model, uncomment this
+SZ4=-D__SZ4__
+
+
+CC=wcl
+COPTS=$(SZ4) -zdf -D__16BIT__ -I. -I..\src -oneatx \
+      -D__PDOS386__ -DNOLIBALLOC \
+      -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -U__OS2__ -fpi87 -s -zu
+
+
+all: clean pdosgeno.lib
+
+pdosgeno.lib: stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj dossupa.obj pdossupc.obj dossupc.obj
+  wlib -b -q pdosgeno +stdio.obj
+  wlib -b -q pdosgeno +string.obj
+  wlib -b -q pdosgeno +stdlib.obj
+  wlib -b -q pdosgeno +start.obj
+  wlib -b -q pdosgeno +time.obj
+  wlib -b -q pdosgeno +errno.obj
+  wlib -b -q pdosgeno +assert.obj
+  wlib -b -q pdosgeno +signal.obj
+  wlib -b -q pdosgeno +locale.obj
+  wlib -b -q pdosgeno +ctype.obj
+  wlib -b -q pdosgeno +setjmp.obj
+  wlib -b -q pdosgeno +math.obj
+  wlib -b -q pdosgeno +dossupa.obj
+  wlib -b -q pdosgeno +pdossupc.obj
+  wlib -b -q pdosgeno +dossupc.obj
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+# We're not actually building PDOS/86, but this
+# define gives us what we need
+.asm.obj:
+  wasm -zcm -q -DWATCOM -DWATCOMC $(SZ4) -Dmemodel=$(MODELA) $(MAKECOM) -DPDOS86 -DPDOSGENOS $<
+
+clean:
+  rm -f pdosgeno.lib
