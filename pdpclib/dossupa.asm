@@ -777,9 +777,46 @@ endif
 
 
 ifdef MSC
-;long _aFNauldiv(long *a, unsigned long b)
+
+;long _aFFauldiv(long *a, unsigned long b)
 public _aFFauldiv
-_aFFauldiv:
+_aFFauldiv proc
+; The pointer is just a segment:offset
+; Values will be on stack
+; *a needs to be updated with *a / b
+; return (of same value, ie *a) should be in dx:ax
+; procedure needs to fix stack
+push bp
+mov bp,sp
+push bx
+push ds
+
+push word ptr [bp + 10 + @CodeSize * 2]
+push word ptr [bp + 8 + @CodeSize * 2]
+
+mov dx, [bp + 6 + @CodeSize * 2]
+mov ds, dx
+mov bx, [bp + 4 + @CodeSize * 2]
+
+mov ax, [bx + 2]
+push ax
+
+mov ax, [bx]
+push ax
+
+call far ptr _aFuldiv
+
+mov [bx + 2], dx
+mov [bx], ax
+
+pop ds
+pop bx
+pop bp
+ret 8
+_aFFauldiv endp
+
+
+;long _aFNauldiv(long *a, unsigned long b)
 public _aFNauldiv
 _aFNauldiv proc
 ; The pointer is just an offset
