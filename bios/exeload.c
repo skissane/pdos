@@ -2728,6 +2728,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
     /* printf("nr is %d\n", nr); */
     for (x = 0; x < nr; x++)
     {
+        /* 2 is segment, 3 is a far address,
+           5 is an offset */
         fread(reloc, sizeof reloc, 1, fp);
         if ((reloc[0] != 2)
             && (reloc[0] != 3)
@@ -2737,8 +2739,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
             for (;;) ;
         }
 #if 0
-        printf("0 is %02X\n", reloc[0]);
-        printf("1 is %02X\n", reloc[1]);
+        printf("0 is %02X, 1 is %02X\n", reloc[0], reloc[1]);
 #endif
         /* 0 = internal reference */
         /* 1 = import ordinal */
@@ -2796,6 +2797,23 @@ static int exeloadLoadNE(unsigned char **entry_point,
                         printf("unknown/unsupported ordinal %u\n", ordnum);
                         for (;;) ;
                     }
+                }
+                else if (reloc[1] == 0)
+                {
+                    unsigned int existing;
+                    unsigned int newval;
+                    
+                    existing = (codeptr[lloffs + 1] << 8) | codeptr[lloffs];
+                    existing = 0; /* seems doco is wrong - this is a chain */
+                    newval = (reloc[7] << 8) + reloc[6];
+                    existing += newval;
+                    codeptr[lloffs] = existing & 0xff;
+                    codeptr[lloffs + 1] = (existing >> 8) & 0xff;
+                }
+                else
+                {
+                    printf("unknown8 reloc %x\n", reloc[1]);
+                    for (;;) ;
                 }
             }
             else if (reloc[4] == 1) /* code */
