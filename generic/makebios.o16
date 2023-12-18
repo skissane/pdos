@@ -8,7 +8,7 @@ MODELC=h
 SZ4=-D__SZ4__
 COPTS=$(SZ4) -zdf -D__16BIT__ -I. -oneatx \
       -I..\pdpclib -I..\bios -I..\src -DNEED_MZ -DNO_DLLENTRY \
-      -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__OS2__ -fpi87 -s -zu
+      -r -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -D__OS2__ -fpi87 -s -zu
 
 all: clean bios.exe
 
