@@ -32,8 +32,15 @@ __intstart proc
         mov ds,dx
 
 ; push far pointer to __start
+;        push ax
+;        push bx
+; we are no longer doing this because the C code
+; can get these values itself and the intention
+; now is to retire this assembler code. The startup
+; code can be written in C instead. Watch this space.
+        mov ax, 0
         push ax
-        push bx
+        push ax
 
 ; DosHugeShift is also known as _AHSHIFT
         call __myDosHugeShift

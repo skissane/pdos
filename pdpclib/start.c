@@ -1096,6 +1096,18 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #ifdef __OS2__
     if (runnum == 1)
     {
+#ifdef __16BIT__
+        {
+            USHORT seg, offs;
+
+            if (DosGetEnv(&seg, &offs) != 0)
+            {
+                p = "\0"; /* two NUL characters */
+            }
+            p = (char *)(((unsigned long)seg << 16)
+                         | offs);
+        }
+#endif
         argv[0] = p;
         p += strlen(p) + 1;
     }
