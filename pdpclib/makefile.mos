@@ -99,7 +99,7 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo __AHSHIFT @135 >>tempb.def
   implib /nologo os2b.lib tempb.def
   echo STUB 'needpdos.exe' >tempc.def
-  link /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
+  link /pmtype:vio /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
 # No reason to bind for now, as that will drag in
 # presumably copyrighted code until that is replaced,
 # which isn't a priority (although there is no sign
