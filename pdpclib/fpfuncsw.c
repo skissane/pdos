@@ -13,7 +13,14 @@
 
 int _fltused_ = 0;
 int __real87 = 0;
+
+#if defined(__WATCOMC__) && !defined(__16BIT__)
+int argc;
+#endif
+
+#if defined(__WATCOMC__) && defined(__16BIT__)
 int _argc;
+#endif
 
 void __init_387_emulator(void)
 {
@@ -58,6 +65,14 @@ int __cdmain(int argc, char **argv)
 #ifdef __OS2__
 #include <os2.h>
 
+#ifndef __PDOSGEN__
+void __myDosExit(int one, int two)
+{
+    DosExit(one, two);
+}
+#endif
+
+#ifdef __16BIT__
 /* Attempting to use the function that MSC 6.0
    uses results in either a link error or a bind
    error, so this MSC code is currently disabled
@@ -68,13 +83,6 @@ void APIENTRY __AHINCR(void);
 #else
 void APIENTRY DosHugeShift(void);
 void APIENTRY DosHugeIncr(void);
-#endif
-
-#ifndef __PDOSGEN__
-void __myDosExit(int one, int two)
-{
-    DosExit(one, two);
-}
 #endif
 
 void *__myDosHugeShift(void)
@@ -105,5 +113,6 @@ void __fixhuge(void)
     __shift = (unsigned int)(unsigned long)__myDosHugeShift();
     __incr = (unsigned int)(unsigned long)__myDosHugeIncr();
 }
+#endif
 
 #endif
