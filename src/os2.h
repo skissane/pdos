@@ -14,7 +14,30 @@
 
 #define NULL ((void *)0)
 
+#ifdef __16BIT__
 #define APIENTRY _pascal _far
+#else
+#define APIENTRY _System
+#endif
+
+/* I think this only exists in 32-bit, but maybe
+   we can change that later */
+#ifndef __16BIT__
+#define FILE_BEGIN 0
+#endif
+
+/* i think this is only available in 32-bit,
+   but we may want to change that regardless one day */
+#ifndef __16BIT__
+#define APIRET int
+#endif
+
+/* I think this is only relevant to 32-bit */
+#ifndef __16BIT__
+#define PAG_COMMIT 0x10
+#define PAG_WRITE 0x2
+#define PAG_READ 0x1
+#endif
 
 typedef unsigned short USHORT;
 typedef unsigned long ULONG;
@@ -58,33 +81,58 @@ typedef struct {
 void APIENTRY DosHugeIncr(void);
 void APIENTRY DosHugeShift(void);
 void APIENTRY DosExit(int a, int b);
+
+/* these short/long should be changed to "int" -
+   that's exactly what it's meant for - to
+   naturally change */
+#ifdef __16BIT__
 USHORT APIENTRY DosOpen(char *fnm, USHORT *handle, USHORT *action1,
                ULONG newsize, USHORT fileattr, USHORT action2,
                USHORT mode, ULONG resvd);
-USHORT APIENTRY DosClose(short handle);
 USHORT APIENTRY DosRead(USHORT hfile, void *ptr,
                         USHORT toread, USHORT *tempRead);
 USHORT APIENTRY DosWrite(USHORT hfile, void *ptr,
                          USHORT towrite, USHORT *tempWritten);
 USHORT APIENTRY DosDelete(char *name, USHORT junk);
 USHORT APIENTRY DosMove(char *a, char *b, USHORT junk);
+USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
+                              int dir, ULONG *retpos);
+#else
+ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
+               ULONG newsize, ULONG fileattr, ULONG action2,
+               ULONG mode, ULONG resvd);
+ULONG APIENTRY DosRead(ULONG hfile, void *ptr,
+                        ULONG toread, ULONG *tempRead);
+ULONG APIENTRY DosWrite(ULONG hfile, void *ptr,
+                         ULONG towrite, ULONG *tempWritten);
+ULONG APIENTRY DosDelete(char *name);
+ULONG APIENTRY DosMove(char *a, char *b);
+ULONG APIENTRY DosSetFilePtr(ULONG hfile, LONG newpos,
+                              int dir, ULONG *retpos);
+#endif
+USHORT APIENTRY DosClose(short handle);
 USHORT APIENTRY DosGetEnv(USHORT *seg, USHORT *offs);
 USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                            char *string, void *junk1, RESULTCODES *results,
                            char *string2);
-void APIENTRY DosFreeSeg(USHORT seg);
 
 #ifdef INCL_DOSMEMMGR
 USHORT APIENTRY DosAllocHuge(USHORT numsegs, USHORT numbytes, USHORT *sel,
                     USHORT junk1, USHORT junk2);
 #endif
 
-USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
-                              int dir, ULONG *retpos);
 USHORT APIENTRY DosGetDateTime(DATETIME *dt);
+
+#ifdef __16BIT__
+void APIENTRY DosFreeSeg(USHORT seg);
 USHORT APIENTRY DosAllocSeg(USHORT bytes, USHORT *seg, USHORT flags);
 USHORT APIENTRY DosCreateCSAlias(USHORT dseg, USHORT *cseg);
-
+#else
+ULONG APIENTRY DosAllocMem(void *base, ULONG size, ULONG flags);
+void APIENTRY DosFreeMem(void *base);
+ULONG APIENTRY DosScanEnv(void *name, void *result);
+ULONG APIENTRY DosSetRelMaxFH(LONG *req, ULONG *max);
+#endif
 
 /* this is not a family API function, but it does
    exist in OS/2 1.x, so you could for example do:
@@ -92,9 +140,21 @@ USHORT APIENTRY DosCreateCSAlias(USHORT dseg, USHORT *cseg);
 USHORT APIENTRY DosSetMaxFH(USHORT nfiles);
 
 #ifdef INCL_DOS
+#ifdef __16BIT__
 USHORT APIENTRY DosDevIOCtl(void *data, void *parm,
                             USHORT function, USHORT category,
                             USHORT handle);
+#else
+ULONG APIENTRY DosDevIOCtl(ULONG handle,
+                           ULONG category,
+                           ULONG function,
+                           void *parmptr,
+                           ULONG parmmax,
+                           ULONG *parmlen,
+                           void *dataptr,
+                           ULONG datamax,
+                           ULONG *datalen);
+#endif
 #endif
 
 #ifdef INCL_KBD
