@@ -22,6 +22,9 @@ typedef long LONG;
 typedef char *PSZ;
 typedef void VOID;
 typedef void *PVOID;
+typedef unsigned char BYTE;
+typedef unsigned short HFILE;
+typedef unsigned char UCHAR;
 
 typedef struct {
     unsigned short codeTerminate;
@@ -45,6 +48,7 @@ typedef struct {
 #define OPEN_ACTION_CREATE_IF_NEW 0x0010
 #define OPEN_ACTION_REPLACE_IF_EXISTS 0x0002
 #define OPEN_SHARE_DENYWRITE 0x0020
+#define OPEN_SHARE_DENYNONE 0x0040
 #define OPEN_ACCESS_READONLY 0x0000
 #define OPEN_ACCESS_WRITEONLY 0x0001
 #define OPEN_ACCESS_READWRITE 0x0002
@@ -69,10 +73,12 @@ USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                            char *string, void *junk1, RESULTCODES *results,
                            char *string2);
 void APIENTRY DosFreeSeg(USHORT seg);
+
 #ifdef INCL_DOSMEMMGR
 USHORT APIENTRY DosAllocHuge(USHORT numsegs, USHORT numbytes, USHORT *sel,
                     USHORT junk1, USHORT junk2);
 #endif
+
 USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
                               int dir, ULONG *retpos);
 USHORT APIENTRY DosGetDateTime(DATETIME *dt);
@@ -84,3 +90,20 @@ USHORT APIENTRY DosCreateCSAlias(USHORT dseg, USHORT *cseg);
    exist in OS/2 1.x, so you could for example do:
    DosSetMaxFH(FOPEN_MAX + 10); */
 USHORT APIENTRY DosSetMaxFH(USHORT nfiles);
+
+#ifdef INCL_DOS
+USHORT APIENTRY DosDevIOCtl(void *data, void *parm,
+                            USHORT function, USHORT category,
+                            USHORT handle);
+#endif
+
+#ifdef INCL_KBD
+typedef struct {
+  UCHAR chChar;
+  UCHAR chScan;
+  UCHAR fbStatus;
+  UCHAR bNlsShift;
+  USHORT fsState;
+  ULONG time;
+} KBDKEYINFO;
+#endif
