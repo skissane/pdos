@@ -5,6 +5,8 @@ pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj fpfuncsw.obj
 #Debug All
+  wasm -zcm -q -DOS220 ..\src\needpdos.asm
+  wlink File needpdos.obj Name needpdos.exe Form dos Option quiet,dosseg
   if exist watcom.lib del watcom.lib
   wlib -q watcom osstart.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj assert.obj signal.obj locale.obj ctype.obj setjmp.obj math.obj fpfuncsw.obj
   rm -f os2.lib
@@ -25,7 +27,7 @@ pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo ++DosScanEnv.DOSCALLS.DosScanEnv.227 >>temp.wat
   echo ++DosSetRelMaxFH.DOSCALLS.DosSetRelMaxFH.382 >>temp.wat
   wlib -q os2.lib @temp.wat
-  wlink File pdptest.obj Name pdptest.exe Form os2 flat full Library watcom.lib Library os2.lib Option quiet
+  wlink File pdptest.obj Name pdptest.exe Form os2 flat full Library watcom.lib Library os2.lib Option quiet,stub=needpdos.exe
 
 osstart.obj: osstart.asm
   wasm -zq -zcm -bt=os2 osstart.asm
