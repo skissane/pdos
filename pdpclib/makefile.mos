@@ -76,7 +76,7 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo DOSEXIT @5 >>temp.def
   echo DOSOPEN @70 >>temp.def
   echo DOSCLOSE @59 >>temp.def
-  echo DOSREAD=DOSREAD @137 >>temp.def
+  echo DOSREAD @137 >>temp.def
   echo DOSWRITE @138 >>temp.def
   echo DOSDELETE @60 >>temp.def
   echo DOSMOVE @67 >>temp.def
@@ -88,6 +88,7 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo DOSGETDATETIME @33 >>temp.def
   echo DOSALLOCSEG @34 >>temp.def
   echo DOSCREATECSALIAS @43 >>temp.def
+  echo DOSDEVIOCTL @53 >>temp.def
   implib /nologo os2.lib temp.def
 # Note sure if there is a better way of doing this.
 # I either get an error on link or an error on bind
@@ -99,7 +100,11 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo __AHSHIFT @135 >>tempb.def
   implib /nologo os2b.lib tempb.def
   echo STUB 'needpdos.exe' >tempc.def
-  link /pmtype:vio /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
+# Switching from vio to novio so that we can use
+# DosDevIOCtl to do raw reads without needing to
+# call a Win function like WinSetKeyboardStateTable
+# to inform PM about what is happening because that sucks
+  link /pmtype:novio /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
 # No reason to bind for now, as that will drag in
 # presumably copyrighted code until that is replaced,
 # which isn't a priority (although there is no sign
