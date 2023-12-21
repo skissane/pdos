@@ -2123,7 +2123,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     if ((stream == __stdin) && (stream->kbdfile != 0))
     {
         int c;
-        static USHORT transferCount = 1;
+        USHORT transferCount = 1;
+#ifndef __16BIT__
+        ULONG datalen;
+        ULONG parmlen;
+#endif
 
         for (tempRead = 0; tempRead < toread; tempRead++)
         {
@@ -2142,24 +2146,29 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 continue;
             }
             /* read character record */
+#ifdef __16BIT__
             rc = DosDevIOCtl(&cd,
                              &transferCount,
                              0x74,
                              4,
                              stream->kbdfile);
+#else
+            parmlen = sizeof transferCount;
+            datalen = sizeof cd;
+            rc = DosDevIOCtl(stream->kbdfile,
+                             4,
+                             0x74,
+                             &transferCount,
+                             sizeof transferCount,
+                             &parmlen,
+                             &cd,
+                             sizeof cd,
+                             &datalen);
+#endif
             if (rc != 0)
             {
                 stream->errorInd = 1;
                 break;
-            }
-            else if (cd.chChar == 0)
-            {
-                /* unfortunately this is doing a hard loop -
-                   need to find an alternative. note that the hard
-                   loop only happens after the first character
-                   is received */
-                tempRead--;
-                continue;
             }
             if (cd.chChar == 0x1b)
             {
@@ -4566,11 +4575,19 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 {
     char *mybuf;
 #ifdef __OS2__
-    USHORT action;
     static USHORT fileAttr = 0;
     static ULONG newsize = 0;
+#ifdef __16BIT__
+    USHORT action;
     static USHORT openMode = OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE;
     static USHORT openAction = OPEN_ACTION_OPEN_IF_EXISTS;
+#else
+    ULONG action;
+    static ULONG openMode = OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE;
+    static ULONG openAction = OPEN_ACTION_OPEN_IF_EXISTS;
+    ULONG datalen;
+    ULONG parmlen;
+#endif
     USHORT rc;
     BYTE bb;
     static BYTE oldbb;
@@ -4615,6 +4632,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
                 return (-1);
             }
 
+#ifdef __16BIT__
             /* get old input mode */
             DosDevIOCtl(&oldbb,
                         NULL,
@@ -4629,6 +4647,34 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
                         0x51,
                         4,
                         stream->kbdfile);
+#else
+            parmlen = 0;
+            datalen = sizeof oldbb;
+            /* get old input mode */
+            DosDevIOCtl(stream->kbdfile,
+                        4,
+                        0x71,
+                        NULL,
+                        0,
+                        &parmlen,
+                        &oldbb,
+                        sizeof oldbb,
+                        &datalen);
+
+            /* set binary mode */
+            bb = 0x80;
+            parmlen = sizeof bb;
+            datalen = 0;
+            DosDevIOCtl(stream->kbdfile,
+                        4,
+                        0x51,
+                        &bb,
+                        sizeof bb,
+                        &parmlen,
+                        NULL,
+                        0,
+                        &datalen);
+#endif
         }
 #endif
 #if defined(__PDOS386__)
@@ -4683,11 +4729,25 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
     if ((stream == __stdin) && (mode == _IOLBF))
     {
         /* restore old mode */
+#ifdef __16BIT__
         rc = DosDevIOCtl(NULL,
                          &oldbb,
                          0x51,
                          4,
                          stream->kbdfile);
+#else
+        parmlen = sizeof oldbb;
+        datalen = 0;
+        rc = DosDevIOCtl(stream->kbdfile,
+                         4,
+                         0x51,
+                         &oldbb,
+                         sizeof oldbb,
+                         &parmlen,
+                         NULL,
+                         0,
+                         &datalen);
+#endif
         DosClose(stream->kbdfile);
         stream->kbdfile = 0;
         return (0);

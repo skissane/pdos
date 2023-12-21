@@ -88,9 +88,15 @@ typedef struct
     int block;
     unsigned long sector;
 #endif
+
 #if defined(__OS2__)
+#ifdef __16BIT__
     unsigned int kbdfile;
+#else
+    unsigned long kbdfile;
 #endif
+#endif
+
 #if (defined(__MVS__) || defined(__CMS__) || defined(__VSE__))
     void *hfile;
     void *asmbuf;
