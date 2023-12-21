@@ -138,6 +138,8 @@ static EFI_BLOCK_IO_PROTOCOL *bio_protocol = NULL;
 #ifdef __16BIT__
 #undef NULL
 #endif
+#define INCL_DOS
+#define INCL_KBD
 #include <os2.h>
 #ifdef __16BIT__
 typedef USHORT APIRET;
@@ -1877,8 +1879,6 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __EFI__
     UINTN tempRead;
     EFI_STATUS Status;
-    static int numpending = 0;
-    static char pending[20];
 #ifdef __EFIBIOS__
 #ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
     static EFI_LBA LBA = 1;
@@ -1889,7 +1889,10 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #endif
 
 #ifdef __OS2__
+    static int numpending = 0;
+    static char pending[20];
     APIRET rc;
+    KBDKEYINFO cd;
 #ifdef __16BIT__
     USHORT tempRead;
 #else
@@ -2117,16 +2120,124 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 
 
 #ifdef __OS2__
-    rc = DosRead(stream->hfile, ptr, toread, &tempRead);
-    if (rc != 0)
+    if ((stream == __stdin) && (stream->kbdfile != 0))
     {
-        *actualRead = 0;
-        stream->errorInd = 1;
-        errno = rc;
+        int c;
+        static USHORT transferCount = 1;
+
+        for (tempRead = 0; tempRead < toread; tempRead++)
+        {
+            if (numpending > 0)
+            {
+                c = pending[0];
+                *(((char *)ptr) + tempRead) = c;
+                numpending--;
+                memmove(pending, pending + 1, numpending);
+                if (numpending == 0)
+                {
+                    /* return immediately if we have data */
+                    tempRead++;
+                    break;
+                }
+                continue;
+            }
+            /* read character record */
+            rc = DosDevIOCtl(&cd,
+                             &transferCount,
+                             0x74,
+                             4,
+                             stream->kbdfile);
+            if (rc != 0)
+            {
+                stream->errorInd = 1;
+                break;
+            }
+            else if (cd.chChar == 0)
+            {
+                /* unfortunately this is doing a hard loop -
+                   need to find an alternative. note that the hard
+                   loop only happens after the first character
+                   is received */
+                tempRead--;
+                continue;
+            }
+            if (cd.chChar == 0x1b)
+            {
+                numpending = 1;
+                pending[0] = 0x1b;
+                *(((char *)ptr) + tempRead) = 0x1b;
+                continue;
+            }
+            else if (cd.chChar == 0xe0)
+            {
+                /* up */
+                if (cd.chScan == 0x48)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[A", 2);
+                }
+                /* down */
+                else if (cd.chScan == 0x50)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[B", 2);
+                }
+                /* right */
+                else if (cd.chScan == 0x4d)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[C", 2);
+                }
+                /* left */
+                else if (cd.chScan == 0x4b)
+                {
+                    numpending = 2;
+                    memcpy(pending, "[D", 2);
+                }
+                else
+                {
+                    /* ignore unrecognized special keys */
+                    tempRead--;
+                    continue;
+                }
+                c = 0x1b;
+                *(((char *)ptr) + tempRead) = c;
+                
+                /* so long as we have pending characters,
+                   continue returning more */
+                continue;
+            }
+            else
+            {
+                c = cd.chChar;
+            }
+            if (c == '\r')
+            {
+                c = '\n';
+            }
+            *(((char *)ptr) + tempRead) = c;
+            /* a single character is returned immediately */
+            tempRead++;
+            break;
+        }
+        if (!stream->errorInd)
+        {
+            *actualRead = tempRead;
+        }
     }
     else
     {
-        *actualRead = tempRead;
+        rc = DosRead(stream->hfile, ptr, toread, &tempRead);
+        if (rc != 0)
+        {
+            *actualRead = 0;
+            stream->errorInd = 1;
+            errno = rc;
+        }
+        else
+        {
+            *actualRead = tempRead;
+        }
     }
 #endif
 #ifdef __WIN32__
@@ -4454,6 +4565,16 @@ buf  + N = ignore, return success
 __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 {
     char *mybuf;
+#ifdef __OS2__
+    USHORT action;
+    static USHORT fileAttr = 0;
+    static ULONG newsize = 0;
+    static USHORT openMode = OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE;
+    static USHORT openAction = OPEN_ACTION_OPEN_IF_EXISTS;
+    USHORT rc;
+    BYTE bb;
+    static BYTE oldbb;
+#endif
 
     stream = __INTFILE(stream);
 
@@ -4476,6 +4597,38 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
                 dw &= ~ENABLE_PROCESSED_INPUT;
                 SetConsoleMode(stream->hfile, dw);
             }
+        }
+#endif
+#ifdef __OS2__
+        if (stream == stdin)
+        {
+            rc = DosOpen((PSZ)"KBD$",
+                         &stream->kbdfile,
+                         &action,
+                         newsize,
+                         fileAttr,
+                         openAction,
+                         openMode,
+                         0);
+            if (rc != 0)
+            {
+                return (-1);
+            }
+
+            /* get old input mode */
+            DosDevIOCtl(&oldbb,
+                        NULL,
+                        0x71,
+                        4,
+                        stream->kbdfile);
+
+            /* set binary mode */
+            bb = 0x80;
+            DosDevIOCtl(NULL,
+                        &bb,
+                        0x51,
+                        4,
+                        stream->kbdfile);
         }
 #endif
 #if defined(__PDOS386__)
@@ -4521,6 +4674,22 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
     if ((stream == __stdin) && (mode == _IOLBF))
     {
         stdin_buffered = 1;
+        return (0);
+    }
+#endif
+#ifdef __OS2__
+    /* for now, ignore any attempt to change stdin, other
+       than to put back line buffering */
+    if ((stream == __stdin) && (mode == _IOLBF))
+    {
+        /* restore old mode */
+        rc = DosDevIOCtl(NULL,
+                         &oldbb,
+                         0x51,
+                         4,
+                         stream->kbdfile);
+        DosClose(stream->kbdfile);
+        stream->kbdfile = 0;
         return (0);
     }
 #endif
