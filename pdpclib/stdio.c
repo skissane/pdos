@@ -755,7 +755,7 @@ static void checkMode(void)
     return;
 }
 
-#ifdef __EFI__
+#if defined(__EFI__) || defined(__W32EMUL__)
 char __cwd[FILENAME_MAX] = "";
 #endif
 
