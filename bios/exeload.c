@@ -2635,6 +2635,11 @@ static int exeloadLoadNE(unsigned char **entry_point,
         return (1);
     }
     
+#ifdef __32BIT__
+    printf("NE not supported for 32-bit\n");
+    return (2);
+#else
+
     fread(segtable, sizeof(segtable), 1, fp);
     offs1 = segtable[0] | (segtable[1] << 8);
     offs1 *= 2;
@@ -2921,6 +2926,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
     *entry_point = csalias;
 #endif
     return (0);
+#endif
 }
 
 #endif /* NEED_MZ */
