@@ -1,0 +1,25 @@
+# This builds a PDOS-generic executable
+# A 32-bit LX suitable for running under
+# the executable produced by makebios.o32
+# However, since exeload.c does not yet
+# support LX executables, this doesn't
+# currently work
+
+CC=wcl386
+
+COPTS=-ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx \
+    -c -I. -I..\pdpclib -I..\src -y -fpi87 \
+    -D__PDOSGEN__ \
+    -s -zq -3s -zm -zl -oneatblr
+
+all: clean pcomm.exe
+
+pcomm.exe: ..\pdpclib\pgastart.obj ..\pdpclib\fpfuncsw.obj pcomm.obj
+  rm -f pcomm.exe
+  wlink File pgastart.obj,fpfuncsw.obj,pcomm.obj Name pcomm.exe Form os2 flat full Library ..\pdpclib\watcom.lib,..\pdpclib\os2.lib Option quiet,start=___crt0,map,verbose,stub=..\pdpclib\needpdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f pcomm.exe
