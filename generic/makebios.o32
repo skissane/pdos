@@ -5,7 +5,7 @@ CC=wcl386
 
 COPTS=-ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx \
     -c -I. -I..\pdpclib -I..\bios -I..\src -y -fpi87 \
-    -DNEED_MZ -DNO_DLLENTRY -DW32EMUL \
+    -DNEED_MZ -DNO_DLLENTRY -DW32EMUL -D__W32EMUL__ \
     -s -zq -3s -zm -zl -oneatblr
 
 all: clean bios.exe
