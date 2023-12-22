@@ -4623,7 +4623,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
         }
 #endif
 #ifdef __OS2__
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             rc = DosOpen((PSZ)"KBD$",
                          &stream->kbdfile,
