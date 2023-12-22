@@ -2027,6 +2027,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long long)strtoul;
                         }
+                        else if (strcmp((char *)hintname, "strtol") == 0)
+                        {
+                            *thunk = (unsigned long long)strtol;
+                        }
                         else if (strcmp((char *)hintname, "strncpy") == 0)
                         {
                             *thunk = (unsigned long long)strncpy;
@@ -2371,6 +2375,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "strtoul") == 0)
                         {
                             *thunk = (unsigned long)strtoul;
+                        }
+                        else if (strcmp((char *)hintname, "strtol") == 0)
+                        {
+                            *thunk = (unsigned long)strtol;
                         }
                         else if (strcmp((char *)hintname, "strncpy") == 0)
                         {
