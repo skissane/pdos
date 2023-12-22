@@ -94,7 +94,7 @@ extern int __start(char *p);
 extern long long __ncallbacks;
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
 extern char __cwd[FILENAME_MAX];
 #endif
 
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
     if (!quiet && !need_usage)
     {
         printf("\nbios starting\n");
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
         printf("type in \"dir\" to get a list of files\n");
         printf("type in \"type\" to show the contents of a file\n");
         printf("type in \"me file.txt\" to edit a file\n");
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
         {
             if (fgets(buf, sizeof buf, scr) == NULL)
             {
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
                 if (scr == stdin) break;
                 fclose(scr);
                 scr = stdin;
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
                 break;
 #endif
             }
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
             if (scr != stdin) printf("%s", buf);
 #endif
             p = (unsigned char *)strchr(buf, '\n');
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
             {
                 if (scr == stdin)
                 {
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
                     continue;
 #else
                     break;
@@ -303,10 +303,14 @@ int main(int argc, char **argv)
             }
         }
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
     if (strcmp(prog_name, "dir") == 0)
     {
+#ifdef W32EMUL
+        printf("sorry - dir not supported yet\n");
+#else
         directory_test();
+#endif
         printf("enter another command, enter to exit\n");
         continue;
     }
@@ -396,7 +400,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
     strcpy(new_prog_name, prog_name);
     if (strstr(new_prog_name, ".exe") == NULL)
     {
@@ -517,7 +521,7 @@ int main(int argc, char **argv)
         {
             break;
         }
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W32EMUL)
     printf("enter another command, exit to exit\n");
 #else
     printf("enter another command, enter to exit\n");
