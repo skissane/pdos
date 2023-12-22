@@ -295,12 +295,18 @@ __PDPCLIB_API__ __DUMMYFILE _iob[3];
    instead of directly accessing the _iob. cc64 was the
    first compiler that REQUIRED this, which is the first
    time I knew that the function even existed. */
+/* It doesn't appear to exist on Windows 2000 (32 bit) -
+   dodged a bullet there */
 #if defined(__64BIT__)
 __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 {
     return (_iob);
 }
 #endif
+#endif
+#if defined(__W32EMUL__)
+static __DUMMYFILE _iob[3];
+__DUMMYFILE *_imp___iob = _iob;
 #endif
 
 static void dblcvt(double num, int cnvtype, int nwidth,

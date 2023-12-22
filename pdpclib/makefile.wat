@@ -2,7 +2,10 @@ CC=wcl386
 # Don't use intrinsics because we need the actual
 # function for PDOS-generic
 # That is why I no longer use -oneatx
-COPTS=-ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx -c -I. -I..\src -y -fpi87 -s -zq -3s -zm -zl -oneatblr
+# Also define __W32EMUL__ if you wish to make the
+# pseudo-bios. It has no meaning outside of that -
+# it isn't OS/2-related
+COPTS=-D__W32EMUL__ -ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx -c -I. -I..\src -y -fpi87 -s -zq -3s -zm -zl -oneatblr
 
 pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
