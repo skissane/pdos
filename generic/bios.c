@@ -52,11 +52,19 @@ static EFI_STATUS directory_test (void);
 static int globrc = 0;
 #endif
 
+#ifdef W32EMUL
+static int globrc = 0;
+#endif
+
 #include "__os.h"
 #include "exeload.h"
 
 #if defined(W64HACK) || defined(W32HACK)
 void w64exit(int status);
+#endif
+
+#if defined(W32EMUL)
+void w32exit(int status);
 #endif
 
 extern int __genstart;
@@ -469,7 +477,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if defined(W64HACK) || defined(W32HACK)
+#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL)
 #ifdef __CC64OS__
     __ncallbacks = 0;
 #endif
@@ -495,7 +503,7 @@ int main(int argc, char **argv)
     rc = 0;
 #endif
 
-#if defined(W64HACK) || defined(W32HACK)
+#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL)
     }
 #endif
 
@@ -651,6 +659,17 @@ void w64exit(int status)
     return;
 }
 #endif
+
+/* this should be combined with the w64 version */
+#if defined(W32EMUL)
+void w32exit(int status)
+{
+    globrc = status;
+    longjmp(jb, status);
+    return;
+}
+#endif
+
 
 #if defined(__gnu_linux__) || defined(__ARM__)
 
