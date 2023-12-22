@@ -1,0 +1,20 @@
+# Produces OS/2 2.0+ executable.
+# Links against library produced by makefile.wat
+
+CC=wcl386
+
+COPTS=-ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx \
+    -c -I. -I..\pdpclib -I..\bios -I..\src -y -fpi87 \
+    -DNEED_MZ -DNO_DLLENTRY \
+    -s -zq -3s -zm -zl -oneatblr
+
+all: clean bios.exe
+
+bios.exe: bios.obj ..\bios\exeload.obj
+  wlink File ..\pdpclib\osstart.obj,bios.obj,exeload.obj Name bios.exe Form os2 flat full Library ..\pdpclib\watcom.lib,..\pdpclib\os2.lib Option quiet,map,verbose,stub=..\pdpclib\needpdos.exe
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+    rm -f *.obj bios.exe
