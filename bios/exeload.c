@@ -1503,6 +1503,9 @@ void w64exit(int status);
 #ifdef W32EMUL
 int getmainargs(int *_Argc, char ***_Argv);
 void w32exit(int status);
+
+extern __DUMMYFILE *_imp___iob;
+
 #endif
 
 static int exeloadLoadPE(unsigned char **entry_point,
@@ -2417,9 +2420,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)getmainargs;
                         }
+                        else if (strcmp((char *)hintname, "_iob") == 0)
+                        {
+                            *thunk = (unsigned long)_imp___iob;
+                        }
 #endif
                         else
                         {
+                            printf("unknown hintname %s\n", hintname);
                             *thunk = (unsigned long)dummyfunc;
                         }
                     }
