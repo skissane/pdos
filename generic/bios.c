@@ -307,7 +307,36 @@ int main(int argc, char **argv)
     if (strcmp(prog_name, "dir") == 0)
     {
 #ifdef W32EMUL
+
+#ifndef HAVE_DIR
         printf("sorry - dir not supported yet\n");
+#else
+        {
+            DTA *dta;
+            int ret;
+
+            dta = PosGetDTA();
+            if (dta == NULL)
+            {
+                printf("dir unavailable\n");
+                continue;
+            }
+            ret = PosFindFirst("*.*", 0x10);
+            while (ret == 0)
+            {
+                if (dta->lfn[0] != '\0')
+                {
+                    printf("%s\n", dta->lfn);
+                }
+                else
+                {
+                    printf("%s\n", dta->file_name);
+                }
+                ret = PosFindNext();
+            }
+        }
+#endif
+
 #else
         directory_test();
 #endif
@@ -711,7 +740,21 @@ static int ff_search(void)
 
 int PosFindFirst(char *pat, int attrib)
 {
+#ifdef W32EMUL
+    char cwd2[sizeof __cwd + 2];
+    char *p;
+
+    strcpy(cwd2, "./");
+    strcat(cwd2, __cwd);
+    p = cwd2;
+    while ((p = strchr(p, '\\')) != NULL)
+    {
+        *p++ = '/';
+    }
+    dirfile = __open(cwd2, 0, 0);
+#else
     dirfile = __open(".", 0, 0);
+#endif
     if (dirfile < 0) return (1);
     return (ff_search());
 }
