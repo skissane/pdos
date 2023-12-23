@@ -4068,7 +4068,7 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
     }
 
 #if defined(__gnu_linux__) || defined(__ARM__)
-    if (stream == stdin)
+    if (stream == __stdin)
     {
         n--;
         while (processed < n)
