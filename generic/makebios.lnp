@@ -2,7 +2,9 @@
 # You should have build pdpclib with makefile.lnp first
 
 CC=gcc386
-CFLAGS=-O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -DNEED_AOUT
+CFLAGS=-O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -DNEED_AOUT \
+    -DNEED_MZ -DNO_DLLENTRY -DW32EMUL -D__W32EMUL__ \
+    -D__32BIT__
 LD=lde86
 LDFLAGS=
 AS=ase86

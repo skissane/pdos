@@ -1,12 +1,15 @@
 # This is the makefile for Linux to build pdpclib using
 # the pdos gcc compiler.
 #
+# Also define __W32EMUL__ if you wish to make the
+# pseudo-bios. It has no meaning outside of that -
+# it isn't OS/2-related
 
 CC=gcc386
 AR=are86
 LD=lde86
 AS=ase86
-COPTS=-S -O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -I.
+COPTS=-D__W32EMUL__ -S -O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -I.
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
