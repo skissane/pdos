@@ -507,6 +507,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if defined(__gnu_linux__)
     if (runnum == 1)
     {
+    /* I believe the reason we switch off echo etc and
+       do our own processing is so that when the command
+       processor (which needs echo off) launches another
+       application, we don't need to put it back to the
+       echo state before doing so. */
     __ioctl(0, TCGETS, (unsigned long)&tios_save);
     tios_new = tios_save;
     tios_new.c_iflag &= ~IXON;
