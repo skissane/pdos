@@ -3513,6 +3513,13 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
             fillCh = ' ';
         }
         y = x;
+        if (flagHash && (toupper((unsigned char)specifier) == 'X'))
+        {
+            outch('0');
+            outch(specifier);
+            extraCh += 2;
+            y += 2;
+        }
         if (!flagMinus)
         {
             while (y < width)
@@ -3521,12 +3528,6 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
                 extraCh++;
                 y++;
             }
-        }
-        if (flagHash && (toupper((unsigned char)specifier) == 'X'))
-        {
-            outch('0');
-            outch('x');
-            extraCh += 2;
         }
         x--;
         while (x >= 0)
