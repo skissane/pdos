@@ -35,8 +35,9 @@
 /* alternate form of extended - used by zPDT (aka z1090/zOPD) IBM
    hardware emulator */
 /* normal extended is z/VM */
-/* and the OSS-ICC never got anywhere */
-#define ALTEXT 1
+/* and the OSA-ICC never got anywhere */
+/* Joes's OSA-ICC system should be 0 */
+#define ALTEXT 0
 
 #if 0
 
@@ -344,10 +345,17 @@ static void negotiate(FILE *sf)
             expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
         }
         fseek(sf, 0, SEEK_CUR);
-        /* these fb and fd should probably be swapped!!! */
-        /* (for the non-ALTEXT) */
-        fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
+
+        if (extend && ALTEXT)
+        {
+            fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
+        }
+        else
+        {
+            fwrite("\xff\xfd\x19" "\xff\xfb\x19", 6, 1, sf);
+        }
         fseek(sf, 0, SEEK_CUR);
+
         printf("binary\n");
         if (extend && ALTEXT)
         {
@@ -371,12 +379,22 @@ static void negotiate(FILE *sf)
         if (extend)
         {
             fseek(sf, 0, SEEK_CUR);
+
+            /* this stuff seems to be different for each system */
+            /* I think when connected directly to z/PDOS you won't
+               see any of this. This might only be applicable when
+               connected to ZVM. In which case, put it all behind
+               a ifdef for ZVM */
+
+#if 0
             /* IAC DO ? IAC WILL ? ? ? IAC EOR_MARK ? IAC EOR_MARK */
 #if ALTEXT
             expect(sf, "\x0d\xc7\x11\x40\x40\x1d\x60\x40\xe4", 9);
 #else
+            /* ignore this i think - this is the old message */
             expect(sf, "\xff\xfd\x00"
                    "\xff\xfb\x00\x0d\xc2\xff\xef\x02\xff\xef", 13);
+#endif
 #endif
 
             fseek(sf, 0, SEEK_CUR);
