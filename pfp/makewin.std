@@ -1,0 +1,39 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+VPATH=source
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp --subsystem 2
+AS=pdas --oformat coff
+COPTS=-S $(CFLAGS) -Wall -ansi -fno-common -I./source -I../pdpclib -I../src -D__WIN32__ -D__NOBIVA__
+
+OBJS=pfpwin.obj pfp.obj
+
+LIBRARIES=../pdpclib/msvcrt.lib ../src/kernel32.lib ../windows/user32.lib ../windows/gdi32.lib
+
+TARGET=pfpwin.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) $(LIBRARIES)
+
+# Suffix different from .s is used so the .s.obj rule does not cause problems.
+.c.obj:
+  $(CC) $(COPTS) -o $*.ts $<
+  $(AS) -o $@ $*.ts
+  rm -f $*.ts
+
+.s.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f $(OBJS) $(TARGET)
