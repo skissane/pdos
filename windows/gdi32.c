@@ -12,6 +12,80 @@
 #include <pos.h>
 
 /* auto-genned dummy functions made compatible with current windows.h */
+BOOL WINAPI BitBlt (HDC hdc,
+                    int x,
+                    int y,
+                    int cx,
+                    int cy,
+                    HDC hdcSrc,
+                    int x1,
+                    int y1,
+                    DWORD rop)
+{
+    unsigned int len = 22;
+    PosWriteFile(1, "BitBlt unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HDC WINAPI CreateCompatibleDC (HDC hdc)
+{
+    unsigned int len = 34;
+    PosWriteFile(1, "CreateCompatibleDC unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HBITMAP WINAPI CreateDIBSection (HDC hdc,
+                                 const BITMAPINFO *pbmi,
+                                 UINT usage,
+                                 VOID **ppvBits,
+                                 HANDLE hSection,
+                                 DWORD offset)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "CreateDIBSection unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HBRUSH WINAPI CreateSolidBrush (COLORREF color)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "CreateSolidBrush unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI DeleteDC (HDC hdc)
+{
+    unsigned int len = 24;
+    PosWriteFile(1, "DeleteDC unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI DeleteObject (HGDIOBJ ho)
+{
+    unsigned int len = 28;
+    PosWriteFile(1, "DeleteObject unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI Rectangle (HDC hdc,
+                       int left,
+                       int top,
+                       int right,
+                       int bottom)
+{
+    unsigned int len = 25;
+    PosWriteFile(1, "Rectangle unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HGDIOBJ WINAPI SelectObject (HDC hdc,
+                             HGDIOBJ h)
+{
+    unsigned int len = 28;
+    PosWriteFile(1, "SelectObject unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
 BOOL WINAPI TextOutA (HDC hdc,
                       int x,
                       int y,
@@ -136,12 +210,6 @@ void WINAPI BeginPath(void)
 {
     unsigned int len = 25;
     PosWriteFile(1, "BeginPath unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI BitBlt(void)
-{
-    unsigned int len = 22;
-    PosWriteFile(1, "BitBlt unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI CLIPOBJ_bEnum(void)
@@ -318,12 +386,6 @@ void WINAPI CreateCompatibleBitmap(void)
     PosWriteFile(1, "CreateCompatibleBitmap unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI CreateCompatibleDC(void)
-{
-    unsigned int len = 34;
-    PosWriteFile(1, "CreateCompatibleDC unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI CreateDCA(void)
 {
     unsigned int len = 25;
@@ -352,12 +414,6 @@ void WINAPI CreateDIBPatternBrushPt(void)
 {
     unsigned int len = 39;
     PosWriteFile(1, "CreateDIBPatternBrushPt unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI CreateDIBSection(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "CreateDIBSection unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI CreateDIBitmap(void)
@@ -562,12 +618,6 @@ void WINAPI CreateSessionMappedDIBSection(void)
 {
     unsigned int len = 45;
     PosWriteFile(1, "CreateSessionMappedDIBSection unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI CreateSolidBrush(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "CreateSolidBrush unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI D3DKMTAbandonSwapChain(void)
@@ -2400,12 +2450,6 @@ void WINAPI DeleteColorSpace(void)
     PosWriteFile(1, "DeleteColorSpace unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI DeleteDC(void)
-{
-    unsigned int len = 24;
-    PosWriteFile(1, "DeleteDC unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI DeleteEnhMetaFile(void)
 {
     unsigned int len = 33;
@@ -2416,12 +2460,6 @@ void WINAPI DeleteMetaFile(void)
 {
     unsigned int len = 30;
     PosWriteFile(1, "DeleteMetaFile unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI DeleteObject(void)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "DeleteObject unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI DescribePixelFormat(void)
@@ -4932,12 +4970,6 @@ void WINAPI RectVisible(void)
     PosWriteFile(1, "RectVisible unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI Rectangle(void)
-{
-    unsigned int len = 25;
-    PosWriteFile(1, "Rectangle unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI RemoveFontMemResourceEx(void)
 {
     unsigned int len = 39;
@@ -5326,12 +5358,6 @@ void WINAPI SelectFontLocal(void)
 {
     unsigned int len = 31;
     PosWriteFile(1, "SelectFontLocal unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI SelectObject(void)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "SelectObject unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI SelectPalette(void)
