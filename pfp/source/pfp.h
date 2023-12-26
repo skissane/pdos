@@ -15,7 +15,9 @@
 /* pfp.c */
 extern char filename[];
 extern int hdim, vdim;
+extern int hoff, voff;
 extern int pictnr;
+extern unsigned char passwd[80];
 
 void init ();
 int decode ();

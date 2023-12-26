@@ -62,7 +62,7 @@ int get_bits(int);
 
 /*unsigned char bgr[3*HBMP*VBMP]; declared in dos.c or win.c */
 
-int    xpos=0,ypos=0,xold,yold,ldown,rdown;
+int    xold,yold,ldown,rdown;
  
 int hdim, vdim;
 int hoff, voff; 
