@@ -55,10 +55,29 @@ BOOL WINAPI DestroyWindow (HWND hWnd)
     for (;;) ;
 }
 
+INT_PTR WINAPI DialogBoxIndirectParamA (HINSTANCE hInstance,
+                                        LPCDLGTEMPLATEA hDialogTemplate,
+                                        HWND hWndParent,
+                                        DLGPROC lpDialogFunc,
+                                        LPARAM dwInitParam)
+{
+    unsigned int len = 39;
+    PosWriteFile(1, "DialogBoxIndirectParamA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
 LRESULT WINAPI DispatchMessageA (const MSG *lpMsg)
 {
     unsigned int len = 32;
     PosWriteFile(1, "DispatchMessageA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI EndDialog (HWND hDlg,
+                       INT_PTR nResult)
+{
+    unsigned int len = 25;
+    PosWriteFile(1, "EndDialog unimplemented\r\n", len, &len);
     for (;;) ;
 }
 
@@ -78,6 +97,23 @@ BOOL WINAPI GetClientRect (HWND hWnd,
     for (;;) ;
 }
 
+HDC WINAPI GetDC (HWND hWnd)
+{
+    unsigned int len = 21;
+    PosWriteFile(1, "GetDC unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+UINT WINAPI GetDlgItemTextA (HWND hDlg,
+                             int nIDDlgItem,
+                             LPSTR lpString,
+                             int cchMax)
+{
+    unsigned int len = 31;
+    PosWriteFile(1, "GetDlgItemTextA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
 BOOL WINAPI GetMessageA (LPMSG lpMsg,
                          HWND hWnd,
                          UINT wMsgFilterMin,
@@ -88,12 +124,27 @@ BOOL WINAPI GetMessageA (LPMSG lpMsg,
     for (;;) ;
 }
 
+int WINAPI GetSystemMetrics (int nIndex)
+{
+    unsigned int len = 32;
+    PosWriteFile(1, "GetSystemMetrics unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
 BOOL WINAPI InvalidateRect (HWND hWnd,
                             const RECT *lpRect,
                             BOOL bErase)
 {
     unsigned int len = 30;
     PosWriteFile(1, "InvalidateRect unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+HCURSOR WINAPI LoadCursorA (HINSTANCE hInstance,
+                            LPCSTR lpCursorName)
+{
+    unsigned int len = 27;
+    PosWriteFile(1, "LoadCursorA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 
@@ -141,6 +192,14 @@ ATOM WINAPI RegisterClassA (const WNDCLASSA *lpWndClass)
 {
     unsigned int len = 30;
     PosWriteFile(1, "RegisterClassA unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+int WINAPI ReleaseDC (HWND hWnd,
+                      HDC hDC)
+{
+    unsigned int len = 25;
+    PosWriteFile(1, "ReleaseDC unimplemented\r\n", len, &len);
     for (;;) ;
 }
 
@@ -1235,12 +1294,6 @@ void WINAPI DestroySyntheticPointerDevice(void)
     PosWriteFile(1, "DestroySyntheticPointerDevice unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI DialogBoxIndirectParamA(void)
-{
-    unsigned int len = 39;
-    PosWriteFile(1, "DialogBoxIndirectParamA unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI DialogBoxIndirectParamAorW(void)
 {
     unsigned int len = 42;
@@ -1587,12 +1640,6 @@ void WINAPI EndDeferWindowPosEx(void)
 {
     unsigned int len = 35;
     PosWriteFile(1, "EndDeferWindowPosEx unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI EndDialog(void)
-{
-    unsigned int len = 25;
-    PosWriteFile(1, "EndDialog unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI EndMenu(void)
@@ -2051,12 +2098,6 @@ void WINAPI GetCursorPos(void)
     PosWriteFile(1, "GetCursorPos unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI GetDC(void)
-{
-    unsigned int len = 21;
-    PosWriteFile(1, "GetDC unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI GetDCEx(void)
 {
     unsigned int len = 23;
@@ -2127,12 +2168,6 @@ void WINAPI GetDlgItemInt(void)
 {
     unsigned int len = 29;
     PosWriteFile(1, "GetDlgItemInt unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetDlgItemTextA(void)
-{
-    unsigned int len = 31;
-    PosWriteFile(1, "GetDlgItemTextA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetDlgItemTextW(void)
@@ -2847,12 +2882,6 @@ void WINAPI GetSystemMenu(void)
 {
     unsigned int len = 29;
     PosWriteFile(1, "GetSystemMenu unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetSystemMetrics(void)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "GetSystemMetrics unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetSystemMetricsForDpi(void)
@@ -3675,12 +3704,6 @@ void WINAPI LoadBitmapW(void)
 {
     unsigned int len = 27;
     PosWriteFile(1, "LoadBitmapW unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI LoadCursorA(void)
-{
-    unsigned int len = 27;
-    PosWriteFile(1, "LoadCursorA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI LoadCursorFromFileA(void)
@@ -4659,12 +4682,6 @@ void WINAPI ReleaseCapture(void)
 {
     unsigned int len = 30;
     PosWriteFile(1, "ReleaseCapture unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI ReleaseDC(void)
-{
-    unsigned int len = 25;
-    PosWriteFile(1, "ReleaseDC unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI ReleaseDwmHitTestWaiters(void)
