@@ -63,10 +63,12 @@ typedef unsigned short WORD;
 
 #ifdef _WIN64
 typedef __int64 LONG_PTR;
+typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 typedef unsigned __int64 ULONG_PTR;
 #else
 typedef long LONG_PTR;
+typedef int INT_PTR;
 typedef unsigned int UINT_PTR;
 typedef unsigned long ULONG_PTR;
 #endif
@@ -86,7 +88,9 @@ typedef HANDLE HCONV;
 typedef HANDLE HCONVLIST;
 typedef HICON HCURSOR;
 typedef HANDLE HDC;
+typedef HANDLE HGDIOBJ;
 typedef HANDLE HGLOBAL;
+typedef HANDLE HHOOK;
 typedef HANDLE HINSTANCE;
 typedef HANDLE HKEY;
 typedef HANDLE HKL;
@@ -135,6 +139,10 @@ typedef char TCHAR;
 typedef TCHAR *LPTCH;
 
 #define INFINITE 0xFFFFFFFF
+
+/* Unknown subheader. */
+#define LOWORD(dwValue) ((WORD)((dwValue) & 0xffff))
+#define HIWORD(dwValue) ((WORD)((dwValue) >> 16))
 
 /* Subheader: windef.h */
 #define MAX_PATH 260
@@ -462,6 +470,93 @@ BOOL WINAPI TerminateProcess (HANDLE hProcess,
                               UINT uExitCode);
 
 /* Subheader: wingdi.h */
+#define BI_RGB        0
+#define BI_BIRFIELDS  3
+
+typedef enum {
+    DIB_RGB_COLORS = 0x00,
+    DIB_PAL_COLORS = 0x01,
+    DIB_PAL_INDICES = 0x02
+} DIBColors;
+
+#define BLACKNESS          66
+#define CAPTUREBLT         1073741824
+#define DSTINVERT          5570569
+#define MERGECOPY          12583114
+#define MERGEPAINT         12255782
+#define NOMIRRORBITMAP     -2147483648
+#define NOTSRCCOPY         3342344
+#define NOTSRCERASE        1114278
+#define PATCOPY            15728673
+#define PATINVERT          5898313
+#define PATPAINT           16452105
+#define SRCAND             8913094
+#define SRCCOPY            13369376
+#define SRCERASE           4457256
+#define SRCINVERT          6684742
+#define SRCPAINT           15597702
+#define WHITENESS          16711778
+
+typedef struct RGBQUAD {
+    BYTE rgbBlue;
+    BYTE rgbGreen;
+    BYTE rgbRed;
+    BYTE rgbReserved;
+} RGBQUAD;
+
+typedef struct tagBITMAPINFOHEADER {
+    DWORD biSize;
+    LONG biWidth;
+    LONG biHeight;
+    WORD biPlanes;
+    WORD biBitCount;
+    DWORD biCompression;
+    DWORD biSizeImage;
+    LONG biXPelsPerMeter;
+    LONG biYPelsPerMeter;
+    DWORD biClrUsed;
+    DWORD biClrImportant;
+} BITMAPINFOHEADER, *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
+
+typedef struct tagBITMAPINFO {
+    BITMAPINFOHEADER bmiHeader;
+    RGBQUAD bmiColors;
+} BITMAPINFO, *LPBITMAPINFO, *PBITMAPINFO;
+
+BOOL WINAPI BitBlt (HDC hdc,
+                    int x,
+                    int y,
+                    int cx,
+                    int cy,
+                    HDC hdcSrc,
+                    int x1,
+                    int y1,
+                    DWORD rop);
+
+HDC WINAPI CreateCompatibleDC (HDC hdc);
+
+HBITMAP WINAPI CreateDIBSection (HDC hdc,
+                                 const BITMAPINFO *pbmi,
+                                 UINT usage,
+                                 VOID **ppvBits,
+                                 HANDLE hSection,
+                                 DWORD offset);
+
+HBRUSH WINAPI CreateSolidBrush (COLORREF color);
+
+BOOL WINAPI DeleteDC (HDC hdc);
+
+BOOL WINAPI DeleteObject (HGDIOBJ ho);
+
+BOOL WINAPI Rectangle (HDC hdc,
+                       int left,
+                       int top,
+                       int right,
+                       int bottom);
+
+HGDIOBJ WINAPI SelectObject (HDC hdc,
+                             HGDIOBJ h);
+
 #define TextOut TextOutA
 BOOL WINAPI TextOutA (HDC hdc,
                       int x,
@@ -654,7 +749,47 @@ DWORD WINAPI GetLastError(void);
 /* Subheader: winuser.h */
 #define COLOR_WINDOW  5
 
+#define CS_BYTEALIGNCLIENT  0x1000
+#define CS_BYTEALIGNWINDOW  0x2000
+#define CS_CLASSDC          0x0040
+#define CS_DBLCLKS          0x0008
+#define CS_DROPSHADOW       0x00020000
+#define CS_GLOBALCLASS      0x4000
+#define CS_HREDRAW          0x0002
+#define CS_NOCLOSE          0x0200
+#define CS_OWNDC            0x0020
+#define CS_PARENTDC         0x0080
+#define CS_SAVEBITS         0x0800
+#define CS_VREDRAW          0x0001
+
 #define CW_USEDEFAULT  0x80000000
+
+#define IDABORT     3
+#define IDCANCEL    2
+#define IDCONTINUE  11
+#define IDIGNORE    5
+#define IDNO        7
+#define IDOK        1
+#define IDRETRY     4
+#define IDTRYAGAIN  10
+#define IDYES       6
+
+#define IDC_ARROW        MAKEINTRESOURCE(32512)
+#define IDC_IBEAM        MAKEINTRESOURCE(32513)
+#define IDC_WAIT         MAKEINTRESOURCE(32514)
+#define IDC_CROSS        MAKEINTRESOURCE(32515)
+#define IDC_UPARROW      MAKEINTRESOURCE(32516)
+#define IDC_SIZENWSE     MAKEINTRESOURCE(32642)
+#define IDC_SIZENESW     MAKEINTRESOURCE(32643)
+#define IDC_SIZEWE       MAKEINTRESOURCE(32644)
+#define IDC_SIZENS       MAKEINTRESOURCE(32645)
+#define IDC_SIZEALL      MAKEINTRESOURCE(32646)
+#define IDC_NO           MAKEINTRESOURCE(32648)
+#define IDC_HAND         MAKEINTRESOURCE(32649)
+#define IDC_APPSTARTING  MAKEINTRESOURCE(32650)
+#define IDC_HELP         MAKEINTRESOURCE(32651)
+#define IDC_PIN          MAKEINTRESOURCE(32671)
+#define IDC_PERSON       MAKEINTRESOURCE(32672)
 
 #define ISC_SHOWUICOMPOSITIONWINDOW  0x80000000
 #define ISC_SHOWUICANDIDATEWINDOW    0x00000001
@@ -691,6 +826,119 @@ DWORD WINAPI GetLastError(void);
  (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY)
 #define QS_ALLINPUT        \
  (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY | QS_SENDMESSAGE)
+
+#define SM_ARRANGE                      56
+#define SM_CLEANBOOT                    67
+#define SM_CMONITORS                    80
+#define SM_CMOUSEBUTTONS                43
+#define SM_CONVERTIBLESLATEMODE         0x2003
+#define SM_CXBORDER                     5
+#define SM_CXCURSOR                     13
+#define SM_CXDLGFRAME                   7
+#define SM_CXDOUBLECLICK                36
+#define SM_CXDRAG                       68
+#define SM_CXEDGE                       45
+#define SM_CXFIXEDFRAME                 7
+#define SM_CXFOCUSBORDER                83
+#define SM_CXFRAME                      32
+#define SM_CXFULLSCREEN                 16
+#define SM_CXHSCROLL                    21
+#define SM_CXHTHUMB                     10
+#define SM_CXICON                       11
+#define SM_CXICONSPACING                38
+#define SM_CXMAXIMIZED                  61
+#define SM_CXMAXTRACK                   59
+#define SM_CXMENUCHECK                  71
+#define SM_CXMENUSIZE                   54
+#define SM_CXMIN                        28
+#define SM_CXMINIMIZED                  57
+#define SM_CXMINSPACING                 47
+#define SM_CXMINTRACK                   34
+#define SM_CXPADDEDBORDER               92
+#define SM_CXSCREEN                     0
+#define SM_CXSIZE                       30
+#define SM_CXSIZEFRAME                  32
+#define SM_CXSMICON                     49
+#define SM_CXSMSIZE                     52
+#define SM_CXVIRTUALSCREEN              78
+#define SM_CXVSCROLL                    2
+#define SM_CYBORDER                     6
+#define SM_CYCAPTION                    4
+#define SM_CYCURSOR                     14
+#define SM_CYDLGFRAME                   8
+#define SM_CYDOUBLECLICK                37
+#define SM_CYDRAG                       69
+#define SM_CYEDGE                       46
+#define SM_CYFIXEDFRAME                 8
+#define SM_CYFOCUSBORDER                84
+#define SM_CYFRAME                      33
+#define SM_CYFULLSCREEN                 17
+#define SM_CYHSCROLL                    3
+#define SM_CYICON                       12
+#define SM_CYICONSPACING                39
+#define SM_CYKANJIWINDOW                18
+#define SM_CYMAXIMIZED                  62
+#define SM_CYMAXTRACK                   60
+#define SM_CYMENU                       15
+#define SM_CYMENUCHECK                  72
+#define SM_CYMENUSIZE                   55
+#define SM_CYMIN                        29
+#define SM_CYMINIMIZED                  58
+#define SM_CYMINSPACING                 48
+#define SM_CYMINTRACK                   35
+#define SM_CYSCREEN                     1
+#define SM_CYSIZE                       31
+#define SM_CYSIZEFRAME                  33
+#define SM_CYSMCAPTION                  51
+#define SM_CYSMICON                     50
+#define SM_CYSMSIZE                     53
+#define SM_CYVIRTUALSCREEN              79
+#define SM_CYVSCROLL                    20
+#define SM_CYVTHUMB                     9
+#define SM_DBCSENABLED                  42
+#define SM_DEBUG                        22
+#define SM_DIGITIZER                    94
+#define SM_IMMENABLED                   82
+#define SM_MAXIMUMTOUCHES               95
+#define SM_MEDIACENTER                  87
+#define SM_MENUDROPALIGNMENT            40
+#define SM_MIDEASTENABLED               74
+#define SM_MOUSEPRESENT                 19
+#define SM_MOUSEHORIZONTALWHEELPRESENT  91
+#define SM_MOUSEWHEELPRESENT            75
+#define SM_NETWORK                      63
+#define SM_PENWINDOWS                   41
+#define SM_REMOTECONTROL                0x2001
+#define SM_REMOTESESSION                0x1000
+#define SM_SAMEDISPLAYFORMAT            81
+#define SM_SECURE                       44
+#define SM_SERVERR2                     89
+#define SM_SHOWSOUNDS                   70
+#define SM_SHUTTINGDOWN                 0x2000
+#define SM_SLOWMACHINE                  73
+#define SM_STARTER                      88
+#define SM_SWAPBUTTON                   23
+#define SM_SYSTEMDOCKED                 0x2004
+#define SM_TABLETPC                     86
+#define SM_XVIRTUALSCREEN               76
+#define SM_YVIRTUALSCREEN               77
+
+#define SS_BLACKFRAME      0x7
+#define SS_BLACKRECT       0x4
+#define SS_CENTER          0x1
+#define SS_ETCHEDFRAME     0x12
+#define SS_ETCHEDHORZ      0x10
+#define SS_ETCHEDVERT      0x11
+#define SS_GRAYFRAME       0x8
+#define SS_GRAYRECT        0x5
+#define SS_LEFT            0x0
+#define SS_LEFTNOWORDWRAP  0xC
+#define SS_NOPREFIX        0x80
+#define SS_NOTIFY          0x100
+#define SS_RIGHT           0x2
+#define SS_SUNKEN          0x1000
+#define SS_WHITEFRAME      0x9
+#define SS_WHITERECT       0x6     
 
 #define VK_LBUTTON              0x01
 #define VK_RBUTTON              0x02
@@ -859,6 +1107,24 @@ DWORD WINAPI GetLastError(void);
 #define WM_SETICON                      0x0080
 #define WM_SETTEXT                      0x000C
 
+#define WM_CTLCOLORDLG                  0x0136
+#define WM_ENTERIDLE                    0x0121
+#define WM_GETDLGCODE                   0x0087
+#define WM_INITDIALOG                   0x0110
+#define WM_NEXTDLGCTL                   0x0028
+
+#define WM_COMMAND                      0x0111
+#define WM_CONTEXTMENU                  0x007B
+#define WM_ENTERMENULOOP                0x0211
+#define WM_EXITMENULOOP                 0x0212
+#define WM_GETTITLEBARINFOEX            0x033F
+#define WM_MENUCOMMAND                  0x0126
+#define WM_MENUDRAG                     0x0123
+#define WM_MENUGETOBJECT                0x0124
+#define WM_MENURBUTTONUP                0x0122
+#define WM_NEXTMENU                     0x0213
+#define WM_UNINITMENUPOPUP              0x0125
+
 #define WM_DISPLAYCHANGE                0x007E
 #define WM_NCPAINT                      0x0085
 #define WM_PAINT                        0x000F
@@ -913,6 +1179,42 @@ DWORD WINAPI GetLastError(void);
 #define WM_SYSKEYUP                     0x0105
 #define WM_UNICHAR                      0x0109
 
+#define WM_CAPTURECHANGED               0x0215
+#define WM_LBUTTONDBLCLK                0x0203
+#define WM_LBUTTONDOWN                  0x0201
+#define WM_LBUTTONUP                    0x0202
+#define WM_MBUTTONDBLCLK                0x0209
+#define WM_MBUTTONDOWN                  0x0207
+#define WM_MBUTTONUP                    0x0208
+#define WM_MOUSEACTIVATE                0x0021
+#define WM_MOUSEHOVER                   0x02A1
+#define WM_MOUSEHWHEEL                  0x020E
+#define WM_MOUSELEAVE                   0x02A3
+#define WM_MOUSEMOVE                    0x0200
+#define WM_MOUSEWHEEL                   0x020A
+#define WM_NCHITTEST                    0x0084
+#define WM_NCLBUTTONDBLCLK              0x00A3
+#define WM_NCLBUTTONDOWN                0x00A1
+#define WM_NCLBUTTONUP                  0x00A2
+#define WM_NCMBUTTONDBLCLK              0x00A9
+#define WM_NCMBUTTONDOWN                0x00A7
+#define WM_NCMBUTTONUP                  0x00A8
+#define WM_NCMOUSEHOVER                 0x02A0
+#define WM_NCMOUSELEAVE                 0x02A2
+#define WM_NCMOUSEMOVE                  0x00A0
+#define WM_NCRBUTTONDBLCLK              0x00A6
+#define WM_NCRBUTTONDOWN                0x00A4
+#define WM_NCRBUTTONUP                  0x00A5
+#define WM_NCXBUTTONDBLCLK              0x00AD
+#define WM_NCXBUTTONDOWN                0x00AB
+#define WM_NCXBUTTONUP                  0x00AC
+#define WM_RBUTTONDBLCLK                0x0206
+#define WM_RBUTTONDOWN                  0x0204
+#define WM_RBUTTONUP                    0x0205
+#define WM_XBUTTONDBLCLK                0x020D
+#define WM_XBUTTONDOWN                  0x020B
+#define WM_XBUTTONUP                    0x020C
+
 #define WS_BORDER            0x00800000L
 #define WS_CAPTION           0x00C00000L
 #define WS_CHILD             0x40000000L
@@ -941,6 +1243,24 @@ DWORD WINAPI GetLastError(void);
 #define WS_TILEDWINDOW       WS_OVERLAPPEDWINDOW
 #define WS_VISIBLE           0x10000000L
 #define WS_VSCROLL           0x00200000L
+
+typedef struct {
+    DWORD style;
+    DWORD dwExtendedStyle;
+    WORD cdit;
+    short x;
+    short y;
+    short cx;
+    short cy;
+} DLGTEMPLATE, *LPDLGTEMPLATE;
+
+typedef CONST DLGTEMPLATE *LPCDLGTEMPLATEA;
+typedef LPCDLGTEMPLATEA LPCDLGTEMPLATE;
+
+typedef INT_PTR (CALLBACK *DLGPROC) (HWND unnamedParam1,
+                                     UINT unnamedParam2,
+                                     WPARAM unnamedParam3,
+                                     LPARAM unnamedParam4);
 
 typedef struct tagPAINTSTRUCT {
     HDC hdc;
@@ -1009,8 +1329,22 @@ LRESULT WINAPI DefWindowProcA (HWND hWnd,
 
 BOOL WINAPI DestroyWindow (HWND hWnd);
 
+#define DialogBoxIndirect DialogBoxIndirectA
+#define DialogBoxIndirectA(hInstance, lpTemplate, hWndParent, lpDialogFunc) \
+ DialogBoxIndirectParamA (hInstance, lpTemplate, hWndParent, lpDialogFunc, 0)
+
+#define DialogBoxIndirectParam DialogBoxIndirectParamA
+INT_PTR WINAPI DialogBoxIndirectParamA (HINSTANCE hInstance,
+                                        LPCDLGTEMPLATEA hDialogTemplate,
+                                        HWND hWndParent,
+                                        DLGPROC lpDialogFunc,
+                                        LPARAM dwInitParam);
+
 #define DispatchMessage DispatchMessageA
 LRESULT WINAPI DispatchMessageA (const MSG *lpMsg);
+
+BOOL WINAPI EndDialog (HWND hDlg,
+                       INT_PTR nResult);
 
 BOOL WINAPI EndPaint (HWND hWnd,
                       const PAINTSTRUCT *lpPaint);
@@ -1018,15 +1352,32 @@ BOOL WINAPI EndPaint (HWND hWnd,
 BOOL WINAPI GetClientRect (HWND hWnd,
                            LPRECT lpRect);
 
+HDC WINAPI GetDC (HWND hWnd);
+
+#define GetDlgItemText GetDlgItemTextA
+UINT WINAPI GetDlgItemTextA (HWND hDlg,
+                             int nIDDlgItem,
+                             LPSTR lpString,
+                             int cchMax);
+
 #define GetMessage GetMessageA
 BOOL WINAPI GetMessageA (LPMSG lpMsg,
                          HWND hWnd,
                          UINT wMsgFilterMin,
                          UINT wMsgFilterMax);
 
+int WINAPI GetSystemMetrics (int nIndex);
+
 BOOL WINAPI InvalidateRect (HWND hWnd,
                             const RECT *lpRect,
                             BOOL bErase);
+
+#define LoadCursor LoadCursorA
+HCURSOR WINAPI LoadCursorA (HINSTANCE hInstance,
+                            LPCSTR lpCursorName);
+
+#define MAKEINTRESOURCE MAKEINTRESOURCEA
+#define MAKEINTRESOURCEA(i) ((LPSTR)((ULONG_PTR)((WORD)(i))))
 
 DWORD WINAPI MsgWaitForMultipleObjects (DWORD nCount,
                                         const HANDLE *pHandles,
@@ -1051,6 +1402,9 @@ void WINAPI PostQuitMessage (int nExitCode);
 
 #define RegisterClass RegisterClassA
 ATOM WINAPI RegisterClassA (const WNDCLASSA *lpWndClass);
+
+int WINAPI ReleaseDC (HWND hWnd,
+                      HDC hDC);
 
 BOOL WINAPI ShowWindow (HWND hWnd,
                         int nCmdShow);
