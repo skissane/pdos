@@ -842,7 +842,8 @@ static int cons_type = 3270; /* do we have a 1052 or 3215? */
 static unsigned char *ramdisk = NULL;
 static char intbuf[6+22*80+7]; /* buffer used for 3270 writes */
 
-static int lastopread = 0; /* was last operation a read? */
+static int we_have_control = 1; /* we have control until we relinquish
+                                   with XON */
 
 void gotret(void);
 int adisp(void);
@@ -1395,7 +1396,6 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                     {
                         memcpy(intbuf + 6, "XX", 2);
                     }
-                    lastopread = 1;
                     __conswr(sizeof intbuf, intbuf, 0);
                     intbuf[0] = 0x41; /* lock keyboard for next time */
                     cnt = __c3270r(300, tbuf);
@@ -1428,13 +1428,13 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                 else
                 {
 #ifdef FORCEANSI
-                    if (!lastopread)
+                    if (we_have_control)
                     {
                         if (cons_type == 1052)
                         {
                             __conswr(1, "\x11", 0); /* send XON */
                         }
-                        lastopread = 1;
+                        we_have_control = 0;
                     }
                     cnt = __c3270r(300, tbuf);
 #else
@@ -1466,6 +1466,16 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                 if ((cnt >= 0) && ((cons_type == 3215) || (cons_type == 3270)))
                 {
                     tbuf[cnt++] = '\n';
+                }
+                /* we need logic to read again if we don't yet have control */
+                /* currently we assume we're going to get it */
+                if (cons_type == 1052)
+                {
+                    if (tbuf[cnt - 1] == 0x11)
+                    {
+                        we_have_control = 1;
+                        cnt--;
+                    }
                 }
             }
             else
@@ -4494,7 +4504,6 @@ static void write3270(char *buf, size_t lenbuf, int cr)
             }
             intbuf[6 + x * 2 + 0] = 'X';
             intbuf[6 + x * 2 + 1] = 'X';
-            lastopread = 0;
             __conswr(sizeof intbuf, intbuf, 0);
             return;
         }
@@ -4502,7 +4511,6 @@ static void write3270(char *buf, size_t lenbuf, int cr)
     }
     memset(intbuf + 6 + lineupto * 80, ' ', 80);
     memcpy(intbuf + 6 + lineupto * 80, buf, lenbuf);
-    lastopread = 0;
     __conswr(sizeof intbuf, intbuf, 0);
     lineupto++;
     if (lineupto == 22)
@@ -4553,7 +4561,6 @@ static int cprintf(char *format, ...)
         else
         {
             memcpy(tbuf, p, q - p);
-            lastopread = 0;
 #ifdef FORCEANSI
             if (cons_type == 1052)
 #else
