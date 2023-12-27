@@ -76,6 +76,10 @@
 
 #include "__memmgr.h"
 
+/* force the use of EBCDIC ANSI even on a 3270 terminal,
+   so that real hardware with an OSA-ICC can be used */
+#define FORCEANSI
+
 #define S370_MAXMB 16 /* maximum MB in a virtual address space for S/370 */
 #define NUM_GPR 16 /* number of general purpose registers */
 #define NUM_CR 16 /* number of control registers */
@@ -830,9 +834,15 @@ static DCB *gendcb = NULL; /* +++ need to eliminate this state info */
 static IOB geniob; /* +++ move this somewhere */
 static char lastds[FILENAME_MAX]; /* needs to be in TIOT */
 static int memid = 256; /* this really belongs in the address space */
+#ifdef FORCEANSI
+static int cons_type = 1052;
+#else
 static int cons_type = 3270; /* do we have a 1052 or 3215? */
+#endif
 static unsigned char *ramdisk = NULL;
 static char intbuf[6+22*80+7]; /* buffer used for 3270 writes */
+
+static int lastopread = 0; /* was last operation a read? */
 
 void gotret(void);
 int adisp(void);
@@ -1100,6 +1110,9 @@ int pdosInit(PDOS *pdos)
                         {
                             cons_type = 1052;
                         }
+#ifdef FORCEANSI
+                        cons_type = 1052;
+#endif
                         break;
                     }
                     ctr++;
@@ -1382,6 +1395,7 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                     {
                         memcpy(intbuf + 6, "XX", 2);
                     }
+                    lastopread = 1;
                     __conswr(sizeof intbuf, intbuf, 0);
                     intbuf[0] = 0x41; /* lock keyboard for next time */
                     cnt = __c3270r(300, tbuf);
@@ -1413,7 +1427,19 @@ static int pdosDispatchUntilInterrupt(PDOS *pdos)
                 }
                 else
                 {
+#ifdef FORCEANSI
+                    if (!lastopread)
+                    {
+                        if (cons_type == 1052)
+                        {
+                            __conswr(1, "\x11", 0); /* send XON */
+                        }
+                        lastopread = 1;
+                    }
+                    cnt = __c3270r(300, tbuf);
+#else
                     cnt = __consrd(300, tbuf);
+#endif
                     /* hack - PDPCLIB MVS routines cannot currently handle
                        EOF being reached (a count of 0 seems to do that,
                        which happens when the remote disconnects) and cleared,
@@ -4468,6 +4494,7 @@ static void write3270(char *buf, size_t lenbuf, int cr)
             }
             intbuf[6 + x * 2 + 0] = 'X';
             intbuf[6 + x * 2 + 1] = 'X';
+            lastopread = 0;
             __conswr(sizeof intbuf, intbuf, 0);
             return;
         }
@@ -4475,6 +4502,7 @@ static void write3270(char *buf, size_t lenbuf, int cr)
     }
     memset(intbuf + 6 + lineupto * 80, ' ', 80);
     memcpy(intbuf + 6 + lineupto * 80, buf, lenbuf);
+    lastopread = 0;
     __conswr(sizeof intbuf, intbuf, 0);
     lineupto++;
     if (lineupto == 22)
@@ -4511,6 +4539,12 @@ static int cprintf(char *format, ...)
         else
         {
             cr = 1; /* assembler needs to do with CR */
+#ifdef FORCEANSI
+            if (cons_type == 1052)
+            {
+                q++;
+            }
+#endif
         }
         if ((cons_type == 3270) || (cons_type == 3275))
         {
@@ -4519,7 +4553,19 @@ static int cprintf(char *format, ...)
         else
         {
             memcpy(tbuf, p, q - p);
-            __conswr(q - p, tbuf, cr);
+            lastopread = 0;
+#ifdef FORCEANSI
+            if (cons_type == 1052)
+#else
+            if (0)
+#endif
+            {
+                __conswr(q - p, tbuf, 0);
+            }
+            else
+            {
+                __conswr(q - p, tbuf, cr);
+            }
         }
         p = q;
         if (cr)
