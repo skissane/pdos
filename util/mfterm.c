@@ -42,6 +42,9 @@
 /* define this if you need to negotiate past a splash screen */
 #define HERCSPLASH 1
 
+/* use XOFF logic to accumulate bytes */
+#define XOFFLOGIC
+
 #if 0
 
 Here is a list of control characters. 6 will need to be
@@ -96,6 +99,7 @@ F - ctrl-O - AVAILABLE
 #include <stdlib.h>
 
 #define XON 0x11
+#define XOFF 0x13
 #define MENU 0x1d
 
 #define IAC 0xff /* telnet */
@@ -279,6 +283,9 @@ static void negotiate(FILE *sf)
     /* printf("writing\n"); */
     /* IAC WILL TERM_TYPE */
     fwrite("\xff\xfb\x18", 1, 3, sf);
+#ifdef XOFFLOGIC
+    fputc(XOFF, sf);
+#endif
 
     if (!extend || !ALTEXT)
     {
@@ -315,6 +322,9 @@ static void negotiate(FILE *sf)
     }
     fwrite("\xff\xf0", 1, 2, sf);
 
+#ifdef XOFFLOGIC
+    fputc(XOFF, sf);
+#endif
     }
 
     if ((termtype == 1052) || (termtype == 1057))
@@ -325,10 +335,17 @@ static void negotiate(FILE *sf)
     expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
     fseek(sf, 0, SEEK_CUR);
     fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
+#ifdef XOFFLOGIC
+    fputc(XOFF, sf);
+#endif
     fseek(sf, 0, SEEK_CUR);
     expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
     fseek(sf, 0, SEEK_CUR);
     fwrite("\xff\xfd\x00" "\xff\xfb\x00", 6, 1, sf);
+#ifdef XOFFLOGIC
+    fputc(XOFF, sf);
+#endif
+
 #else
     fseek(sf, 0, SEEK_CUR);
     /* IAC WILL ECHO */
@@ -563,7 +580,7 @@ static void interact(FILE *sf)
                     {
                         cnt = 0;
                         ign3275 = 0;
-
+                        
                         /* the 1057 needs to ignore the Hercules/OSA markup */
                         if (termtype != 1057)
                         {
@@ -728,11 +745,17 @@ static void interact(FILE *sf)
                         }
                         /* printf("writing %x\n", c); */
                         fputc(c, sf);
+                        /* this is for PDOS */
+                        fputc(XON, sf);
                         if (HERCSPLASH)
                         {
                             /* printf("writing eor\n"); */
                             fwrite("\xff\xef", 1, 2, sf);
                         }
+#ifdef XOFFLOGIC
+                        /* this is for modem */
+                        fputc(XOFF, sf);
+#endif
                     }
                 }
                 else if (termtype == 3275)
