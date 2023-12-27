@@ -39,6 +39,9 @@
 /* Joes's OSA-ICC system should be 0 */
 #define ALTEXT 0
 
+/* define this if you need to negotiate past a splash screen */
+#define HERCSPLASH 1
+
 #if 0
 
 Here is a list of control characters. 6 will need to be
@@ -288,10 +291,10 @@ static void negotiate(FILE *sf)
     /* printf("writing\n"); */
     /* IAC SB TERM_TYPE IS (ANSI) IAC SE */
     fwrite("\xff\xfa\x18\x00", 1, 4, sf);
-    if ((termtype == 3270) || (termtype == 3275))
+    if (HERCSPLASH || (termtype == 3270) || (termtype == 3275))
     {
         printf("writing IBM-3270\n");
-        if (1) /* extend) */
+        if (1) /* (!HERCSPLASH) */ /* was 1 - was - extend) */
         {
             printf("actually IBM-3278-2\n");
             fwrite("IBM-3278-2", 1, 10, sf);
@@ -316,6 +319,17 @@ static void negotiate(FILE *sf)
 
     if ((termtype == 1052) || (termtype == 1057))
     {
+#if HERCSPLASH
+    fseek(sf, 0, SEEK_CUR);
+    /* get fd first, but must respond fb first */
+    expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
+    fseek(sf, 0, SEEK_CUR);
+    fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
+    fseek(sf, 0, SEEK_CUR);
+    expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
+    fseek(sf, 0, SEEK_CUR);
+    fwrite("\xff\xfd\x00" "\xff\xfb\x00", 6, 1, sf);
+#else
     fseek(sf, 0, SEEK_CUR);
     /* IAC WILL ECHO */
     expect(sf, "\xff\xfb\x01", 3);
@@ -324,7 +338,38 @@ static void negotiate(FILE *sf)
     /* printf("writing\n"); */
     /* IAC DO ECHO */
     fwrite("\xff\xfd\x01", 1, 3, sf);
+#endif
     }
+
+    printf("looking for splash\n");
+#if HERCSPLASH
+    fseek(sf, 0, SEEK_CUR);
+    /* splash screen? */
+    /* expect(sf, "\xf5\x42\x11\x40", 4); */
+        {
+            int x = 0;
+            int c;
+
+            while (1)
+            {
+                c = fgetc(sf);
+                /* printf("c from logo is %02X\n", c); */
+                if (c == EOF) break;
+                if (c == IAC)
+                {
+                    x++;
+                    c = fgetc(sf);
+                    if (c == 0xef)
+                    {
+                        x++;
+                        printf("read and discarded %d bytes of logo data\n", x);
+                        break;
+                    }
+                }
+                x++;
+            }
+        }
+#endif
 
     if ((termtype == 3270) || (termtype == 3275))
     {
@@ -474,12 +519,25 @@ static void interact(FILE *sf)
         ign3275 = 0;
         while (1)
         {
+            /* printf("about to fgetc\n"); */
             c = fgetc(sf);
             cnt++;
             /* printf("ccc is %x %d\n", c, cnt++); */
+#if HERCSPLASH
+            if (c == 0xf1)
+            {
+                /* printf("skip f1\n"); */
+                continue;
+            }
+#endif
+
             if ((termtype == 1052) || (termtype == 1057))
             {
                 if ((c == EOF) || (c == XON)) break;
+#if HERCSPLASH
+                if (c == IAC) {}
+                else
+#endif
                 if (termtype == 1057)
                 {
                     c = febc(c);
@@ -494,7 +552,8 @@ static void interact(FILE *sf)
                 }
                 fflush(stdout);
             }
-            else if ((termtype == 3270) || (termtype == 3275))
+            /* hercsplash goes through both */
+            if (HERCSPLASH || (termtype == 3270) || (termtype == 3275))
             {
                 if (c == IAC)
                 {
@@ -504,6 +563,10 @@ static void interact(FILE *sf)
                     {
                         cnt = 0;
                         ign3275 = 0;
+
+                        /* the 1057 needs to ignore the Hercules/OSA markup */
+                        if (termtype != 1057)
+                        {
                         /* if the keyboard is unlocked, we need to type
                            something */
                         if (keybcode == 0xc3)
@@ -512,6 +575,8 @@ static void interact(FILE *sf)
                             /* printf("time for keyboard\n"); */
                             break;
                         }
+                        }
+                        /* printf("got EOR, continuing\n"); */
                         continue;
                     }
                     /* ignore any IAC commands */
@@ -520,9 +585,10 @@ static void interact(FILE *sf)
                 /* the first character received is x'f1' which is a write
                    command, added by Hercules, not PDOS. That's what the
                    +1 is about */
-                /* the zPDT seems to send x'01' instead of x'f1'. no idea
+                /* zPDT seems to send x'01' instead of x'f1'. no idea
                    what the difference is. */
                 /* ignore first 6+1 characters */
+#if !HERCSPLASH
                 if (cnt == 2)
                 {
                     keybcode = c;
@@ -596,6 +662,7 @@ static void interact(FILE *sf)
                         fflush(stdout);
                     }
                 }
+#endif
             }
         }
         if (c == XON)
@@ -654,7 +721,18 @@ static void interact(FILE *sf)
                     c = tebc(c);
                     if (c != 0)
                     {
+                        if (HERCSPLASH)
+                        {
+                            /* printf("writing 7d\n"); */
+                            /* fwrite("\x7d", 1, 1, sf); */
+                        }
+                        /* printf("writing %x\n", c); */
                         fputc(c, sf);
+                        if (HERCSPLASH)
+                        {
+                            /* printf("writing eor\n"); */
+                            fwrite("\xff\xef", 1, 2, sf);
+                        }
                     }
                 }
                 else if (termtype == 3275)
