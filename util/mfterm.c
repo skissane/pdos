@@ -228,6 +228,10 @@ static void negotiate(FILE *sf)
         printf("writing wont 3270e\n");
         /* IAC WONT TN3270E */
         fwrite("\xff\xfc\x28", 1, 3, sf);
+#ifdef XOFFLOGIC
+    fputc(XOFF, sf);
+#endif
+
 #endif
     }
 
@@ -329,22 +333,29 @@ static void negotiate(FILE *sf)
 
     if ((termtype == 1052) || (termtype == 1057))
     {
+    /* the ICC will send 3 separate packets, and
+       modem.c won't consolidate them, so this logic
+       needs to be split */
 #if HERCSPLASH
     fseek(sf, 0, SEEK_CUR);
     /* get fd first, but must respond fb first */
-    expect(sf, "\xff\xfd\x19" "\xff\xfb\x19", 6);
+    expect(sf, "\xff\xfd\x19", 3);
     fseek(sf, 0, SEEK_CUR);
     fwrite("\xff\xfb\x19" "\xff\xfd\x19", 6, 1, sf);
 #ifdef XOFFLOGIC
     fputc(XOFF, sf);
 #endif
+
     fseek(sf, 0, SEEK_CUR);
-    expect(sf, "\xff\xfd\x00" "\xff\xfb\x00", 6);
+    expect(sf, "\xff\xfb\x19" "\xff\xfd\x00", 6);
     fseek(sf, 0, SEEK_CUR);
-    fwrite("\xff\xfd\x00" "\xff\xfb\x00", 6, 1, sf);
+    fwrite("\xff\xfb\x00" "\xff\xfd\x00", 6, 1, sf);
 #ifdef XOFFLOGIC
     fputc(XOFF, sf);
 #endif
+
+    fseek(sf, 0, SEEK_CUR);
+    expect(sf, "\xff\xfb\x00", 3);
 
 #else
     fseek(sf, 0, SEEK_CUR);
