@@ -120,6 +120,9 @@ static char luname[50] = "";
 
 static int extend = 0;
 
+/* counter used in TN3270E */
+static char buildup[5];
+
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
@@ -627,16 +630,25 @@ static void interact(FILE *sf)
     int keybcode = 0;
     int ign3275;
     static char *hex = "0123456789ABCDEF";
+    int gotxon;
 
     while (c != EOF)
     {
         fseek(sf, 0, SEEK_CUR);
         cnt = 0;
         ign3275 = 0;
+        gotxon = 0;
         while (1)
         {
             /* printf("about to fgetc\n"); */
             c = fgetc(sf);
+            if ((termtype == 1057) && extend)
+            {
+                if (cnt < sizeof buildup)
+                {
+                    buildup[cnt] = c;
+                }
+            }
             cnt++;
             /* printf("ccc is %x %d\n", c, cnt++); */
 #if HERCSPLASH
@@ -649,7 +661,17 @@ static void interact(FILE *sf)
 
             if ((termtype == 1052) || (termtype == 1057))
             {
-                if ((c == EOF) || (c == XON)) break;
+                if ((c == EOF) || (c == XON))
+                {
+                    if (extend)
+                    {
+                        /* need to defer to EOR so that we
+                           can do the ACK first */
+                        gotxon = 1;
+                        continue;
+                    }
+                    break;
+                }
 #if HERCSPLASH
                 if (c == IAC) {}
                 else
@@ -691,6 +713,25 @@ static void interact(FILE *sf)
                             /* printf("time for keyboard\n"); */
                             break;
                         }
+                        }
+                        /* 1057 extended needs to respond to every message */
+                        else if (extend)
+                        {
+                            fseek(sf, 0, SEEK_CUR);
+                            buildup[0] = buildup[2];
+                            buildup[2] = '\x00';
+                            fwrite(buildup, 1, sizeof buildup, sf);
+                            fputc(0x00, sf);
+                            fwrite("\xff\xef", 1, 2, sf);
+#ifdef XOFFLOGIC
+                            fputc(XOFF, sf);
+#endif
+                            if (gotxon)
+                            {
+                                c = XON;
+                                break;
+                            }
+                            fseek(sf, 0, SEEK_CUR);
                         }
                         /* printf("got EOR, continuing\n"); */
                         continue;
