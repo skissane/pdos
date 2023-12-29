@@ -213,7 +213,7 @@ static void negotiate(FILE *sf)
         /* IAC DO TN3270E */
         expect(sf, "\xff\xfd\x28", 3);
 
-#if 0
+#if 1
         fseek(sf, 0, SEEK_CUR);
         printf("writing will 3270e\n");
         /* IAC WILL TN3270E */
@@ -224,18 +224,22 @@ static void negotiate(FILE *sf)
            so we'll try extended (above) instead */
         /* I think that was an unrelated error, so maybe
            try this "easy" option again? */
+        /* It was indeed an unrelated error. Unfortunately
+           at the end of the "easy" option, the OSA-ICC
+           hung, so we're back to doing 3270e */
         fseek(sf, 0, SEEK_CUR);
         printf("writing wont 3270e\n");
         /* IAC WONT TN3270E */
         fwrite("\xff\xfc\x28", 1, 3, sf);
-#ifdef XOFFLOGIC
-    fputc(XOFF, sf);
 #endif
 
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
 #endif
+
     }
 
-#if 0
+#if 1
     if (extend)
     {
         fseek(sf, 0, SEEK_CUR);
@@ -253,6 +257,8 @@ static void negotiate(FILE *sf)
 #endif
         /* IAC SB TN3270E DEVICE-TYPE REQUEST xxx */
         fwrite("\xff\xfa\x28\x02\x07" "IBM-3278-2", 1, 15, sf);
+        fwrite("-E", 1, 2, sf); /* I don't think we need this extended
+                                   - try deleting after we match c3270 */
         if (strcmp(luname, "") != 0)
         {
             /* CONNECT yyy */
@@ -261,6 +267,82 @@ static void negotiate(FILE *sf)
         }
         /* IAC SE */
         fwrite("\xff\xf0", 1, 2, sf);
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
+#endif
+
+
+
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        /* this looks like an echo of the luname - TERM - so
+           we need to be more flexible with the expect - and
+           may as well do an expect of the terminal type the
+           same way */
+        expect(sf, "\xff\xfa\x28\x02\x04\x49\x42\x4d\x2d\x33"
+                   "\x32\x37\x38\x2d\x32\x2d\x45\x01\x54\x45"
+                   "\x52\x4d\xff\xf0", 24);
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        fwrite("\xff\xfa\x28\x03\x07\x00\x02\x04\xff\xf0", 1, 10, sf);
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
+#endif
+
+
+
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        expect(sf, "\xff\xfa\x28\x03\x07\x02\xff\xf0", 8);
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        fwrite("\xff\xfa\x28\x03\x04\x02\xff\xf0", 1, 8, sf);
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
+#endif
+
+
+
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        expect(sf, "\x00\x00\x00\x00\x00\x0d\x44\xff\xef", 9);
+
+        fseek(sf, 0, SEEK_CUR);
+        /* send a null to get another message */
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
+#endif
+
+
+
+
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        expect(sf, "\x00\x00\x00\x00\x00\x02\xff\xef", 8);
+
+        printf("ready to write thousands of NULs\n");
+        fseek(sf, 0, SEEK_CUR);
+        /* don't know */
+        fwrite("\x00\x00\x00\x00\x00\x60\x40\x40", 1, 8, sf);
+        {
+            int x;
+            for (x = 0; x < 1930 - 8 - 2; x++)
+            {
+                fputc(0x00, sf);
+            }
+        }
+        fwrite("\xff\xef", 1, 2, sf);
+#ifdef XOFFLOGIC
+        fputc(XOFF, sf);
+#endif
+
+
+
 
 #if 0
         fseek(sf, 0, SEEK_CUR);
@@ -272,13 +354,18 @@ static void negotiate(FILE *sf)
         /* IAC WONT TN3270E IAC DO TERMINAL_TYPE */
         expect(sf, "\xff\xfc\x28\xff\xfd\x18", 6);
 #endif
+
+#if 0
         fseek(sf, 0, SEEK_CUR);
         /* IAC DONT TN3270E */
         expect(sf, "\xff\xfe\x28", 3);
         /* fall through to expect request to do terminal type */
+#endif
     }
 #endif
 
+    if (!extend) /* || !ALTEXT) */
+    {
     fseek(sf, 0, SEEK_CUR);
     /* IAC DO TERM_TYPE */
     expect(sf, "\xff\xfd\x18", 3);
@@ -291,8 +378,6 @@ static void negotiate(FILE *sf)
     fputc(XOFF, sf);
 #endif
 
-    if (!extend || !ALTEXT)
-    {
 
     fseek(sf, 0, SEEK_CUR);
     /* IAC SB TERM_TYPE SEND IAC SE */
@@ -333,6 +418,8 @@ static void negotiate(FILE *sf)
 
     if ((termtype == 1052) || (termtype == 1057))
     {
+    if (!extend)
+    {
     /* the ICC will send 3 separate packets, and
        modem.c won't consolidate them, so this logic
        needs to be split */
@@ -368,6 +455,7 @@ static void negotiate(FILE *sf)
     fwrite("\xff\xfd\x01", 1, 3, sf);
 #endif
     }
+    } /* !extend */
 
     printf("looking for splash\n");
 #if HERCSPLASH
