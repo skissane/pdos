@@ -123,6 +123,9 @@ static int extend = 0;
 /* counter used in TN3270E */
 static char buildup[5];
 
+/* global counter of messages sent */
+static int globcount = 0;
+
 static void negotiate(FILE *sf);
 static void interact(FILE *sf);
 static void expect(FILE *sf, unsigned char *buf, size_t buflen);
@@ -878,6 +881,12 @@ static void interact(FILE *sf)
                     c = tebc(c);
                     if (c != 0)
                     {
+                        if (extend)
+                        {
+                            globcount++;
+                            fwrite("\x00\x00\x00\x00", 1, 4, sf);
+                            fputc(globcount, sf);
+                        }
                         if (HERCSPLASH)
                         {
                             /* printf("writing 7d\n"); */
