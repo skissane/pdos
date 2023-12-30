@@ -673,11 +673,14 @@ static void interact(FILE *sf)
             {
                 if ((c == EOF) || (c == XON))
                 {
-                    if (extend && (cnt > sizeof buildup))
+                    if (extend)
                     {
-                        /* need to defer to EOR so that we
-                           can do the ACK first */
-                        gotxon = 1;
+                        if (cnt > sizeof buildup)
+                        {
+                            /* need to defer to EOR so that we
+                               can do the ACK first */
+                            gotxon = 1;
+                        }
                         continue;
                     }
                     break;
