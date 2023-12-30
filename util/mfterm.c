@@ -10,6 +10,13 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* Probably want to have a generic protocol for creating
+   TCP/IP packets, that doesn't rely on timeouts. So send
+   an XOFF before sending either an XOFF as data, or an
+   XON as a TCP/IP control. But the TCP/IP packets themselves
+   are still created externally (via qemu or whatever). So
+   this is not implementing SLIP/PPP (my understanding) */
+
 /* Note that the EBCDIC ANSI protocol works in that mfterm
    solicits input from the keyboard, but won't interpret an
    ANSI X3.64 escape sequence. It just passes it to the
@@ -666,7 +673,7 @@ static void interact(FILE *sf)
             {
                 if ((c == EOF) || (c == XON))
                 {
-                    if (extend)
+                    if (extend && (cnt > sizeof buildup))
                     {
                         /* need to defer to EOR so that we
                            can do the ACK first */
