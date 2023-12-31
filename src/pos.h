@@ -451,6 +451,9 @@ unsigned int PosLoadFonts(int start,
 /* F6,4E - map accent */
 unsigned int PosAccentMap(int accent_key, unsigned char *newmap);
 
+/* F6,4F - Internal system call for DLLs */
+unsigned int PosWinSyscall(unsigned int function_index, void *arguments);
+
 unsigned int PosAbsoluteDiskRead(int drive, unsigned long start_sector,
                                  unsigned int sectors,void *buf); /*INT25 */
 

@@ -10,9 +10,12 @@
 # This makefile builds 32-bit pdos.exe (aka PDOS.SYS) on Windows.
 # makefile.pdw in PDPCLIB must be used before using this makefile to produce the pdos.a.
 
+VPATH=../pfp/svga;../pdld/src/bytearray
+
 CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib
+COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib \
+      -I../pfp/svga -I../pdld/src/bytearray -I.
 AS=pdas
 AR=xar
 LD=pdld
@@ -20,7 +23,8 @@ LD=pdld
 TARGET=pdos.exe
 TEMP_ARCHIVE=os.lib
 ARCHIVE_OBJS=bos.obj fat.obj ../bios/exeload.obj physmem.obj vmm.obj process.obj int21.obj uart.obj \
-             int80.obj log.obj helper.obj memmgr.obj patmat.obj supportf.obj protintp.obj protintf.obj pdosf.obj
+             int80.obj log.obj helper.obj memmgr.obj patmat.obj supportf.obj protintp.obj protintf.obj pdosf.obj \
+             wingui.obj svga.obj vesa_bytearray.obj bytearray.obj
 OBJS=strt32.obj pdos.obj
 
 all: clean $(TARGET)

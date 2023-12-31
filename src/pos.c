@@ -2304,6 +2304,24 @@ unsigned int PosAccentMap(int accent_key, unsigned char *newmap)
 #endif
 }
 
+#if defined(__32BIT__)
+/* F6,4F - Internal system call for DLLs */
+unsigned int PosWinSyscall(unsigned int function_index, void *arguments)
+{
+    union REGS regsin;
+    union REGS regsout;
+
+    regsin.h.ah = 0xF6;
+    regsin.h.al = 0x4F;
+
+    regsin.d.edx = function_index;
+    regsin.d.ebx = (unsigned long)arguments;
+
+    int86(0x21, &regsin, &regsout);
+    return ((unsigned int)(regsout.d.eax));
+}
+#endif
+
 
 /*int 25 function call*/
 unsigned int PosAbsoluteDiskRead(int drive,unsigned long start_sector,

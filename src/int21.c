@@ -1482,6 +1482,10 @@ static void int21handler(union REGS *regsin,
                 regsout->d.eax = PosAccentMap(regsin->d.ecx,
                                               (unsigned char *)regsin->d.ebx);
             }
+            else if (regsin->h.al == 0x4F)
+            {
+                regsout->d.eax = PosWinSyscall(regsin->d.edx, (void *)(regsin->d.ebx));
+            }
 #endif
             else
             {

@@ -20,6 +20,8 @@
 #include <liballoc.h>
 #endif
 
+#include "dllsyscall.h"
+
 static DWORD lasterr = 0;
 
 HANDLE WINAPI GetStdHandle(DWORD nStdHandle)
@@ -441,6 +443,11 @@ void WINAPI GetSystemTimeAsFileTime(FILETIME *a)
     return;
 }
 
+HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName)
+{
+    return (HMODULE)system_call_1 (0, lpModuleName);
+}
+
 /* auto-genned dummy functions made compatible with current windows.h */
 BOOL WINAPI ConnectNamedPipe (HANDLE hNamedPipe,
                               LPOVERLAPPED lpOverlapped)
@@ -461,13 +468,6 @@ HANDLE WINAPI CreateNamedPipeA (LPCSTR lpName,
 {
     unsigned int len = 32;
     PosWriteFile(1, "CreateNamedPipeA unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-
-HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName)
-{
-    unsigned int len = 32;
-    PosWriteFile(1, "GetModuleHandleA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 

@@ -17,6 +17,7 @@
         public getEFLAGSAndDisable
         public setEFLAGS
         public callDllEntry
+        public stdcallWithArgCopy
 
         .code
 
@@ -275,6 +276,31 @@ callDllEntry:
         mov     eax, 12[ebp]
         push    eax
 ; Calls the entry point.
+        mov     eax, 8[ebp]
+        call    eax
+        pop     ebp
+        ret
+
+;////////////////////////////////////////////////////////////
+; unsigned int stdcallWithArgCopy(void *function, void *arguments,
+;                                 unsigned int num_args);
+; Calls the provided function using __stdcall convention
+; with arguments copied from memory.
+stdcallWithArgCopy:
+        push    ebp
+        mov     ebp, esp   
+; Copies arguments from memory.
+        mov     ecx, 16[ebp]
+        test    ecx, ecx
+        jz      end_loop
+        mov     eax, 12[ebp]
+        sub     eax, 4
+copy_loop:
+        push    [eax + ecx*4]
+        sub     ecx, 1
+        jnz     copy_loop
+end_loop:
+; Calls the function.
         mov     eax, 8[ebp]
         call    eax
         pop     ebp
