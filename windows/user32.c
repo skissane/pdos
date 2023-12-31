@@ -11,13 +11,13 @@
 #include <windows.h>
 #include <pos.h>
 
-/* auto-genned dummy functions made compatible with current windows.h */
+#include "dllsyscall.h"
+#define INDEX_START 1
+
 HDC WINAPI BeginPaint (HWND hWnd,
                        LPPAINTSTRUCT lpPaint)
 {
-    unsigned int len = 26;
-    PosWriteFile(1, "BeginPaint unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HDC)system_call_2 (INDEX_START, hWnd, lpPaint);
 }
 
 HWND WINAPI CreateWindowExA (DWORD dwExStyle,
@@ -33,9 +33,19 @@ HWND WINAPI CreateWindowExA (DWORD dwExStyle,
                              HINSTANCE hInstance,
                              LPVOID lpParam)
 {
-    unsigned int len = 31;
-    PosWriteFile(1, "CreateWindowExA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HWND)system_call_12 (INDEX_START + 1,
+                                 dwExStyle,
+                                 lpClassName,
+                                 lpWindowName,
+                                 dwStyle,
+                                 X,
+                                 Y,
+                                 nWidth,
+                                 nHeight,
+                                 hWndParent,
+                                 hMenu,
+                                 hInstance,
+                                 lpParam);
 }
 
 LRESULT WINAPI DefWindowProcA (HWND hWnd,
@@ -43,16 +53,16 @@ LRESULT WINAPI DefWindowProcA (HWND hWnd,
                                WPARAM wParam,
                                LPARAM lParam)
 {
-    unsigned int len = 30;
-    PosWriteFile(1, "DefWindowProcA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (LRESULT)system_call_4 (INDEX_START + 2,
+                                   hWnd,
+                                   Msg,
+                                   wParam,
+                                   lParam);
 }
 
 BOOL WINAPI DestroyWindow (HWND hWnd)
 {
-    unsigned int len = 29;
-    PosWriteFile(1, "DestroyWindow unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_1 (INDEX_START + 3, hWnd);
 }
 
 INT_PTR WINAPI DialogBoxIndirectParamA (HINSTANCE hInstance,
@@ -61,47 +71,46 @@ INT_PTR WINAPI DialogBoxIndirectParamA (HINSTANCE hInstance,
                                         DLGPROC lpDialogFunc,
                                         LPARAM dwInitParam)
 {
-    unsigned int len = 39;
-    PosWriteFile(1, "DialogBoxIndirectParamA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (INT_PTR)system_call_5 (INDEX_START + 4,
+                                   hInstance,
+                                   hDialogTemplate,
+                                   hWndParent,
+                                   lpDialogFunc,
+                                   dwInitParam);
 }
 
 LRESULT WINAPI DispatchMessageA (const MSG *lpMsg)
 {
-    unsigned int len = 32;
-    PosWriteFile(1, "DispatchMessageA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (LRESULT)system_call_1 (INDEX_START + 5, lpMsg);
 }
 
 BOOL WINAPI EndDialog (HWND hDlg,
                        INT_PTR nResult)
 {
-    unsigned int len = 25;
-    PosWriteFile(1, "EndDialog unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_2 (INDEX_START + 6,
+                                hDlg,
+                                nResult);
 }
 
 BOOL WINAPI EndPaint (HWND hWnd,
                       const PAINTSTRUCT *lpPaint)
 {
-    unsigned int len = 24;
-    PosWriteFile(1, "EndPaint unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_2 (INDEX_START + 7,
+                                hWnd,
+                                lpPaint);
 }
 
 BOOL WINAPI GetClientRect (HWND hWnd,
                            LPRECT lpRect)
 {
-    unsigned int len = 29;
-    PosWriteFile(1, "GetClientRect unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_2 (INDEX_START + 8,
+                                hWnd,
+                                lpRect);
 }
 
 HDC WINAPI GetDC (HWND hWnd)
 {
-    unsigned int len = 21;
-    PosWriteFile(1, "GetDC unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HDC)system_call_1 (INDEX_START + 9, hWnd);
 }
 
 UINT WINAPI GetDlgItemTextA (HWND hDlg,
@@ -109,9 +118,11 @@ UINT WINAPI GetDlgItemTextA (HWND hDlg,
                              LPSTR lpString,
                              int cchMax)
 {
-    unsigned int len = 31;
-    PosWriteFile(1, "GetDlgItemTextA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (UINT)system_call_4 (INDEX_START + 10,
+                                hDlg,
+                                nIDDlgItem,
+                                lpString,
+                                cchMax);
 }
 
 BOOL WINAPI GetMessageA (LPMSG lpMsg,
@@ -119,33 +130,34 @@ BOOL WINAPI GetMessageA (LPMSG lpMsg,
                          UINT wMsgFilterMin,
                          UINT wMsgFilterMax)
 {
-    unsigned int len = 27;
-    PosWriteFile(1, "GetMessageA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_4 (INDEX_START + 11,
+                                lpMsg,
+                                hWnd,
+                                wMsgFilterMin,
+                                wMsgFilterMax);
 }
 
 int WINAPI GetSystemMetrics (int nIndex)
 {
-    unsigned int len = 32;
-    PosWriteFile(1, "GetSystemMetrics unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (int)system_call_1 (INDEX_START + 12, nIndex);
 }
 
 BOOL WINAPI InvalidateRect (HWND hWnd,
                             const RECT *lpRect,
                             BOOL bErase)
 {
-    unsigned int len = 30;
-    PosWriteFile(1, "InvalidateRect unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_3 (INDEX_START + 13,
+                                hWnd,
+                                lpRect,
+                                bErase);
 }
 
 HCURSOR WINAPI LoadCursorA (HINSTANCE hInstance,
                             LPCSTR lpCursorName)
 {
-    unsigned int len = 27;
-    PosWriteFile(1, "LoadCursorA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HCURSOR)system_call_2 (INDEX_START + 14,
+                                   hInstance,
+                                   lpCursorName);
 }
 
 DWORD WINAPI MsgWaitForMultipleObjects (DWORD nCount,
@@ -154,9 +166,12 @@ DWORD WINAPI MsgWaitForMultipleObjects (DWORD nCount,
                                         DWORD dwMilliseconds,
                                         DWORD dwWakeMask)
 {
-    unsigned int len = 41;
-    PosWriteFile(1, "MsgWaitForMultipleObjects unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (DWORD)system_call_5 (INDEX_START + 15,
+                                 nCount,
+                                 pHandles,
+                                 fWaitAll,
+                                 dwMilliseconds,
+                                 dwWakeMask);
 }
 
 DWORD WINAPI MsgWaitForMultipleObjectsEx (DWORD nCount,
@@ -165,9 +180,12 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx (DWORD nCount,
                                           DWORD dwWakeMask,
                                           DWORD dwFlags)
 {
-    unsigned int len = 43;
-    PosWriteFile(1, "MsgWaitForMultipleObjectsEx unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (DWORD)system_call_5 (INDEX_START + 16,
+                                 nCount,
+                                 pHandles,
+                                 dwMilliseconds,
+                                 dwWakeMask,
+                                 dwFlags);
 }
 
 BOOL WINAPI PeekMessageA (LPMSG lpMsg,
@@ -176,53 +194,48 @@ BOOL WINAPI PeekMessageA (LPMSG lpMsg,
                           UINT wMsgFilterMax,
                           UINT wRemoveMsg)
 {
-    unsigned int len = 28;
-    PosWriteFile(1, "PeekMessageA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_5 (INDEX_START + 17,
+                                lpMsg,
+                                hWnd,
+                                wMsgFilterMin,
+                                wMsgFilterMax,
+                                wRemoveMsg);
 }
 
 void WINAPI PostQuitMessage (int nExitCode)
 {
-    unsigned int len = 31;
-    PosWriteFile(1, "PostQuitMessage unimplemented\r\n", len, &len);
-    for (;;) ;
+    system_call_1 (INDEX_START + 18, nExitCode);
 }
 
 ATOM WINAPI RegisterClassA (const WNDCLASSA *lpWndClass)
 {
-    unsigned int len = 30;
-    PosWriteFile(1, "RegisterClassA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (ATOM)system_call_1 (INDEX_START + 19, lpWndClass);
 }
 
 int WINAPI ReleaseDC (HWND hWnd,
                       HDC hDC)
 {
-    unsigned int len = 25;
-    PosWriteFile(1, "ReleaseDC unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (int)system_call_2 (INDEX_START + 20,
+                               hWnd,
+                               hDC);
 }
 
 BOOL WINAPI ShowWindow (HWND hWnd,
                         int nCmdShow)
 {
-    unsigned int len = 26;
-    PosWriteFile(1, "ShowWindow unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_2 (INDEX_START + 21,
+                                hWnd,
+                                nCmdShow);
 }
 
 BOOL WINAPI TranslateMessage (const MSG *lpMsg)
 {
-    unsigned int len = 32;
-    PosWriteFile(1, "TranslateMessage unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_1 (INDEX_START + 22, lpMsg);
 }
 
 BOOL WINAPI UpdateWindow (HWND hWnd)
 {
-    unsigned int len = 28;
-    PosWriteFile(1, "UpdateWindow unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_1 (INDEX_START + 23, hWnd);
 }
 
 /* auto-genned dummy functions */

@@ -11,7 +11,9 @@
 #include <windows.h>
 #include <pos.h>
 
-/* auto-genned dummy functions made compatible with current windows.h */
+#include "dllsyscall.h"
+#define INDEX_START 25
+
 BOOL WINAPI BitBlt (HDC hdc,
                     int x,
                     int y,
@@ -22,16 +24,21 @@ BOOL WINAPI BitBlt (HDC hdc,
                     int y1,
                     DWORD rop)
 {
-    unsigned int len = 22;
-    PosWriteFile(1, "BitBlt unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_9 (INDEX_START,
+                                hdc,
+                                x,
+                                y,
+                                cx,
+                                cy,
+                                hdcSrc,
+                                x1,
+                                y1,
+                                rop);
 }
 
 HDC WINAPI CreateCompatibleDC (HDC hdc)
 {
-    unsigned int len = 34;
-    PosWriteFile(1, "CreateCompatibleDC unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HDC)system_call_1 (INDEX_START + 1, hdc);
 }
 
 HBITMAP WINAPI CreateDIBSection (HDC hdc,
@@ -41,30 +48,28 @@ HBITMAP WINAPI CreateDIBSection (HDC hdc,
                                  HANDLE hSection,
                                  DWORD offset)
 {
-    unsigned int len = 32;
-    PosWriteFile(1, "CreateDIBSection unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HBITMAP)system_call_6 (INDEX_START + 2,
+                                   hdc,
+                                   pbmi,
+                                   usage,
+                                   ppvBits,
+                                   hSection,
+                                   offset);
 }
 
 HBRUSH WINAPI CreateSolidBrush (COLORREF color)
 {
-    unsigned int len = 32;
-    PosWriteFile(1, "CreateSolidBrush unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HBRUSH)system_call_1 (INDEX_START + 3, color);
 }
 
 BOOL WINAPI DeleteDC (HDC hdc)
 {
-    unsigned int len = 24;
-    PosWriteFile(1, "DeleteDC unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_1 (INDEX_START + 4, hdc);
 }
 
 BOOL WINAPI DeleteObject (HGDIOBJ ho)
 {
-    unsigned int len = 28;
-    PosWriteFile(1, "DeleteObject unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_1 (INDEX_START + 5, ho);
 }
 
 BOOL WINAPI Rectangle (HDC hdc,
@@ -73,17 +78,20 @@ BOOL WINAPI Rectangle (HDC hdc,
                        int right,
                        int bottom)
 {
-    unsigned int len = 25;
-    PosWriteFile(1, "Rectangle unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_5 (INDEX_START + 6,
+                                hdc,
+                                left,
+                                top,
+                                right,
+                                bottom);
 }
 
 HGDIOBJ WINAPI SelectObject (HDC hdc,
                              HGDIOBJ h)
 {
-    unsigned int len = 28;
-    PosWriteFile(1, "SelectObject unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (HGDIOBJ)system_call_2 (INDEX_START + 7,
+                                   hdc,
+                                   h);
 }
 
 BOOL WINAPI TextOutA (HDC hdc,
@@ -92,9 +100,12 @@ BOOL WINAPI TextOutA (HDC hdc,
                       LPCSTR lpString,
                       int c)
 {
-    unsigned int len = 24;
-    PosWriteFile(1, "TextOutA unimplemented\r\n", len, &len);
-    for (;;) ;
+    return (BOOL)system_call_5 (INDEX_START + 8,
+                                hdc,
+                                x,
+                                y,
+                                lpString,
+                                c);
 }
 
 /* auto-genned dummy functions */
