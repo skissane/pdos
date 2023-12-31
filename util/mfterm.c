@@ -109,6 +109,9 @@ F - ctrl-O - AVAILABLE
 #define XOFF 0x13
 #define MENU 0x1d
 
+/* double splash screen on bare lpar */
+#define DOUBLE 1
+
 #define IAC 0xff /* telnet */
 
 static int noisy = 0;
@@ -472,6 +475,35 @@ static void negotiate(FILE *sf)
 
     printf("looking for splash\n");
 #if HERCSPLASH
+    fseek(sf, 0, SEEK_CUR);
+    /* splash screen? */
+    /* expect(sf, "\xf5\x42\x11\x40", 4); */
+        {
+            int x = 0;
+            int c;
+
+            while (1)
+            {
+                c = fgetc(sf);
+                /* printf("c from logo is %02X\n", c); */
+                if (c == EOF) break;
+                if (c == IAC)
+                {
+                    x++;
+                    c = fgetc(sf);
+                    if (c == 0xef)
+                    {
+                        x++;
+                        printf("read and discarded %d bytes of logo data\n", x);
+                        break;
+                    }
+                }
+                x++;
+            }
+        }
+#endif
+
+#if DOUBLE
     fseek(sf, 0, SEEK_CUR);
     /* splash screen? */
     /* expect(sf, "\xf5\x42\x11\x40", 4); */
