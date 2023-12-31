@@ -110,7 +110,7 @@ F - ctrl-O - AVAILABLE
 #define MENU 0x1d
 
 /* double splash screen on bare lpar */
-#define DOUBLE 1
+#define DOUBLE 0
 
 #define IAC 0xff /* telnet */
 
@@ -296,9 +296,15 @@ static void negotiate(FILE *sf)
            we need to be more flexible with the expect - and
            may as well do an expect of the terminal type the
            same way */
-        expect(sf, "\xff\xfa\x28\x02\x04\x49\x42\x4d\x2d\x33"
-                   "\x32\x37\x38\x2d\x32\x2d\x45\x01\x54\x45"
-                   "\x52\x4d\xff\xf0", 24);
+        expect(sf, "\xff\xfa\x28\x02\x04", 5);
+        expect(sf, "IBM-3278-2", 10);
+        expect(sf, "-E", 2);
+        if (strcmp(luname, "") != 0)
+        {
+            expect(sf, "\x01", 1);
+            expect(sf, luname, strlen(luname));
+        }
+        expect(sf, "xff\xf0", 2);
 
         fseek(sf, 0, SEEK_CUR);
         /* don't know */
@@ -694,7 +700,7 @@ static void interact(FILE *sf)
             cnt++;
             /* printf("ccc is %x %d\n", c, cnt++); */
 #if HERCSPLASH
-            if (c == 0xf1)
+            if ((cnt == 1) && (c == 0xf1))
             {
                 /* printf("skip f1\n"); */
                 continue;
