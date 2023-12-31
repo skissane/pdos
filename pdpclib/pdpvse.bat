@@ -1,3 +1,6 @@
+rem in order to run this, first copy pdp370.mac
+rem (or possibly others) to pdptop.mac
+
 rem del pdpvse.zip
 gccvse -Os -DXXX_MEMMGR -S -I . start.c
 gccvse -Os -DXXX_MEMMGR -S -I . stdio.c
