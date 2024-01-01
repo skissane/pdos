@@ -2,6 +2,13 @@
 # This has the C library statically-linked
 # Build with pdmake -f makefile.mos
 
+# Note that we should also produce a DLL that is compatible
+# with the MSC 6.0 version when you do:
+# c:cdllobjs .
+# cl /AHu /MD /F 4000 world.c crtexe.obj cexample.lib
+# set OS2LIBPATH=. (for Windows 2000, otherwise just LIBPATH)
+# probably want to call the DLL PDPCRT.DLL
+
 # Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
 MODELC=H
 # Choose long form of above name, required by wasm instead of wcl
