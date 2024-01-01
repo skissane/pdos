@@ -11,8 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Without this, WINAPI gets __declspec(dllimport) and tries to import the functions. */
-#define __EXPORT__ 
+/* Note that without __EXPORT__ defined, WINAPI gets
+   __declspec(dllimport) and tries to import the functions. */
+/* So make sure you define that */
+
 #include "windows.h"
 #include "pos.h"
 #include "svga.h"
