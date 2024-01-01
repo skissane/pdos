@@ -14,7 +14,9 @@ VPATH=../pfp/svga;../pdld/src/bytearray
 
 CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib \
+COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT \
+      -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib \
+      -DW32DLL -D__EXPORT__ \
       -I../pfp/svga -I../pdld/src/bytearray -I.
 AS=pdas
 AR=xar
