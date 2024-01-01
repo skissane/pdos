@@ -2514,6 +2514,105 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     }
                 }
                 }
+                else if (strcmp(exeStart + import_desc->Name, "user32.dll") == 0)
+                {
+                unsigned long *thunk;
+
+                for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
+                     *thunk != 0;
+                     thunk++)
+                {
+                    if ((*thunk) & 0x80000000UL)
+                    {
+                        /* Bit 31 set, import by ordinal. */
+                        printf("ordinal import not supported\n");
+                        return (2);
+                    }
+                    else
+                    {
+                        /* Import by name. */
+                        unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffUL);
+                        int i;
+
+                        /* The first 2 bytes are hint index,
+                         * so they are skipped to get the name. */
+                        hintname += 2;
+                        /* printf("hintname is X%sX\n", hintname); */
+                        if (strcmp(hintname, "BeginPaint") == 0)
+                        {
+                            *thunk = (unsigned long)BeginPaint;
+                        }
+                        else if (strcmp((char *)hintname, "CreateWindowExA") == 0)
+                        {
+                            *thunk = (unsigned long)CreateWindowExA;
+                        }
+                        else if (strcmp((char *)hintname, "DefWindowProcA") == 0)
+                        {
+                            *thunk = (unsigned long)DefWindowProcA;
+                        }
+                        else if (strcmp((char *)hintname, "DialogBoxIndirectParamA") == 0)
+                        {
+                            *thunk = (unsigned long)DialogBoxIndirectParamA;
+                        }
+                        else if (strcmp((char *)hintname, "DispatchMessageA") == 0)
+                        {
+                            *thunk = (unsigned long)DispatchMessageA;
+                        }
+                        else if (strcmp((char *)hintname, "EndDialog") == 0)
+                        {
+                            *thunk = (unsigned long)EndDialog;
+                        }
+                        else if (strcmp((char *)hintname, "EndPaint") == 0)
+                        {
+                            *thunk = (unsigned long)EndPaint;
+                        }
+                        else if (strcmp((char *)hintname, "GetDC") == 0)
+                        {
+                            *thunk = (unsigned long)GetDC;
+                        }
+                        else if (strcmp((char *)hintname, "GetDlgItemTextA") == 0)
+                        {
+                            *thunk = (unsigned long)GetDlgItemTextA;
+                        }
+                        else if (strcmp((char *)hintname, "GetMessageA") == 0)
+                        {
+                            *thunk = (unsigned long)GetMessageA;
+                        }
+                        else if (strcmp((char *)hintname, "GetSystemMetrics") == 0)
+                        {
+                            *thunk = (unsigned long)GetSystemMetrics;
+                        }
+                        else if (strcmp((char *)hintname, "LoadCursorA") == 0)
+                        {
+                            *thunk = (unsigned long)LoadCursorA;
+                        }
+                        else if (strcmp((char *)hintname, "PostQuitMessage") == 0)
+                        {
+                            *thunk = (unsigned long)PostQuitMessage;
+                        }
+                        else if (strcmp((char *)hintname, "RegisterClassA") == 0)
+                        {
+                            *thunk = (unsigned long)RegisterClassA;
+                        }
+                        else if (strcmp((char *)hintname, "ReleaseDC") == 0)
+                        {
+                            *thunk = (unsigned long)ReleaseDC;
+                        }
+                        else if (strcmp((char *)hintname, "TranslateMessage") == 0)
+                        {
+                            *thunk = (unsigned long)TranslateMessage;
+                        }
+                        else
+                        {
+                            printf("unknown hintname %s\n", hintname);
+                            /* probably want a stdcall version, but that
+                               won't be possible since we don't know how
+                               many parameters to clear */
+                            *thunk = (unsigned long)dummyfunc;
+                        }
+                    }
+                }
+                }
                 else
                 {
 #endif
