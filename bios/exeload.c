@@ -35,6 +35,10 @@
 #include <os2.h>
 #endif
 
+#ifdef W32DLL
+#include <windows.h>
+#endif
+
 #include "exeload.h"
 
 /* Headers for executable support. */
@@ -2441,6 +2445,78 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     }
                 }
 #else
+
+#ifdef W32DLL
+                if (strcmp(exeStart + import_desc->Name, "gdi32.dll") == 0)
+                {
+                unsigned long *thunk;
+
+                for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
+                     *thunk != 0;
+                     thunk++)
+                {
+                    if ((*thunk) & 0x80000000UL)
+                    {
+                        /* Bit 31 set, import by ordinal. */
+                        printf("ordinal import not supported\n");
+                        return (2);
+                    }
+                    else
+                    {
+                        /* Import by name. */
+                        unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffUL);
+                        int i;
+
+                        /* The first 2 bytes are hint index,
+                         * so they are skipped to get the name. */
+                        hintname += 2;
+                        /* printf("hintname is X%sX\n", hintname); */
+                        if (strcmp(hintname, "BitBlt") == 0)
+                        {
+                            *thunk = (unsigned long)BitBlt;
+                        }
+                        else if (strcmp((char *)hintname, "CreateCompatibleDC") == 0)
+                        {
+                            *thunk = (unsigned long)CreateCompatibleDC;
+                        }
+                        else if (strcmp((char *)hintname, "CreateDIBSection") == 0)
+                        {
+                            *thunk = (unsigned long)CreateDIBSection;
+                        }
+                        else if (strcmp((char *)hintname, "CreateSolidBrush") == 0)
+                        {
+                            *thunk = (unsigned long)CreateSolidBrush;
+                        }
+                        else if (strcmp((char *)hintname, "DeleteDC") == 0)
+                        {
+                            *thunk = (unsigned long)DeleteDC;
+                        }
+                        else if (strcmp((char *)hintname, "DeleteObject") == 0)
+                        {
+                            *thunk = (unsigned long)DeleteObject;
+                        }
+                        else if (strcmp((char *)hintname, "Rectangle") == 0)
+                        {
+                            *thunk = (unsigned long)Rectangle;
+                        }
+                        else if (strcmp((char *)hintname, "SelectObject") == 0)
+                        {
+                            *thunk = (unsigned long)SelectObject;
+                        }
+                        else
+                        {
+                            printf("unknown hintname %s\n", hintname);
+                            /* probably want a stdcall version, but that
+                               won't be possible since we don't know how
+                               many parameters to clear */
+                            *thunk = (unsigned long)dummyfunc;
+                        }
+                    }
+                }
+                }
+                else
+                {
+#endif
                 ret = exeloadLoadPEDLL(exeStart, import_desc);
                 if (ret != 0)
                 {
@@ -2448,6 +2524,11 @@ static int exeloadLoadPE(unsigned char **entry_point,
                            exeStart + import_desc->Name, ret);
                     return (2);
                 }
+
+#ifdef W32DLL
+                }
+#endif
+
 #endif
             }
         }
