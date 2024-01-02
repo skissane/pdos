@@ -23,6 +23,7 @@
 #include <math.h>
 #include <time.h>
 #include <assert.h>
+#include <signal.h>
 
 /* moved these defines here to reduce pressure on
    the size of command line */
@@ -2732,6 +2733,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)CreateFileA;
                         }
+                        else if (strcmp((char *)hintname, "CreateDirectoryA") == 0)
+                        {
+                            *thunk = (unsigned long)CreateDirectoryA;
+                        }
+                        else if (strcmp((char *)hintname, "GetFileAttributesA") == 0)
+                        {
+                            *thunk = (unsigned long)GetFileAttributesA;
+                        }
                         else if (strcmp((char *)hintname, "CreateProcessA") == 0)
                         {
                             *thunk = (unsigned long)CreateProcessA;
@@ -2847,6 +2856,18 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "puts") == 0)
                         {
                             *thunk = (unsigned long)puts;
+                        }
+                        else if (strcmp((char *)hintname, "getenv") == 0)
+                        {
+                            *thunk = (unsigned long)getenv;
+                        }
+                        else if (strcmp((char *)hintname, "perror") == 0)
+                        {
+                            *thunk = (unsigned long)perror;
+                        }
+                        else if (strcmp((char *)hintname, "signal") == 0)
+                        {
+                            *thunk = (unsigned long)signal;
                         }
                         else if (strcmp((char *)hintname, "printf") == 0)
                         {
@@ -3589,6 +3610,14 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
                         else if (strcmp((char *)hintname, "CreateFileA") == 0)
                         {
                             *thunk = (unsigned long)CreateFileA;
+                        }
+                        else if (strcmp((char *)hintname, "CreateDirectoryA") == 0)
+                        {
+                            *thunk = (unsigned long)CreateDirectoryA;
+                        }
+                        else if (strcmp((char *)hintname, "GetFileAttributesA") == 0)
+                        {
+                            *thunk = (unsigned long)GetFileAttributesA;
                         }
                         else if (strcmp((char *)hintname, "CreateProcessA") == 0)
                         {
