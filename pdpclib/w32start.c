@@ -72,10 +72,11 @@ void mainCRTStartup(void)
     int startinfo = 0;
     int status;
 
+/* 0 = don't expand wildcards, 1 = expand */
 #ifndef __SUBC__
-    __getmainargs(&argc, &argv, &environ, 1, &startinfo);
+    __getmainargs(&argc, &argv, &environ, 0, &startinfo);
 #else
-    __getmainargs(&argc, &argv, &environ, 1, &startinfo);
+    __getmainargs(&argc, &argv, &environ, 0, &startinfo);
 #endif
 
 #ifdef __WATCOMC__
