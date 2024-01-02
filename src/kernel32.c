@@ -443,10 +443,12 @@ void WINAPI GetSystemTimeAsFileTime(FILETIME *a)
     return;
 }
 
+#ifndef __PDOS386__
 HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName)
 {
     return (HMODULE)system_call_1 (0, lpModuleName);
 }
+#endif
 
 /* auto-genned dummy functions made compatible with current windows.h */
 BOOL WINAPI ConnectNamedPipe (HANDLE hNamedPipe,
