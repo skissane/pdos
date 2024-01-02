@@ -2,7 +2,8 @@
 # For the 32-bit version of PDOS we define __PDOS386__
 
 CC=gccwin
-COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
+COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common \
+      -D__W32DLL__ -D__PDOS386__ -D__32BIT__ -I. -I../src
 AR=xar
 
 pdptest.exe: pdosst32.obj pdptest.obj stdio.obj string.obj stdlib.obj \

@@ -225,7 +225,7 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
 /* the W64SHELL should replace CC64OS */
 
 #if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__) \
-    || defined(__W64SHELL__) || defined(__W32EMUL__)
+    || defined(__W64SHELL__) || defined(__W32EMUL__) || defined(__W32DLL__)
 /* For Windows stdin, stdout and stderr macros
  * are implemented using an array FILE _iob[]
  * where the first three members
