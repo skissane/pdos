@@ -12,22 +12,25 @@
 
 CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -D__PDOS386__ -D__32BIT__ -I../pdpclib
+COPTS=$(CFLAGS) -S -fno-common -D__WIN32__ -D__32BIT__ -I../pdpclib
 AS=pdas
 LD=pdld
 
 TARGET=pcomm.exe
-OBJS=pcomm.obj dostime.obj
+OBJS=pcomm.obj dostime.obj pos.obj supportf.obj
 
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) -s -e ___pdosst32 -o $(TARGET) ../pdpclib/pdosst32.obj $(OBJS) ../pdpclib/pdos.lib
+  $(LD) -s -Map map.txt --no-insert-timestamp -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) --oformat coff -o $@ $*.s
   rm -f $*.s
+
+.asm.obj:
+  as86 -f coff -o $@ $<
 
 clean:
   rm -f *.obj

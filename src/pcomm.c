@@ -88,7 +88,13 @@ static int inBatch = 0;
 static FILE * currentBatchFp = NULL;
 
 /* PDPCLIB defines this as pointer to environment */
-extern char **__envptr;
+/* If using msvcrt.dll then I assume we need our own */
+#ifdef __WIN32__
+static
+#else
+extern
+#endif
+char **__envptr;
 
 /* Flag set to true if genuine PDOS detected */
 static int genuine_pdos = 0;
