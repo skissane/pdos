@@ -1524,6 +1524,8 @@ extern __DUMMYFILE *_imp___iob;
 #ifdef W32DLL
 #define MAXPARMS 50
 
+extern char **__envptr;
+
 #ifndef __SUBC__
 #ifdef __CC64__
 $callback
@@ -1537,6 +1539,7 @@ static int getmainargs(int *_Argc,
     static char *argv[MAXPARMS + 1];
     static char *env[] = {NULL};
 
+    __envptr = PosGetEnvBlock();
     p = PosGetCommandLine();
 
     argv[0] = p;
@@ -1594,6 +1597,12 @@ static int getmainargs(int *_Argc,
     *_Argv = argv;
     return (0);
 }
+
+void w32exit(int status)
+{
+    PosTerminate(status);
+}
+
 #endif
 #endif
 
@@ -2851,7 +2860,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         /* printf("hintname is X%sX\n", hintname); */
                         if (strcmp(hintname, "exit") == 0)
                         {
-                            *thunk = (unsigned long)exit;
+                            *thunk = (unsigned long)w32exit;
                         }
                         else if (strcmp((char *)hintname, "puts") == 0)
                         {
