@@ -2857,6 +2857,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)puts;
                         }
+                        else if (strcmp((char *)hintname, "mktime") == 0)
+                        {
+                            *thunk = (unsigned long)mktime;
+                        }
+                        else if (strcmp((char *)hintname, "putchar") == 0)
+                        {
+                            *thunk = (unsigned long)putchar;
+                        }
                         else if (strcmp((char *)hintname, "getenv") == 0)
                         {
                             *thunk = (unsigned long)getenv;
