@@ -24,6 +24,7 @@
 #include <time.h>
 #include <assert.h>
 #include <signal.h>
+#include <setjmp.h>
 
 /* moved these defines here to reduce pressure on
    the size of command line */
@@ -1600,6 +1601,7 @@ static int getmainargs(int *_Argc,
 
 void w32exit(int status)
 {
+    __envptr = PosGetEnvBlock();
     PosTerminate(status);
 }
 
@@ -2865,6 +2867,34 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "puts") == 0)
                         {
                             *thunk = (unsigned long)puts;
+                        }
+                        else if (strcmp((char *)hintname, "bsearch") == 0)
+                        {
+                            *thunk = (unsigned long)bsearch;
+                        }
+                        else if (strcmp((char *)hintname, "calloc") == 0)
+                        {
+                            *thunk = (unsigned long)calloc;
+                        }
+                        else if (strcmp((char *)hintname, "longjmp") == 0)
+                        {
+                            *thunk = (unsigned long)longjmp;
+                        }
+                        else if (strcmp((char *)hintname, "raise") == 0)
+                        {
+                            *thunk = (unsigned long)raise;
+                        }
+                        else if (strcmp((char *)hintname, "strpbrk") == 0)
+                        {
+                            *thunk = (unsigned long)strpbrk;
+                        }
+                        else if (strcmp((char *)hintname, "strspn") == 0)
+                        {
+                            *thunk = (unsigned long)strspn;
+                        }
+                        else if (strcmp((char *)hintname, "tmpnam") == 0)
+                        {
+                            *thunk = (unsigned long)tmpnam;
                         }
                         else if (strcmp((char *)hintname, "mktime") == 0)
                         {
