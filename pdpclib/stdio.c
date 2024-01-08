@@ -2511,7 +2511,7 @@ static void freadSlowT(void *ptr,
             {
                 if (*(stream->upto - 1) == '\r')
                 {
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__MSDOS__)
                     if ((stream == stdin)
                         && (stream->bufTech == _IONBF))
                     {
