@@ -2493,7 +2493,7 @@ void safegets(char *buffer, int size, bool use_history)
 
 static int cmd_date_run(char *ignored)
 {
-    int y, m, d, dw;
+    unsigned int y, m, d, dw;
     CMD_HAS_NO_ARGS(ignored);
     PosGetSystemDate(&y,&m,&d,&dw);
     printf("%04d-%02d-%02d\n", y, m, d);
