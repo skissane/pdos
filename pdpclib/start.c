@@ -202,7 +202,7 @@ int MAINTYP (*__genmain)(int argc, char **argv) = main;
 #ifndef __SMALLERC__
 extern
 #endif
-unsigned char *__envptr;
+char *__envptr;
 #ifndef __SMALLERC__
 extern
 #endif
@@ -267,7 +267,7 @@ extern EFI_FILE_PROTOCOL *__EfiRoot;
 #if defined(__PDOS386__)
 #include <support.h>
 #include <pos.h>
-unsigned char *__envptr;
+char *__envptr;
 static unsigned int stdin_dw;
 #endif
 
@@ -1150,7 +1150,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     argv[0] = "";
 
 #ifdef __SMALLERC__
-    __envptr = (unsigned char *)
+    __envptr = (char *)
                ((unsigned long)(*(unsigned short *)(p + 0x2c)) << 4);
     __osver = osver;
 #endif
