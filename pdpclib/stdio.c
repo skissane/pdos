@@ -4686,7 +4686,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
         }
 #endif
 #if defined(__PDOS386__)
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             unsigned int dw;
 
@@ -4785,7 +4785,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 #if defined(__PDOS386__)
         if (mode == _IOLBF)
         {
-            if (stream == stdin)
+            if (stream == __stdin)
             {
                 unsigned int dw;
 
