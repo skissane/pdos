@@ -38,7 +38,7 @@ $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
   rm -f $(TEMP_ARCHIVE)
-  $(AR) -r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
+  $(AR) r $(TEMP_ARCHIVE) $(ARCHIVE_OBJS)
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
