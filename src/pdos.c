@@ -212,6 +212,8 @@ static MEMMGR btlmem;
 extern int *G_intloc;
 #endif
 
+extern char *__envptr;
+
 #ifndef __32BIT__
 #ifdef __WATCOMC__
 #define CTYP __cdecl
@@ -5252,7 +5254,10 @@ static void terminateExe32(void)
     /* Process finished, parent becomes current */
     curPCB = newProc->parent;
     if (curPCB != NULL && curPCB->status == PDOS_PROCSTATUS_CHILDWAIT)
+    {
         curPCB->status = PDOS_PROCSTATUS_ACTIVE;
+        __envptr = curPCB->envBlock;
+    }
 
     /* Terminates the process. */
     newProc->status = PDOS_PROCSTATUS_TERMINATED;
@@ -7374,6 +7379,7 @@ int PosSetEnv(char *name, char *value)
 
     /* Update PCB */
     curPCB->envBlock = envPtr;
+    __envptr = envPtr;
 #ifndef __32BIT__
     /* Update the PSP (in 16-bit only) */
     psp = MK_FP(curPCB->pid, 0);
