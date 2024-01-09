@@ -36,6 +36,11 @@ int toupper(int c);
 
 #define isalnum __os->isalnum
 #define isxdigit __os->isxdigit
+#define isdigit __os->isdigit
+#define isalpha __os->isalpha
+#define isprint __os->isprint
+#define isspace __os->isspace
+#define tolower __os->tolower
 
 #else
 extern unsigned short *__isbuf;

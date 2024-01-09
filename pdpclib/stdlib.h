@@ -156,6 +156,7 @@ long _Builtin __labs(long j);
 #define bsearch __os->Xbsearch
 #define abs __os->Xabs
 #define atof __os->Xatof
+#define system __os->Xsystem
 
 #endif
 

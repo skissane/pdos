@@ -148,6 +148,12 @@ typedef struct {
     void (*Xclearerr)(FILE *stream);
     int (*_assert)(char *x, char *y, int z); /* internal use */
     double (*Xatof)(const char *nptr);
+    int (*isdigit)(int c);
+    int (*isalpha)(int c);
+    int (*isprint)(int c);
+    int (*isspace)(int c);
+    int (*tolower)(int c);
+    int (*Xsystem)(const char *string);
 } OS;
 
 extern OS *__os;
