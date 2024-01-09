@@ -72,6 +72,23 @@ void mainCRTStartup(void)
     int startinfo = 0;
     int status;
 
+    /* Default Windows msvcrt.dll wrongly assumes
+     * that pipes do not point to an interactive device
+     * and makes stdout and stderr fully buffered.
+     * PDPCLIB always uses line buffering for stdout and stderr,
+     * so this forces the same behavior on Windows msvcrt.dll.
+     *
+     * But as _IOLBF does not work properly in Windows msvcrt.dll,
+     * _IONBF must be used but it should not be used for PDPCLIB.
+     * That is why _IOLBF is intentionally set to incompatible value
+     * (2 instead of 64) what makes Windows msvcrt.dll return error
+     * and identify itself.
+     */
+    if (setvbuf (stdout, NULL, _IOLBF, BUFSIZ)) {
+        setvbuf (stdout, NULL, _IONBF, BUFSIZ);
+        setvbuf (stderr, NULL, _IONBF, BUFSIZ);
+    }
+
 /* 0 = don't expand wildcards, 1 = expand */
 #ifndef __SUBC__
     __getmainargs(&argc, &argv, &environ, 0, &startinfo);
