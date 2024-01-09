@@ -3176,6 +3176,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)labs;
                         }
+                        else if (strcmp((char *)hintname, "abs") == 0)
+                        {
+                            *thunk = (unsigned long)abs;
+                        }
                         else if (strcmp((char *)hintname, "sqrt") == 0)
                         {
                             *thunk = (unsigned long)sqrt;
