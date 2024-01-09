@@ -4,7 +4,7 @@
 
 CC=gccwin
 AR=xar
-AS=pdas
+AS=pdas --oformat coff
 LD=pdld
 COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
 
@@ -22,19 +22,24 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   rm -f temp.lib
   $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib
 
+w32start.obj: w32start.c
+  $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
 pdptest.obj: pdptest.c
   $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
-  $(AS) -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 dllcrt.obj: dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -o $*.s $*.c
-  $(AS) -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
-  $(AS) -o $*.obj --oformat coff $*.s
+  $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 .asm.obj:
