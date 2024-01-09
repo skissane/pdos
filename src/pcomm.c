@@ -94,7 +94,7 @@ static
 #else
 extern
 #endif
-char **__envptr;
+char *__envptr;
 
 /* Flag set to true if genuine PDOS detected */
 static int genuine_pdos = 0;
