@@ -163,9 +163,20 @@ typedef unsigned long fpos_t;
 #define FOPEN_MAX 256
 #endif
 
+#ifdef __WIN32__
+#define _IOFBF 0
+/* _IOLBF behaves the same as _IOFBF in Windows msvcrt.dll,
+ * so there is no point in supporting it there
+ * and regular PDPCLIB value is used instead.
+ */
+/*#define _IOLBF 64*/
+#define _IOLBF 2
+#define _IONBF 4
+#else
 #define _IOFBF 1
 #define _IOLBF 2
 #define _IONBF 3
+#endif
 
 
 #ifndef BUFSIZ
