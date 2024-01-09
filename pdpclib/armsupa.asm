@@ -471,3 +471,82 @@ __aeabi_uidivmod:
 #        str    lr, [sp, #-4]!
 #        ldr    lr, [sp], #4
 #        b      _memcpy
+
+
+# Support routines for SubC
+
+# unsigned integer divide
+# inner loop code taken from http://me.henri.net/fp-div.html
+# in:  r0 = num,  r1 = den
+# out: r0 = quot, r1 = rem
+
+	.globl	udiv
+	.align	2
+udiv:	rsb     r2,r1,#0
+	mov     r1,#0
+	adds    r0,r0,r0
+	.rept   32
+	adcs    r1,r2,r1,lsl #1
+	subcc   r1,r1,r2
+	adcs    r0,r0,r0
+	.endr
+	mov     pc,lr
+
+# signed integer divide
+# in:  r0 = num,  r1 = den
+# out: r0 = quot
+
+	.globl	sdiv
+	.align	2
+sdiv:	stmfd	sp!,{lr}
+	eor	r3,r0,r1	@ r3 = sign
+	mov	r3,r3,asr #31
+	cmp	r1,#0
+	beq	divz2
+	rsbmi	r1,r1,#0
+	cmp	r0,#0
+	rsbmi	r0,r0,#0
+	bl	udiv
+	cmp	r3,#0
+	rsbne	r0,r0,#0
+	ldmfd	sp!,{pc}
+divz2:	mov	r0,#8		@ SIGFPE
+	stmfd	sp!,{r0}
+	mov	r0,#1
+	stmfd	sp!,{r0}
+#	bl	Craise
+	mov	r0,#0		@ if raise(SIGFPE) failed, return 0
+	ldmfd	sp!,{pc}
+
+# signed integer modulo
+# in:  r0 = num,  r1 = den
+# out: r0 = rem
+
+	.globl	srem
+	.align	2
+srem:	stmfd	sp!,{lr}
+	mov	r4,r0,asr #31		@ r4 = sign
+	bl	sdiv
+	mov	r0,r1
+	cmp	r4,#0
+	rsbne	r0,r0,#0
+	ldmfd	sp!,{pc}
+
+# internal switch(expr) routine
+# r1 = switch table, r0 = expr
+
+	.globl	switch
+	.align	2
+switch:	ldr	r2,[r1]		@ # of non-default cases
+	add	r1,r1,#4	@ first case
+next:	ldr	r3,[r1]
+	cmp	r0,r3
+	beq	match
+	add	r1,r1,#8
+	subs	r2,r2,#1
+	bne	next
+	ldr	r0,[r1]
+	blx	r0
+match:	add	r1,r1,#4
+	ldr	r0,[r1]
+	blx	r0
