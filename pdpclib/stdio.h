@@ -163,7 +163,7 @@ typedef unsigned long fpos_t;
 #define FOPEN_MAX 256
 #endif
 
-#ifdef __WIN32__
+#if 1 /* def __WIN32__ */
 #define _IOFBF 0
 /* _IOLBF behaves the same as _IOFBF in Windows msvcrt.dll,
  * so there is no point in supporting it there
