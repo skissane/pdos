@@ -33,7 +33,9 @@
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
-#        ldr     r1,[sp]         @ env
+.ifdef STACKPARM
+        ldr     r0,[sp]         @ env
+.endif
         mov     r1,r0
         mov     r2,sp
 #        add     r2,r2,#4
