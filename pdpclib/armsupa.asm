@@ -13,6 +13,14 @@
 # https://gist.github.com/yamnikov-oleg/454f48c3c45b735631f2
 # https://syscalls.w3challs.com/?arch=arm_strong
 
+# ARM (a.out) and ERM (ELF) have been changed to put all
+# parameters on the stack, to match SubC
+# PRM (PE) is locked in to the UEFI calling convention,
+# which appears to use registers.
+
+# Note that r2 (and presumably other registers) need to be
+# preserved (for gccarm I think)
+
         .text
         .align  2
 # int setjmp(jmp_buf env);
@@ -100,13 +108,15 @@ ___exita:
         .align  2
 __write:
 ___write:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ len
-#        ldr     r1,[sp,#8]      @ buf
-#        ldr     r0,[sp,#4]      @ fd
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]     @ len
+        ldr     r1,[sp,#16]      @ buf
+        ldr     r0,[sp,#12]      @ fd
+.endif
         mov     r7,#4           @ SYS_write
         swi     0
-wrtok:  ldmia   sp!,{r7,pc}
+wrtok:  ldmia   sp!,{r2,r7,pc}
 
 # int ___read(int fd, void *buf, int len);
 
@@ -242,13 +252,15 @@ timok:  ldr     r0,[sp]
         .align  2
 __mprotect:
 ___mprotect:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ prot
-#        ldr     r1,[sp,#8]      @ len
-#        ldr     r0,[sp,#4]      @ buf
+        stmfd   sp!,{r2,r7,lr}
+.ifdef STACKPARM
+        ldr     r2,[sp,#20]     @ prot
+        ldr     r1,[sp,#16]      @ len
+        ldr     r0,[sp,#12]      @ buf
+.endif
         mov     r7,#125          @ SYS_mprotect
         swi     0
-mpok:   ldmia   sp!,{r7,pc}
+mpok:   ldmia   sp!,{r2,r7,pc}
 
 # int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
 
@@ -274,13 +286,15 @@ gdok:   ldmia   sp!,{r7,pc}
         .align  2
 __ioctl:
 ___ioctl:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ arg
-#        ldr     r1,[sp,#8]      @ cmd
-#        ldr     r0,[sp,#4]      @ fd
+        stmfd   sp!,{r2,r7,lr}
+.ifdef STACKPARM
+        ldr     r2,[sp,#20]      @ arg
+        ldr     r1,[sp,#16]      @ cmd
+        ldr     r0,[sp,#12]      @ fd
+.endif
         mov     r7,#54           @ SYS_ioctl
         swi     0
-iocok:  ldmia   sp!,{r7,pc}
+iocok:  ldmia   sp!,{r2,r7,pc}
 
 # int ___chdir(const char *filename);
 
@@ -354,6 +368,46 @@ ___main:
 __udivsi3:
 ___udivsi3:
 __aeabi_uidiv:
+
+        stmfd   sp!,{r2,lr}
+
+.ifdef STACKPARM
+        ldr     r0,[sp,#8]
+        ldr     r1,[sp,#12]
+.endif
+
+        rsb     r2,r1,#0
+        mov     r1,#0
+        adds    r0,r0,r0
+        .rept   32
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+        .endr
+#        mov     pc,lr
+        ldmia   sp!,{r2,pc}
+
+
+
+# This is the traditional function that expects
+# register parameters, not on the stack - for
+# use even in a stack parameter environment
+# We may wish to eliminate this function in
+# a stack environment though
+
+        .globl  __udivsi3_trad
+        .globl  ___udivsi3_trad
+.if ELF
+        .type  __udivsi3_trad, %function
+.endif
+        .globl  __aeabi_uidiv_trad
+.if ELF
+        .type  __aeabi_uidiv_trad, %function
+.endif
+        .align  2
+__udivsi3_trad:
+___udivsi3_trad:
+__aeabi_uidiv_trad:
         rsb     r2,r1,#0
         mov     r1,#0
         adds    r0,r0,r0
@@ -363,6 +417,8 @@ __aeabi_uidiv:
         adcs    r0,r0,r0
         .endr
         mov     pc,lr
+
+
 
 # signed integer divide
 # in:  r0 = num,  r1 = den
@@ -446,7 +502,11 @@ __umodsi3:
 ___umodsi3:
 __aeabi_uidivmod:
         stmfd   sp!,{lr}
-        bl      ___udivsi3
+.ifdef STACKPARM
+        ldr     r0,[sp,#4]
+        ldr     r1,[sp,#8]
+.endif
+        bl      ___udivsi3_trad
         mov     r0,r1
         ldmia   sp!,{pc}
 

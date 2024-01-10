@@ -12,6 +12,18 @@ static char *newmembuf = membuf;
 extern int __start(int argc, char **argv);
 extern int __exita(int rc);
 
+#ifdef STACKPARM
+#if !defined(__UNOPT__)
+#define ADJUST -6
+#elif defined(NEED_MPROTECT)
+#define ADJUST -7
+#else
+#define ADJUST -5
+#endif
+#else
+#define ADJUST 0
+#endif
+
 #ifdef NEED_MPROTECT
 extern int __mprotect(void *buf, size_t len, int prot);
 
@@ -58,15 +70,15 @@ int _start(char *p)
     /* these hardcoded numbers are dependent on the number of
        stack parameters defined above */
 #ifdef NEED_MPROTECT
-    rc = __start(*(int *)(&p + 7), &p + 8);
+    rc = __start(*(int *)(&p + 7 + ADJUST), &p + 8 + ADJUST);
 #else
-    rc = __start(*(int *)(&p + 5), &p + 6);
+    rc = __start(*(int *)(&p + 5 + ADJUST), &p + 6 + ADJUST);
 #endif
 
 #else
     /* the optimized version doesn't appear to be dependent on
        the number of stack parameters defined above */
-    rc = __start(*(int *)(&p + 6), &p + 7);
+    rc = __start(*(int *)(&p + 6 + ADJUST), &p + 7 + ADJUST);
 #endif
 
 /* Note that a problem with this stack manipulation was found when
