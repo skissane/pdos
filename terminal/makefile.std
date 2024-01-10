@@ -8,7 +8,7 @@
 # and by any means.
 
 VPATH=src
-CC=gcc
+CC=gccwin
 CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp --subsystem 2
