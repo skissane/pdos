@@ -27,6 +27,11 @@ pdptest.exe: w32start.o pdptest.o stdio.o string.o stdlib.o \
   rm -f temp.a
   $(LD) -s -nostdlib -o pdptest.exe w32start.o pdptest.o msvcrt.a
 
+w32start.o: w32start.c
+  $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
 pdptest.o: pdptest.c
   $(CC) -S -O2 -D__WIN32__ -I . -I ../src -o $*.s $*.c
   $(AS) -o $*.o $*.s
