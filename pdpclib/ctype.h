@@ -27,7 +27,8 @@ int isxdigit(int c);
 int tolower(int c);
 int toupper(int c);
 
-#if defined(__WIN32__) && !defined(__STATIC__) || defined(__SUBC__)
+#if defined(__WIN32__) && !defined(__STATIC__) \
+    || (defined(__SUBC__) && !defined(__PDOSGEN__))
 
 /* don't use macros on these environments */
 
