@@ -64,8 +64,8 @@ ___Ysetjmp:
 longjmp:
 _longjmp:
 .ifdef STACKPARM
-        ldr     r0,[sp,#4]      @ v
-        ldr     r1,[sp]         @ env
+        ldr     r0,[sp]      @ env
+        ldr     r1,[sp,#4]   @ v
 .endif
         mov     r2,r0
         mov     r0,r1
