@@ -154,6 +154,9 @@ typedef struct {
     int (*isspace)(int c);
     int (*tolower)(int c);
     int (*Xsystem)(const char *string);
+    int (*islower)(int c);
+    int (*isupper)(int c);
+    int (*Xatexit)(void (*func)(void));
 } OS;
 
 extern OS *__os;
