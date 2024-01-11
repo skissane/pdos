@@ -33,7 +33,7 @@
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
-.ifdef STACKPARM
+.if STACKPARM
         ldr     r0,[sp]         @ env
 .endif
         mov     r1,r0
@@ -63,7 +63,7 @@ ___Ysetjmp:
         .align  2
 longjmp:
 _longjmp:
-.ifdef STACKPARM
+.if STACKPARM
         ldr     r0,[sp]      @ env
         ldr     r1,[sp,#4]   @ v
 .endif
@@ -273,7 +273,7 @@ timok:  ldr     r0,[sp]
 __mprotect:
 ___mprotect:
         stmfd   sp!,{r2,r7,lr}
-.ifdef STACKPARM
+.if STACKPARM
         ldr     r2,[sp,#20]     @ prot
         ldr     r1,[sp,#16]      @ len
         ldr     r0,[sp,#12]      @ buf
@@ -309,7 +309,7 @@ gdok:   ldmia   sp!,{r2,r7,pc}
 __ioctl:
 ___ioctl:
         stmfd   sp!,{r2,r7,lr}
-.ifdef STACKPARM
+.if STACKPARM
         ldr     r2,[sp,#20]      @ arg
         ldr     r1,[sp,#16]      @ cmd
         ldr     r0,[sp,#12]      @ fd
@@ -399,7 +399,7 @@ __aeabi_uidiv:
 
         stmfd   sp!,{r2,lr}
 
-.ifdef STACKPARM
+.if STACKPARM
         ldr     r0,[sp,#8]
         ldr     r1,[sp,#12]
 .endif
@@ -465,10 +465,12 @@ __aeabi_uidiv_trad:
 __divsi3:
 ___divsi3:
 __aeabi_idiv:
-        stmfd   sp!,{r3,lr}
-.ifdef STACKPARM
-        ldr     r0,[sp,#8]
-        ldr     r1,[sp,#12]
+# Need to preserve r2 because the
+# function we may call, doesn't
+        stmfd   sp!,{r2,r3,lr}
+.if STACKPARM
+        ldr     r0,[sp,#12]
+        ldr     r1,[sp,#16]
 .endif
         eor     r3,r0,r1        @ r3 = sign
 #       asr     r3,r3,#31
@@ -478,7 +480,7 @@ __aeabi_idiv:
         rsbmi   r1,r1,#0
         cmp     r0,#0
         rsbmi   r0,r0,#0
-        bl      ___udivsi3
+        bl      ___udivsi3_trad
         cmp     r3,#0
         rsbne   r0,r0,#0
         ldmia   sp!,{pc}
@@ -488,7 +490,7 @@ divz:   mov     r0,#8           @ SIGFPE
         stmfd   sp!,{r0}
 #        bl      Craise
         mov     r0,#0           @ if raise(SIGFPE) failed, return 0
-        ldmia   sp!,{r3,pc}
+        ldmia   sp!,{r2,r3,pc}
 
 
 
@@ -552,10 +554,12 @@ divz_trad:
 __modsi3:
 ___modsi3:
 __aeabi_idivmod:
-        stmfd   sp!,{r4,lr}
-.ifdef STACKPARM
-        ldr     r0,[sp,#8]
-        ldr     r1,[sp,#12]
+# Need to preserve r3, because the function
+# we call doesn't
+        stmfd   sp!,{r3,r4,lr}
+.if STACKPARM
+        ldr     r0,[sp,#12]
+        ldr     r1,[sp,#16]
 .endif
 #        asr     r4,r0,#31               @ r4 = sign
         mov     r4,r0,asr#31
@@ -563,7 +567,7 @@ __aeabi_idivmod:
         mov     r0,r1
         cmp     r4,#0
         rsbne   r0,r0,#0
-        ldmia   sp!,{r4,pc}
+        ldmia   sp!,{r3,r4,pc}
 
 # unsigned integer modulo
 # in:  r0 = num,  r1 = den
@@ -582,14 +586,16 @@ __aeabi_idivmod:
 __umodsi3:
 ___umodsi3:
 __aeabi_uidivmod:
-        stmfd   sp!,{lr}
-.ifdef STACKPARM
-        ldr     r0,[sp,#4]
-        ldr     r1,[sp,#8]
+# Need to preserve r2, because the function
+# we call  doesn't
+        stmfd   sp!,{r2,lr}
+.if STACKPARM
+        ldr     r0,[sp,#8]
+        ldr     r1,[sp,#12]
 .endif
         bl      ___udivsi3_trad
         mov     r0,r1
-        ldmia   sp!,{pc}
+        ldmia   sp!,{r2,pc}
 
 
 # This is a call to memcpy where the parameters are
