@@ -1,6 +1,7 @@
 # Produce pdos-generic ARM executables
-# links with PDPCLIB created by makefile.aga
-# Uses SubC as compiler (not working)
+# used to link with PDPCLIB created by makefile.aga
+# but for now is self-contained instead
+# Uses SubC as compiler
 
 #CC=gccarm -fno-common -mapcs-32 -fno-builtin
 CC=sccarm
@@ -11,7 +12,7 @@ AR=ararm
 
 all: world.exe
 
-world.exe: world.o
+world.exe: world.o ../pdpclib/pgastart.o ../pdpclib/armsupa.o
   $(LD) -N -s -nostdlib -o world.exe ../pdpclib/pgastart.o world.o ../pdpclib/armsupa.o
 
 .c.o:
@@ -19,7 +20,10 @@ world.exe: world.o
   $(CC) -S -o $*.s $*.i
   rm -f $*.i
   $(AS) -o $@ $*.s
-#  rm -f $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) --defsym LINUX=1 --defsym ELF=0 --defsym STACKPARM=1 -o $@ $<
 
 clean:
   rm -f *.o
