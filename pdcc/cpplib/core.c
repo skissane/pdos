@@ -824,7 +824,7 @@ char *_cpp_builtin_macro_text(cpp_reader *reader,
                 }
 
                 reader->date = xmalloc(sizeof("\"Abc 12 3456\""));
-                reader->time = xmalloc(sizeof("\"12:34:56\""));
+                reader->Ztime = xmalloc(sizeof("\"12:34:56\""));
 
                 if (ts)
                 {
@@ -834,7 +834,7 @@ char *_cpp_builtin_macro_text(cpp_reader *reader,
                     sprintf((char *)(reader->date), "\"%s %2d %4d\"",
                             months[ts->tm_mon], ts->tm_mday,
                             ts->tm_year + 1900);
-                    sprintf((char *)(reader->time), "\"%02d:%02d:%02d\"",
+                    sprintf((char *)(reader->Ztime), "\"%02d:%02d:%02d\"",
                             ts->tm_hour, ts->tm_min, ts->tm_sec);
                 }
                 else
@@ -842,7 +842,7 @@ char *_cpp_builtin_macro_text(cpp_reader *reader,
                     cpp_error(reader, CPP_DL_WARNING,
                               "could not determine date and time");
                     strcpy(reader->date, "\"??? ?? ????\"");
-                    strcpy(reader->time, "\"??:??:??\"");
+                    strcpy(reader->Ztime, "\"??:??:??\"");
                 }
             }
 
@@ -853,8 +853,8 @@ char *_cpp_builtin_macro_text(cpp_reader *reader,
             }
             else
             {
-                result = xmalloc(strlen(reader->time) + 1);
-                memcpy(result, reader->time, strlen(reader->time) + 1);
+                result = xmalloc(strlen(reader->Ztime) + 1);
+                memcpy(result, reader->Ztime, strlen(reader->Ztime) + 1);
             }
             break;
 

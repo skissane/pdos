@@ -99,7 +99,7 @@ cpp_reader *cpp_create_reader(enum c_lang lang, symtab *tab)
     _cpp_init_symtab(reader, tab);
 
     reader->date = NULL;
-    reader->time = NULL;
+    reader->Ztime = NULL;
 
     return (reader);
 }
@@ -108,7 +108,7 @@ void cpp_destroy_reader(cpp_reader *reader)
 {
     _cpp_destroy_symtab(reader);
     free(reader->date);
-    free(reader->time);
+    free(reader->Ztime);
     free(reader);
 }
 

@@ -167,7 +167,7 @@ struct cpp_reader {
     location_t invocation_location;
 
     char *date;
-    char *time;
+    char *Ztime;
 
     void *help;
     void *help2;
