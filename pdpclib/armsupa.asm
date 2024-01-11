@@ -63,14 +63,16 @@ ___Ysetjmp:
         .align  2
 longjmp:
 _longjmp:
-#        ldr     r0,[sp,#4]      @ v
+.ifdef STACKPARM
+        ldr     r0,[sp,#4]      @ v
+        ldr     r1,[sp]         @ env
+.endif
         mov     r2,r0
         mov     r0,r1
 
         cmp     r0,#0
         moveq   r0,#1
 
-#        ldr     r1,[sp]         @ env
         mov     r1,r2
 
         ldr     sp,[r1]
@@ -128,13 +130,15 @@ wrtok:  ldmia   sp!,{r2,r7,pc}
         .align  2
 __read:
 ___read:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ len
-#        ldr     r1,[sp,#8]      @ buf
-#        ldr     r0,[sp,#4]      @ fd
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]     @ len
+        ldr     r1,[sp,#16]      @ buf
+        ldr     r0,[sp,#12]      @ fd
+.endif
         mov     r7,#3           @ SYS_read
         swi     0
-redok:  ldmia   sp!,{r7,pc}
+redok:  ldmia   sp!,{r2,r7,pc}
 
 # int ___seek(int fd, int pos, int how);
 
@@ -144,14 +148,16 @@ redok:  ldmia   sp!,{r7,pc}
         .align  2
 __seek:
 ___seek:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ how
-#        ldr     r1,[sp,#8]      @ off_t
-#        ldr     r0,[sp,#4]      @ fd
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]      @ how
+        ldr     r1,[sp,#16]      @ off_t
+        ldr     r0,[sp,#12]      @ fd
+.endif
         mov     r7,#19     @ SYS_lseek
         swi     0
 lskok:  
-        ldmia   sp!,{r7,pc}
+        ldmia   sp!,{r2,r7,pc}
 
 # int __creat(char *path, int mode);
 
@@ -162,9 +168,11 @@ lskok:
 __creat:
 ___creat:
         stmfd   sp!,{r7,lr}
-#        ldr     r1,[sp,#8]      @ mode
+#        ldr     r1,[sp,#12]      @ mode
         mov     r1,#0x1A4       @ 0644
-#        ldr     r0,[sp,#4]      @ path
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ path
+.endif
         mov     r7,#8           @ SYS_creat
         swi     0
 crtok:  ldmia   sp!,{r7,pc}
@@ -179,8 +187,10 @@ __open:
 ___open:
         stmfd   sp!,{r7,lr}
 #        mov     r2,#0x1A4       @ 0644
-#        ldr     r1,[sp,#8]      @ flags
-#        ldr     r0,[sp,#4]      @ path
+.if STACKPARM
+        ldr     r1,[sp,#12]     @ flags
+        ldr     r0,[sp,#8]      @ path
+.endif
         mov     r7,#5           @ SYS_open
         swi     0
 opnok:  ldmia   sp!,{r7,pc}
@@ -194,7 +204,9 @@ opnok:  ldmia   sp!,{r7,pc}
 __close:
 ___close:
         stmfd   sp!,{r7,lr}
-#        ldr     r0,[sp,#4]      @ fd
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ fd
+.endif
         mov     r7,#6           @ SYS_close
         swi     0
 clsok:  ldmia   sp!,{r7,pc}
@@ -208,7 +220,9 @@ clsok:  ldmia   sp!,{r7,pc}
 __remove:
 ___remove:
         stmfd   sp!,{r7,lr}
-#        ldr     r0,[sp,#4]      @ path
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ path
+.endif
         mov     r7,#10          @ SYS_unlink
         swi     0
 unlok:  ldmia   sp!,{r7,pc}
@@ -222,8 +236,10 @@ unlok:  ldmia   sp!,{r7,pc}
 __rename:
 ___rename:
         stmfd   sp!,{r7,lr}
-#        ldr     r1,[sp,#8]      @ new
-#        ldr     r0,[sp,#4]      @ old
+.if STACKPARM
+        ldr     r1,[sp,#12]     @ new
+        ldr     r0,[sp,#8]      @ old
+.endif
         mov     r7,#0x26        @ SYS_rename
         swi     0
 renok:  ldmia   sp!,{r7,pc}
@@ -439,7 +455,11 @@ __aeabi_uidiv_trad:
 __divsi3:
 ___divsi3:
 __aeabi_idiv:
-        stmfd   sp!,{lr}
+        stmfd   sp!,{r3,lr}
+.ifdef STACKPARM
+        ldr     r0,[sp,#8]
+        ldr     r1,[sp,#12]
+.endif
         eor     r3,r0,r1        @ r3 = sign
 #       asr     r3,r3,#31
         mov     r3,r3,asr#31
@@ -458,7 +478,52 @@ divz:   mov     r0,#8           @ SIGFPE
         stmfd   sp!,{r0}
 #        bl      Craise
         mov     r0,#0           @ if raise(SIGFPE) failed, return 0
+        ldmia   sp!,{r3,pc}
+
+
+
+# This is the traditional function that expects
+# register parameters, not on the stack - for
+# use even in a stack parameter environment
+# We may wish to eliminate this function in
+# a stack environment though
+
+        .globl  __divsi3_trad
+        .globl  ___divsi3_trad
+.if ELF
+        .type  __divsi3_trad, %function
+.endif
+        .globl  __aeabi_idiv_trad
+.if ELF
+        .type  __aeabi_idiv_trad, %function
+.endif
+        .align  2
+__divsi3_trad:
+___divsi3_trad:
+__aeabi_idiv_trad:
+        stmfd   sp!,{lr}
+        eor     r3,r0,r1        @ r3 = sign
+#       asr     r3,r3,#31
+        mov     r3,r3,asr#31
+        cmp     r1,#0
+        beq     divz_trad
+        rsbmi   r1,r1,#0
+        cmp     r0,#0
+        rsbmi   r0,r0,#0
+        bl      ___udivsi3_trad
+        cmp     r3,#0
+        rsbne   r0,r0,#0
         ldmia   sp!,{pc}
+divz_trad:
+        mov     r0,#8           @ SIGFPE
+        stmfd   sp!,{r0}
+        mov     r0,#1
+        stmfd   sp!,{r0}
+#        bl      Craise
+        mov     r0,#0           @ if raise(SIGFPE) failed, return 0
+        ldmia   sp!,{pc}
+
+
 
 # signed integer modulo
 # in:  r0 = num,  r1 = den
@@ -478,9 +543,13 @@ __modsi3:
 ___modsi3:
 __aeabi_idivmod:
         stmfd   sp!,{r4,lr}
+.ifdef STACKPARM
+        ldr     r0,[sp,#8]
+        ldr     r1,[sp,#12]
+.endif
 #        asr     r4,r0,#31               @ r4 = sign
         mov     r4,r0,asr#31
-        bl      ___divsi3
+        bl      ___divsi3_trad
         mov     r0,r1
         cmp     r4,#0
         rsbne   r0,r0,#0
