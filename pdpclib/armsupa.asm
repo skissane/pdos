@@ -99,7 +99,9 @@ _longjmp:
 __exita:
 ___exita:
         stmfd   sp!,{lr}
-#        ldr     r0,[sp,#4]      @ rc
+.if STACKPARM
+        ldr     r0,[sp,#4]      @ rc
+.endif
         mov     r7,#1           @ SYS_exit
         swi     0
         ldmia   sp!,{pc}
@@ -288,13 +290,15 @@ mpok:   ldmia   sp!,{r2,r7,pc}
         .align  2
 __getdents:
 ___getdents:
-        stmfd   sp!,{r7,lr}
-#        ldr     r2,[sp,#12]     @ count
-#        ldr     r1,[sp,#8]      @ dirent
-#        ldr     r0,[sp,#4]      @ fd
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]     @ count
+        ldr     r1,[sp,#16]      @ dirent
+        ldr     r0,[sp,#12]      @ fd
+.endif
         mov     r7,#141          @ SYS_getdents
         swi     0
-gdok:   ldmia   sp!,{r7,pc}
+gdok:   ldmia   sp!,{r2,r7,pc}
 
 # int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
@@ -323,7 +327,9 @@ iocok:  ldmia   sp!,{r2,r7,pc}
 __chdir:
 ___chdir:
         stmfd   sp!,{r7,lr}
-#        ldr     r0,[sp,#4]      @ filename
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ filename
+.endif
         mov     r7,#12           @ SYS_chdir
         swi     0
 cdok:  ldmia   sp!,{r7,pc}
@@ -337,8 +343,10 @@ cdok:  ldmia   sp!,{r7,pc}
 __mkdir:
 ___mkdir:
         stmfd   sp!,{r7,lr}
-#        ldr     r1,[sp,#8]      @ mode
-#        ldr     r0,[sp,#4]      @ pathname
+.if STACKPARM
+        ldr     r1,[sp,#12]      @ mode
+        ldr     r0,[sp,#8]      @ pathname
+.endif
         mov     r7,#39           @ SYS_mkdir
         swi     0
 mdok:  ldmia   sp!,{r7,pc}
@@ -352,7 +360,9 @@ mdok:  ldmia   sp!,{r7,pc}
 __rmdir:
 ___rmdir:
         stmfd   sp!,{r7,lr}
-#        ldr     r0,[sp,#4]      @ pathname
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ pathname
+.endif
         mov     r7,#40           @ SYS_rmdir
         swi     0
 rdok:  ldmia   sp!,{r7,pc}
