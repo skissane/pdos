@@ -3,7 +3,7 @@
 # but for now is self-contained instead
 # Uses SubC as compiler
 
-#CC=gccarm -fno-common -mapcs-32 -fno-builtin
+#CC=gccarm -O0 -fno-common -mapcs-32 -fno-builtin
 CC=sccarm
 LD=ldarm
 AS=asarm
