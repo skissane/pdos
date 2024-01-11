@@ -2,7 +2,7 @@
 # links with PDPCLIB created by makefile.aga
 # Uses SubC as compiler (not working)
 
-#CC=gccarm -mapcs-32
+#CC=gccarm -fno-common -mapcs-32 -fno-builtin
 CC=sccarm
 LD=ldarm
 AS=asarm
