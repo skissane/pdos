@@ -1,0 +1,37 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# Produces ARM executable.
+# Links with PDPCLIB created by makefile.aga.
+
+VPATH=./hashtab
+
+CC=gccarm
+CFLAGS=-O0 -D__UNOPT__
+LD=ldarm -N -e ___crt0 
+LDFLAGS=
+AS=asarm
+AR=ararm
+
+COPTS=-S $(CFLAGS) -mapcs-32 -fno-builtin -fno-common -ansi \
+    -I. -I./hashtab -I../pdpclib -I../generic \
+    -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__
+
+all: clean pdmake.exe
+
+pdmake.exe: main.o read.o rule.o variable.o xmalloc.o hashtab.o
+  $(LD) $(LDFLAGS) -s -o pdmake.exe ../pdpclib/pgastart.o main.o read.o rule.o variable.o xmalloc.o hashtab.o ../pdpclib/string.o ../pdpclib/armsupa.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o pdmake.exe
