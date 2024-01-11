@@ -99,5 +99,12 @@ double __cos__(double x);
 #define cos(x) (__cos__((x)))
 #endif
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define ceil __os->Xceil
+
+#endif
+
 #endif
 
