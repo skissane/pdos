@@ -1,0 +1,50 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# Produces ARM executable.
+# Links with PDPCLIB created by makefile.aga.
+
+CC=gccarm
+CFLAGS=-O0 -D__UNOPT__
+LD=ldarm -N -e ___crt0 
+LDFLAGS=
+AS=asarm
+AR=ararm
+COPTS=-S $(CFLAGS) -mapcs-32 -fno-builtin -fno-common -ansi -Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -I../generic -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__
+
+all: clean pdcc.exe
+
+pdcc.exe: main.o c_ppout.o inc_path.o cpplib.a cclib.a
+    $(LD) $(LDFLAGS) -s -o pdcc.exe ../pdpclib/pgastart.o main.o c_ppout.o inc_path.o cpplib.a cclib.a ../pdpclib/string.o ../pdpclib/armsupa.o
+
+cpplib.a: cpplib/core.o cpplib/directs.o cpplib/errors.o \
+          cpplib/expr.o cpplib/files.o cpplib/chars.o \
+          cpplib/idents.o cpplib/init.o cpplib/lex.o \
+          cpplib/macro.o cpplib/support.o cpplib/symtab.o \
+          xmalloc.o
+    rm -f cpplib.a
+    $(AR) r cpplib.a cpplib/core.o cpplib/directs.o cpplib/errors.o
+    $(AR) r cpplib.a cpplib/expr.o cpplib/files.o cpplib/chars.o
+    $(AR) r cpplib.a cpplib/idents.o cpplib/init.o cpplib/lex.o
+    $(AR) r cpplib.a cpplib/macro.o cpplib/support.o cpplib/symtab.o
+    $(AR) r cpplib.a xmalloc.o
+
+cclib.a: cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o \
+         xmalloc.o
+    rm -f cclib.a
+    $(AR) r cclib.a cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o
+    $(AR) r cpplib.a xmalloc.o
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o cpplib/*.o cpplib.a cclib/*.o cclib.a pdcc.exe
