@@ -187,15 +187,15 @@ crtok:  ldmia   sp!,{r7,pc}
         .align  2
 __open:
 ___open:
-        stmfd   sp!,{r7,lr}
-#        mov     r2,#0x1A4       @ 0644
+        stmfd   sp!,{r2,r7,lr}
+        mov     r2,#0x1A4       @ 0644
 .if STACKPARM
-        ldr     r1,[sp,#12]     @ flags
-        ldr     r0,[sp,#8]      @ path
+        ldr     r1,[sp,#16]     @ flags
+        ldr     r0,[sp,#12]      @ path
 .endif
         mov     r7,#5           @ SYS_open
         swi     0
-opnok:  ldmia   sp!,{r7,pc}
+opnok:  ldmia   sp!,{r2,r7,pc}
 
 # int _close(int fd);
 
