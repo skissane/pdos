@@ -142,7 +142,7 @@ long _Builtin __labs(long j);
 #include <__os.h>
 
 #define malloc __os->malloc
-#define free __os->free
+#define free (*__os->free)
 #undef abort
 #define abort __os->abort
 #define getenv __os->Xgetenv
