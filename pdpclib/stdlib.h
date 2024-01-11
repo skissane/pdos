@@ -157,6 +157,7 @@ long _Builtin __labs(long j);
 #define abs __os->Xabs
 #define atof __os->Xatof
 #define system __os->Xsystem
+#define atexit __os->Xatexit
 
 #endif
 
