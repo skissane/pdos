@@ -483,7 +483,7 @@ __aeabi_idiv:
         bl      ___udivsi3_trad
         cmp     r3,#0
         rsbne   r0,r0,#0
-        ldmia   sp!,{pc}
+        ldmia   sp!,{r2,r3,pc}
 divz:   mov     r0,#8           @ SIGFPE
         stmfd   sp!,{r0}
         mov     r0,#1
