@@ -68,7 +68,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   strcspn, memchr, ftell, abs, setlocale, perror, rewind, strncat, sscanf,
   isalnum, isxdigit, rename, clearerr, _assert, atof,
   isdigit, isalpha, isprint, isspace, tolower, system,
-  islower, isupper, atexit,
+  islower, isupper, atexit, ceil,
 };
 
 static int (*pgastart)(OS *os);

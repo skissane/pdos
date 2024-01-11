@@ -26,6 +26,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 
 typedef struct {
     /* a BIOS may not have this, as it implies the existence of a
@@ -157,6 +158,7 @@ typedef struct {
     int (*islower)(int c);
     int (*isupper)(int c);
     int (*Xatexit)(void (*func)(void));
+    double (*Xceil)(double x);
 } OS;
 
 extern OS *__os;
