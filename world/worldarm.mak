@@ -23,7 +23,7 @@ world.exe: world.o ../pdpclib/pgastart.o ../pdpclib/armsupa.o
   rm -f $*.s
 
 .asm.o:
-  $(AS) --defsym LINUX=1 --defsym ELF=0 --defsym STACKPARM=1 -o $@ $<
+  $(AS) --defsym LINUX=0 --defsym ELF=0 --defsym STACKPARM=1 -o $@ $<
 
 clean:
   rm -f *.o
