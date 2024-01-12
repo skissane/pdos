@@ -49,7 +49,7 @@ typedef struct {
 #elif defined(__ARM__) || defined(__ARMGEN__)
     void *sp;
     void *fp;
-    void *ip;
+    int lr; /* was void *ip; */
     int r4;
     int r5;
     int r6;
@@ -57,6 +57,10 @@ typedef struct {
     int r8;
     int r9;
     int r10;
+    int r2;
+    int r3;
+    int r12; /* ip */
+    int r1;
 #elif defined(__WIN32__) || defined(__32BIT__) \
     || (defined(__OS2__) && !defined(__16BIT__)) \
     || defined(__PDOS386__) || defined(__gnu_linux__) || defined(__EFI__)

@@ -21,6 +21,11 @@
 # Note that r2 (and presumably other registers) need to be
 # preserved (for gccarm I think)
 
+
+# I haven't seen direct evidence that r2 and r3
+# need to be preserved in setjmp/longjmp, but
+# doing so anyway. ditto r12 and r1.
+
         .text
         .align  2
 # int setjmp(jmp_buf env);
@@ -36,7 +41,11 @@ ___Ysetjmp:
 .if STACKPARM
         ldr     r0,[sp]         @ env
 .endif
+        str     r1,[r0,#52]
         mov     r1,r0
+        str     r2,[r1,#40]
+        str     r3,[r1,#44]
+        str     r12,[r1,#48]  @ ip
         mov     r2,sp
 #        add     r2,r2,#4
 #        str     sp,[r1]
@@ -85,6 +94,10 @@ _longjmp:
         ldr     r8,[r1,#28]
         ldr     r9,[r1,#32]
         ldr     r10,[r1,#36]
+        ldr     r2,[r1,#40]
+        ldr     r3,[r1,#44]
+        ldr     r12,[r1,#48]  @ ip
+        ldr     r1,[r1,#52]
         mov     pc,lr
 
 .if LINUX
