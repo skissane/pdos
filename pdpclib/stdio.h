@@ -415,6 +415,7 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #define sscanf __os->Xsscanf
 #define rename __os->Xrename
 #define clearerr __os->Xclearerr
+#define setvbuf __os->Xsetvbuf
 #endif
 
 #endif /* __STDIO_INCLUDED */
