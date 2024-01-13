@@ -1,13 +1,16 @@
 # This builds ELF ARM executables
 # You must have built PDPCLIB with makefile.erm first
 
+# Executing on a Pinebook Pro needs a delay
+# Same experience on a Samsung Chromebook
+
 CC=gccarm
 CFLAGS=-O0 -D__UNOPT__ -fno-common -mapcs-32
 LD=lderm
 LDFLAGS=-e __start
 AS=aserm
 AR=arerm
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DXNEED_DELAY
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DNEED_DELAY
 
 all: clean bios.exe
 
