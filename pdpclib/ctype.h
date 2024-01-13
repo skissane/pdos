@@ -44,6 +44,8 @@ int toupper(int c);
 #define tolower __os->tolower
 #define islower __os->islower
 #define isupper __os->isupper
+#define toupper __os->toupper
+#define iscntrl __os->iscntrl
 
 #else
 extern unsigned short *__isbuf;
