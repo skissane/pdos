@@ -159,6 +159,8 @@ typedef struct {
     int (*isupper)(int c);
     int (*Xatexit)(void (*func)(void));
     double (*Xceil)(double x);
+    int (*toupper)(int c);
+    int (*iscntrl)(int c);
 } OS;
 
 extern OS *__os;
