@@ -295,6 +295,8 @@ ___mprotect:
         swi     0
 mpok:   ldmia   sp!,{r2,r7,pc}
 
+
+
 # int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
 
         .globl  __getdents
@@ -312,6 +314,29 @@ ___getdents:
         mov     r7,#141          @ SYS_getdents
         swi     0
 gdok:   ldmia   sp!,{r2,r7,pc}
+
+
+
+
+# int ___nanosleep(unsigned int tval[2], unsigned int tval2[2]);
+
+        .globl  __nanosleep
+        .globl  ___nanosleep
+        .type  __nanosleep, %function
+        .align  2
+__nanosleep:
+___nanosleep:
+        stmfd   sp!,{r7,lr}
+.if STACKPARM
+        ldr     r1,[sp,#12]      @ time struct
+        ldr     r0,[sp,#8]       @ time struct
+.endif
+        mov     r7,#162          @ SYS_nanosleep
+        swi     0
+nsok:   ldmia   sp!,{r7,pc}
+
+
+
 
 # int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
