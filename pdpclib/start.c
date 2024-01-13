@@ -125,7 +125,7 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <windows.h>
 #endif
 
-static int runnum = 0;
+int __runnum = 0;
 
 int __G_live = 0;
 void *__G_ptr = NULL;
@@ -416,7 +416,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
-    runnum++;
+    __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
@@ -452,7 +452,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #ifdef __WIN32__
-    if (runnum == 1)
+    if (__runnum == 1)
     {
     __stdin->hfile = GetStdHandle(STD_INPUT_HANDLE);
     {
@@ -505,7 +505,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #if defined(__gnu_linux__)
-    if (runnum == 1)
+    if (__runnum == 1)
     {
     /* I believe the reason we switch off echo etc and
        do our own processing is so that when the command
@@ -520,7 +520,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 #endif
 
-    if (runnum == 1)
+    if (__runnum == 1)
     {
     __stdin->quickBin = 0;
     __stdin->quickText = 0;
@@ -630,7 +630,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     int ret;
     int have_sysparm;
 
-    runnum++;
+    __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
 /*
  Now build the SVC 202 string for sysprint
@@ -718,7 +718,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 
 #else /* not CMS */
-    runnum++;
+    __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
 #endif
 
@@ -1099,7 +1099,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 #endif
 #ifdef __OS2__
-    if (runnum == 1)
+    if (__runnum == 1)
     {
 #ifdef __16BIT__
         {
@@ -1210,11 +1210,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             {
                 fprintf(stderr, "command line too long to handle\n");
                 newcmdline = nclsave;
-                if (runnum == 1)
+                if (__runnum == 1)
                 {
                     __exit(EXIT_FAILURE);
                 }
-                runnum--;
+                __runnum--;
                 return(EXIT_FAILURE);
             }
         }
@@ -1295,6 +1295,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
             rc = main(argc, argv);
+            exit(rc); /* this will return to the above setjmp */
         }
     }
     else
@@ -1307,6 +1308,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         else
         {
             rc = __genmain(argc, argv);
+            exit(rc); /* this will return to the above setjmp */
         }
     }
     globrc = oldglobrc;
@@ -1319,14 +1321,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
     newcmdline = nclsave;
 #endif
-    if (runnum == 1)
+    if (__runnum == 1)
     {
 /* I think this only applies to EFI and should be changed */
 #if !defined(__64BIT__) || defined(__WIN32__)
     __exit(rc);
 #endif
     }
-    runnum--;
+    __runnum--;
     return (rc);
 #endif
 }
@@ -1338,7 +1340,7 @@ __PDPCLIB_API__ void _c_exit(void);
 void __exit(int status)
 {
     /* Complete C library termination and exit with error code. */
-    if (runnum == 1)
+    if (1) /* __runnum == 1) */
     {
     _cexit();
     }
@@ -1346,13 +1348,13 @@ void __exit(int status)
 #ifdef __WIN32__
     ExitProcess(status);
 #else
-    if (runnum == 1)
+    if (__runnum == 1)
     {
     __exita(status);
     /* in case exita returns here, which is the case for PDOS-generic
        running under the pseudo-BIOS currently, decrement the run number
        so that we don't get called again */
-    runnum--;
+    __runnum--;
     /* and we can't go through another longjmp either */
     /* really? 64 bit needs a longjmp. */
     /* 64-bit EFI-only I think - needs to be rationalized */
@@ -1403,22 +1405,37 @@ __PDPCLIB_API__ void _c_exit(void)
 
     for (x = 0; x < __NFILE; x++)
     {
-        if (__userFiles[x] != NULL)
+        if ((__userFiles[x] != NULL) && (__userFiles[x]->runnum == __runnum))
         {
 #if defined(__VSE__)
             /* this should be closed after the rest of the user files */
             if (__userFiles[x] != __stdpch)
 #endif
             fclose(__userFiles[x]);
+            /* note that fclose itself will set the userfiles[x] to NULL */
         }
     }
 
 #if defined(__VSE__)
-    if (__stdpch != NULL) fclose(__stdpch);
+    if (__stdpch != NULL)
+    {
+        if (__runnum == 1)
+        {
+            fclose(__stdpch);
+        }
+        else
+        {
+            fflush(__stdpch);
+        }
+    }
 #endif
 
     if (__stdout != NULL) fflush(__stdout);
     if (__stderr != NULL) fflush(__stderr);
+
+    /* bypass remainder for now unless top level */
+    if (__runnum != 1) return;
+
 #if defined(__WIN32__)
     SetConsoleMode(__stdin->hfile, stdin_dw);
     SetConsoleMode(__stdout->hfile, stdout_dw);
@@ -1440,7 +1457,7 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 #if defined(__gnu_linux__)
-    if (runnum == 1)
+    if (__runnum == 1)
     {
     __ioctl(0, TCSETS, (unsigned long)&tios_save);
     }
@@ -1453,7 +1470,7 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 
-    if (runnum == 1)
+    if (__runnum == 1)
     {
 #if USE_MEMMGR
     memmgrTerm(&__memmgr);

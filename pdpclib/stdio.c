@@ -269,6 +269,8 @@ static int    spareSpot;
 static int    err;
 static int    inreopen = 0;
 
+extern int __runnum;
+
 #if defined(__VSE__)
 /* for VSE library files being punched */
 #define VSE_LIB_LIM 1000000
@@ -581,6 +583,7 @@ static void fopen3(void)
         myfile->ungetCh = -1;
         myfile->update = 0;
         myfile->isopen = 1;
+        myfile->runnum = __runnum;
 #if !defined(__MVS__) && !defined(__CMS__)
         if (!myfile->textMode)
         {
