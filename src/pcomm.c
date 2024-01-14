@@ -2310,9 +2310,6 @@ void safegets(char *buffer, int size, bool use_history)
     int j;
     int history_cursor = -1;
     int pos = 0;
-    /* this isn't ideal - it would be better if PDPCLIB was
-       able to return to line buffering using its own buffer */
-    static char sbuf[BUFSIZ];
 
     setvbuf(stdin, NULL, _IONBF, 0);
     while (1)
@@ -2426,7 +2423,7 @@ void safegets(char *buffer, int size, bool use_history)
 
             if ((a == '\n') || (a == '\r'))
             {
-                setvbuf(stdin, sbuf, _IOLBF, BUFSIZ);
+                setvbuf(stdin, NULL, _IOLBF, BUFSIZ);
                 return;
             }
 
@@ -2445,7 +2442,7 @@ void safegets(char *buffer, int size, bool use_history)
 
                 buffer[i] = '\0';
 
-                setvbuf(stdin, sbuf, _IOLBF, BUFSIZ);
+                setvbuf(stdin, NULL, _IOLBF, BUFSIZ);
                 return;
             }
 
