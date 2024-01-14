@@ -221,11 +221,26 @@ int main(int argc, char **argv)
     pgastart = (void *)entry_point;
 
 #ifdef NEED_DELAY
-    for (ret = 0; ret < 500; ret++)
+
+#ifdef __ARMGEN__
     {
-        printf("please accept a delay before we execute pcomm.exe "
+        /* 1, 0 works */
+        /* 0, 50000000 works */
+        /* 0, 5000000 sometimes fails */
+        /* 0, 10000000 works, so double to be hopefully safe */
+        static unsigned int val1[2] = {0, 20000000UL};
+        unsigned int val2[2];
+        printf("sleeping before executing BSS memory\n");
+        __nanosleep(val1, val2);
+    }
+#else
+    for (rc = 0; rc < 500; rc++)
+    {
+        printf("please accept a delay before we execute program "
                "in BSS memory\n");
     }
+#endif
+
 #endif
 
     printf("about to call app\n");
