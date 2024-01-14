@@ -52,7 +52,7 @@ static EFI_STATUS directory_test (void);
 static int globrc = 0;
 #endif
 
-#ifdef W32EMUL
+#if defined(W32EMUL) || defined(GENSHELL)
 static int globrc = 0;
 #endif
 
@@ -94,7 +94,7 @@ extern int __start(char *p);
 extern long long __ncallbacks;
 #endif
 
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
 extern char __cwd[FILENAME_MAX];
 #endif
 
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     if (!quiet && !need_usage)
     {
         printf("\nbios starting\n");
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
         printf("type in \"dir\" to get a list of files\n");
         printf("type in \"type\" to show the contents of a file\n");
         printf("type in \"me file.txt\" to edit a file\n");
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
         {
             if (fgets(buf, sizeof buf, scr) == NULL)
             {
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
                 if (scr == stdin) break;
                 fclose(scr);
                 scr = stdin;
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
                 break;
 #endif
             }
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
             if (scr != stdin) printf("%s", buf);
 #endif
             p = (unsigned char *)strchr(buf, '\n');
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
             {
                 if (scr == stdin)
                 {
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
                     continue;
 #else
                     break;
@@ -305,10 +305,10 @@ int main(int argc, char **argv)
             }
         }
 
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
     if (strcmp(prog_name, "dir") == 0)
     {
-#ifdef W32EMUL
+#if defined(W32EMUL) || defined(GENSHELL)
 
 #ifndef HAVE_DIR
         printf("sorry - dir not supported yet\n");
@@ -431,7 +431,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
     strcpy(new_prog_name, prog_name);
     if (strstr(new_prog_name, ".exe") == NULL)
     {
@@ -526,7 +526,8 @@ int main(int argc, char **argv)
 
 #endif
 
-#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
+    || defined(GENSHELL)
 #ifdef __CC64OS__
     __ncallbacks = 0;
 #endif
@@ -552,7 +553,8 @@ int main(int argc, char **argv)
     rc = 0;
 #endif
 
-#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
+    || defined(GENSHELL)
     }
 #endif
 
@@ -566,7 +568,7 @@ int main(int argc, char **argv)
         {
             break;
         }
-#if defined(W64HACK) || defined(W32EMUL)
+#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
     printf("enter another command, exit to exit\n");
 #else
     printf("enter another command, enter to exit\n");
@@ -710,7 +712,7 @@ void w64exit(int status)
 #endif
 
 /* this should be combined with the w64 version */
-#if defined(W32EMUL)
+#if defined(W32EMUL) || defined(GENSHELL)
 void w32exit(int status)
 {
     globrc = status;
@@ -756,7 +758,7 @@ static int ff_search(void)
 
 int PosFindFirst(char *pat, int attrib)
 {
-#ifdef W32EMUL
+#if defined(W32EMUL) || defined(GENSHELL)
     char cwd2[sizeof __cwd + 2];
     char *p;
 
