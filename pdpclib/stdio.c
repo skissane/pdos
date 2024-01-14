@@ -759,7 +759,7 @@ static void checkMode(void)
     return;
 }
 
-#if defined(__EFI__) || defined(__W32EMUL__)
+#if defined(__EFI__) || defined(__W32EMUL__) || defined(__GENSHELL__)
 char __cwd[FILENAME_MAX] = "";
 #endif
 
