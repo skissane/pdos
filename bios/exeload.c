@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <locale.h>
 
 /* moved these defines here to reduce pressure on
    the size of command line */
@@ -3199,6 +3200,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         else if (strcmp((char *)hintname, "fclose") == 0)
                         {
                             *thunk = (unsigned long)fclose;
+                        }
+                        else if (strcmp((char *)hintname, "setlocale") == 0)
+                        {
+                            *thunk = (unsigned long)setlocale;
                         }
                         else if (strcmp((char *)hintname, "_errno") == 0)
                         {
