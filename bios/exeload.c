@@ -3225,6 +3225,14 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)strncat;
                         }
+                        else if (strcmp((char *)hintname, "rand") == 0)
+                        {
+                            *thunk = (unsigned long)rand;
+                        }
+                        else if (strcmp((char *)hintname, "srand") == 0)
+                        {
+                            *thunk = (unsigned long)srand;
+                        }
                         else if (strcmp((char *)hintname, "_errno") == 0)
                         {
                             *thunk = (unsigned long)_errno;
