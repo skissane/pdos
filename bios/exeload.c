@@ -3205,6 +3205,26 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)setlocale;
                         }
+                        else if (strcmp((char *)hintname, "memchr") == 0)
+                        {
+                            *thunk = (unsigned long)memchr;
+                        }
+                        else if (strcmp((char *)hintname, "clearerr") == 0)
+                        {
+                            *thunk = (unsigned long)clearerr;
+                        }
+                        else if (strcmp((char *)hintname, "ctime") == 0)
+                        {
+                            *thunk = (unsigned long)ctime;
+                        }
+                        else if (strcmp((char *)hintname, "rename") == 0)
+                        {
+                            *thunk = (unsigned long)rename;
+                        }
+                        else if (strcmp((char *)hintname, "strncat") == 0)
+                        {
+                            *thunk = (unsigned long)strncat;
+                        }
                         else if (strcmp((char *)hintname, "_errno") == 0)
                         {
                             *thunk = (unsigned long)_errno;
