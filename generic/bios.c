@@ -44,6 +44,11 @@ some sort of (useful) Frankenstein.
 #include <assert.h>
 #include <setjmp.h>
 
+#ifdef FREEMEM
+#include <__memmgr.h>
+extern int __mmgid;
+#endif
+
 #ifdef W64HACK
 #include <efi.h>
 static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
@@ -542,6 +547,10 @@ int main(int argc, char **argv)
     {
 #endif
 
+#ifdef FREEMEM
+        __mmgid += 256;
+#endif
+
     printf("about to execute program\n");
 #if 1
 #ifdef __CC64__
@@ -563,6 +572,11 @@ int main(int argc, char **argv)
         printf("return from called program is %d\n", rc);
     }
     free(p);
+
+#ifdef FREEMEM
+        memmgrFreeId(&__memmgr, __mmgid);
+        __mmgid -= 256;
+#endif
 
         if (scr == NULL)
         {
