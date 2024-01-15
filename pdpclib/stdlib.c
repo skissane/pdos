@@ -65,6 +65,9 @@ extern int __tso;
 
 #if USE_MEMMGR
 #include "__memmgr.h"
+
+int __mmgid = 0; /* memmgr id to use - normally 0 */
+
 /* GCCMVS 3.4.6 requires 49 MB minimum for full optimization */
 /* so we give it 60. GCCMVS 3.2.3 only requires 20 MB */
 /* Note that you can set MAX_CHUNK to less than REQ_CHUNK */
@@ -289,7 +292,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
     }
     else
     {
-        ptr = memmgrAllocate(&__memmgr, size, 0);
+        ptr = memmgrAllocate(&__memmgr, size, __mmgid);
         if (ptr == NULL)
         {
             void *ptr2;
@@ -337,7 +340,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
             }
             __lastsup = ptr2;
             memmgrSupply(&__memmgr, ptr2, REQ_CHUNK);
-            ptr = memmgrAllocate(&__memmgr, size, 0);
+            ptr = memmgrAllocate(&__memmgr, size, __mmgid);
         }
     }
     return (ptr);
