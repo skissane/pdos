@@ -357,6 +357,9 @@ int main(int argc, char **argv)
     else if (strcmp(prog_name, "cd") == 0)
     {
         p++;
+#ifdef LINDIR
+        PosChangeDir(p);
+#else
         if (p[0] == '\\')
         {
             strcpy(__cwd, (char *)p + 1);
@@ -374,6 +377,7 @@ int main(int argc, char **argv)
                 strcat(__cwd, (char *)p);
             }
         }
+#endif
         printf("enter another command, exit to exit\n");
         continue;
     }
@@ -446,6 +450,60 @@ int main(int argc, char **argv)
     {
         FILE *fp;
 
+#ifdef LINDIR
+        char cwd2[sizeof __cwd + 2];
+        char *p;
+
+        /* cwd2 is historical - should go back to
+           non-lindir logic or close */
+        /* but need a PATH command first */
+        strcpy(cwd2, "");
+        strcat(cwd2, prog_name);
+        fp = fopen(cwd2, "rb");
+        if (fp == NULL)
+        {
+            char *zzz;
+
+            zzz = strstr(cwd2, ".exe");
+            if (zzz != NULL)
+            {
+                strcpy(zzz, ".bat");
+                fp = fopen(cwd2, "r");
+                if (fp != NULL)
+                {
+                    scr = fp;
+                    strcpy(prog_name, cwd2);
+                    continue;
+                }
+                strcpy(zzz, ".exe");
+            }
+        }
+        if (fp == NULL)
+        {
+            /* hack for now - off current directory */
+            strcpy(cwd2, "./dos/");
+            strcat(cwd2, prog_name);
+            fp = fopen(cwd2, "rb");
+        }
+        if (fp == NULL)
+        {
+            /* hack for now - one level up */
+            strcpy(cwd2, "../dos/");
+            strcat(cwd2, prog_name);
+            fp = fopen(cwd2, "rb");
+        }
+        if (fp == NULL)
+        {
+            /* hack for now - one level up */
+            strcpy(cwd2, "../");
+            strcat(cwd2, prog_name);
+            fp = fopen(cwd2, "rb");
+        }
+        if (fp != NULL)
+        {
+            strcpy(prog_name, cwd2);
+        }
+#else
         fp = fopen(prog_name, "rb");
         if (fp == NULL)
         {
@@ -476,9 +534,14 @@ int main(int argc, char **argv)
             memcpy(prog_name, "\\DOS", 4);
             fp = fopen(prog_name, "rb");
         }
+#endif
         if (fp == NULL)
         {
+#ifdef LINDIR
+            printf("no such program %s\n", prog_name);
+#else
             printf("no such program %s\n", prog_name + 5);
+#endif
             printf("enter another command\n");
             continue;
         }
@@ -772,7 +835,7 @@ static int ff_search(void)
 
 int PosFindFirst(char *pat, int attrib)
 {
-#if defined(W32EMUL) || defined(GENSHELL)
+#if defined(W32EMUL) /* || defined(GENSHELL) */
     char cwd2[sizeof __cwd + 2];
     char *p;
 
