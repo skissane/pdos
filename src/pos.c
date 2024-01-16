@@ -977,11 +977,18 @@ int PosForceDuplicateFileHandle(int fh, int newfh)
     regsin.x.cx = newfh;
 #endif
     int86(0x21, &regsin, &regsout);
+    if (regsout.x.cflag)
+    {
 #ifdef __32BIT__
         return (regsout.d.eax);
 #else
         return (regsout.x.ax);
 #endif
+    }
+    else
+    {
+        return (0);
+    }
 }
 
 /**/
