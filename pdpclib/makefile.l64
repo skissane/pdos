@@ -1,0 +1,21 @@
+# This is the makefile for Linux to build pdpclib using
+# the gcc compiler.
+#
+
+CC=gcc
+COPTS=-c -O2 -fno-builtin -DUSE_MEMMGR -I . -m64 -fno-stack-protector
+
+pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o __memmgr.o
+	rm -f pdplinux.a
+	ar r pdplinux.a linstart.o l64supa.o stdio.o string.o stdlib.o
+	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
+	ar r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
+	gcc -m64 -nostdlib -o pdptest linstart.o l64supa.o pdptest.o pdplinux.a
+
+.c.o:
+	$(CC) $(COPTS) $<
+
+l64supa.o: l64supa.asm
+	as --64 -o $@ $*.asm
