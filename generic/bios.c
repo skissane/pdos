@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 #if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
         printf("type in \"dir\" to get a list of files\n");
         printf("type in \"type\" to show the contents of a file\n");
-        printf("type in \"me file.txt\" to edit a file\n");
+        printf("type in \"e/me file.txt\" to edit a file\n");
         printf("ctrl-x, ctrl-s saves; ctrl-x, ctrl-c quits\n");
 #endif
     }
