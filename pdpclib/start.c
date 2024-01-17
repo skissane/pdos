@@ -1355,10 +1355,16 @@ void __exit(int status)
        running under the pseudo-BIOS currently, decrement the run number
        so that we don't get called again */
     __runnum--;
-    /* and we can't go through another longjmp either */
-    /* really? 64 bit needs a longjmp. */
-    /* 64-bit EFI-only I think - needs to be rationalized */
-#if defined(__64BIT__) && !defined(__WIN32__)
+    /* and we can't go through another longjmp either on
+       some systems - supposedly/historically - hasn't
+       yet been rationalized */
+    /* 64 bit (64-bit what? EFI? Currently we are
+       not doing it for Win64 until proven necessary) needs a longjmp. */
+    /* PDOS-generic under the pseudo-bios needs a longjmp currently,
+       so adding that too. It might be better to make this (1)
+       until specific systems are identified as failing */
+#if (defined(__64BIT__) && !defined(__WIN32__)) \
+    || defined(__PDOS386__)
     longjmp(jb, status);
 #endif
     return;
