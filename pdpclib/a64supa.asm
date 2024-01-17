@@ -2,6 +2,8 @@
 # Modified by Paul Edwards
 # All changes remain public domain
 
+# 64-bit ARM (AArch64) needs the stack 16-byte aligned
+
 # int ___write(int fd, void *buf, int len);
 
         .globl  __write
@@ -10,15 +12,21 @@
         .align  2
 __write:
 ___write:
-        stmfd   sp!,{x8,lr}
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
 .if STACKPARM
         ldr     x2,[sp,#40]     @ len
         ldr     x1,[sp,#32]      @ buf
         ldr     x0,[sp,#24]      @ fd
 .endif
-        mov     x8,#64           @ SYS_write
+        mov     x8,#64
+#           @ SYS_write
+
         svc     #0
-wrtok:  ldmia   sp!,{x8,pc}
+wrtok:
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
 
 
 
@@ -32,13 +40,18 @@ wrtok:  ldmia   sp!,{x8,pc}
         .align  2
 __exita:
 ___exita:
-        stmfd   sp!,{x8,lr}
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
 .if STACKPARM
         ldr     x0,[sp,#8]      @ rc
 .endif
-        mov     x8,#93           @ SYS_exit
-        swi     0
-        ldmia   sp!,{x8,pc}
+        mov     x8,#93
+#           @ SYS_exit
+
+        svc     #0
+        ldr     x8,[sp, #0]
+        add     sp,sp,#16
+        ret
 
 
 
