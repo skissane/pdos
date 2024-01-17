@@ -648,6 +648,23 @@ static int processInput(bool save_in_history)
 {
     char *p;
     cmdBlock *block;
+    int ret;
+
+    char new_buf[sizeof (buf)];
+    struct {
+        char *name;
+        int saved_handle;
+        enum {
+            MODE_NONE = 0,
+            MODE_TO_FILE,
+            MODE_TO_HANDLE,
+            MODE_APPEND,
+            MODE_FROM_FILE,
+            MODE_FROM_HANDLE
+        } mode;
+    } redirects[10] = {{NULL}};
+    int i;
+    const char *error_msg = NULL;
 
     /* Remove newline at end of buffer */
     len = strlen(buf);
@@ -674,64 +691,242 @@ static int processInput(bool save_in_history)
         }
     }
 
+    /* Labels should be checked early as they skip command redirection. */
+    if (buf[0] == ':')
+    {
+        /* Labels are ignored here */
+        return 0;
+    }
+
+    {
+#define SKIP_SPACES(a) do { while (*(a) == ' ') (a)++; } while (0)
+        char *src, *dst;
+
+        src = buf;
+        SKIP_SPACES (src);
+
+        dst = new_buf;
+        while (*src) {
+            int handle_num = -1;
+
+            if (*src == '^') {
+                src++;
+                goto copy;
+            }
+
+            if (isdigit (*src)
+                && (src[1] == '<' || src[1] == '>')) {
+                handle_num = *src - '0';
+                src++;
+            }
+
+            if (*src == '<' || *src == '>') {
+                if (*src == '<') {
+                    if (handle_num == -1) handle_num = 0;
+                    redirects[handle_num].mode = MODE_FROM_FILE;
+                    if (src[1] == '&') {
+                        redirects[handle_num].mode = MODE_FROM_HANDLE;
+                        *src = '\0';
+                        src++;
+                    }
+                } else {
+                    if (handle_num == -1) handle_num = 1;
+                    redirects[handle_num].mode = MODE_TO_FILE;
+                    if (src[1] == '&') {
+                        redirects[handle_num].mode = MODE_TO_HANDLE;
+                        *src = '\0';
+                        src++;
+                    } else if (src[1] == '>') {
+                        redirects[handle_num].mode = MODE_APPEND;
+                        *src = '\0';
+                        src++;
+                    }
+                }
+
+                *src = '\0';
+                src++;
+
+                SKIP_SPACES (src);
+
+                if (redirects[handle_num].mode == MODE_TO_HANDLE
+                    || redirects[handle_num].mode == MODE_FROM_HANDLE) {
+                    fprintf (stderr, "'<&' and '>&' are not yet supported.\n");
+                    return 1;
+                }
+
+                for (p = src;
+                     *p && *p != '>' && *p != '<' && *p != ' ';
+                     p++) {}
+                if (p == src) {
+                    fprintf (stderr,
+                             "The syntax of the command is incorrect.\n");
+                    return 1;
+                }
+
+                redirects[handle_num].name = src;
+
+                src = p;
+                if (*src == ' ') {
+                    *src = '\0';
+                    src++;
+                    SKIP_SPACES (src);
+                }
+            } else {
+        copy:
+                *dst = *src;
+                src++;
+                dst++;
+            }
+        }
+
+        *dst = '\0';
+    }
+
+    /* Redirection without a command is not permitted. */
+    if (!new_buf[0]) {
+        fprintf (stderr, "The syntax of the command is incorrect.\n");
+        return 1;
+    }
+
+    /* C library does not know handles are being manipulated,
+     * so it needs to be told to flush buffers.
+     */
+    fflush (stdout);
+    fflush (stderr);
+
+    /* Errors that occur during redirection cannot be reported immediately
+     * as stderr might have been already redirected.
+     */
+    for (i = 0; i < sizeof (redirects) / sizeof (redirects[0]); i++) {
+        if (redirects[i].mode) {
+            int temp_handle;
+
+            if (genuine_pdos) {
+                printf ("Command redirection is not "
+                        "supported on genuine PDOS.\n");
+                break;
+            }
+
+            switch (redirects[i].mode) {
+                case MODE_TO_FILE:
+                    if (PosCreatFile (redirects[i].name, 0, &temp_handle)) {
+                        error_msg = "Failed to create file.";
+                        goto end;
+                    }
+                    break;
+
+                case MODE_APPEND:
+                    error_msg = "'>>' is not yet supported.";
+                    goto end;
+
+                case MODE_FROM_FILE:
+                    /* '<' does not provide the file directly,
+                     * it "type"s it and provides the output.
+                     * (So '<' can be done with same file
+                     *  multiple times for one command.)
+                     * It could be probably implemented using
+                     * Int 21/AH=5Ah CREATE TEMPORARY FILE
+                     * but that is not yet in pos.c.
+                     */
+                    error_msg = "'<' is not yet supported.";
+                    goto end;
+            }
+
+            /* Handles 3-9 are undefined, so they should not be redirected
+             * but they still should create a file when '>' is used.
+             */
+            if (i < 3) {
+                redirects[i].saved_handle = PosDuplicateFileHandle (i);
+
+                if (PosForceDuplicateFileHandle (temp_handle, i)) {
+                    error_msg = "Failed to duplicate handle.";
+                    goto end;
+                }
+            }
+
+            PosCloseFile (temp_handle);
+        }
+    }
+
+    len = strlen(new_buf);
     /* Split command and arguments */
-    p = strchr(buf, ' ');
+    p = strchr(new_buf, ' ');
     if (p != NULL)
     {
         *p++ = '\0';
     }
     else
     {
-        p = buf + len;
+        p = new_buf + len;
     }
-    len -= (size_t)(p - buf);
+    len -= (size_t)(p - new_buf);
 
     /* Check for special case syntax first */
-    if (buf[0] == ':')
+    if (ins_strncmp(new_buf, "cd.", 3) == 0)
     {
-        /* Labels are ignored here */
-        return 0;
+        ret = cmd_cd_run(new_buf + 2);
     }
-    else if (ins_strncmp(buf, "cd.", 3) == 0)
+    else if (ins_strncmp(new_buf, "cd\\", 3) == 0)
     {
-        return cmd_cd_run(buf + 2);
+        ret = cmd_cd_run(new_buf + 2);
     }
-    else if (ins_strncmp(buf, "cd\\", 3) == 0)
+    else if ((strlen(new_buf) == 2) && (new_buf[1] == ':'))
     {
-        return cmd_cd_run(buf + 2);
-    }
-    else if ((strlen(buf) == 2) && (buf[1] == ':'))
-    {
-        return changedisk(buf[0]);
+        ret = changedisk(new_buf[0]);
     }
     else
     {
         /* Look for internal command in registry */
-        block = findCommand(buf);
+        block = findCommand(new_buf);
         if (block != NULL)
         {
             /* Command was found, call implementation if present */
             if (block->proc == NULL)
             {
                 printf("ERROR: No implementation found for command '%s'\n",
-                        buf);
-                return 1;
+                        new_buf);
+                ret = 1;
             }
             else
             {
                 /* Populate curCmdName (for use in error messages) */
-                strcpy(curCmdName, buf);
+                strcpy(curCmdName, new_buf);
                 strtoupper(curCmdName);
                 /* Call implementation */
-                return block->proc(p);
+                ret = block->proc(p);
             }
         }
         else
         {
             /* No internal command found, presume external command */
-            return doExec(buf,p);
+            ret = doExec(new_buf,p);
         }
     }
+
+end:
+    fflush (stdout);
+    fflush (stderr);
+
+    for (i = 0; i < sizeof (redirects) / sizeof (redirects[0]); i++) {
+        if (redirects[i].mode) {
+            if (genuine_pdos) break;
+
+            if (redirects[i].saved_handle) {
+                if (PosForceDuplicateFileHandle (redirects[i].saved_handle,
+                                                 i)) {
+                    error_msg = "Failed to restore handle.";
+                }
+                PosCloseFile (redirects[i].saved_handle);
+            }
+        }
+    }
+
+    if (error_msg) {
+        fprintf (stderr, "%s\n", error_msg);
+        ret = 1;
+    }
+
+    return ret;
 }
 
 /* $$ - prints dollar sign */
