@@ -2,6 +2,48 @@
 # Modified by Paul Edwards
 # All changes remain public domain
 
+# int ___write(int fd, void *buf, int len);
+
+        .globl  __write
+        .globl  ___write
+        .type  __write, %function
+        .align  2
+__write:
+___write:
+        stmfd   sp!,{x8,lr}
+.if STACKPARM
+        ldr     x2,[sp,#40]     @ len
+        ldr     x1,[sp,#32]      @ buf
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#64           @ SYS_write
+        svc     #0
+wrtok:  ldmia   sp!,{x8,pc}
+
+
+
+# void _exita(int rc);
+
+        .globl  __exita
+        .globl  ___exita
+.if ELF
+        .type  __exita, %function
+.endif
+        .align  2
+__exita:
+___exita:
+        stmfd   sp!,{x8,lr}
+.if STACKPARM
+        ldr     x0,[sp,#8]      @ rc
+.endif
+        mov     x8,#93           @ SYS_exit
+        swi     0
+        ldmia   sp!,{x8,pc}
+
+
+
+
+
 .if 0
 
 # Calling conventions: r0,r1,r2,stack, return in r0
@@ -120,24 +162,6 @@ ___exita:
         mov     r7,#1           @ SYS_exit
         swi     0
         ldmia   sp!,{pc}
-
-# int ___write(int fd, void *buf, int len);
-
-        .globl  __write
-        .globl  ___write
-        .type  __write, %function
-        .align  2
-__write:
-___write:
-        stmfd   sp!,{r2,r7,lr}
-.if STACKPARM
-        ldr     r2,[sp,#20]     @ len
-        ldr     r1,[sp,#16]      @ buf
-        ldr     r0,[sp,#12]      @ fd
-.endif
-        mov     r7,#4           @ SYS_write
-        swi     0
-wrtok:  ldmia   sp!,{r2,r7,pc}
 
 # int ___read(int fd, void *buf, int len);
 
