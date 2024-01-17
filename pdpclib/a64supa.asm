@@ -28,7 +28,24 @@ wrtok:
         add     sp,sp,#16
         ret
 
-
+.global __rename
+__rename:
+.global __close
+__close:
+.global __seek
+__seek:
+.global __remove
+__remove:
+.global __open
+__open:
+.global __ioctl
+__ioctl:
+.global __longj
+__longj:
+.global __setj
+__setj:
+.global __read
+__read:
 
 # void _exita(int rc);
 
