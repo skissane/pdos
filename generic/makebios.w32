@@ -5,21 +5,21 @@
 
 CC=gccwin
 CFLAGS=-O2
-LD=ldwin
+LD=pdld --no-insert-timestamp
 LDFLAGS=
-AS=aswin
-AR=arwin
+AS=pdas --oformat coff
+AR=xar
 COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT
 
 all: clean bios.exe
 
-bios.exe: bios.o ../bios/exeload.o
-    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.o bios.o ../bios/exeload.o ../pdpclib/pdpwin32.a ../src/kernel32.a
+bios.exe: bios.obj ../bios/exeload.obj
+    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.obj bios.obj ../bios/exeload.obj ../pdpclib/pdpwin32.lib ../src/kernel32.lib
 
-.c.o:
+.c.obj:
     $(CC) $(COPTS) -I../bios -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
 
 clean:
-    rm -f *.o bios.exe
+    rm -f *.obj bios.exe
