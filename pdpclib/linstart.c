@@ -97,6 +97,14 @@ int _start(char *p)
 */
 
 #else
+
+#ifdef __64BIT__
+    __write(1, "Hi\n", 3);
+    __exita(0);
+    for (;;) ;
+
+#endif
+
     rc = __start(*(int *)(&p - 1), &p);
 #endif
     __exita(rc);
