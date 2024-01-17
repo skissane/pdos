@@ -3,7 +3,7 @@
 #
 
 CC=gcc
-COPTS=-c -O2 -fno-builtin -DUSE_MEMMGR -I . -m64 -fno-stack-protector
+COPTS=-c -O2 -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64 -fno-stack-protector
 
 pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -18,4 +18,4 @@ pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
 	$(CC) $(COPTS) $<
 
 l64supa.o: l64supa.asm
-	as --64 -o $@ $*.asm
+	as --64 --defsym STACKPARM=0 -o $@ $*.asm
