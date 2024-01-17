@@ -64,25 +64,36 @@ ret
 ___write:
 .globl __write
 __write:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
+.endif
 
-# function code 4 = write
-movq $4, %rax
+# function code 1 = write
+movq $1, %rax
+
+.if STACKPARM
 # handle
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # data pointer
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # length
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
 
 
@@ -227,14 +238,23 @@ ___exita:
 .globl __exita
 __exita:
 # exit/terminate
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-movq 8(%rbp), %rbx
-movq $1, %rax
-int $0x80
-pop %rbx
+push %rdi
+movq 16(%rbp), %rdi
+.endif
+
+movq $60, %rax
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
 
 
