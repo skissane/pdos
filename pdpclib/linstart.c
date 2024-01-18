@@ -36,7 +36,11 @@ extern int __mprotect(void *buf, size_t len, int prot);
    a C program. There is no return address. Instead, on the
    stack is a count, followed by all the parameters as pointers */
 
+#ifdef __64BIT__
+int _start(char *a, char *b, char *c, char *d, char *e, char *f, char *p)
+#else
 int _start(char *p)
+#endif
 {
     int rc;
 
@@ -97,14 +101,6 @@ int _start(char *p)
 */
 
 #else
-
-#ifdef __64BIT__
-    __write(1, "Hi\n", 3);
-    __exita(0);
-    for (;;) ;
-
-#endif
-
     rc = __start(*(int *)(&p - 1), &p);
 #endif
     __exita(rc);
