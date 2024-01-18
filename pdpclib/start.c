@@ -418,6 +418,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
     __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
+
+#if defined(__64BIT__) && defined(__gnu_linux__)
+    __write(1, argv[0], strlen(argv[0]));
+    __write(1, argv[1], strlen(argv[1]));
+    __write(1, argv[2], strlen(argv[2]));
+    return 0;
+#endif
+
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
     {
