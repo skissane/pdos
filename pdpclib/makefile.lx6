@@ -7,7 +7,7 @@ AS=as
 LD=ld
 AR=ar
 
-COPTS=-S -O0 -mno-red-zone -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64 -fno-stack-protector
+COPTS=-S -O0 -U__WIN32__ -D__gnu_linux__ -mno-red-zone -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64
 
 pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
