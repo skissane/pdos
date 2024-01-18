@@ -1288,7 +1288,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
 #if defined(__64BIT__) && defined(__gnu_linux__)
 	    /* need this for some reason */
-	    return 0;
+	    /* but only if optimization is switched on */
+	    /* return 0; */
 #endif
             /* we're here because of longjmp */
             /* the invoker needs to set globrc first, otherwise
@@ -1310,7 +1311,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     {
 #if defined(__64BIT__) && defined(__gnu_linux__)
         /* need this for some reason */
-        return 0;
+	/* but only if optimization is switched on */
+        /* return 0; */
 #endif
         rc = setjmp(jb);
         if (rc != 0)
