@@ -238,6 +238,119 @@ ___exita:
 
 
 
+# int __time(void);
+
+        .globl  __time
+        .globl  ___time
+.if ELF
+        .type  __time, %function
+.endif
+        .align  2
+__time:
+___time:
+# Unusual amount of storage used
+        sub     sp,sp,#32
+# Note that this store is unusual
+        str     x8, [sp, #16]
+        mov     x0, sp
+        mov     x8,#113
+#           @ SYS_clock_gettime
+
+        svc     #0
+        ldr     x8,[sp, #0]
+# Unusual stack correction
+        add     sp,sp,#32
+        ret
+
+
+
+
+# int ___chdir(const char *filename);
+
+        .globl  __chdir
+        .globl  ___chdir
+.if ELF
+        .type  __chdir, %function
+.endif
+        .align  2
+__chdir:
+___chdir:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x0,[sp,#8]      @ filename
+.endif
+        mov     x8,#49
+#           @ SYS_chdir
+
+        svc     #0
+        ldr     x8,[sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. No idea why. So just return -1
+# (presumably failure).
+
+# int ___mkdir(const char *filename);
+
+        .globl  __mkdir
+        .globl  ___mkdir
+.if ELF
+        .type  __mkdir, %function
+.endif
+        .align  2
+__mkdir:
+___mkdir:
+        mov     x0, #-1
+        ret
+
+
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. No idea why. So just return -1
+# (presumably failure).
+
+# int ___rmdir(const char *filename);
+
+        .globl  __rmdir
+        .globl  ___rmdir
+.if ELF
+        .type  __rmdir, %function
+.endif
+        .align  2
+__rmdir:
+___rmdir:
+        mov     x0, #-1
+        ret
+
+
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. There is a getdents64 but that will
+# presumably require more work. So just return -1,
+# presumably failure.
+
+# int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
+
+        .globl  __geetdents
+        .globl  ___getdents
+.if ELF
+        .type  __getdents, %function
+.endif
+        .align  2
+__getdents:
+___getdents:
+        mov     x0, #-1
+        ret
+
+
+
 
 .if 0
 
