@@ -159,12 +159,12 @@ ___ioctl:
 
 # int setjmp(jmp_buf env);
 
-        .globl  __setj
-        .globl  ___setj
-        .type  __setj, %function
+        .globl  __Ysetjmp
+        .globl  ___Ysetjmp
+        .type  __Ysetjmp, %function
         .align  2
-__setj:
-___setj:
+__Ysetjmp:
+___Ysetjmp:
         mov     x0, #0
         ret
 
@@ -172,12 +172,12 @@ ___setj:
 
 # void longjmp(jmp_buf env, int v);
 
-        .globl  __longj
-        .globl  ___longj
-        .type  __longj, %function
+        .globl  longjmp
+        .globl  _longjmp
+        .type  longjmp, %function
         .align  2
-__longj:
-___longj:
+longjmp:
+_longjmp:
         mov     x0, #0
         ret
 
