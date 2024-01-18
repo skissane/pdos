@@ -653,6 +653,7 @@ static int processInput(bool save_in_history)
     char new_buf[sizeof (buf)];
     struct {
         char *name;
+        int to_handle_num;
         int saved_handle;
         enum {
             MODE_NONE = 0,
@@ -750,20 +751,28 @@ static int processInput(bool save_in_history)
 
                 if (redirects[handle_num].mode == MODE_TO_HANDLE
                     || redirects[handle_num].mode == MODE_FROM_HANDLE) {
-                    fprintf (stderr, "'<&' and '>&' are not yet supported.\n");
-                    return 1;
-                }
+                    long lhandle;
 
-                for (p = src;
-                     *p && *p != '>' && *p != '<' && *p != ' ';
-                     p++) {}
-                if (p == src) {
-                    fprintf (stderr,
+                    lhandle = strtol (src, &p, 10);
+                    if (lhandle == 0 && src == p) {
+                        fprintf (stderr,
                              "The syntax of the command is incorrect.\n");
-                    return 1;
-                }
+                        return 1;
+                    }
 
-                redirects[handle_num].name = src;
+                    redirects[handle_num].to_handle_num = (int)lhandle;
+                } else {
+                    for (p = src;
+                         *p && *p != '>' && *p != '<' && *p != ' ';
+                         p++) {}
+                    if (p == src) {
+                        fprintf (stderr,
+                                 "The syntax of the command is incorrect.\n");
+                        return 1;
+                    }
+
+                    redirects[handle_num].name = src;
+                }
 
                 src = p;
                 if (*src == ' ') {
@@ -815,6 +824,10 @@ static int processInput(bool save_in_history)
                     }
                     break;
 
+                case MODE_TO_HANDLE:
+                    temp_handle = redirects[i].to_handle_num;
+                    break;
+
                 case MODE_APPEND:
                     error_msg = "'>>' is not yet supported.";
                     goto end;
@@ -830,6 +843,10 @@ static int processInput(bool save_in_history)
                      */
                     error_msg = "'<' is not yet supported.";
                     goto end;
+
+                case MODE_FROM_HANDLE:
+                    error_msg = "'<&' is not yet supported.";
+                    goto end;
             }
 
             /* Handles 3-9 are undefined, so they should not be redirected
@@ -844,7 +861,9 @@ static int processInput(bool save_in_history)
                 }
             }
 
-            PosCloseFile (temp_handle);
+            if (redirects[i].mode != MODE_TO_HANDLE) {
+                PosCloseFile (temp_handle);
+            }
         }
     }
 
