@@ -186,6 +186,9 @@ int $0x80
 pop %ecx
 pop %ebx
 pop %ebp
+ret
+
+
 
 
 .globl ___remove
