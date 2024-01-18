@@ -347,8 +347,17 @@ static void freadSlowB(void *ptr,
                        size_t *actualRead);
 #endif
 
+/* I don't know if there is a better way to access the
+   argument list than this split logic */
+#if defined(__64BIT__) && defined(__gnu_linux__)
 static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount);
+#define ACCESS_ARG arg
+#else
+static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
+                   int chcount);
+#define ACCESS_ARG *arg
+#endif
 
 #if defined(__CMS__) || defined(__MVS__)
 static void filedef(char *fdddname, char *fnm, int mymode);
@@ -3215,7 +3224,11 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
             {
                 int extraCh;
 
+#if defined(__64BIT__) && defined(__gnu_linux__)
                 extraCh = examine(&format, fq, s, arg, chcount);
+#else
+                extraCh = examine(&format, fq, s, &arg, chcount);
+#endif
                 chcount += extraCh;
                 if (s != NULL)
                 {
@@ -3233,8 +3246,13 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
     return (chcount);
 }
 
+#if defined(__64BIT__) && defined(__gnu_linux__)
 static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount)
+#else
+static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
+                   int chcount)
+#endif
 {
     int extraCh = 0;
     int flagMinus = 0;
@@ -3283,7 +3301,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                       break;
             case '0': flagZero = 1;
                       break;
-            case '*': width = va_arg(arg, int);
+            case '*': width = va_arg(ACCESS_ARG, int);
                       if (width < 0)
                       {
                           flagMinus = 1;
@@ -3326,7 +3344,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list arg,
         format++;
         if (*format == '*')
         {
-            precision = va_arg(arg, int);
+            precision = va_arg(ACCESS_ARG, int);
             format++;
         }
         else
@@ -3379,24 +3397,24 @@ static int examine(const char **formt, FILE *fq, char *s, va_list arg,
         if (specifier == 'p')
         {
             lng = 1;
-            lvalue = (long)va_arg(arg, void *);
+            lvalue = (long)va_arg(ACCESS_ARG, void *);
         }
         else
 #endif
         if (lng)
         {
-            lvalue = va_arg(arg, long);
+            lvalue = va_arg(ACCESS_ARG, long);
         }
         else if (half)
         {
             /* short is promoted to int, so use int */
-            hvalue = va_arg(arg, int);
+            hvalue = va_arg(ACCESS_ARG, int);
             if (specifier == 'u') lvalue = (unsigned short)hvalue;
             else lvalue = hvalue;
         }
         else
         {
-            ivalue = va_arg(arg, int);
+            ivalue = va_arg(ACCESS_ARG, int);
             if (specifier == 'u') lvalue = (unsigned int)ivalue;
             else lvalue = ivalue;
         }
@@ -3556,7 +3574,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list arg,
         {
             precision = 6;
         }
-        vdbl = va_arg(arg, double);
+        vdbl = va_arg(ACCESS_ARG, double);
         dblcvt(vdbl, specifier, width, precision, work);   /* 'e','f' etc. */
         slen = strlen(work);
         if ((flagSpace || flagPlus) && (work[0] != '-'))
@@ -3585,7 +3603,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list arg,
     }
     else if (specifier == 's')
     {
-        svalue = va_arg(arg, char *);
+        svalue = va_arg(ACCESS_ARG, char *);
         fillCh = ' ';
         if (precision > 0)
         {
