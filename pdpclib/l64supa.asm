@@ -10,6 +10,7 @@ ___setj:
 __setj:
 mov $0, %rax
 ret
+
 mov 4(%rsp), %rax
 push %rbx
 mov %rsp, %rbx
@@ -38,6 +39,9 @@ ret
 ___longj:
 .globl __longj
 __longj:
+mov $0, %rax
+ret
+
 mov 4(%rsp), %rax
 mov 20(%rax), %rbp
 mov %rbp, %rsp
@@ -60,6 +64,7 @@ mov 16(%rax), %esi
 mov 60(%rax), %rax    # return value
 
 ret
+
 
 
 .globl ___write
@@ -99,30 +104,43 @@ pop %rbp
 ret
 
 
+
 .globl ___read
 ___read:
 .globl __read
 __read:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
+.endif
 
-# function code 3 = read
-movq $3, %rax
+# function code 0 = read
+movq $0, %rax
+
+.if STACKPARM
 # handle
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # data pointer
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # length
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
 
 
 
@@ -130,25 +148,36 @@ ret
 ___open:
 .globl __open
 __open:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
+.endif
 
-# function code 5 = open
-movq $5, %rax
+# function code 2 = open
+movq $2, %rax
+
+.if STACKPARM
 # filename
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # flag
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # mode
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
 
 
@@ -157,25 +186,36 @@ ret
 __seek:
 .globl ___seek
 ___seek:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
+.endif
 
-# function code 19 = lseek
-movq $19, %rax
+# function code 8 = lseek
+movq $8, %rax
+
+.if STACKPARM
 # handle
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # offset
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # whence
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
 
 
@@ -184,55 +224,94 @@ ret
 ___rename:
 .globl __rename
 __rename:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
+.endif
 
-# function code 38 = rename
-movq $38, %rax
+# function code 82 = rename
+movq $82, %rax
+
+.if STACKPARM
 # old file
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # new file
-movq 12(%rbp), %rcx
-int $0x80
-pop %rcx
-pop %rbx
+movq 24(%rbp), %rsi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
+ret
 
 
 .globl ___remove
 ___remove:
 .globl __remove
 __remove:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-# function code 10 = unlink
-movq $10, %rax
+push %rdi
+.endif
+
+# function code 87 = unlink
+movq $87, %rax
+
+.if STACKPARM
 # filename
-movq 8(%rbp), %rbx
-int $0x80
-pop %rbx
+movq 16(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
 
 
 .globl ___close
 ___close:
 .globl __close
 __close:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-# function code 6 = close
-movq $6, %rax
+push %rdi
+.endif
+
+# function code 3 = close
+movq $3, %rax
+
+.if STACKPARM
 # handle
-movq 8(%rbp), %rbx
-int $0x80
-pop %rbx
+movq 16(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___exita
@@ -264,145 +343,238 @@ ret
 ___time:
 .globl __time
 __time:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-# function code 13 = retrieve current time
-movq $13, %rax
+push %rdi
+.endif
+
+# function code 201 = retrieve current time
+movq $201, %rax
+
+.if STACKPARM
 # pointer to time_t
-movq 8(%rbp), %rbx
-int $0x80
-pop %rbx
+movq 16(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___ioctl
 ___ioctl:
 .globl __ioctl
 __ioctl:
-ret
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
-# function code 54 = ioctl
-movq $54, %rax
+.endif
+
+# function code 16 = ioctl
+movq $16, %rax
+
+.if STACKPARM
 # file descriptor
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # command
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # parameter
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
 
 
 .globl ___chdir
 ___chdir:
 .globl __chdir
 __chdir:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-# function code 12 = chdir
-movq $12, %rax
+push %rdi
+.endif
+
+# function code 80 = chdir
+movq $80, %rax
+
+.if STACKPARM
 # filename (directory name)
-movq 8(%rbp), %rbx
-int $0x80
-pop %rbx
+movq 16(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___rmdir
 ___rmdir:
 .globl __rmdir
 __rmdir:
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-# function code 40 = rmdir
-movq $40, %rax
+push %rdi
+.endif
+
+# function code 84 = rmdir
+movq $84, %rax
+
+.if STACKPARM
 # pathname
-movq 8(%rbp), %rbx
-int $0x80
-pop %rbx
+movq 8(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___mkdir
 ___mkdir:
 .globl __mkdir
 __mkdir:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
-# function code 39 = mkdir
-movq $39, %rax
+push %rdi
+push %rsi
+.endif
+
+# function code 83 = mkdir
+movq $83, %rax
+
+.if STACKPARM
 # pathname
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # mode
-movq 12(%rbp), %rcx
-int $0x80
-pop %rcx
-pop %rbx
+movq 24(%rbp), %rsi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___getdents
 ___getdents:
 .globl __getdents
 __getdents:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
-# function code 141 = getdents
-movq $141, %rax
+.endif
+
+# function code 78 = getdents
+movq $78, %rax
+
+.if STACKPARM
 # file descriptor
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # dirent
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # count
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
+
+
 
 
 .globl ___mprotect
 ___mprotect:
 .globl __mprotect
 __mprotect:
+
+.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rbx
-push %rcx
+push %rdi
+push %rsi
 push %rdx
-# function code 125 = mprotect
-movq $125, %rax
+.endif
+
+# function code 10 = mprotect
+movq $10, %rax
+
+.if STACKPARM
 # start
-movq 8(%rbp), %rbx
+movq 16(%rbp), %rdi
 # len
-movq 12(%rbp), %rcx
+movq 24(%rbp), %rsi
 # prot
-movq 16(%rbp), %rdx
-int $0x80
+movq 32(%rbp), %rdx
+.endif
+
+syscall
+
+.if STACKPARM
 pop %rdx
-pop %rcx
-pop %rbx
+pop %rsi
+pop %rdi
 pop %rbp
+.endif
+
 ret
