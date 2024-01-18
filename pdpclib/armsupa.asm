@@ -737,3 +737,118 @@ ___nanosleep:
         mov     r7,#162          @ SYS_nanosleep
         swi     0
 nsok:   ldmia   sp!,{r7,pc}
+
+
+# These floating point routines are all dummied to
+# hopefully allow gccarm to run when built with
+# -msoft-float given that -mhard-float (default)
+# is not working on real hardware such as a
+# Pinebook Pro for unknown reasons (ldfd is an
+# illegal instruction).
+
+.globl ___addsf3
+.globl ____addsf33
+___addsf3:
+____addsf3:
+
+.globl ___adddf3
+.globl ____adddf33
+___adddf3:
+____adddf3:
+
+.globl ___subsf3
+.globl ____subsf33
+___subsf3:
+____subsf3:
+
+.globl ___subdf3
+.globl ____subdf33
+___subdf3:
+____subdf3:
+
+.globl ___mulsf3
+.globl ____mulsf33
+___mulsf3:
+____mulsf3:
+
+.globl ___muldf3
+.globl ____muldf3
+___muldf3:
+____muldf3:
+
+.globl ___divdf3
+.globl ____divdf3
+___divdf3:
+____divsd3:
+
+.globl ___divsf3
+.globl ____divsf33
+___divsf3:
+____divsf3:
+
+.globl ___floatsisf
+.globl ____floatsisf
+___floatsisf:
+____floatsisf:
+
+.globl ___gtsf2
+.globl ____gtsf2
+___gtsf2:
+____gtsf2:
+
+.globl ___gtdf2
+.globl ____gtdf2
+___gtdf2:
+____gtdf2:
+
+.globl ___ltsf2
+.globl ____ltsf2
+___ltsf2:
+____ltsf2:
+
+.globl ___ltdf2
+.globl ____ltdf2
+___ltdf2:
+____ltdf2:
+
+.globl ___nesf2
+.globl ____nesf2
+___nesf2:
+____nesf2:
+
+.globl ___eqsf2
+.globl ____eqsf2
+___eqsf2:
+____eqsf2:
+
+.globl ___eqdf2
+.globl ____eqdf2
+___eqdf2:
+____eqdf2:
+
+.globl ___fixsfsi
+.globl ____fixsfsi
+___fixsfsi:
+____fixsfsi:
+
+.globl ___fixdfsi
+.globl ____fixdfsi
+___fixdfsi:
+____fixdfsi:
+
+.globl ___extendsfdf2
+.globl ____extendsfdf2
+___extendsfdf2:
+____extendsfdf2:
+
+.globl ___floatsidf
+.globl ____floatsidf
+___floatsidf:
+____floatsidf:
+
+.globl ___truncdfsf2
+.globl ____truncdfsf2
+___truncdfsf2:
+____truncdfsf2:
+
+mov pc,lr
