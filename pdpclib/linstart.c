@@ -37,7 +37,15 @@ extern int __mprotect(void *buf, size_t len, int prot);
    stack is a count, followed by all the parameters as pointers */
 
 #ifdef __64BIT__
+
+#ifdef __ARM__
+int _start(char *a, char *b, char *d, char *e,
+           char *f, char *g, char *h, char *i,
+           char *p)
+#else
 int _start(char *a, char *b, char *c, char *d, char *e, char *f, char *p)
+#endif
+
 #else
 int _start(char *p)
 #endif
@@ -68,7 +76,15 @@ int _start(char *p)
     /* I don't know what the official rules for ARM are, but
        looking at the stack on entry showed that this code
        would work */
-#ifdef __ARM__
+
+    /* The official rules for 64-bit are for parameters to
+       be passed in x0 to x7. */
+
+#if defined(__ARM__) && defined(__64BIT__)
+
+    rc = __start(*(int *)(&p - 1), &p);
+
+#elif defined(__ARM__)
 
 #if defined(__UNOPT__)
     /* these hardcoded numbers are dependent on the number of
