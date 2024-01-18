@@ -281,6 +281,7 @@ ret
 ___ioctl:
 .globl __ioctl
 __ioctl:
+ret
 push %rbp
 mov %rsp, %rbp
 push %rbx
