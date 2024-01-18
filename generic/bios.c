@@ -579,7 +579,10 @@ int main(int argc, char **argv)
         /* 0, 50000000 works */
         /* 0, 5000000 sometimes fails */
         /* 0, 10000000 works, so double to be hopefully safe */
-        static unsigned int val1[2] = {0, 20000000UL};
+        /* Although that is apparently enough for a Pinebook Pro,
+           it wasn't enough for an armv7 netbook, which continued
+           to randomly fail. So 1 second was added */
+        static unsigned int val1[2] = {1, 20000000UL};
         unsigned int val2[2];
         printf("sleeping before executing BSS memory\n");
         __nanosleep(val1, val2);
