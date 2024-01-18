@@ -25,7 +25,9 @@ if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
 
 /* Try only using builtins for GCC 4.x and above, which
    appears to cover clang too */
-#if defined (__GNUC__) && __GNUC__ > 3
+/* We probably need the builtin for 64-bit where parameters are
+   not all passed on the stack too */
+#if defined (__GNUC__) && ((__GNUC__ > 3) || defined(__64BIT__))
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
