@@ -104,7 +104,7 @@ __POSGENOS__ - I give up.
 #endif
 
 #if defined(__ARM__) && !defined(__EFI__)
-#define __gnu_linux__
+#define __gnu_linux__ 1
 #endif
 
 extern FILE *__userFiles[__NFILE];
