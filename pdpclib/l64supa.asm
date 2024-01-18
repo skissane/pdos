@@ -8,6 +8,8 @@
 ___setj:
 .globl __setj
 __setj:
+mov $0, %rax
+ret
 mov 4(%rsp), %rax
 push %rbx
 mov %rsp, %rbx
