@@ -338,14 +338,14 @@ ___rmdir:
 
 # int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
 
-        .globl  __geetdents
-        .globl  ___getdents
+        .globl  _geetdents
+        .globl  __getdents
 .if ELF
-        .type  __getdents, %function
+        .type  _getdents, %function
 .endif
         .align  2
+_getdents:
 __getdents:
-___getdents:
         mov     x0, #-1
         ret
 
