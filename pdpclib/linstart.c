@@ -78,11 +78,12 @@ int _start(char *p)
        would work */
 
     /* The official rules for 64-bit are for parameters to
-       be passed in x0 to x7. */
+       be passed in x0 to x7. But not sure how that translates
+       to the actual stack */
 
 #if defined(__ARM__) && defined(__64BIT__)
 
-    rc = __start(*(int *)(&p - 1), &p);
+    rc = __start(*(int *)(&p), &p + 1);
 
 #elif defined(__ARM__)
 
