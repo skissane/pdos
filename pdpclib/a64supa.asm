@@ -32,8 +32,7 @@ ___write:
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. No idea why. So just return 1 (failure).
+# AArch64 requires the use of renameat instead
 
 # int ___rename(char *old, char *new);
 
@@ -43,7 +42,31 @@ ___write:
         .align  2
 __rename:
 ___rename:
-        mov     x0, #1
+        sub     sp,sp,#32
+        str     x8, [sp, #0]
+        str     x1, [sp, #8]
+        str     x2, [sp, #16]
+        str     x3, [sp, #24]
+.if STACKPARM
+        ldr     x1,[sp,#48]      @ new
+        ldr     x0,[sp,#40]      @ old
+.endif
+        mov     x3, x1
+        mov     x2, #-100
+# AT_FDCWD
+        mov     x1, x0
+        mov     x0, #-100
+# AT_FDCWD
+        mov     x8,#38
+#           @ SYS_renameat
+
+        svc     #0
+
+        ldr     x3, [sp, #24]
+        ldr     x2, [sp, #16]
+        ldr     x1, [sp, #8]
+        ldr     x8, [sp, #0]
+        add     sp,sp,#32
         ret
 
 
@@ -98,8 +121,7 @@ ___seek:
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. No idea why. So just return 1 (failure).
+# AArch64 requires the use of unlinkat
 
 # int ___remove(char *path);
 
@@ -109,14 +131,33 @@ ___seek:
         .align  2
 __remove:
 ___remove:
-        mov     x0, #1
+        sub     sp,sp,#32
+        str     x8, [sp, #0]
+        str     x1, [sp, #8]
+        str     x2, [sp, #16]
+.if STACKPARM
+        ldr     x0,[sp,#40]      @ path
+.endif
+        mov     x2,#0
+# flags (not defining AT_REMOVEDIR)
+        mov     x1, x0
+        mov     x0, #-100
+# AT_FDCWD
+        mov     x8,#35
+#           @ SYS_unlinkat
+
+        svc     #0
+
+        ldr     x2, [sp, #16]
+        ldr     x1, [sp, #8]
+        ldr     x8, [sp, #0]
+        add     sp,sp,#32
         ret
 
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. No idea why. So just return -1 (failure).
+# AArch64 requires the use of openat instead of open
 
 # int _open(char *path, int flags);
 
@@ -126,7 +167,31 @@ ___remove:
         .align  2
 __open:
 ___open:
-        mov     x0, #-1
+        sub     sp,sp,#32
+        str     x8, [sp, #0]
+        str     x1, [sp, #8]
+        str     x2, [sp, #16]
+        str     x3, [sp, #24]
+.if STACKPARM
+        ldr     x1,[sp,#48]      @ flags
+        ldr     x0,[sp,#40]      @ path
+.endif
+        mov     x3,#0x1A4
+#        @ 0644
+        mov     x2, x1
+        mov     x1, x0
+        mov     x0, #-100
+# AT_FDCWD
+        mov     x8,#56
+#           @ SYS_openat
+
+        svc     #0
+
+        ldr     x3, [sp, #24]
+        ldr     x2, [sp, #16]
+        ldr     x1, [sp, #8]
+        ldr     x8, [sp, #0]
+        add     sp,sp,#32
         ret
 
 
@@ -291,11 +356,9 @@ ___chdir:
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. No idea why. So just return -1
-# (presumably failure).
+# AArch64 uses mkdirat
 
-# int ___mkdir(const char *filename);
+# int ___mkdir(const char *filename, int mode);
 
         .globl  __mkdir
         .globl  ___mkdir
@@ -305,15 +368,33 @@ ___chdir:
         .align  2
 __mkdir:
 ___mkdir:
-        mov     x0, #-1
+        sub     sp,sp,#32
+        str     x8, [sp, #0]
+        str     x1, [sp, #8]
+        str     x2, [sp, #16]
+.if STACKPARM
+        ldr     x1,[sp,#48]      @ mode
+        ldr     x0,[sp,#40]      @ filename
+.endif
+        mov     x2, x1
+        mov     x1, x0
+        mov     x0, #-100
+# AT_FDCWD
+        mov     x8,#34
+#           @ SYS_mkdirat
+
+        svc     #0
+
+        ldr     x2, [sp, #16]
+        ldr     x1, [sp, #8]
+        ldr     x8, [sp, #0]
+        add     sp,sp,#32
         ret
 
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. No idea why. So just return -1
-# (presumably failure).
+# AArch64 requires unlinkat with AT_REMOVEDIR
 
 # int ___rmdir(const char *filename);
 
@@ -325,7 +406,27 @@ ___mkdir:
         .align  2
 __rmdir:
 ___rmdir:
-        mov     x0, #-1
+        sub     sp,sp,#32
+        str     x8, [sp, #0]
+        str     x1, [sp, #8]
+        str     x2, [sp, #16]
+.if STACKPARM
+        ldr     x0,[sp,#40]      @ path
+.endif
+        mov     x2,#0x200
+# flags (setting AT_REMOVEDIR)
+        mov     x1, x0
+        mov     x0, #-100
+# AT_FDCWD
+        mov     x8,#35
+#           @ SYS_unlinkat
+
+        svc     #0
+
+        ldr     x2, [sp, #16]
+        ldr     x1, [sp, #8]
+        ldr     x8, [sp, #0]
+        add     sp,sp,#32
         ret
 
 
