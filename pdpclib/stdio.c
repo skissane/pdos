@@ -347,7 +347,7 @@ static void freadSlowB(void *ptr,
                        size_t *actualRead);
 #endif
 
-static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
+static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount);
 
 #if defined(__CMS__) || defined(__MVS__)
@@ -3215,7 +3215,7 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
             {
                 int extraCh;
 
-                extraCh = examine(&format, fq, s, &arg, chcount);
+                extraCh = examine(&format, fq, s, arg, chcount);
                 chcount += extraCh;
                 if (s != NULL)
                 {
@@ -3233,7 +3233,7 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
     return (chcount);
 }
 
-static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
+static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount)
 {
     int extraCh = 0;
@@ -3283,7 +3283,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
                       break;
             case '0': flagZero = 1;
                       break;
-            case '*': width = va_arg(*arg, int);
+            case '*': width = va_arg(arg, int);
                       if (width < 0)
                       {
                           flagMinus = 1;
@@ -3326,7 +3326,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         format++;
         if (*format == '*')
         {
-            precision = va_arg(*arg, int);
+            precision = va_arg(arg, int);
             format++;
         }
         else
@@ -3379,24 +3379,24 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         if (specifier == 'p')
         {
             lng = 1;
-            lvalue = (long)va_arg(*arg, void *);
+            lvalue = (long)va_arg(arg, void *);
         }
         else
 #endif
         if (lng)
         {
-            lvalue = va_arg(*arg, long);
+            lvalue = va_arg(arg, long);
         }
         else if (half)
         {
             /* short is promoted to int, so use int */
-            hvalue = va_arg(*arg, int);
+            hvalue = va_arg(arg, int);
             if (specifier == 'u') lvalue = (unsigned short)hvalue;
             else lvalue = hvalue;
         }
         else
         {
-            ivalue = va_arg(*arg, int);
+            ivalue = va_arg(arg, int);
             if (specifier == 'u') lvalue = (unsigned int)ivalue;
             else lvalue = ivalue;
         }
@@ -3556,7 +3556,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         {
             precision = 6;
         }
-        vdbl = va_arg(*arg, double);
+        vdbl = va_arg(arg, double);
         dblcvt(vdbl, specifier, width, precision, work);   /* 'e','f' etc. */
         slen = strlen(work);
         if ((flagSpace || flagPlus) && (work[0] != '-'))
@@ -3585,7 +3585,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
     }
     else if (specifier == 's')
     {
-        svalue = va_arg(*arg, char *);
+        svalue = va_arg(arg, char *);
         fillCh = ' ';
         if (precision > 0)
         {
