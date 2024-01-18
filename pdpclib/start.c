@@ -419,13 +419,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
 
-#if defined(__64BIT__) && defined(__gnu_linux__)
-    __write(1, argv[0], strlen(argv[0]));
-    __write(1, argv[1], strlen(argv[1]));
-    __write(1, argv[2], strlen(argv[2]));
-    return 0;
-#endif
-
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
     {
@@ -1293,6 +1286,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         rc = setjmp(jb);
         if (rc != 0)
         {
+#if defined(__64BIT__) && defined(__gnu_linux__)
+	    /* need this for some reason */
+	    return 0;
+#endif
             /* we're here because of longjmp */
             /* the invoker needs to set globrc first, otherwise
                we can't distinguish a genuine return code */
@@ -1303,11 +1300,18 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
             rc = main(argc, argv);
+#if defined(__64BIT__) && defined(__gnu_linux__)
+	    return rc;
+#endif
             exit(rc); /* this will return to the above setjmp */
         }
     }
     else
     {
+#if defined(__64BIT__) && defined(__gnu_linux__)
+        /* need this for some reason */
+        return 0;
+#endif
         rc = setjmp(jb);
         if (rc != 0)
         {
