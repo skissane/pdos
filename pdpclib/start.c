@@ -1301,9 +1301,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
             rc = main(argc, argv);
-#if defined(__64BIT__) && defined(__gnu_linux__)
-	    return rc;
-#endif
             exit(rc); /* this will return to the above setjmp */
         }
     }
