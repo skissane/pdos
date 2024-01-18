@@ -4,6 +4,8 @@
 
 # 64-bit ARM (AArch64) needs the stack 16-byte aligned
 
+
+
 # int ___write(int fd, void *buf, int len);
 
         .globl  __write
@@ -23,29 +25,192 @@ ___write:
 #           @ SYS_write
 
         svc     #0
-wrtok:
+
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
 
-.global __rename
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. No idea why. So just return 1 (failure).
+
+# int ___rename(char *old, char *new);
+
+        .globl  __rename
+        .globl  ___rename
+        .type  __rename, %function
+        .align  2
 __rename:
-.global __close
+___rename:
+        mov     x0, #1
+        ret
+
+
+
+# int _close(int fd);
+
+        .globl  __close
+        .globl  ___close
+        .type  __close, %function
+        .align  2
 __close:
-.global __seek
+___close:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#57
+#           @ SYS_close
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+# int ___seek(int fd, int pos, int how);
+
+        .globl  __seek
+        .globl  ___seek
+        .type  __seek, %function
+        .align  2
 __seek:
-.global __remove
+___seek:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x2,[sp,#40]     @ how
+        ldr     x1,[sp,#32]      @ pos
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#62
+#           @ SYS_lseek
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. No idea why. So just return 1 (failure).
+
+# int ___remove(char *path);
+
+        .globl  __remove
+        .globl  ___remove
+        .type  __remove, %function
+        .align  2
 __remove:
-.global __open
+___remove:
+        mov     x0, #1
+        ret
+
+
+
+
+# AArch64 doesn't seem to have a syscall for this
+# operation. No idea why. So just return -1 (failure).
+
+# int _open(char *path, int flags);
+
+        .globl  __open
+        .globl  ___open
+        .type  __open, %function
+        .align  2
 __open:
-.global __ioctl
+___open:
+        mov     x0, #-1
+        ret
+
+
+
+# int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+
+        .globl  __ioctl
+        .globl  ___ioctl
+        .type  __ioctl, %function
+        .align  2
 __ioctl:
-.global __longj
-__longj:
-.global __setj
+___ioctl:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x2,[sp,#40]      @ arg
+        ldr     x1,[sp,#32]      @ cmd
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#29
+#           @ SYS_ioctl
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+# int setjmp(jmp_buf env);
+
+        .globl  __setj
+        .globl  ___setj
+        .type  __setj, %function
+        .align  2
 __setj:
-.global __read
+___setj:
+        mov     x0, #0
+        ret
+
+
+
+# void longjmp(jmp_buf env, int v);
+
+        .globl  __longj
+        .globl  ___longj
+        .type  __longj, %function
+        .align  2
+__longj:
+___longj:
+        mov     x0, #0
+        ret
+
+
+
+
+# int ___read(int fd, void *buf, int len);
+
+        .globl  __read
+        .globl  ___read
+        .type  __read, %function
+        .align  2
 __read:
+___read:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x2,[sp,#40]      @ len
+        ldr     x1,[sp,#32]      @ buf
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#63
+#           @ SYS_read
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
 
 # void _exita(int rc);
 
