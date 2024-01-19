@@ -27,6 +27,8 @@ if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
    appears to cover clang too */
 /* We probably need the builtin for 64-bit where parameters are
    not all passed on the stack too */
+/* It looks like above version 3 you need to use va_start,
+   but version 3 uses stdarg_start */
 #if defined (__GNUC__) && ((__GNUC__ > 3) || defined(__64BIT__))
 
 #ifndef __GNUC_VA_LIST
@@ -36,7 +38,12 @@ typedef __builtin_va_list __gnuc_va_list;
 
 typedef __gnuc_va_list va_list;
 
+#if (__GNUC__ > 3)
 #define va_start(v,l)   __builtin_va_start(v,l)
+#else
+#define va_start(v,l)   __builtin_stdarg_start(v,l)
+#endif
+
 #define va_end(v)       __builtin_va_end(v)
 #define va_arg(v,l)     __builtin_va_arg(v,l)
 #if !defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L
