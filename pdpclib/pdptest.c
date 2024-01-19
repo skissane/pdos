@@ -36,9 +36,6 @@ int main(int argc, char **argv)
     int dummy; /* to get SubC to align stack on 16-byte boundary for SSE */
 #endif
 
-#ifdef __VA_HACK__
-    fputs("", stdout);
-#endif
     printf("welcome to pdptest\n");
 #ifndef SEGHACK
 
