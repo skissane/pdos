@@ -7,7 +7,9 @@ AS=as
 LD=ld
 AR=ar
 
-COPTS=-S -O0 -U__WIN32__ -D__gnu_linux__ -mno-red-zone -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64
+# need to remove VA_HACK
+
+COPTS=-D__VA_HACK__ -S -O0 -U__WIN32__ -D__gnu_linux__ -mno-red-zone -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64
 
 pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -16,7 +18,7 @@ pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdplinux.a linstart.o l64supa.o stdio.o string.o stdlib.o
 	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
 	ar r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
-	$(LD) -static -s -m64 -nostdlib -o pdptest linstart.o l64supa.o pdptest.o pdplinux.a
+	$(LD) -e __start -static -s -nostdlib -o pdptest linstart.o l64supa.o pdptest.o pdplinux.a
 
 .c.o:
 	$(CC) -o $*.s $(COPTS) $<

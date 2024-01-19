@@ -151,3 +151,8 @@ void CTYP argc(void) { return; }
 void CTYP _8087(void) { return; }
 
 #endif
+
+/* need to find out why this isn't defined */
+#ifdef __VA_HACK__
+int __builtin_va_start(void) { return 0; }
+#endif
