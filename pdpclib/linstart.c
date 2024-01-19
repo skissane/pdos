@@ -6,7 +6,11 @@
 #include "stddef.h"
 
 /* malloc calls get this */
+#ifdef __64BIT__
+static char membuf[62000000];
+#else
 static char membuf[31000000];
+#endif
 static char *newmembuf = membuf;
 
 extern int __start(int argc, char **argv);
