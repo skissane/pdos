@@ -39,6 +39,7 @@ ret
 ___longj:
 .globl __longj
 __longj:
+fred: jmp fred
 mov $0, %rax
 ret
 
