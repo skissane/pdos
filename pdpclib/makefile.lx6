@@ -1,13 +1,17 @@
 # This is the makefile for Linux to build pdpclib using
 # the gccx64 compiler.
 #
+# You can use gcc if you prefer, but you need to take
+# away one underscore from the ld start entry point name
+# You also need to disable optimization for unknow reasons
 
 CC=gccx64
+#CC=gcc -fno-stack-protector
 AS=as
 LD=ld
 AR=ar
 
-COPTS=-S -O0 -U__WIN32__ -D__gnu_linux__ -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64
+COPTS=-S -O2 -U__WIN32__ -D__gnu_linux__ -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64
 
 pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
