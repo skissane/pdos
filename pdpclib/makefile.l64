@@ -1,6 +1,8 @@
 # This is the makefile for Linux to build pdpclib using
 # the gcc compiler.
 #
+# Note that we can't activate optimization - the resultant
+# pdptest crashes - don't know why
 
 CC=gcc
 COPTS=-c -O0 -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64 \
