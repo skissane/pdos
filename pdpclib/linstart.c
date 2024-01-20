@@ -7,7 +7,7 @@
 
 /* malloc calls get this */
 #ifdef __64BIT__
-static char membuf[62000000];
+static char membuf[126000000];
 #else
 static char membuf[31000000];
 #endif
