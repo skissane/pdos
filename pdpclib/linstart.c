@@ -47,7 +47,13 @@ int _start(char *a, char *b, char *d, char *e,
            char *f, char *g, char *h, char *i,
            char *p)
 #else
+
+#ifdef __FORCE_ALL_64__
+int _start(char *p)
+#else
 int _start(char *a, char *b, char *c, char *d, char *e, char *f, char *p)
+#endif
+
 #endif
 
 #else
