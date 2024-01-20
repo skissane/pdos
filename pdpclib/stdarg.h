@@ -29,7 +29,7 @@ if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
    not all passed on the stack too */
 /* It looks like above version 3 you need to use va_start,
    but version 3 uses stdarg_start */
-#if defined (__GNUC__) && ((__GNUC__ > 3) || defined(__64BIT__))
+#if defined (__GNUC__) && ((__GNUC__ > 3) || defined(__USEBIVA__))
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
