@@ -3453,7 +3453,9 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         }
         if (specifier == 'p')
         {
-#if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
+#if defined(__64BIT__)
+            precision = 16;
+#elif (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
