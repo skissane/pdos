@@ -3393,7 +3393,8 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
     !defined(__PDOS386__) && \
     !defined(__SMALLERC__) && \
     !defined(__gnu_linux__) && \
-    !defined(__ARM__)
+    !defined(__ARM__) \
+    || defined(__64BIT__)
         if (specifier == 'p')
         {
             lng = 1;
