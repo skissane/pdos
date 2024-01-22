@@ -18,6 +18,18 @@
 # so minimal code is required.
 
 
+# This is the new entry point. We simply capture
+# the current status of the stack and pass it on
+# to C code (linstart.c, not start.c) figure out
+# the rest
+
+.align 4
+.globl ___pdpstart
+___pdpstart:
+mov x0, sp
+bl __start
+
+
 # int ___write(int fd, void *buf, int len);
 
         .globl  ___write
