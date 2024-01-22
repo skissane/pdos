@@ -43,10 +43,15 @@ extern int __mprotect(void *buf, size_t len, int prot);
 #ifdef __64BIT__
 
 #ifdef __MACOS__
-/* Note that this should not be made the entry point. The
-   proper entry point is __pdpstart, which will get the
-   stack pointer into the x0 register for use here */
-int _start(char *p)
+/* Note that this can be made the entry point if you
+   wish, but in the future we may be bypassing the
+   dynamic loader and need access to the stack as
+   provided by the kernel, so it is best to keep the
+   entry point __pdpstart. But currently, the dynamic
+   loader appears to have first crack and we end up
+   receiving a simple argc and argv */
+
+int _start(int argc, char **argv)
 
 #elif defined(__ARM__)
 int _start(char *a, char *b, char *d, char *e,
@@ -98,25 +103,9 @@ int _start(char *p)
        to the actual stack */
 
 #if defined(__MACOS__)
-    /* For some reason - probably alignment on 16-byte boundary
-       reasons - the argc (and argv) is not at a consistent
-       location. Sometimes the offset is 95 from the top of the
-       stack as per program invocation, and sometimes it is at
-       96. Currently I do not know what the correct algorithm is,
-       and it seems different from traditional Unix, so I am
-       currently just checking to see if argc is "large" if 95
-       is chosen, and if so, I bump it up to 96. */
 
-    if (*(int *)((char *)p + 95 * 8) > 400)
-    {
-        rc = __start(*(int *)((char *)p + 96 * 8),
-	             (char **)((char *)p + 97 * 8));
-    }
-    else
-    {
-        rc = __start(*(int *)((char *)p + 95 * 8),
-	             (char **)((char *)p + 96 * 8));
-    }
+    /* We pass on the simple argc/argv */
+    __start(argc, argv);
 
 #elif defined(__ARM__) && defined(__64BIT__)
 
