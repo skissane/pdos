@@ -13,7 +13,7 @@
 # get around a clang "bug" (disputed).
 
 CC=clang
-COPTS=-c -O0 -D__UNOPT__ -D__ARM__ -fno-builtin \
+COPTS=-c -O0 -D__UNOPT__ -D__ARM__ -fno-builtin -D__MACOS__ \
     -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
 
 pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
