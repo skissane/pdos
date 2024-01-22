@@ -91,9 +91,19 @@ int _start(char *p)
        be passed in x0 to x7. But not sure how that translates
        to the actual stack */
 
-#if defined(__ARM__) && defined(__64BIT__)
+#if defined(__MACOS__)
 
-    rc = __start(*(int *)(&p), &p + 1);
+    /* The generated code does a subtraction of the stack,
+       and then stores the known parameters in there. To
+       get to the original, we need to skip a lot of data,
+       and that value is subject to change.
+       The number is higher than I expected from looking
+       at the generated assembler. */
+    rc = __start(*(int *)(&p + 106), &p + 107);
+
+#elif defined(__ARM__) && defined(__64BIT__)
+
+    rc = __start(*(int *)(&p), &p);
 
 #elif defined(__ARM__)
 
