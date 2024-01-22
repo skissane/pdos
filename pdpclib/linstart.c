@@ -42,7 +42,13 @@ extern int __mprotect(void *buf, size_t len, int prot);
 
 #ifdef __64BIT__
 
-#ifdef __ARM__
+#ifdef __MACOS__
+/* Note that this should not be made the entry point. The
+   proper entry point is __pdpstart, which will get the
+   stack pointer into the x0 register for use here */
+int _start(char *p)
+
+#elif defined(__ARM__)
 int _start(char *a, char *b, char *d, char *e,
            char *f, char *g, char *h, char *i,
            char *p)
@@ -92,14 +98,25 @@ int _start(char *p)
        to the actual stack */
 
 #if defined(__MACOS__)
+    /* For some reason - probably alignment on 16-byte boundary
+       reasons - the argc (and argv) is not at a consistent
+       location. Sometimes the offset is 95 from the top of the
+       stack as per program invocation, and sometimes it is at
+       96. Currently I do not know what the correct algorithm is,
+       and it seems different from traditional Unix, so I am
+       currently just checking to see if argc is "large" if 95
+       is chosen, and if so, I bump it up to 96. */
 
-    /* The generated code does a subtraction of the stack,
-       and then stores the known parameters in there. To
-       get to the original, we need to skip a lot of data,
-       and that value is subject to change.
-       The number is higher than I expected from looking
-       at the generated assembler. */
-    rc = __start(*(int *)(&p + 106), &p + 107);
+    if (*(int *)((char *)p + 95 * 8) > 400)
+    {
+        rc = __start(*(int *)((char *)p + 96 * 8),
+	             (char **)((char *)p + 97 * 8));
+    }
+    else
+    {
+        rc = __start(*(int *)((char *)p + 95 * 8),
+	             (char **)((char *)p + 96 * 8));
+    }
 
 #elif defined(__ARM__) && defined(__64BIT__)
 
