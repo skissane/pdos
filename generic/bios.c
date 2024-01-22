@@ -157,11 +157,231 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
 
 static int (*genstart)(OS *bios);
 
+static struct {
+    char *name;
+    int to_handle_num;
+    FILE *saved_handle;
+    enum {
+        MODE_NONE = 0,
+        MODE_TO_FILE,
+        MODE_TO_HANDLE,
+        MODE_APPEND,
+        MODE_FROM_FILE,
+        MODE_FROM_HANDLE
+    } mode;
+} redirects[10] = {{NULL}};
+static const char *error_msg = NULL;
+
+static int parse_redirection (char *src, char *dst)
+{    
+#define SKIP_SPACES(a) do { while (*(a) == ' ') (a)++; } while (0)
+    SKIP_SPACES (src);
+    
+    while (*src) {
+        int handle_num = -1;
+
+        if (*src == '^') {
+            src++;
+            goto copy;
+        }
+
+        if (isdigit (*src)
+            && (src[1] == '<' || src[1] == '>')) {
+            handle_num = *src - '0';
+            src++;
+        }
+
+        if (*src == '<' || *src == '>') {
+            char *p;
+            
+            if (*src == '<') {
+                if (handle_num == -1) handle_num = 0;
+                redirects[handle_num].mode = MODE_FROM_FILE;
+                if (src[1] == '&') {
+                    redirects[handle_num].mode = MODE_FROM_HANDLE;
+                    *src = '\0';
+                    src++;
+                }
+            } else {
+                if (handle_num == -1) handle_num = 1;
+                redirects[handle_num].mode = MODE_TO_FILE;
+                if (src[1] == '&') {
+                    redirects[handle_num].mode = MODE_TO_HANDLE;
+                    *src = '\0';
+                    src++;
+                } else if (src[1] == '>') {
+                    redirects[handle_num].mode = MODE_APPEND;
+                    *src = '\0';
+                    src++;
+                }
+            }
+
+            *src = '\0';
+            src++;
+
+            SKIP_SPACES (src);
+
+            if (redirects[handle_num].mode == MODE_TO_HANDLE
+                || redirects[handle_num].mode == MODE_FROM_HANDLE) {
+                long lhandle;
+
+                lhandle = strtol (src, &p, 10);
+                if (lhandle == 0 && src == p) {
+                    fprintf (stderr,
+                         "The syntax of the command is incorrect.\n");
+                    return 1;
+                }
+
+                redirects[handle_num].to_handle_num = (int)lhandle;
+            } else {
+                for (p = src;
+                     *p && *p != '>' && *p != '<' && *p != ' ';
+                     p++) {}
+                if (p == src) {
+                    fprintf (stderr,
+                             "The syntax of the command is incorrect.\n");
+                    return 1;
+                }
+
+                redirects[handle_num].name = src;
+            }
+
+            src = p;
+            if (*src == ' ') {
+                *src = '\0';
+                src++;
+                SKIP_SPACES (src);
+            }
+        } else {
+    copy:
+            *dst = *src;
+            src++;
+            dst++;
+        }
+    }
+    *dst = '\0';
+
+    return 0;
+}
+
+static int do_redirection (void)
+{
+    int i;
+    
+    /* C library does not know about the redirection,
+     * so it needs to be told to flush buffers.
+     */
+    fflush (stdout);
+    fflush (stderr);
+
+    /* Errors that occur during redirection cannot be reported immediately
+     * as stderr might have been already redirected.
+     */
+    for (i = 0; i < sizeof (redirects) / sizeof (redirects[0]); i++) {
+        if (redirects[i].mode) {
+            FILE *file;
+
+            switch (redirects[i].mode) {
+                case MODE_TO_FILE:
+                    if (!(file = fopen (redirects[i].name, "w"))) {
+                        error_msg = "Failed to create file.";
+                        goto end;
+                    }
+                    break;
+
+                case MODE_TO_HANDLE:
+                    error_msg = "'>&' is not yet supported.";
+                    goto end;
+
+                case MODE_APPEND:
+                    error_msg = "'>>' is not yet supported.";
+                    goto end;
+
+                case MODE_FROM_FILE:
+                    /* '<' does not provide the file directly,
+                     * it "type"s it and provides the output.
+                     * (So '<' can be done with same file
+                     *  multiple times for one command.)
+                     * It could be probably implemented using
+                     * temporary file.
+                     */
+                    error_msg = "'<' is not yet supported.";
+                    goto end;
+
+                case MODE_FROM_HANDLE:
+                    error_msg = "'<&' is not yet supported.";
+                    goto end;
+            }
+
+            /* Handles 3-9 are undefined, so they should not be redirected
+             * but they still should create a file when '>' is used.
+             */
+            if (i < 3) {
+                /* The underscores should be removed
+                 * if non-PDPCLIB C library is used. */
+#define CHANGE_HANDLE(name, file) \
+ do { redirects[i].saved_handle = __##name; \
+      __##name = (file); bios.X##name = (file); } while (0)
+
+                switch (i) {
+                    case 0: CHANGE_HANDLE (stdin, file); break;
+                    case 1: CHANGE_HANDLE (stdout, file); break;
+                    case 2: CHANGE_HANDLE (stderr, file); break;
+                }
+
+#undef CHANGE_HANDLE
+            }
+        }
+    }
+
+    return 0;
+
+end:
+    return 1;
+}
+
+static int undo_redirection (void)
+{
+    int i;
+    
+    fflush (stdout);
+    fflush (stderr);
+
+    for (i = 0; i < sizeof (redirects) / sizeof (redirects[0]); i++) {
+        if (redirects[i].mode) {
+            if (redirects[i].saved_handle) {
+#define RESTORE_HANDLE(name) \
+ do { fclose (__##name); \
+      __##name = redirects[i].saved_handle; bios.X##name = name; } while (0)
+
+                switch (i) {
+                    case 0: RESTORE_HANDLE (stdin); break;
+                    case 1: RESTORE_HANDLE (stdout); break;
+                    case 2: RESTORE_HANDLE (stderr); break;
+                }
+
+#undef RESTORE_HANDLE
+            }
+        }
+    }
+
+    memset (redirects, 0, sizeof (redirects));
+
+    if (error_msg) {
+        fprintf (stderr, "%s\n", error_msg);
+        error_msg = NULL;
+        return 1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     unsigned char *p;
     unsigned char *entry_point;
     int rc;
+    char prog_name_s[FILENAME_MAX];
     char *prog_name;
     int need_usage = 0;
     int valid = 0;
@@ -264,6 +484,9 @@ int main(int argc, char **argv)
     do
     {
         if (need_usage) break; /* should put this before do */
+        
+        undo_redirection ();
+        
         if (scr != NULL)
         {
             if (fgets(buf, sizeof buf, scr) == NULL)
@@ -301,9 +524,18 @@ int main(int argc, char **argv)
             {
                 continue;
             }
-            strcpy(cmd, buf);
-            prog_name = buf;
-            p = (unsigned char *)strchr(buf, ' ');
+
+            if (parse_redirection (buf, cmd)) continue;
+            /* Redirection without a command is not permitted. */
+            if (!cmd[0]) {
+                fprintf (stderr, "The syntax of the command is incorrect.\n");
+                continue;
+            }
+            if (do_redirection ()) continue;
+
+            strcpy (prog_name_s, cmd);
+            prog_name = prog_name_s;
+            p = (unsigned char *)strchr(prog_name, ' ');
             if (p != NULL)
             {
                 *p = '\0';
@@ -347,6 +579,7 @@ int main(int argc, char **argv)
 #else
         directory_test();
 #endif
+        undo_redirection ();
         printf("enter another command, enter to exit\n");
         continue;
     }
@@ -378,6 +611,7 @@ int main(int argc, char **argv)
             }
         }
 #endif
+        undo_redirection ();
         printf("enter another command, exit to exit\n");
         continue;
     }
@@ -394,6 +628,7 @@ int main(int argc, char **argv)
             }
             fclose(fp);
         }
+        undo_redirection ();
         printf("enter another command, enter to exit\n");
         continue;
     }
@@ -435,6 +670,7 @@ int main(int argc, char **argv)
                 fclose(fp);
             }
         }
+        undo_redirection ();
         printf("enter another command, enter to exit\n");
         continue;
     }
@@ -542,6 +778,7 @@ int main(int argc, char **argv)
 #else
             printf("no such program %s\n", prog_name + 5);
 #endif
+            undo_redirection ();
             printf("enter another command\n");
             continue;
         }
@@ -608,6 +845,7 @@ int main(int argc, char **argv)
         /* we got exit via longjmp */
         /* true return code is in global */
         rc = globrc;
+        undo_redirection ();
     }
     else
     {
@@ -617,7 +855,7 @@ int main(int argc, char **argv)
         __mmgid += 256;
 #endif
 
-    printf("about to execute program\n");
+    fprintf(stderr, "about to execute program\n");
 #if 1
 #ifdef __CC64__
     rc = (*genstart)(&bios);
@@ -627,7 +865,8 @@ int main(int argc, char **argv)
 #else
     rc = 0;
 #endif
-
+    undo_redirection ();
+    
 #if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
     || defined(GENSHELL)
     }
