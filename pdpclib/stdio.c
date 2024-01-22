@@ -1898,6 +1898,8 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __EFI__
     UINTN tempRead;
     EFI_STATUS Status;
+    static int numpending = 0;
+    static char pending[20];
 #ifdef __EFIBIOS__
 #ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
     static EFI_LBA LBA = 1;
