@@ -86,10 +86,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
 static int exeloadLoadLX(unsigned char **entry_point,
                          FILE *fp,
                          unsigned long e_lfanew);
+#ifdef __16BIT__
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
                          unsigned long e_lfanew);
+#endif
 
 /* Support function for loading DLLs. */
 static int exeloadLoadPEDLL(unsigned char *exeStart,
@@ -1474,8 +1476,10 @@ static int exeloadLoadMZ(unsigned char **entry_point,
         ret = exeloadLoadPE(entry_point, fp, loadloc, firstbit.e_lfanew);
         if (ret == 1)
             ret = exeloadLoadLX(entry_point, fp, firstbit.e_lfanew);
+#ifdef __16BIT__
         if (ret == 1)
             ret = exeloadLoadNE(entry_point, fp, loadloc, firstbit.e_lfanew);
+#endif
         if (ret == 1)
             printf("Unknown MZ extension\n");
         return (ret);
@@ -3852,6 +3856,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
     return (2);
 }
 
+#ifdef __16BIT__
 extern int __shift;
 extern int __incr;
 
@@ -4180,6 +4185,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
 #endif
 }
 
+#endif /* !__16BIT__ */
 #endif /* NEED_MZ */
 
 #if NEED_MVS
