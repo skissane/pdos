@@ -1,0 +1,32 @@
+# This is the makefile for macOS to build pdpclib using
+# the clang compiler. Note that it will gain an external
+# dynamic library reference to /usr/lib/libSystem.B.dylib
+# but that is both unused and necessary (quibbling aside),
+# otherwise MacOS will refuse to load the executable (if
+# you attempt to do a static link). clang is used to do
+# the link step for this reason - because the ld command
+# to do the same thing is a bit difficult, ie:
+# -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path`
+# -e __start (add -arch arm64 to do cross-compile)
+#
+# linstart.c needs to be built without optimization, to
+# get around a clang "bug" (disputed).
+
+CC=clang
+COPTS=-c -O0 -D__UNOPT__ -D__ARM__ -fno-builtin \
+    -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
+
+pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o math.o __memmgr.o
+	rm -f pdpmacos.a
+	ar r pdpmacos.a linstart.o m64supa.o stdio.o string.o stdlib.o
+	ar r pdpmacos.a start.o time.o errno.o assert.o signal.o
+	ar r pdpmacos.a locale.o ctype.o math.o __memmgr.o
+	clang -Wl,-e, -Wl,_start -s -nostdlib -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
+
+.c.o:
+	$(CC) $(COPTS) $<
+
+m64supa.o: m64supa.asm
+	as -o $@ $*.asm
