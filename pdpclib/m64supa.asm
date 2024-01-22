@@ -36,11 +36,16 @@ ___write:
 
 
 
-# void ___exit(int rc);
+.align 4
+.globl _longjmp
+_longjmp:
 
-        .globl  ___exit
+
+# void ___exita(int rc);
+
+        .globl  ___exita
         .align  4
-___exit:
+___exita:
         sub     sp,sp,#16
         str     x16, [sp, #0]
         mov     x16,#1
@@ -51,3 +56,28 @@ ___exit:
         ldr     x16, [sp, #0]
         add     sp,sp,#16
         ret
+
+
+
+.align 4
+.globl ___ioctl
+___ioctl:
+.globl ___Ysetjmp
+___Ysetjmp:
+mov x0,#0
+ret
+
+.align 4
+.globl ___seek
+___seek:
+.globl ___read
+___read:
+.globl ___close
+___close:
+.globl ___rename
+___rename:
+.globl ___remove
+___remove:
+.globl ___open
+___open:
+ret
