@@ -7,13 +7,16 @@
 # the link step for this reason - because the ld command
 # to do the same thing is a bit difficult, ie:
 # -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path`
-# -e __start (add -arch arm64 to do cross-compile)
+# -e ___pdpstart (add -arch arm64 to do cross-compile)
 #
-# linstart.c needs to be built without optimization, to
-# get around a clang "bug" (disputed).
+# Note that you can switch on optimization with clang
+# now that I have used an assembler entry point rather
+# than relying on unusual C to still behave sensibly.
+# So note that the entry point needs to be ___pdpstart,
+# not __start
 
 CC=clang
-COPTS=-c -O0 -D__UNOPT__ -D__ARM__ -fno-builtin -D__MACOS__ \
+COPTS=-c -O2 -D__ARM__ -fno-builtin -D__MACOS__ \
     -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
 
 pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
@@ -23,7 +26,7 @@ pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdpmacos.a linstart.o m64supa.o stdio.o string.o stdlib.o
 	ar r pdpmacos.a start.o time.o errno.o assert.o signal.o
 	ar r pdpmacos.a locale.o ctype.o math.o __memmgr.o
-	clang -Wl,-e, -Wl,__start -s -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
+	clang -Wl,-e, -Wl,___pdpstart -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
 
 .c.o:
 	$(CC) $(COPTS) $<
