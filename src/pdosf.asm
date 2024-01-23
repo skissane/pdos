@@ -289,6 +289,7 @@ callDllEntry:
 stdcallWithArgCopy:
         push    ebp
         mov     ebp, esp   
+        push    ecx
 ; Copies arguments from memory.
         mov     ecx, 16[ebp]
         test    ecx, ecx
@@ -303,6 +304,7 @@ end_loop:
 ; Calls the function.
         mov     eax, 8[ebp]
         call    eax
+        pop     ecx
         pop     ebp
         ret
 
