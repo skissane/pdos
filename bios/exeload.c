@@ -2885,6 +2885,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)puts;
                         }
+                        else if (strcmp((char *)hintname, "strtok") == 0)
+                        {
+                            *thunk = (unsigned long)strtok;
+                        }
                         else if (strcmp((char *)hintname, "bsearch") == 0)
                         {
                             *thunk = (unsigned long)bsearch;
