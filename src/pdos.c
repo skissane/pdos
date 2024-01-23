@@ -2073,7 +2073,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
         if (strncmp(p, ";size=", 6) == 0)
         {
             p += 6;
-            numsects = strtoul(p, NULL, 0);
+            numsects = strtoul(p, NULL, 0) / 512;
         }
         return (opendrv((int)strtol(name + 3, NULL, 16), numsects, handle));
     }
@@ -2123,7 +2123,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
         if (strncmp(p, ";size=", 6) == 0)
         {
             p += 6;
-            numsects = strtoul(p, NULL, 0);
+            numsects = strtoul(p, NULL, 0) / 512;
         }
         return (opendrv((int)strtol(name + 3, NULL, 16), numsects, handle));
     }
