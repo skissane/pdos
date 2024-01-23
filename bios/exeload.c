@@ -2749,6 +2749,18 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)CreateFileA;
                         }
+                        else if (strcmp((char *)hintname, "FindClose") == 0)
+                        {
+                            *thunk = (unsigned long)FindClose;
+                        }
+                        else if (strcmp((char *)hintname, "FindFirstFileA") == 0)
+                        {
+                            *thunk = (unsigned long)FindFirstFileA;
+                        }
+                        else if (strcmp((char *)hintname, "FindNextFileA") == 0)
+                        {
+                            *thunk = (unsigned long)FindNextFileA;
+                        }
                         else if (strcmp((char *)hintname, "CreateDirectoryA") == 0)
                         {
                             *thunk = (unsigned long)CreateDirectoryA;
