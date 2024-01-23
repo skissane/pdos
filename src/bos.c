@@ -1008,7 +1008,15 @@ int BosReadKeyboardStatus(int *scancode, int *ascii)
 /*
     Input: None.
     Returns: Status of shift/ctrl/alt etc
-    Notes: None.
+    Notes:
+    bit 7 = insert active
+    bit 6 = capslock active
+    bit 5 = numlock active
+    bit 4 = scrolllock active
+    bit 3 = alt key pressed (either)
+    bit 2 = ctrl key pressed (either)
+    bit 1 = left shift pressed
+    bit 0 = right shift pressed
 */
 
 int BosGetKeyboardShiftStatus(unsigned int *flags)
