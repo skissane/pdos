@@ -1857,7 +1857,34 @@ void PosGetSystemDate(unsigned int *year,
 
     if(retval == 0)
     {
-        *year = bcd2int(c) * 100 + bcd2int(y);
+        /* The BIOS (in Chinese, no English option)
+           of a Lenovo Kaitian N80Z KX-U6780A
+           with Zhaoxin (made in China, ie not Intel
+           or AMD) processor, is returning x'ff'
+           for the century, instead of the expected
+           x'20'. Given that the PLA is the last known
+           producer of the legacy BIOS, they effectively
+           get to set the standard instead of the
+           traditional IBM (do they even make PCs
+           anymore?) and Ralf Brown (is he still even
+           alive?) guardians.
+
+           As such, I am introducing a Year 2100 problem
+           here, but it will not occur if the People's
+           Suppression Army is overthrown by a
+           programmer-led revolution so that they can
+           fix the damned BIOS so that all computers
+           can be reflashed. */
+
+        if (c == 0xff)
+        {
+            c = 20; /* caution - YEAR 2100 PROBLEM */
+        }
+        else
+        {
+            c = bcd2int(c);
+        }
+        *year = c * 100 + bcd2int(y);
         *month = bcd2int(m);
         *day = bcd2int(d);
         *dw = dow(*year,*month,*day);
