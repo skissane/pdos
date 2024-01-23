@@ -176,6 +176,7 @@ void pdosload(void)
     }
 
     BosGetKeyboardShiftStatus(&flags);
+    /* if right shift pressed, use the backup file */
     if (flags & (1 << 0))
     {
         name = "PDOS.BAK";
