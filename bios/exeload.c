@@ -2841,6 +2841,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)WriteFile;
                         }
+                        else if (strcmp((char *)hintname, "GetModuleHandleA") == 0)
+                        {
+                            *thunk = (unsigned long)GetModuleHandleA;
+                        }
                         else
                         {
                             printf("unknown hintname %s\n", hintname);
