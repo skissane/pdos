@@ -842,6 +842,16 @@ int main(int argc, char **argv)
 
 #endif
 
+
+#ifdef NEED_FLUSH
+#if defined(__gnu_linux__) && defined(__64BIT__)
+        __cacheflush(p, p + 50000000, 0);
+#else
+        __cacheflush(p, p + 5000000, 0);
+#endif
+#endif
+
+
 #if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
     || defined(GENSHELL)
 #ifdef __CC64OS__
