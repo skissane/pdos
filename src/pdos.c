@@ -1110,7 +1110,7 @@ void pdosRun(void)
         }
         if (totfound != 0)
         {
-            printf("new extended memory is %lu bytes\n", thisamt);
+            printf("new extended memory is %lu bytes\n", totfound);
             memavail = 0;
         }
     }
