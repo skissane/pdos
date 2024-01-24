@@ -794,7 +794,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#ifdef __64BIT__
+#if defined(__gnu_linux__) && defined(__64BIT__)
     p = calloc(1, 50000000);
 #elif defined(__OS2__)
     p = NULL;
