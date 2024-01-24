@@ -1,0 +1,30 @@
+# This builds a PDOS-generic ELF executable for ARM64
+# It will need to be built on an ELF system (or
+# cross-compiled) even if the intended target is macOS
+
+# although a64 is linked in, it isn't used for any of
+# the linux functions. It is only used if some generated
+# code requires it
+
+CC=gcc
+COPTS=-S -O0 -fno-common -fno-builtin -DXHAVE_DIR -D__UNOPT__ \
+    -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ \
+    -D__64BIT__ \
+    -I . -I../pdpclib -I../src
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/a64supa.o
+  rm -f pcomm.exe
+  ld -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/a64supa.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  as -o $@ $*.s
+  rm -f $*.s
+
+.asm.o:
+  as --defsym LINUX=0 --defsym ELF=1 --defsym STACKPARM=0 -o $@ $<
+
+clean:
+  rm -f pcomm.exe
