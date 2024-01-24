@@ -17,6 +17,7 @@
 
 CC=clang
 COPTS=-c -O2 -D__ARM__ -fno-builtin -D__MACOS__ \
+    -DNEED_MPROTECT \
     -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
 
 pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
