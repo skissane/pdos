@@ -3,6 +3,7 @@
 
 # Executing on a Pinebook Pro needs a delay
 # Same experience on a Samsung Chromebook
+# Seems we actually need a flush
 
 CC=gccarm
 CFLAGS=-O0 -D__UNOPT__ -fno-common -mapcs-32
@@ -11,7 +12,7 @@ LDFLAGS=-e __start
 AS=aserm
 AR=arerm
 COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
-  -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DNEED_DELAY \
+  -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DNEED_FLUSH \
   -DGENSHELL -DHAVE_DIR -DFREEMEM -DLINDIR
 
 all: clean bios.exe
