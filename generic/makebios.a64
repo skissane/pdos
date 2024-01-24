@@ -2,7 +2,7 @@
 # You should have build pdpclib with makefile.a64 first
 
 CC=gcc
-CFLAGS=-O0 -fno-builtin -D__gnu_linux__ \
+CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
     -fno-stack-protector \
     -D__NOBIVA__ -DUSE_MEMMGR -DNEED_ELF \
     -DNO_DLLENTRY -DGENSHELL -D__ARM__ \
