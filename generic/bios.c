@@ -46,9 +46,9 @@ some sort of (useful) Frankenstein.
 
 #ifdef __MACOS__
 int __close(int fd);
-int __open(char *path, int flags);
+int __open(char *path, int flags, int x);
 int __chdir(const char *filename);
-int __mkdir(const char *filename);
+int __mkdir(const char *filename, int x);
 int __rmdir(const char *filename);
 #endif
 
