@@ -23,31 +23,6 @@ HWND   bmphandle,windowhandle;
 int    xpos=0,ypos=0,HWIN,VWIN;
 
 /**************************************************************************/
-void crypt(unsigned char*,unsigned int*);
-int getC();
-void cleanup();
-void ende(int,int);
-int get_byte();
-int get_word();
-void SOI();
-void EOI();
-void DQT();
-void DHT();
-void SOF();
-void SOS();
-void APP0();
-void COM();
-void UNKNOWN();
-void out_string(char*);
-void out_byte(int);
-void out_bin(int,int);
-void out_hex1(int);
-void out_hex2(int);
-void out_hex4(int);
-void out_dec(int);
-void print_string(char*);
-void print_dec(int);
-int get_bits(int);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void zeichne(HDC);
@@ -64,74 +39,87 @@ void (*scale)() = scale8;
 */
 /**************************************************************************/
 
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine, int       nCmdShow)
-{MSG msg;
- WNDCLASS    wc; 
- BITMAPINFO  bmpinfo;
- int i;
- char *p,*q;
+int CALLBACK WinMain (HINSTANCE hInstance,
+                      HINSTANCE hPrevInstance,
+                      LPSTR lpCmdLine,
+                      int nCmdShow)
+{
+    MSG msg;
+    WNDCLASS    wc; 
+    BITMAPINFO  bmpinfo;
+    int i;
+    char *p,*q;
 
- globalhInstance=hInstance;
- wc.style         = CS_HREDRAW | CS_VREDRAW;
- wc.lpfnWndProc   = (WNDPROC)WndProc;
- wc.cbClsExtra    = 0;
- wc.cbWndExtra    = 0;
- wc.hInstance     = hInstance;
- wc.hIcon         = NULL;
- wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
- wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
- wc.lpszMenuName  = NULL;
- wc.lpszClassName = "pfp";
+    globalhInstance=hInstance;
+    wc.style         = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc   = (WNDPROC)WndProc;
+    wc.cbClsExtra    = 0;
+    wc.cbWndExtra    = 0;
+    wc.hInstance     = hInstance;
+    wc.hIcon         = NULL;
+    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wc.lpszMenuName  = NULL;
+    wc.lpszClassName = "pfp";
 
- bmpinfo.bmiHeader.biSize=40;
- bmpinfo.bmiHeader.biWidth=HBMP;
- bmpinfo.bmiHeader.biHeight=-VBMP;
- bmpinfo.bmiHeader.biPlanes=1;
- bmpinfo.bmiHeader.biBitCount=24;
- bmpinfo.bmiHeader.biCompression=BI_RGB;
- bmpinfo.bmiHeader.biSizeImage=0;
- bmpinfo.bmiHeader.biXPelsPerMeter=1000;
- bmpinfo.bmiHeader.biYPelsPerMeter=1000;
- bmpinfo.bmiHeader.biClrUsed=0;
- bmpinfo.bmiHeader.biClrImportant=0;
+    bmpinfo.bmiHeader.biSize=40;
+    bmpinfo.bmiHeader.biWidth=HBMP;
+    bmpinfo.bmiHeader.biHeight=-VBMP;
+    bmpinfo.bmiHeader.biPlanes=1;
+    bmpinfo.bmiHeader.biBitCount=24;
+    bmpinfo.bmiHeader.biCompression=BI_RGB;
+    bmpinfo.bmiHeader.biSizeImage=0;
+    bmpinfo.bmiHeader.biXPelsPerMeter=1000;
+    bmpinfo.bmiHeader.biYPelsPerMeter=1000;
+    bmpinfo.bmiHeader.biClrUsed=0;
+    bmpinfo.bmiHeader.biClrImportant=0;
 
 
- if (!RegisterClass(&wc)) return (FALSE);
- HWIN=GetSystemMetrics(SM_CXSCREEN);
- VWIN=GetSystemMetrics(SM_CYSCREEN);
- if (!(windowhandle=CreateWindow("pfp", "", WS_POPUP|WS_VISIBLE,xpos,
+    if (!RegisterClass(&wc)) return (FALSE);
+    HWIN=GetSystemMetrics(SM_CXSCREEN);
+    VWIN=GetSystemMetrics(SM_CYSCREEN);
+    if (!(windowhandle=CreateWindow("pfp", "", WS_POPUP|WS_VISIBLE,xpos,
        ypos, HWIN, VWIN, NULL, NULL, hInstance, NULL))) return (FALSE);
- globalhdc=GetDC(windowhandle);
+    globalhdc=GetDC(windowhandle);
 
- if (!(bmphdc=CreateCompatibleDC(NULL))) return (FALSE);
- if (!(bmphandle=
+    if (!(bmphdc=CreateCompatibleDC(NULL))) return (FALSE);
+    if (!(bmphandle=
        CreateDIBSection(globalhdc,&bmpinfo,DIB_RGB_COLORS,(void **)&bgr,NULL,0))
       )
     return (FALSE);
- if (!(SelectObject(bmphdc,bmphandle))) return (FALSE);
+    if (!(SelectObject(bmphdc,bmphandle))) return (FALSE);
 
- blackbrush=CreateSolidBrush(0);
+    blackbrush=CreateSolidBrush(0);
 
- p=lpCmdLine; 
- q=filename;
- i=0;
- while (*p == ' ') p++; 
- if (*p=='"') {p++; while ( (*q++ = *p++)!='"' && (i++ < 1025) );} 
+    p=lpCmdLine; 
+    q=filename;
+    i=0;
+    while (*p == ' ') p++; 
+    if (*p=='"') {p++; while ( (*q++ = *p++)!='"' && (i++ < 1025) );} 
          else {     while ( (*q++ = *p++) >' ' && (i++ < 1025) );}
- *(--q)=0; 
+    *(--q)=0;
+    
+    if (init ()) goto end;
+    decode();
+    (*scale)();
+    zeichne(globalhdc);
 
- init(); decode(); (*scale)(); zeichne(globalhdc);
- 
-/**************************************************************************/
+    /**************************************************************************/
 
- while (GetMessage(&msg, NULL,0,0)) 
-       {TranslateMessage(&msg); DispatchMessage(&msg); }
- DeleteObject(blackbrush); 
- DeleteObject(bmphandle); 
- DeleteDC(bmphdc);
- ReleaseDC(NULL,globalhdc);
- return (msg.wParam);
+    while (GetMessage (&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+end:
+    cleanup ();
+
+    DeleteObject(blackbrush); 
+    DeleteObject(bmphandle); 
+    DeleteDC(bmphdc);
+    ReleaseDC(NULL,globalhdc);
+
+    return (msg.wParam);
 }
 
 /**************************************************************************/
@@ -206,7 +194,6 @@ if (dir==1) goto loop;
            break; 
 
       case WM_DESTROY:
-           cleanup();
            PostQuitMessage(0);
            break;
 

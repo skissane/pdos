@@ -19,8 +19,9 @@ extern int hoff, voff;
 extern int pictnr;
 extern unsigned char passwd[80];
 
-void init ();
+int init ();
 int decode ();
+void cleanup (void);
 
 void scale1 ();
 void scale2 ();

@@ -121,10 +121,15 @@ void setpict(i) int i;
 
 /************************************************************************/
 
-void init()
+int init()
 {int i,j,k,l;
  char *p;
- jpg = fopen(filename,"rb"); if (jpg==NULL) ende(2,1); 
+ jpg = fopen(filename,"rb");
+    if (jpg==NULL) {
+        ende(2,1);
+        return 1;
+    }
+
  tryagain:
  p=head;  while (*p && (*p == getc(jpg))) p++;
  if (! *p)  
@@ -161,15 +166,24 @@ j=0;
 for (i=0;i<lmt;i++) limit[j++]=0;
 for (i=0;i<255;i++) limit[j++]=i;
 for (i=0;i<lmt;i++) limit[j++]=255;
+
+    return 0;
 }
 
 
 /************************************************************************/
 
-void cleanup()
+void cleanup (void)
 {
- fclose(jpg);
- if (txt) fclose(txt);
+    if (jpg) {
+        fclose (jpg);
+        jpg = NULL;
+    }
+
+    if (txt) {
+        fclose (txt);
+        txt = NULL;
+    }
 }
 
 
@@ -865,36 +879,34 @@ void out_string(p) char *p; {while (*p) out_byte(*p++);}
 
 /************************************************************************/
 
-void ende(j,i) int j,i;
+void ende (int j, int i)
+{
+    static char *(meld[]) = {
+        /*  0 */ "can't open log file" ,
+        /*  1 */ "can't open input file" ,
+        /*  2 */ "Error in Quant. Table" ,
+        /*  3 */ "Error in Huffm. Table" ,
+        /*  4 */ "Error in  Frame" ,
+        /*  5 */ "Picture too big increase HBMP/VBMP" ,
+        /*  6 */ "Error in  Scan" ,
+        /*  7 */ "unimplemented format" ,
+        /*  8 */ "unexpected end of input file" ,
+        /*  9 */ "you never should read this" ,
+        /* 10 */ "you never should read this" ,
+        /* 11 */ "you never should read this" ,
+        /* 12 */ "you never should read this" ,
+        /* 13 */ "you never should read this" ,
+    };
 
-{static char *(meld[]) = {
+    txt = fopen("pfp.log","wb");
+    {
+        out_string("\15\12error: Nr.: "); out_dec(j);
+        out_string(" in picture Nr.: "); out_dec(pictnr+1);
+        out_string(" : ");
+        out_string(meld[i]); out_string("\15\12");
+    }
 
-/*  0 */ "can't open log file" ,
-/*  1 */ "can't open input file" ,
-/*  2 */ "Error in Quant. Table" ,
-/*  3 */ "Error in Huffm. Table" ,
-/*  4 */ "Error in  Frame" ,
-/*  5 */ "Picture too big increase HBMP/VBMP" ,
-/*  6 */ "Error in  Scan" ,
-/*  7 */ "unimplemented format" ,
-/*  8 */ "unexpected end of input file" ,
-/*  9 */ "you never should read this" ,
-/* 10 */ "you never should read this" ,
-/* 11 */ "you never should read this" ,
-/* 12 */ "you never should read this" ,
-/* 13 */ "you never should read this" ,
-};
-
- txt = fopen("pfp.log","wb");
-        {out_string("\15\12error: Nr.: "); out_dec(j);
-         out_string(" in picture Nr.: "); out_dec(pictnr+1);
-         out_string(" : ");
-         out_string(meld[i]); out_string("\15\12");
-        }
-   
- if (jpg!=NULL) fclose(jpg);
- if (txt!=NULL) fclose(txt);
- exit(0);
+    cleanup ();
 }
 
 /************************************************************************/
