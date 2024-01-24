@@ -739,6 +739,42 @@ ___nanosleep:
 nsok:   ldmia   sp!,{r7,pc}
 
 
+
+# Trying cacheflush instead
+#
+# Some documentation says that the parameters are
+#
+# start pointer, size and flags as follows:
+# ICACHE = 1
+# DCACHE = 2
+# BCACHE = 3 (I | D)
+#
+# However, other documentation - that actually worked -
+# says that the parameters are start pointer, end pointer,
+# and 0. So that is what is shown below and used.
+
+        .globl  __cacheflush
+        .globl  ___cacheflush
+        .type  __cacheflush, %function
+        .align  2
+__cacheflush:
+___cacheflush:
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]      @ flag
+        ldr     r1,[sp,#16]      @ end
+        ldr     r0,[sp,#12]      @ start
+.endif
+# Can't use this directly
+#        mov     r7,#0xf0002     @ SYS_cacheflush
+        mov     r7, #0xf0000
+        add     r7,r7,#2
+        swi     0
+        ldmia   sp!,{r2,r7,pc}
+
+
+
+
 # These floating point routines are all dummied to
 # hopefully allow gccarm to run when built with
 # -msoft-float given that -mhard-float (default)
