@@ -9,14 +9,14 @@
 CC=gcc
 COPTS=-S -O0 -fno-common -fno-builtin -DXHAVE_DIR -D__UNOPT__ \
     -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ \
-    -D__64BIT__ \
+    -D__64BIT__ -fno-stack-protector \
     -I . -I../pdpclib -I../src
 
 all: clean pcomm.exe
 
 pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/a64supa.o
   rm -f pcomm.exe
-  ld -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/a64supa.o
+  ld -s -e __crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/a64supa.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
