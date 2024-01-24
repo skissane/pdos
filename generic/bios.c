@@ -44,6 +44,14 @@ some sort of (useful) Frankenstein.
 #include <assert.h>
 #include <setjmp.h>
 
+#ifdef __MACOS__
+int __close(int fd);
+int __open(char *path, int flags);
+int __chdir(const char *filename);
+int __mkdir(const char *filename);
+int __rmdir(const char *filename);
+#endif
+
 #ifdef FREEMEM
 #include <__memmgr.h>
 extern int __mmgid;
@@ -1054,6 +1062,9 @@ static int ff_search(void)
     static size_t upto = 0;
     static size_t avail = 0;
 
+#ifdef __MACOS__
+    return (1);
+#else
     if (avail <= 0)
     {
         avail = __getdents(dirfile, buf, 500);
@@ -1063,6 +1074,7 @@ static int ff_search(void)
             return (1);
         }
     }
+#endif
     strncpy(origdta.file_name, buf + upto + 10, sizeof origdta.file_name);
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
     strncpy(origdta.lfn, buf + upto + 10, sizeof origdta.lfn);
