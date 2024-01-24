@@ -276,24 +276,6 @@ ___remove:
 
 
 
-
-# int ___creat(char *path, int mode);
-
-        .align  4
-        .globl  ___creat
-___creat:
-
-# The syscall 8 has been taken away. Not sure what
-# the replacement is. Perhaps an extended open?
-# So just loop when someone actually uses it
-loop3:  b loop3
-
-
-
-
-
-
-
 # int __time(void);
 
         .align  4
