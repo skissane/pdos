@@ -113,7 +113,7 @@ int _start(char *p)
 
 #elif defined(__ARM__) && defined(__64BIT__)
 
-    rc = __start(*(int *)(&p), &p);
+    rc = __start(*(int *)(&p), &p+1);
 
 #elif defined(__ARM__)
 
