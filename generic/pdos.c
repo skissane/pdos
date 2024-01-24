@@ -246,6 +246,13 @@ int main(int argc, char **argv)
 
 #endif
 
+
+#ifdef NEED_FLUSH
+    __cacheflush(mem_base, bios->mem_amt, 0);
+#endif
+
+
+
     printf("about to call app\n");
     ret = pgastart(&os);
     printf("return from app is %d\n", ret);
