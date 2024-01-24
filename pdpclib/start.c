@@ -618,7 +618,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     if (__mprc != 0)
     {
         fprintf(stderr, "mprotect failed with rc %d\n", __mprc);
-        exita(EXIT_FAILURE);
+        __exita(EXIT_FAILURE);
     }
 #endif
 
