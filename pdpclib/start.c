@@ -125,6 +125,10 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <windows.h>
 #endif
 
+#ifdef NEED_MPROTECT
+extern int __mprc;
+#endif
+
 int __runnum = 0;
 
 int __G_live = 0;
@@ -609,6 +613,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stderr->theirBuffer = 0;
     __stderr->permfile = 1;
     __stderr->isopen = 1;
+
+#ifdef NEED_MPROTECT
+    if (__mprc != 0)
+    {
+        fprintf(stderr, "mprotect failed with rc %d\n", __mprc);
+        exita(EXIT_FAILURE);
+    }
+#endif
 
 #if USE_MEMMGR
     memmgrDefaults(&__memmgr);

@@ -16,6 +16,10 @@ static char *newmembuf = membuf;
 extern int __start(int argc, char **argv);
 extern int __exita(int rc);
 
+#ifdef NEED_MPROTECT
+int __mprc;
+#endif
+
 #ifdef STACKPARM
 #if !defined(__UNOPT__)
 #define ADJUST -6
@@ -88,10 +92,10 @@ int _start(char *p)
     newmembuf = newmembuf - (unsigned int)newmembuf % blksize;
     numblks = sizeof membuf / blksize;
     numblks -= 2; /* if already aligned, we wasted an extra block */
-    rc = __mprotect(newmembuf,
-                    numblks * blksize,
-                    PROT_READ | PROT_WRITE | PROT_EXEC);
-    if (rc != 0) return (rc);
+    __mprc = __mprotect(newmembuf,
+                        numblks * blksize,
+                        PROT_READ | PROT_WRITE | PROT_EXEC);
+    /* can't return here - we'll check return code in start */
 #endif
 
     /* I don't know what the official rules for ARM are, but
