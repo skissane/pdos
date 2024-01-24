@@ -1,0 +1,27 @@
+# Produces macOS arm64 (aarch64) executable
+# You should have build pdpclib with makefile.m64 first
+
+CC=clang
+CFLAGS=-O2 -fno-builtin -D__ARM__ -D__MACOS__ \
+    -fno-stack-protector \
+    -D__NOBIVA__ -DUSE_MEMMGR -DNEED_ELF \
+    -DNO_DLLENTRY \
+    -D__64BIT__ -DXHAVE_DIR
+LD=ld
+LDFLAGS=
+AS=as
+AR=ar
+COPTS=-S $(CFLAGS) -ansi -I../bios -I../pdpclib -I../src
+
+all: clean bios
+
+bios: bios.o ../bios/exeload.o
+  $(LD) -s -nostdlib -e __start -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../pdpclib/pdplinux.a
+
+.c.o:
+    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+	rm -f *.o bios
