@@ -10,9 +10,10 @@ AR=ararm
 # Testing on an old ARM Samsung Chromebook showed that a delay
 # (NEED_DELAY) was able to overcome a coredump when PDOS
 # attempted to execute pcomm. Pinebook Pro had the same issue.
+# Seems that we need a cache flush
 COPTS=-S $(CFLAGS) -fno-common -mapcs-32 -ansi \
    -I. -I../bios -I../pdpclib -I../src \
-   -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -DNEED_AOUT -DNEED_DELAY
+   -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -DNEED_AOUT -DNEED_FLUSH
 
 all: clean pdos.exe
 
