@@ -300,7 +300,7 @@ ___time:
 ___chdir:
         sub     sp,sp,#16
         str     x16, [sp, #0]
-        mov     x16,#10
+        mov     x16,#12
 #           @ SYS_chdir
 
         svc     #0x80
