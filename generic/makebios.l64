@@ -5,8 +5,8 @@ CC=gcc
 CFLAGS=-O0 -mno-red-zone -fno-builtin -D__gnu_linux__ \
     -m64 -fno-stack-protector \
     -D__NOBIVA__ -DUSE_MEMMGR -DNEED_ELF \
-    -DNO_DLLENTRY \
-    -D__64BIT__ -DHAVE_DIR
+    -DNO_DLLENTRY -DGENSHELL \
+    -D__64BIT__ -DXHAVE_DIR -DLINDIR
 LD=ld
 LDFLAGS=
 AS=as
