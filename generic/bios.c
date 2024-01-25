@@ -1069,12 +1069,23 @@ void *PosGetDTA(void)
 static int ff_search(void)
 {
     static unsigned char buf[500];
-    static size_t upto = 0;
-    static size_t avail = 0;
+    static int upto = 0;
+    static int avail = 0;
 
 #ifdef __MACOS__
     return (1);
 #else
+
+    /* note that Linux is expected to return multiple entries,
+       but they will always be complete entries */
+
+#if defined(__64BIT__) && defined(__ARM__)
+    /* this is actually getdents64 so structure is different */
+#define EXTRAPAD 1
+#else
+#define EXTRAPAD 0
+#endif
+
     if (avail <= 0)
     {
         avail = __getdents(dirfile, buf, 500);
@@ -1084,17 +1095,24 @@ static int ff_search(void)
             return (1);
         }
     }
-#endif
-    strncpy(origdta.file_name, buf + upto + 10, sizeof origdta.file_name);
+    strncpy(origdta.file_name,
+            buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+            sizeof origdta.file_name);
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
-    strncpy(origdta.lfn, buf + upto + 10, sizeof origdta.lfn);
+
+    strncpy(origdta.lfn,
+            buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+            sizeof origdta.lfn);
     origdta.lfn[sizeof origdta.lfn - 1] = '\0';
-    upto += *(short *)(buf + upto + 8);
+
+    upto += *(short *)(buf + upto + sizeof(long) * 2);
+
     if (upto >= avail)
     {
         upto = avail = 0;
     }
     return (0);
+#endif
 }
 
 int PosFindFirst(char *pat, int attrib)
