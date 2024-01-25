@@ -432,22 +432,33 @@ ___rmdir:
 
 
 
-# AArch64 doesn't seem to have a syscall for this
-# operation. There is a getdents64 but that will
-# presumably require more work. So just return -1,
-# presumably failure.
+# AArch64 doesn't have getdents - only getdents64
 
-# int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
+# int ___getdents64(unsigned int fd, struct linux_dirent64 *dirent, int count);
 
-        .globl  _geetdents
-        .globl  __getdents
+        .globl  _getdents64
+        .globl  __getdents64
 .if ELF
-        .type  _getdents, %function
+        .type  _getdents64, %function
 .endif
         .align  2
-_getdents:
-__getdents:
-        mov     x0, #-1
+_getdents64:
+__getdents64:
+
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+.if STACKPARM
+        ldr     x2,[sp,#40]      @ count
+        ldr     x1,[sp,#32]      @ dirent
+        ldr     x0,[sp,#24]      @ fd
+.endif
+        mov     x8,#61
+#           @ SYS_getdents64
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
         ret
 
 
