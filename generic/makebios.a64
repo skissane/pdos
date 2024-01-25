@@ -6,7 +6,7 @@ CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
     -fno-stack-protector \
     -D__NOBIVA__ -DUSE_MEMMGR -DNEED_ELF \
     -DNO_DLLENTRY -DGENSHELL -D__ARM__ \
-    -D__64BIT__ -DXHAVE_DIR -DLINDIR
+    -D__64BIT__ -DHAVE_DIR -DLINDIR
 LD=ld
 LDFLAGS=
 AS=as
