@@ -1082,6 +1082,7 @@ static int ff_search(void)
 #if defined(__64BIT__) && defined(__ARM__)
     /* this is actually getdents64 so structure is different */
 #define EXTRAPAD 1
+#define __getdents __getdents64
 #else
 #define EXTRAPAD 0
 #endif
