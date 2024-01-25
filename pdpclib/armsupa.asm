@@ -297,6 +297,8 @@ mpok:   ldmia   sp!,{r2,r7,pc}
 
 
 
+# count is size of buffer
+
 # int ___getdents(unsigned int fd, struct linux_dirent *dirent, int count);
 
         .globl  __getdents
@@ -305,15 +307,19 @@ mpok:   ldmia   sp!,{r2,r7,pc}
         .align  2
 __getdents:
 ___getdents:
-        stmfd   sp!,{r2,r7,lr}
+
+# Now that we're using stack parameters, we likely
+# need to preserve r1 too (ditto for other functions)
+
+        stmfd   sp!,{r1,r2,r7,lr}
 .if STACKPARM
-        ldr     r2,[sp,#20]     @ count
-        ldr     r1,[sp,#16]      @ dirent
-        ldr     r0,[sp,#12]      @ fd
+        ldr     r2,[sp,#24]      @ count
+        ldr     r1,[sp,#20]      @ dirent
+        ldr     r0,[sp,#16]      @ fd
 .endif
         mov     r7,#141          @ SYS_getdents
         swi     0
-gdok:   ldmia   sp!,{r2,r7,pc}
+gdok:   ldmia   sp!,{r1,r2,r7,pc}
 
 
 
