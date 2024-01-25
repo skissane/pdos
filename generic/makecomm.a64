@@ -2,7 +2,7 @@
 # It will need to be built on an ELF system (or
 # cross-compiled) even if the intended target is macOS
 
-# although a64 is linked in, it isn't used for any of
+# although a64supa is linked in, it isn't used for any of
 # the linux functions. It is only used if some generated
 # code requires it
 
