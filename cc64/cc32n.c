@@ -10240,7 +10240,7 @@ L184 :;
         L187 :;
         while (!!(p)) {
             aa = (i64)(u32)(p);
-            if (((aa > (i64)4294967295) || (aa < (i64)100))) {
+            if (((aa > (i64)4294967295LL) || (aa < (i64)100))) {
                 msysnewc_m_print_startcon();
                 msysnewc_m_print_str(s,NULL);
                 msysnewc_m_print_str((byte*)"FREE LIST ERROR",NULL);
@@ -13170,7 +13170,7 @@ L302 :;
     cc_decls_nextlx.symbol = (u64)((i64)59);
     if ((aa > (u64)9223372036854775807u)) {
         cc_decls_nextlx.subcode = (u64)((i64)10);
-    } else if (((i64)(aa) > (i64)4294967295)) {
+    } else if (((i64)(aa) > (i64)4294967295LL)) {
         cc_decls_nextlx.subcode = (u64)((i64)5);
     } else if (((i64)(aa) > (i64)2147483647)) {
         cc_decls_nextlx.subcode = (u64)((i64)9);
@@ -13420,7 +13420,7 @@ L323 :;
     cc_decls_nextlx.subcode = (u64)((i64)4);
     if (((i64)(ll)==(i64)0) || ((i64)(ll)==(i64)1)) {
         if (!!((u64)(usigned))) {
-            if (((i64)(aa) >= (i64)4294967295)) {
+            if (((i64)(aa) >= (i64)4294967295LL)) {
                 cc_decls_nextlx.subcode = (u64)((i64)10);
             } else {
                 cc_decls_nextlx.subcode = (u64)((i64)9);
@@ -15382,7 +15382,7 @@ L457 :;
 }
 
 static void cc_lex_setnumberoffset(i64 offset) {
-    cc_decls_nextlx.numberoffset = (((i64)(cc_decls_nextlx.numberoffset) & (i64)4278190080) | (offset & (i64)16777215));
+    cc_decls_nextlx.numberoffset = (((i64)(cc_decls_nextlx.numberoffset) & (i64)4278190080LL) | (offset & (i64)16777215));
 }
 
 static void cc_lex_setfileno(i64 fileno) {
@@ -19897,7 +19897,7 @@ static struct cc_decls_unitrec * cc_parse_createnegop(struct cc_decls_unitrec * 
             (*p).value = -((*p).value);
             return p;
         }else if ((t==(i64)9)) {
-            (*p).value = (-((*p).value) & (i64)4294967295);
+            (*p).value = (-((*p).value) & (i64)4294967295LL);
             return p;
         }else if ((t==(i64)12)) {
             (*p).xvalue = -((*p).xvalue);
@@ -20417,7 +20417,7 @@ L706 :;
             }else if ((cc_decls_ttsize[(t)]==(i64)2)) {
                 (*p).value &= (i64)65535;
             }else if ((cc_decls_ttsize[(t)]==(i64)4)) {
-                (*p).value = ((*p).value & (i64)4294967295);
+                (*p).value = ((*p).value & (i64)4294967295LL);
             };
             goto L705 ;
 ;
@@ -26613,7 +26613,7 @@ static void cc_genasm_do_urem(struct cc_libmcl_opndrec * a) {
 static void cc_genasm_do_and(struct cc_libmcl_opndrec * a,struct cc_libmcl_opndrec * b) {
     if (((i64)((u64)((*b).mode)) == (i64)2)) {
         if (((i64)((*a).size) <= (i64)4)) {
-            (*b).value = ((*b).value & (i64)4294967295);
+            (*b).value = ((*b).value & (i64)4294967295LL);
             cc_genasm_convertimm(b,(i64)0);
         } else {
             cc_genasm_convertimm(b,(i64)1);
@@ -26625,7 +26625,7 @@ static void cc_genasm_do_and(struct cc_libmcl_opndrec * a,struct cc_libmcl_opndr
 static void cc_genasm_do_or(struct cc_libmcl_opndrec * a,struct cc_libmcl_opndrec * b) {
     if (((i64)((u64)((*b).mode)) == (i64)2)) {
         if (((i64)((*a).size) <= (i64)4)) {
-            (*b).value = ((*b).value & (i64)4294967295);
+            (*b).value = ((*b).value & (i64)4294967295LL);
             cc_genasm_convertimm(b,(i64)0);
         } else {
             cc_genasm_convertimm(b,(i64)1);
@@ -26637,7 +26637,7 @@ static void cc_genasm_do_or(struct cc_libmcl_opndrec * a,struct cc_libmcl_opndre
 static void cc_genasm_do_xor(struct cc_libmcl_opndrec * a,struct cc_libmcl_opndrec * b) {
     if (((i64)((u64)((*b).mode)) == (i64)2)) {
         if (((i64)((*a).size) <= (i64)4)) {
-            (*b).value = ((*b).value & (i64)4294967295);
+            (*b).value = ((*b).value & (i64)4294967295LL);
             cc_genasm_convertimm(b,(i64)0);
         } else {
             cc_genasm_convertimm(b,(i64)1);
@@ -27132,7 +27132,7 @@ static void cc_genasm_convertimm(struct cc_libmcl_opndrec * a,i64 sx) {
     value = (*a).value;
     if (((i64)((*a).valtype)==(i64)1)) {
         if ((labs(sx)==(i64)1)) {
-            if ((((i64)-2147483648 <= value) && (value <= (i64)2147483647))) {
+            if ((((i64)-2147483648LL <= value) && (value <= (i64)2147483647))) {
             } else {
                 if ((sx < (i64)0)) {
                     cc_support_gerror((byte*)"conv/imm1",(struct cc_decls_unitrec *)(0));
@@ -27142,7 +27142,7 @@ static void cc_genasm_convertimm(struct cc_libmcl_opndrec * a,i64 sx) {
                 (*a).mode = (u64)((i64)4);
             };
         }else if ((labs(sx)==(i64)2)) {
-            if ((((i64)0 <= value) && (value <= (i64)4294967295))) {
+            if ((((i64)0 <= value) && (value <= (i64)4294967295LL))) {
             } else {
                 if ((sx < (i64)0)) {
                     cc_support_gerror((byte*)"conv/imm2",(struct cc_decls_unitrec *)(0));
@@ -31447,7 +31447,7 @@ static i64 ax_genss_isbytesized(i64 x) {
 }
 
 static i64 ax_genss_isdwordsized(i64 x) {
-    return (((i64)-2147483648 <= x) && (x <= (i64)2147483647));
+    return (((i64)-2147483648LL <= x) && (x <= (i64)2147483647));
 }
 
 static void ax_genss_do_push(struct ax_decls_opndrec * a) {
@@ -31769,7 +31769,7 @@ L1210 :;
             } else if ((((i64)-128 <= x) && (x <= (i64)127))) {
                 opc = (i64)131;
             } else {
-                if (!((((i64)-2147483648 <= x) && (x <= (i64)4294967295)))) {
+                if (!((((i64)-2147483648LL <= x) && (x <= (i64)4294967295LL)))) {
                     ax_lib_gerror((byte*)"3:exceeding word32 value");
                 };
                 opc = (i64)129;
@@ -31860,7 +31860,7 @@ static void ax_genss_do_mov(struct ax_decls_opndrec * a,struct ax_decls_opndrec 
                     ax_genss_genbyte(((i64)184 + regcode));
                     ax_genss_genopnd(b,(i64)4);
                 } else {
-                    if (!((((i64)-2147483648 <= value) && (value <= (i64)((u64)4294967295u))))) {
+                    if (!((((i64)-2147483648LL <= value) && (value <= (i64)((u64)4294967295u))))) {
                         msysnewc_m_print_startcon();
                         msysnewc_m_print_i64(value,NULL);
                         msysnewc_m_print_ptr((void *)(u32)(value),NULL);
@@ -31883,7 +31883,7 @@ L1211 :;
                     ax_genss_genbyte(((i64)184 + regcode));
                     ax_genss_genopnd(b,(i64)8);
                 } else {
-                    if (((value >= (i64)0) && (value <= (i64)4294967295))) {
+                    if (((value >= (i64)0) && (value <= (i64)4294967295LL))) {
                         goto L1211 ;
 ;
                     };
@@ -31937,7 +31937,7 @@ L1211 :;
                 ax_genss_genword(value);
             }else if (((i64)((*a).size)==(i64)4) || ((i64)((*a).size)==(i64)8)) {
                 if (!(!!((*b).labeldef))) {
-                    if (!((((i64)-2147483647 <= value) && (value <= (i64)4294967295)))) {
+                    if (!((((i64)-2147483647 <= value) && (value <= (i64)4294967295LL)))) {
                         ax_lib_gerror((byte*)"2:exceeding word32 value");
                     };
                 };
@@ -33682,16 +33682,16 @@ static void ax_writeexe_writesectionheader(struct ax_writeexe_sectionrec * s) {
     sheader.rawdata_offset = (u64)((*s).rawoffset);
     sheader.rawdata_size = (u64)((*s).rawsize);
     if (((*s).segtype==(i64)3)) {
-        aa = (i64)3226468480;
+        aa = (i64)3226468480LL;
         sheader.characteristics = (u64)(aa);
     }else if (((*s).segtype==(i64)2)) {
-        aa = (i64)3226468416;
+        aa = (i64)3226468416LL;
         sheader.characteristics = (u64)(aa);
     }else if (((*s).segtype==(i64)1)) {
         aa = (i64)1615855648;
         sheader.characteristics = (u64)(aa);
     }else if (((*s).segtype==(i64)5)) {
-        aa = (i64)3224371264;
+        aa = (i64)3224371264LL;
         sheader.characteristics = (u64)(aa);
     };
     ax_writeexe_writerecordx((void *)(&sheader),(i64)40);
@@ -35808,14 +35808,14 @@ static void ax_writeobj_writecoff(byte * outfile) {
     header.nsections = (u64)((i64)3);
     strcpy((i8 *)(&zsection.name[((i64)1)-1]),(i8 *)((byte*)".bss"));
     zsection.rawdata_size = (u64)(ax_decls_ss_zdatalen);
-    zsection.characteristics = (u64)((i64)3225419904);
+    zsection.characteristics = (u64)((i64)3225419904LL);
     if (((ax_decls_ss_nidatarelocs >= (i64)65536) || (ax_decls_ss_ncoderelocs >= (i64)65536))) {
         ax_lib_gerror((byte*)"Too many relocs (exceeds 16-bit field)");
     };
     strcpy((i8 *)(&isection.name[((i64)1)-1]),(i8 *)((byte*)".data"));
     isection.rawdata_size = (u64)(ax_lib_bufferlength(ax_decls_ss_idata));
     isection.nrelocs = (u64)(ax_decls_ss_nidatarelocs);
-    isection.characteristics = (u64)((i64)3226468416);
+    isection.characteristics = (u64)((i64)3226468416LL);
     strcpy((i8 *)(&csection.name[((i64)1)-1]),(i8 *)((byte*)".text"));
     csection.rawdata_size = (u64)(ax_lib_bufferlength(ax_decls_ss_code));
     csection.nrelocs = (u64)(ax_decls_ss_ncoderelocs);
