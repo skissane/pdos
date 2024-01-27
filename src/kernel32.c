@@ -348,7 +348,7 @@ HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, WIN32_FIND_DATA *FindFileData)
     }
     if (dta->lfn[0] != '\0')
     {
-        strcpy(FindFileData->cFileName, dta->lfn);
+        strcpy(FindFileData->cFileName, (char *)dta->lfn);
     }
     else
     {
@@ -371,7 +371,7 @@ BOOL WINAPI FindNextFileA(HANDLE h, WIN32_FIND_DATA *FindFileData)
     }
     if (dta->lfn[0] != '\0')
     {
-        strcpy(FindFileData->cFileName, dta->lfn);
+        strcpy(FindFileData->cFileName, (char *)dta->lfn);
     }
     else
     {
