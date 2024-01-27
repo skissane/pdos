@@ -93,8 +93,7 @@ mov %ecx, %edi
 # data pointer
 mov %rdx, %rsi
 # length
-xor %rdx,%rdx
-mov %edx, %edx
+mov %r8, %rdx
 
 syscall
 
@@ -329,6 +328,7 @@ push %rdi
 movq 16(%rbp), %rdi
 .endif */
 
+movq $9, %rdi
 movq $60, %rax
 
 syscall
