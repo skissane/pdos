@@ -8,10 +8,10 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <stddef.h>
+#include <stddef.h>
 
-#include    "as.h"
-#include    "cfi.h"
+#include "as.h"
+#include "cfi.h"
 
 static struct fixup *fixup_new_internal (struct frag *frag,
                                          unsigned long where,
@@ -32,6 +32,7 @@ static struct fixup *fixup_new_internal (struct frag *frag,
     fixup->add_number   = add_number;
     fixup->pcrel        = pcrel;
     fixup->done         = 0;
+    fixup->fixup_signed = 0;
     fixup->reloc_type   = reloc_type;
     fixup->next         = NULL;
     
@@ -454,6 +455,25 @@ static unsigned long fixup_section (section_t section)
         
         if (fixup->done == 0) {
             section_reloc_count++;
+        }
+
+        if (fixup->size < sizeof (value_t)) {
+            value_t mask = -1;
+
+            mask <<= fixup->size * 8 - !!fixup->fixup_signed;
+            if ((add_number & mask)
+                && (fixup->fixup_signed
+                    ? ((add_number & mask) != mask)
+                    : (-add_number & mask))) {
+                as_error_at (NULL, 0,
+                             (add_number > 1000)
+                             ? "value of %#"PRIxVALUE" too large for field of %u byte%s at %#lx"
+                             : "value of %"PRIuVALUE" too large for field of %u byte%s at %#lx",
+                             add_number,
+                             fixup->size,
+                             ((fixup->size == 1) ? "" : "s"),
+                             fixup->frag->address + fixup->where);
+            }
         }
     
     }

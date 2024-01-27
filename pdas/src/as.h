@@ -81,6 +81,7 @@ typedef unsigned long address_t;
 
 typedef int_fast64_t offset_t;
 typedef uint_fast64_t value_t;
+#define PRIuVALUE PRIuFAST64
 #define PRIxVALUE PRIxFAST64
 #define PRIXVALUE PRIXFAST64
 #define PRIiOFFSET PRIiFAST64

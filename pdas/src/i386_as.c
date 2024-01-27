@@ -1414,6 +1414,7 @@ static void output_disps (void)
                 value = convert_number_to_size (instruction.disps[operand]->add_number, size);
                 machine_dependent_number_to_chars (frag_increase_fixed_size (size), value, size);
             } else {
+                struct fixup *fixup;
                 int pcrel = (instruction.special_types[operand] & OPERAND_PCREL) != 0;
 
                 if (pcrel) {
@@ -1428,8 +1429,16 @@ static void output_disps (void)
                     }
                 }
  
-                fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.disps[operand], pcrel, RELOC_TYPE_DEFAULT);
+                fixup = fixup_new_expr (current_frag,
+                                        current_frag->fixed_size,
+                                        size,
+                                        instruction.disps[operand],
+                                        pcrel,
+                                        RELOC_TYPE_DEFAULT);
                 frag_increase_fixed_size (size);
+
+                if (bits == 64 && size == 4 && pcrel
+                    && !instruction.prefixes[ADDR_PREFIX]) fixup->fixup_signed = 1;
             }
         }
     }
@@ -1954,6 +1963,7 @@ static void output_jump (void)
 static void output_call_or_jumpbyte (void)
 {
     int size;
+    struct fixup *fixup;
     
     if (instruction.template.opcode_modifier.jumpbyte) {
         size = 1;
@@ -2000,8 +2010,20 @@ static void output_call_or_jumpbyte (void)
         instruction.disps[0]->add_symbol = symbol_temp_new_now ();
     }
     
-    fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.disps[0], 1, RELOC_TYPE_DEFAULT);
+    fixup = fixup_new_expr (current_frag, current_frag->fixed_size, size, instruction.disps[0], 1, RELOC_TYPE_DEFAULT);
     frag_increase_fixed_size (size);
+
+    /* All instructions here use signed operand
+     * but wrapping around at 4 GiB outside of 64-bit mode should be allowed. */
+    switch (size) {
+        case 1:
+            fixup->fixup_signed = 1;
+            break;
+
+        case 4:
+            if (bits == 64) fixup->fixup_signed = 1;
+            break;
+    }
 }
 
 static void output_intersegment_jump (void)
@@ -3068,6 +3090,7 @@ int machine_dependent_force_relocation_local (struct fixup *fixup)
 offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, section_t section)
 {
     if (symbol_get_section (frag->symbol) != section) {
+        struct fixup *fixup;
         int size = (frag->relax_subtype & RELAX_SUBTYPE_CODE16_JUMP) ? 2 : 4;
         
         unsigned char *opcode_pos = frag->buf + frag->opcode_offset_in_buf;
@@ -3078,7 +3101,7 @@ offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, sectio
             case RELAX_SUBTYPE_UNCONDITIONAL_JUMP:
                 *opcode_pos = 0xE9;
                 
-                fixup_new (frag, frag->fixed_size, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
+                fixup = fixup_new (frag, frag->fixed_size, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
                 frag->fixed_size += size;
                 
                 break;
@@ -3094,7 +3117,7 @@ offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, sectio
                     opcode_pos[2] = 0xE9;
                     
                     frag->fixed_size += 4;
-                    fixup_new (frag, old_frag_fixed_size + 2, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
+                    fixup = fixup_new (frag, old_frag_fixed_size + 2, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
                     
                     break;
                 
@@ -3106,7 +3129,7 @@ offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, sectio
                 opcode_pos[1] = opcode_pos[0] + 0x10;
                 opcode_pos[0] = TWOBYTE_OPCODE;
                 
-                fixup_new (frag, frag->fixed_size + 1, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
+                fixup = fixup_new (frag, frag->fixed_size + 1, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
                 frag->fixed_size += size + 1;
                 
                 break;
@@ -3120,7 +3143,7 @@ offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, sectio
                 
                 size = 1;
                 
-                fixup_new (frag, frag->fixed_size, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
+                fixup = fixup_new (frag, frag->fixed_size, size, frag->symbol, frag->offset, 1, RELOC_TYPE_DEFAULT);
                 frag->fixed_size += size;
                 
                 break;
@@ -3131,6 +3154,11 @@ offset_t machine_dependent_estimate_size_before_relax (struct frag *frag, sectio
                 return 0;
         
         }
+
+        /* Jumps here are signed but wrapping around is allowed,
+         * only wrapping around at 4 GiB is not allowed in 64-bit mode.
+         */
+        if (size == 4 && bits == 64) fixup->fixup_signed = 1;
         
         frag->relax_type = RELAX_TYPE_NONE_NEEDED;
         return frag->fixed_size - old_frag_fixed_size;

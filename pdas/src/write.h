@@ -21,6 +21,7 @@ struct fixup {
     
     int pcrel;
     int done;
+    int fixup_signed;
     
     reloc_type_t reloc_type;
     struct fixup *next;
