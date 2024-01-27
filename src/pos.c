@@ -2311,7 +2311,7 @@ unsigned int PosAccentMap(int accent_key, unsigned char *newmap)
 #endif
 }
 
-#if defined(__32BIT__)
+#if defined(__32BIT__) || defined(__64BIT__)
 /* F6,4F - Internal system call for DLLs */
 unsigned int PosWinSyscall(unsigned int function_index, void *arguments)
 {
