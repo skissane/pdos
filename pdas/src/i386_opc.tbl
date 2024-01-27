@@ -383,15 +383,15 @@ Jcc ("jnle", 0x7F)
     
 /* Loop instructions. */
 "loop", 0xE2, NONE, CPU_NO64, WL_SUF | JUMPBYTE, { DISP8 }
-"loop", 0xE2, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
+"loop", 0xE2, NONE, CPU_64, LQ_SUF | JUMPBYTE | NO_REX_W, { DISP8 }
 "loopz", 0xE1, NONE, CPU_NO64, WL_SUF | JUMPBYTE, { DISP8 }
-"loopz", 0xE1, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
+"loopz", 0xE1, NONE, CPU_64, LQ_SUF | JUMPBYTE | NO_REX_W, { DISP8 }
 "loope", 0xE1, NONE, CPU_NO64, WL_SUF | JUMPBYTE, { DISP8 }
-"loope", 0xE1, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
+"loope", 0xE1, NONE, CPU_64, LQ_SUF | JUMPBYTE | NO_REX_W, { DISP8 }
 "loopnz", 0xE0, NONE, CPU_NO64, WL_SUF | JUMPBYTE, { DISP8 }
-"loopnz", 0xE0, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
+"loopnz", 0xE0, NONE, CPU_64, LQ_SUF | JUMPBYTE | NO_REX_W, { DISP8 }
 "loopne", 0xE0, NONE, CPU_NO64, WL_SUF | JUMPBYTE, { DISP8 }
-"loopne", 0xE0, NONE, CPU_64, LQ_SUF | JUMPBYTE, { DISP8 }
+"loopne", 0xE0, NONE, CPU_64, LQ_SUF | JUMPBYTE | NO_REX_W, { DISP8 }
 
 /* Set byte on flag instructions. */
 #define SETcc(name, opcode) name, opcode, 0, CPU_386, B_SUF | MODRM, { REG8 | ANY_MEM | Byte }
@@ -712,6 +712,11 @@ SETcc ("setg", 0x0F9F)
 "ud2", 0x0F0B, NONE, CPU_186, NO_SUF, {}
 
 /* i686 extensions. */
+"sysenter", 0x0F34, NONE, CPU_64, NO_SUF, {}
+"sysenter", 0x0F34, NONE, CPU_686 | CPU_NO64, NO_SUF, {}
+"sysexit", 0x0F35, NONE, CPU_64, LQ_SUF, {}
+"sysexit", 0x0F35, NONE, CPU_686 | CPU_NO64, NO_SUF, {}
+
 #define CMOVcc(name, opcode) name, opcode, NONE, CPU_CMOV, WLQ_SUF | MODRM, { REG16 | REG32 | REG64 | ANY_MEM | Word | Dword | Qword, REG16 | REG32 | REG64 }
 CMOVcc ("cmovo", 0x0F40)
 CMOVcc ("cmovno", 0x0F41)
@@ -744,6 +749,7 @@ CMOVcc ("cmovng", 0x0F4E)
 CMOVcc ("cmovg", 0x0F4F)
 CMOVcc ("cmovnle", 0x0F4F)
 
+/* SSE instructions. */
 "movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
 "movhlps", 0x0F12, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM, REG_XMM }
@@ -844,6 +850,10 @@ CmpCCsd (neq, 4)
 CmpCCsd (nlt, 5)
 CmpCCsd (nle, 6)
 CmpCCsd (ord, 7)
+
+/* AMD extensions. */
+"syscall", 0x0F05, NONE, CPU_SYSCALL, NO_SUF, {}
+"sysret", 0x0F07, NONE, CPU_SYSCALL, LQ_SUF, {}
 
 ===REGISTER TABLE===
 
@@ -1012,7 +1022,7 @@ CmpCCsd (ord, 7)
 ===CPU FLAGS INITIALIZERS===
 
 #define CPU_GENERIC32_FLAGS CPU_186 | CPU_286 | CPU_386
-#define CPU_GENERIC64_FLAGS CPU_I686_FLAGS | CPU_LONG_MODE | CPU_SSE
+#define CPU_GENERIC64_FLAGS CPU_I686_FLAGS | CPU_LONG_MODE | CPU_SSE | CPU_SYSCALL
 
 #define CPU_I186_FLAGS CPU_186
 #define CPU_I286_FLAGS CPU_I186_FLAGS | CPU_286
@@ -1039,6 +1049,7 @@ CPU_687_INITIALIZER, CPU_387 | CPU_687
 CPU_CMOV_INITIALIZER, CPU_CMOV
 CPU_FXSR_INITIALIZER, CPU_FXSR
 CPU_SSE_INITIALIZER, CPU_SSE
+CPU_SYSCALL_INITIALIZER, CPU_SYSCALL
 
 CPU_NO87_INITIALIZER, CPU_8087 | CPU_287 | CPU_387 | CPU_687
 CPU_NO687_INITIALIZER, CPU_687

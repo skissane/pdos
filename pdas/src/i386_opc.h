@@ -27,6 +27,7 @@
  GENERATOR_MACRO(cpu_fxsr) \
  GENERATOR_MACRO(cpu_sse) \
  GENERATOR_MACRO(cpu_sse2) \
+ GENERATOR_MACRO(cpu_syscall) \
 \
  GENERATOR_MACRO(cpu_long_mode) \
  GENERATOR_MACRO(cpu_no64) \

@@ -149,7 +149,8 @@ static const struct cpu_arch_entry cpu_extensions[] = {
     {"687", CPU_687_INITIALIZER},
     {"cmov", CPU_CMOV_INITIALIZER},
     {"fxsr", CPU_FXSR_INITIALIZER},
-    {"sse", CPU_SSE_INITIALIZER}
+    {"sse", CPU_SSE_INITIALIZER},
+    {"syscall", CPU_SYSCALL_INITIALIZER}
 };
 
 static const struct cpu_arch_entry cpu_no_extensions[] = {
@@ -160,7 +161,8 @@ static const struct cpu_arch_entry cpu_no_extensions[] = {
     {"no687", CPU_NO687_INITIALIZER},
     {"nocmov", CPU_CMOV_INITIALIZER},
     {"nofxsr", CPU_FXSR_INITIALIZER},
-    {"nosse", CPU_SSE_INITIALIZER}
+    {"nosse", CPU_SSE_INITIALIZER},
+    {"nosyscall", CPU_SYSCALL_INITIALIZER}
 };
 
 static const struct operand_type imm8 = IMM8_INITIALIZER;
@@ -1682,7 +1684,11 @@ static int process_suffix (void)
                                           
     if (!instruction.suffix
         && !instruction.template.opcode_modifier.ignore_size
-        && !instruction.template.opcode_modifier.default_size
+        && (!instruction.template.opcode_modifier.default_size
+            /* Handles sysret. */
+            || (bits == 64
+                && !instruction.template.opcode_modifier.no_lsuf
+                && !instruction.template.opcode_modifier.no_qsuf))
         /* Explicit data size prefix allows determining the size. */
         && !instruction.prefixes[DATA_PREFIX]
         && !(instruction.prefixes[REX_PREFIX] & REX_W)
