@@ -21742,6 +21742,7 @@ L784 :;
     ;
     cc_libmcl_setsegment((i64)67,(i64)1);
     ismain = (i64)0;
+#ifndef BLDGENERIC
     if (!!(mlib_eqstring((*p).name,(byte*)"main"))) {
         ismain = (i64)1;
         if (!!(cc_libmcl_parambytes)) {
@@ -21751,6 +21752,7 @@ L784 :;
             cc_support_gerror((byte*)"main needs int return type",(struct cc_decls_unitrec *)(0));
         };
     };
+#endif
     cc_genmcl_genprocentry(cc_libmcl_framebytes,cc_libmcl_parambytes);
     if (!!(nparams)) {
         np = ((i64)4<nparams?(i64)4:nparams);
