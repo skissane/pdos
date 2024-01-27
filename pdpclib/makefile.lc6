@@ -1,0 +1,39 @@
+# This is the makefile to build pdpclib using
+# the cc64 compiler to produce a Linux ELF
+# executable but with Win64 calling conventions
+# for function calls (but not syscalls)
+
+CC=cc64
+CFLAGS=
+COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
+
+#AR=xar
+AR=arwin
+AS=pdas --oformat coff --64
+#AS=aswin
+LD=pdld --no-insert-timestamp
+#LD=ldwin
+
+all: pdptest.exe
+
+pdptest.exe: linstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj l64supb.obj
+  rm -f pdpwin64.lib
+  $(AR) r pdpwin64.lib linstart.obj stdio.obj string.obj stdlib.obj l64supb.obj
+  $(AR) r pdpwin64.lib start.obj time.obj errno.obj assert.obj signal.obj
+  $(AR) r pdpwin64.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
+  $(AR) s pdpwin64.lib
+  $(LD) -s --image-base 0x400000 -nostdlib -o pdptest.exe linstart.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
+
+.c.obj:
+  pdcc -E $(COPTS) -o $*.i $<
+  $(CC) -q -c -out:$@ $*.i
+  rm -f $*.i
+
+.asm.obj:
+  $(AS) --defsym STACKPARM=0 -o $@ $<
+
+clean:
+  rm -rf *.obj
+  rm -rf pdptest.exe
