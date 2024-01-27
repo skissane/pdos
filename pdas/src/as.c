@@ -51,6 +51,8 @@ int main (int argc, char **argv)
     process_init ();
     
     machine_dependent_init ();
+
+    as_use_defsyms ();
     
     if (state->nb_files == 0) {
         if (program_name) {

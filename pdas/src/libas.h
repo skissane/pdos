@@ -15,4 +15,5 @@
 #endif
 
 void as_parse_args (int *pargc, char ***pargv, int optind);
+void as_use_defsyms (void);
 void dynarray_add (int *nb_ptr, void *ptab, void *data);

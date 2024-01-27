@@ -8,42 +8,49 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <ctype.h>
-#include    <stdarg.h>
-#include    <stddef.h>
-#include    <stdio.h>
-#include    <stdlib.h>
-#include    <string.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include    "as.h"
-#include    "cstr.h"
-#include    "libas.h"
-#include    "options.h"
-
+#include "as.h"
+#include "cstr.h"
+#include "libas.h"
+#include "options.h"
 
 enum option_index {
 
     AS_OPTION_IGNORED = 0,
-    AS_OPTION_FORMAT,
+    AS_OPTION_DEFSYM,
     AS_OPTION_HELP,
     AS_OPTION_INCLUDE,
     AS_OPTION_LISTING,
-    AS_OPTION_OUTFILE
+    AS_OPTION_OUTFILE,
+    AS_OPTION_OFORMAT
 
 };
 
 static const struct as_option as_options[] = {
 
-    { "I",          AS_OPTION_INCLUDE,      AS_OPTION_HAS_ARG           },
-    { "-oformat",   AS_OPTION_FORMAT,       AS_OPTION_HAS_ARG           },
-    
     { "a",          AS_OPTION_LISTING,      AS_OPTION_HAS_OPTIONAL_ARG  },
-    { "o",          AS_OPTION_OUTFILE,      AS_OPTION_HAS_ARG           },
-    
+    { "-defsym",    AS_OPTION_DEFSYM,       AS_OPTION_HAS_ARG           },
     { "-help",      AS_OPTION_HELP,         AS_OPTION_NO_ARG            },
+    { "I",          AS_OPTION_INCLUDE,      AS_OPTION_HAS_ARG           },
+    { "o",          AS_OPTION_OUTFILE,      AS_OPTION_HAS_ARG           },
+    { "-oformat",   AS_OPTION_OFORMAT,      AS_OPTION_HAS_ARG           },
     { NULL,         0,                      0                           }
 
 };
+
+struct defsym {
+    struct defsym *next;
+    const char *name;
+    value_t value;
+};
+
+static struct defsym *defsyms = NULL;
 
 static void _add_include_path (const char *pathname) {
 
@@ -106,14 +113,14 @@ void _error (const char *fmt, ...) {
 
 }
 
-static void _print_help (const char *name) {
-
+static void _print_help (const char *name)
+{
     const char *default_format;
     char *p;
     
-#if      defined (USE_COFF_BY_DEFAULT)
+#if defined (USE_COFF_BY_DEFAULT)
     default_format = "coff";
-#elif      defined (USE_ELF_BY_DEFAULT)
+#elif defined (USE_ELF_BY_DEFAULT)
     default_format = "elf";
 #else
     default_format = "a.out";
@@ -123,22 +130,20 @@ static void _print_help (const char *name) {
         name = (p + 1);
     }
     
-    fprintf (stderr, "Usage: %s [options] asmfile...\n\n", name);
-    
-    fprintf (stderr, "    -I DIR                Add DIR to search list for .include directives\n");
-    fprintf (stderr, "    --oformat FORMAT      Create an output file in format FORMAT (default %s)\n", default_format);
-    fprintf (stderr, "                              Supported formats are: a.out, coff, elf\n");
-    
-    fprintf (stderr, "    -a[=FILE]             Print listings to stdout or a specified file\n");
-    fprintf (stderr, "    -o OBJFILE            Name the object-file output OBJFILE (default a.out)\n");
-    
-    fprintf (stderr, "    --help                Print this help information\n");
+    printf ("Usage: %s [options] asmfile...\n\n", name);
+
+    printf ("    -a[=FILE]             Print listings to stdout or a specified file\n");
+    printf ("    --defsym SYM=VAL      Define symbol SYM to given value");
+    printf ("    --help                Print this help information\n");
+    printf ("    -I DIR                Add DIR to search list for .include directives\n");
+    printf ("    -o OBJFILE            Name the object-file output OBJFILE (default a.out)\n");
+    printf ("    --oformat FORMAT      Create an output file in format FORMAT (default %s)\n", default_format);
+    printf ("                              Supported formats are: a.out, coff, elf\n");
 
     machine_dependent_print_help ();
     
-    fprintf (stderr, "\n");
+    printf ("\n");
     exit (EXIT_SUCCESS);
-
 }
 
 static int _strstart (const char *val, const char **str) {
@@ -162,8 +167,8 @@ static int _strstart (const char *val, const char **str) {
 
 }
 
-void as_parse_args (int *pargc, char ***pargv, int optind) {
-
+void as_parse_args (int *pargc, char ***pargv, int optind)
+{
     char **argv = *pargv;
     int argc = *pargc;
     
@@ -245,36 +250,30 @@ void as_parse_args (int *pargc, char ***pargv, int optind) {
         }
 
         if (is_machine_dependent_option) {
-
             machine_dependent_handle_option (popt, optarg);
             continue;
-
         }
         
         switch (popt->index) {
-        
-            case AS_OPTION_FORMAT: {
-            
-                char *temp = xmalloc (strlen (optarg) + 1);
-                _convert_to_lower (temp, optarg);
-                
-                if (strcmp (temp, "a.out") == 0) {
-                    state->format = AS_FORMAT_A_OUT;
-                } else if (strcmp (temp, "coff") == 0) {
-                    state->format = AS_FORMAT_COFF;
-                } else if (strcmp (temp, "elf") == 0) {
-                    state->format = AS_FORMAT_ELF;
-                } else {
-                
-                    free (temp);
-                    _error ("unsuppored format '%s' specified\n", optarg);
-                
+
+            case AS_OPTION_DEFSYM:
+                {
+                    struct defsym *defsym;
+                    char *p = strchr (optarg, '=');
+
+                    if (!p) {
+                        _error ("bad defsym; format is --defsym name=value");
+                    }
+                    *p = '\0';
+                    p++;
+
+                    defsym = xmalloc (sizeof (*defsym));
+                    defsym->next = defsyms;
+                    defsym->name = optarg;
+                    defsym->value = strtoul (p, NULL, 0);
+                    defsyms = defsym;                    
                 }
-                
-                free (temp);
-                break;
-            
-            }
+                break;                
             
             case AS_OPTION_HELP:
             
@@ -304,6 +303,29 @@ void as_parse_args (int *pargc, char ***pargv, int optind) {
                 
                 state->outfile = xstrdup (optarg);
                 break;
+
+            case AS_OPTION_OFORMAT: {
+            
+                char *temp = xmalloc (strlen (optarg) + 1);
+                _convert_to_lower (temp, optarg);
+                
+                if (strcmp (temp, "a.out") == 0) {
+                    state->format = AS_FORMAT_A_OUT;
+                } else if (strcmp (temp, "coff") == 0) {
+                    state->format = AS_FORMAT_COFF;
+                } else if (strcmp (temp, "elf") == 0) {
+                    state->format = AS_FORMAT_ELF;
+                } else {
+                
+                    free (temp);
+                    _error ("unsuppored format '%s' specified\n", optarg);
+                
+                }
+                
+                free (temp);
+                break;
+            
+            }
             
             default:
             
@@ -315,7 +337,22 @@ void as_parse_args (int *pargc, char ***pargv, int optind) {
     }
     
     if (!state->outfile) { state->outfile = "a.out"; }
+}
 
+void as_use_defsyms (void)
+{
+    struct defsym *defsym, *next;
+
+    for (defsym = defsyms; defsym; defsym = next) {
+        struct symbol *symbol = symbol_find_or_make (defsym->name);
+
+        symbol_set_frag (symbol, &zero_address_frag);
+        symbol_set_section (symbol, absolute_section);
+        symbol_set_value (symbol, defsym->value);
+
+        next = defsym->next;
+        free (defsym);
+    }
 }
 
 void dynarray_add (int *nb_ptr, void *ptab, void *data) {
