@@ -7,8 +7,8 @@ CC=cc64
 CFLAGS=
 COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
-#AR=xar
-AR=arwin
+AR=xar
+#AR=arwin
 AS=pdas --oformat coff --64
 #AS=aswin
 LD=pdld --no-insert-timestamp
@@ -24,7 +24,7 @@ pdptest.exe: linstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(AR) r pdpwin64.lib start.obj time.obj errno.obj assert.obj signal.obj
   $(AR) r pdpwin64.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   $(AR) s pdpwin64.lib
-  $(LD) -s --image-base 0x400000 -nostdlib -o pdptest.exe linstart.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
+  $(LD) -s --image-base 0x400000 -nostdlib -o pdptest.exe linstart.obj pdptest.obj pdpwin64.lib
 
 .c.obj:
   pdcc -E $(COPTS) -o $*.i $<
@@ -32,7 +32,8 @@ pdptest.exe: linstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   rm -f $*.i
 
 .asm.obj:
-  $(AS) --defsym STACKPARM=0 -o $@ $<
+  $(AS) -o $@ $<
+#  $(AS) --defsym STACKPARM=0 -o $@ $<
 
 clean:
   rm -rf *.obj
