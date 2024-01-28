@@ -10,36 +10,6 @@
 
 
 
-# This is the new entry point. We simply capture
-# the current status of the stack and pass it on
-# to C code (linstart.c, not start.c) figure out
-# the rest. However, it seems that the MSABI
-# requires some stack to be available so that the
-# 4 register parameters can be saved if required.
-# Which seems to be what cc64 does unconditionally.
-# Which means we wipe out the first 4 arguments
-# (argv[x]) that were put on the stack. argc survives
-# presumably because it is in the spot where the
-# return address normally is. Bottom line is we
-# need to subtract 48 bytes from the stack before
-# things get clobbered.
-
-
-
-        .globl ___pdpstart
-___pdpstart:
-mov %rsp, %rcx
-sub $48, %rsp
-call _start
-
-# we shouldn't get here, but if we do, loop
-# instead of doing something random
-loop1:  jmp loop1
-
-
-
-
-
 .globl ___setj
 ___setj:
 .globl __setj
@@ -99,44 +69,6 @@ mov 12(%rax), %rdi
 mov 16(%rax), %esi
 
 mov 60(%rax), %rax    # return value
-
-ret
-
-
-
-.globl __seek
-__seek:
-.globl ___seek
-___seek:
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-.endif */
-
-# function code 8 = lseek
-movq $8, %rax
-
-/* .if STACKPARM
-# handle
-movq 16(%rbp), %rdi
-# offset
-movq 24(%rbp), %rsi
-# whence
-movq 32(%rbp), %rdx
-.endif */
-
-syscall
-
-/* .if STACKPARM
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
-.endif */
 
 ret
 
@@ -205,32 +137,6 @@ ret
 
 
 
-.globl ___exita
-___exita:
-.globl __exita
-__exita:
-# exit/terminate
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-movq 16(%rbp), %rdi
-.endif */
-
-movq $9, %rdi
-movq $60, %rax
-
-syscall
-
-/* .if STACKPARM
-pop %rdi
-pop %rbp
-.endif */
-
-ret
-
-
 .globl ___time
 ___time:
 .globl __time
@@ -256,50 +162,6 @@ syscall
 pop %rdi
 pop %rbp
 .endif */
-
-ret
-
-
-
-# int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
-
-.globl ___ioctl
-___ioctl:
-.globl __ioctl
-__ioctl:
-
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-
-# function code 16 = ioctl
-movq $16, %rax
-
-/* .if STACKPARM
-# file descriptor
-movq 16(%rbp), %rdi
-# command
-movq 24(%rbp), %rsi
-# parameter
-movq 32(%rbp), %rdx
-.endif */
-
-# handle
-xor %rdi,%rdi
-mov %ecx, %edi
-# cmd
-mov %rdx, %rsi
-# arg
-mov %r8, %rdx
-
-syscall
-
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
 
 ret
 
@@ -440,45 +302,6 @@ ret
 
 
 
-.globl ___mprotect
-___mprotect:
-.globl __mprotect
-__mprotect:
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-.endif */
-
-# function code 10 = mprotect
-movq $10, %rax
-
-/* .if STACKPARM
-# start
-movq 16(%rbp), %rdi
-# len
-movq 24(%rbp), %rsi
-# prot
-movq 32(%rbp), %rdx
-.endif */
-
-syscall
-
-/* .if STACKPARM
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
-.endif */
-
-ret
-
-
-
-
 
 
 
@@ -486,6 +309,36 @@ ret
 
 
 .intel_syntax noprefix
+
+
+
+# This is the new entry point. We simply capture
+# the current status of the stack and pass it on
+# to C code (linstart.c, not start.c) figure out
+# the rest. However, it seems that the MSABI
+# requires some stack to be available so that the
+# 4 register parameters can be saved if required.
+# Which seems to be what cc64 does unconditionally.
+# Which means we wipe out the first 4 arguments
+# (argv[x]) that were put on the stack. argc survives
+# presumably because it is in the spot where the
+# return address normally is. Bottom line is we
+# need to subtract 48 bytes from the stack before
+# things get clobbered.
+
+.globl ___pdpstart
+___pdpstart:
+
+mov rcx, rsp
+sub rsp, 48
+call _start
+
+# we shouldn't get here, but if we do, loop
+# instead of doing something random
+loop1: jmp loop1
+
+
+
 
 
 .globl __write
@@ -503,7 +356,6 @@ xor rdi, rdi
 mov edi, ecx
 # data pointer
 mov rsi, rdx
-xor rdx, rdx
 # length
 xor rdx, rdx
 mov edx, r8d
@@ -517,6 +369,37 @@ pop rdi
 ret
 
 
+
+
+
+# int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+
+.globl __ioctl
+__ioctl:
+
+push rdi
+push rsi
+push rdx
+
+# function code 16 = ioctl
+mov rax, 16
+
+# handle
+xor rdi, rdi
+mov edi, ecx
+# cmd
+mov rsi, rdx
+# arg
+xor rdx, rdx
+mov rdx, r8
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
 
 
 
@@ -601,6 +484,83 @@ syscall
 pop rdi
 
 ret
+
+
+
+
+.globl __seek
+__seek:
+
+push rdi
+push rsi
+push rdx
+
+# function code 8 = lseek
+mov rax, 8
+
+# handle
+xor rdi, rdi
+mov edi, ecx
+# offset
+mov rsi, rdx
+# whence
+xor rdx, rdx
+mov edx, r8d
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
+
+
+.globl __exita
+__exita:
+
+# exit/terminate
+mov rax, 60
+
+mov rdi, rcx
+
+syscall
+
+# Shouldn't get here
+loop2: jmp loop2
+
+ret
+
+
+
+
+
+.globl __mprotect
+__mprotect:
+
+push rdi
+push rsi
+push rdx
+
+# function code 10 = mprotect
+mov rax, 10
+
+# start
+mov rdi, rcx
+# len
+mov rsi, rdx
+# prot
+mov rdx, r8
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
 
 
 
