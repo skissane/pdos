@@ -1863,7 +1863,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
              * and the array has a null terminator. */
             for (; import_desc->OriginalFirstThunk; import_desc++)
             {
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W64DLL)
                 unsigned long long *thunk;
                 
                 for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
@@ -2856,10 +2856,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     }
                 }
                 }
-#elif defined(W64DLL)
+#elif defined(XW64DLL)
                 if (0) {}
 #endif
-#if defined(W32DLL) || defined(W64DLL)
+#if defined(W32DLL) || defined(XW64DLL)
                 else if (strcmp((char *)exeStart + import_desc->Name, "msvcrt.dll") == 0)
                 {
                 unsigned long *thunk;
@@ -2886,7 +2886,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         /* printf("hintname is X%sX\n", hintname); */
                         if (strcmp((char *)hintname, "exit") == 0)
                         {
-#if defined(W64DLL)
+#if defined(XW64DLL)
                             *thunk = (unsigned long)w64exit;
 #else
                             *thunk = (unsigned long)w32exit;
@@ -3300,7 +3300,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     return (2);
                 }
 
-#if defined(W32DLL) || defined(W64DLL)
+#if defined(W32DLL) || defined(XW64DLL)
                 }
 #endif
 
