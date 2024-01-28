@@ -10,70 +10,6 @@
 
 
 
-.globl ___setj
-___setj:
-.globl __setj
-__setj:
-mov $0, %rax
-ret
-
-mov 4(%rsp), %rax
-push %rbx
-mov %rsp, %rbx
-mov %rbx, 20(%rax) #esp
-
-mov %rbp, %rbx
-mov %rbx, 24(%rax)
-
-mov %rcx, 4(%rax)
-mov %rdx, 8(%rax)
-mov %rdi, 12(%rax)
-mov %esi, 16(%rax)
-
-mov 4(%rsp), %rbx    # return address
-mov %rbx, 28(%rax)   # return address
-
-pop %rbx
-mov %rbx,0(%rax)
-mov $0, %rax
-
-ret
-
-
-
-.globl ___longj
-___longj:
-.globl __longj
-__longj:
-fred: jmp fred
-mov $0, %rax
-ret
-
-mov 4(%rsp), %rax
-mov 20(%rax), %rbp
-mov %rbp, %rsp
-
-pop %rbx            # position of old ebx
-pop %rbx            # position of old return address
-
-mov 28(%rax), %rbx  # return address
-push %rbx
-
-mov 24(%rax), %rbx
-mov %rbx, %rbp
-
-mov 0(%rax), %rbx
-mov 4(%rax), %rcx
-mov 8(%rax), %rdx
-mov 12(%rax), %rdi
-mov 16(%rax), %esi
-
-mov 60(%rax), %rax    # return value
-
-ret
-
-
-
 .globl ___rename
 ___rename:
 .globl __rename
@@ -559,6 +495,48 @@ pop rdx
 pop rsi
 pop rdi
 
+ret
+
+
+
+
+
+# I think rcx will have env
+# And it looks like we only need to save rbx, rcx, rdx, r8, r9, rsp
+# plus return address
+# And first location is reserved for return value
+# (second is for return address)
+.globl __setj
+__setj:
+mov [rcx + 8*2], rbx
+mov [rcx + 8*3], rcx
+mov [rcx + 8*4], rdx
+mov [rcx + 8*5], r8
+mov [rcx + 8*6], r9
+mov [rcx + 8*7], rsp
+mov rax, [rsp]
+mov [rcx + 8*1], rax
+# we only return int (eax), but since we're not preserving
+# rax anyway (maybe we should?), may as well clear it.
+xor rax,rax
+ret
+
+
+
+
+# I think rcx will have env
+.globl __longj
+__longj:
+mov rax, [rcx + 8*7]
+mov rsp, rax
+mov rax, [rcx + 8*1]
+mov [rsp], rax
+mov rbx, [rcx + 8*2]
+mov rdx, [rcx + 8*4]
+mov r8, [rcx + 8*5]
+mov r9, [rcx + 8*6]
+mov rax, [rcx]
+mov rcx, [rcx + 8*3]
 ret
 
 
