@@ -3272,6 +3272,7 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
     short int hvalue;
     int ivalue;
     unsigned long ulvalue;
+    ptrdiff_t pvalue;
     double vdbl;
     char *svalue;
     char work[50];
@@ -3399,8 +3400,14 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
     || defined(__64BIT__)
         if (specifier == 'p')
         {
+#ifdef __64BIT__
+            lng = 2; /* still true (non-zero), but used as indicator */
+            lvalue = 1; /* dummy value */
+            pvalue = (ptrdiff_t)va_arg(ACCESS_ARG, void *);
+#else
             lng = 1;
             lvalue = (long)va_arg(ACCESS_ARG, void *);
+#endif
         }
         else
 #endif
@@ -3470,7 +3477,14 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         x = 0;
         while (ulvalue > 0)
         {
-            rem = (int)(ulvalue % base);
+            if (lng == 2) /* really a pointer */
+            {
+                rem = (int)(pvalue % base);
+            }
+            else
+            {
+                rem = (int)(ulvalue % base);
+            }
             if (rem < 10)
             {
                 work[x] = (char)('0' + rem);
@@ -3498,7 +3512,15 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
                 x++;
             }
 #endif
-            ulvalue = ulvalue / base;
+            if (lng == 2)
+            {
+                pvalue /= base;
+                if (pvalue == 0) break;
+            }
+            else
+            {
+                ulvalue = ulvalue / base;
+            }
         }
 #if (defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))) && \
     !defined(__PDOS386__) && \
