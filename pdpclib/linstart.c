@@ -65,6 +65,10 @@ int _start(char *a, char *b, char *d, char *e,
 
 #ifdef __FORCE_ALL_64__
 int _start(char *p)
+#elif defined(__CC64__)
+/* this should not be made the entry point - use
+   ___pdpstart instead, which will call this */
+int _start(char *p)
 #else
 int _start(char *a, char *b, char *c, char *d, char *e, char *f, char *p)
 #endif
@@ -147,6 +151,8 @@ int _start(char *p)
    no concept of the spirit of C.
 */
 
+#elif defined(__CC64__)
+    rc = __start(*(int *)(p), (char **)(p + 8));
 #else
     rc = __start(*(int *)(&p - 1), &p);
 #endif
