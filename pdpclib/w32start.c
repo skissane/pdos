@@ -10,6 +10,10 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* This file is not part of the DLL, so should either be
+   compiled without this defined, or we just undefine it now */
+#undef __PDPCLIB_DLL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
