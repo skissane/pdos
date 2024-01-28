@@ -104,46 +104,6 @@ ret
 
 
 
-.globl ___write
-___write:
-.globl __write
-__write:
-
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-
-# function code 1 = write
-movq $1, %rax
-
-# handle
-xor %rdi,%rdi
-mov %ecx, %edi
-# data pointer
-mov %rdx, %rsi
-# length
-#mov %r8, %rdx
-xor %rdx, %rdx
-mov %r8d, %edx
-
-# Not sure if this is 32 bits or 64 bits
-#xor rdx, rdx
-#mov edx, r8d
-#mov rdx, r8
-
-syscall
-
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
-
-ret
-
-
-
 .globl __seek
 __seek:
 .globl ___seek
@@ -242,37 +202,6 @@ pop %rbp
 .endif */
 
 ret
-
-
-
-.globl ___close
-___close:
-.globl __close
-__close:
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-.endif */
-
-# function code 3 = close
-movq $3, %rax
-
-/* .if STACKPARM
-# handle
-movq 16(%rbp), %rdi
-.endif */
-
-syscall
-
-/* .if STACKPARM
-pop %rdi
-pop %rbp
-.endif */
-
-ret
-
 
 
 
@@ -559,6 +488,39 @@ ret
 .intel_syntax noprefix
 
 
+.globl __write
+__write:
+
+push rdi
+push rsi
+push rdx
+
+# function code 1 = write
+mov rax, 1
+
+# handle
+xor rdi, rdi
+mov edi, ecx
+# data pointer
+mov rsi, rdx
+xor rdx, rdx
+# length
+xor rdx, rdx
+mov edx, r8d
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
+
+
+
+
+
 .globl __open
 __open:
 
@@ -605,6 +567,9 @@ mov edi, ecx
 mov rsi, rdx
 # length
 # Not sure if this is 32 bits or 64 bits
+# cc64 will be using a 32-bit value. And may not
+# be zeroing the high 32 bits. Linux may require
+# a full clean 64-bit value
 xor rdx, rdx
 mov edx, r8d
 #mov rdx, r8
@@ -616,6 +581,27 @@ pop rsi
 pop rdi
 
 ret
+
+
+
+.globl __close
+__close:
+
+push rdi
+
+# function code 3 = close
+mov rax, 3
+
+# handle
+xor rdi, rdi
+mov edi, ecx
+
+syscall
+
+pop rdi
+
+ret
+
 
 
 
