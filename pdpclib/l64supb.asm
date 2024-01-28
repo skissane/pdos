@@ -124,7 +124,14 @@ mov %ecx, %edi
 # data pointer
 mov %rdx, %rsi
 # length
-mov %r8, %rdx
+#mov %r8, %rdx
+xor %rdx, %rdx
+mov %r8d, %edx
+
+# Not sure if this is 32 bits or 64 bits
+#xor rdx, rdx
+#mov edx, r8d
+#mov rdx, r8
 
 syscall
 
@@ -132,83 +139,6 @@ pop %rdx
 pop %rsi
 pop %rdi
 pop %rbp
-
-ret
-
-
-
-.globl ___read
-___read:
-.globl __read
-__read:
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-.endif */
-
-# function code 0 = read
-movq $0, %rax
-
-/* .if STACKPARM
-# handle
-movq 16(%rbp), %rdi
-# data pointer
-movq 24(%rbp), %rsi
-# length
-movq 32(%rbp), %rdx
-.endif */
-
-syscall
-
-/* .if STACKPARM
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
-.endif */
-
-ret
-
-
-
-
-.globl ___open
-___open:
-.globl __open
-__open:
-
-/* .if STACKPARM
-push %rbp
-mov %rsp, %rbp
-push %rdi
-push %rsi
-push %rdx
-.endif */
-
-# function code 2 = open
-movq $2, %rax
-
-/* .if STACKPARM
-# filename
-movq 16(%rbp), %rdi
-# flag
-movq 24(%rbp), %rsi
-# mode
-movq 32(%rbp), %rdx
-.endif */
-
-syscall
-
-/* .if STACKPARM
-pop %rdx
-pop %rsi
-pop %rdi
-pop %rbp
-.endif */
 
 ret
 
@@ -619,7 +549,77 @@ ret
 
 
 
+
+
+
+
+
+
+
 .intel_syntax noprefix
+
+
+.globl __open
+__open:
+
+push rdi
+push rsi
+push rdx
+
+# function code 2 = open
+mov rax, 2
+
+# filename
+mov rdi,rcx
+# flag
+xor rsi, rsi
+mov esi, edx
+# mode
+xor rdx, rdx
+mov edx, r8d
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
+
+
+.globl __read
+__read:
+
+push rdi
+push rsi
+push rdx
+
+# function code 0 = read
+mov rax, 0
+
+# handle
+xor rdi, rdi
+mov edi, ecx
+# data pointer
+mov rsi, rdx
+# length
+# Not sure if this is 32 bits or 64 bits
+xor rdx, rdx
+mov edx, r8d
+#mov rdx, r8
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
+
+
+
 
 # These routines were copied (and then modified) from bcclib.asm generated
 # by the public domain cc64, and are used for cc64
