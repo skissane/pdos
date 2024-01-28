@@ -1870,7 +1870,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
                      *thunk != 0;
                      thunk++)
                 {
+#if 0
                     if ((*thunk) & 0x8000000000000000ULL)
+#else
+                    /* don't burden infrastructure */
+                    if ((*thunk) & (1ULL << 63))
+#endif
                     {
                         /* Bit 63 set, import by ordinal. */
                         printf("ordinal import not supported\n");
@@ -1879,7 +1884,15 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     else
                     {
                         /* Import by name. */
+                        /* The top bit should already be clear, so no masking
+                           should be required. A large constant like this
+                           burdens the infrastructure to deal with 64-bit
+                           values */
+#if 0
                         unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffffffffffULL);
+#else
+                        unsigned char *hintname = exeStart + ((*thunk));
+#endif
                         int i;
 
                         /* The first 2 bytes are hint index,
