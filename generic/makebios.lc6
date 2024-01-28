@@ -9,10 +9,11 @@
 CC=cc64
 CFLAGS=
 COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ \
-    -I . -I ../pdpclib -I../src -I../bios -D__64BIT__ \
+    -I . -I ../pdpclib -I../src -I../bios \
     -DNEED_MZ -DNOUNDMAIN -DUSE_MEMMGR \
-    -DNO_DLLENTRY -DGENSHELL \
-    -D__64BIT__ -DHAVE_DIR -DLINDIR
+    -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
+    -D__64BIT__ -DHAVE_DIR -DLINDIR -DTARGET_64BIT \
+    -DXW64HACK -DW64DLL
 
 AR=xar
 AS=pdas --oformat coff --64

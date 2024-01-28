@@ -39,7 +39,7 @@
 #endif
 
 
-#ifdef W32DLL
+#if defined(W32DLL) || defined(W64DLL)
 #include <pos.h>
 #include <windows.h>
 
@@ -1512,7 +1512,7 @@ void w64exit(int status);
 void w32puts(void);
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(W64DLL)
 int getmainargs(int *_Argc, char ***_Argv);
 void w64exit(int status);
 #endif
@@ -2550,7 +2550,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
 #else
 
 #ifdef W32DLL
-                if (strcmp(exeStart + import_desc->Name, "gdi32.dll") == 0)
+                if (strcmp((char *)exeStart + import_desc->Name, "gdi32.dll") == 0)
                 {
                 unsigned long *thunk;
 
@@ -2574,7 +2574,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
-                        if (strcmp(hintname, "BitBlt") == 0)
+                        if (strcmp((char *)hintname, "BitBlt") == 0)
                         {
                             *thunk = (unsigned long)BitBlt;
                         }
@@ -2617,7 +2617,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     }
                 }
                 }
-                else if (strcmp(exeStart + import_desc->Name, "user32.dll") == 0)
+                else if (strcmp((char *)exeStart + import_desc->Name, "user32.dll") == 0)
                 {
                 unsigned long *thunk;
 
@@ -2641,7 +2641,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
-                        if (strcmp(hintname, "BeginPaint") == 0)
+                        if (strcmp((char *)hintname, "BeginPaint") == 0)
                         {
                             *thunk = (unsigned long)BeginPaint;
                         }
@@ -2717,7 +2717,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                 }
                 }
 
-                else if (strcmp(exeStart + import_desc->Name, "kernel32.dll") == 0)
+                else if (strcmp((char *)exeStart + import_desc->Name, "kernel32.dll") == 0)
                 {
                 unsigned long *thunk;
 
@@ -2741,7 +2741,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
-                        if (strcmp(hintname, "CloseHandle") == 0)
+                        if (strcmp((char *)hintname, "CloseHandle") == 0)
                         {
                             *thunk = (unsigned long)CloseHandle;
                         }
@@ -2856,8 +2856,11 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     }
                 }
                 }
-
-                else if (strcmp(exeStart + import_desc->Name, "msvcrt.dll") == 0)
+#elif defined(W64DLL)
+                if (0) {}
+#endif
+#if defined(W32DLL) || defined(W64DLL)
+                else if (strcmp((char *)exeStart + import_desc->Name, "msvcrt.dll") == 0)
                 {
                 unsigned long *thunk;
 
@@ -2881,9 +2884,13 @@ static int exeloadLoadPE(unsigned char **entry_point,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
-                        if (strcmp(hintname, "exit") == 0)
+                        if (strcmp((char *)hintname, "exit") == 0)
                         {
+#if defined(W64DLL)
+                            *thunk = (unsigned long)w64exit;
+#else
                             *thunk = (unsigned long)w32exit;
+#endif
                         }
                         else if (strcmp((char *)hintname, "puts") == 0)
                         {
@@ -3293,7 +3300,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                     return (2);
                 }
 
-#ifdef W32DLL
+#if defined(W32DLL) || defined(W64DLL)
                 }
 #endif
 

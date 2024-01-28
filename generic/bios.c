@@ -76,7 +76,7 @@ static int globrc = 0;
 #include "__os.h"
 #include "exeload.h"
 
-#if defined(W64HACK) || defined(W32HACK)
+#if defined(W64HACK) || defined(W32HACK) || defined(W64DLL)
 void w64exit(int status);
 #endif
 
@@ -1040,7 +1040,7 @@ int getmainargs(int *_Argc,
 }
 #endif
 
-#if defined(W64HACK) || defined(W32HACK)
+#if defined(W64HACK) || defined(W32HACK) || defined(W64DLL)
 #ifdef __CC64__
 $callback
 #endif

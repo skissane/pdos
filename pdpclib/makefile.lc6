@@ -9,7 +9,8 @@
 
 CC=cc64
 CFLAGS=
-COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ -I . -I../src -D__64BIT__ -DNOUNDMAIN -DUSE_MEMMGR
+COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ -I . -I../src \
+    -D__64BIT__ -DNOUNDMAIN -DUSE_MEMMGR -D__W64SHELL__
 
 AR=xar
 #AR=arwin
