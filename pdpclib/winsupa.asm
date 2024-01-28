@@ -111,7 +111,7 @@ udivmodsi3:
     push    ebx
 #    push    ecx
     
-    sub     esp,    68
+    sub     esp,    36
     
     mov     ecx,    dword ptr [ebp + 8]
     mov     dword ptr [ebp - 40],   ecx
@@ -133,164 +133,114 @@ udivmodsi3:
     
     jmp     L2
 
-L4:
+L3:
 
-    mov     eax,    dword ptr [ebp - 48]
-    mov     edx,    dword ptr [ebp - 44]
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
     
-    shld    edx,    eax,    1
-    add     eax,    eax
+    shld    ebx,    ecx,    1
+    add     ecx,    ecx
     
-    mov     dword ptr [ebp - 48],   eax
-    mov     dword ptr [ebp - 44],   edx
+    mov     dword ptr [ebp - 48],   ecx
+    mov     dword ptr [ebp - 44],   ebx
     
-    mov     eax,    dword ptr [ebp - 24]
-    mov     edx,    dword ptr [ebp - 20]
+    mov     ecx,    dword ptr [ebp - 24]
+    mov     ebx,    dword ptr [ebp - 20]
     
-    shld    edx,    eax,    1
-    add     eax,    eax
+    shld    ebx,    ecx,    1
+    add     ecx,    ecx
     
-    mov     dword ptr [ebp - 24],   eax
-    mov     dword ptr [ebp - 20],   edx
+    mov     dword ptr [ebp - 24],   ecx
+    mov     dword ptr [ebp - 20],   ebx
 
 L2:
 
-    mov     eax,    dword ptr [ebp - 48]
-    mov     edx,    dword ptr [ebp - 44]
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
     
-    cmp     eax,    dword ptr [ebp - 40]
-    mov     eax,    edx
-    sbb     eax,    dword ptr [ebp - 36]
-    jnc     L5
+    test    ebx,    ebx
+    jns     L3
     
-    mov     eax,    dword ptr [ebp - 24]
-    xor     ah,     0
-    mov     dword ptr [ebp - 56],   eax
-    
-    mov     eax,    dword ptr [ebp - 20]
-    xor     ah,     0
-    mov     dword ptr [ebp - 52],   eax
-    
-    mov     eax,    dword ptr [ebp - 56]
-    mov     edx,    dword ptr [ebp - 52]
-    
-    mov     ebx,    edx
-    or      ebx,    eax
-    mov     eax,    ebx
-    
-    test    eax,    eax
-    je      L5
-    
-    mov     eax,    dword ptr [ebp - 48]
-    and     eax,    -2147483648
-    mov     esi,    eax
-    
-    mov     eax,    dword ptr [ebp - 44]
-    and     ah,     -1
-    mov     edi,    eax
-    
-    mov     eax,    esi
-    xor     ah,     0
-    mov     dword ptr [ebp - 64],   eax
-    
-    mov     eax,    edi
-    xor     ah,     0
-    mov     dword ptr [ebp - 60],   eax
-    
-    mov     eax,        dword ptr [ebp - 64]
-    mov     edx,        dword ptr [ebp - 60]
-    
-    mov     ecx,    edx
-    or      ecx,    eax
-    mov     eax,    ecx
-    
-    test    eax,    eax
-    je      L4
-    
-    jmp     L5
-
-L7:
-
-    mov     eax,    dword ptr [ebp - 40]
-    mov     edx,    dword ptr [ebp - 36]
-    
-    cmp     eax,    dword ptr [ebp - 48]
-    mov     eax,    edx
-    sbb     eax,    dword ptr [ebp - 44]
-    jc      L6
-    
-    mov     eax,    dword ptr [ebp - 48]
-    mov     edx,    dword ptr [ebp - 44]
-    
-    sub     dword ptr [ebp - 40],   eax
-    sbb     dword ptr [ebp - 36],   edx
-    
-    mov     eax,    dword ptr [ebp - 32]
-    or      eax,    dword ptr [ebp - 24]
-    mov     dword ptr [ebp - 72],   eax
-    
-    mov     eax,    dword ptr [ebp - 28]
-    or      eax,    dword ptr [ebp - 20]
-    mov     dword ptr [ebp - 68],   eax
-    
-    mov     eax,    dword ptr [ebp - 72]
-    mov     edx,    dword ptr [ebp - 68]
-    
-    mov     dword ptr [ebp - 32],   eax
-    mov     dword ptr [ebp - 28],   edx
+    jmp     L4
 
 L6:
 
-    mov     eax,    dword ptr [ebp - 24]
-    mov     edx,    dword ptr [ebp - 20]
+    mov     ecx,    dword ptr [ebp - 40]
+    mov     ebx,    dword ptr [ebp - 36]
     
-    shrd    eax,    edx,    1
-    shr     edx,    1
+    cmp     ecx,    dword ptr [ebp - 48]
+    sbb     ebx,    dword ptr [ebp - 44]
+    jc      L5
     
-    mov     dword ptr [ebp - 24],   eax
-    mov     dword ptr [ebp - 20],   edx
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
     
-    mov     eax,    dword ptr [ebp - 48]
-    mov     edx,    dword ptr [ebp - 44]
+    sub     dword ptr [ebp - 40],   ecx
+    sbb     dword ptr [ebp - 36],   ebx
     
-    shrd    eax,    edx,    1
-    shr     edx,    1
+    mov     ecx,    dword ptr [ebp - 32]
+    or      ecx,    dword ptr [ebp - 24]
+    mov     eax,    ecx
     
-    mov     dword ptr [ebp - 48],   eax
-    mov     dword ptr [ebp - 44],   edx
+    mov     ecx,    dword ptr [ebp - 28]
+    or      ecx,    dword ptr [ebp - 20]
+    mov     edx,    ecx
+    
+    mov     dword ptr [ebp - 32],   eax
+    mov     dword ptr [ebp - 38],   edx
 
 L5:
 
-    mov     eax,    dword ptr [ebp - 24]
-    xor     ah,     0
-    mov     dword ptr [ebp - 80],   eax
+    mov     ecx,    dword ptr [ebp - 24]
+    mov     ebx,    dword ptr [ebp - 20]
     
-    mov     eax,    dword ptr [ebp - 20]
-    xor     ah,     0
-    mov     dword ptr [ebp - 76],   eax
+    shrd    ecx,    ebx,    1
+    shr     ebx,    1
     
-    mov     esi,    dword ptr [ebp - 80]
-    mov     edi,    dword ptr [ebp - 76]
+    mov     dword ptr [ebp - 24],   ecx
+    mov     dword ptr [ebp - 20],   ebx
     
-    mov     eax,    edi
-    or      eax,    esi
+    mov     ecx,    dword ptr [ebp - 48]
+    mov     ebx,    dword ptr [ebp - 44]
     
-    test    eax,    eax
-    jne     L7
+    shrd    ecx,    ebx,    1
+    shr     ebx,    1
+    
+    mov     dword ptr [ebp - 48],   ecx
+    mov     dword ptr [ebp - 44],   ebx
+
+L4:
+
+    mov     ecx,    dword ptr [ebp - 24]
+    xor     ch,     0
+    mov     esi,    ecx
+    
+    mov     ecx,    dword ptr [ebp - 20]
+    xor     ch,     0
+    mov     edi,    ecx
+    
+    mov     ecx,    edi
+    or      ecx,    esi
+    
+    test    ecx,    ecx
+    jne     L6
     
     cmp     dword ptr [ebp + 24],   0
-    je      L8
+    je      L7
     
     mov     eax,    dword ptr [ebp - 40]
-    jmp     L9
+    mov     edx,    dword ptr [ebp - 36]
+    
+    jmp     L8
+
+L7:
+
+    mov     eax,    dword ptr [ebp - 32]
+    mov     edx,    dword ptr [ebp - 28]
 
 L8:
 
-    mov     eax,    dword ptr [ebp - 32]
-
-L9:
-
-    add     esp,    68
+    add     esp,    36
 #    pop     ecx
     pop     ebx
     pop     esi
