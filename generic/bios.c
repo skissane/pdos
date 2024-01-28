@@ -44,12 +44,16 @@ some sort of (useful) Frankenstein.
 #include <assert.h>
 #include <setjmp.h>
 
-#ifdef __MACOS__
+#if defined(__MACOS__) || defined(__CC64__)
 int __close(int fd);
 int __open(char *path, int flags, int x);
 int __chdir(const char *filename);
 int __mkdir(const char *filename, int x);
 int __rmdir(const char *filename);
+#endif
+
+#ifdef __CC64__
+int __getdents(int dirfile, void *buf, int n);
 #endif
 
 #ifdef FREEMEM
@@ -599,7 +603,7 @@ int main(int argc, char **argv)
     {
         p++;
 #ifdef LINDIR
-        PosChangeDir(p);
+        PosChangeDir((char *)p);
 #else
         if (p[0] == '\\')
         {
@@ -1096,13 +1100,13 @@ static int ff_search(void)
             return (1);
         }
     }
-    strncpy(origdta.file_name,
-            buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+    strncpy((char *)origdta.file_name,
+            (char *)buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
             sizeof origdta.file_name);
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
 
-    strncpy(origdta.lfn,
-            buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+    strncpy((char *)origdta.lfn,
+            (char *)buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
             sizeof origdta.lfn);
     origdta.lfn[sizeof origdta.lfn - 1] = '\0';
 
