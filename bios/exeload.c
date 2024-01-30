@@ -1349,14 +1349,19 @@ static int exeloadLoadELF(unsigned char **entry_point,
                     continue;
                 }
 
+                /* I doubt that it is correct to be accessing the symbol
+                   table in order to do relocations - as you should be
+                   free to strip that */
                 for (currel = startrel;
                      currel < (startrel
                                + ((section->sh_size) / (section->sh_entsize)));
                      currel++)
                 {
-                    long *target = (long *)(target_base + currel->r_offset);
                     Elf32_Sym *symbol = (sym_table
                                          + ELF32_R_SYM(currel->r_info));
+                    long *target = (long *)(exeStart
+                        - (section_table + symbol->st_shndx)->sh_addr
+                        + currel->r_offset);
                     Elf32_Addr sym_value = 0;
 
                     if (ELF32_R_SYM(currel->r_info) != STN_UNDEF)
@@ -1385,7 +1390,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
                             sym_value = symbol->st_value;
                             /* Adds the address of the related section
                              * so the symbol stores absolute address. */
-                            sym_value += ((section_table
+                            sym_value -= ((section_table
                                            + symbol->st_shndx)->sh_addr);
                         }
                     }
@@ -1395,13 +1400,18 @@ static int exeloadLoadELF(unsigned char **entry_point,
                             break;
                         case R_386_32:
                             /* Symbol value + offset. */
-                            *target = sym_value + *target;
+                            *target = sym_value + (long)exeStart;
                             break;
                         case R_386_PC32:
                             /* Symbol value + offset - absolute address
                              * of the modified field. */
+                            /* I believe this is a PC-relative instruction, and
+                               as such, should not be altered. If you do alter it,
+                               terrible things happen */
+#if 0
                             *target = (sym_value + (*target)
                                        - (unsigned long)target);
+#endif
                             break;
                         default:
                             printf("Unknown relocation type in ELF file\n");
