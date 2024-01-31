@@ -76,6 +76,7 @@ __PDPCLIB_HEADFUNC size_t strftime(char *s, size_t maxsize,
 #define localtime __os->Xlocaltime
 #define time __os->Xtime
 #define clock __os->Xclock
+#define strftime __os->Xstrftime
 
 #endif
 

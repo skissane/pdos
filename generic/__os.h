@@ -161,6 +161,29 @@ typedef struct {
     double (*Xceil)(double x);
     int (*toupper)(int c);
     int (*iscntrl)(int c);
+    double (*Xsin)(double x);
+    double (*Xcos)(double x);
+    double (*Xtan)(double x);
+    double (*Xfloor)(double x);
+    double (*Xasin)(double x);
+    double (*Xacos)(double x);
+    double (*Xatan)(double x);
+    double (*Xsinh)(double x);
+    double (*Xcosh)(double x);
+    double (*Xtanh)(double x);
+    int (*Xrand)(void);
+    void (*Xsrand)(unsigned int seed);
+    size_t (*Xstrftime)(char *s, size_t maxsize,
+                        const char *format, const struct tm *timeptr);
+    int (*Xputs)(const char *s);
+    double (*Xpow)(double x, double y);
+    double (*Xmodf)(double value, double *iptr);
+    double (*Xlog)(double x);
+    double (*Xlog10)(double x);
+    double (*Xatan2)(double y, double x);
+    double (*Xfabs)(double x);
+    double (*Xexp)(double x);
+    double (*Xsqrt)(double x);
 } OS;
 
 extern OS *__os;

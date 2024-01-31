@@ -103,8 +103,25 @@ double __cos__(double x);
 #include <__os.h>
 
 #define ceil __os->Xceil
+#define sin __os->Xsin
+#define cos __os->Xcos
+#define tan __os->Xtan
+#define floor __os->Xfloor
+#define asin __os->Xasin
+#define acos __os->Xacos
+#define atan __os->Xatan
+#define sinh __os->Xsinh
+#define cosh __os->Xcosh
+#define tanh __os->Xtanh
+#define pow __os->Xpow
+#define modf __os->Xmodf
+#define log __os->Xlog
+#define log10 __os->Xlog10
+#define atan2 __os->Xatan2
+#define fabs __os->Xfabs
+#define exp __os->Xexp
+#define sqrt __os->Xsqrt
 
 #endif
 
 #endif
-

@@ -158,6 +158,8 @@ long _Builtin __labs(long j);
 #define atof __os->Xatof
 #define system __os->Xsystem
 #define atexit __os->Xatexit
+#define rand __os->Xrand
+#define srand __os->Xsrand
 
 #endif
 
