@@ -2291,7 +2291,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         /* Windows returns DEL for backspace instead of ^H so we
            convert to ^H now */
         /* this is presumably useful when line buffering is not in use */
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             p = ptr;
             for (x = 0; x < *actualRead; x++)
@@ -2526,7 +2526,7 @@ static void freadSlowT(void *ptr,
                 if (*(stream->upto - 1) == '\r')
                 {
 #if defined(__WIN32__) || defined(__MSDOS__)
-                    if ((stream == stdin)
+                    if ((stream == __stdin)
                         && (stream->bufTech == _IONBF))
                     {
                         *((char *)ptr + *actualRead - 1) = '\n';
@@ -4660,7 +4660,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
     {
         stream->bufTech = mode;
 #ifdef __WIN32__
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             DWORD dw;
 
@@ -4749,7 +4749,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             stdin_buffered = 0;
         }
 #elif defined(__MSDOS__) && !defined(__ARM__) && !defined(__gnu_linux__)
-        if (stream == stdin)
+        if (stream == __stdin)
         {
             unsigned int dw;
 
@@ -4859,7 +4859,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 #if defined(__MSDOS__) && !defined(__ARM__) && !defined(__gnu_linux__)
         if (mode == _IOLBF)
         {
-            if (stream == stdin)
+            if (stream == __stdin)
             {
                 unsigned int dw;
 
