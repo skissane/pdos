@@ -17,23 +17,27 @@ compete with the Microsoft/IBM monopolies.
 INTRODUCTION
 ------------
 
-PDOS currently comes in some quite different flavors, in
-two broad categories (3 mainframe systems, 3 PC systems):
+PDOS currently comes in quite a variety of flavors:
 
 
 Mainframe:
 
-1. PDOS/390 - runs on an IBM mainframe (S/390 architecture).
+1. z/PDOS - runs on an IBM mainframe (z/Arch), nominally
+in AMODE 64, but (via the use of page tables) effectively
+AMODE 32, giving a normal 32-bit environment for MVS
+programs that would otherwise run as AMODE 31.
+
+2. PDOS/390 - runs on an IBM mainframe (S/390 architecture).
 Predominantly designed to be compatible with a subset of the
 31-bit MVS interface, so it can run programs as AMODE 31,
 RMODE ANY. Also intended to support Posix interface.
 
-2. PDOS/370 - runs on an IBM mainframe (S/370 architecture).
+3. PDOS/370 - runs on an IBM mainframe (S/370 architecture).
 Predominantly designed to be compatible with a subset of the
 24-bit MVS interface, so that it can run programs as
 RMODE 24, AMODE 24.
 
-3. PDOS/380 - runs on Hercules/380 (S/380 architecture).
+4. PDOS/380 - runs on Hercules/380 (S/380 architecture).
 Predominantly designed to be compatible with a subset of the
 MVS/380 interface, so that it can run programs as
 AMODE 32 (not just 31), RMODE ANY.
@@ -54,6 +58,14 @@ to change. You should be using the Win32 API instead.
 of MSDOS, PD-Windows is designed to support Win32
 applications, but built on top of 32-bit PDOS/386 instead of
 16-bit MSDOS.
+
+4. PDOS/x64 - runs under UEFI on an x86_64 processor.
+
+
+Smartphone:
+
+1. PDOS-generic runs on 32-bit ARM
+
 
 
 For a version 1.0 to be created requires the following
