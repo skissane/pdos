@@ -111,7 +111,7 @@ udivmodsi3:
     push    ebx
     push    ecx
     
-    sub     esp,    36
+    sub     esp,    436
     
     mov     eax,    dword ptr [ebp + 8]
     mov     dword ptr [ebp - 32],   eax
@@ -125,8 +125,8 @@ udivmodsi3:
     mov     eax,    dword ptr [ebp + 20]
     mov     dword ptr [ebp - 36],   eax
     
-    mov     dword ptr [ebp - 16],   1
-    mov     dword ptr [ebp - 12],   0
+    mov     dword ptr [ebp - 216],   1
+    mov     dword ptr [ebp - 212],   0
     
     mov     dword ptr [ebp - 24],   0
     mov     dword ptr [ebp - 20],   0
@@ -144,14 +144,14 @@ L3:
     mov     dword ptr [ebp - 40],   eax
     mov     dword ptr [ebp - 36],   edx
     
-    mov     eax,    dword ptr [ebp - 16]
-    mov     edx,    dword ptr [ebp - 12]
+    mov     eax,    dword ptr [ebp - 216]
+    mov     edx,    dword ptr [ebp - 212]
     
     shld    edx,    eax,    1
     add     eax,    eax
     
-    mov     dword ptr [ebp - 16],   eax
-    mov     dword ptr [ebp - 12],   edx
+    mov     dword ptr [ebp - 216],   eax
+    mov     dword ptr [ebp - 212],   edx
 
 L2:
 
@@ -179,22 +179,22 @@ L6:
     sub     dword ptr [ebp - 32],   eax
     sbb     dword ptr [ebp - 28],   edx
     
-    mov     eax,    dword ptr [ebp - 16]
-    mov     edx,    dword ptr [ebp - 12]
+    mov     eax,    dword ptr [ebp - 216]
+    mov     edx,    dword ptr [ebp - 212]
     
     add     dword ptr [ebp - 24],   eax
     adc     dword ptr [ebp - 20],   edx
 
 L5:
 
-    mov     eax,    dword ptr [ebp - 16]
-    mov     edx,    dword ptr [ebp - 12]
+    mov     eax,    dword ptr [ebp - 216]
+    mov     edx,    dword ptr [ebp - 212]
     
     shrd    eax,    edx,    1
     shr     edx,    1
     
-    mov     dword ptr [ebp - 16],   eax
-    mov     dword ptr [ebp - 12],   edx
+    mov     dword ptr [ebp - 216],   eax
+    mov     dword ptr [ebp - 212],   edx
     
     mov     eax,    dword ptr [ebp - 40]
     mov     edx,    dword ptr [ebp - 36]
@@ -207,11 +207,11 @@ L5:
 
 L4:
 
-    mov     eax,    dword ptr [ebp - 16]
+    mov     eax,    dword ptr [ebp - 216]
     xor     ah,     0
     mov     ecx,    eax
     
-    mov     eax,    dword ptr [ebp - 12]
+    mov     eax,    dword ptr [ebp - 212]
     xor     ah,     0
     mov     ebx,    eax
     
@@ -236,7 +236,7 @@ L7:
 
 L8:
 
-    add     esp,    36
+    add     esp,    436
     pop     ecx
     pop     ebx
     pop     esi
