@@ -2301,6 +2301,14 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                     p[x] = 0x08;
                 }
             }
+            /* a sole ESC being read is a sign that this is Windows, not
+               PDOS, which doesn't double the ESC characters when the user
+               presses ESC, so we double it now */
+            if ((*actualRead == 1) && (toread > 1) && (p[0] == 0x1b))
+            {
+                *actualRead = 2;
+                p[1] = 0x1b;
+            }
         }
     }
 #endif
