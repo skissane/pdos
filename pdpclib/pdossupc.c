@@ -167,6 +167,11 @@ void CTYP __datetime(void *ptr)
     return;
 }
 
+int CTYP __magic(void)
+{
+    return (PosGetMagic());
+}
+
 #ifndef NOUNDMAIN
 void __main(void)
 {

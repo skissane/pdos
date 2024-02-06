@@ -1361,4 +1361,15 @@ ret
 __dint endp
 
 
+; Genuine PDOS magic check (PDOS/86 extension)
+
+public __magic
+__magic proc
+mov ah, 0f6h
+mov al, 06h
+int 21h
+ret
+__magic endp
+
+
 end
