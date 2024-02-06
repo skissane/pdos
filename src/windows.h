@@ -47,10 +47,10 @@ typedef int BOOL;
 typedef unsigned char BYTE;
 typedef char CCHAR;
 typedef char CHAR;
-typedef unsigned long DWORD;
+typedef unsigned int DWORD;
 typedef unsigned __int64 DWORDLONG;
 typedef int INT;
-typedef long LONG;
+typedef int LONG;
 typedef void *PVOID;
 typedef short SHORT;
 typedef unsigned int UINT;
@@ -67,17 +67,17 @@ typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 typedef unsigned __int64 ULONG_PTR;
 #else
-typedef long LONG_PTR;
+typedef int LONG_PTR;
 typedef int INT_PTR;
 typedef unsigned int UINT_PTR;
-typedef unsigned long ULONG_PTR;
+typedef unsigned int ULONG_PTR;
 #endif
 
 typedef WORD ATOM;
 typedef BYTE BOOLEAN;
 typedef DWORD COLORREF;
 typedef PVOID HANDLE;
-typedef ULONG_PTR SIZE_T;
+typedef unsigned int SIZE_T;
 
 typedef HANDLE HICON;
 
