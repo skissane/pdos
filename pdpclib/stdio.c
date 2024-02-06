@@ -4698,6 +4698,7 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
             {
                 dw &= ~ENABLE_LINE_INPUT;
                 dw &= ~ENABLE_PROCESSED_INPUT;
+                dw &= ~ENABLE_ECHO_INPUT;
                 SetConsoleMode(stream->hfile, dw);
             }
         }
