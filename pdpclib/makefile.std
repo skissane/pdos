@@ -2,6 +2,11 @@
 # It produces an msvcrt.dll that allows you to run a
 # subset of Win32 executables
 
+# Note that you can switch from msvcrt to pdpcrt by
+# doing a global change, so that you can take advantage
+# of the pdp version doing ANSI escapes on Windows 10+
+# and also switch to 64-bit long
+
 CC=gccwin
 AR=xar
 AS=pdas --oformat coff
