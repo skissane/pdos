@@ -1928,6 +1928,11 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __MSDOS__
     int errind;
     size_t tempRead;
+#if !defined(__gnu_linux__) && !defined(__ARM__)
+    static int numpending = 0;
+    static char pending[20];
+    static int genuine = -1;
+#endif
 #endif
 
 #ifdef __AMIGA__
@@ -2312,7 +2317,25 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         }
     }
 #endif
+
+/* I think for MSDOS we need to read a single character, otherwise
+   even in raw mode it will continue to accumulate characters */
+
 #ifdef __MSDOS__
+
+#if !defined(__gnu_linux__) && !defined(__ARM__)
+    if ((stream == __stdin)
+        && (toread == 1)
+        && (numpending > 0))
+    {
+        *(char *)ptr = pending[0];
+        numpending--;
+        memmove(pending, pending + 1, numpending);
+        *actualRead = 1;
+        return;
+    }
+#endif
+
     tempRead = __read(stream->hfile, ptr, (unsigned int)toread, &errind);
     if (errind)
     {
@@ -2328,6 +2351,80 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             char *p;
 
             p = ptr;
+#if !defined(__gnu_linux__) && !defined(__ARM__)
+            if ((toread == 1) && (*actualRead == 1))
+            {
+                /* user pressing ESC will always be 1 character on MSDOS,
+                   but not PDOS */
+                if (p[0] == 0x1b)
+                {
+                    if (genuine == -1)
+                    {
+                        genuine = (__magic() == 0x1234);
+                    }
+                    if (!genuine)
+                    {
+                        pending[0] = 0x1b;
+                        numpending = 1;
+                        return;
+                    }
+                    /* genuine PDOS will get the second ESC next read */
+                }
+                /* we can allow apps to flow through this logic even
+                   if running under PDOS */
+                /* if it is an extended character, convert to ANSI escapes */
+                else if (p[0] == 0)
+                {
+                    tempRead = __read(stream->hfile,
+                                      ptr,
+                                      (unsigned int)toread,
+                                      &errind);
+                    if (errind)
+                    {
+                        errno = tempRead;
+                        *actualRead = 0;
+                        stream->errorInd = 1;
+                    }
+                    else
+                    {
+                        /* up */
+                        if (p[0] == 0x48)
+                        {
+                            numpending = 2;
+                            memcpy(pending, "[A", 2);
+                        }
+                        /* down */
+                        else if (p[0] == 0x50)
+                        {
+                            numpending = 2;
+                            memcpy(pending, "[B", 2);
+                        }
+                        /* right */
+                        else if (p[0] == 0x4d)
+                        {
+                            numpending = 2;
+                            memcpy(pending, "[C", 2);
+                        }
+                        /* left */
+                        else if (p[0] == 0x4b)
+                        {
+                            numpending = 2;
+                            memcpy(pending, "[D", 2);
+                        }
+                        else
+                        {
+                            /* unrecognized sequences get a NUL - no good
+                               options here */
+                            p[0] = 0;
+                        }
+                        if (p[0] != 0)
+                        {
+                            p[0] = 0x1b;
+                        }
+                    }
+                }
+            }
+#else
             /* a sole ESC being read is a sign that this is a non-PDOS system
                which doesn't double the ESC characters when the user
                presses ESC, so we double it now */
@@ -2336,6 +2433,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                 *actualRead = 2;
                 p[1] = 0x1b;
             }
+#endif
         }
     }
 #endif
