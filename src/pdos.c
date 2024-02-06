@@ -2648,7 +2648,17 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
             if (stdin_raw)
             {
                 x++;
-                break;
+                /* if we have pending characters, it is ok to go
+                   through the loop again - otherwise we need to
+                   return immediately */
+                if (num_pending == 0)
+                {
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
             }
             if (ascii != '\b')
             {
