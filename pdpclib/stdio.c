@@ -3425,8 +3425,16 @@ static int examine(const char **formt, FILE *fq, char *s, va_list *arg,
         else
         {
             ivalue = va_arg(ACCESS_ARG, int);
-            if (specifier == 'u') lvalue = (unsigned int)ivalue;
-            else lvalue = ivalue;
+            if ((specifier == 'u')
+                || (specifier == 'x')
+                || (specifier == 'X'))
+            {
+                lvalue = (unsigned int)ivalue;
+            }
+            else
+            {
+                lvalue = ivalue;
+            }
         }
         ulvalue = (unsigned long)lvalue;
         if ((lvalue < 0) && ((specifier == 'd') || (specifier == 'i')))
