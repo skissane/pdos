@@ -722,6 +722,11 @@ typedef BOOL (__stdcall *PHANDLER_ROUTINE)(DWORD CtrlType);
 BOOL WINAPI ReadConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd);
 #endif
 
+#define PeekConsoleInput PeekConsoleInputA
+#ifndef __SUBC__
+BOOL WINAPI PeekConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd);
+#endif
+
 BOOL WINAPI SetConsoleCursorPosition(HANDLE h, COORD c);
 
 BOOL WINAPI SetConsoleMode(HANDLE hFile, DWORD dw);
