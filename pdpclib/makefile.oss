@@ -81,6 +81,7 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo ++DosGetDateTime.DOSCALLS.DOSGETDATETIME.33 >>temp.wat
   echo ++DosAllocSeg.DOSCALLS.DOSALLOCSEG.34 >>temp.wat
   echo ++DosCreateCSAlias.DOSCALLS.DOSCREATECSALIAS.43 >>temp.wat
+  echo ++DosDevIOCtl.DOSCALLS.DOSDEVIOCTL.53 >>temp.wat
   wlib -q os2.lib @temp.wat
   wlink File os1strt.obj,pdptest.obj Name pdptest.exe Form os2 Library watcom.lib,os2.lib Option quiet,stack=8192,start=___intstart,map,verbose,dosseg,stub=needpdos.exe
 
