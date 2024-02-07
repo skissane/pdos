@@ -2,8 +2,13 @@
 # the gcc compiler, and using custom-built Windows tools
 # and for static linking. Use with pdmake etc.
 
+# define OLDWIN if you want to produce executables that can
+# run under command.com, with dosonly and ansi.sys in config.nt,
+# and using HX (as an unusual way to run PE executables,
+# but at least you then get ANSI)
+
 CC=gccwin
-COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src
+COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src -DXOLDWIN
 AR=xar
 
 all: pdptest.exe
