@@ -8,6 +8,7 @@
 # and also switch to 64-bit long
 
 CC=gccwin
+#CC=gccwin_l64
 AR=xar
 AS=pdas --oformat coff
 LD=pdld
