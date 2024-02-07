@@ -34,7 +34,13 @@ static void collapse_subsections (void)
 static void calculate_section_sizes_and_rvas (void)
 {
     struct section *section;
-    address_type rva = coff_get_first_section_rva ();
+    address_type rva = 0;
+
+    if (ld_state->oformat == LD_OFORMAT_COFF) {
+        rva = coff_get_first_section_rva ();
+    } else if (ld_state->oformat == LD_OFORMAT_ELF) {
+        rva = elf_get_first_section_rva ();
+    }
 
     for (section = all_sections; section; section = section->next) {
         struct section_part *part;
@@ -73,21 +79,25 @@ static void relocate_sections (void)
         struct section_part *part;
         
         for (part = section->first_part; part; part = part->next) {
-            coff_relocate_part (part);
+            if (ld_state->oformat == LD_OFORMAT_COFF) {
+                coff_relocate_part (part);
+            } else if (ld_state->oformat == LD_OFORMAT_ELF) {
+                elf_relocate_part (part);
+            }
         }
     }
 }
 
 static void calculate_entry_point (void)
 {
-    struct section *section;
+    const struct section *section;
 
     if (ld_state->entry_symbol_name) {
         if (ld_state->entry_symbol_name[0] == '\0') {
             ld_state->entry_point -= ld_state->base_address;
             return;
         } else {
-            struct symbol *symbol;
+            const struct symbol *symbol;
 
             symbol = symbol_find (ld_state->entry_symbol_name);
             if (symbol) {

@@ -24,6 +24,7 @@ enum option_index {
     LD_OPTION_MAP,
     LD_OPTION_MAP_FILE,
     LD_OPTION_OUTPUT,
+    LD_OPTION_OFORMAT,
     LD_OPTION_OUT_IMPLIB,
     LD_OPTION_SHARED_LIBRARY,
     LD_OPTION_VERSION,
@@ -52,6 +53,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("Map"), LD_OPTION_MAP_FILE, OPTION_HAS_ARG},
     { STR_AND_LEN("nostdlib"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("output"), LD_OPTION_OUTPUT, OPTION_HAS_ARG},
+    { STR_AND_LEN("oformat"), LD_OPTION_OFORMAT, OPTION_HAS_ARG},
     { STR_AND_LEN("out-implib"), LD_OPTION_OUT_IMPLIB, OPTION_HAS_ARG},
     { STR_AND_LEN("shared"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("strip-all"), LD_OPTION_IGNORED, OPTION_NO_ARG},
@@ -71,6 +73,10 @@ static void print_help (void)
     printf ("  -Map FILE                   Write a linker map to FILE\n");
     printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
+    printf ("  --oformat FORMAT            Create an output file and accept input files\n"
+            "                                in format FORMAT (default %s)\n",
+            "coff");
+    printf ("                                Supported formats are: coff, elf\n");
     printf ("  --out-implib FILE           Generate import library\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");
     printf ("  -s, --strip-all             Ignored\n");
@@ -116,6 +122,16 @@ static void use_option (enum option_index option_index, char *arg)
 
         case LD_OPTION_OUTPUT:
             ld_state->output_filename = arg;
+            break;
+
+        case LD_OPTION_OFORMAT:
+            if (strcmp (arg, "coff") == 0) {
+                ld_state->oformat = LD_OFORMAT_COFF;
+            } else if (strcmp (arg, "elf") == 0) {
+                ld_state->oformat = LD_OFORMAT_ELF;
+            } else {
+                ld_error ("unsupported format '%s' specified", arg);
+            }
             break;
 
         case LD_OPTION_OUT_IMPLIB:

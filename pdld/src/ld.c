@@ -30,6 +30,7 @@ int main (int argc, char **argv)
     }
 
     ld_state->output_filename = "a.exe";
+    ld_state->oformat = LD_OFORMAT_COFF;
 
     input_filenames = ld_parse_args (argc, argv, 1);
     if (input_filenames == NULL) {
@@ -40,19 +41,27 @@ int main (int argc, char **argv)
     symbols_init ();
 
     for (i = 0; i < argc; i++) {
-        if (input_filenames[i]) coff_read (input_filenames[i]);
+        if (ld_state->oformat == LD_OFORMAT_COFF) {
+            if (input_filenames[i]) coff_read (input_filenames[i]);
+        } else if (ld_state->oformat == LD_OFORMAT_ELF) {
+            if (input_filenames[i]) elf_read (input_filenames[i]);
+        }
     }
 
     sections_destroy_empty_before_collapse ();
 
-    coff_before_link ();
-
+    if (ld_state->oformat == LD_OFORMAT_COFF) coff_before_link ();
+    
     link ();
 
-    coff_after_link ();
+    if (ld_state->oformat == LD_OFORMAT_COFF) coff_after_link ();
     
-    coff_write (ld_state->output_filename);
-
+    if (ld_state->oformat == LD_OFORMAT_COFF) {
+        coff_write (ld_state->output_filename);
+    } else if (ld_state->oformat == LD_OFORMAT_ELF) {
+        elf_write (ld_state->output_filename);
+    }
+    
     if (ld_state->output_map_filename) map_write (ld_state->output_map_filename);
     
     sections_destroy ();
