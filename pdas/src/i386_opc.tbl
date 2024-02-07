@@ -749,6 +749,42 @@ CMOVcc ("cmovng", 0x0F4E)
 CMOVcc ("cmovg", 0x0F4F)
 CMOVcc ("cmovnle", 0x0F4F)
 
+#define FCMOVcc(name, opcode) name, opcode, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+FCMOVcc ("fcmovb", 0xDAC0)
+FCMOVcc ("fcmovnae", 0xDAC0)
+FCMOVcc ("fcmove", 0xDAC8)
+FCMOVcc ("fcmovbe", 0xDAD0)
+FCMOVcc ("fcmovna", 0xDAD0)
+FCMOVcc ("fcmovu", 0xDAD8)
+FCMOVcc ("fcmovae", 0xDBC0)
+FCMOVcc ("fcmovnb", 0xDBC0)
+FCMOVcc ("fcmovne", 0xDBC8)
+FCMOVcc ("fcmova", 0xDBD0)
+FCMOVcc ("fcmovnbe", 0xDBD0)
+FCMOVcc ("fcmovnu", 0xDBD8)
+
+"fcomi", 0xDBF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fcomi", 0xDBF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fcomi", 0xDBF1, NONE, CPU_687, NO_SUF, {}
+
+"fucomi", 0xDBE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fucomi", 0xDBE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fucomi", 0xDBE9, NONE, CPU_687, NO_SUF, {}
+
+"fcomip", 0xDFF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fcomip", 0xDFF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fcomip", 0xDFF1, NONE, CPU_687, NO_SUF, {}
+"fcompi", 0xDFF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fcompi", 0xDFF0, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fcompi", 0xDFF1, NONE, CPU_687, NO_SUF, {}
+
+"fucomip", 0xDFE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fucomip", 0xDFE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fucomip", 0xDFE9, NONE, CPU_687, NO_SUF, {}
+"fucompi", 0xDFE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG, FLOAT_ACC }
+"fucompi", 0xDFE8, NONE, CPU_687, NO_SUF | SHORT_FORM, { FLOAT_REG }
+"fucompi", 0xDFE9, NONE, CPU_687, NO_SUF, {}
+
 /* SSE instructions. */
 "movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
