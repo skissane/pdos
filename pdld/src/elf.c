@@ -122,6 +122,8 @@ static unsigned char *write_sections (unsigned char *file)
 
 address_type elf_get_first_section_rva (void)
 {
+    if (all_sections == NULL) return size_of_headers;
+
     return ALIGN (size_of_headers, all_sections->section_alignment);
 }
 
