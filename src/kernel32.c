@@ -1165,12 +1165,6 @@ void WINAPI OutputDebugStringA(void)
     PosWriteFile(1, "OutputDebugStringA unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI PeekConsoleInputA(void)
-{
-    unsigned int len = 33;
-    PosWriteFile(1, "PeekConsoleInputA unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI PeekConsoleInputW(void)
 {
     unsigned int len = 33;
@@ -1229,6 +1223,13 @@ BOOL WINAPI ReadConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd)
 {
     unsigned int len = 33;
     PosWriteFile(1, "ReadConsoleInputA unimplemented\r\n", len, &len);
+    for (;;) ;
+    return (0);
+}
+BOOL WINAPI PeekConsoleInputA(HANDLE h, PINPUT_RECORD pi, DWORD d, LPDWORD lpd)
+{
+    unsigned int len = 33;
+    PosWriteFile(1, "PeekConsoleInputA unimplemented\r\n", len, &len);
     for (;;) ;
     return (0);
 }
