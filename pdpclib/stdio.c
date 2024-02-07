@@ -2276,6 +2276,68 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
 #endif
 #ifdef __WIN32__
+
+/* On pre-later-Win10 you can get ANSI output by using HX under command.com
+   if you make config.nt "dosonly". For input, you need this, since the
+   cursor keys don't come through on a ReadFile() */
+#ifdef OLDWIN
+    if ((stream == __stdin)
+        && (stream->bufTech = _IONBF)
+        && (toread >= 3)
+       )
+    {
+        INPUT_RECORD ir;
+        DWORD nr;
+
+        for (;;)
+        {
+            rc = ReadConsoleInput(stream->hfile, &ir, 1, &nr);
+            if (!rc) break;
+            if (ir.EventType != KEY_EVENT) continue;
+            if (!ir.Event.KeyEvent.bKeyDown) continue;
+
+            tempRead = 1;
+            if (ir.Event.KeyEvent.uChar.AsciiChar)
+            {
+                *(char *)ptr = ir.Event.KeyEvent.uChar.AsciiChar;
+            }
+            else
+            {
+                /* up */
+                if (ir.Event.KeyEvent.wVirtualKeyCode == 0x26)
+                {
+                    memcpy(ptr, "\x1b[A", 3);
+                    tempRead = 3;
+                }
+                /* down */
+                else if (ir.Event.KeyEvent.wVirtualKeyCode == 0x28)
+                {
+                    memcpy(ptr, "\x1b[B", 3);
+                    tempRead = 3;
+                }
+                /* right */
+                else if (ir.Event.KeyEvent.wVirtualKeyCode == 0x27)
+                {
+                    memcpy(ptr, "\x1b[C", 3);
+                    tempRead = 3;
+                }
+                /* left */
+                else if (ir.Event.KeyEvent.wVirtualKeyCode == 0x25)
+                {
+                    memcpy(ptr, "\x1b[D", 3);
+                    tempRead = 3;
+                }
+                else
+                {
+                    /* continue on unknown characters */
+                    continue;
+                }
+            }
+            break;
+        }
+    }
+    else
+#endif
     rc = ReadFile(stream->hfile,
                   ptr,
                   toread,
