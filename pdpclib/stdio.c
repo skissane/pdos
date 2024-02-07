@@ -2280,6 +2280,10 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 /* On pre-later-Win10 you can get ANSI output by using HX under command.com
    if you make config.nt "dosonly". For input, you need this, since the
    cursor keys don't come through on a ReadFile() */
+/* Potentially we only want to do this if the input is actually a console,
+   as determined by GetFileType() returning FILE_TYPE_CHAR, but that doesn't
+   appear to exist in Windows 2000, so we need a special "oldwin" build
+   anyway. */
 #ifdef OLDWIN
     if ((stream == __stdin)
         && (stream->bufTech = _IONBF)
