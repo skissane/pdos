@@ -239,7 +239,7 @@
 
 /* Conversion instructions. */
 "cbw", 0x98, NONE, 0, NO_SUF | SIZE16, {}
-"cwde", 0x98, NONE, 0, NO_SUF | SIZE32, {}
+"cwde", 0x98, NONE, CPU_386, NO_SUF | SIZE32, {}
 "cdqe", 0x98, NONE, CPU_64, NO_SUF | SIZE64, {}
 "cwd", 0x99, NONE, 0, NO_SUF | SIZE16, {}
 "cdq", 0x99, NONE, CPU_386, NO_SUF | SIZE32, {}
@@ -247,7 +247,7 @@
 
 /* Other naming. */
 "cbtw", 0x98, NONE, 0, NO_SUF | SIZE16, {}
-"cwtl", 0x98, NONE, 0, NO_SUF | SIZE32, {}
+"cwtl", 0x98, NONE, CPU_386, NO_SUF | SIZE32, {}
 "cltq", 0x98, NONE, CPU_64, NO_SUF | SIZE64, {}
 "cwtd", 0x99, NONE, 0, NO_SUF | SIZE16, {}
 "cltd", 0x99, NONE, CPU_386, NO_SUF | SIZE32, {}
@@ -378,7 +378,7 @@ Jcc ("jg", 0x7F)
 Jcc ("jnle", 0x7F)
 
 "jcxz", 0xE3, NONE, CPU_NO64, NO_SUF | JUMPBYTE | SIZE16, { DISP8 }
-"jecxz", 0xE3, NONE, 0, NO_SUF | JUMPBYTE | SIZE32, { DISP8 }
+"jecxz", 0xE3, NONE, CPU_386, NO_SUF | JUMPBYTE | SIZE32, { DISP8 }
 "jrcxz", 0xE3, NONE, CPU_64, NO_SUF | JUMPBYTE | SIZE64 | NO_REX_W, { DISP8 }
     
 /* Loop instructions. */
@@ -821,7 +821,7 @@ FCMOVcc ("fcmovnu", 0xDBD8)
 "movapd", 0x660F28, NONE, CPU_SSE2, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "movsd", 0xF20F10, NONE, CPU_SSE2, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 /* Conflicts with string movs with 'd' suffix. */
-"movsd", 0xA5, NONE, 0, NO_SUF | IS_STRING | SIZE32, {}
+"movsd", 0xA5, NONE, CPU_386, NO_SUF | IS_STRING | SIZE32, {}
 
 "comisd", 0x660F2F, NONE, CPU_SSE2, NO_SUF | MODRM | NO_REX_W, { REG_XMM | ANY_MEM | Qword, REG_XMM }
 
