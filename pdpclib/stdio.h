@@ -30,7 +30,13 @@
 #ifdef __SUBC__
 typedef unsigned int size_t;
 #else
+
+#if defined(__LONG64__)
+typedef unsigned long size_t;
+#else
 typedef unsigned long long size_t;
+#endif
+
 #endif
 #elif (defined(__OS2__) || defined(__MVS__) \
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__) \
