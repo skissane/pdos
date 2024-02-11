@@ -73,7 +73,10 @@ struct cpu_flags {
  GENERATOR_MACRO(no_intelsuf) \
 \
  GENERATOR_MACRO(no_rex_w) \
- GENERATOR_MACRO(immext)
+ GENERATOR_MACRO(immext) \
+\
+ GENERATOR_MACRO(to_dword) \
+ GENERATOR_MACRO(to_qword)
 
 struct opcode_modifier {
 
