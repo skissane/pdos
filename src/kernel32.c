@@ -149,11 +149,16 @@ LPTSTR WINAPI GetCommandLineA(void)
     return ((LPTSTR)PosGetCommandLine());
 }
 
-LPTCH WINAPI GetEnvironmentStrings(void)
+LPTCH WINAPI GetEnvironmentStringsA(void)
 {
     char *env = PosGetEnvBlock();
 
     return ((LPTCH)env);
+}
+
+BOOL WINAPI FreeEnvironmentStringsA(LPCH x)
+{
+    return 1;
 }
 
 BOOL WINAPI GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
@@ -1614,12 +1619,6 @@ void WINAPI FormatMessageA(void)
 {
     unsigned int len = 30;
     PosWriteFile(1, "FormatMessageA unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI FreeEnvironmentStringsA(void)
-{
-    unsigned int len = 39;
-    PosWriteFile(1, "FreeEnvironmentStringsA unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetACP(void)

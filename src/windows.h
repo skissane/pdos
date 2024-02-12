@@ -137,6 +137,7 @@ typedef LPSTR LPTSTR;
 typedef PCSTR PCTSTR;
 typedef char TCHAR;
 typedef TCHAR *LPTCH;
+typedef CHAR *LPCH;
 
 #define INFINITE 0xFFFFFFFF
 
@@ -756,7 +757,11 @@ BOOL WINAPI WriteConsoleOutputA(
 #define GetCommandLine GetCommandLineA
 LPTSTR WINAPI GetCommandLineA(void);
 
-LPTCH WINAPI GetEnvironmentStrings(void);
+#define GetEnvironmentStrings GetEnvironmentStringsA
+LPCH WINAPI GetEnvironmentStrings(void);
+
+#define FreeEnvironmentStrings FreeEnvironmentStringsA
+BOOL WINAPI FreeEnvironmentStrings(LPCH x);
 
 /* Subheader: handleapi.h */
 BOOL WINAPI CloseHandle(HANDLE hObject);
