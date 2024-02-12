@@ -26,7 +26,7 @@
 #endif
 #define MB_LEN_MAX 1
 #define SHRT_MIN (-SHRT_MAX-1)
-#ifdef __FORCE_ALL_64__
+#if defined(__FORCE_ALL_64__)
 #define SHRT_MAX 0x7fffffffffffffffL
 #define USHRT_MAX ((unsigned short)0xffffffffffffffffUL)
 #else
@@ -41,7 +41,7 @@
     || defined(__EFI__))
 #define INT_MIN (-INT_MAX-1)
 
-#ifdef __FORCE_ALL_64__
+#if defined(__FORCE_ALL_64__)
 #define INT_MAX 0x7fffffffffffffffL
 #define UINT_MAX ((unsigned short)0xffffffffffffffffUL)
 #else
@@ -59,7 +59,7 @@
 
 #define LONG_MIN (-LONG_MAX-1)
 
-#if defined(__64BIT__) && defined(__gnu_linux__)
+#if (defined(__64BIT__) && defined(__gnu_linux__)) || defined(__LONG64__)
 #define LONG_MAX 0x7fffffffffffffffL
 #define ULONG_MAX ((unsigned short)0xffffffffffffffffUL)
 #else
