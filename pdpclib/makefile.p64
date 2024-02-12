@@ -5,9 +5,11 @@
 # Or you can use gccx64
 
 CC=x86_64-w64-mingw32-gcc
-#CC=gccx64
 CFLAGS=-O2
+
+#CC=gccx64
 #CFLAGS=-O2 -D__LONG64__ -D__USEBIVA__
+
 COPTS=-S $(CFLAGS) -fno-common -fno-builtin -ansi -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
 
 AR=xar
