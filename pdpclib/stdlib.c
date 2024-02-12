@@ -1057,13 +1057,21 @@ __PDPCLIB_API__ char *getenv(const char *name)
 #endif
 #if defined(__MSDOS__) || defined(__WIN32__)
     char *env;
+    static char *orig = NULL;
     size_t lenn;
 
 #ifdef __WIN32__
+    if (orig != NULL)
+    {
+        FreeEnvironmentStrings(orig);
+        orig = NULL;
+    }
     env = GetEnvironmentStrings();
 #else
     env = (char *)__envptr;
 #endif
+    if (env == NULL) return (NULL);
+    orig = env;
     lenn = strlen(name);
     while (*env != '\0')
     {
