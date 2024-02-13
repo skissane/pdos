@@ -246,8 +246,8 @@ static int read_and_append_char_in_ascii (char **pp) {
                     for (i = 0, number = 0;
                          isxdigit ((unsigned char)ch) && (i < 3);
                          (ch = *((*pp)++)), i++) {
-                        if (isdigit (ch)) number = number * 16 + ch - '0';
-                        else if (isupper (ch)) number = number * 16 + ch - 'A' + 10;
+                        if (isdigit ((unsigned char)ch)) number = number * 16 + ch - '0';
+                        else if (isupper ((unsigned char)ch)) number = number * 16 + ch - 'A' + 10;
                         else number = number * 16 + ch - 'a' + 10;
                     }
                     

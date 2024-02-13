@@ -72,7 +72,7 @@ int read_text_file_into_memory (const char *filename, unsigned char **memory_p, 
 
 void skip_spaces (char **pp)
 {
-    while (isspace (**pp)) ++*pp;
+    while (isspace ((unsigned char)**pp)) ++*pp;
 }
 
 int xstrcasecmp (const char *s1, const char *s2)

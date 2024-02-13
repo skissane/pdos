@@ -2166,7 +2166,7 @@ static char *parse_instruction (char *line)
         p2 = line = skip_whitespace (line);
         
         while ((*p2 != ' ') && (*p2 != '\t') && (*p2 != '\0')) {
-            *p2 = tolower (*p2);
+            *p2 = tolower ((unsigned char)*p2);
             p2++;
         }
         
