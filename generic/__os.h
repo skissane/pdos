@@ -184,6 +184,10 @@ typedef struct {
     double (*Xfabs)(double x);
     double (*Xexp)(double x);
     double (*Xsqrt)(double x);
+    char *(*strtok)(char *s1, const char *s2);
+    long (*Xatol)(const char *nptr);
+    time_t (*Xmktime)(struct tm *timeptr);
+    int (*Xvprintf)(const char *format, va_list arg);
 } OS;
 
 extern OS *__os;

@@ -174,6 +174,7 @@ char *__strrchr__(const char *s, int c);
 #if defined(__PDOSGEN__)
 #include <__os.h>
 
+#define strtok __os->strtok
 #define strchr __os->strchr
 #define strcmp __os->strcmp
 #define strncmp __os->strncmp

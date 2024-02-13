@@ -166,6 +166,7 @@ long _Builtin __labs(long j);
 #define atexit __os->Xatexit
 #define rand __os->Xrand
 #define srand __os->Xsrand
+#define atol __os->Xatol
 
 #endif
 
