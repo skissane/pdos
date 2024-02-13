@@ -546,6 +546,11 @@ unsigned int PosMonitor(void)
     for (;;) ;
 }
 
+int PosGetMagic(void)
+{
+    return (PDOS_MAGIC);
+}
+
 static void readLogical(void *diskptr, unsigned long sector, void *buf)
 {
     int ret;
