@@ -1,12 +1,14 @@
 VPATH=src;src/bytearray;src/hashtab
 CC=x86_64-w64-mingw32-gcc
-CFLAGS=-O2
+#CC=gccw64_l64
+CFLAGS=-O2 -Wno-builtin-declaration-mismatch
+#CFLAGS=-O2 -D__LONG64__ -ansi -pedantic-errors -D__STATIC__
 LD=pdld
-LDFLAGS=-s -nostdlib
+LDFLAGS=-s -nostdlib --no-insert-timestamp
 AS=pdas --oformat coff --64
-COPTS=-S $(CFLAGS) -Wall -Wno-builtin-declaration-mismatch -ansi -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+COPTS=-S $(CFLAGS) -Wall -ansi -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
 
-OBJS=bytearray.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj map.obj sections.obj symbols.obj xmalloc.obj
+OBJS=bytearray.obj elf.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj map.obj sections.obj symbols.obj xmalloc.obj
 
 TARGET=pdld.exe
 
@@ -14,6 +16,7 @@ all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
   $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+#  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/p32start.obj $(OBJS) ../pdpclib/pdpwin64.lib ../src/kernel32.lib
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
