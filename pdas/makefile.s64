@@ -9,13 +9,15 @@
 
 VPATH=src;src/hashtab
 CC=x86_64-w64-mingw32-gcc
+#CC=gccw64_l64
 PREPROCESSOR=pdcc -E
-CFLAGS=-O2
-#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+CFLAGS=-O2 -Wno-builtin-declaration-mismatch
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors -D__USEBIVA__ -D__LONG64__ -D__STATIC__
+#CFLAGS=-O2 -ansi -pedantic-errors
 LD=pdld
-LDFLAGS=-nostdlib
+LDFLAGS=-nostdlib --no-insert-timestamp
 AS=pdas --oformat coff --64
-COPTS=-S $(CFLAGS) -Wall -Wno-builtin-declaration-mismatch -fno-common -I. -I./src -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+COPTS=-S $(CFLAGS) -Wall  -fno-common -I. -I./src -I./src/hashtab -I../pdpclib -D__WIN32__ -D__64BIT__
 
 OBJS=a_out.obj as.obj bytearray.obj cfi.obj coff.obj cstr.obj elf.obj error.obj \
 expr.obj frags.obj hashtab.obj libas.obj listing.obj load_line.obj process.obj sections.obj symbols.obj write.obj int64sup.obj \
@@ -27,6 +29,7 @@ all: clean generate $(TARGET)
 
 $(TARGET): $(OBJS)
   $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+#  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/p32start.obj $(OBJS) ../pdpclib/pdpwin64.lib ../src/kernel32.lib
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
@@ -40,6 +43,7 @@ OBJS_GENERATE=i386_gen.obj i386_opc.i
 
 generate: clean_generate $(OBJS_GENERATE)
   $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/w32start.obj i386_gen.obj ../pdpclib/msvcrt.lib
+#  $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/p32start.obj i386_gen.obj ../pdpclib/pdpwin64.lib ../src/kernel32.lib
   gen.exe i386_opc.i i386_tbl.h
 
 clean_generate:
