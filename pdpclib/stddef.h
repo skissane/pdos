@@ -16,6 +16,8 @@
 #if defined(__64BIT__)
 #ifdef __SUBC__
 typedef int ptrdiff_t;
+#elif defined(__LONG64__)
+typedef long ptrdiff_t;
 #else
 typedef long long ptrdiff_t;
 #endif
