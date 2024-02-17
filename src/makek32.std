@@ -7,6 +7,13 @@
 # without complying with any conditions
 # and by any means.
 
+# This is the standard for 32-bit
+
+# Note that even if you intend to use gccwin_l64 in pdpclib
+# later, you don't need to use here, because the interfaces
+# shouldn't be using "long" (and if they were, it wouldn't
+# work as it needs to match actual Windows)
+
 VPATH=../pdpclib
 
 CC=gccwin
