@@ -409,6 +409,22 @@ ret
 
 
 
+
+.globl ___getpid
+___getpid:
+.globl __getpid
+__getpid:
+
+# function code 39 = getpid
+movq $39, %rax
+
+syscall
+
+ret
+
+
+
+
 .globl ___chdir
 ___chdir:
 .globl __chdir
