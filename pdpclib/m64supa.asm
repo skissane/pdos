@@ -116,6 +116,25 @@ ___ioctl:
 
 
 
+# int ___getpid(void);
+
+        .align  4
+        .globl  ___getpid
+___getpid:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#20
+#           @ SYS_getpid
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
 # int setjmp(jmp_buf env);
 
         .align  4
