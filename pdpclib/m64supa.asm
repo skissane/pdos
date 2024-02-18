@@ -17,6 +17,12 @@
 # x0-x7, and these are also used by the syscall,
 # so minimal code is required.
 
+# syscall numbers can be found here:
+# https://opensource.apple.com/source/xnu/xnu-1228/bsd/sys/syscall.h.auto.html
+
+
+
+
 
 # This is the new entry point. We simply capture
 # the current status of the stack and pass it on
@@ -28,8 +34,6 @@
 # for the fact that the stack will be a bit
 # deeper if we had more than 8 parameters of
 # interest - but currently we don't)
-
-
 
         .align 4
         .globl ___pdpstart

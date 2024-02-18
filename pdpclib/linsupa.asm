@@ -3,6 +3,9 @@
 # This program written by Paul Edwards
 # Released to the public domain
 
+# syscall numbers can be found here:
+
+# https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
 .globl ___setj
 ___setj:
