@@ -342,6 +342,25 @@ ___ioctl:
         swi     0
 iocok:  ldmia   sp!,{r2,r7,pc}
 
+
+
+
+# int ___getpid(void);
+
+        .globl  __getpid
+        .globl  ___getpid
+        .type  __getpid, %function
+        .align  2
+__getpid:
+___getpid:
+        stmfd   sp!,{r7,lr}
+        mov     r7,#20           @ SYS_getpid
+        swi     0
+pidok:  ldmia   sp!,{r7,pc}
+
+
+
+
 # int ___chdir(const char *filename);
 
         .globl  __chdir
