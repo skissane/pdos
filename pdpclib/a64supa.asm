@@ -222,6 +222,27 @@ ___ioctl:
 
 
 
+# int ___getpid(void);
+
+        .globl  __getpid
+        .globl  ___getpid
+        .type  __getpid, %function
+        .align  2
+__getpid:
+___getpid:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#172
+#           @ SYS_getpid
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
 # int setjmp(jmp_buf env);
 
         .globl  __Ysetjmp
