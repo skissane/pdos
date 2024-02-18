@@ -380,7 +380,7 @@ int __start(char *plist, char *pgmname, char **eplist)
 int __start(char *p, char *pgmname, char *ep)
 #elif defined(__MVS__)
 int __start(char *p, char *pgmname, int tso)
-#elif defined(__gnu_linux__) || defined(__EFI__)
+#elif defined(__EFI__)
 int __start(int argc, char **argv)
 #elif defined(__AMIGA__)
 int __start(unsigned long cmdlen, char *p, void *pdosbase)
@@ -390,13 +390,13 @@ __PDPCLIB_API__ int CTYP __start(char *p, unsigned short osver)
 __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 {
-#ifdef __CMS__
+#if defined(__CMS__)
     char *p;
 #endif
     int x;
     int oldglobrc = globrc;
     jmp_buf oldjb;
-#if !defined(__gnu_linux__) && !defined(__EFI__)
+#if !defined(__EFI__)
     int argc;
     static char *argv[MAXPARMS + 1];
 #endif
@@ -412,7 +412,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     unsigned char *env;
     unsigned char *nclsave;
 #endif
-#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
+        || defined(__gnu_linux__)
     int parmLen;
     int progLen;
     char parmbuf[310]; /* z/VSE can have a PARM up to 300 characters */
@@ -1088,6 +1089,44 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         /* PDOS itself is starting so no API calls should be used. */
         p = "";
         __envptr = NULL;
+    }
+#endif
+
+/* override argc/argv (which depend on a wacky stack which PDOS/386
+   does not provide) with what can be obtained from /proc, so that
+   "properly-built" Linux executables work under PDOS/386. The
+   "file" has fields NUL-separated already, with the length as the
+   terminator */
+
+#if defined(__gnu_linux__)
+    {
+        char fnm[FILENAME_MAX];
+        int pf;
+        int tot;
+
+        sprintf(fnm, "/proc/%d/cmdline", __getpid());
+        pf = __open(fnm, 0, 0);
+        if (pf == -1)
+        {
+            argc = 1;
+            argv[0] = "";
+        }
+        else
+        {
+            tot = __read(pf, parmbuf, sizeof parmbuf - 1);
+            __close(pf);
+            parmbuf[sizeof parmbuf - 1] = '\0';
+            p = parmbuf;
+            argc = 1;
+            argv[0] = p;
+            p += strlen(p) + 1;
+            while (p < parmbuf + tot)
+            {
+                argv[argc] = p;
+                p += strlen(p) + 1;
+                argc++;
+            }
+        }
     }
 #endif
 

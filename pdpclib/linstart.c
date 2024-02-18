@@ -13,7 +13,11 @@ static char membuf[31000000];
 #endif
 static char *newmembuf = membuf;
 
+#if defined(__gnu_linux__)
+extern int __start(char *p);
+#else
 extern int __start(int argc, char **argv);
+#endif
 extern int __exita(int rc);
 
 #ifdef NEED_MPROTECT
@@ -110,7 +114,12 @@ int _start(char *p)
        be passed in x0 to x7. But not sure how that translates
        to the actual stack */
 
-#if defined(__MACOS__)
+#if defined(__gnu_linux__)
+
+    /* we get arguments from /proc now */
+    __start(NULL);
+
+#elif defined(__MACOS__)
 
     /* We pass on the simple argc/argv */
     __start(argc, argv);
