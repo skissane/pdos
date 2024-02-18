@@ -283,6 +283,20 @@ pop %ebp
 ret
 
 
+.globl ___getpid
+___getpid:
+.globl __getpid
+__getpid:
+push %ebp
+mov %esp, %ebp
+# function code 20 = getpid
+movl $20, %eax
+# no parameters
+int $0x80
+pop %ebp
+ret
+
+
 .globl ___chdir
 ___chdir:
 .globl __chdir
