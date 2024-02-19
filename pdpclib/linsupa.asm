@@ -430,8 +430,8 @@ push %ebp
 mov %esp, %ebp
 push %ebx
 push %ecx
-# function code 11 = munmap
-movl $11, %eax
+# function code 91 = munmap
+movl $91, %eax
 # addr
 movl 8(%ebp), %ebx
 # len
