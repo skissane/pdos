@@ -5,6 +5,7 @@
 #include "errno.h"
 #include "stddef.h"
 
+#if USE_MEMMGR
 /* malloc calls get this */
 #ifdef __64BIT__
 static char membuf[126000000];
@@ -12,6 +13,7 @@ static char membuf[126000000];
 static char membuf[31000000];
 #endif
 static char *newmembuf = membuf;
+#endif
 
 #if defined(__gnu_linux__)
 extern int __start(char *p);
@@ -170,10 +172,12 @@ int _start(char *p)
 }
 
 
+#if USE_MEMMGR
 void *__allocmem(size_t size)
 {
     return (newmembuf);
 }
+#endif
 
 
 #if defined(__WATCOMC__)
