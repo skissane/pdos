@@ -9,7 +9,7 @@ CC=gcc386
 AR=are86
 LD=lde86
 AS=ase86
-COPTS=-D__W32EMUL__ -S -O2 -D__gnu_linux__ -D__NOBIVA__ -DUSE_MEMMGR -I.
+COPTS=-D__W32EMUL__ -S -O2 -D__gnu_linux__ -D__NOBIVA__ -I.
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
