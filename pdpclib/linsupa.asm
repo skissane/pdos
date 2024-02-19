@@ -438,3 +438,57 @@ pop %ecx
 pop %ebx
 pop %ebp
 ret
+
+
+.globl ___munmap
+___munmap:
+.globl __munmap
+__munmap:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+# function code 11 = munmap
+movl $11, %eax
+# addr
+movl 8(%ebp), %ebx
+# len
+movl 12(%ebp), %ecx
+int $0x80
+pop %ecx
+pop %ebx
+pop %ebp
+ret
+
+
+.globl ___mremap
+___mremap:
+.globl __mremap
+__mremap:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+push %esi
+push %edi
+# function code 163 = mremap
+movl $163, %eax
+# addr
+movl 8(%ebp), %ebx
+# old_len
+movl 12(%ebp), %ecx
+# new_len
+movl 16(%ebp), %edx
+# flags
+movl 20(%ebp), %esi
+# new_addr
+movl 24(%ebp), %edi
+int $0x80
+pop %edi
+pop %esi
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
