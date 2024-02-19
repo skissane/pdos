@@ -112,6 +112,23 @@ int CTYP __getrc(void);
 
 #if defined(__gnu_linux__) || defined(__ARM__)
 void *__allocmem(size_t size);
+typedef struct {
+    void *addr;
+    size_t length;
+    int prot;
+    int flags;
+    int fd;
+    long offset;
+} mmstruc;
+void *__mmap(mmstruc *mms);
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define PROT_EXEC 4
+#define MAP_ANONYMOUS 0x20
+#define MAP_PRIVATE 0x2
+#define MAP_SHARED 0x1
+#define MAP_FAILED ((void *)-1)
+#define O_RDWR   0x2
 #endif
 
 void (*__userExit[__NATEXIT])(void);
@@ -360,17 +377,48 @@ __PDPCLIB_API__ void *malloc(size_t size)
         ptr = (char *)ptr + sizeof(size_t);
     }
     return (ptr);
+
 #elif defined(__gnu_linux__) || defined(__ARM__)
     void *ptr;
 
-    ptr = __allocmem(size + sizeof(size_t));
-    if (ptr != NULL)
+#if 0
     {
-        *(size_t *)ptr = size;
-        ptr = (char *)ptr + sizeof(size_t);
+        int fd;
+        /* may need this on old systems */
+        fd = __open("/dev/zero", O_RDWR);
+        ptr = __mmap(NULL, size + sizeof(size_t),
+                     PROT_READ | PROT_WRITE | PROT_EXEC,
+                     MAP_PRIVATE, fd, 0);
+        close(fd); /* I think this can be done immediately */
     }
+#else
+    {
+        mmstruc mms;
+
+        mms.addr = NULL;
+        mms.length = size + sizeof(size_t);
+        mms.prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+        mms.flags = MAP_ANONYMOUS | MAP_PRIVATE;
+        mms.fd = -1;
+        mms.offset = 0;
+        ptr = __mmap(&mms);
+
+        /* errors are high pointers - not sure how high - which
+           seem to be a negative errno */
+        if (ptr > (void *)-256)
+        {
+            ptr = NULL;
+        }
+        else
+        {
+            *(size_t *)ptr = size;
+            ptr = (char *)ptr + sizeof(size_t);
+        }
+    }
+#endif
     return (ptr);
 #endif
+
 #endif /* not MEMMGR */
 }
 
