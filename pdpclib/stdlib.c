@@ -119,6 +119,7 @@ typedef struct {
     int flags;
     int fd;
     long offset;
+    long offset2;
 } mmstruc;
 void *__mmap(mmstruc *mms);
 int __munmap(void *a, size_t b);
@@ -402,6 +403,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.flags = MAP_ANONYMOUS | MAP_PRIVATE;
         mms.fd = -1;
         mms.offset = 0;
+        mms.offset2 = 0;
         ptr = __mmap(&mms);
 
         /* errors are high pointers - not sure how high - which
