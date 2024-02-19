@@ -403,3 +403,38 @@ pop %ecx
 pop %ebx
 pop %ebp
 ret
+
+
+.globl ___mmap
+___mmap:
+.globl __mmap
+__mmap:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+push %esi
+push %edi
+# function code 90 = mmap
+movl $90, %eax
+# addr
+movl 8(%ebp), %ebx
+# length
+movl 12(%ebp), %ecx
+# prot
+movl 16(%ebp), %edx
+# flags
+movl 20(%ebp), %esi
+# fd
+movl 24(%ebp), %edi
+# pgoffset
+movl 28(%ebp), %ebp
+int $0x80
+pop %edi
+pop %esi
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
