@@ -121,6 +121,7 @@ typedef struct {
     long offset;
 } mmstruc;
 void *__mmap(mmstruc *mms);
+int __munmap(void *a, size_t b);
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define PROT_EXEC 4
@@ -411,7 +412,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         }
         else
         {
-            *(size_t *)ptr = size;
+            *(size_t *)ptr = size + sizeof(size_t);
             ptr = (char *)ptr + sizeof(size_t);
         }
     }
@@ -570,18 +571,30 @@ __PDPCLIB_API__ void free(void *ptr)
         }
     }
 #else /* not using MEMMGR */
+
 #if defined(__MVS__) || defined(__CMS__)
     if (ptr != NULL)
     {
         __freem(ptr);
     }
 #endif
+
 #ifdef __WIN32__
     if (ptr != NULL)
     {
         GlobalFree(((size_t *)ptr) - 1);
     }
 #endif
+
+#ifdef __gnu_linux__
+    if (ptr != NULL)
+    {
+        ptr = (char *)ptr - sizeof(size_t);
+        /* this returns 0 on success */
+        __munmap(ptr, *(size_t *)ptr);
+    }
+#endif
+
 #endif /* not USE_MEMMGR */
     return;
 }
