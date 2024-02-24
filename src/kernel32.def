@@ -241,3 +241,4 @@ EXPORTS SetFileTime
 EXPORTS SetHandleCount
 EXPORTS SystemTimeToFileTime
 EXPORTS UnhandledExceptionFilter
+EXPORTS GetEnvironmentStringsA

@@ -240,3 +240,4 @@
 ++SetHandleCount.'kernel32.dll'._SetHandleCount@0
 ++SystemTimeToFileTime.'kernel32.dll'._SystemTimeToFileTime@0
 ++UnhandledExceptionFilter.'kernel32.dll'._UnhandledExceptionFilter@0
+++GetEnvironmentStringsA.'kernel32.dll'._GetEnvironmentStringsA@0

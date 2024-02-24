@@ -1798,6 +1798,13 @@ call [__imp__UnhandledExceptionFilter@0]
 ret
 ret
 
+extrn __imp__GetEnvironmentStringsA@0:ptr
+public _GetEnvironmentStringsA
+_GetEnvironmentStringsA:
+call [__imp__GetEnvironmentStringsA@0]
+ret
+ret
+
 
 
 
