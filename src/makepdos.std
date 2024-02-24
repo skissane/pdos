@@ -15,6 +15,7 @@ VPATH=../pfp/svga;../pdld/src/bytearray
 CC=gccwin
 CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -fno-common -U__WIN32__ -DNOVM -DNEED_AOUT \
+      -D_System= -D__SUPPRESS__ -DNEED_OS2 \
       -DNEED_MZ -D__PDOS386__ -D__32BIT__ -I../bios -I../pdpclib \
       -DW32DLL -D__EXPORT__ -DNOLIBALLOC -DNEED_ELF \
       -I../pfp/svga -I../pdld/src/bytearray -I.
@@ -26,7 +27,7 @@ TARGET=pdos.exe
 TEMP_ARCHIVE=os.lib
 ARCHIVE_OBJS=bos.obj fat.obj ../bios/exeload.obj physmem.obj vmm.obj process.obj int21.obj uart.obj \
              int80.obj log.obj helper.obj memmgr.obj patmat.obj supportf.obj protintp.obj protintf.obj pdosf.obj \
-             wingui.obj svga.obj vesa_bytearray.obj bytearray.obj kernel32.obj
+             wingui.obj svga.obj vesa_bytearray.obj bytearray.obj kernel32.obj doscalls.obj
 OBJS=strt32.obj pdos.obj
 
 all: clean $(TARGET)

@@ -17,7 +17,9 @@
 #ifdef __16BIT__
 #define APIENTRY _pascal _far
 #else
+#ifndef __SUPPRESS__
 #define APIENTRY _System
+#endif
 #endif
 
 /* I think this only exists in 32-bit, but maybe
@@ -39,13 +41,23 @@
 #define PAG_READ 0x1
 #endif
 
+#ifndef __SUPPRESS__
 typedef unsigned short USHORT;
+#endif
+
 typedef unsigned long ULONG;
-typedef long LONG;
+#ifndef __SUPPRESS__
+typedef int LONG;
+#endif
 typedef char *PSZ;
-typedef void VOID;
+#define VOID void
+#ifndef __SUPPRESS__
 typedef void *PVOID;
+#endif
+
+#ifndef __SUPPRESS__
 typedef unsigned char BYTE;
+#endif
 typedef unsigned short HFILE;
 typedef unsigned char UCHAR;
 

@@ -38,13 +38,19 @@
 #include <os2.h>
 #endif
 
-
 #if defined(W32DLL) || defined(W64DLL)
 #include <pos.h>
 #include <windows.h>
 
 extern void *_imp___iob;
 
+#endif
+
+
+#if defined(__32BIT__) && defined(NEED_OS2)
+#undef APIENTRY
+#define APIENTRY
+#include <os2.h>
 #endif
 
 
@@ -3861,6 +3867,11 @@ static int exeloadLoadLX(unsigned char **entry_point,
     unsigned char firstbit[2];
     long newpos;
     size_t readbytes;
+    unsigned char *base;
+    unsigned char *codestart;
+    unsigned char *datastart;
+    unsigned char *corr;
+    unsigned int zapoffs;
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -3868,10 +3879,76 @@ static int exeloadLoadLX(unsigned char **entry_point,
     {
         return (1);
     }
+#if !(defined(__32BIT__) && defined(NEED_OS2))
     /* LX seems to be called LE sometimes. */
     printf("LX (other name LE) is not supported\n");
 
     return (2);
+#else
+    base = malloc(200000);
+    if (base == NULL)
+    {
+        printf("insufficient memory\n");
+        return (1);
+    }
+    memcpy(base, firstbit, sizeof firstbit);
+    fread(base + sizeof firstbit, 1, 200000 - sizeof firstbit, fp);
+
+    /* this gives an offset into the "data pages", which apparently
+       includes code. We're assuming our entry point is at the
+       beginning of the code */
+    codestart = base + *(int *)(base + 0x80);
+    /* we need to subtract the size of the MZ header, since this
+       offset is relative to the beginning of the exe file */
+    codestart -= 0x80;
+
+    datastart = codestart + 0x3b; /* not sure how to get this properly */
+
+    corr = base + 0x1b4 - 0x80;
+
+    while (1)
+    {
+        if ((corr[0] == 0x08) && (corr[1] == 0x44))
+        {
+            break;
+        }
+        if (corr[0] == 0x08)
+        {
+            zapoffs = corr[2] | (corr[3] << 8);
+            if ((corr[5] == 0x1a) && (corr[6] == 0x01))
+            {
+                *(unsigned int *)(codestart + zapoffs) =
+                    (unsigned char *)DosWrite - (codestart + zapoffs + 4);
+                corr += 7;
+            }
+            else if (corr[5] == 0xea)
+            {
+                *(unsigned int *)(codestart + zapoffs) =
+                    (unsigned char *)DosExit - (codestart + zapoffs + 4);
+                corr += 6;
+            }
+            else
+            {
+                printf("unknown DLL entry %x\n", corr[5]);
+                for (;;) ;
+            }
+        }
+        else if (corr[0] == 0x07)
+        {
+            zapoffs = corr[2] | (corr[3] << 8);
+            *(unsigned int *)(codestart + zapoffs)
+                = (unsigned int)(datastart + corr[5] + (corr[6] << 8));
+            corr += 7;
+        }
+        else
+        {
+            printf("unknown fixup %x\n", corr[0]);
+            for (;;) ;
+        }
+    }
+    *entry_point = codestart;
+    return (0);
+#endif
 }
 
 #ifdef __16BIT__
