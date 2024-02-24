@@ -40,7 +40,7 @@ __intstart proc
         mov eax, [esp+16]
         push eax
         call __start
-        sub sp,4
+        add sp,4
         push eax
         call __exita
 __intstart endp
@@ -53,7 +53,7 @@ __exita proc
         push eax
         push 1
         call __myDosExit
-        sub sp,8
+        add sp,8
 __exita endp
 
 
