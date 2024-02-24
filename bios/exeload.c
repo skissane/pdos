@@ -2964,6 +2964,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)GetModuleHandleA;
                         }
+                        else if (strcmp((char *)hintname, "GetEnvironmentStringsA") == 0)
+                        {
+                            *thunk = (unsigned long)GetEnvironmentStringsA;
+                        }
                         else
                         {
                             printf("unknown hintname %s\n", hintname);
