@@ -79,7 +79,8 @@ static void relocate_sections (void)
         struct section_part *part;
         
         for (part = section->first_part; part; part = part->next) {
-            if (ld_state->oformat == LD_OFORMAT_COFF) {
+            if (ld_state->oformat == LD_OFORMAT_COFF
+                || ld_state->oformat == LD_OFORMAT_LX) {
                 coff_relocate_part (part);
             } else if (ld_state->oformat == LD_OFORMAT_ELF) {
                 elf_relocate_part (part);

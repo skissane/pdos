@@ -41,7 +41,8 @@ int main (int argc, char **argv)
     symbols_init ();
 
     for (i = 0; i < argc; i++) {
-        if (ld_state->oformat == LD_OFORMAT_COFF) {
+        if (ld_state->oformat == LD_OFORMAT_COFF
+            || ld_state->oformat == LD_OFORMAT_LX) {
             if (input_filenames[i]) coff_read (input_filenames[i]);
         } else if (ld_state->oformat == LD_OFORMAT_ELF) {
             if (input_filenames[i]) elf_read (input_filenames[i]);
@@ -60,6 +61,8 @@ int main (int argc, char **argv)
         coff_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_ELF) {
         elf_write (ld_state->output_filename);
+    } else if (ld_state->oformat == LD_OFORMAT_LX) {
+        lx_write (ld_state->output_filename);
     }
     
     if (ld_state->output_map_filename) map_write (ld_state->output_map_filename);

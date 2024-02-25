@@ -76,7 +76,7 @@ static void print_help (void)
     printf ("  --oformat FORMAT            Create an output file and accept input files\n"
             "                                in format FORMAT (default %s)\n",
             "coff");
-    printf ("                                Supported formats are: coff, elf\n");
+    printf ("                                Supported formats are: coff, elf, lx (coff input)\n");
     printf ("  --out-implib FILE           Generate import library\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");
     printf ("  -s, --strip-all             Ignored\n");
@@ -129,6 +129,8 @@ static void use_option (enum option_index option_index, char *arg)
                 ld_state->oformat = LD_OFORMAT_COFF;
             } else if (strcmp (arg, "elf") == 0) {
                 ld_state->oformat = LD_OFORMAT_ELF;
+            } else if (strcmp (arg, "lx") == 0) {
+                ld_state->oformat = LD_OFORMAT_LX;
             } else {
                 ld_error ("unsupported format '%s' specified", arg);
             }

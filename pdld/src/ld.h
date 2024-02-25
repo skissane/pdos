@@ -24,7 +24,8 @@
 
 enum ld_oformat {
     LD_OFORMAT_COFF,
-    LD_OFORMAT_ELF
+    LD_OFORMAT_ELF,
+    LD_OFORMAT_LX
 };
 
 typedef unsigned long address_type;
@@ -180,6 +181,9 @@ address_type elf_get_first_section_rva (void);
 void elf_relocate_part (struct section_part *part);
 void elf_write (const char *filename);
 void elf_read (const char *filename);
+
+/* lx.c */
+void lx_write (const char *filename);
 
 /* map.c */
 void map_write (const char *filename);
