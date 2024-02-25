@@ -3868,6 +3868,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
     long newpos;
     size_t readbytes;
     unsigned char *base;
+    unsigned char *hdr;
     unsigned char *codestart;
     unsigned char *datastart;
     unsigned char *corr;
@@ -3891,61 +3892,63 @@ static int exeloadLoadLX(unsigned char **entry_point,
         printf("insufficient memory\n");
         return (1);
     }
-    memcpy(base, firstbit, sizeof firstbit);
-    fread(base + sizeof firstbit, 1, 200000 - sizeof firstbit, fp);
+    memcpy(base + e_lfanew, firstbit, sizeof firstbit);
+    fread(base + e_lfanew + sizeof firstbit, 1, 200000 - sizeof firstbit - e_lfanew, fp);
+
+    hdr = base + e_lfanew;
 
     /* this gives an offset into the "data pages", which apparently
        includes code. We're assuming our entry point is at the
        beginning of the code */
-    codestart = base + *(int *)(base + 0x80);
-    /* we need to subtract the size of the MZ header, since this
-       offset is relative to the beginning of the exe file */
-    codestart -= 0x80;
+    codestart = base + *(int *)(hdr + 0x80);
 
     datastart = codestart + 0x3b; /* not sure how to get this properly */
 
-    corr = base + 0x1b4 - 0x80;
-
-    while (1)
-    {
-        if ((corr[0] == 0x08) && (corr[1] == 0x44))
+    if (*(int *)(hdr + 0x6C)) {
+        corr = hdr + *(int *)(hdr + 0x6C); /* FixupRecordTableOffsetHdr */
+        while (1)
         {
-            break;
-        }
-        if (corr[0] == 0x08)
-        {
-            zapoffs = corr[2] | (corr[3] << 8);
-            if ((corr[5] == 0x1a) && (corr[6] == 0x01))
+            if ((corr[0] == 0x08) && (corr[1] == 0x44))
             {
-                *(unsigned int *)(codestart + zapoffs) =
-                    (unsigned char *)DosWrite - (codestart + zapoffs + 4);
-                corr += 7;
+                break;
             }
-            else if (corr[5] == 0xea)
+            if (corr[0] == 0x08)
             {
-                *(unsigned int *)(codestart + zapoffs) =
-                    (unsigned char *)DosExit - (codestart + zapoffs + 4);
-                corr += 6;
+                zapoffs = corr[2] | (corr[3] << 8);
+                if ((corr[5] == 0x1a) && (corr[6] == 0x01))
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosWrite - (codestart + zapoffs + 4);
+                    corr += 7;
+                }
+                else if (corr[5] == 0xea)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosExit - (codestart + zapoffs + 4);
+                    corr += 6;
+                }
+                else
+                {
+                    printf("unknown DLL entry %x\n", corr[5]);
+                    for (;;) ;
+                }
+            }
+            else if (corr[0] == 0x07)
+            {
+                zapoffs = corr[2] | (corr[3] << 8);
+                *(unsigned int *)(codestart + zapoffs)
+                    = (unsigned int)(datastart + corr[5] + (corr[6] << 8));
+                corr += 7;
             }
             else
             {
-                printf("unknown DLL entry %x\n", corr[5]);
+                printf("unknown fixup %x\n", corr[0]);
                 for (;;) ;
+
             }
         }
-        else if (corr[0] == 0x07)
-        {
-            zapoffs = corr[2] | (corr[3] << 8);
-            *(unsigned int *)(codestart + zapoffs)
-                = (unsigned int)(datastart + corr[5] + (corr[6] << 8));
-            corr += 7;
-        }
-        else
-        {
-            printf("unknown fixup %x\n", corr[0]);
-            for (;;) ;
-        }
     }
+
     *entry_point = codestart;
     return (0);
 #endif
