@@ -29,7 +29,7 @@ pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdpmacos.a linstart.o m64supa.o stdio.o string.o stdlib.o
 	ar r pdpmacos.a start.o time.o errno.o assert.o signal.o
 	ar r pdpmacos.a locale.o ctype.o math.o __memmgr.o
-	clang -Wl,-e, -Wl,___pdpstart -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
+	clang -Wl,-e, -Wl,_start -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
 
 .c.o:
 	$(CC) $(COPTS) $<
