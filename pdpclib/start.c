@@ -149,7 +149,12 @@ struct termios {
 static struct termios tios_save;
 static struct termios tios_new;
 
-int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+extern int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+extern int __open(const char *a, int b, int c);
+extern int __read(int a, void *b, int c);
+extern int __seek(int handle, long offset, int whence);
+extern void __close(int handle);
+extern int __getpid(void);
 
 #define TCGETS 0x00005401U
 #define TCSETS 0x00005402U
