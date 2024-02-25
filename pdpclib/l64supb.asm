@@ -303,6 +303,21 @@ ret
 
 
 
+.globl __getpid
+__getpid:
+
+# function code 39 = getpid
+mov rax, 39
+
+syscall
+
+ret
+
+
+
+
+
+
 .globl __chdir
 __chdir:
 
