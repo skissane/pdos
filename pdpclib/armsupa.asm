@@ -369,13 +369,19 @@ pidok:  ldmia   sp!,{r7,pc}
         .align  2
 __mmap:
 ___mmap:
-        stmfd   sp!,{r7,lr}
+        stmfd   sp!,{r2,r3,r4,r5,r6,r7,lr}
 .if STACKPARM
-        ldr     r0,[sp,#8]      @ struct
+        ldr     r6,[sp,#52]      @ p6
+        ldr     r5,[sp,#48]      @ p5
+        ldr     r4,[sp,#44]      @ p4
+        ldr     r3,[sp,#40]      @ p3
+        ldr     r2,[sp,#36]      @ p2
+        ldr     r1,[sp,#32]      @ p1
+        ldr     r0,[sp,#28]      @ p0
 .endif
         mov     r7,#192          @ SYS_mmap2
         swi     0
-        ldmia   sp!,{r7,pc}
+        ldmia   sp!,{r2,r3,r4,r5,r6,r7,pc}
 
 
 # int ___munmap(char *addr, int len);
