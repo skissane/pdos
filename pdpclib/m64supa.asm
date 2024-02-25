@@ -24,32 +24,6 @@
 
 
 
-# This is the new entry point. We simply capture
-# the current status of the stack and pass it on
-# to C code (linstart.c, not start.c) figure out
-# the rest. Change of plans. argc and argv are
-# already in x0 and x1 - the dynamic loader
-# apparently gets first crack, so now we just
-# call the C code without interference (except
-# for the fact that the stack will be a bit
-# deeper if we had more than 8 parameters of
-# interest - but currently we don't)
-
-        .align 4
-        .globl ___pdpstart
-___pdpstart:
-
-#       mov x0, sp
-        bl __start
-
-# we shouldn't get here, but if we do, loop
-# instead of doing something random
-loop1:  b loop1
-
-
-
-
-
 # int ___write(int fd, void *buf, int len);
 
         .align  4
