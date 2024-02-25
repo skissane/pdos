@@ -6,7 +6,7 @@ AR=arerm
 LD=lderm
 AS=aserm
 COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ \
-   -DUSE_MEMMGR -DNEED_MPROTECT -DSTACKPARM -I. \
+   -DNEED_MPROTECT -DSTACKPARM -I. \
    -D__GENSHELL__
 #COPTS=-S -O2 -fno-common -mapcs-32 -D__ARM__ -DUSE_MEMMGR -DNEED_MPROTECT -DSTACKPARM -I.
 
