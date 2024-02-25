@@ -385,7 +385,7 @@ int __start(char *plist, char *pgmname, char **eplist)
 int __start(char *p, char *pgmname, char *ep)
 #elif defined(__MVS__)
 int __start(char *p, char *pgmname, int tso)
-#elif defined(__EFI__)
+#elif defined(__EFI__) || defined(__MACOS__)
 int __start(int argc, char **argv)
 #elif defined(__AMIGA__)
 int __start(unsigned long cmdlen, char *p, void *pdosbase)
@@ -1103,7 +1103,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
    "file" has fields NUL-separated already, with the length as the
    terminator */
 
-#if defined(__gnu_linux__)
+/* Note that this doesn't seem to work for MacOS, so we use the
+   argc/argv provided on entry instead */
+
+#if defined(__gnu_linux__) && !defined(__MACOS__)
     {
         char fnm[FILENAME_MAX];
         int pf;
