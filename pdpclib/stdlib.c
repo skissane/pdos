@@ -121,7 +121,14 @@ typedef struct {
     long offset;
     long offset2;
 } mmstruc;
+
+#ifdef __ARM__
+void *__mmap(void *a, int b, int prot, int flags, int fd,
+             long offset, long offset2);
+#else
 void *__mmap(mmstruc *mms);
+#endif
+
 int __munmap(void *a, size_t b);
 #define PROT_READ 1
 #define PROT_WRITE 2
@@ -404,7 +411,12 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.fd = -1;
         mms.offset = 0;
         mms.offset2 = 0;
+#ifdef __ARM__
+        ptr = __mmap(mms.addr, mms.length, mms.prot,
+                     mms.flags, mms.fd, mms.offset, mms.offset2);
+#else
         ptr = __mmap(&mms);
+#endif
 
         /* errors are high pointers - not sure how high - which
            seem to be a negative errno */
