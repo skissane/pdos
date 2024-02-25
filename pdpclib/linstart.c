@@ -2,181 +2,50 @@
 /* written by Paul Edwards */
 /* released to the public domain */
 
-#include "errno.h"
 #include "stddef.h"
 
-#if USE_MEMMGR
-/* malloc calls get this */
-#ifdef __64BIT__
-static char membuf[126000000];
+#ifdef __MACOS__
+extern int __start(int argc, char **argv);
 #else
-static char membuf[31000000];
-#endif
-static char *newmembuf = membuf;
+extern int __start(char *p);
 #endif
 
-#if defined(__gnu_linux__)
-extern int __start(char *p);
-#else
-extern int __start(int argc, char **argv);
-#endif
 extern int __exita(int rc);
 
-#ifdef NEED_MPROTECT
-int __mprc;
-#endif
-
-#ifdef STACKPARM
-#if !defined(__UNOPT__)
-#define ADJUST -6
-#elif defined(NEED_MPROTECT)
-#define ADJUST -7
-#else
-#define ADJUST -5
-#endif
-#else
-#define ADJUST 0
-#endif
-
-#ifdef NEED_MPROTECT
-extern int __mprotect(void *buf, size_t len, int prot);
-
-#define PROT_READ 1
-#define PROT_WRITE 2
-#define PROT_EXEC 4
-#endif
-
-/* We can get away with a minimal startup code, plus make it
-   a C program. There is no return address. Instead, on the
-   stack is a count, followed by all the parameters as pointers */
-
-#ifdef __64BIT__
+/* For Linux environments, we ignore the data on the (abnormal) stack
+   and get parameters from /proc/<pid>/command instead. This way the
+   executable can be run under PDOS/386 which does not create a
+   silly stack. Note that the Linux stack has no return address,
+   and instead has a count, followed by all the parameters as pointers */
 
 #ifdef __MACOS__
-/* Note that this can be made the entry point if you
-   wish, but in the future we may be bypassing the
-   dynamic loader and need access to the stack as
-   provided by the kernel, so it is best to keep the
-   entry point __pdpstart. But currently, the dynamic
-   loader appears to have first crack and we end up
-   receiving a simple argc and argv */
+/* The dynamic loader is getting first crack so that we
+   end up receiving a simple argc and argv */
 
 int _start(int argc, char **argv)
-
-#elif defined(__ARM__)
-int _start(char *a, char *b, char *d, char *e,
-           char *f, char *g, char *h, char *i,
-           char *p)
-#else
-
-#ifdef __FORCE_ALL_64__
-int _start(char *p)
-#elif defined(__CC64__)
-/* this should not be made the entry point - use
-   ___pdpstart instead, which will call this */
-int _start(char *p)
-#else
-int _start(char *a, char *b, char *c, char *d, char *e, char *f, char *p)
-#endif
-
-#endif
-
-#else
-int _start(char *p)
-#endif
 {
     int rc;
 
-#ifdef NEED_MPROTECT
-    /* make malloced memory executable */
-    /* most environments already make the memory executable */
-    /* but some certainly don't */
-    /* there doesn't appear to be a syscall to get the page size to
-       ensure page alignment (as required), and I read that some
-       environments have 4k page sizes but mprotect requires 16k
-       alignment. So for now we'll just go with 16k */
-    size_t blksize = 16 * 1024;
-    size_t numblks;
-
-    newmembuf = membuf + blksize; /* could waste memory here */
-    newmembuf = newmembuf - (unsigned int)newmembuf % blksize;
-    numblks = sizeof membuf / blksize;
-    numblks -= 2; /* if already aligned, we wasted an extra block */
-    __mprc = __mprotect(newmembuf,
-                        numblks * blksize,
-                        PROT_READ | PROT_WRITE | PROT_EXEC);
-    /* can't return here - we'll check return code in start */
-#endif
-
-    /* I don't know what the official rules for ARM are, but
-       looking at the stack on entry showed that this code
-       would work */
-
-    /* The official rules for 64-bit are for parameters to
-       be passed in x0 to x7. But not sure how that translates
-       to the actual stack */
-
-#if defined(__gnu_linux__)
-
-    /* we get arguments from /proc now */
-    __start(NULL);
-
-#elif defined(__MACOS__)
-
-    /* We pass on the simple argc/argv */
-    __start(argc, argv);
-
-#elif defined(__ARM__) && defined(__64BIT__)
-
-    rc = __start(*(int *)(&p), &p+1);
-
-#elif defined(__ARM__)
-
-#if defined(__UNOPT__)
-    /* these hardcoded numbers are dependent on the number of
-       stack parameters defined above */
-#ifdef NEED_MPROTECT
-    rc = __start(*(int *)(&p + 7 + ADJUST), &p + 8 + ADJUST);
-#else
-    rc = __start(*(int *)(&p + 5 + ADJUST), &p + 6 + ADJUST);
-#endif
-
-#else
-    /* the optimized version doesn't appear to be dependent on
-       the number of stack parameters defined above */
-    rc = __start(*(int *)(&p + 6 + ADJUST), &p + 7 + ADJUST);
-#endif
-
-/* Note that a problem with this stack manipulation was found when
-   built with clang with optimization on. clang correctly determines
-   that it is undefined behavior (this sort of stack manipulation is),
-   but instead of doing what the programmer clearly intended to do
-   (ie the result you get without optimization), it decides to silently
-   drop the first parameter and pass whatever rubbish is on the stack
-   as argc. And they don't see anything wrong with that!
-   https://github.com/llvm/llvm-project/issues/61112
-   I don't consider my code to be wrong (although it is obviously not
-   portable - I'm writing a C library, not a C program), so if you wish
-   to use clang, then switch off optimization. Otherwise use a better
-   compiler, not one "supported" by jackasses on the internet who have
-   no concept of the spirit of C.
-*/
-
-#elif defined(__CC64__)
-    rc = __start(*(int *)(p), (char **)(p + 8));
-#else
-    rc = __start(*(int *)(&p - 1), &p);
-#endif
+    rc = __start(argc, argv);
     __exita(rc);
     return (rc);
 }
 
+#else
 
-#if USE_MEMMGR
-void *__allocmem(size_t size)
+int _start(void)
 {
-    return (newmembuf);
+    int rc;
+
+    rc = __start(NULL);
+    __exita(rc);
+
+    /* normal Unix environments don't have a valid return address,
+       so just loop rather than doing something random */
+    for (;;);
+    return (rc);
 }
+
 #endif
 
 
