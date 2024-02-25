@@ -361,6 +361,47 @@ pidok:  ldmia   sp!,{r7,pc}
 
 
 
+# int ___mmap(struct *x);
+
+        .globl  __mmap
+        .globl  ___mmap
+        .type  __mmap, %function
+        .align  2
+__mmap:
+___mmap:
+        stmfd   sp!,{r7,lr}
+.if STACKPARM
+        ldr     r0,[sp,#8]      @ struct
+.endif
+        mov     r7,#192          @ SYS_mmap2
+        swi     0
+        ldmia   sp!,{r7,pc}
+
+
+# int ___munmap(char *addr, int len);
+
+        .globl  __munmap
+        .globl  ___munmap
+        .type  __munmap, %function
+        .align  2
+__munmap:
+___munmap:
+        stmfd   sp!,{r7,lr}
+.if STACKPARM
+        ldr     r1,[sp,#12]     @ addr
+        ldr     r0,[sp,#8]      @ len
+.endif
+        mov     r7,#91          @ SYS_munmap
+        swi     0
+        ldmia   sp!,{r7,pc}
+
+
+
+# mremap 163
+
+
+
+
 # int ___chdir(const char *filename);
 
         .globl  __chdir
