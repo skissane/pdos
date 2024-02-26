@@ -24,6 +24,16 @@ void *xmalloc (size_t size)
     return p;
 }
 
+void *xcalloc (size_t num, size_t size)
+{
+    void *p;
+    
+    p = xmalloc (num * size);
+    memset (p, '\0', num * size);
+    
+    return p;
+}
+
 void *xrealloc (void *p, size_t size)
 {
     p = realloc (p, size);

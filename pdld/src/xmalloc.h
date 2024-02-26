@@ -11,6 +11,7 @@
 #include <stddef.h>
 
 void *xmalloc (size_t size);
+void *xcalloc (size_t num, size_t size);
 void *xrealloc (void *p, size_t size);
 char *xstrdup (const char *str);
 size_t strnlen (const char *str, size_t max_len);

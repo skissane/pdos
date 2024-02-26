@@ -521,7 +521,7 @@ static void generate_edata (void)
     struct export_name *export_names;
     size_t i;
     struct symbol *symbol;
-    struct relocation_entry_internal *relocs;
+    struct reloc_entry *relocs;
     size_t name_table_offset;
     struct IMAGE_EXPORT_DIRECTORY_internal ied;
     unsigned long OrdinalBase;
@@ -579,9 +579,9 @@ static void generate_edata (void)
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     section_append_section_part (section, part);
-
+    
     part->relocation_count = 4 + num_names * 2;
-    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
     relocs = part->relocation_array;
 
     of->symbol_array[0].name = xstrdup (section->name);
@@ -619,15 +619,13 @@ static void generate_edata (void)
         write_struct_IMAGE_EXPORT_DIRECTORY (part->content, &ied);
 
         for (i = 0; i < 4; i++) {
-            relocs[i].SymbolTableIndex = 0;
-            relocs[i].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                              ? IMAGE_REL_AMD64_ADDR32NB
-                              : IMAGE_REL_I386_DIR32NB);
+            relocs[i].symbol = &of->symbol_array[0];
+            relocs[i].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
         }
-        relocs[0].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NameRVA);
-        relocs[1].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, ExportAddressTableRVA);
-        relocs[2].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NamePointerRVA);
-        relocs[3].VirtualAddress = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, OrdinalTableRVA);
+        relocs[0].offset = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NameRVA);
+        relocs[1].offset = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, ExportAddressTableRVA);
+        relocs[2].offset = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, NamePointerRVA);
+        relocs[3].offset = offsetof (struct IMAGE_EXPORT_DIRECTORY_file, OrdinalTableRVA);
         relocs += 4;
     }
 
@@ -647,12 +645,12 @@ static void generate_edata (void)
             symbol->part = NULL;
             symbol->section_number = 0;
             symbol_record_external_symbol (symbol);
+            
+            relocs[0].offset = ied.ExportAddressTableRVA + sizeof (struct EXPORT_Address_Table_file) * i;
+            relocs[0].symbol = symbol;
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
+
             symbol++;
-            relocs[0].VirtualAddress = ied.ExportAddressTableRVA + sizeof (struct EXPORT_Address_Table_file) * i;
-            relocs[0].SymbolTableIndex = i + 1;
-            relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                              ? IMAGE_REL_AMD64_ADDR32NB
-                              : IMAGE_REL_I386_DIR32NB);
             relocs++;
         }
         {
@@ -661,11 +659,9 @@ static void generate_edata (void)
             write_struct_EXPORT_Name_Pointer_Table (part->content + ied.NamePointerRVA
                                                     + sizeof (struct EXPORT_Name_Pointer_Table_file) * i,
                                                     &npt);
-            relocs[0].VirtualAddress = ied.NamePointerRVA + sizeof (struct EXPORT_Name_Pointer_Table_file) * i;
-            relocs[0].SymbolTableIndex = 0;
-            relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                              ? IMAGE_REL_AMD64_ADDR32NB
-                              : IMAGE_REL_I386_DIR32NB);
+            relocs[0].offset = ied.NamePointerRVA + sizeof (struct EXPORT_Name_Pointer_Table_file) * i;
+            relocs[0].symbol = &of->symbol_array[0];
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
             relocs++;
         }
         {
@@ -692,15 +688,13 @@ static void generate_edata (void)
 
 static int check_reloc_section_needed_section_part (struct section_part *part)
 {
-    struct relocation_entry_internal *relocs;
     size_t i;
     
-    relocs = part->relocation_array;
     for (i = 0; i < part->relocation_count; i++) {
-        if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-            if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64
-                || relocs[i].Type == IMAGE_REL_AMD64_ADDR32) return 1;
-        } else if (relocs[i].Type == IMAGE_REL_I386_DIR32) return 1;
+        if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+            return 1;
+        }
     }
     
     return 0;
@@ -795,204 +789,89 @@ void coff_before_link (void)
     iat_last_part = part;
 }
 
-static void coff_relocate_part_64 (struct section_part *part)
+static void translate_relocation_64 (struct reloc_entry *reloc,
+                                     struct relocation_entry_internal *input_reloc,
+                                     struct section_part *part)
 {
-    struct relocation_entry_internal *relocs;
-    size_t i;
-    
-    relocs = part->relocation_array;
-    for (i = 0; i < part->relocation_count; i++) {
+    reloc->symbol = part->of->symbol_array + input_reloc->SymbolTableIndex;
+    reloc->offset = input_reloc->VirtualAddress;
 
-        struct symbol *symbol;
+    switch (input_reloc->Type) {
+        case IMAGE_REL_AMD64_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
 
-        if (relocs[i].Type == IMAGE_REL_AMD64_ABSOLUTE) continue;
+        case IMAGE_REL_AMD64_ADDR64: reloc->howto = &reloc_howtos[RELOC_TYPE_64]; break;
 
-        symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
-        if (symbol_is_undefined (symbol)) {
-            if ((symbol = symbol_find (symbol->name)) == NULL) {
-                symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "external symbol '%s' not found in hashtab",
-                                             symbol->name);
-            }
-            if (symbol_is_undefined (symbol)) {
-                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
-                          part->of->filename,
-                          part->section->name,
-                          relocs[i].VirtualAddress,
-                          symbol->name);
-                continue;
-            }
-        }
+        case IMAGE_REL_AMD64_ADDR32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
-        switch (relocs[i].Type) {
+        case IMAGE_REL_AMD64_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
-            case IMAGE_REL_AMD64_ADDR64:
-                {
-                    unsigned long result;
+        case IMAGE_REL_AMD64_REL32: reloc->howto = &reloc_howtos[RELOC_TYPE_PC32]; break;
+        
+        case IMAGE_REL_AMD64_REL32_1:
+        case IMAGE_REL_AMD64_REL32_2:
+        case IMAGE_REL_AMD64_REL32_3:
+        case IMAGE_REL_AMD64_REL32_4:
+        case IMAGE_REL_AMD64_REL32_5:
+        case IMAGE_REL_AMD64_SECTION:
+        case IMAGE_REL_AMD64_SECREL:
+        case IMAGE_REL_AMD64_SECREL7:
+        case IMAGE_REL_AMD64_TOKEN:
+        case IMAGE_REL_AMD64_SREL32:
+        case IMAGE_REL_AMD64_PAIR:
+        case IMAGE_REL_AMD64_SSPAN32:
+            ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
+            break;
 
-                    /* It should be actually 8 bytes but 64-bit int is not yet available. */
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    result += symbol_get_value_with_base (symbol);
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case IMAGE_REL_AMD64_ADDR32:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    /* +++Warn about truncation if the result exceeds 4 bytes. */
-                    result += symbol_get_value_with_base (symbol);
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case IMAGE_REL_AMD64_ADDR32NB:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    result += symbol_get_value_no_base (symbol);
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case IMAGE_REL_AMD64_REL32:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    result += symbol_get_value_no_base (symbol) - (part->rva + relocs[i].VirtualAddress) - 4;
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-            
-            case IMAGE_REL_AMD64_REL32_1:
-            case IMAGE_REL_AMD64_REL32_2:
-            case IMAGE_REL_AMD64_REL32_3:
-            case IMAGE_REL_AMD64_REL32_4:
-            case IMAGE_REL_AMD64_REL32_5:
-            case IMAGE_REL_AMD64_SECTION:
-            case IMAGE_REL_AMD64_SECREL:
-            case IMAGE_REL_AMD64_SECREL7:
-            case IMAGE_REL_AMD64_TOKEN:
-            case IMAGE_REL_AMD64_SREL32:
-            case IMAGE_REL_AMD64_PAIR:
-            case IMAGE_REL_AMD64_SSPAN32:
-                ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", relocs[i].Type);
-                break;
-
-            default:
-                /* There is no point in continuing, the object is broken. */
-                ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", relocs[i].Type, part->of->filename);
-                break;
-
-        }
+        default:
+            /* There is no point in continuing, the object is broken. */
+            ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", input_reloc->Type, part->of->filename);
+            break;
         
     }
 }
 
-void coff_relocate_part (struct section_part *part)
+static void translate_relocation (struct reloc_entry *reloc,
+                                  struct relocation_entry_internal *input_reloc,
+                                  struct section_part *part)
 {
-    struct relocation_entry_internal *relocs;
-    size_t i;
-
     if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-        coff_relocate_part_64 (part);
+        translate_relocation_64 (reloc,
+                                 input_reloc,
+                                 part);
         return;
     }
-    
-    relocs = part->relocation_array;
-    for (i = 0; i < part->relocation_count; i++) {
 
-        struct symbol *symbol;
+    reloc->symbol = part->of->symbol_array + input_reloc->SymbolTableIndex;
+    reloc->offset = input_reloc->VirtualAddress;
 
-        if (relocs[i].Type == IMAGE_REL_I386_ABSOLUTE) continue;
+    switch (input_reloc->Type) {
+        case IMAGE_REL_I386_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
 
-        symbol = part->of->symbol_array + relocs[i].SymbolTableIndex;
-        if (symbol_is_undefined (symbol)) {
-            if ((symbol = symbol_find (symbol->name)) == NULL) {
-                ld_internal_error_at_source (__FILE__, __LINE__, "external symbol not found in hashtab");
-            }
-            if (symbol_is_undefined (symbol)) {
-                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
-                          part->of->filename,
-                          part->section->name,
-                          relocs[i].VirtualAddress,
-                          symbol->name);
-                continue;
-            }
-        }
+        case IMAGE_REL_I386_DIR32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
-        switch (relocs[i].Type) {
+        case IMAGE_REL_I386_DIR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
-            case IMAGE_REL_I386_DIR32:
-                {
-                    unsigned long result;
+        case IMAGE_REL_I386_REL32: reloc->howto = &reloc_howtos[RELOC_TYPE_PC32]; break;
 
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
+        case IMAGE_REL_I386_SECTION:
+        case IMAGE_REL_I386_SECREL:
+        case IMAGE_REL_I386_TOKEN:
+        case IMAGE_REL_I386_SECREL7:
+            ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
+            break;
 
-                    result += symbol_get_value_with_base (symbol);
+        case IMAGE_REL_I386_DIR16:
+        case IMAGE_REL_I386_REL16:
+        case IMAGE_REL_I386_SEG12:
+            /* There is no point in continuing, the user is using very outdated objects. */
+            ld_fatal_error ("relocation type 0x%04hx is no longer supported according to the specification", input_reloc->Type);
+            break;
 
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
+        default:
+            /* There is no point in continuing, the object is broken. */
+            ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", input_reloc->Type, part->of->filename);
+            break;
 
-            case IMAGE_REL_I386_DIR32NB:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    result += symbol_get_value_no_base (symbol);
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case IMAGE_REL_I386_REL32:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].VirtualAddress, LITTLE_ENDIAN);
-
-                    result += symbol_get_value_no_base (symbol) - (part->rva + relocs[i].VirtualAddress) - 4;
-
-                    bytearray_write_4_bytes (part->content + relocs[i].VirtualAddress, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case IMAGE_REL_I386_SECTION:
-            case IMAGE_REL_I386_SECREL:
-            case IMAGE_REL_I386_TOKEN:
-            case IMAGE_REL_I386_SECREL7:
-                ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", relocs[i].Type);
-                break;
-
-            case IMAGE_REL_I386_DIR16:
-            case IMAGE_REL_I386_REL16:
-            case IMAGE_REL_I386_SEG12:
-                /* There is no point in continuing, the user is using very outdated objects. */
-                ld_fatal_error ("relocation type 0x%04hx is no longer supported according to the specification", relocs[i].Type);
-                break;
-
-            default:
-                /* There is no point in continuing, the object is broken. */
-                ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", relocs[i].Type, part->of->filename);
-                break;
-
-        }
-        
     }
 }
 
@@ -1035,26 +914,25 @@ static void generate_base_relocation_block (struct section *reloc_section,
         struct section_part *part;
 
         for (part = ((section == saved_section) ? saved_part : section->first_part); part; part = part->next) {
-            struct relocation_entry_internal *relocs;
+            struct reloc_entry *relocs;
             size_t i;
 
             relocs = part->relocation_array;
             for (i = ((part == saved_part) ? saved_i : 0); i < part->relocation_count; i++) {
                 unsigned short base_relocation_type;
                 
-                if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-                    if (relocs[i].Type == IMAGE_REL_AMD64_ADDR64) base_relocation_type = IMAGE_REL_BASED_DIR64;
-                    else if (relocs[i].Type == IMAGE_REL_AMD64_ADDR32) base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
-                    else continue;
-                } else {
-                    if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
+                if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_64]) {
+                    base_relocation_type = IMAGE_REL_BASED_DIR64;
+                } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
+                } else {
+                    continue;
                 }
 
                 {
                     unsigned short rel_word;
 
-                    rel_word = (part->rva + relocs[i].VirtualAddress - ibr_hdr_p->RVAOfBlock) & 0xfff;
+                    rel_word = (part->rva + relocs[i].offset - ibr_hdr_p->RVAOfBlock) & 0xfff;
                     rel_word |= base_relocation_type << 12;
 
                     bytearray_write_2_bytes (write_pos, rel_word, LITTLE_ENDIAN);
@@ -1098,24 +976,20 @@ void coff_after_link (void)
         struct section_part *part;
 
         for (part = section->first_part; part; part = part->next) {
-            struct relocation_entry_internal *relocs;
+            struct reloc_entry *relocs;
             size_t i;
 
             relocs = part->relocation_array;
             for (i = 0; i < part->relocation_count; i++) {
-                if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-                    if (relocs[i].Type != IMAGE_REL_AMD64_ADDR64
-                        && relocs[i].Type != IMAGE_REL_AMD64_ADDR32) continue;
-                } else {
-                    if (relocs[i].Type != IMAGE_REL_I386_DIR32) continue;
-                }
+                if (relocs[i].howto != &reloc_howtos[RELOC_TYPE_64]
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
 
                 /* Relocations can be listed in any order, so it must not be assumed they have ascending RVAs.
                  * This workaround sometimes produces suboptimal results but the results should be always correct.
                  * Probably better solution would be creating a list of relocations and sorting it by RVA. */
                 if (num_relocs
-                    && (part->rva + relocs[i].VirtualAddress >= ibr_hdr.RVAOfBlock + BASE_RELOCATION_PAGE_SIZE
-                        || part->rva + relocs[i].VirtualAddress < ibr_hdr.RVAOfBlock)) {
+                    && (part->rva + relocs[i].offset >= ibr_hdr.RVAOfBlock + BASE_RELOCATION_PAGE_SIZE
+                        || part->rva + relocs[i].offset < ibr_hdr.RVAOfBlock)) {
                     generate_base_relocation_block (reloc_section,
                                                     &ibr_hdr,
                                                     num_relocs,
@@ -1126,7 +1000,7 @@ void coff_after_link (void)
                 }
 
                 if (num_relocs == 0) {
-                    ibr_hdr.RVAOfBlock = FLOOR_TO (part->rva + relocs[i].VirtualAddress, BASE_RELOCATION_PAGE_SIZE);
+                    ibr_hdr.RVAOfBlock = FLOOR_TO (part->rva + relocs[i].offset, BASE_RELOCATION_PAGE_SIZE);
                     saved_section = section;
                     saved_part = part;
                     saved_i = i;
@@ -1757,7 +1631,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                 if (section_hdr.PointerToRelocations && section_hdr.NumberOfRelocations) {
 
                     size_t j;
-                    struct relocation_entry_internal *relocations;
+                    struct relocation_entry_internal relocation;
 
                     if (!section_hdr.PointerToRawData) {
                         ld_fatal_error ("section '%s' is BSS but has relocations", section->name);
@@ -1765,13 +1639,14 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                     pos = file + section_hdr.PointerToRelocations;
 
-                    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * section_hdr.NumberOfRelocations);
+                    part->relocation_array = xcalloc (section_hdr.NumberOfRelocations, sizeof *part->relocation_array);
                     part->relocation_count = section_hdr.NumberOfRelocations;
-                    relocations = part->relocation_array;
+                    
                     CHECK_READ (pos, sizeof (struct relocation_entry_file) * section_hdr.NumberOfRelocations);
                     for (j = 0; j < section_hdr.NumberOfRelocations; j++) {
-                        read_struct_relocation_entry (relocations + j,
+                        read_struct_relocation_entry (&relocation,
                                                       pos + sizeof (struct relocation_entry_file) * j);
+                        translate_relocation (part->relocation_array + j, &relocation, part);
                     }
                 }
                 
@@ -1911,7 +1786,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
 
     {
         struct IMPORT_Directory_Table_internal import_dt;
-        struct relocation_entry_internal *relocs;
+        struct reloc_entry *relocs;
         int i;
 
         import_dt.ImportNameTableRVA = 0;
@@ -1923,18 +1798,16 @@ static void import_generate_head (const char *dll_name, const char *filename)
         write_struct_IMPORT_Directory_Table (part->content, &import_dt);
 
         part->relocation_count = 3;
-        part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+        part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         relocs = part->relocation_array;
 
         for (i = 0; i < 3; i++) {
-            relocs[i].SymbolTableIndex = i;
-            relocs[i].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                              ? IMAGE_REL_AMD64_ADDR32NB
-                              : IMAGE_REL_I386_DIR32NB);
+            relocs[i].symbol = &of->symbol_array[i];
+            relocs[i].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
         }
-        relocs[0].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
-        relocs[1].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportAddressTableRVA);
-        relocs[2].VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
+        relocs[0].offset = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
+        relocs[1].offset = offsetof (struct IMPORT_Directory_Table_file, ImportAddressTableRVA);
+        relocs[2].offset = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
     }
     
     subsection = subsection_find_or_make (section, "4");
@@ -1982,7 +1855,7 @@ static void import_generate_import (const char *import_name,
     struct section *section;
     struct subsection *subsection;
     struct section_part *part;
-    struct relocation_entry_internal *relocs;
+    struct reloc_entry *relocs;
     struct symbol *symbol;
 
     /* 2 symbols are internal for .idata$5 and .idata$6. */
@@ -1999,13 +1872,11 @@ static void import_generate_import (const char *import_name,
     memset (part->content, 0, part->content_size);
     
     part->relocation_count = 1;
-    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
     relocs = part->relocation_array;
-    relocs[0].SymbolTableIndex = 1;
-    relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                      ? IMAGE_REL_AMD64_ADDR32NB
-                      : IMAGE_REL_I386_DIR32NB);
-    relocs[0].VirtualAddress = 0;
+    relocs[0].symbol = &of->symbol_array[1];
+    relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
+    relocs[0].offset = 0;
 
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
@@ -2021,13 +1892,11 @@ static void import_generate_import (const char *import_name,
     symbol++;
 
     part->relocation_count = 1;
-    part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+    part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
     relocs = part->relocation_array;
-    relocs[0].SymbolTableIndex = 1;
-    relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                      ? IMAGE_REL_AMD64_ADDR32NB
-                      : IMAGE_REL_I386_DIR32NB);
-    relocs[0].VirtualAddress = 0;
+    relocs[0].symbol = &of->symbol_array[1];
+    relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
+    relocs[0].offset = 0;
 
     dot_idata5_part = part;
 
@@ -2096,13 +1965,13 @@ static void import_generate_import (const char *import_name,
         symbol++;
 
         part->relocation_count = 1;
-        part->relocation_array = xmalloc (sizeof (struct relocation_entry_internal) * part->relocation_count);
+        part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         relocs = part->relocation_array;
-        relocs[0].SymbolTableIndex = 0;
-        relocs[0].Type = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
-                          ? IMAGE_REL_AMD64_REL32
-                          : IMAGE_REL_I386_DIR32);
-        relocs[0].VirtualAddress = 2;
+        relocs[0].symbol = &of->symbol_array[0];
+        relocs[0].howto = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+                           ? &reloc_howtos[RELOC_TYPE_PC32]
+                           : &reloc_howtos[RELOC_TYPE_32]);
+        relocs[0].offset = 2;
     }
     
     symbol->name = xmalloc (IMP_PREFIX_LEN + strlen (import_name) + 1);

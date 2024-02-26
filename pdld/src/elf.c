@@ -127,66 +127,27 @@ address_type elf_get_first_section_rva (void)
     return ALIGN (size_of_headers, all_sections->section_alignment);
 }
 
-void elf_relocate_part (struct section_part *part)
+static void translate_relocation (struct reloc_entry *reloc,
+                                  struct Elf32_Rel *input_reloc,
+                                  struct section_part *part)
 {
-    struct Elf32_Rel *relocs;
-    size_t i;
+    /* STN_UNDEF should be treated as absolute symbol with value 0 at index 0. */
+    reloc->symbol = part->of->symbol_array + ELF32_R_SYM (input_reloc->r_info);
+    reloc->offset = input_reloc->r_offset;
 
-    relocs = part->relocation_array;
-    for (i = 0; i < part->relocation_count; i++) {
-        struct symbol *symbol;
+    switch (ELF32_R_TYPE (input_reloc->r_info)) {
+        case R_386_32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
-        symbol = part->of->symbol_array + ELF32_R_SYM (relocs[i].r_info);
-        if (ELF32_R_SYM (relocs[i].r_info) == STN_UNDEF) {
-            /* Relocation has no symbol and the symbol value should be 0. */
-            symbol = NULL;
-        } else if (symbol_is_undefined (symbol)) {
-            if ((symbol = symbol_find (symbol->name)) == NULL) {
-                ld_internal_error_at_source (__FILE__, __LINE__, "external symbol not found in hashtab");
-            }
-            if (symbol_is_undefined (symbol)) {
-                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
-                          part->of->filename,
-                          part->section->name,
-                          relocs[i].r_offset,
-                          symbol->name);
-                continue;
-            }
-        }
+        case R_386_PC32:
+            reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+            reloc->addend += 4; /* ELF should not have the size of the field subtracted. */
+            break;
 
-        switch (ELF32_R_TYPE (relocs[i].r_info)) {
-            case R_386_32:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].r_offset, LITTLE_ENDIAN);
-
-                    result += symbol ? symbol_get_value_with_base (symbol) : 0;
-
-                    bytearray_write_4_bytes (part->content + relocs[i].r_offset, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            case R_386_PC32:
-                {
-                    unsigned long result;
-
-                    bytearray_read_4_bytes (&result, part->content + relocs[i].r_offset, LITTLE_ENDIAN);
-
-                    if (symbol) {
-                        result += symbol_get_value_no_base (symbol) - (part->rva + relocs[i].r_offset);
-                    } else result += 0 - (part->rva + relocs[i].r_offset);
-
-                    bytearray_write_4_bytes (part->content + relocs[i].r_offset, result, LITTLE_ENDIAN);
-                }
-                break;
-
-            default:
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "+++relocation type 0x%02x not supported yet",
-                                             ELF32_R_TYPE (relocs[i].r_info));
-                break;
-        }
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "+++relocation type 0x%02x not supported yet",
+                                         ELF32_R_TYPE (input_reloc->r_info));
+            break;
     }
 }
 
@@ -411,7 +372,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return 1;
     }
 
-    if (ehdr.e_shstrndx == 0 < ehdr.e_shstrndx < ehdr.e_shnum) {
+    if (ehdr.e_shstrndx == 0 || ehdr.e_shstrndx >= ehdr.e_shnum) {
         ld_error ("%s: missing section name string table", filename);
         return 1;
     }
@@ -595,6 +556,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
 
     for (i = 1; i < ehdr.e_shnum; i++) {
         struct section_part *part;
+        size_t j;
         
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
         shdr_p = (void *)pos;
@@ -613,9 +575,13 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         CHECK_READ (pos, shdr_p->sh_size);
 
         part->relocation_count = shdr_p->sh_size / shdr_p->sh_entsize;
-        part->relocation_array = xmalloc (sizeof (struct Elf32_Rel) * part->relocation_count);
+        part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
 
-        memcpy (part->relocation_array, pos, sizeof (struct Elf32_Rel) * part->relocation_count);
+        for (j = 0; j < part->relocation_count; j++) {
+            translate_relocation (part->relocation_array + j,
+                                  (struct Elf32_Rel *)(pos + shdr_p->sh_entsize * j),
+                                  part);
+        }
     }
 
     free (part_p_array);

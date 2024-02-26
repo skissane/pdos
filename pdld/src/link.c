@@ -13,6 +13,100 @@
 
 #include "ld.h"
 #include "xmalloc.h"
+#include "bytearray.h"
+
+const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
+    { 0, 0, 0, NULL, "RELOC_TYPE_IGNORED" },
+    
+    { 8, 0, 0, NULL, "RELOC_TYPE_64" },
+    { 4, 0, 0, NULL, "RELOC_TYPE_32" },
+
+    { 4, 1, 0, NULL, "RELOC_TYPE_PC32" },
+
+    { 4, 0, 1, NULL, "RELOC_TYPE_32_NO_BASE" },
+
+};
+
+static void relocate_part (struct section_part *part)
+{
+    struct reloc_entry *relocs;
+    size_t i;
+    
+    relocs = part->relocation_array;
+    for (i = 0; i < part->relocation_count; i++) {
+        struct symbol *symbol;
+        address_type result;
+
+        if (relocs[i].howto->size == 0) continue;
+
+        if (relocs[i].howto->special_function) {
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "special relocation functions are not yet supported");
+        }
+
+        symbol = relocs[i].symbol;
+        if (symbol_is_undefined (symbol)) {
+            if ((symbol = symbol_find (symbol->name)) == NULL) {
+                symbol = relocs[i].symbol;
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "external symbol '%s' not found in hashtab",
+                                             symbol->name);
+            }
+            if (symbol_is_undefined (symbol)) {
+                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
+                          part->of->filename,
+                          part->section->name,
+                          relocs[i].offset,
+                          symbol->name);
+                continue;
+            }
+        }
+
+        switch (relocs[i].howto->size) {
+            case 8:
+                /* It should be actually 8 bytes but 64-bit int is not yet available. */
+                bytearray_read_4_bytes (&result, part->content + relocs[i].offset, LITTLE_ENDIAN);
+                break;
+
+            case 4:
+                bytearray_read_4_bytes (&result, part->content + relocs[i].offset, LITTLE_ENDIAN);
+                break;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "invalid relocation size");
+        }
+
+        result += relocs[i].addend;
+        
+        if (relocs[i].howto->pc_relative
+            || relocs[i].howto->no_base) {
+            result += symbol_get_value_no_base (symbol);
+        } else {
+            result += symbol_get_value_with_base (symbol);
+        }
+
+        if (relocs[i].howto->pc_relative) {
+            result -= part->rva + relocs[i].offset;
+            result -= relocs[i].howto->size;
+        }
+        
+        switch (relocs[i].howto->size) {
+            case 8:
+                /* It should be actually 8 bytes but 64-bit int is not yet available. */
+                bytearray_write_4_bytes (part->content + relocs[i].offset, result, LITTLE_ENDIAN);
+                break;
+
+            case 4:
+                bytearray_write_4_bytes (part->content + relocs[i].offset, result, LITTLE_ENDIAN);
+                break;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "invalid relocation size");
+        }
+    }
+}
 
 static void collapse_subsections (void)
 {
@@ -79,12 +173,7 @@ static void relocate_sections (void)
         struct section_part *part;
         
         for (part = section->first_part; part; part = part->next) {
-            if (ld_state->oformat == LD_OFORMAT_COFF
-                || ld_state->oformat == LD_OFORMAT_LX) {
-                coff_relocate_part (part);
-            } else if (ld_state->oformat == LD_OFORMAT_ELF) {
-                elf_relocate_part (part);
-            }
+            relocate_part (part);
         }
     }
 }

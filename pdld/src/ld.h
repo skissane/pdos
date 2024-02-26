@@ -65,6 +65,39 @@ struct symbol {
 #define ABSOLUTE_SECTION_NUMBER (-1)
 #define DEBUG_SECTION_NUMBER (-2)
 
+struct reloc_howto {
+    int size;
+    int pc_relative;
+    int no_base;
+
+    void *special_function; /* For special relocations. */
+
+    const char *name;
+};
+
+enum {
+    RELOC_TYPE_IGNORED,
+    
+    RELOC_TYPE_64,
+    RELOC_TYPE_32,
+    
+    RELOC_TYPE_PC32,
+    
+    RELOC_TYPE_32_NO_BASE,
+    
+    RELOC_TYPE_END
+};
+
+/* link.c */
+extern const struct reloc_howto reloc_howtos[RELOC_TYPE_END];
+
+struct reloc_entry {
+    struct symbol *symbol;
+    address_type offset;
+    address_type addend;
+    const struct reloc_howto *howto;
+};
+
 struct object_file {
 
     struct object_file *next;
@@ -87,7 +120,7 @@ struct section_part {
     address_type content_size;
     address_type alignment;
 
-    void *relocation_array;
+    struct reloc_entry *relocation_array;
     size_t relocation_count;
 
     address_type rva;
@@ -166,7 +199,6 @@ void link (void);
 address_type coff_get_base_address (void);
 address_type coff_get_first_section_rva (void);
 void coff_before_link (void);
-void coff_relocate_part (struct section_part *part);
 address_type coff_calculate_entry_point (void);
 void coff_after_link (void);
 void coff_write (const char *filename);
@@ -178,7 +210,6 @@ const struct long_option *coff_get_long_options (void);
 
 /* elf.c */
 address_type elf_get_first_section_rva (void);
-void elf_relocate_part (struct section_part *part);
 void elf_write (const char *filename);
 void elf_read (const char *filename);
 
