@@ -50,6 +50,7 @@ extern void *_imp___iob;
 #if defined(__32BIT__) && defined(NEED_OS2)
 #undef APIENTRY
 #define APIENTRY
+#define INCL_DOS
 #include <os2.h>
 #endif
 
@@ -3908,28 +3909,106 @@ static int exeloadLoadLX(unsigned char **entry_point,
         corr = hdr + *(int *)(hdr + 0x6C); /* FixupRecordTableOffsetHdr */
         while (1)
         {
+            /* we should be abiding by the count, not looking for
+               the beginning of the DLL name (DOSCALLS) and its
+               length (8) */
             if ((corr[0] == 0x08) && (corr[1] == 0x44))
             {
                 break;
             }
             if (corr[0] == 0x08)
             {
+                unsigned int ord;
+
                 zapoffs = corr[2] | (corr[3] << 8);
-                if ((corr[5] == 0x1a) && (corr[6] == 0x01))
+                if ((corr[1] & 0x80) == 0)
                 {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosWrite - (codestart + zapoffs + 4);
+                    ord = (corr[6] << 8) | corr[5];
                     corr += 7;
-                }
-                else if (corr[5] == 0xea)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosExit - (codestart + zapoffs + 4);
-                    corr += 6;
                 }
                 else
                 {
-                    printf("unknown DLL entry %x\n", corr[5]);
+                    ord = corr[5];
+                    corr += 6;
+                }
+                if (ord == 234)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosExit - (codestart + zapoffs + 4);
+                }
+                else if (ord == 273)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosOpen - (codestart + zapoffs + 4);
+                }
+                else if (ord == 257)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosClose - (codestart + zapoffs + 4);
+                }
+                else if (ord == 281)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosRead - (codestart + zapoffs + 4);
+                }
+                else if (ord == 282)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosWrite - (codestart + zapoffs + 4);
+                }
+                else if (ord == 259)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosDelete - (codestart + zapoffs + 4);
+                }
+                else if (ord == 271)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosMove - (codestart + zapoffs + 4);
+                }
+                else if (ord == 283)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosExecPgm - (codestart + zapoffs + 4);
+                }
+                else if (ord == 256)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosSetFilePtr - (codestart + zapoffs + 4);
+                }
+                else if (ord == 230)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosGetDateTime - (codestart + zapoffs + 4);
+                }
+                else if (ord == 284)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosDevIOCtl - (codestart + zapoffs + 4);
+                }
+                else if (ord == 299)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosAllocMem - (codestart + zapoffs + 4);
+                }
+                else if (ord == 304)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosFreeMem - (codestart + zapoffs + 4);
+                }
+                else if (ord == 227)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosScanEnv - (codestart + zapoffs + 4);
+                }
+                else if (ord == 382)
+                {
+                    *(unsigned int *)(codestart + zapoffs) =
+                        (unsigned char *)DosSetRelMaxFH - (codestart + zapoffs + 4);
+                }
+                else
+                {
+                    printf("unknown DLL ordinal %d\n", ord);
                     for (;;) ;
                 }
             }
