@@ -122,7 +122,7 @@ typedef struct {
     long offset2;
 } mmstruc;
 
-#ifdef __ARM__
+#if defined(__ARM__) || defined(__64BIT__)
 void *__mmap(void *a, int b, int prot, int flags, int fd,
              long offset, long offset2);
 #else
@@ -411,7 +411,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.fd = -1;
         mms.offset = 0;
         mms.offset2 = 0;
-#ifdef __ARM__
+#if defined(__ARM__) || defined(__64BIT__)
         ptr = __mmap(mms.addr, mms.length, mms.prot,
                      mms.flags, mms.fd, mms.offset, mms.offset2);
 #else
