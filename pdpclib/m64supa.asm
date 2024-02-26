@@ -290,6 +290,50 @@ ___time:
 
 
 
+# int ___mmap(...);
+
+        .align  4
+        .globl  ___mmap
+___mmap:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#197
+#           @ SYS_mmap
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+
+
+# int ___munmap(...);
+
+        .align  4
+        .globl  ___munmap
+___munmap:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#73
+#           @ SYS_munmap
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+# Doesn't appear to have mremap
+
+
+
+
+
 # int ___chdir(const char *filename);
 
         .align  4
