@@ -5,6 +5,9 @@
 # This program written by Paul Edwards
 # Released to the public domain
 
+# syscall numbers can be found here:
+# https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
+
 
 .code64
 
@@ -313,6 +316,58 @@ syscall
 
 ret
 
+
+
+
+
+# Not sure yet whether parameters are in a struct or
+# passed individually. Assuming struct
+
+.globl __mmap
+__mmap:
+
+push rdi
+
+# function code 9 = mmap
+mov rax, 9
+
+# struct
+mov rdi, rcx
+
+syscall
+
+pop rdi
+
+ret
+
+
+
+
+
+.globl __munmap
+__munmap:
+
+push rdi
+push rsi
+
+# function code 11 = munmap
+mov rax, 11
+
+# addr
+mov rdi, rcx
+# len
+mov rsi, rdx
+
+syscall
+
+pop rsi
+pop rdi
+
+ret
+
+
+
+# mremap is 25
 
 
 
