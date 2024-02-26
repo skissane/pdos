@@ -5,7 +5,7 @@
 # pdptest crashes - don't know why
 
 CC=gcc
-COPTS=-c -O0 -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -m64 \
+COPTS=-c -O0 -fno-builtin -D__64BIT__ -I . -m64 \
     -fno-common -D__gnu_linux__ -fno-stack-protector \
     -D__USEBIVA__
 

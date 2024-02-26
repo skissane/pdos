@@ -3,7 +3,7 @@
 #
 
 CC=gcc
-COPTS=-c -O2 -D__ARM__ -fno-builtin -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
+COPTS=-c -O2 -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector
 
 pdptest: linstart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
