@@ -320,23 +320,40 @@ ret
 
 
 
-# Not sure yet whether parameters are in a struct or
-# passed individually. Assuming struct
+# 7 parameters received, but only 6 used
 
 .globl __mmap
 __mmap:
 
+push rbp
+mov rbp, rsp
 push rdi
+push rsi
+push rdx
+push r10
+push r8
+push r9
 
 # function code 9 = mmap
 mov rax, 9
 
-# struct
 mov rdi, rcx
+mov rsi, rdx
+mov rdx, r8
+mov r10, r9
+
+mov r8, 48[rbp]
+mov r9, 56[rbp]
 
 syscall
 
+pop r9
+pop r8
+pop r10
+pop rdx
+pop rsi
 pop rdi
+pop rbp
 
 ret
 
