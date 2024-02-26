@@ -474,3 +474,24 @@ pop %ecx
 pop %ebx
 pop %ebp
 ret
+
+
+# You need to provide a buffer that is apparently 6 * 65 bytes
+# in size minimum, because there are 6 strings, each with a
+# fixed 65 bytes reserved
+
+.globl ___uname
+___uname:
+.globl __uname
+__uname:
+push %ebp
+mov %esp, %ebp
+push %ebx
+# function code 122 = uname
+movl $122, %eax
+# addr
+movl 8(%ebp), %ebx
+int $0x80
+pop %ebx
+pop %ebp
+ret
