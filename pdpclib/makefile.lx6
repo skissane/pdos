@@ -1,9 +1,13 @@
 # This is the makefile for Linux to build pdpclib using
-# the gccx64 compiler.
+# the gccx64 compiler. This is a compiler that forced
+# short, int and long to 64-bit and used the stack, to
+# get around a compiler issue that was eventually found
+# and fixed, so this compiler is not being distributed
+# until it starts being used for something
 #
 # You can use gcc if you prefer, but you need to take
 # away one underscore from the ld start entry point name
-# You also need to disable optimization for unknow reasons
+# You also need to disable optimization for unknown reasons
 
 CC=gccx64
 #CC=gcc -fno-stack-protector
