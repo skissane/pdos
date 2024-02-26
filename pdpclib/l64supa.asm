@@ -6,6 +6,10 @@
 # syscall numbers can be found here:
 # https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
+# linux 64-bit calling convention is rdi, rsi, rdx, rcx, r8, r9
+
+# However, the syscall convention is rdi, rsi, rdx, r10, r8, r9
+
 .globl ___setj
 ___setj:
 .globl __setj
@@ -428,34 +432,29 @@ ret
 
 
 
-# Not yet determined whether mmap takes a pointer to
-# a struct or individual parameters. Assuming struct
+# We receive 7 parameters, but only use 6
+# Note that Linux 64-bit calling convention passes the 4th
+# parameter in rcx, but the syscall convention requires
+# the 4th parameter to be in r10
 
 .globl ___mmap
 ___mmap:
 .globl __mmap
 __mmap:
 
-.if STACKPARM
 push %rbp
 mov %rsp, %rbp
-push %rdi
-.endif
+push %rcx
 
 # function code 9 = mmap
 movq $9, %rax
 
-.if STACKPARM
-# struct
-movq 16(%rbp), %rdi
-.endif
+mov %rcx, %r10
 
 syscall
 
-.if STACKPARM
-pop %rdi
+pop %rcx
 pop %rbp
-.endif
 
 ret
 
