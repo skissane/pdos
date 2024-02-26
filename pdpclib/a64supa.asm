@@ -4,6 +4,8 @@
 
 # 64-bit ARM (AArch64) needs the stack 16-byte aligned
 
+# syscall numbers can be found here:
+# https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
 
 # int ___write(int fd, void *buf, int len);
@@ -349,6 +351,49 @@ ___time:
         ret
 
 
+
+
+# int ___mmap(...);
+
+        .globl  __mmap
+        .globl  ___mmap
+        .type  __mmap, %function
+        .align  2
+__mmap:
+___mmap:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#222
+#           @ SYS_mmap
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+# int ___munmap(...);
+
+        .globl  __munmap
+        .globl  ___munmap
+        .type  __munmap, %function
+        .align  2
+__munmap:
+___munmap:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#215
+#           @ SYS_munmap
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+# mremap is 216
 
 
 # int ___chdir(const char *filename);
