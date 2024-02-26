@@ -3,6 +3,8 @@
 # This program written by Paul Edwards
 # Released to the public domain
 
+# syscall numbers can be found here:
+# https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
 .globl ___setj
 ___setj:
@@ -421,6 +423,81 @@ movq $39, %rax
 syscall
 
 ret
+
+
+
+
+
+# Not yet determined whether mmap takes a pointer to
+# a struct or individual parameters. Assuming struct
+
+.globl ___mmap
+___mmap:
+.globl __mmap
+__mmap:
+
+.if STACKPARM
+push %rbp
+mov %rsp, %rbp
+push %rdi
+.endif
+
+# function code 9 = mmap
+movq $9, %rax
+
+.if STACKPARM
+# struct
+movq 16(%rbp), %rdi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rdi
+pop %rbp
+.endif
+
+ret
+
+
+
+
+.globl ___munmap
+___munmap:
+.globl __munmap
+__munmap:
+
+.if STACKPARM
+push %rbp
+mov %rsp, %rbp
+push %rdi
+push %rsi
+.endif
+
+# function code 11 = munmap
+movq $11, %rax
+
+.if STACKPARM
+# addr
+movq 16(%rbp), %rdi
+# len
+movq 24(%rbp), %rsi
+.endif
+
+syscall
+
+.if STACKPARM
+pop %rsi
+pop %rdi
+pop %rbp
+.endif
+
+ret
+
+
+
+# mremap is 25
+
 
 
 
