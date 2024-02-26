@@ -109,6 +109,10 @@ USHORT APIENTRY DosDelete(char *name, USHORT junk);
 USHORT APIENTRY DosMove(char *a, char *b, USHORT junk);
 USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
                               int dir, ULONG *retpos);
+USHORT APIENTRY DosClose(short handle);
+USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
+                           char *string, void *junk1, RESULTCODES *results,
+                           char *string2);
 #else
 ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
                ULONG newsize, ULONG fileattr, ULONG action2,
@@ -121,27 +125,27 @@ ULONG APIENTRY DosDelete(char *name);
 ULONG APIENTRY DosMove(char *a, char *b);
 ULONG APIENTRY DosSetFilePtr(ULONG hfile, LONG newpos,
                               int dir, ULONG *retpos);
+ULONG APIENTRY DosClose(short handle);
+ULONG APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
+                          char *string, void *junk1, RESULTCODES *results,
+                          char *string2);
 #endif
-USHORT APIENTRY DosClose(short handle);
 USHORT APIENTRY DosGetEnv(USHORT *seg, USHORT *offs);
-USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
-                           char *string, void *junk1, RESULTCODES *results,
-                           char *string2);
 
 #ifdef INCL_DOSMEMMGR
 USHORT APIENTRY DosAllocHuge(USHORT numsegs, USHORT numbytes, USHORT *sel,
                     USHORT junk1, USHORT junk2);
 #endif
 
-USHORT APIENTRY DosGetDateTime(DATETIME *dt);
-
 #ifdef __16BIT__
+USHORT APIENTRY DosGetDateTime(DATETIME *dt);
 void APIENTRY DosFreeSeg(USHORT seg);
 USHORT APIENTRY DosAllocSeg(USHORT bytes, USHORT *seg, USHORT flags);
 USHORT APIENTRY DosCreateCSAlias(USHORT dseg, USHORT *cseg);
 #else
+ULONG APIENTRY DosGetDateTime(DATETIME *dt);
 ULONG APIENTRY DosAllocMem(void *base, ULONG size, ULONG flags);
-void APIENTRY DosFreeMem(void *base);
+ULONG APIENTRY DosFreeMem(void *base);
 ULONG APIENTRY DosScanEnv(void *name, void *result);
 ULONG APIENTRY DosSetRelMaxFH(LONG *req, ULONG *max);
 #endif
