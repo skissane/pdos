@@ -158,6 +158,8 @@ typedef USHORT APIRET;
 #define VARIABLE_TEXT 3
 #endif
 
+static FILE  *myfile;
+
 #if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__EFI__))
 
 extern int __open(const char *a, int b, int c);
@@ -174,22 +176,34 @@ extern void __rename(const char *old, const char *newnam);
 #define O_CREAT  0x40
 #define O_TRUNC  0x200
 
+/* reserve 8000 0000 as a flag to indicate extension */
+/* make sure O_TEXT hasn't been set to 0 by undefining */
+/* and next available bit counting down is thus 4000 0000 */
+
+#undef O_TEXT
+#define O_TEXT 0x40000000
+
 static int open(const char *a, int b, int *c)
 {
     int ret = -1;
+    int oflag = 0;
 
+    if (myfile->textMode)
+    {
+        oflag = O_TEXT;
+    }
     *c = 0;
     if (b == 2)
     {
-        ret = __open(a, O_RDWR, 0);
+        ret = __open(a, O_RDWR | oflag, 0);
     }
     else if (b == 1)
     {
-        ret = __open(a, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+        ret = __open(a, O_WRONLY | O_CREAT | O_TRUNC | oflag, 0664);
     }
     else if (b == 0)
     {
-        ret = __open(a, O_RDONLY, 0);
+        ret = __open(a, O_RDONLY | oflag, 0);
     }
     if (ret < 0)
     {
@@ -264,7 +278,6 @@ FILE *__stdout_ptr = &permFiles[1];
 FILE *__stderr_ptr = &permFiles[2];
 
 FILE *__userFiles[__NFILE];
-static FILE  *myfile;
 static int    spareSpot;
 static int    err;
 static int    inreopen = 0;
