@@ -66,7 +66,7 @@ ret
 .globl myentry
 myentry:
 
-push $11
+push $9
 push $message
 push $1
 call __write
@@ -75,12 +75,9 @@ push $0
 call __exita
 
 
-# Currently you need \r if you want to run nicely
-# under PDOS/386. And they seem to be harmless
-# under Linux except for the fact that if you
-# redirect the output, the output file contains
-# the \r. Probably best to change PDOS/386
+# PDOS/386 can now cope with CR missing when
+# writing to stdout
 
 .globl message
 message:
-.string "hi\r\nthere\r\n"
+.string "hi\nthere\n"
