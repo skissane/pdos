@@ -486,6 +486,39 @@ int $0x80
 ret
 
 
+.globl ___clone
+___clone:
+.globl __clone
+__clone:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+push %esi
+push %edi
+# function code 120 = clone
+movl $120, %eax
+# flags
+movl 8(%ebp), %ebx
+# child stack ptr
+movl 12(%ebp), %ecx
+# *ptid
+movl 16(%ebp), %edx
+# *ctid
+movl 20(%ebp), %esi
+# *regs
+movl 24(%ebp), %edi
+int $0x80
+pop %edi
+pop %esi
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
+
+
 .globl ___execve
 ___execve:
 .globl __execve
