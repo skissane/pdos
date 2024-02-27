@@ -320,6 +320,107 @@ ret
 
 
 
+.globl __clone
+__clone:
+
+push rbp
+mov rbp, rsp
+push rdi
+push rsi
+push rdx
+push r10
+push r8
+
+# function code 56 = clone
+mov rax, 56
+
+mov rdi, rcx
+mov rsi, rdx
+mov rdx, r8
+mov r10, r9
+
+mov r8, 48[rbp]
+
+syscall
+
+pop r8
+pop r10
+pop rdx
+pop rsi
+pop rdi
+pop rbp
+
+ret
+
+
+
+
+.globl __waitid
+__waitid:
+
+push rbp
+mov rbp, rsp
+push rdi
+push rsi
+push rdx
+push r10
+push r8
+
+# function code 247 = waitid
+mov rax, 247
+
+mov rdi, rcx
+mov rsi, rdx
+mov rdx, r8
+mov r10, r9
+
+mov r8, 48[rbp]
+
+syscall
+
+pop r8
+pop r10
+pop rdx
+pop rsi
+pop rdi
+pop rbp
+
+ret
+
+
+
+
+.globl __execve
+__execve:
+
+push rdi
+push rsi
+push rdx
+
+# function code 59 = execve
+mov rax, 59
+
+# filename
+mov rdi, rcx
+# argv
+mov rsi, rdx
+# envp
+mov rdx, r8
+
+syscall
+
+pop rdx
+pop rsi
+pop rdi
+
+ret
+
+
+
+
+
+
+
 # 7 parameters received, but only 6 used
 
 .globl __mmap

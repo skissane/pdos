@@ -432,6 +432,63 @@ ret
 
 
 
+.globl ___clone
+___clone:
+.globl __clone
+__clone:
+
+push %rcx
+
+# function code 56 = clone
+movq $56, %rax
+
+mov %rcx, %r10
+
+syscall
+
+pop %rcx
+
+ret
+
+
+
+
+.globl ___waitid
+___waitid:
+.globl __waitid
+__waitid:
+
+push %rcx
+
+# function code 247 = waitid
+movq $247, %rax
+
+mov %rcx, %r10
+
+syscall
+
+pop %rcx
+
+ret
+
+
+
+
+.globl ___execve
+___execve:
+.globl __execve
+__execve:
+
+# function code 59 = execve
+movq $59, %rax
+
+syscall
+
+ret
+
+
+
+
 # We receive 7 parameters, but only use 6
 # Note that Linux 64-bit calling convention passes the 4th
 # parameter in rcx, but the syscall convention requires
