@@ -353,6 +353,72 @@ ___time:
 
 
 
+# int ___clone(...);
+
+        .globl  __clone
+        .globl  ___clone
+        .type  __clone, %function
+        .align  2
+__clone:
+___clone:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#220
+#           @ SYS_clone
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+# int ___waitpid(...);
+
+        .globl  __waitpid
+        .globl  ___waitpid
+        .type  __waitpid, %function
+        .align  2
+__waitpid:
+___waitpid:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#95
+#           @ SYS_waitpid
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+# int ___execve(...);
+
+        .globl  __execve
+        .globl  ___execve
+        .type  __execve, %function
+        .align  2
+__execve:
+___execve:
+        sub     sp,sp,#16
+        str     x8, [sp, #0]
+        mov     x8,#221
+#           @ SYS_execve
+
+        svc     #0
+
+        ldr     x8, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
 # int ___mmap(...);
 
         .globl  __mmap
