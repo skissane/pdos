@@ -311,6 +311,69 @@ ___mmap:
 
 
 
+# int ___fork(...);
+
+        .align  4
+        .globl  ___fork
+___fork:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#2
+#           @ SYS_fork
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+
+
+# int ___waitid(...);
+
+        .align  4
+        .globl  ___waitid
+___waitid:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#173
+#           @ SYS_waitid
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+
+
+# int ___execve(...);
+
+        .align  4
+        .globl  ___execve
+___execve:
+        sub     sp,sp,#16
+        str     x16, [sp, #0]
+        mov     x16,#59
+#           @ SYS_execve
+
+        svc     #0x80
+
+        ldr     x16, [sp, #0]
+        add     sp,sp,#16
+        ret
+
+
+
+
+
+
 # int ___munmap(...);
 
         .align  4
