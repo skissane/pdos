@@ -4,12 +4,7 @@
 # Released the public domain
 
 #ase86 -o elftest.o elftest.asm
-# You should be able to use "-s" to strip symbols,
-# and Linux is fine with that, but the PDOS/386
-# loader currently requires them (should be changed)
-# You shouldn't need the -Ttext, but for some reason
-# you currently do
-#lde86 -Ttext 400000 --emit-relocs -e myentry -o elftest.exe elftest.o
+#lde86 -s --emit-relocs -e myentry -o elftest.exe elftest.o
 #
 # If you are using Linux:
 #chmod 755 elftest.exe (may be required)
