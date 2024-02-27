@@ -288,6 +288,7 @@ static int doing_ne = 0;
 #define HANDTYPE_ZERO 4
 #define HANDTYPE_SCAP 5
 
+/* this is also defined in int80.c */
 #define MAXFILES 40
 static struct {
     FATFILE fatfile;
@@ -985,6 +986,7 @@ void pdosRun(void)
     currentDrive = bootDriveLogical;
     cwd = disks[currentDrive].cwd;
     initfiles();
+    initlinux();
     loadConfig();
     memmgrDefaults(&memmgr);
     memmgrInit(&memmgr);
