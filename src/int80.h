@@ -15,5 +15,6 @@
 #define INT80_INCLUDED
 
 int int80(unsigned int *regs);
+void initlinux(void);
 
 #endif /* INT80_INCLUDED */
