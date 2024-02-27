@@ -423,7 +423,7 @@ ___execve:
 .endif
         mov     r7,#11           @ SYS_execve
         swi     0
-redok:  ldmia   sp!,{r2,r7,pc}
+        ldmia   sp!,{r2,r7,pc}
 
 
 
