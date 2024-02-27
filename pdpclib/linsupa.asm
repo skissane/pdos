@@ -476,6 +476,75 @@ pop %ebp
 ret
 
 
+.globl ___fork
+___fork:
+.globl __fork
+__fork:
+# function code 2 = fork
+movl $2, %eax
+int $0x80
+ret
+
+
+.globl ___execve
+___execve:
+.globl __execve
+__execve:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+
+# function code 11 = execve
+movl $11, %eax
+# path
+movl 8(%ebp), %ebx
+# argv
+movl 12(%ebp), %ecx
+# envp
+movl 16(%ebp), %edx
+int $0x80
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
+
+
+.globl ___waitid
+___waitid:
+.globl __waitid
+__waitid:
+push %ebp
+mov %esp, %ebp
+push %ebx
+push %ecx
+push %edx
+push %esi
+push %edi
+# function code 284 = waitid
+movl $284, %eax
+# which
+movl 8(%ebp), %ebx
+# pid_t
+movl 12(%ebp), %ecx
+# siginfo *
+movl 16(%ebp), %edx
+# options
+movl 20(%ebp), %esi
+# struct rusage
+movl 24(%ebp), %edi
+int $0x80
+pop %edi
+pop %esi
+pop %edx
+pop %ecx
+pop %ebx
+pop %ebp
+ret
+
+
 # You need to provide a buffer that is apparently 6 * 65 bytes
 # in size minimum, because there are 6 strings, each with a
 # fixed 65 bytes reserved
