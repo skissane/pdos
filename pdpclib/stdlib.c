@@ -1305,8 +1305,11 @@ __PDPCLIB_API__ int system(const char *string)
        chance to start, and waitid is still required, which
        doesn't seem to match the documentation, but the
        documentation wasn't really for the syscall */
+#ifndef __MACOS__
     pid = __clone(0x4000, NULL, NULL, NULL, NULL);
-    /* pid = __fork(); */
+#else
+    pid = __fork();
+#endif
     if (pid != 0)
     {
         /* printf("in parent\n"); */
