@@ -1438,8 +1438,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
             {
                 /* sh_link specifies the symbol table
                  * and sh_info section being modified. */
-                Elf32_Sym *sym_table = (Elf32_Sym *)(section_table
-                                        + (section->sh_link))->sh_addr;
+                Elf32_Sym *sym_table;
                 Elf32_Rel *startrel = (Elf32_Rel *)section->sh_addr;
                 Elf32_Rel *currel;
 
@@ -1447,6 +1446,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
                 {
                     printf("Invalid size of relocation entries in ELF file\n");
                     continue;
+                }
+
+                if (section->sh_link == 0) {
+                    sym_table = NULL;
+                } else {
+                    sym_table = (Elf32_Sym *)(section_table
+                                              + (section->sh_link))->sh_addr;
                 }
 
                 /* I doubt that it is correct to be accessing the symbol
@@ -1457,8 +1463,6 @@ static int exeloadLoadELF(unsigned char **entry_point,
                                + ((section->sh_size) / (section->sh_entsize)));
                      currel++)
                 {
-                    Elf32_Sym *symbol = (sym_table
-                                         + ELF32_R_SYM(currel->r_info));
                     /* For executable files, r_offset contains virtual address
                      * of the field to which relocation should be applied,
                      * so just subtracting the executable base address
@@ -1467,35 +1471,42 @@ static int exeloadLoadELF(unsigned char **entry_point,
                     long *target = (long *)(exeStart
                                             + (currel->r_offset
                                                - lowest_p_vaddr));
+                    
                     Elf32_Addr sym_value = 0;
 
-                    if (ELF32_R_SYM(currel->r_info) != STN_UNDEF)
-                    {
-                        if (symbol->st_shndx == SHN_ABS)
+                    if (sym_table) {
+                        Elf32_Sym *symbol;
+                        
+                        symbol = sym_table + ELF32_R_SYM(currel->r_info);
+
+                        if (ELF32_R_SYM(currel->r_info) != STN_UNDEF)
                         {
-                            /* Absolute symbol, stores absolute value. */
-                            sym_value = symbol->st_value;
-                        }
-                        else if (symbol->st_shndx == SHN_UNDEF)
-                        {
-                            /* Dynamic linker should fill this symbol. */
-                            printf("Undefined symbol in ELF file\n");
-                            continue;
-                        }
-                        else if (symbol->st_shndx == SHN_XINDEX)
-                        {
-                            printf("Unsupported value in ELF symbol\n");
-                            printf("symbol->st_shndx: %x\n", symbol->st_shndx);
-                            continue;
-                        }
-                        else
-                        {
-                            /* Internal symbol. Must be converted
-                             * to absolute symbol.*/
-                            sym_value = symbol->st_value;
-                            /* Adjusts the symbol value for new base address. */
-                            sym_value -= lowest_p_vaddr;
-                            sym_value += (unsigned long)exeStart;
+                            if (symbol->st_shndx == SHN_ABS)
+                            {
+                                /* Absolute symbol, stores absolute value. */
+                                sym_value = symbol->st_value;
+                            }
+                            else if (symbol->st_shndx == SHN_UNDEF)
+                            {
+                                /* Dynamic linker should fill this symbol. */
+                                printf("Undefined symbol in ELF file\n");
+                                continue;
+                            }
+                            else if (symbol->st_shndx == SHN_XINDEX)
+                            {
+                                printf("Unsupported value in ELF symbol\n");
+                                printf("symbol->st_shndx: %x\n", symbol->st_shndx);
+                                continue;
+                            }
+                            else
+                            {
+                                /* Internal symbol. Must be converted
+                                 * to absolute symbol.*/
+                                sym_value = symbol->st_value;
+                                /* Adjusts the symbol value for new base address. */
+                                sym_value -= lowest_p_vaddr;
+                                sym_value += (unsigned long)exeStart;
+                            }
                         }
                     }
 
@@ -1510,8 +1521,15 @@ static int exeloadLoadELF(unsigned char **entry_point,
                              * because it is stored in the field
                              * and the field is overwritten...
                              */
-                            *target = sym_value;
-#else
+                            if (sym_table)
+                            {
+                                *target = sym_value;
+                            }
+                            /* Without symbol table,
+                             * the below way is the only option.
+                             */
+                            else 
+#endif
                             /* So instead adjust the field
                              * directly for the new base address
                              * to preserve the addend
@@ -1519,9 +1537,10 @@ static int exeloadLoadELF(unsigned char **entry_point,
                              * This assumes the linker does not output
                              * relocations with absolute symbols.
                              */
-                            *target -= lowest_p_vaddr;
-                            *target += (unsigned long)exeStart;
-#endif
+                            {
+                                *target -= lowest_p_vaddr;
+                                *target += (unsigned long)exeStart;
+                            }
                             break;
                         case R_386_PC32:
                             /* Symbol value + offset - absolute address
