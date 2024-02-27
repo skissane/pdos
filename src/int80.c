@@ -99,6 +99,12 @@ int int80(unsigned int *regs)
 
 void lin_exit(int rc);
 unsigned int lin_write(int handle, void *buf, unsigned int len);
+int lin_open(char *fnm, unsigned int flags, unsigned int mode);
+unsigned int lin_read(int handle, void *buf, unsigned int len);
+int lin_close(int handle);
+int lin_getpid(void);
+int lin_ioctl(int handle, int command, int parm);
+void *lin_mmap(void *p);
 
 
 static void int80handler(union REGS *regsin,
@@ -115,12 +121,50 @@ static void int80handler(union REGS *regsin,
             lin_exit(regsin->d.ebx);
             break;
 
-        /* Write */
+        /* read */
+        case 0x3:
+            p = (void *)(regsin->d.ecx);
+            regsout->d.eax = lin_read(regsin->d.ebx,
+                                      p,
+                                      regsin->d.edx);
+            break;
+
+        /* write */
         case 0x4:
             p = (void *)(regsin->d.ecx);
             regsout->d.eax = lin_write(regsin->d.ebx,
                                        p,
                                        regsin->d.edx);
+            break;
+
+        /* open */
+        case 0x5:
+            p = (void *)(regsin->d.ebx);
+            regsout->d.eax = lin_open(p,
+                                      regsin->d.ecx,
+                                      regsin->d.edx);
+            break;
+
+        /* close */
+        case 0x6:
+            regsout->d.eax = lin_close(regsin->d.ebx);
+            break;
+
+        /* getpid */
+        case 0x14:
+            regsout->d.eax = lin_getpid();
+            break;
+
+        /* ioctl */
+        case 0x36:
+            regsout->d.eax = lin_ioctl(regsin->d.ebx,
+                                       regsin->d.ecx,
+                                       regsin->d.edx);
+            break;
+
+        /* mmap */
+        case 0x5a:
+            regsout->d.eax = (int)lin_mmap((void *)regsin->d.ebx);
             break;
 
         default:
@@ -189,4 +233,66 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
         }
     }
     return (writtenbytes);
+}
+
+int lin_open(char *fnm, unsigned int flags, unsigned int mode)
+{
+    if (strncmp(fnm, "/proc", 5) == 0)
+    {
+        /* not a real file */
+        return (MAXFILES);
+    }
+    return (-1);
+}
+
+unsigned int lin_read(int handle, void *buf, unsigned int len)
+{
+    if (handle == MAXFILES)
+    {
+        if (len >= 300)
+        {
+            char *p;
+
+            p = PosGetCommandLine();
+            len = strlen(p);
+            if (strlen(p) < 300)
+            {
+                strcpy(buf, p);
+                p = buf;
+                while ((p = strchr(p, ' ')) != NULL)
+                {
+                    *p++ = '\0';
+                }
+            }
+            return (len);
+        }
+    }
+    return (-1);
+}
+
+int lin_close(int handle)
+{
+    if (handle == MAXFILES)
+    {
+        return (0);
+    }
+    return (-1);
+}
+
+int lin_getpid(void)
+{
+    return (0);
+}
+
+int lin_ioctl(int handle, int command, int parm)
+{
+    return (0);
+}
+
+void *lin_mmap(void *p)
+{
+    int *q;
+
+    q = p;
+    return (PosAllocMem(q[1], 0));
 }
