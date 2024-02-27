@@ -896,6 +896,12 @@ static int exeloadLoadELF(unsigned char **entry_point,
         /* Checks other parts of the header if the file can be loaded. */
         if (elfHdr->e_type == ET_REL)
         {
+            /* ELF relocatable files are only partly linked
+             * (produced by passing "-r" to linker)
+             * or not linked at at all (output from assembler)
+             * and should not be used for regular programs
+             * (those should use --emit-relocs).
+             */
             doing_elf_rel = 1;
         }
         else if (elfHdr->e_type == ET_EXEC)
@@ -1434,8 +1440,6 @@ static int exeloadLoadELF(unsigned char **entry_point,
                  * and sh_info section being modified. */
                 Elf32_Sym *sym_table = (Elf32_Sym *)(section_table
                                         + (section->sh_link))->sh_addr;
-                unsigned char *target_base = (unsigned char *)(section_table
-                                             + (section->sh_info))->sh_addr;
                 Elf32_Rel *startrel = (Elf32_Rel *)section->sh_addr;
                 Elf32_Rel *currel;
 
@@ -1455,9 +1459,14 @@ static int exeloadLoadELF(unsigned char **entry_point,
                 {
                     Elf32_Sym *symbol = (sym_table
                                          + ELF32_R_SYM(currel->r_info));
+                    /* For executable files, r_offset contains virtual address
+                     * of the field to which relocation should be applied,
+                     * so just subtracting the executable base address
+                     * (lowest_p_vaddr) is enough.
+                     */
                     long *target = (long *)(exeStart
-                        - (section_table + symbol->st_shndx)->sh_addr
-                        + currel->r_offset);
+                                            + (currel->r_offset
+                                               - lowest_p_vaddr));
                     Elf32_Addr sym_value = 0;
 
                     if (ELF32_R_SYM(currel->r_info) != STN_UNDEF)
@@ -1484,19 +1493,35 @@ static int exeloadLoadELF(unsigned char **entry_point,
                             /* Internal symbol. Must be converted
                              * to absolute symbol.*/
                             sym_value = symbol->st_value;
-                            /* Adds the address of the related section
-                             * so the symbol stores absolute address. */
-                            sym_value -= ((section_table
-                                           + symbol->st_shndx)->sh_addr);
+                            /* Adjusts the symbol value for new base address. */
+                            sym_value -= lowest_p_vaddr;
+                            sym_value += (unsigned long)exeStart;
                         }
                     }
+
                     switch (ELF32_R_TYPE(currel->r_info))
                     {
                         case R_386_NONE:
                             break;
                         case R_386_32:
-                            /* Symbol value + offset. */
-                            *target = sym_value + (long)exeStart;
+#if 0
+                            /* Symbol value + addend.
+                             * But the addend is lost
+                             * because it is stored in the field
+                             * and the field is overwritten...
+                             */
+                            *target = sym_value;
+#else
+                            /* So instead adjust the field
+                             * directly for the new base address
+                             * to preserve the addend
+                             * (and make symbol table unnecessary).
+                             * This assumes the linker does not output
+                             * relocations with absolute symbols.
+                             */
+                            *target -= lowest_p_vaddr;
+                            *target += (unsigned long)exeStart;
+#endif
                             break;
                         case R_386_PC32:
                             /* Symbol value + offset - absolute address
