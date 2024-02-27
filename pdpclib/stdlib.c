@@ -15,7 +15,7 @@
 #include "string.h"
 #include "ctype.h"
 #include "stddef.h"
-#include "limits.h"
+#include "errno.h"
 
 /* VSE is similar to MVS */
 #if defined(__VSE__)
@@ -1285,7 +1285,7 @@ __PDPCLIB_API__ int system(const char *string)
 
 #if defined(__gnu_linux__)
     int rc;
-    int pid;
+    long pid;
     static int argc = 4;
     static char *argv[] = { "sh",
                             "-c",
@@ -1293,8 +1293,15 @@ __PDPCLIB_API__ int system(const char *string)
                             NULL };
 
     /* printf("in system\n"); */
-    /* pid = __clone(0, NULL, NULL, NULL, NULL); */
-    pid = __fork();
+    argv[2] = (char *)string;
+    errno = 0;
+
+    /* CLONE_VFORK 0x4000 was needed to give the child a
+       chance to start, and waitid is still required, which
+       doesn't seem to match the documentation, but the
+       documentation wasn't really for the syscall */
+    pid = __clone(0x4000, NULL, NULL, NULL, NULL);
+    /* pid = __fork(); */
     if (pid != 0)
     {
         /* printf("in parent\n"); */
@@ -1306,21 +1313,21 @@ __PDPCLIB_API__ int system(const char *string)
     else
     {
         /* printf("in child\n"); */
-        argv[2] = (char *)string;
-        /* on real Linux this doesn't return, but on PDOS/386
-           it will */
+        /* on real Linux  doesn't return, but on PDOS/386
+           it will. And the PDOS/386 app may return -1 as a valid
+           return code. So we instead rely on Linux setting
+           errno if we get a -1, and we clear it first. But we
+           do that clear before getting here, so that we fit
+           within the rules of vfork where we are supposed to
+           immediately execute execve. Just in case that is
+           needed. */
         rc = __execve("/bin/sh", argv, NULL);
-        /* PDOS/386 programs cannot return INT_MIN, so it is
-           used as -1 return */
-        /* probably better to clear and check errno */
-        if (rc == INT_MIN)
-        {
-            rc = -1;
-        }
-        else if (rc == -1)
+        if ((rc == -1) && (errno != 0))
         {
             /* failure to execute on Linux - exit with -1 */
-            exit(-1);
+            /* as per vfork rules, don't go through full C library
+               exit as that is unnecessary and not allowed */
+            __exita(-1);
         }
         /* printf("will not print normally\n"); */ /* PDOS will print */
     }
