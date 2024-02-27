@@ -15,6 +15,7 @@
 #include "string.h"
 #include "ctype.h"
 #include "stddef.h"
+#include "limits.h"
 
 /* VSE is similar to MVS */
 #if defined(__VSE__)
@@ -1281,6 +1282,51 @@ __PDPCLIB_API__ int system(const char *string)
     if (rc != 0) return (-rc);
     return (__getrc());
 #endif
+
+#if defined(__gnu_linux__)
+    int rc;
+    int pid;
+    static int argc = 4;
+    static char *argv[] = { "sh",
+                            "-c",
+                            NULL, /* will be filled in */
+                            NULL };
+
+    /* printf("in system\n"); */
+    /* pid = __clone(0, NULL, NULL, NULL, NULL); */
+    pid = __fork();
+    if (pid != 0)
+    {
+        /* printf("in parent\n"); */
+        /* first parm is 0 for P_ALL or 1 for P_PID */
+        /* 4 in 4th parm = W_EXITED */
+        rc = __waitid(0, pid, NULL, 4, NULL);
+        /* printf("finished waiting\n"); */
+    }
+    else
+    {
+        /* printf("in child\n"); */
+        argv[2] = (char *)string;
+        /* on real Linux this doesn't return, but on PDOS/386
+           it will */
+        rc = __execve("/bin/sh", argv, NULL);
+        /* PDOS/386 programs cannot return INT_MIN, so it is
+           used as -1 return */
+        /* probably better to clear and check errno */
+        if (rc == INT_MIN)
+        {
+            rc = -1;
+        }
+        else if (rc == -1)
+        {
+            /* failure to execute on Linux - exit with -1 */
+            exit(-1);
+        }
+        /* printf("will not print normally\n"); */ /* PDOS will print */
+    }
+    return (rc);
+#endif
+
 #if defined(MUSIC)
     return (__system(strlen(string), string));
 #elif defined(__MVS__)
