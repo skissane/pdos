@@ -131,6 +131,11 @@ void *__mmap(mmstruc *mms);
 #endif
 
 int __munmap(void *a, size_t b);
+long __clone(int a, void *b, void *c, void *d, void *e);
+int __waitid(int a, long pid, void *c, int d, void *e);
+int __execve(char *a, char **argv, void *c);
+void __exita(int a);
+
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define PROT_EXEC 4
