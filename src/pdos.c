@@ -986,7 +986,9 @@ void pdosRun(void)
     currentDrive = bootDriveLogical;
     cwd = disks[currentDrive].cwd;
     initfiles();
+#ifdef __32BIT__
     initlinux();
+#endif
     loadConfig();
     memmgrDefaults(&memmgr);
     memmgrInit(&memmgr);
