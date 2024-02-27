@@ -361,7 +361,74 @@ pidok:  ldmia   sp!,{r7,pc}
 
 
 
-# int ___mmap(struct *x);
+# int ___clone(...);
+
+        .globl  __clone
+        .globl  ___clone
+        .type  __clone, %function
+        .align  2
+__clone:
+___clone:
+        stmfd   sp!,{r2,r3,r4,r7,lr}
+.if STACKPARM
+        ldr     r4,[sp,#36]      @ p4
+        ldr     r3,[sp,#32]      @ p3
+        ldr     r2,[sp,#28]      @ p2
+        ldr     r1,[sp,#24]      @ p1
+        ldr     r0,[sp,#20]      @ p0
+.endif
+        mov     r7,#120          @ SYS_clone
+        swi     0
+        ldmia   sp!,{r2,r3,r4,r7,pc}
+
+
+
+
+# int ___waitid(...);
+
+        .globl  __waitid
+        .globl  ___waitid
+        .type  __waitid, %function
+        .align  2
+__waitid:
+___waitid:
+        stmfd   sp!,{r2,r3,r4,r7,lr}
+.if STACKPARM
+        ldr     r4,[sp,#36]      @ p4
+        ldr     r3,[sp,#32]      @ p3
+        ldr     r2,[sp,#28]      @ p2
+        ldr     r1,[sp,#24]      @ p1
+        ldr     r0,[sp,#20]      @ p0
+.endif
+        mov     r7,#280          @ SYS_waitid
+        swi     0
+        ldmia   sp!,{r2,r3,r4,r7,pc}
+
+
+
+
+# int ___execve(...)
+
+        .globl  __execve
+        .globl  ___execve
+        .type  __execve, %function
+        .align  2
+__execve:
+___execve:
+        stmfd   sp!,{r2,r7,lr}
+.if STACKPARM
+        ldr     r2,[sp,#20]
+        ldr     r1,[sp,#16]
+        ldr     r0,[sp,#12]
+.endif
+        mov     r7,#11           @ SYS_execve
+        swi     0
+redok:  ldmia   sp!,{r2,r7,pc}
+
+
+
+
+# int ___mmap(...);
 
         .globl  __mmap
         .globl  ___mmap
