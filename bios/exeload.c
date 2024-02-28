@@ -78,6 +78,8 @@ char kernel32[FILENAME_MAX] = "\\KERNEL32.DLL";
 
 /* For reading files Pos API must be used directly
  * as PDPCLIB allocates memory from the process address space. */
+/* Since VM was disabled that is no longer the case, and
+   the normal C90 functions can be used again */
 
 #if NEED_AOUT
 static int exeloadLoadAOUT(unsigned char **entry_point,
