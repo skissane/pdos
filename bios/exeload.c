@@ -74,6 +74,7 @@ char kernel32[FILENAME_MAX] = "\\KERNEL32.DLL";
 #if NEED_ELF
 #include "elf.h"
 #endif
+#include "../pdld/src/lx.h" /*---*/
 
 /* For reading files Pos API must be used directly
  * as PDPCLIB allocates memory from the process address space. */
@@ -3923,6 +3924,11 @@ static int exeloadLoadLX(unsigned char **entry_point,
     unsigned char *corr;
     unsigned int zapoffs;
 
+    const struct LX_HEADER_internal *lx_hdr_p;
+    const struct object_table_entry_internal *object_table;
+    const struct object_page_table_entry_internal *object_page_table;
+    unsigned char *data_pages;
+
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
         || (memcmp(firstbit, "LX", 2) != 0))
@@ -3945,16 +3951,18 @@ static int exeloadLoadLX(unsigned char **entry_point,
     fread(base + e_lfanew + sizeof firstbit, 1, 200000 - sizeof firstbit - e_lfanew, fp);
 
     hdr = base + e_lfanew;
+    lx_hdr_p = (void *)hdr;
+    object_table = (void *)(hdr + lx_hdr_p->ObjectTableOffsetHdr);
+    object_page_table = (void *)(hdr + lx_hdr_p->ObjectPageTableOffsetHdr);
+    data_pages = base + lx_hdr_p->DataPagesOffset;
 
     /* this gives an offset into the "data pages", which apparently
        includes code. We're assuming our entry point is at the
        beginning of the code */
-    codestart = base + *(int *)(hdr + 0x80);
-
-    datastart = codestart + 0x3b; /* not sure how to get this properly */
+    codestart = base + lx_hdr_p->DataPagesOffset;
 
     if (*(int *)(hdr + 0x6C)) {
-        corr = hdr + *(int *)(hdr + 0x6C); /* FixupRecordTableOffsetHdr */
+        corr = hdr + lx_hdr_p->FixupRecordTableOffsetHdr;
         while (1)
         {
             /* we should be abiding by the count, not looking for
@@ -4062,9 +4070,16 @@ static int exeloadLoadLX(unsigned char **entry_point,
             }
             else if (corr[0] == 0x07)
             {
+                const struct object_table_entry_internal *src_obj;
+                const struct object_page_table_entry_internal *src_page_e;
+
+                src_obj = object_table + corr[4] - 1;
+                src_page_e = object_page_table + src_obj->PageTableIndex - 1;
+
                 zapoffs = corr[2] | (corr[3] << 8);
                 *(unsigned int *)(codestart + zapoffs)
-                    = (unsigned int)(datastart + corr[5] + (corr[6] << 8));
+                    = (unsigned int)(data_pages + src_page_e->PageDataOffset
+                                     + corr[5] + (corr[6] << 8));
                 corr += 7;
             }
             else
