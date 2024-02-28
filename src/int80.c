@@ -243,13 +243,14 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
             {
                 rc = PosWriteFile(linfiles[handle].handle,
                                   p,
-                                  q - p,
+                                  remain,
                                   &thiswrite);
                 if (rc != 0)
                 {
                     return (-1);
                 }
                 writtenbytes += thiswrite;
+                remain = 0;
             }
         }
     }
