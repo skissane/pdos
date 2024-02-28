@@ -106,7 +106,7 @@ int lin_getpid(void);
 int lin_ioctl(int handle, int command, int parm);
 void *lin_mmap(void *p);
 int lin_munmap(void *p, unsigned int len);
-
+int lin_execve(char *path, char **argv, char **envp);
 
 static void int80handler(union REGS *regsin,
                         union REGS *regsout,
@@ -151,6 +151,13 @@ static void int80handler(union REGS *regsin,
             regsout->d.eax = lin_close(regsin->d.ebx);
             break;
 
+        /* execve */
+        case 0xb:
+            regsout->d.eax = lin_execve((void *)regsin->d.ebx,
+                                        (void *)regsin->d.ecx,
+                                        (void *)regsin->d.edx);
+            break;
+
         /* getpid */
         case 0x14:
             regsout->d.eax = lin_getpid();
@@ -172,6 +179,12 @@ static void int80handler(union REGS *regsin,
         case 0x5b:
             regsout->d.eax = lin_munmap((void *)regsin->d.ebx,
                                         regsin->d.ecx);
+            break;
+
+        /* clone */
+        case 0x78:
+            /* don't bother doing anything except return success/child */
+            regsout->d.eax = 0;
             break;
 
         default:
@@ -379,4 +392,9 @@ int lin_munmap(void *p, unsigned int len)
 {
     PosFreeMem(p);
     return (0);
+}
+
+int lin_execve(char *path, char **argv, char **envp)
+{
+    return (system(argv[2]));
 }
