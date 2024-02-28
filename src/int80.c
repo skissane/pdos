@@ -189,6 +189,7 @@ static void int80handler(union REGS *regsin,
 
         default:
             printf("got int 80H call %x\n", regsin->d.eax);
+            for (;;) ;
             break;
     }
     return;
