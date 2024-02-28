@@ -105,6 +105,7 @@ int lin_close(int handle);
 int lin_getpid(void);
 int lin_ioctl(int handle, int command, int parm);
 void *lin_mmap(void *p);
+int lin_munmap(void *p, unsigned int len);
 
 
 static void int80handler(union REGS *regsin,
@@ -167,6 +168,12 @@ static void int80handler(union REGS *regsin,
             regsout->d.eax = (int)lin_mmap((void *)regsin->d.ebx);
             break;
 
+        /* munmap */
+        case 0x5b:
+            regsout->d.eax = lin_munmap((void *)regsin->d.ebx,
+                                        regsin->d.ecx);
+            break;
+
         default:
             printf("got int 80H call %x\n", regsin->d.eax);
             break;
@@ -198,13 +205,19 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
             q = memchr(p, '\n', remain);
             if (q != NULL)
             {
-                rc = PosWriteFile(handle, p, q - p, &thiswrite);
+                rc = PosWriteFile(linfiles[handle].handle,
+                                  p,
+                                  q - p,
+                                  &thiswrite);
                 if (rc != 0)
                 {
                     return (-1);
                 }
                 writtenbytes += thiswrite;
-                rc = PosWriteFile(handle, "\r\n", 2, &thiswrite);
+                rc = PosWriteFile(linfiles[handle].handle,
+                                  "\r\n",
+                                  2,
+                                  &thiswrite);
                 if (rc != 0)
                 {
                     return (-1);
@@ -215,7 +228,10 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
             }
             else
             {
-                rc = PosWriteFile(handle, p, q - p, &thiswrite);
+                rc = PosWriteFile(linfiles[handle].handle,
+                                  p,
+                                  q - p,
+                                  &thiswrite);
                 if (rc != 0)
                 {
                     return (-1);
@@ -226,7 +242,7 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
     }
     else
     {
-        rc = PosWriteFile(handle, buf, len, &writtenbytes);
+        rc = PosWriteFile(linfiles[handle].handle, buf, len, &writtenbytes);
         if (rc != 0)
         {
             return (-1);
@@ -235,18 +251,62 @@ unsigned int lin_write(int handle, void *buf, unsigned int len)
     return (writtenbytes);
 }
 
+#define O_TEXT 0x40000000
+
 int lin_open(char *fnm, unsigned int flags, unsigned int mode)
 {
+    int handle;
+    int x;
+    int rc;
+
     if (strncmp(fnm, "/proc", 5) == 0)
     {
         /* not a real file */
         return (MAXFILES);
     }
+    else
+    {
+        for (x = 3; x < MAXFILES; x++)
+        {
+            if (!linfiles[x].inuse)
+            {
+                if (flags & 1)
+                {
+                    rc = PosCreatFile(fnm, 0, &handle);
+                }
+                else
+                {
+                    rc = PosOpenFile(fnm, 2, &handle);
+                }
+                if (rc == 0)
+                {
+                    linfiles[x].handle = handle;
+                    if (flags & O_TEXT)
+                    {
+                        linfiles[x].text = 1;
+                    }
+                    else
+                    {
+                        linfiles[x].text = 0;
+                    }
+                    linfiles[x].inuse = 1;
+                    /* the handle to Linux is different from the one
+                       used by PDOS */
+                    return (x);
+                }
+                break;
+            }
+        }
+    }
+
     return (-1);
 }
 
 unsigned int lin_read(int handle, void *buf, unsigned int len)
 {
+    int rc;
+    unsigned int readbytes;
+
     if (handle == MAXFILES)
     {
         if (len >= 300)
@@ -267,6 +327,18 @@ unsigned int lin_read(int handle, void *buf, unsigned int len)
             return (len);
         }
     }
+    else
+    {
+        /* we should really have a more complex algorithm here, to
+           translate CRLF into LF. However, currently PDPCLIB - even
+           on Linux - is doing that translation anyway, so it will
+           take a bit more effort to test */
+        rc = PosReadFile(linfiles[handle].handle, buf, len, &readbytes);
+        if (rc == 0)
+        {
+            return (readbytes);
+        }
+    }
     return (-1);
 }
 
@@ -274,6 +346,12 @@ int lin_close(int handle)
 {
     if (handle == MAXFILES)
     {
+        return (0);
+    }
+    if (handle < MAXFILES)
+    {
+        PosCloseFile(linfiles[handle].handle);
+        linfiles[handle].inuse = 0;
         return (0);
     }
     return (-1);
@@ -295,4 +373,10 @@ void *lin_mmap(void *p)
 
     q = p;
     return (PosAllocMem(q[1], 0));
+}
+
+int lin_munmap(void *p, unsigned int len)
+{
+    PosFreeMem(p);
+    return (0);
 }
