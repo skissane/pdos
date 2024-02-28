@@ -27,6 +27,10 @@
 #include <setjmp.h>
 #include <locale.h>
 
+/* is this a standalone program that won't call __start of its
+   own free will? */
+int salone = 0;
+
 /* moved these defines here to reduce pressure on
    the size of command line */
 #if defined(__MSC__) && defined(__OS2__) && defined(__16BIT__)
@@ -4071,6 +4075,13 @@ static int exeloadLoadLX(unsigned char **entry_point,
             }
         }
     }
+
+    /* This program that uses doscalls.dll directly will not go through
+       a __start process, so will not get the runnum incremented, and
+       thus when it attempts to do DosExit, thus exit, it will terminate
+       the entire process. So we need to let the pseudo-bios know that
+       this is a standalone program so that it will provide a genmain */
+    salone = 1;
 
     *entry_point = codestart;
     return (0);
