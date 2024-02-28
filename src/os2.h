@@ -18,7 +18,9 @@
 #define APIENTRY _pascal _far
 #else
 #ifndef __SUPPRESS__
+#ifndef APIENTRY
 #define APIENTRY _System
+#endif
 #endif
 #endif
 
