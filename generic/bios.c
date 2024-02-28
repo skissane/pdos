@@ -134,6 +134,9 @@ int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
 #endif
 
+extern int salone; /* is this a standalone program that
+    will not invoke start of its own free will? */
+
 static char buf[600];
 static char cmd[600];
 
@@ -817,6 +820,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
 #endif
+    salone = 0;
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
@@ -886,7 +890,17 @@ int main(int argc, char **argv)
 #ifdef __CC64__
     rc = (*genstart)(&bios);
 #else
-    rc = genstart(&bios);
+    if (salone)
+    {
+        __genmain = (void *)genstart;
+        rc = __start(0, NULL); /* parameters no longer correct for linux */
+        salone = 0;
+        __genmain = 0;
+    }
+    else
+    {
+        rc = genstart(&bios);
+    }
 #endif
 #else
     rc = 0;
