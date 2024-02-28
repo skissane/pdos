@@ -377,8 +377,34 @@ int lin_getpid(void)
     return (0);
 }
 
+#define TCSETS 0x00005402U
+
 int lin_ioctl(int handle, int command, int parm)
 {
+    unsigned int dw;
+    static int linebuf = 1;
+
+    if (handle == 0)
+    {
+        /* there should be laws against hacks this bad */
+        if (command == TCSETS)
+        {
+            PosGetDeviceInformation(0, &dw);
+            if (linebuf)
+            {
+                linebuf = 0;
+                dw &= 0xff;
+                dw |= (1 << 5);
+            }
+            else
+            {
+                dw &= 0xff;
+                dw &= ~(1 << 5);
+                linebuf = 1;
+            }
+            PosSetDeviceInformation(0, dw);
+        }
+    }
     return (0);
 }
 
