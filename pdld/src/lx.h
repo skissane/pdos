@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file            lx.c
+ * @file            lx.h
  *
  * Released to the public domain.
  *
@@ -46,6 +46,7 @@ struct LX_HEADER_internal {
     unsigned long EspObjectIndex;
     unsigned long Esp;
     unsigned long PageSize;
+#define PAGE_SIZE  0x1000
     unsigned long PageOffsetShift;
     unsigned long FixupSectionSize;
     unsigned long FixupSectionChecksum;
@@ -143,4 +144,59 @@ struct LX_HEADER_file {
     unsigned char Heapsize[4];
     unsigned char Stacksize[4];
     
+};
+
+struct object_table_entry_internal {
+
+    unsigned long VirtualSize;
+    unsigned long RelocationBaseAddress;
+    unsigned long ObjectFlags;
+    unsigned long PageTableIndex; /* 1-based. */
+    unsigned long NumberOfPageTableEntries;
+    unsigned long Reserved;
+
+};
+
+struct object_table_entry_file {
+
+    unsigned char VirtualSize[4];
+    unsigned char RelocationBaseAddress[4];
+    unsigned char ObjectFlags[4];
+    unsigned char PageTableIndex[4];
+    unsigned char NumberOfPageTableEntries[4];
+    unsigned char Reserved[4];
+
+};
+
+#define OBJECT_FLAGS_MEM_READ                 0x0001
+#define OBJECT_FLAGS_MEM_WRITE                0x0002
+#define OBJECT_FLAGS_MEM_EXECUTE              0x0004
+#define OBJECT_FLAGS_RESOURCE                 0x0008
+#define OBJECT_FLAGS_DISCARDABLE              0x0010
+#define OBJECT_FLAGS_SHARED                   0x0020
+#define OBJECT_FLAGS_HAS_PRELOAD_PAGES        0x0040
+#define OBJECT_FLAGS_HAS_INVALID_PAGES        0x0080
+#define OBJECT_FLAGS_RESIDENT                 0x0100
+#define OBJECT_FLAGS_RESIDENT_CONTIGUOUS      0x0300
+#define OBJECT_FLAGS_RESIDENT_LONG_LOCKABLE   0x0400
+#define OBJECT_FLAGS_IBM_MICRO_EXTENSION      0x0800
+#define OBJECT_FLAGS_16_16_ALIAS_NEEDED       0x1000
+#define OBJECT_FLAGS_BIG_DEFAULT_BIT_SETTING  0x2000
+#define OBJECT_FLAGS_CONFORMING_FOR_CODE      0x4000
+#define OBJECT_FLAGS_IO_PRIVILEGE_LEVEL       0x8000
+
+struct object_page_table_entry_internal {
+
+    unsigned long PageDataOffset;
+    unsigned short DataSize;
+    unsigned short Flags;
+
+};
+
+struct object_page_table_entry_file {
+
+    unsigned char PageDataOffset[4];
+    unsigned char DataSize[2];
+    unsigned char Flags[2];
+
 };

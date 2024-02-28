@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file            coff_bytearray.c
+ * @file            lx_bytearray.c
  *
  * Released to the public domain.
  *
@@ -77,6 +77,27 @@ void read_struct_LX_HEADER (struct LX_HEADER_internal *LX_HEADER_internal, const
     COPY(LX_HEADER, Stacksize, 4);
 }
 
+void read_struct_object_table_entry (struct object_table_entry_internal *object_table_entry_internal, const void *memory)
+{
+    const struct object_table_entry_file *object_table_entry_file = memory;
+
+    COPY(object_table_entry, VirtualSize, 4);
+    COPY(object_table_entry, RelocationBaseAddress, 4);
+    COPY(object_table_entry, ObjectFlags, 4);
+    COPY(object_table_entry, PageTableIndex, 4);
+    COPY(object_table_entry, NumberOfPageTableEntries, 4);
+    COPY(object_table_entry, Reserved, 4);
+}
+
+void read_struct_object_page_table_entry (struct object_page_table_entry_internal *object_page_table_entry_internal, const void *memory)
+{
+    const struct object_page_table_entry_file *object_page_table_entry_file = memory;
+
+    COPY(object_page_table_entry, PageDataOffset, 4);
+    COPY(object_page_table_entry, DataSize, 2);
+    COPY(object_page_table_entry, Flags, 2);
+}
+
 #undef COPY_CHAR_ARRAY
 #undef COPY
 
@@ -138,6 +159,27 @@ void write_struct_LX_HEADER (void *memory, const struct LX_HEADER_internal *LX_H
     COPY(LX_HEADER, NumberOfInstanceDemandPages, 4);
     COPY(LX_HEADER, Heapsize, 4);
     COPY(LX_HEADER, Stacksize, 4);
+}
+
+void write_struct_object_table_entry (void *memory, const struct object_table_entry_internal *object_table_entry_internal)
+{
+    struct object_table_entry_file *object_table_entry_file = memory;
+
+    COPY(object_table_entry, VirtualSize, 4);
+    COPY(object_table_entry, RelocationBaseAddress, 4);
+    COPY(object_table_entry, ObjectFlags, 4);
+    COPY(object_table_entry, PageTableIndex, 4);
+    COPY(object_table_entry, NumberOfPageTableEntries, 4);
+    COPY(object_table_entry, Reserved, 4);
+}
+
+void write_struct_object_page_table_entry (void *memory, const struct object_page_table_entry_internal *object_page_table_entry_internal)
+{
+    struct object_page_table_entry_file *object_page_table_entry_file = memory;
+
+    COPY(object_page_table_entry, PageDataOffset, 4);
+    COPY(object_page_table_entry, DataSize, 2);
+    COPY(object_page_table_entry, Flags, 2);
 }
 
 #undef COPY_CHAR_ARRAY
