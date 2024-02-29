@@ -137,6 +137,13 @@ void lx_write (const char *filename)
 
         for (section = all_sections; section; section = section->next) {
             if (!section->is_bss) total_section_size_to_write += section->total_size;
+
+            if (ld_state->entry_point >= section->rva
+                && ld_state->entry_point < section->rva + section->total_size) {
+                lx_hdr.EipObjectIndex = object_page_table_entries + 1;
+                lx_hdr.Eip = ld_state->entry_point - section->rva;
+            }
+
             object_page_table_entries += (section->total_size / lx_hdr.PageSize) + !!(section->total_size % lx_hdr.PageSize);
         }
 
