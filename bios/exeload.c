@@ -74,7 +74,7 @@ char kernel32[FILENAME_MAX] = "\\KERNEL32.DLL";
 #if NEED_ELF
 #include "elf.h"
 #endif
-#include "../pdld/src/lx.h" /*---*/
+#include "../pdld/src/lx.h"
 
 /* For reading files Pos API must be used directly
  * as PDPCLIB allocates memory from the process address space. */
@@ -3958,137 +3958,136 @@ static int exeloadLoadLX(unsigned char **entry_point,
     object_page_table = (void *)(hdr + lx_hdr_p->ObjectPageTableOffsetHdr);
     data_pages = base + lx_hdr_p->DataPagesOffset;
 
-    /* this gives an offset into the "data pages", which apparently
-       includes code. We're assuming our entry point is at the
-       beginning of the code */
-    codestart = base + lx_hdr_p->DataPagesOffset;
+    if (lx_hdr_p->FixupPageTableOffsetHdr
+        && lx_hdr_p->FixupRecordTableOffsetHdr) {
+        unsigned long i;
+        const unsigned long *fixup_offset_table;
+        unsigned char *corr_start;
 
-    if (*(int *)(hdr + 0x6C)) {
-        corr = hdr + lx_hdr_p->FixupRecordTableOffsetHdr;
-        while (1)
-        {
-            /* we should be abiding by the count, not looking for
-               the beginning of the DLL name (DOSCALLS) and its
-               length (8) */
-            if ((corr[0] == 0x08) && (corr[1] == 0x44))
-            {
-                break;
-            }
-            if (corr[0] == 0x08)
-            {
-                unsigned int ord;
+        fixup_offset_table = (void *)(hdr + lx_hdr_p->FixupPageTableOffsetHdr);
+        corr_start = (void *)(hdr + lx_hdr_p->FixupRecordTableOffsetHdr);
 
-                zapoffs = corr[2] | (corr[3] << 8);
-                if ((corr[1] & 0x80) == 0)
+        for (i = 0; i < lx_hdr_p->ModuleNumberOfPages; i++) {
+            unsigned char *trg_page = data_pages + object_page_table[i].PageDataOffset;
+
+            corr = corr_start + fixup_offset_table[i];
+            while (corr < corr_start + fixup_offset_table[i + 1]) {
+                if (corr[0] == 0x08)
                 {
-                    ord = (corr[6] << 8) | corr[5];
+                    unsigned int ord;
+
+                    zapoffs = corr[2] | (corr[3] << 8);
+                    if ((corr[1] & 0x80) == 0)
+                    {
+                        ord = (corr[6] << 8) | corr[5];
+                        corr += 7;
+                    }
+                    else
+                    {
+                        ord = corr[5];
+                        corr += 6;
+                    }
+                    if (ord == 234)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosExit - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 273)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosOpen - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 257)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosClose - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 281)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosRead - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 282)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosWrite - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 259)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosDelete - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 271)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosMove - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 283)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosExecPgm - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 256)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosSetFilePtr - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 230)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosGetDateTime - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 284)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosDevIOCtl - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 299)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosAllocMem - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 304)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosFreeMem - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 227)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosScanEnv - (trg_page + zapoffs + 4);
+                    }
+                    else if (ord == 382)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosSetRelMaxFH - (trg_page + zapoffs + 4);
+                    }
+                    else
+                    {
+                        printf("unknown DLL ordinal %d\n", ord);
+                        for (;;) ;
+                    }
+                }
+                else if (corr[0] == 0x07)
+                {
+                    const struct object_table_entry_internal *src_obj;
+                    const struct object_page_table_entry_internal *src_page_e;
+
+                    src_obj = object_table + corr[4] - 1;
+                    src_page_e = object_page_table + src_obj->PageTableIndex - 1;
+
+                    zapoffs = corr[2] | (corr[3] << 8);
+                    *(unsigned int *)(trg_page + zapoffs)
+                        = (unsigned int)(data_pages + src_page_e->PageDataOffset
+                                         + corr[5] + (corr[6] << 8));
                     corr += 7;
                 }
                 else
                 {
-                    ord = corr[5];
-                    corr += 6;
-                }
-                if (ord == 234)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosExit - (codestart + zapoffs + 4);
-                }
-                else if (ord == 273)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosOpen - (codestart + zapoffs + 4);
-                }
-                else if (ord == 257)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosClose - (codestart + zapoffs + 4);
-                }
-                else if (ord == 281)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosRead - (codestart + zapoffs + 4);
-                }
-                else if (ord == 282)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosWrite - (codestart + zapoffs + 4);
-                }
-                else if (ord == 259)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosDelete - (codestart + zapoffs + 4);
-                }
-                else if (ord == 271)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosMove - (codestart + zapoffs + 4);
-                }
-                else if (ord == 283)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosExecPgm - (codestart + zapoffs + 4);
-                }
-                else if (ord == 256)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosSetFilePtr - (codestart + zapoffs + 4);
-                }
-                else if (ord == 230)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosGetDateTime - (codestart + zapoffs + 4);
-                }
-                else if (ord == 284)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosDevIOCtl - (codestart + zapoffs + 4);
-                }
-                else if (ord == 299)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosAllocMem - (codestart + zapoffs + 4);
-                }
-                else if (ord == 304)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosFreeMem - (codestart + zapoffs + 4);
-                }
-                else if (ord == 227)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosScanEnv - (codestart + zapoffs + 4);
-                }
-                else if (ord == 382)
-                {
-                    *(unsigned int *)(codestart + zapoffs) =
-                        (unsigned char *)DosSetRelMaxFH - (codestart + zapoffs + 4);
-                }
-                else
-                {
-                    printf("unknown DLL ordinal %d\n", ord);
+                    printf("unknown fixup %x\n", corr[0]);
                     for (;;) ;
+
                 }
-            }
-            else if (corr[0] == 0x07)
-            {
-                const struct object_table_entry_internal *src_obj;
-                const struct object_page_table_entry_internal *src_page_e;
-
-                src_obj = object_table + corr[4] - 1;
-                src_page_e = object_page_table + src_obj->PageTableIndex - 1;
-
-                zapoffs = corr[2] | (corr[3] << 8);
-                *(unsigned int *)(codestart + zapoffs)
-                    = (unsigned int)(data_pages + src_page_e->PageDataOffset
-                                     + corr[5] + (corr[6] << 8));
-                corr += 7;
-            }
-            else
-            {
-                printf("unknown fixup %x\n", corr[0]);
-                for (;;) ;
-
             }
         }
     }
@@ -4100,7 +4099,19 @@ static int exeloadLoadLX(unsigned char **entry_point,
        this is a standalone program so that it will provide a genmain */
     salone = 1;
 
-    *entry_point = codestart;
+    if (lx_hdr_p->EipObjectIndex) {
+        const struct object_table_entry_internal *eip_obj;
+        const struct object_page_table_entry_internal *eip_page_e;
+
+        eip_obj = object_table + lx_hdr_p->EipObjectIndex - 1;
+        eip_page_e = object_page_table + eip_obj->PageTableIndex - 1;
+
+        *entry_point = data_pages + eip_page_e->PageDataOffset + lx_hdr_p->Eip;
+    } else {
+        printf ("LX program has no entry point\n");
+        return 2;
+    }
+
     return (0);
 #endif
 }
