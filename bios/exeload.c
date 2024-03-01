@@ -4062,6 +4062,11 @@ static int exeloadLoadLX(unsigned char **entry_point,
                         *(unsigned int *)(trg_page + zapoffs) =
                             (unsigned char *)DosSetRelMaxFH - (trg_page + zapoffs + 4);
                     }
+                    else if (ord == 312)
+                    {
+                        *(unsigned int *)(trg_page + zapoffs) =
+                            (unsigned char *)DosGetInfoBlocks - (trg_page + zapoffs + 4);
+                    }
                     else
                     {
                         printf("unknown DLL ordinal %d\n", ord);
