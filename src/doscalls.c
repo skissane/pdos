@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <pos.h>
+
 ULONG APIENTRY DosWrite(ULONG hfile, void *ptr,
                          ULONG towrite, ULONG *tempWritten)
 {
