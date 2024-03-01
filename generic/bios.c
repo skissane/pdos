@@ -1189,6 +1189,11 @@ void *PosGetDTA(void)
 #endif
 
 
+char *PosGetCommandLine(void)
+{
+    return (cmd);
+}
+
 #ifdef W64HACK
 
 #define STATUS_IS_ERROR(a) (!!((a) >> (sizeof (a) * 8 - 1)))
