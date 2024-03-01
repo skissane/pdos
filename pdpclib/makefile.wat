@@ -32,6 +32,7 @@ pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo ++DosFreeMem.DOSCALLS.DosFreeMem.304 >>temp.wat
   echo ++DosScanEnv.DOSCALLS.DosScanEnv.227 >>temp.wat
   echo ++DosSetRelMaxFH.DOSCALLS.DosSetRelMaxFH.382 >>temp.wat
+  echo ++DosGetInfoBlocks.DOSCALLS.DosGetInfoBlocks.312 >>temp.wat
   wlib -q os2.lib @temp.wat
 # full works, PMCompatible doesn't
   wlink File pdptest.obj Name pdptest.exe Form os2 flat full Library watcom.lib Library os2.lib Option quiet,stub=needpdos.exe,internalrelocs
