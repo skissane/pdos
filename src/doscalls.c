@@ -107,3 +107,17 @@ ULONG APIENTRY DosSetRelMaxFH(LONG *req, ULONG *max)
 {
     return (0);
 }
+
+ULONG APIENTRY DosGetInfoBlocks(TIB **tib, PIB **pib)
+{
+    /* OS/2 appears to have a space before the qqq, but
+       PDPCLIB doesn't seem to care either way */
+    static char cmd[] = "ppp\0qqq rrr";
+    static PIB mypib = { 0, 0, 0, cmd };
+
+    if (pib != NULL)
+    {
+        *pib = &mypib;
+    }
+    return (0);
+}
