@@ -1157,8 +1157,26 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             {
                 p = "\0"; /* two NUL characters */
             }
-            p = (char *)(((unsigned long)seg << 16)
-                         | offs);
+            else
+            {
+                p = (char *)(((unsigned long)seg << 16)
+                             | offs);
+            }
+        }
+#else
+        {
+            PIB *pib;
+
+            if (DosGetInfoBlocks(NULL, &pib) != 0)
+            {
+                p = "\0"; /* two NUL characters */
+            }
+            else
+            {
+                /* skip three 32-bit values and then you get a
+                   pointer to the command line */
+                p = pib->pib_pchcmd;
+            }
         }
 #endif
         argv[0] = p;
