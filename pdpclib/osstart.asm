@@ -37,7 +37,7 @@ top:
 
 public __main
 __intstart proc
-# We no longer use this copy of the command line
+; We no longer use this copy of the command line
         mov eax, [esp+16]
         push eax
         call __start
