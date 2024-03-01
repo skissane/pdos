@@ -90,7 +90,7 @@ ULONG APIENTRY DosDevIOCtl(ULONG handle,
 
 ULONG APIENTRY DosAllocMem(void *base, ULONG size, ULONG flags)
 {
-    return (0);
+    return (1); /* fail for now */
 }
 
 ULONG APIENTRY DosFreeMem(void *base)
