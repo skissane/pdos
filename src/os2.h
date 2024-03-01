@@ -10,6 +10,18 @@
 /*                                                                   */
 /*********************************************************************/
 
+/*
+
+ordinal numbers can be found here:
+
+https://www.osfree.org/doku/en:docs:os2:modules:doscalls
+
+Further documentation can be found here:
+
+http://www.edm2.com/index.php/Control_Program_Functions_List
+
+*/
+
 #include <stddef.h>
 
 #define NULL ((void *)0)
@@ -184,4 +196,24 @@ typedef struct {
   USHORT fsState;
   ULONG time;
 } KBDKEYINFO;
+#endif
+
+
+
+#ifdef __32BIT__
+
+typedef struct {
+    int dummy1;
+} TIB;
+
+typedef struct {
+    int dummy1;
+    int dummy2;
+    int dummy3;
+    char *pib_pchcmd;
+    char *pib_pchenv;
+} PIB;
+
+ULONG APIENTRY DosGetInfoBlocks(TIB **tib, PIB **pib);
+
 #endif
