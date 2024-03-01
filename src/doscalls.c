@@ -112,11 +112,24 @@ ULONG APIENTRY DosGetInfoBlocks(TIB **tib, PIB **pib)
 {
     /* OS/2 appears to have a space before the qqq, but
        PDPCLIB doesn't seem to care either way */
-    static char cmd[] = "ppp\0qqq rrr";
+    /* static char cmd[] = "ppp\0qqq rrr"; */
+
+    static char cmd[310]; /* will have NUL terminator */
     static PIB mypib = { 0, 0, 0, cmd };
 
     if (pib != NULL)
     {
+        char *p;
+
+        strncpy(cmd, PosGetCommandLine(), sizeof cmd - 1);
+
+        /* this simple algorithm prevents the program name from
+           having a space in it, so may want to fix */
+        p = strchr(cmd, ' ');
+        if (p != NULL)
+        {
+            *p = '\0';
+        }
         *pib = &mypib;
     }
     return (0);
