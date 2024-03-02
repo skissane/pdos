@@ -10,6 +10,14 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* note that we don't need a separate table of OS/2 handles
+   to file pointers - we rely on the handles less than 3 being
+   standard and not clashing with file pointers and then the
+   rest are equated. We should possibly create an initialization
+   function, similar to initlinux, so that we can more easily
+   index into a table containing just stdin, stdout and stderr,
+   but for now we'll just code that every time */
+
 #undef __SUPPRESS__
 
 #include <os2.h>
@@ -22,7 +30,14 @@
 ULONG APIENTRY DosWrite(ULONG hfile, void *ptr,
                          ULONG towrite, ULONG *tempWritten)
 {
-    fwrite(ptr, towrite, 1, stdout);
+    FILE *f;
+
+    if (hfile == 0) f = stdin;
+    else if (hfile == 1) f = stdout;
+    else if (hfile == 2) f = stderr;
+    else f = (FILE *)hfile;
+
+    *tempWritten = fwrite(ptr, 1, towrite, f);
     return (0);
 }
 
@@ -35,17 +50,45 @@ ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
                ULONG newsize, ULONG fileattr, ULONG action2,
                ULONG mode, ULONG resvd)
 {
+    if ((mode & OPEN_ACCESS_WRITEONLY) != 0)
+    {
+        *handle = (ULONG)fopen(fnm, "wb");
+    }
+    else
+    {
+        *handle = (ULONG)fopen(fnm, "rb");
+    }
+
+    if ((void *)*handle == NULL)
+    {
+        return (1);
+    }
     return (0);
 }
 
-ULONG APIENTRY DosClose(short handle)
+ULONG APIENTRY DosClose(ULONG hfile)
 {
+    FILE *f;
+
+    if (hfile == 0) f = stdin;
+    else if (hfile == 1) f = stdout;
+    else if (hfile == 2) f = stderr;
+    else f = (FILE *)hfile;
+    fclose((FILE *)hfile);
     return (0);
 }
 
 ULONG APIENTRY DosRead(ULONG hfile, void *ptr,
                        ULONG toread, ULONG *tempRead)
 {
+    FILE *f;
+
+    if (hfile == 0) f = stdin;
+    else if (hfile == 1) f = stdout;
+    else if (hfile == 2) f = stderr;
+    else f = (FILE *)hfile;
+
+    *tempRead = fread(ptr, 1, toread, f);
     return (0);
 }
 
@@ -92,11 +135,17 @@ ULONG APIENTRY DosDevIOCtl(ULONG handle,
 
 ULONG APIENTRY DosAllocMem(void *base, ULONG size, ULONG flags)
 {
-    return (1); /* fail for now */
+    char *p;
+
+    p = malloc(size);
+    if (p == NULL) return (1);
+    *(char **)base = p;
+    return (0);
 }
 
 ULONG APIENTRY DosFreeMem(void *base)
 {
+    free(base);
     return (0);
 }
 
