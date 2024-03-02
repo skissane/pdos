@@ -139,7 +139,7 @@ ULONG APIENTRY DosDelete(char *name);
 ULONG APIENTRY DosMove(char *a, char *b);
 ULONG APIENTRY DosSetFilePtr(ULONG hfile, LONG newpos,
                               int dir, ULONG *retpos);
-ULONG APIENTRY DosClose(short handle);
+ULONG APIENTRY DosClose(ULONG handle);
 ULONG APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                           char *string, void *junk1, RESULTCODES *results,
                           char *string2);
