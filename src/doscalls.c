@@ -56,7 +56,7 @@ ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
     }
     else
     {
-        *handle = (ULONG)fopen(fnm, "rb");
+        *handle = (ULONG)fopen(fnm, "r+b");
     }
 
     if ((void *)*handle == NULL)
@@ -94,11 +94,13 @@ ULONG APIENTRY DosRead(ULONG hfile, void *ptr,
 
 ULONG APIENTRY DosDelete(char *name)
 {
+    remove(name);
     return (0);
 }
 
 ULONG APIENTRY DosMove(char *a, char *b)
 {
+    rename(a, b);
     return (0);
 }
 
@@ -106,12 +108,21 @@ ULONG APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                           char *string, void *junk1, RESULTCODES *results,
                           char *string2)
 {
+    system(string);
     return (0);
 }
 
 ULONG APIENTRY DosSetFilePtr(ULONG hfile, LONG newpos,
                               int dir, ULONG *retpos)
 {
+    FILE *f;
+
+    if (hfile == 0) f = stdin;
+    else if (hfile == 1) f = stdout;
+    else if (hfile == 2) f = stderr;
+    else f = (FILE *)hfile;
+
+    *retpos = fseek(f, newpos, dir);
     return (0);
 }
 
@@ -151,6 +162,7 @@ ULONG APIENTRY DosFreeMem(void *base)
 
 ULONG APIENTRY DosScanEnv(void *name, void *result)
 {
+    *(char **)result = getenv(name);
     return (0);
 }
 
