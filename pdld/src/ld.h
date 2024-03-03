@@ -156,6 +156,7 @@ struct section {
     address_type rva;
     address_type section_alignment;
 
+    int target_index;
     void *object_dependent_data;
 
 };

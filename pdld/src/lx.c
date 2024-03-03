@@ -46,6 +46,106 @@ static unsigned long translate_section_flags_to_ObjectFlags (flag_int flags)
     return ObjectFlags;
 }
 
+static int reloc_compar (const void *a, const void *b)
+{
+    if (((struct reloc_entry *)a)->offset < ((struct reloc_entry *)b)->offset) return -1;
+    if (((struct reloc_entry *)a)->offset == ((struct reloc_entry *)b)->offset) return 0;
+    return 1;
+}
+
+static size_t calculate_fixup_record_table_size (void)
+{
+    struct section *section;
+    size_t frt_size = 0;
+
+    for (section = all_sections; section; section = section->next) {
+        struct section_part *part;
+        
+        for (part = section->first_part; part; part = part->next) {
+            size_t i;
+
+            /* Relocations need to be sorted by RVA
+             * because they need to be grouped
+             * according to memory page to which they belong.
+             */
+            qsort (part->relocation_array,
+                   part->relocation_count,
+                   sizeof *part->relocation_array,
+                   &reloc_compar);
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    frt_size += 7;
+                }
+            }
+        }
+    }
+
+    return frt_size;
+}
+
+static void write_relocations (unsigned char *file,
+                               struct LX_HEADER_internal *lx_hdr_p,
+                               size_t lx_hdr_offset)
+{
+    unsigned char *pos, *pos2;
+    struct section *section;
+    size_t old_rec_offset = 0;
+    address_type cur_rva = all_sections ? all_sections->rva : 0;
+
+    pos = file + lx_hdr_p->FixupPageTableOffsetHdr + lx_hdr_offset;
+    pos2 = file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset;
+
+    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+    pos += 4;
+
+    for (section = all_sections; section; section = section->next) {
+        struct section_part *part;
+        
+        for (part = section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                address_type rva;
+                
+                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) {
+                    continue;
+                }
+
+                rva = part->rva + part->relocation_array[i].offset;
+                while (rva > cur_rva + lx_hdr_p->PageSize) {
+                    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+                    pos += 4;
+                    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+                    cur_rva += lx_hdr_p->PageSize;
+                }
+
+                bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
+                bytearray_write_1_bytes (pos2 + 1, 0, LITTLE_ENDIAN);
+                bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
+
+                {
+                    struct section *source_section;
+                    address_type value;
+
+                    source_section = part->relocation_array[i].symbol->part->section;
+                    bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
+                    
+                    /* The source offset is just the field value
+                     * made source-section-relative.
+                     */
+                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (pos2 + 5, value - source_section->rva, LITTLE_ENDIAN);
+                }
+                pos2 += 7;
+            }
+        }
+    }
+
+    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+}    
+
 static void write_sections (unsigned char *file,
                             unsigned char *pos,
                             struct LX_HEADER_internal *lx_hdr_p,
@@ -83,7 +183,7 @@ static void write_sections (unsigned char *file,
             obj_page_e.PageDataOffset = pos - file - lx_hdr_p->DataPagesOffset;
             obj_page_e.PageDataOffset += i * lx_hdr_p->PageSize;
             if (obj_tab_e.NumberOfPageTableEntries - i == 1) {
-                obj_page_e.DataSize =  section->total_size % lx_hdr_p->PageSize;
+                obj_page_e.DataSize = section->total_size % lx_hdr_p->PageSize;
             } else {
                 obj_page_e.DataSize = lx_hdr_p->PageSize;
             }
@@ -132,10 +232,13 @@ void lx_write (const char *filename)
     {
         size_t total_section_size_to_write = 0;
         size_t object_page_table_entries = 0;
+        int object_index = 1;
 
         lx_hdr.DataPagesOffset = file_size = size_of_headers;
 
         for (section = all_sections; section; section = section->next) {
+            section->target_index = object_index++;
+            
             if (!section->is_bss) total_section_size_to_write += section->total_size;
 
             if (ld_state->entry_point >= section->rva
@@ -151,8 +254,15 @@ void lx_write (const char *filename)
         lx_hdr.ObjectTableOffsetHdr = file_size - lx_hdr_offset;
         lx_hdr.NumberOfObjectsInModule = section_count ();
         file_size += lx_hdr.NumberOfObjectsInModule * sizeof (struct object_table_entry_file);
-        lx_hdr.ObjectPageTableOffsetHdr = file_size;
+        lx_hdr.ObjectPageTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += object_page_table_entries * sizeof (struct object_page_table_entry_file);
+        lx_hdr.ModuleNumberOfPages = object_page_table_entries;
+
+        lx_hdr.FixupPageTableOffsetHdr = file_size - lx_hdr_offset;
+        file_size += 4 * (lx_hdr.ModuleNumberOfPages + 1);
+        lx_hdr.FixupRecordTableOffsetHdr = file_size - lx_hdr_offset;
+        file_size += calculate_fixup_record_table_size ();
+        lx_hdr.FixupSectionSize = file_size - (lx_hdr.FixupPageTableOffsetHdr + lx_hdr_offset);
     }
 
     file = xmalloc (file_size);
@@ -161,6 +271,7 @@ void lx_write (const char *filename)
     pos = file + size_of_headers;
 
     write_sections (file, pos, &lx_hdr, lx_hdr_offset);
+    write_relocations (file, &lx_hdr, lx_hdr_offset);
 
     pos = file;
 
