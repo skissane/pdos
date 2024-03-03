@@ -1,24 +1,12 @@
 # This builds a.out files for PDOS386, on Windows
 # For the 32-bit version of PDOS we define __PDOS386__
 
-# With the gcc386 and as386 combination, everything is fine.
-# I produce a 36k executable
+# Note that the traditional as386 assembler targeting
+# a.out treats .align as a power of 2, which the
+# traditional gcc386 compiler generates. gccwin was
+# switched to use .balign to produce consistent results
 
-# If I switch to gccwin, I get this warning
-# ctype.s:3: Warning: alignment too large: 15 assumed
-# (plus others)
-# and a 299k executable
-
-# If I stay with that, but switch to pdas (only the .c.o
-# is required), I get a 36k executable again.
-
-# All executables work, but it would be nice to know what
-# the issues are (ie which bit(s) of software are violating
-# some rule). I intend to standardize on gccwin and
-# pdas regardless.
-
-CC=gcc386
-#CC=gccwin
+CC=gccwin
 COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
 
 pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
@@ -34,7 +22,7 @@ pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
 
 pos.o: ../src/pos.c
   $(CC) $(COPTS) -o $*.s ../src/pos.c
-  as386 -o $*.o $*.s
+  pdas -o $*.o $*.s
   rm -f $*.s
 
 support.o: ../src/support.s
@@ -42,6 +30,5 @@ support.o: ../src/support.s
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-#  pdas -o $*.o $*.s
-  as386 -o $*.o $*.s
+  pdas -o $*.o $*.s
   rm -f $*.s
