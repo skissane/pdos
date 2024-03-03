@@ -1,18 +1,35 @@
 # This builds a.out files for PDOS386, on Windows
 # For the 32-bit version of PDOS we define __PDOS386__
 
+# With the gcc386 and as386 combination, everything is fine.
+# I produce a 36k executable
+
+# If I switch to gccwin, I get this warning
+# ctype.s:3: Warning: alignment too large: 15 assumed
+# (plus others)
+# and a 299k executable
+
+# If I stay with that, but switch to pdas (only the .c.o
+# is required), I get a 36k executable again.
+
+# All executables work, but it would be nice to know what
+# the issues are (ie which bit(s) of software are violating
+# some rule). I intend to standardize on gccwin and
+# pdas regardless.
+
 CC=gcc386
-COPTS=-S -O2 -ansi -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
+#CC=gccwin
+COPTS=-S -O2 -ansi -U__WIN32__ -DNOLIBALLOC -fno-common -D__PDOS386__ -D__32BIT__ -I. -I../src
 
 pdptest.exe: pdosst32.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o pos.o support.o pdossupc.o
   rm -f pdos.a
-  ar r pdos.a pdosst32.o stdio.o string.o stdlib.o
-  ar r pdos.a start.o time.o errno.o assert.o signal.o
-  ar r pdos.a locale.o ctype.o setjmp.o math.o
-  ar r pdos.a pos.o support.o pdossupc.o
-  ar s pdos.a
+  xar r pdos.a pdosst32.o stdio.o string.o stdlib.o
+  xar r pdos.a start.o time.o errno.o assert.o signal.o
+  xar r pdos.a locale.o ctype.o setjmp.o math.o
+  xar r pdos.a pos.o support.o pdossupc.o
+  xar s pdos.a
   ld86 -N -s -e ___pdosst32 -o pdptest.exe pdosst32.o pdptest.o pdos.a
 
 pos.o: ../src/pos.c
@@ -25,5 +42,6 @@ support.o: ../src/support.s
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
+#  pdas -o $*.o $*.s
   as386 -o $*.o $*.s
   rm -f $*.s
