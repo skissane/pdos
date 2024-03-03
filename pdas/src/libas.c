@@ -133,7 +133,7 @@ static void _print_help (const char *name)
     printf ("Usage: %s [options] asmfile...\n\n", name);
 
     printf ("    -a[=FILE]             Print listings to stdout or a specified file\n");
-    printf ("    --defsym SYM=VAL      Define symbol SYM to given value");
+    printf ("    --defsym SYM=VAL      Define symbol SYM to given value\n");
     printf ("    --help                Print this help information\n");
     printf ("    -I DIR                Add DIR to search list for .include directives\n");
     printf ("    -o OBJFILE            Name the object-file output OBJFILE (default a.out)\n");
