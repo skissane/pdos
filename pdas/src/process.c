@@ -969,6 +969,7 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "align",      &handler_align_bytes    },
     { "ascii",      &handler_ascii          },
     { "asciz",      &handler_asciz          },
+    { "balign",     &handler_align_bytes    },
     { "byte",       &handler_byte           },
     { "comm",       &handler_comm           },
     { "data",       &handler_data           },
