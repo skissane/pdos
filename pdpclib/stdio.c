@@ -2211,10 +2211,20 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             }
             if (cd.chChar == 0x1b)
             {
-                numpending = 1;
-                pending[0] = 0x1b;
-                *(((char *)ptr) + tempRead) = 0x1b;
-                continue;
+                /* genuine OS/2 gives a scancode of 1 for ESC.
+                   PDOS/386 sets it to 0 to bypass this logic
+                   so that it will take care of ANSI key input */
+                if (cd.chScan != 0)
+                {
+                    numpending = 1;
+                    pending[0] = 0x1b;
+                    *(((char *)ptr) + tempRead) = 0x1b;
+                    continue;
+                }
+                else
+                {
+                    c = cd.chChar;
+                }
             }
             else if (cd.chChar == 0xe0)
             {
