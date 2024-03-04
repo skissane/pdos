@@ -52,8 +52,6 @@ extern void *_imp___iob;
 
 
 #if defined(__32BIT__) && defined(NEED_OS2)
-#undef APIENTRY
-#define APIENTRY
 #define INCL_DOS
 #include <os2.h>
 #endif
