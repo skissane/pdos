@@ -28,13 +28,31 @@ http://www.edm2.com/index.php/Control_Program_Functions_List
 
 #ifdef __16BIT__
 #define APIENTRY _pascal _far
+
+#else /* 32-bit */
+
+/* if APIENTRY is already defined, then we assume we have
+   included windows.h previously, and thus we need to
+   suppress some defines. And we also need our own define,
+   so undefine theirs */
+#ifdef APIENTRY
+#define __SUPPRESS__
+#undef APIENTRY
+#endif
+
+/* some compilers have a keyword that may allow a different
+   naming standard for system calls. If you have such a
+   compiler you can define this variable. Since the executable
+   ends up purely with import by ordinal, it is not important
+   to match name */
+
+#ifdef __HAVESYS__
+#define APIENTRY __HAVESYS__
 #else
-#ifndef __SUPPRESS__
-#ifndef APIENTRY
-#define APIENTRY _System
+#define APIENTRY
 #endif
-#endif
-#endif
+
+#endif /* 32-bit */
 
 /* I think this only exists in 32-bit, but maybe
    we can change that later */
