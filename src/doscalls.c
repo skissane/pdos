@@ -18,8 +18,9 @@
    index into a table containing just stdin, stdout and stderr,
    but for now we'll just code that every time */
 
-#undef __SUPPRESS__
+/* add special handle 3 for opening of KBD$ */
 
+#define INCL_KBD
 #include <os2.h>
 
 #include <stdio.h>
@@ -50,6 +51,12 @@ ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
                ULONG newsize, ULONG fileattr, ULONG action2,
                ULONG mode, ULONG resvd)
 {
+    if (strcmp(fnm, "KBD$") == 0)
+    {
+        *handle = 3;
+        return (0);
+    }
+
     if ((mode & OPEN_ACCESS_WRITEONLY) != 0)
     {
         *handle = (ULONG)fopen(fnm, "wb");
@@ -69,6 +76,9 @@ ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
 ULONG APIENTRY DosClose(ULONG hfile)
 {
     FILE *f;
+
+    /* keyboard is exception */
+    if (hfile == 3) return (0);
 
     if (hfile == 0) f = stdin;
     else if (hfile == 1) f = stdout;
@@ -141,6 +151,35 @@ ULONG APIENTRY DosDevIOCtl(ULONG handle,
                            ULONG datamax,
                            ULONG *datalen)
 {
+    static int linebuf = 1;
+    static KBDKEYINFO cd;
+
+    if (function == 0x51)
+    {
+        if (linebuf)
+        {
+            linebuf = 0;
+            setvbuf(stdin, NULL, _IONBF, 0);
+        }
+        else
+        {
+            linebuf = 1;
+            setvbuf(stdin, NULL, _IOLBF, 0);
+        }
+    }
+    /* this algorithm won't work for people who are using e0 as a
+       legitimate character. Need to find out what e0 goes through
+       with as a scancode, and set that scancode here, and get
+       PDPCLIB to test that scancode first */
+    else if (function == 0x74)
+    {
+        /* make sure to use a non-standard 0 (OS/2 uses 1) for a
+           scancode of an ESC so that PDPCLIB does not attempt to
+           double it. Currently all our scancodes are 0 since
+           PDPCLIB doesn't need them */
+        cd.chChar = fgetc(stdin);
+        *(KBDKEYINFO *)dataptr = cd;
+    }
     return (0);
 }
 
