@@ -35,6 +35,22 @@
 #include "log.h"
 #include "helper.h"
 
+#ifdef __32BIT__
+#include "__os.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include <locale.h>
+#include <assert.h>
+int __start(char *parm);
+extern int (*__genmain)(int argc, char **argv);
+extern int __genstart;
+#endif
+
+#ifdef __32BIT__
+extern int __minstart;
+#endif
+
 /* set this to 1 to convert bad sectors into hex 04 as eyecatcher */
 #define BADSECT 0
 /* set this to 1 to read a DMF disk with 21 sectors per track */
@@ -316,6 +332,32 @@ static int stdout_fhandle_index = 1;
 static int stderr_fhandle_index = 2;
 
 static int showret = 0;
+
+#ifdef __32BIT__
+static OS bios = { __start, 0, 0, NULL /* cmd */, printf, 0, malloc, NULL, NULL,
+  fopen, fseek, fread, fclose, fwrite, fgets, strchr,
+  strcmp, strncmp, strcpy, strlen, fgetc, fputc,
+  fflush, setvbuf,
+  PosGetDTA,
+  PosFindFirst, PosFindNext,
+  0, 0,
+  ctime, time,
+  PosChangeDir, PosMakeDir, PosRemoveDir,
+  remove,
+  memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
+  getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
+  sprintf, signal, raise, calloc, realloc, atoi, strtol, strtoul, qsort,
+  bsearch, localtime, clock, strerror, strrchr, strstr, strpbrk, strspn,
+  strcspn, memchr, ftell, abs, setlocale, perror, rewind, strncat, sscanf,
+  isalnum, isxdigit, rename, clearerr, _assert, atof,
+  isdigit, isalpha, isprint, isspace, tolower, system,
+  islower, isupper, atexit, ceil, toupper, iscntrl,
+  sin, cos, tan, floor, asin, acos, atan, sinh, cosh, tanh,
+  rand, srand, strftime, puts,
+  pow, modf, log, log10, atan2, fabs, exp, sqrt,
+  strtok, atol, mktime, vprintf,
+};
+#endif
 
 static int scanmap_active = 0;
 static int keybmap_active = 0;
@@ -876,6 +918,20 @@ static void waitForKeystroke(void)
 #ifndef USING_EXE
 int main(void)
 {
+
+#ifdef __32BIT__
+    /* any further executions of __start will be PDOS-generic apps I think */
+    __minstart = 0;
+    __genstart = 1;
+
+    /* PDOS-generic apps needs these set. It might be possible to
+       do at compile time instead */
+    bios.Xstdin = stdin;
+    bios.Xstdout = stdout;
+    bios.Xstderr = stderr;
+    bios.main = &__genmain;
+#endif
+
 #if defined(__32BIT__) && defined(VGADRV)
     vgatext_init(&vgatext);
 #endif
@@ -5377,7 +5433,7 @@ static int fixexe32(unsigned char *entry, unsigned int sp,
     realdata->base_23_16 = (dataStart >> 16) & 0xff;
     realdata->base_31_24 = (dataStart >> 24) & 0xff;
 
-    ret = call32(entry, sp, curTCB);
+    ret = call32(entry, sp, curTCB, &bios);
 
     if (showret)
     {
@@ -6282,8 +6338,6 @@ static void analyseBpb(DISKINFO *diskinfo, unsigned char *bpb)
 }
 
 #ifdef __32BIT__
-extern int __minstart;
-
 int pdosstrt(void)
 {
     pdos_parms *pp;
