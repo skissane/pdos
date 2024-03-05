@@ -1,3 +1,6 @@
+/ As of 2024-03-05 this file is no longer being maintained
+/ Use the replacement pdosf.asm or update it yourself
+
 / pdos support routines in assembler
 / written by Paul Edwards
 / released to the public domain
