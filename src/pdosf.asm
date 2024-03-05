@@ -38,6 +38,10 @@ call32:
         push    edi
         push    call32_esp
         push    saveesp2
+
+; This is the PDOS-generic parameter
+        mov     edx, 20[ebp]
+
         mov     call32_esp, esp
 ; call32_esp has to be saved in TCB
         mov     edi, 16[ebp]
@@ -70,11 +74,13 @@ call32:
         push   eax
         push   ecx
 ; push parameters for subroutine from right to left
-        push   edx
+; We are pushing 4 parameters for historical reasons,
+; the last 3 all zeros. This will probably change.
         mov    eax, 0h
         push   eax
         push   eax
         push   eax
+        push   edx
 ; push address of a "retf" statement so that they can come back
         push   edi
 ; push subroutine's address
