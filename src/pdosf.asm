@@ -93,7 +93,6 @@ call32:
 call32_singleret:
         ret
 call32_singleretf:
-        pop     ebx
 ; and skip the parameters too
         add     esp, 16
         retf

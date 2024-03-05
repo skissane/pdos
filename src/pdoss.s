@@ -89,7 +89,6 @@ _call32:
 _call32_singleret:
         ret
 _call32_singlelret:
-        pop     %ebx
 / and skip the parameters too
         add     $16, %esp
         lret
