@@ -37,7 +37,7 @@ pdptest.exe: os2strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   genimp temp.wat os2.lib
 # executable needs to be marked fullscreen if the app uses setvbuf
 # otherwise VIO works too
-  pdld -s -o pdptest.exe os2strt.obj pdptest.obj pdpos2.lib os2.lib
+  pdld -s --oformat lx -o pdptest.exe os2strt.obj pdptest.obj pdpos2.lib os2.lib
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
