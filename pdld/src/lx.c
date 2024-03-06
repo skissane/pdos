@@ -81,6 +81,11 @@ static size_t calculate_fixup_record_table_size (void)
                 const struct symbol *symbol;
                 
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
+                        if (symbol_is_undefined ((symbol = symbol_find (symbol->name)))) continue;
+                    }
+                    if (!symbol->part) continue; /* Absolute symbol. */
+                    
                     frt_size += 7;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
                            && (symbol = symbol_find (part->relocation_array[i].symbol->name))
@@ -128,6 +133,11 @@ static void write_relocations (unsigned char *file,
                 }
                 
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
+                        if (symbol_is_undefined ((symbol = symbol_find (symbol->name)))) continue;
+                    }
+                    if (!symbol->part) continue; /* Absolute symbol. */
+                    
                     bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
                     bytearray_write_1_bytes (pos2 + 1, 0, LITTLE_ENDIAN);
                     bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
@@ -135,8 +145,8 @@ static void write_relocations (unsigned char *file,
                     {
                         struct section *source_section;
                         address_type value;
-
-                        source_section = part->relocation_array[i].symbol->part->section;
+                        
+                        source_section = symbol->part->section;
                         bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
                         
                         /* The source offset is just the field value
@@ -163,8 +173,10 @@ static void write_relocations (unsigned char *file,
     old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
     bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
 
-    pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
-    memcpy (pos, dll_inames, dll_inames_size);
+    if (dll_inames_size) {
+        pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
+        memcpy (pos, dll_inames, dll_inames_size);
+    }
 }    
 
 static void write_sections (unsigned char *file,
