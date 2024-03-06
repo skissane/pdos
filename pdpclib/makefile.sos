@@ -1,0 +1,52 @@
+# Standard build for OS/2 2.0+
+
+CC=gccwin
+COPTS=-U__WIN32__ -D__HAVESYS__=_System -O2 -fno-common -ansi -D__OS2__ -D__32BIT__ -D__NOBIVA__ -S -I. -I../src
+AR=xar
+
+pdptest.exe: os2strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsw.obj
+#  wasm -zcm -q -DOS220 ..\src\needpdos.asm
+#  wlink File needpdos.obj Name needpdos.exe Form dos Option quiet,dosseg
+#  if exist watcom.lib del watcom.lib
+#  wlib -q watcom os2strt.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj assert.obj signal.obj locale.obj ctype.obj setjmp.obj math.obj fpfuncsw.obj
+  rm -f pdpos2.lib
+  $(AR) r pdpos2.lib os2strt.obj stdio.obj string.obj stdlib.obj
+  $(AR) r pdpos2.lib start.obj time.obj errno.obj assert.obj signal.obj
+  $(AR) r pdpos2.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsw.obj
+  $(AR) s pdpos2.lib
+  rm -f os2.lib
+  rm -f temp.wat
+  echo ++DosExit.DOSCALLS.DosExit.234 >>temp.wat
+  echo ++DosOpen.DOSCALLS.DosOpen.273 >>temp.wat
+  echo ++DosClose.DOSCALLS.DosClose.257 >>temp.wat
+  echo ++DosRead.DOSCALLS.DosRead.281 >>temp.wat
+  echo ++DosWrite.DOSCALLS.DosWrite.282 >>temp.wat
+  echo ++DosDelete.DOSCALLS.DosDelete.259 >>temp.wat
+  echo ++DosMove.DOSCALLS.DosMove.271 >>temp.wat
+  echo ++DosExecPgm.DOSCALLS.DosExecPgm.283 >>temp.wat
+  echo ++DosSetFilePtr.DOSCALLS.DosSetFilePtr.256 >>temp.wat
+  echo ++DosGetDateTime.DOSCALLS.DosGetDateTime.230 >>temp.wat
+  echo ++DosDevIOCtl.DOSCALLS.DosDevIOCtl.284 >>temp.wat
+  echo ++DosAllocMem.DOSCALLS.DosAllocMem.299 >>temp.wat
+  echo ++DosFreeMem.DOSCALLS.DosFreeMem.304 >>temp.wat
+  echo ++DosScanEnv.DOSCALLS.DosScanEnv.227 >>temp.wat
+  echo ++DosSetRelMaxFH.DOSCALLS.DosSetRelMaxFH.382 >>temp.wat
+  echo ++DosGetInfoBlocks.DOSCALLS.DosGetInfoBlocks.312 >>temp.wat
+  genimp temp.wat os2.lib
+# executable needs to be marked fullscreen if the app uses setvbuf
+# otherwise VIO works too
+  pdld -s -o pdptest.exe os2strt.obj pdptest.obj pdpos2.lib os2.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  pdas --oformat coff -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  as86 -f coff -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
