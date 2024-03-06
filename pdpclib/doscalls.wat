@@ -1,0 +1,16 @@
+++DosExit.DOSCALLS.DosExit.234 
+++DosOpen.DOSCALLS.DosOpen.273 
+++DosClose.DOSCALLS.DosClose.257 
+++DosRead.DOSCALLS.DosRead.281 
+++DosWrite.DOSCALLS.DosWrite.282 
+++DosDelete.DOSCALLS.DosDelete.259 
+++DosMove.DOSCALLS.DosMove.271 
+++DosExecPgm.DOSCALLS.DosExecPgm.283 
+++DosSetFilePtr.DOSCALLS.DosSetFilePtr.256 
+++DosGetDateTime.DOSCALLS.DosGetDateTime.230 
+++DosDevIOCtl.DOSCALLS.DosDevIOCtl.284 
+++DosAllocMem.DOSCALLS.DosAllocMem.299 
+++DosFreeMem.DOSCALLS.DosFreeMem.304 
+++DosScanEnv.DOSCALLS.DosScanEnv.227 
+++DosSetRelMaxFH.DOSCALLS.DosSetRelMaxFH.382 
+++DosGetInfoBlocks.DOSCALLS.DosGetInfoBlocks.312 
