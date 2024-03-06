@@ -215,6 +215,12 @@ void elf_write (const char *filename);
 void elf_read (const char *filename);
 
 /* lx.c */
+void lx_import_generate_import_with_dll_name (const char *import_name,
+                                              short OrdinalHint,
+                                              short ImportType,
+                                              short ImportNameType,
+                                              const char *filename,
+                                              const char *dll_name);
 void lx_write (const char *filename);
 
 /* map.c */

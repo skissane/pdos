@@ -23,6 +23,10 @@
 
 static size_t size_of_headers = sizeof (struct IMAGE_DOS_HEADER_file) + sizeof (struct LX_HEADER_file);
 
+static struct section_part fake_lx_part_s;
+static char *dll_inames;
+static size_t dll_inames_size;
+
 static unsigned long translate_section_flags_to_ObjectFlags (flag_int flags)
 {
     unsigned long ObjectFlags = 0;
@@ -74,7 +78,13 @@ static size_t calculate_fixup_record_table_size (void)
                    &reloc_compar);
             
             for (i = 0; i < part->relocation_count; i++) {
+                const struct symbol *symbol;
+                
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    frt_size += 7;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
+                           && (symbol = symbol_find (part->relocation_array[i].symbol->name))
+                           && symbol->part == &fake_lx_part_s) {
                     frt_size += 7;
                 }
             }
@@ -107,10 +117,7 @@ static void write_relocations (unsigned char *file,
             
             for (i = 0; i < part->relocation_count; i++) {
                 address_type rva;
-                
-                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) {
-                    continue;
-                }
+                const struct symbol *symbol;
 
                 rva = part->rva + part->relocation_array[i].offset;
                 while (rva > cur_rva + lx_hdr_p->PageSize) {
@@ -119,31 +126,45 @@ static void write_relocations (unsigned char *file,
                     old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
                     cur_rva += lx_hdr_p->PageSize;
                 }
+                
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 1, 0, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
 
-                bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
-                bytearray_write_1_bytes (pos2 + 1, 0, LITTLE_ENDIAN);
-                bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
+                    {
+                        struct section *source_section;
+                        address_type value;
 
-                {
-                    struct section *source_section;
-                    address_type value;
-
-                    source_section = part->relocation_array[i].symbol->part->section;
-                    bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
-                    
-                    /* The source offset is just the field value
-                     * made source-section-relative.
-                     */
-                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
-                    bytearray_write_2_bytes (pos2 + 5, value - source_section->rva, LITTLE_ENDIAN);
+                        source_section = part->relocation_array[i].symbol->part->section;
+                        bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
+                        
+                        /* The source offset is just the field value
+                         * made source-section-relative.
+                         */
+                        bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                        bytearray_write_2_bytes (pos2 + 5, value - source_section->rva, LITTLE_ENDIAN);
+                    }
+                    pos2 += 7;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
+                           && (symbol = symbol_find (part->relocation_array[i].symbol->name))
+                           && symbol->part == &fake_lx_part_s) {
+                    bytearray_write_1_bytes (pos2, 0x8, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 1, 1, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 4, symbol->value >> 16, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (pos2 + 5, symbol->value & 0xffff, LITTLE_ENDIAN);
+                    pos2 += 7;
                 }
-                pos2 += 7;
             }
         }
     }
 
     old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
     bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+
+    pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
+    memcpy (pos, dll_inames, dll_inames_size);
 }    
 
 static void write_sections (unsigned char *file,
@@ -197,6 +218,54 @@ static void write_sections (unsigned char *file,
             pos += section->total_size;
         }
     }
+}
+
+void lx_import_generate_import_with_dll_name (const char *import_name,
+                                              short OrdinalHint,
+                                              short ImportType,
+                                              short ImportNameType,
+                                              const char *filename,
+                                              const char *dll_name)
+{
+    struct object_file *of;
+    struct symbol *symbol;
+    unsigned short dll_index = 1;
+
+    if (ImportNameType != IMPORT_ORDINAL) {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "ImportNameType other than IMPORT_ORDINAL is not yet supported for LX");
+    }
+    if (ImportType != IMPORT_CODE) {
+        ld_fatal_error ("ImportType other than IMPORT_CODE not supported for LX");
+    }
+
+    {
+        size_t i;
+        size_t name_len = strlen (dll_name);
+
+        for (i = 0; i < dll_inames_size; i += dll_inames[i], dll_index++) {
+            if (name_len == dll_inames[i]
+                && memcmp (dll_name, dll_inames + i + 1, name_len) == 0) {
+                break;
+            }
+        }
+
+        if (i == dll_inames_size) {
+            dll_inames_size += 1 + name_len;
+            dll_inames = xrealloc (dll_inames, dll_inames_size);
+            dll_inames[i] = name_len;
+            memcpy (dll_inames + i + 1, dll_name, name_len);
+        }
+    }
+    
+    of = object_file_make (1, filename);
+    symbol = of->symbol_array;
+
+    symbol->name = xstrdup (import_name);
+    symbol->value = (dll_index << 16) | OrdinalHint;
+    symbol->part = &fake_lx_part_s;
+    symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+    symbol_record_external_symbol (symbol);
 }
 
 void lx_write (const char *filename)
@@ -262,6 +331,17 @@ void lx_write (const char *filename)
         file_size += 4 * (lx_hdr.ModuleNumberOfPages + 1);
         lx_hdr.FixupRecordTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += calculate_fixup_record_table_size ();
+
+        lx_hdr.ImportModuleTableOffsetHdr = file_size - lx_hdr_offset;
+        {
+            size_t i;
+
+            for (i = 0; i < dll_inames_size; i += dll_inames[i]) {
+                lx_hdr.NumberOfImportModEntries++;
+            }
+        }
+        file_size += dll_inames_size;
+        lx_hdr.ImportProcTableOffsetHdr = file_size - lx_hdr_offset;
         lx_hdr.FixupSectionSize = file_size - (lx_hdr.FixupPageTableOffsetHdr + lx_hdr_offset);
     }
 
@@ -292,6 +372,8 @@ void lx_write (const char *filename)
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
     }
+
+    free (dll_inames);
 
     free (file);
     fclose (outfile);

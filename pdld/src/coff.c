@@ -357,7 +357,9 @@ static void write_archive_member_header (unsigned char *pos, const char *Name, u
     write_struct_IMAGE_ARCHIVE_MEMBER_HEADER (pos, &member_hdr);
 }
 
-static void write_implib (struct export_name *export_names, size_t num_names, unsigned long OrdinalBase)
+static void write_implib (const struct export_name *export_names,
+                          size_t num_names,
+                          unsigned long OrdinalBase)
 {
     const char *filename;
     unsigned char *file;
@@ -672,7 +674,7 @@ static void generate_edata (void)
                                                &ot);
         }
         {
-            char *name;
+            const char *name;
             name = kill_at ? (export_names[i].name_no_at) : (export_names[i].name);
             strcpy ((char *)(part->content + name_table_offset), name);
             name_table_offset += strlen (name) + 1;
@@ -686,7 +688,7 @@ static void generate_edata (void)
     free (export_names);
 }
 
-static int check_reloc_section_needed_section_part (struct section_part *part)
+static int check_reloc_section_needed_section_part (const struct section_part *part)
 {
     size_t i;
     
@@ -877,7 +879,7 @@ static void translate_relocation (struct reloc_entry *reloc,
 
 address_type coff_calculate_entry_point (void)
 {
-    struct symbol *symbol;
+    const struct symbol *symbol;
 
     symbol = symbol_find ("_mainCRTStartup");
     if (symbol) return symbol_get_value_no_base (symbol);
@@ -1449,7 +1451,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 {
     struct coff_header_internal coff_hdr;
     struct string_table_header_internal string_table_hdr;
-    char *string_table = NULL;
+    const char *string_table = NULL;
     struct section_table_entry_internal section_hdr;
     union sym_tab_entry *read_symtab = NULL;
     unsigned long *comdat_aux_symbol_indexes;
@@ -2013,7 +2015,7 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
 {
     struct IMPORT_OBJECT_HEADER_internal import_hdr;
     char *import_name;
-    char *dll_name;
+    const char *dll_name;
     
     unsigned char *pos;
 
@@ -2042,6 +2044,16 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
     CHECK_READ (pos, 2);
     import_name = (char *)pos;
     dll_name = import_name + strlen (import_name) + 1;
+
+    if (ld_state->oformat == LD_OFORMAT_LX) {
+        lx_import_generate_import_with_dll_name (import_name,
+                                                 import_hdr.OrdinalHint,
+                                                 import_hdr.Type & 0x3,
+                                                 import_hdr.Type >> 2,
+                                                 filename,
+                                                 dll_name);
+        return 0;
+    }
 
     if (current_import_dll_name && strcmp (dll_name, current_import_dll_name)) {
         import_generate_end ();
