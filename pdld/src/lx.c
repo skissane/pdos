@@ -308,6 +308,7 @@ void lx_write (const char *filename)
     lx_hdr.FormatLevel = 0;
     lx_hdr.CpuType = CPU_TYPE_386;
     lx_hdr.OsType = OS_TYPE_OS2;
+    lx_hdr.ModuleFlags = 0x10; /* Has internal fixups. */
     lx_hdr.PageSize = PAGE_SIZE;
 
     {
@@ -330,6 +331,9 @@ void lx_write (const char *filename)
 
             object_page_table_entries += (section->total_size / lx_hdr.PageSize) + !!(section->total_size % lx_hdr.PageSize);
         }
+
+        lx_hdr.EspObjectIndex = object_index;
+        lx_hdr.Esp = 0x8000; /* Arbitrary. */
 
         file_size += total_section_size_to_write;
         lx_hdr.ObjectTableOffsetHdr = file_size - lx_hdr_offset;
@@ -373,6 +377,8 @@ void lx_write (const char *filename)
     dos_hdr.Magic[1] = 'Z';
 
     dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+
+    dos_hdr.OffsetToRelocationTable = 0x40; /* LX specification requirement. */
 
     dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
 

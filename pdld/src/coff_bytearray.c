@@ -31,6 +31,15 @@ void read_struct_IMAGE_DOS_HEADER (struct IMAGE_DOS_HEADER_internal *IMAGE_DOS_H
     COPY(IMAGE_DOS_HEADER, dummy2, 2);
     COPY(IMAGE_DOS_HEADER, dummy3, 2);
     COPY(IMAGE_DOS_HEADER, SizeOfHeaderInParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, MinimumExtraParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, MaximumExtraParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, InitialSs, 2);
+    COPY(IMAGE_DOS_HEADER, InitialSp, 2);
+    COPY(IMAGE_DOS_HEADER, Checksum, 2);
+    COPY(IMAGE_DOS_HEADER, InitialIp, 2);
+    COPY(IMAGE_DOS_HEADER, InitialCs, 2);
+    COPY(IMAGE_DOS_HEADER, OffsetToRelocationTable, 2);
+    COPY(IMAGE_DOS_HEADER, OverlayNumber, 2);
 
     COPY_CHAR_ARRAY (IMAGE_DOS_HEADER, dummy4);
 
@@ -266,6 +275,15 @@ void write_struct_IMAGE_DOS_HEADER (void *memory, const struct IMAGE_DOS_HEADER_
     COPY(IMAGE_DOS_HEADER, dummy2, 2);
     COPY(IMAGE_DOS_HEADER, dummy3, 2);
     COPY(IMAGE_DOS_HEADER, SizeOfHeaderInParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, MinimumExtraParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, MaximumExtraParagraphs, 2);
+    COPY(IMAGE_DOS_HEADER, InitialSs, 2);
+    COPY(IMAGE_DOS_HEADER, InitialSp, 2);
+    COPY(IMAGE_DOS_HEADER, Checksum, 2);
+    COPY(IMAGE_DOS_HEADER, InitialIp, 2);
+    COPY(IMAGE_DOS_HEADER, InitialCs, 2);
+    COPY(IMAGE_DOS_HEADER, OffsetToRelocationTable, 2);
+    COPY(IMAGE_DOS_HEADER, OverlayNumber, 2);
 
     COPY_CHAR_ARRAY (IMAGE_DOS_HEADER, dummy4);
 

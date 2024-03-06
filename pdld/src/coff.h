@@ -17,7 +17,16 @@ struct IMAGE_DOS_HEADER_internal {
     unsigned short dummy2;
     unsigned short dummy3;
     unsigned short SizeOfHeaderInParagraphs;
-    unsigned char dummy4[50];
+    unsigned short MinimumExtraParagraphs;
+    unsigned short MaximumExtraParagraphs;
+    unsigned short InitialSs;
+    unsigned short InitialSp;
+    unsigned short Checksum;
+    unsigned short InitialIp;
+    unsigned short InitialCs;
+    unsigned short OffsetToRelocationTable;
+    unsigned short OverlayNumber;
+    unsigned char dummy4[32];
     unsigned long OffsetToNewEXEHeader;
 
 };
@@ -29,7 +38,16 @@ struct IMAGE_DOS_HEADER_file {
     unsigned char dummy2[2];
     unsigned char dummy3[2];
     unsigned char SizeOfHeaderInParagraphs[2];
-    unsigned char dummy4[50];
+    unsigned char MinimumExtraParagraphs[2];
+    unsigned char MaximumExtraParagraphs[2];
+    unsigned char InitialSs[2];
+    unsigned char InitialSp[2];
+    unsigned char Checksum[2];
+    unsigned char InitialIp[2];
+    unsigned char InitialCs[2];
+    unsigned char OffsetToRelocationTable[2];
+    unsigned char OverlayNumber[2];
+    unsigned char dummy4[32];
     unsigned char OffsetToNewEXEHeader[4];
 
 };
