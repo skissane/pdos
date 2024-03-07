@@ -101,11 +101,7 @@ extern int (*__genmain)(int argc, char **argv);
 #define MEMAMT 24*1000*1000
 #endif
 
-#if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
-extern int __start(int argc, char **argv);
-#else
 extern int __start(char *p);
-#endif
 
 #ifdef __CC64OS__
 extern long long __ncallbacks;
@@ -893,7 +889,7 @@ int main(int argc, char **argv)
     if (salone)
     {
         __genmain = (void *)genstart;
-        rc = __start(0, NULL); /* parameters no longer correct for linux */
+        rc = __start(NULL);
         salone = 0;
         __genmain = 0;
     }
