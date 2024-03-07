@@ -1,10 +1,19 @@
 CC=wcl386
+
 # Don't use intrinsics because we need the actual
 # function for PDOS-generic
 # That is why I no longer use -oneatx
+# I think what this means is that Watcom knows about
+# an intrinsic function that it created that uses
+# register parameters, but we need a version of the
+# function of the same name that takes stack parameters,
+# so that if a Win32 application that uses msvcrt.dll
+# wishes to use it, it can.
+
 # Also define __W32EMUL__ if you wish to make the
 # pseudo-bios. It has no meaning outside of that -
 # it isn't OS/2-related
+
 COPTS=-D__W32EMUL__ -D__HAVESYS__=_System -ecc -D__OS2__ -D__32BIT__ -bt=os2 -l=os2v2 -wx -c -I. -I..\src -y -fpi87 -s -zq -3s -zm -zl -oneatblr
 
 pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
