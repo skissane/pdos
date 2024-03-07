@@ -9,12 +9,12 @@ LD=pdld --no-insert-timestamp
 LDFLAGS=
 AS=pdas --oformat coff
 AR=xar
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../src -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT -DNEED_MZ -DNEED_OS2 -D__32BIT__ -DNO_DLLENTRY
 
 all: clean bios.exe
 
-bios.exe: bios.obj ../bios/exeload.obj
-    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.obj bios.obj ../bios/exeload.obj ../pdpclib/pdpwin32.lib ../src/kernel32.lib
+bios.exe: bios.obj ../bios/exeload.obj ../src/doscalls.obj
+    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.obj bios.obj ../bios/exeload.obj ../src/doscalls.obj ../pdpclib/pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
     $(CC) $(COPTS) -I../bios -o $*.s $<
