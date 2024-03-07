@@ -53,6 +53,8 @@ static unsigned short Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 static unsigned long SizeOfStackReserve = 0x200000;
 static unsigned long SizeOfStackCommit = 0x1000;
 
+static unsigned char *stub_file;
+static size_t stub_size;
 static long size_of_headers;
 
 static address_type size_of_code = 0;
@@ -88,6 +90,13 @@ struct export_name {
 
 static struct name_list *export_name_list = NULL;
 static struct name_list **last_export_name_list_p = &export_name_list;
+
+/* Shares the stub with LX. */
+void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p)
+{
+    *stub_file_p = stub_file;
+    *stub_size_p = stub_size;
+}
 
 static unsigned long translate_section_flags_to_Characteristics (flag_int flags)
 {
@@ -752,19 +761,22 @@ void coff_before_link (void)
         section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
     }
 
-    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-        size_of_headers = (sizeof (struct IMAGE_DOS_HEADER_file) + 4 /* "PE\0\0" */
-                           + sizeof (struct coff_header_file)
-                           + sizeof (struct optional_header_plus_file)
-                           + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
-                           + sizeof (struct section_table_entry_file) * section_count ());
+    if (stub_file) {
+        size_of_headers = stub_size;
     } else {
-        size_of_headers = (sizeof (struct IMAGE_DOS_HEADER_file) + 4 /* "PE\0\0" */
-                           + sizeof (struct coff_header_file)
-                           + sizeof (struct optional_header_file)
-                           + NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file)
-                           + sizeof (struct section_table_entry_file) * section_count ());
+        size_of_headers = sizeof (struct IMAGE_DOS_HEADER_file);
     }
+
+    size_of_headers += 4 /* "PE\0\0" */ + sizeof (struct coff_header_file);
+
+    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+        size_of_headers += sizeof (struct optional_header_plus_file);
+    } else {
+        size_of_headers += sizeof (struct optional_header_file);
+    }
+    
+    size_of_headers += NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file);
+    size_of_headers += sizeof (struct section_table_entry_file) * section_count ();
     size_of_headers = ALIGN (size_of_headers, FileAlignment);
 
     /* .idata$2 contains Import Directory Table which needs to be terminated with null entry. */
@@ -1089,17 +1101,28 @@ void coff_write (const char *filename)
 
     pos = file;
 
-    memset (&dos_hdr, 0, sizeof (dos_hdr));
+    if (stub_file) {
+        read_struct_IMAGE_DOS_HEADER (&dos_hdr, stub_file);
+        
+        dos_hdr.OffsetToNewEXEHeader = stub_size;
 
-    dos_hdr.Magic[0] = 'M';
-    dos_hdr.Magic[1] = 'Z';
+        write_struct_IMAGE_DOS_HEADER (stub_file, &dos_hdr);
+        memcpy (pos, stub_file, stub_size);
+        pos += stub_size;
+        free (stub_file);
+    } else {
+        memset (&dos_hdr, 0, sizeof (dos_hdr));
 
-    dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+        dos_hdr.Magic[0] = 'M';
+        dos_hdr.Magic[1] = 'Z';
 
-    dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
+        dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
 
-    write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
-    pos += sizeof (struct IMAGE_DOS_HEADER_file);
+        dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
+
+        write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
+        pos += sizeof (struct IMAGE_DOS_HEADER_file);
+    }
 
     memcpy (pos, "PE\0\0", 4);
     pos += 4;
@@ -2315,6 +2338,7 @@ enum option_index {
     COFF_OPTION_IMAGE_BASE,
     COFF_OPTION_SECTION_ALIGNMENT,
     COFF_OPTION_STACK,
+    COFF_OPTION_STUB,
     COFF_OPTION_SUBSYSTEM,
     COFF_OPTION_INSERT_TIMESTAMP,
     COFF_OPTION_NO_INSERT_TIMESTAMP,
@@ -2335,6 +2359,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("image-base"), COFF_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
     { STR_AND_LEN("section-alignment"), COFF_OPTION_SECTION_ALIGNMENT, OPTION_HAS_ARG},
     { STR_AND_LEN("stack"), COFF_OPTION_STACK, OPTION_HAS_ARG},
+    { STR_AND_LEN("stub"), COFF_OPTION_STUB, OPTION_HAS_ARG},
     { STR_AND_LEN("subsystem"), COFF_OPTION_SUBSYSTEM, OPTION_HAS_ARG},
     { STR_AND_LEN("insert-timestamp"), COFF_OPTION_INSERT_TIMESTAMP, OPTION_NO_ARG},
     { STR_AND_LEN("no-insert-timestamp"), COFF_OPTION_NO_INSERT_TIMESTAMP, OPTION_NO_ARG},
@@ -2358,6 +2383,7 @@ void coff_print_help (void)
     printf ("  --section-alignment <size>         Set section alignment\n");
     printf ("  --stack <reserve size>[,<commit size>]\n"
             "                                     Set size of the initial stack\n");
+    printf ("  --stub FILE                        Use FILE as MZ stub\n");
     printf ("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n");
     printf ("  --[no-]insert-timestamp            Use a real timestamp (default) rather than zero.\n");
     printf ("                                     This makes binaries non-deterministic\n");
@@ -2446,6 +2472,53 @@ static void use_option (enum option_index option_index, char *arg)
                 if (*p != '\0') {
                     ld_error ("invalid stack commit size number '%s'", arg);
                     break;
+                }
+            }
+            break;
+
+        case COFF_OPTION_STUB:
+            {
+                struct IMAGE_DOS_HEADER_internal dos_hdr;
+                size_t old_hdr_size, new_hdr_size;
+                
+                if (read_file_into_memory (arg, &stub_file, &stub_size)) {
+                    ld_error ("failed to read stub file '%s' into memory", arg);
+                    return;
+                }
+
+                if (stub_size < sizeof (struct IMAGE_DOS_HEADER_file)
+                    || !(stub_file[0] == 'M' && stub_file[1] == 'Z')) {
+                    free (stub_file);
+                    stub_file = NULL;
+                    ld_error ("'%s' is not a valid MZ executable", arg);
+                    return;
+                }
+
+                /* It is possible that the provided stub has smaller header
+                 * than needed for OffsetToNewEXEHeader field,
+                 * so the header needs to be expanded and the stub adjusted. */
+                read_struct_IMAGE_DOS_HEADER (&dos_hdr, stub_file);
+                old_hdr_size = dos_hdr.SizeOfHeaderInParagraphs * IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+                new_hdr_size = sizeof (struct IMAGE_DOS_HEADER_file);
+                if (old_hdr_size < new_hdr_size) {
+                    unsigned char *new_stub;
+                    
+                    stub_size += new_hdr_size - old_hdr_size;
+                    new_stub = xmalloc (stub_size);
+                    memcpy (new_stub + new_hdr_size,
+                            stub_file + old_hdr_size,
+                            stub_size - new_hdr_size);
+
+                    dos_hdr.SizeOfHeaderInParagraphs = new_hdr_size / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+                    dos_hdr.OffsetToRelocationTable += new_hdr_size - old_hdr_size;
+
+                    write_struct_IMAGE_DOS_HEADER (new_stub, &dos_hdr);
+                    memset (new_stub + old_hdr_size,
+                            '\0',
+                            new_hdr_size - old_hdr_size);
+                    
+                    free (stub_file);
+                    stub_file = new_stub;
                 }
             }
             break;

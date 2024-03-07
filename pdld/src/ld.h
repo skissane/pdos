@@ -197,6 +197,8 @@ int read_file_into_memory (const char *filename, unsigned char **memory_p, size_
 void link (void);
 
 /* coff.c */
+void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p);
+
 address_type coff_get_base_address (void);
 address_type coff_get_first_section_rva (void);
 void coff_before_link (void);

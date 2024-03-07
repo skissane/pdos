@@ -21,7 +21,7 @@
 #include "coff_bytearray.h"
 #include "lx_bytearray.h"
 
-static size_t size_of_headers = sizeof (struct IMAGE_DOS_HEADER_file) + sizeof (struct LX_HEADER_file);
+static size_t size_of_headers = sizeof (struct LX_HEADER_file);
 
 static struct section_part fake_lx_part_s;
 static char *dll_inames;
@@ -287,17 +287,28 @@ void lx_write (const char *filename)
     size_t file_size;
     unsigned char *pos;
 
+    unsigned char *stub_file;
+    size_t stub_size;
+
     struct IMAGE_DOS_HEADER_internal dos_hdr;
     struct LX_HEADER_internal lx_hdr;
+    size_t lx_hdr_offset;
 
     struct section *section;
-
-    size_t lx_hdr_offset = size_of_headers - sizeof (struct LX_HEADER_file);
 
     if (!(outfile = fopen (filename, "wb"))) {
         ld_error ("cannot open '%s' for writing", filename);
         return;
     }
+
+    coff_get_stub_file (&stub_file, &stub_size);
+
+    if (stub_file) {
+        size_of_headers += stub_size;
+    } else {
+        size_of_headers += sizeof (struct IMAGE_DOS_HEADER_file);
+    }
+    lx_hdr_offset = size_of_headers - sizeof (struct LX_HEADER_file);
 
     memset (&lx_hdr, 0, sizeof lx_hdr);
 
@@ -342,6 +353,7 @@ void lx_write (const char *filename)
         lx_hdr.ObjectPageTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += object_page_table_entries * sizeof (struct object_page_table_entry_file);
         lx_hdr.ModuleNumberOfPages = object_page_table_entries;
+        lx_hdr.LoaderSectionSize = file_size - lx_hdr_offset - lx_hdr.ObjectTableOffsetHdr;
 
         lx_hdr.FixupPageTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += 4 * (lx_hdr.ModuleNumberOfPages + 1);
@@ -371,19 +383,30 @@ void lx_write (const char *filename)
 
     pos = file;
 
-    memset (&dos_hdr, 0, sizeof (dos_hdr));
+    if (stub_file) {
+        read_struct_IMAGE_DOS_HEADER (&dos_hdr, stub_file);
+        
+        dos_hdr.OffsetToRelocationTable = 0x40; /* LX specification requirement. */
+        dos_hdr.OffsetToNewEXEHeader = stub_size;
 
-    dos_hdr.Magic[0] = 'M';
-    dos_hdr.Magic[1] = 'Z';
+        write_struct_IMAGE_DOS_HEADER (stub_file, &dos_hdr);
+        memcpy (pos, stub_file, stub_size);
+        pos += stub_size;
+        free (stub_file);
+    } else {
+        memset (&dos_hdr, 0, sizeof (dos_hdr));
 
-    dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+        dos_hdr.Magic[0] = 'M';
+        dos_hdr.Magic[1] = 'Z';
 
-    dos_hdr.OffsetToRelocationTable = 0x40; /* LX specification requirement. */
+        dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
 
-    dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
+        dos_hdr.OffsetToRelocationTable = 0x40; /* LX specification requirement. */
+        dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
 
-    write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
-    pos += sizeof (struct IMAGE_DOS_HEADER_file);
+        write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
+        pos += sizeof (struct IMAGE_DOS_HEADER_file);
+    }
 
     write_struct_LX_HEADER (pos, &lx_hdr);
 
