@@ -52,5 +52,8 @@ int 21h ; terminate
 ; No need for a return. We're screwed anyway if the above
 ; doesn't work. There's nothing on the stack to return to.
 ;ret
+zloop: jmp zloop
+zpad dw 0
+
 
 end top
