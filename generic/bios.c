@@ -967,15 +967,7 @@ int their_start(char *parm)
 {
     int rc;
 
-#if defined(__gnu_linux__) || defined(__ARM__) || defined(__EFI__)
-    int argc;
-    char **argv;
-
-    getmainargs(&argc, &argv);
-    rc = __start(argc, argv);
-#else
     rc = __start(cmd);
-#endif
     return (rc);
 }
 
