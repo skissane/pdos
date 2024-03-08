@@ -11,12 +11,13 @@
 
 .code
 
-top:
+public __top
+__top:
 
 
 ; We don't use the registers or stack at entry
 
-public __main
+public __intstart
 __intstart proc
         mov eax, 0
         push eax
@@ -41,6 +42,7 @@ zloop:  jmp zloop
 __exita endp
 
 
+public __main
 __main proc
         ret
 __main endp
@@ -101,4 +103,4 @@ __longj proc
 __longj endp
 
 
-end top
+end __top
