@@ -22,6 +22,7 @@
 #include "lx_bytearray.h"
 
 static size_t size_of_headers = sizeof (struct LX_HEADER_file);
+static size_t stack_size = 0x8000; /* Arbitrary. */
 
 static struct section_part fake_lx_part_s;
 static char *dll_inames;
@@ -113,7 +114,15 @@ static void write_relocations (unsigned char *file,
 
     for (section = all_sections; section; section = section->next) {
         struct section_part *part;
-        
+
+        /* BSS section has no page entries and no relocations. */
+        if (section->is_bss) continue;
+
+        cur_rva = section->rva;
+        old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+        bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+        pos += 4;
+
         for (part = section->first_part; part; part = part->next) {
             size_t i;
             
@@ -122,10 +131,11 @@ static void write_relocations (unsigned char *file,
                 const struct symbol *symbol;
 
                 rva = part->rva + part->relocation_array[i].offset;
+
                 while (rva >= cur_rva + lx_hdr_p->PageSize) {
+                    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
                     bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
                     pos += 4;
-                    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
                     cur_rva += lx_hdr_p->PageSize;
                 }
                 
@@ -165,23 +175,29 @@ static void write_relocations (unsigned char *file,
                 }
             }
         }
+
+        while (section->rva + section->total_size >= cur_rva + lx_hdr_p->PageSize) {
+            old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+            bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+            pos += 4;
+            cur_rva += lx_hdr_p->PageSize;
+        }
     }
 
-    while (pos != file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset) {
-        bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-        pos += 4;
-        old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-    }
+    /* Writes the terminating fixup page table entry. */
+    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+    pos += 4;
 
     if (dll_inames_size) {
         pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
         memcpy (pos, dll_inames, dll_inames_size);
     }
-}    
+}
 
 static void write_sections (unsigned char *file,
                             unsigned char *pos,
-                            struct LX_HEADER_internal *lx_hdr_p,
+                            const struct LX_HEADER_internal *lx_hdr_p,
                             size_t lx_hdr_offset)
 {
     struct section *section;
@@ -194,42 +210,75 @@ static void write_sections (unsigned char *file,
 
     for (section = all_sections; section; section = section->next) {
         struct object_table_entry_internal obj_tab_e;
-        unsigned long i;
 
         obj_tab_e.VirtualSize = section->total_size;
         obj_tab_e.RelocationBaseAddress = ld_state->base_address + section->rva;
         obj_tab_e.ObjectFlags = translate_section_flags_to_ObjectFlags (section->flags);
         /* Segment descriptor setting needed for all 32-bit code. */ 
         obj_tab_e.ObjectFlags |= OBJECT_FLAGS_BIG_DEFAULT_BIT_SETTING;
+        
         obj_tab_e.PageTableIndex = page_table_i;
+        if (section->is_bss) {
+            /* Workaround for PDOS
+             * because it does not handle objects
+             * without page entries properly.
+             */
+            obj_tab_e.PageTableIndex--;
+        }
+        
         obj_tab_e.NumberOfPageTableEntries = (section->total_size / lx_hdr_p->PageSize) + !!(section->total_size % lx_hdr_p->PageSize);
         obj_tab_e.Reserved = 0;
 
         write_struct_object_table_entry (object_table_entry_file++,
                                          &obj_tab_e);
 
-        for (i = 0;
-             i < obj_tab_e.NumberOfPageTableEntries;
-             i++, page_table_i++) {
-            struct object_page_table_entry_internal obj_page_e;
+        if (!section->is_bss) {
+            unsigned long i;
             
-            obj_page_e.PageDataOffset = pos - file - lx_hdr_p->DataPagesOffset;
-            obj_page_e.PageDataOffset += i * lx_hdr_p->PageSize;
-            if (obj_tab_e.NumberOfPageTableEntries - i == 1) {
-                obj_page_e.DataSize = section->total_size % lx_hdr_p->PageSize;
-            } else {
-                obj_page_e.DataSize = lx_hdr_p->PageSize;
+            for (i = 0;
+                 i < obj_tab_e.NumberOfPageTableEntries;
+                 i++, page_table_i++) {
+                struct object_page_table_entry_internal obj_page_e;
+                
+                obj_page_e.PageDataOffset = pos - file - lx_hdr_p->DataPagesOffset;
+                obj_page_e.PageDataOffset += i * lx_hdr_p->PageSize;
+                if (obj_tab_e.NumberOfPageTableEntries - i == 1) {
+                    obj_page_e.DataSize = section->total_size % lx_hdr_p->PageSize;
+                } else {
+                    obj_page_e.DataSize = lx_hdr_p->PageSize;
+                }
+
+                write_struct_object_page_table_entry (object_page_table_entry_file++,
+                                                      &obj_page_e);
             }
 
-            write_struct_object_page_table_entry (object_page_table_entry_file++,
-                                                  &obj_page_e);
-        }
-
-        if (!section->is_bss) {
+        
             section_write (section, pos);
             pos += section->total_size;
         }
     }
+
+    {
+        /* Creates stack object which has no corresponding section. */ 
+        struct object_table_entry_internal obj_tab_e;
+
+        obj_tab_e.VirtualSize = stack_size;
+        
+        for (section = all_sections; section; section = section->next) {
+            obj_tab_e.RelocationBaseAddress = ld_state->base_address + section->rva + section->total_size;
+            obj_tab_e.RelocationBaseAddress = ALIGN (obj_tab_e.RelocationBaseAddress, section->section_alignment);
+        }
+        
+        obj_tab_e.ObjectFlags = OBJECT_FLAGS_MEM_READ | OBJECT_FLAGS_MEM_WRITE;
+        /* Segment descriptor setting needed for all 32-bit code. */ 
+        obj_tab_e.ObjectFlags |= OBJECT_FLAGS_BIG_DEFAULT_BIT_SETTING;
+        obj_tab_e.PageTableIndex = page_table_i;
+        obj_tab_e.NumberOfPageTableEntries = 0;
+        obj_tab_e.Reserved = 0;
+
+        write_struct_object_table_entry (object_table_entry_file++,
+                                         &obj_tab_e);
+    }        
 }
 
 void lx_import_generate_import_with_dll_name (const char *import_name,
@@ -255,7 +304,7 @@ void lx_import_generate_import_with_dll_name (const char *import_name,
         size_t i;
         size_t name_len = strlen (dll_name);
 
-        for (i = 0; i < dll_inames_size; i += dll_inames[i], dll_index++) {
+        for (i = 0; i < dll_inames_size; i += dll_inames[i] + 1, dll_index++) {
             if (name_len == dll_inames[i]
                 && memcmp (dll_name, dll_inames + i + 1, name_len) == 0) {
                 break;
@@ -319,7 +368,7 @@ void lx_write (const char *filename)
     lx_hdr.FormatLevel = 0;
     lx_hdr.CpuType = CPU_TYPE_386;
     lx_hdr.OsType = OS_TYPE_OS2;
-    lx_hdr.ModuleFlags = 0x10; /* Has internal fixups. */
+    lx_hdr.ModuleFlags = MODULE_FLAGS_PM_WINDOWING_COMPATIBLE;
     lx_hdr.PageSize = PAGE_SIZE;
 
     {
@@ -332,27 +381,34 @@ void lx_write (const char *filename)
         for (section = all_sections; section; section = section->next) {
             section->target_index = object_index++;
             
-            if (!section->is_bss) total_section_size_to_write += section->total_size;
+            if (!section->is_bss) {
+                total_section_size_to_write += section->total_size;
+                object_page_table_entries += (section->total_size / lx_hdr.PageSize) + !!(section->total_size % lx_hdr.PageSize);
+            }
 
             if (ld_state->entry_point >= section->rva
                 && ld_state->entry_point < section->rva + section->total_size) {
                 lx_hdr.EipObjectIndex = object_page_table_entries + 1;
                 lx_hdr.Eip = ld_state->entry_point - section->rva;
             }
-
-            object_page_table_entries += (section->total_size / lx_hdr.PageSize) + !!(section->total_size % lx_hdr.PageSize);
         }
 
         lx_hdr.EspObjectIndex = object_index;
-        lx_hdr.Esp = 0x8000; /* Arbitrary. */
+        lx_hdr.Esp = stack_size - 16;
 
         file_size += total_section_size_to_write;
         lx_hdr.ObjectTableOffsetHdr = file_size - lx_hdr_offset;
-        lx_hdr.NumberOfObjectsInModule = section_count ();
+        lx_hdr.NumberOfObjectsInModule = object_index;
         file_size += lx_hdr.NumberOfObjectsInModule * sizeof (struct object_table_entry_file);
         lx_hdr.ObjectPageTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += object_page_table_entries * sizeof (struct object_page_table_entry_file);
         lx_hdr.ModuleNumberOfPages = object_page_table_entries;
+
+        lx_hdr.ResidentNameTableOffsetHdr = file_size - lx_hdr_offset;
+        file_size += 1 + strlen (ld_state->output_filename) + 2;
+
+        lx_hdr.EntryTableOffsetHdr = file_size - lx_hdr_offset;
+        file_size += 2; /* For dummy entry. */
         lx_hdr.LoaderSectionSize = file_size - lx_hdr_offset - lx_hdr.ObjectTableOffsetHdr;
 
         lx_hdr.FixupPageTableOffsetHdr = file_size - lx_hdr_offset;
@@ -364,13 +420,15 @@ void lx_write (const char *filename)
         {
             size_t i;
 
-            for (i = 0; i < dll_inames_size; i += dll_inames[i]) {
+            for (i = 0; i < dll_inames_size; i += dll_inames[i] + 1) {
                 lx_hdr.NumberOfImportModEntries++;
             }
         }
         file_size += dll_inames_size;
         lx_hdr.ImportProcTableOffsetHdr = file_size - lx_hdr_offset;
         lx_hdr.FixupSectionSize = file_size - (lx_hdr.FixupPageTableOffsetHdr + lx_hdr_offset);
+
+        file_size += 1; /* Makes ImportProcTableOffsetHdr point inside the file. */
     }
 
     file = xmalloc (file_size);
@@ -380,6 +438,10 @@ void lx_write (const char *filename)
 
     write_sections (file, pos, &lx_hdr, lx_hdr_offset);
     write_relocations (file, &lx_hdr, lx_hdr_offset);
+
+    pos = file + lx_hdr_offset + lx_hdr.ResidentNameTableOffsetHdr;
+    pos[0] = strlen (ld_state->output_filename);
+    memcpy (pos + 1, ld_state->output_filename, pos[0]);
 
     pos = file;
 

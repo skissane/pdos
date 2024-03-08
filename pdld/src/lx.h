@@ -146,6 +146,21 @@ struct LX_HEADER_file {
     
 };
 
+#define MODULE_FLAGS_PER_PROCESS_LIBRARY_INITIALIZATION  0x00000004
+#define MODULE_FLAGS_INTERNAL_FIXUPS_REMOVED             0x00000010
+#define MODULE_FLAGS_EXTERNAL_FIXUPS_REMOVED             0x00000020
+#define MODULE_FLAGS_PM_WINDOWING_INCOMPATIBLE           0x00000100
+#define MODULE_FLAGS_PM_WINDOWING_COMPATIBLE             0x00000200
+#define MODULE_FLAGS_PM_WINDOWING_USES_API               0x00000300
+#define MODULE_FLAGS_NOT_LOADABLE                        0x00002000
+#define MODULE_FLAGS_EXECUTABLE_MODULE                   0x00000000
+#define MODULE_FLAGS_LIBRARY_MODULE                      0x00008000
+#define MODULE_FLAGS_PDD_MODULE                          0x00020000
+#define MODULE_FLAGS_VDD_MODULE                          0x00028000
+#define MODULE_FLAGS_DLD_MODULE                          0x00030000
+#define MODULE_FLAGS_MP_UNSAFE                           0x00080000
+#define MODULE_FLAGS_PER_PROCESS_LIBRARY_TERMINATION     0x40000000
+
 struct object_table_entry_internal {
 
     unsigned long VirtualSize;
