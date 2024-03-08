@@ -111,9 +111,6 @@ static void write_relocations (unsigned char *file,
     pos = file + lx_hdr_p->FixupPageTableOffsetHdr + lx_hdr_offset;
     pos2 = file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset;
 
-    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-    pos += 4;
-
     for (section = all_sections; section; section = section->next) {
         struct section_part *part;
         
@@ -125,7 +122,7 @@ static void write_relocations (unsigned char *file,
                 const struct symbol *symbol;
 
                 rva = part->rva + part->relocation_array[i].offset;
-                while (rva > cur_rva + lx_hdr_p->PageSize) {
+                while (rva >= cur_rva + lx_hdr_p->PageSize) {
                     bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
                     pos += 4;
                     old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
@@ -170,8 +167,11 @@ static void write_relocations (unsigned char *file,
         }
     }
 
-    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+    while (pos != file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset) {
+        bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
+        pos += 4;
+        old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+    }
 
     if (dll_inames_size) {
         pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
