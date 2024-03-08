@@ -46,61 +46,56 @@ __main proc
 __main endp
 
 
-; Note that setjmp/longjmp are untested under OS/2 since
-; I don't have that environment readily available at the
-; moment
+; These routines copied from winsupa.asm
 
 public __setj
-__setj proc env:dword
-        mov eax, env
+__setj proc
+        mov eax, [esp+4]
         push ebx
         mov ebx, esp
-        push ebx               ; esp
+        mov [eax+20], ebx    ; esp
 
-        mov [eax + 4], ecx
-        mov [eax + 8], edx
-        mov [eax + 12], edi
-        mov [eax + 16], esi
+        mov ebx, ebp
+        mov [eax+24], ebx    ; ebp
 
-        pop ebx
-        mov [eax + 20], ebx    ; esp
-        mov ebx, [ebp + 0]
-        mov [eax + 24], ebx    ; ebp
+        mov [eax+4], ecx
+        mov [eax+8], edx
+        mov [eax+12], edi
+        mov [eax+16], esi
 
-        mov ebx, [ebp + 4]     ; return address
-        mov [eax + 28], ebx    ; return address
+        mov ebx, [esp+4]   ; return address
+        mov [eax+28], ebx    ; return address
 
         pop ebx
-        mov [eax + 0], ebx
+        mov [eax+0], ebx
         mov eax, 0
 
         ret
 __setj endp
 
-
 public __longj
-__longj proc env:dword
-        mov eax, env
-        mov ebp, [eax + 20]
+__longj proc
+        mov eax, [esp+4]
+        mov ebp, [eax+20]
         mov esp, ebp
+
         pop ebx                ; position of old ebx
-        pop ebx                ; position of old ebp
         pop ebx                ; position of old return address
 
-        mov ebx, [eax + 28]    ; return address
+        mov ebx, [eax+28]    ; return address
         push ebx
 
-        mov ebx, [eax + 24]    ; ebp saved as normal
-        push ebx
-        mov ebp, esp
+        mov ebx, [eax+24]
+        mov ebp, ebx
 
-        mov ebx, [eax + 0]
-        mov ecx, [eax + 4]
-        mov edx, [eax + 8]
-        mov edi, [eax + 12]
-        mov esi, [eax + 16]
+        mov ebx, [eax+0]
+        mov ecx, [eax+4]
+        mov edx, [eax+8]
+        mov edi, [eax+12]
+        mov esi, [eax+16]
 
-        mov eax, [eax + 32]    ; return value
+; Need to account for 7 dwords of filler
+        mov eax, [eax+28+7*4+4]    ; return value
 
         ret
 __longj endp
