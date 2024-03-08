@@ -224,9 +224,11 @@ static void write_sections (unsigned char *file,
              * without page entries properly.
              */
             obj_tab_e.PageTableIndex--;
+
+            obj_tab_e.NumberOfPageTableEntries = 0;
+        } else {
+            obj_tab_e.NumberOfPageTableEntries = (section->total_size / lx_hdr_p->PageSize) + !!(section->total_size % lx_hdr_p->PageSize);
         }
-        
-        obj_tab_e.NumberOfPageTableEntries = (section->total_size / lx_hdr_p->PageSize) + !!(section->total_size % lx_hdr_p->PageSize);
         obj_tab_e.Reserved = 0;
 
         write_struct_object_table_entry (object_table_entry_file++,
@@ -252,7 +254,6 @@ static void write_sections (unsigned char *file,
                                                       &obj_page_e);
             }
 
-        
             section_write (section, pos);
             pos += section->total_size;
         }
