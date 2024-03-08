@@ -21,9 +21,11 @@ __intstart proc
         mov eax, 0
         push eax
         call __start
-        add sp,4
+        add esp,4
         push eax
         call __exita
+        add esp, 4
+        ret
 __intstart endp
 
 
@@ -34,7 +36,8 @@ __exita proc
         push eax
         push 1
         call __myDosExit
-        add sp,8
+        add esp,8
+zloop:  jmp zloop
 __exita endp
 
 
