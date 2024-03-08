@@ -1421,9 +1421,6 @@ void __exit(int status)
     _cexit();
     }
 
-#ifdef __WIN32__
-    ExitProcess(status);
-#else
     if (__runnum == 1)
     {
     __exita(status);
@@ -1449,7 +1446,6 @@ void __exit(int status)
 
     longjmp(jb, status);
 
-#endif
 }
 
 __PDPCLIB_API__ void _exit(int status)
@@ -1457,11 +1453,7 @@ __PDPCLIB_API__ void _exit(int status)
     /* Quick C library termination and exit with error code.. */
     _c_exit();
 
-#ifdef __WIN32__
-    ExitProcess(status);
-#else
     __exita(status);
-#endif
 }
 
 __PDPCLIB_API__ void _cexit(void)
@@ -1640,3 +1632,13 @@ void __G_debug(void *ptr)
     }
     return;
 }
+
+/* probably more than just WIN32 should define their
+   exita here */
+#ifdef __WIN32__
+void __exita(int status)
+{
+    ExitProcess(status);
+    return;
+}
+#endif
