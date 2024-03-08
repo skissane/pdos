@@ -61,7 +61,8 @@ __longj proc
         mov edi, [eax+12]
         mov esi, [eax+16]
 
-        mov eax, [eax+32]    ; return value
+; Need to account for 7 dwords of filler
+        mov eax, [eax+28+7*4+4]    ; return value
 
         ret
 __longj endp

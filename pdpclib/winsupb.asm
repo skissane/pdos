@@ -59,6 +59,7 @@ __longj:
         mov edi, [eax+12]
         mov esi, [eax+16]
 
-        mov eax, [eax+32]    ; return value
+; account for 7 dwords of filler
+        mov eax, [eax+7*4+32]    ; return value
 
         ret
