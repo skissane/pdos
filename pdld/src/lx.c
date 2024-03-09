@@ -249,6 +249,7 @@ static void write_sections (unsigned char *file,
                 } else {
                     obj_page_e.DataSize = lx_hdr_p->PageSize;
                 }
+                obj_page_e.Flags = 0;
 
                 write_struct_object_page_table_entry (object_page_table_entry_file++,
                                                       &obj_page_e);
@@ -389,7 +390,7 @@ void lx_write (const char *filename)
 
             if (ld_state->entry_point >= section->rva
                 && ld_state->entry_point < section->rva + section->total_size) {
-                lx_hdr.EipObjectIndex = object_page_table_entries + 1;
+                lx_hdr.EipObjectIndex = section->target_index;
                 lx_hdr.Eip = ld_state->entry_point - section->rva;
             }
         }
