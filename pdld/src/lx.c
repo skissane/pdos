@@ -344,6 +344,7 @@ void lx_write (const char *filename)
     struct IMAGE_DOS_HEADER_internal dos_hdr;
     struct LX_HEADER_internal lx_hdr;
     size_t lx_hdr_offset;
+    size_t module_name_len;
 
     struct section *section;
 
@@ -407,7 +408,17 @@ void lx_write (const char *filename)
         lx_hdr.ModuleNumberOfPages = object_page_table_entries;
 
         lx_hdr.ResidentNameTableOffsetHdr = file_size - lx_hdr_offset;
-        file_size += 1 + strlen (ld_state->output_filename) + 2;
+        {
+            const char *p = strrchr (ld_state->output_filename, '.');
+
+            if (p && p != ld_state->output_filename) {
+                module_name_len = p - ld_state->output_filename;
+            } else {
+                module_name_len = strlen (ld_state->output_filename);
+            }
+        }
+        /* Length byte + the name + 2 byte ordinal + empty entry (length byte with 0). */
+        file_size += 1 + module_name_len + 2 + 1;
 
         lx_hdr.EntryTableOffsetHdr = file_size - lx_hdr_offset;
         file_size += 2; /* For dummy entry. */
@@ -442,7 +453,7 @@ void lx_write (const char *filename)
     write_relocations (file, &lx_hdr, lx_hdr_offset);
 
     pos = file + lx_hdr_offset + lx_hdr.ResidentNameTableOffsetHdr;
-    pos[0] = strlen (ld_state->output_filename);
+    pos[0] = module_name_len;
     memcpy (pos + 1, ld_state->output_filename, pos[0]);
 
     pos = file;
