@@ -43,8 +43,9 @@ pdptest.exe: osstart.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo ++DosSetRelMaxFH.DOSCALLS.DosSetRelMaxFH.382 >>temp.wat
   echo ++DosGetInfoBlocks.DOSCALLS.DosGetInfoBlocks.312 >>temp.wat
   wlib -q os2.lib @temp.wat
-# fullscreen works, PMCompatible doesn't
-  wlink File pdptest.obj Name pdptest.exe Form os2 flat fullscreen Library watcom.lib Library os2.lib Option quiet,stub=needpdos.exe,internalrelocs
+# If you are producing an executable that uses setvbuf, use
+# change PMCompatible to fullscreen
+  wlink File osstart.obj,pdptest.obj Name pdptest.exe Form os2 flat PMCompatible Library watcom.lib Library os2.lib Option quiet,stub=needpdos.exe,internalrelocs
 
 osstart.obj: osstart.asm
   wasm -zq -zcm -bt=os2 osstart.asm
