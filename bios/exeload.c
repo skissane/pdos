@@ -3929,6 +3929,10 @@ static int exeloadLoadLX(unsigned char **entry_point,
     const struct object_page_table_entry_internal *object_page_table;
     unsigned char *data_pages;
 
+    unsigned char *exestart;
+    size_t base_address;
+    size_t i;
+
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
         || (memcmp(firstbit, "LX", 2) != 0))
@@ -3956,148 +3960,189 @@ static int exeloadLoadLX(unsigned char **entry_point,
     object_page_table = (void *)(hdr + lx_hdr_p->ObjectPageTableOffsetHdr);
     data_pages = base + lx_hdr_p->DataPagesOffset;
 
+    base_address = object_table[0].RelocationBaseAddress;
+
+    {
+        const struct object_table_entry_internal *obj;
+        size_t highest_addr = 0;
+
+        obj = object_table + lx_hdr_p->NumberOfObjectsInModule - 1;
+        highest_addr = obj->RelocationBaseAddress + obj->VirtualSize;
+
+        if ((exestart = calloc (1, highest_addr - base_address)) == NULL) {
+            printf ("insufficient memory\n");
+            return 2;
+        }
+    }
+
+    for (i = 0; i < lx_hdr_p->NumberOfObjectsInModule; i++) {
+        size_t j;
+        unsigned char *trg_page;
+
+        trg_page = exestart + object_table[i].RelocationBaseAddress - base_address;
+
+        for (j = object_table[i].PageTableIndex - 1;
+             j < (object_table[i].PageTableIndex
+                  + object_table[i].NumberOfPageTableEntries
+                  - 1);
+             j++) {
+            if (object_page_table[j].Flags != 0) {
+                printf ("unsupported object page flags\n");
+                return 2;
+            }
+            
+            memcpy (trg_page,
+                    data_pages + object_page_table[j].PageDataOffset,
+                    object_page_table[j].DataSize);
+            trg_page += lx_hdr_p->PageSize;
+        }
+    }
+    
     if (lx_hdr_p->FixupPageTableOffsetHdr
         && lx_hdr_p->FixupRecordTableOffsetHdr) {
-        unsigned long i;
         const unsigned long *fixup_offset_table;
         unsigned char *corr_start;
 
         fixup_offset_table = (void *)(hdr + lx_hdr_p->FixupPageTableOffsetHdr);
         corr_start = (void *)(hdr + lx_hdr_p->FixupRecordTableOffsetHdr);
+        
+        for (i = 0; i < lx_hdr_p->NumberOfObjectsInModule; i++) {
+            size_t j;
+            unsigned char *trg_page;
 
-        for (i = 0; i < lx_hdr_p->ModuleNumberOfPages; i++) {
-            unsigned char *trg_page = data_pages + object_page_table[i].PageDataOffset;
+            trg_page = exestart + object_table[i].RelocationBaseAddress - base_address;
 
-            corr = corr_start + fixup_offset_table[i];
-            while (corr < corr_start + fixup_offset_table[i + 1]) {
-                if (corr[0] == 0x08)
-                {
-                    unsigned int ord;
-
-                    zapoffs = corr[2] | (corr[3] << 8);
-                    if ((corr[1] & 0x80) == 0)
+            for (j = object_table[i].PageTableIndex - 1;
+                 j < (object_table[i].PageTableIndex
+                      + object_table[i].NumberOfPageTableEntries
+                      - 1);
+                 j++) {
+                corr = corr_start + fixup_offset_table[j];
+                while (corr < corr_start + fixup_offset_table[j + 1]) {
+                    if (corr[0] == 0x08)
                     {
-                        ord = (corr[6] << 8) | corr[5];
+                        unsigned int ord;
+
+                        zapoffs = corr[2] | (corr[3] << 8);
+                        if ((corr[1] & 0x80) == 0)
+                        {
+                            ord = (corr[6] << 8) | corr[5];
+                            corr += 7;
+                        }
+                        else
+                        {
+                            ord = corr[5];
+                            corr += 6;
+                        }
+                        if (ord == 234)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosExit - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 273)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosOpen - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 257)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosClose - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 281)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosRead - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 282)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosWrite - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 259)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosDelete - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 271)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosMove - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 283)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosExecPgm - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 256)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosSetFilePtr - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 230)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosGetDateTime - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 284)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosDevIOCtl - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 299)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosAllocMem - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 304)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosFreeMem - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 227)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosScanEnv - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 382)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosSetRelMaxFH - (trg_page + zapoffs + 4);
+                        }
+                        else if (ord == 312)
+                        {
+                            *(unsigned int *)(trg_page + zapoffs) =
+                                (unsigned char *)DosGetInfoBlocks - (trg_page + zapoffs + 4);
+                        }
+                        else
+                        {
+                            printf("unknown DLL ordinal %d\n", ord);
+                            for (;;) ;
+                        }
+                    }
+                    else if (corr[0] == 0x07)
+                    {
+                        const struct object_table_entry_internal *src_obj;
+
+                        src_obj = object_table + corr[4] - 1;
+
+                        zapoffs = corr[2] | (corr[3] << 8);
+                        *(unsigned int *)(trg_page + zapoffs)
+                            = (unsigned int)(exestart
+                                             + src_obj->RelocationBaseAddress
+                                             - base_address
+                                             + corr[5] + (corr[6] << 8));
                         corr += 7;
                     }
                     else
                     {
-                        ord = corr[5];
-                        corr += 6;
-                    }
-                    if (ord == 234)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosExit - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 273)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosOpen - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 257)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosClose - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 281)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosRead - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 282)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosWrite - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 259)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosDelete - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 271)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosMove - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 283)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosExecPgm - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 256)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosSetFilePtr - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 230)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosGetDateTime - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 284)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosDevIOCtl - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 299)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosAllocMem - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 304)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosFreeMem - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 227)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosScanEnv - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 382)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosSetRelMaxFH - (trg_page + zapoffs + 4);
-                    }
-                    else if (ord == 312)
-                    {
-                        *(unsigned int *)(trg_page + zapoffs) =
-                            (unsigned char *)DosGetInfoBlocks - (trg_page + zapoffs + 4);
-                    }
-                    else
-                    {
-                        printf("unknown DLL ordinal %d\n", ord);
+                        printf("unknown fixup %x\n", corr[0]);
                         for (;;) ;
+
                     }
                 }
-                else if (corr[0] == 0x07)
-                {
-                    const struct object_table_entry_internal *src_obj;
-                    const struct object_page_table_entry_internal *src_page_e;
 
-                    src_obj = object_table + corr[4] - 1;
-                    src_page_e = object_page_table + src_obj->PageTableIndex - 1;
-
-                    zapoffs = corr[2] | (corr[3] << 8);
-                    *(unsigned int *)(trg_page + zapoffs)
-                        = (unsigned int)(data_pages + src_page_e->PageDataOffset
-                                         + corr[5] + (corr[6] << 8));
-#if 1 /* this somehow manages to clear BSS */
-                    if (src_obj->NumberOfPageTableEntries == 0) {
-                        *(unsigned int *)(trg_page + zapoffs)
-                            = (unsigned int)(data_pages + src_page_e->PageDataOffset + 0x4000
-                                             + corr[5] + (corr[6] << 8));
-                    }
-#endif
-                    corr += 7;
-                }
-                else
-                {
-                    printf("unknown fixup %x\n", corr[0]);
-                    for (;;) ;
-
-                }
+                trg_page += lx_hdr_p->PageSize;
             }
         }
     }
@@ -4111,12 +4156,13 @@ static int exeloadLoadLX(unsigned char **entry_point,
 
     if (lx_hdr_p->EipObjectIndex) {
         const struct object_table_entry_internal *eip_obj;
-        const struct object_page_table_entry_internal *eip_page_e;
-
+        
         eip_obj = object_table + lx_hdr_p->EipObjectIndex - 1;
-        eip_page_e = object_page_table + eip_obj->PageTableIndex - 1;
 
-        *entry_point = data_pages + eip_page_e->PageDataOffset + lx_hdr_p->Eip;
+        *entry_point = (exestart
+                        + eip_obj->RelocationBaseAddress
+                        - base_address
+                        + lx_hdr_p->Eip);
     } else {
         printf ("LX program has no entry point\n");
         return 2;
