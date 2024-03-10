@@ -20,7 +20,7 @@ pdptest.exe: os2strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   genimp doscalls.wat os2.lib
 # executable needs to be marked fullscreen if the app uses setvbuf
 # otherwise VIO works too
-  pdld -s --oformat lx --stub needpdos.exe -o pdptest.exe os2strt.obj pdptest.obj pdpos2.lib os2.lib
+  pdld --image-base 0x10000 --section-alignment 0x10000 -s --oformat lx --stub needpdos.exe -o pdptest.exe os2strt.obj pdptest.obj pdpos2.lib os2.lib
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
