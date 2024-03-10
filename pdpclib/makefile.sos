@@ -8,7 +8,7 @@ pdptest.exe: os2strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsw.obj
   as86 -DOS220 -o needpdos.obj ..\src\needpdos.asm
-  ld86 --oformat msdos-mz -o needpdos.exe needpdos.obj
+  ld86 -e top --oformat msdos-mz -o needpdos.exe needpdos.obj
   rm -f pdpos2.lib
   $(AR) r pdpos2.lib os2strt.obj stdio.obj string.obj stdlib.obj
   $(AR) r pdpos2.lib start.obj time.obj errno.obj assert.obj signal.obj
