@@ -439,9 +439,9 @@ void lx_write (const char *filename)
         }
         file_size += dll_inames_size;
         lx_hdr.ImportProcTableOffsetHdr = file_size - lx_hdr_offset;
+        /* Empty Import Procedure Table entry (length byte with 0). */
+        file_size += 1;
         lx_hdr.FixupSectionSize = file_size - (lx_hdr.FixupPageTableOffsetHdr + lx_hdr_offset);
-
-        file_size += 1; /* Makes ImportProcTableOffsetHdr point inside the file. */
     }
 
     file = xmalloc (file_size);
