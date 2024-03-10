@@ -98,6 +98,11 @@ void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p)
     *stub_size_p = stub_size;
 }
 
+unsigned long coff_get_SizeOfStackCommit (void)
+{
+    return SizeOfStackCommit;
+}
+
 static unsigned long translate_section_flags_to_Characteristics (flag_int flags)
 {
     unsigned long Characteristics = 0;

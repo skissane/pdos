@@ -82,10 +82,18 @@ static size_t calculate_fixup_record_table_size (void)
                 const struct symbol *symbol;
                 
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    const struct section *source_section;
+                    address_type value;
+                    
                     if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
                         if (symbol_is_undefined ((symbol = symbol_find (symbol->name)))) continue;
                     }
                     if (!symbol->part) continue; /* Absolute symbol. */
+
+                    source_section = symbol->part->section;
+                    value -= ld_state->base_address + source_section->rva;
+                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    if (value > 0xffff) frt_size += 2;
                     
                     frt_size += 7;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
@@ -140,34 +148,42 @@ static void write_relocations (unsigned char *file,
                 }
                 
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    const struct section *source_section;
+                    address_type value;
+                    unsigned char flags;
+                    
                     if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
                         if (symbol_is_undefined ((symbol = symbol_find (symbol->name)))) continue;
                     }
                     if (!symbol->part) continue; /* Absolute symbol. */
+
+                    source_section = symbol->part->section;
+                    /* The source offset is just the field value
+                     * made source-section-relative.
+                     */
+                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    value -= ld_state->base_address + source_section->rva;
+
+                    flags = FIXUP_TARGET_FLAGS_INTERNAL_REFERENCE;
+                    if (value > 0xffff) flags |= FIXUP_TARGET_FLAGS_32_BIT_OFFSET;
                     
                     bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 1, 0, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 1, flags, LITTLE_ENDIAN);
                     bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
-
-                    {
-                        struct section *source_section;
-                        address_type value;
-                        
-                        source_section = symbol->part->section;
-                        bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
-                        
-                        /* The source offset is just the field value
-                         * made source-section-relative.
-                         */
-                        bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
-                        bytearray_write_2_bytes (pos2 + 5, value - source_section->rva, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
+                    if (value > 0xffff) {
+                        bytearray_write_4_bytes (pos2 + 5, value, LITTLE_ENDIAN);
+                        pos += 2;
+                    } else {
+                        bytearray_write_2_bytes (pos2 + 5, value, LITTLE_ENDIAN);
                     }
+                    
                     pos2 += 7;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
                            && (symbol = symbol_find (part->relocation_array[i].symbol->name))
                            && symbol->part == &fake_lx_part_s) {
                     bytearray_write_1_bytes (pos2, 0x8, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 1, 1, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (pos2 + 1, FIXUP_TARGET_FLAGS_IMPORT_BY_ORDINAL, LITTLE_ENDIAN);
                     bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
                     bytearray_write_1_bytes (pos2 + 4, symbol->value >> 16, LITTLE_ENDIAN);
                     bytearray_write_2_bytes (pos2 + 5, symbol->value & 0xffff, LITTLE_ENDIAN);
@@ -354,6 +370,10 @@ void lx_write (const char *filename)
     }
 
     coff_get_stub_file (&stub_file, &stub_size);
+    {
+        size_t new_stack_size = coff_get_SizeOfStackCommit ();
+        if (new_stack_size > stack_size) stack_size = new_stack_size;
+    }
 
     if (stub_file) {
         size_of_headers += stub_size;
