@@ -91,8 +91,9 @@ static size_t calculate_fixup_record_table_size (void)
                     if (!symbol->part) continue; /* Absolute symbol. */
 
                     source_section = symbol->part->section;
-                    value -= ld_state->base_address + source_section->rva;
                     bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    value -= ld_state->base_address + source_section->rva;
+                    
                     if (value > 0xffff) frt_size += 2;
                     
                     frt_size += 7;
