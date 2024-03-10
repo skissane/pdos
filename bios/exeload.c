@@ -4083,6 +4083,13 @@ static int exeloadLoadLX(unsigned char **entry_point,
                     *(unsigned int *)(trg_page + zapoffs)
                         = (unsigned int)(data_pages + src_page_e->PageDataOffset
                                          + corr[5] + (corr[6] << 8));
+#if 1 /* this somehow manages to clear BSS */
+                    if (src_obj->NumberOfPageTableEntries == 0) {
+                        *(unsigned int *)(trg_page + zapoffs)
+                            = (unsigned int)(data_pages + src_page_e->PageDataOffset + 0x4000
+                                             + corr[5] + (corr[6] << 8));
+                    }
+#endif
                     corr += 7;
                 }
                 else
