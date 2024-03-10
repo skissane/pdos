@@ -3945,7 +3945,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
 
     return (2);
 #else
-    base = calloc(1, 200000);
+    base = malloc(200000);
     if (base == NULL)
     {
         printf("insufficient memory\n");
