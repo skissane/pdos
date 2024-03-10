@@ -7,10 +7,8 @@ AR=xar
 pdptest.exe: os2strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
        ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsw.obj
-  wasm -zcm -q -DOS220 ..\src\needpdos.asm
-  wlink File needpdos.obj Name needpdos.exe Form dos Option quiet,dosseg
-#  as86 -DOS220 -o needpdos.obj ..\src\needpdos.asm
-#  ld86 --oformat msdos-mz -o needpdos.exe needpdos.obj
+  as86 -DOS220 -o needpdos.obj ..\src\needpdos.asm
+  ld86 --oformat msdos-mz -o needpdos.exe needpdos.obj
   rm -f pdpos2.lib
   $(AR) r pdpos2.lib os2strt.obj stdio.obj string.obj stdlib.obj
   $(AR) r pdpos2.lib start.obj time.obj errno.obj assert.obj signal.obj
