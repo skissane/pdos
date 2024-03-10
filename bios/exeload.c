@@ -3945,14 +3945,26 @@ static int exeloadLoadLX(unsigned char **entry_point,
 
     return (2);
 #else
-    base = malloc(200000);
+    if (fseek(fp, 0, SEEK_END) != 0)
+    {
+        return (2);
+    }
+    newpos = ftell(fp);
+    /* we could check for overflowing size_t here */
+    base = malloc((size_t)newpos);
     if (base == NULL)
     {
         printf("insufficient memory\n");
-        return (1);
+        return (2);
+    }
+    if (fseek(fp, e_lfanew + sizeof firstbit, SEEK_SET) != 0)
+    {
+        return (2);
     }
     memcpy(base + e_lfanew, firstbit, sizeof firstbit);
-    fread(base + e_lfanew + sizeof firstbit, 1, 200000 - sizeof firstbit - e_lfanew, fp);
+    fread(base + e_lfanew + sizeof firstbit,
+          1,
+          (size_t)newpos - sizeof firstbit - e_lfanew, fp);
 
     hdr = base + e_lfanew;
     lx_hdr_p = (void *)hdr;
