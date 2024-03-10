@@ -39,6 +39,7 @@ ULONG APIENTRY DosWrite(ULONG hfile, void *ptr,
     else f = (FILE *)hfile;
 
     *tempWritten = fwrite(ptr, 1, towrite, f);
+    fflush(f);
     return (0);
 }
 
