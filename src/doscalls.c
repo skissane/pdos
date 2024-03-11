@@ -58,9 +58,9 @@ ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
         return (0);
     }
 
-    if ((mode & OPEN_ACCESS_WRITEONLY) != 0)
+    if ((action2 & OPEN_ACTION_REPLACE_IF_EXISTS) != 0)
     {
-        *handle = (ULONG)fopen(fnm, "wb");
+        *handle = (ULONG)fopen(fnm, "w+b");
     }
     else
     {
