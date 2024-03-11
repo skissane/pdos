@@ -1172,13 +1172,24 @@ __PDPCLIB_API__ int system(const char *string)
     char err_obj[100];
     APIRET rc;
     RESULTCODES results;
+    char cmdbuf[310];
+    char *cmdproc;
 
+    cmdproc = getenv("COMSPEC");
+    if (cmdproc == NULL)
+    {
+        return (-1);
+    }
     if (string == NULL)
     {
         return (1);
     }
+    memcpy(cmdbuf, "cmd\0/c ", 7);
+    strncpy(cmdbuf + 7, string, sizeof cmdbuf - 1 - 7 - 1);
+    cmdbuf[sizeof cmdbuf - 1] = '\0';
+    cmdbuf[sizeof cmdbuf - 2] = '\0';
     rc = DosExecPgm(err_obj, sizeof err_obj, EXEC_SYNC,
-                    (PSZ)string, NULL, &results, (PSZ)string);
+                    (PSZ)cmdbuf, NULL, &results, (PSZ)cmdproc);
     if (rc != 0)
     {
         return (rc);
