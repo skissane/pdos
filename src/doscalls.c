@@ -119,7 +119,7 @@ ULONG APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                           char *string, void *junk1, RESULTCODES *results,
                           char *string2)
 {
-    system(string);
+    system(string + strlen(string) + 1);
     return (0);
 }
 
