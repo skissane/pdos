@@ -226,6 +226,10 @@ void lx_import_generate_import_with_dll_name (const char *import_name,
                                               const char *dll_name);
 void lx_write (const char *filename);
 
+void lx_print_help (void);
+void lx_use_option (int option_index, char *arg);
+const struct long_option *lx_get_long_options (void);
+
 /* map.c */
 void map_write (const char *filename);
 

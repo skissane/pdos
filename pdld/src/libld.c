@@ -83,11 +83,12 @@ static void print_help (void)
     printf ("  -v, --version               Print version information\n");
     
     coff_print_help ();
+    lx_print_help ();
     
     exit (EXIT_SUCCESS);
 }
 
-static void use_option (enum option_index option_index, char *arg)
+static void use_option (int option_index, char *arg)
 {
     switch (option_index) {
 
@@ -158,11 +159,44 @@ static void use_option (enum option_index option_index, char *arg)
     }
 }
 
+static const struct long_option *check_long_options (const char *after_hyphen,
+                                                     const struct long_option *options)
+{
+    const struct long_option *l_option;
+
+    for (l_option = options;
+         l_option->name;
+         l_option++) {
+        if (strncmp (l_option->name, after_hyphen, l_option->name_len) == 0
+            && (after_hyphen[l_option->name_len] == '\0'
+                || after_hyphen[l_option->name_len] == '=')) break;
+    }
+
+    if (l_option->name) return l_option;
+
+    return NULL;
+}
+
+struct options_with_use {
+    const struct long_option *options;
+    void (*use) (int option_index, char *arg);
+};
+
 char **ld_parse_args (int argc, char **argv, int start_index)
 {
     char **input_filenames;
     int i_arg;
     int at_least_one_input_filename = 0;
+    struct options_with_use options_with_use[4];
+
+    options_with_use[0].options = long_options;
+    options_with_use[0].use = &use_option;
+    options_with_use[1].options = coff_get_long_options ();
+    options_with_use[1].use = &coff_use_option;
+    options_with_use[2].options = lx_get_long_options ();
+    options_with_use[2].use = &lx_use_option;
+    options_with_use[3].options = NULL;
+    options_with_use[3].use = NULL;
 
     if (argc == start_index) return NULL;
 
@@ -207,42 +241,33 @@ char **ld_parse_args (int argc, char **argv, int start_index)
         } else after_hyphen = argv[i_arg] + 2;
 
         {
-            const struct long_option *l_option;
-            const struct long_option *object_dependent_options;
+            const struct options_with_use *owu;
+            const struct long_option *l_option = NULL;
 
-            object_dependent_options = coff_get_long_options (); 
-
-            for (l_option = long_options;
-                 l_option->name
-                 || (object_dependent_options
-                     && (l_option = object_dependent_options,
-                         object_dependent_options = NULL,
-                         l_option->name));
-                 l_option++) {
-                if (strncmp (l_option->name, after_hyphen, l_option->name_len) == 0
-                    && (after_hyphen[l_option->name_len] == '\0'
-                        || after_hyphen[l_option->name_len] == '=')) break;
+            for (owu = options_with_use; owu->options; owu++) {
+                l_option = check_long_options (after_hyphen, owu->options);
+                if (l_option) break;
             }
 
-            if ((l_option->flags & OPTION_NO_ARG)
-                && after_hyphen[l_option->name_len] == '\0') {
-                if (object_dependent_options) use_option (l_option->index, NULL);
-                else coff_use_option (l_option->index, NULL);
-                continue;
-            }
-            if (l_option->flags & OPTION_HAS_ARG) {
-                char *arg;
-                if (after_hyphen[l_option->name_len] == '=') arg = after_hyphen + l_option->name_len + 1;
-                else if (i_arg + 1 < argc) arg = argv[++i_arg];
-                else {
-                    ld_error ("argument to '%s' is missing", argv[i_arg]);
+            if (l_option) {
+                if ((l_option->flags & OPTION_NO_ARG)
+                    && after_hyphen[l_option->name_len] == '\0') {
+                    (*owu->use) (l_option->index, NULL);
                     continue;
                 }
-                if (object_dependent_options) use_option (l_option->index, arg);
-                else coff_use_option (l_option->index, arg);
-                continue;
+                if (l_option->flags & OPTION_HAS_ARG) {
+                    char *arg;
+                    if (after_hyphen[l_option->name_len] == '=') arg = after_hyphen + l_option->name_len + 1;
+                    else if (i_arg + 1 < argc) arg = argv[++i_arg];
+                    else {
+                        ld_error ("argument to '%s' is missing", argv[i_arg]);
+                        continue;
+                    }
+                    (*owu->use) (l_option->index, arg);
+                    continue;
+                }
             }
-        }
+        }                
 
         ld_error ("unrecognized command-line option '%s'", argv[i_arg]);
         ld_note ("use the --help option for usage information");

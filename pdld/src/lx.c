@@ -21,6 +21,8 @@
 #include "coff_bytearray.h"
 #include "lx_bytearray.h"
 
+static unsigned long api_type = MODULE_FLAGS_PM_WINDOWING_COMPATIBLE;
+
 static size_t size_of_headers = sizeof (struct LX_HEADER_file);
 static size_t stack_size = 0x8000; /* Arbitrary. */
 
@@ -392,7 +394,7 @@ void lx_write (const char *filename)
     lx_hdr.FormatLevel = 0;
     lx_hdr.CpuType = CPU_TYPE_386;
     lx_hdr.OsType = OS_TYPE_OS2;
-    lx_hdr.ModuleFlags = MODULE_FLAGS_PM_WINDOWING_COMPATIBLE;
+    lx_hdr.ModuleFlags = api_type;
     lx_hdr.PageSize = PAGE_SIZE;
 
     {
@@ -514,4 +516,65 @@ void lx_write (const char *filename)
 
     free (file);
     fclose (outfile);
+}
+
+#include "options.h"
+
+enum option_index {
+
+    LX_OPTION_IGNORED = 0,
+    LX_OPTION_FULLSCREEN,
+    LX_OPTION_PM,
+    LX_OPTION_PMCOMPATIBLE
+
+};
+
+#define STR_AND_LEN(str) (str), (sizeof (str) - 1)
+static const struct long_option long_options[] = {
+    
+    { STR_AND_LEN("fullscreen"), LX_OPTION_FULLSCREEN, OPTION_NO_ARG},
+    { STR_AND_LEN("pm"), LX_OPTION_PM, OPTION_NO_ARG},
+    { STR_AND_LEN("pmcompatible"), LX_OPTION_PMCOMPATIBLE, OPTION_NO_ARG},
+    { NULL, 0, 0}
+
+};
+#undef STR_AND_LEN
+
+void lx_print_help (void)
+{
+    printf ("i386lx:\n");
+    printf ("  --pm, --pmcompatible,              Set API type\n"
+            "   --fullscreen\n");
+}
+
+static void use_option (enum option_index option_index, char *arg)
+{
+    switch (option_index) {
+
+        case LX_OPTION_IGNORED:
+            break;
+
+        case LX_OPTION_FULLSCREEN:
+            api_type = MODULE_FLAGS_PM_WINDOWING_INCOMPATIBLE;
+            break;
+
+        case LX_OPTION_PM:
+            api_type = MODULE_FLAGS_PM_WINDOWING_USES_API;
+            break;
+
+        case LX_OPTION_PMCOMPATIBLE:
+            api_type = MODULE_FLAGS_PM_WINDOWING_COMPATIBLE;
+            break;
+
+    }
+}
+
+void lx_use_option (int option_index, char *arg)
+{
+    use_option (option_index, arg);
+}
+
+const struct long_option *lx_get_long_options (void)
+{
+    return long_options;
 }
