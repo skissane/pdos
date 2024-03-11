@@ -16,12 +16,11 @@
 VPATH=src;src/hashtab
 CC=gccwin
 PREPROCESSOR=pdcc -E
-CFLAGS=-O2
-#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+#CFLAGS=-O2
+CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
-    --stub ../pdpclib/needpdos.exe \
-    --image-base 0x10000 --section-alignment 0x10000
+    --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I./src -I./src/hashtab -I../pdpclib \
   -U__WIN32__ -D__NOBIVA__ -D__HAVESYS__=_System -D__OS2__ -D__32BIT__

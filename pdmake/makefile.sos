@@ -7,8 +7,7 @@ CC=gccwin
 CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
-    --stub ../pdpclib/needpdos.exe \
-    --image-base 0x10000 --section-alignment 0x10000
+    --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
 AR=ar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \

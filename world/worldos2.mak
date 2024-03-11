@@ -3,8 +3,7 @@
 # Use SubC as compiler
 
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
-    --stub ../pdpclib/needpdos.exe \
-    --image-base 0x10000 --section-alignment 0x10000
+    --stub ../pdpclib/needpdos.exe
 
 all: world.exe
 

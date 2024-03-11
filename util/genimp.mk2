@@ -14,8 +14,7 @@ CC=gccwin
 CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
-    --stub ../pdpclib/needpdos.exe \
-    --image-base 0x10000 --section-alignment 0x10000
+    --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common \
     -I../pdld/src -I../pdld/src/bytearray -I../pdpclib -U__WIN32__ -D__NOBIVA__ \
