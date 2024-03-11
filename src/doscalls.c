@@ -119,7 +119,10 @@ ULONG APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                           char *string, void *junk1, RESULTCODES *results,
                           char *string2)
 {
-    system(string + strlen(string) + 1);
+    int rc;
+
+    rc = system(string + strlen(string) + 1 + 3);
+    results->codeResult = rc;
     return (0);
 }
 
@@ -133,7 +136,8 @@ ULONG APIENTRY DosSetFilePtr(ULONG hfile, LONG newpos,
     else if (hfile == 2) f = stderr;
     else f = (FILE *)hfile;
 
-    *retpos = fseek(f, newpos, dir);
+    fseek(f, newpos, dir);
+    *retpos = ftell(f);
     return (0);
 }
 
