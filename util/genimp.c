@@ -296,7 +296,7 @@ static int process_input (void *input_file,
         enames[num_enames].export_type = EXPORT_TYPE_CODE;
         num_enames++;
         
-        while (isspace (*input)) input++;
+        while (isspace (*(unsigned char *)input)) input++;
     }
 
     *export_names_p = enames;
