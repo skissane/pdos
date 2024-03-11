@@ -4020,9 +4020,12 @@ static int exeloadLoadLX(unsigned char **entry_point,
         
         for (i = 0; i < lx_hdr_p->NumberOfObjectsInModule; i++) {
             size_t j;
-            unsigned char *trg_page;
+            unsigned char *src_page;
 
-            trg_page = exestart + object_table[i].RelocationBaseAddress - base_address;
+            /* Source is the field being edited,
+             * target is to where it should point to.
+             */
+            src_page = exestart + object_table[i].RelocationBaseAddress - base_address;
 
             for (j = object_table[i].PageTableIndex - 1;
                  j < (object_table[i].PageTableIndex
@@ -4034,6 +4037,11 @@ static int exeloadLoadLX(unsigned char **entry_point,
                     if (corr[0] == 0x08)
                     {
                         unsigned int ord;
+
+                        if (corr[1] != 0x1) {
+                            printf ("unsupported fixup flags for type 0x8: %#x\n", corr[1]);
+                            for (;;);
+                        }
 
                         zapoffs = corr[2] | (corr[3] << 8);
                         if ((corr[1] & 0x80) == 0)
@@ -4048,83 +4056,83 @@ static int exeloadLoadLX(unsigned char **entry_point,
                         }
                         if (ord == 234)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosExit - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosExit - (src_page + zapoffs + 4);
                         }
                         else if (ord == 273)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosOpen - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosOpen - (src_page + zapoffs + 4);
                         }
                         else if (ord == 257)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosClose - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosClose - (src_page + zapoffs + 4);
                         }
                         else if (ord == 281)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosRead - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosRead - (src_page + zapoffs + 4);
                         }
                         else if (ord == 282)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosWrite - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosWrite - (src_page + zapoffs + 4);
                         }
                         else if (ord == 259)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosDelete - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosDelete - (src_page + zapoffs + 4);
                         }
                         else if (ord == 271)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosMove - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosMove - (src_page + zapoffs + 4);
                         }
                         else if (ord == 283)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosExecPgm - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosExecPgm - (src_page + zapoffs + 4);
                         }
                         else if (ord == 256)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosSetFilePtr - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosSetFilePtr - (src_page + zapoffs + 4);
                         }
                         else if (ord == 230)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosGetDateTime - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosGetDateTime - (src_page + zapoffs + 4);
                         }
                         else if (ord == 284)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosDevIOCtl - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosDevIOCtl - (src_page + zapoffs + 4);
                         }
                         else if (ord == 299)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosAllocMem - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosAllocMem - (src_page + zapoffs + 4);
                         }
                         else if (ord == 304)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosFreeMem - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosFreeMem - (src_page + zapoffs + 4);
                         }
                         else if (ord == 227)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosScanEnv - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosScanEnv - (src_page + zapoffs + 4);
                         }
                         else if (ord == 382)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosSetRelMaxFH - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosSetRelMaxFH - (src_page + zapoffs + 4);
                         }
                         else if (ord == 312)
                         {
-                            *(unsigned int *)(trg_page + zapoffs) =
-                                (unsigned char *)DosGetInfoBlocks - (trg_page + zapoffs + 4);
+                            *(unsigned int *)(src_page + zapoffs) =
+                                (unsigned char *)DosGetInfoBlocks - (src_page + zapoffs + 4);
                         }
                         else
                         {
@@ -4134,17 +4142,34 @@ static int exeloadLoadLX(unsigned char **entry_point,
                     }
                     else if (corr[0] == 0x07)
                     {
-                        const struct object_table_entry_internal *src_obj;
+                        const struct object_table_entry_internal *trg_obj;
 
-                        src_obj = object_table + corr[4] - 1;
+                        if (corr[1] != 0x0
+                            && corr[1] != 0x10) {
+                            printf ("unsupported fixup flags for type 0x7: %#x\n", corr[1]);
+                            for (;;);
+                        }
+
+                        trg_obj = object_table + corr[4] - 1;
 
                         zapoffs = corr[2] | (corr[3] << 8);
-                        *(unsigned int *)(trg_page + zapoffs)
-                            = (unsigned int)(exestart
-                                             + src_obj->RelocationBaseAddress
-                                             - base_address
-                                             + corr[5] + (corr[6] << 8));
-                        corr += 7;
+                        if (corr[1] & 0x10) {
+                            *(unsigned int *)(src_page + zapoffs)
+                                = (unsigned int)(exestart
+                                                 + trg_obj->RelocationBaseAddress
+                                                 - base_address
+                                                 + corr[5] + (corr[6] << 8)
+                                                 + (corr[7] << 16)
+                                                 + (corr[8] << 24));
+                            corr += 9;
+                        } else {
+                            *(unsigned int *)(src_page + zapoffs)
+                                = (unsigned int)(exestart
+                                                 + trg_obj->RelocationBaseAddress
+                                                 - base_address
+                                                 + corr[5] + (corr[6] << 8));
+                            corr += 7;
+                        }
                     }
                     else
                     {
@@ -4154,7 +4179,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
                     }
                 }
 
-                trg_page += lx_hdr_p->PageSize;
+                src_page += lx_hdr_p->PageSize;
             }
         }
     }
