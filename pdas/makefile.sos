@@ -1,0 +1,59 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# You need to have built pdpclib with makefile.sos first
+
+# If you are using Windows to target OS/2 you will need to
+# uncomment the copy of wingen.exe and build the windows
+# version with makefile.std first and rename gen.exe to wingen.exe
+
+VPATH=src;src/hashtab
+CC=gccwin
+PREPROCESSOR=pdcc -E
+CFLAGS=-O2
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
+    --stub ../pdpclib/needpdos.exe \
+    --image-base 0x10000 --section-alignment 0x10000
+AS=pdas --oformat coff
+COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I./src -I./src/hashtab -I../pdpclib \
+  -U__WIN32__ -D__NOBIVA__ -D__HAVESYS__=_System -D__OS2__ -D__32BIT__
+
+OBJS=a_out.obj as.obj bytearray.obj cfi.obj coff.obj cstr.obj elf.obj error.obj \
+expr.obj frags.obj hashtab.obj libas.obj listing.obj load_line.obj process.obj sections.obj symbols.obj write.obj int64sup.obj \
+i386_as.obj
+
+TARGET=pdas.exe
+
+all: clean generate $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/os2strt.obj $(OBJS) ../pdpclib/pdpos2.lib ../pdpclib/os2.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean: clean_generate
+  rm -f $(OBJS) $(TARGET)
+
+OBJS_GENERATE=i386_gen.obj i386_opc.i
+
+generate: clean_generate $(OBJS_GENERATE)
+  $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/os2strt.obj i386_gen.obj ../pdpclib/pdpos2.lib ../pdpclib/os2.lib
+#  copy wingen.exe gen.exe
+  gen.exe i386_opc.i i386_tbl.h
+
+clean_generate:
+  rm -f $(OBJS_GENERATE) gen.exe i386_tbl.h
+
+.tbl.i:
+  $(PREPROCESSOR) $(COPTS) -o $@ $<
