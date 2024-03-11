@@ -1,0 +1,29 @@
+# Produce OS/2 executables
+# links with PDPCLIB created by makefile.sos
+
+VPATH=./hashtab
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
+    --stub ../pdpclib/needpdos.exe \
+    --image-base 0x10000 --section-alignment 0x10000
+AS=pdas --oformat coff
+AR=ar
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
+    -U__WIN32__ -D__HAVESYS__=_System \
+    -D__OS2__ -D__32BIT__ -D__NOBIVA__
+
+all: clean pdmake.exe
+
+pdmake.exe: main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj
+  $(LD) $(LDFLAGS) -s -o pdmake.exe ../pdpclib/os2strt.obj main.obj read.obj rule.obj variable.obj xmalloc.obj hashtab.obj ../pdpclib/pdpos2.lib ../pdpclib/os2.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.obj pdmake.exe
