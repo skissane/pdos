@@ -98,6 +98,11 @@ no:	loop	next
 	jmp	eax
 
 
+
+; Note that there is a C version of these routines
+; available at pdas\src\int64sup.c which could
+; potentially be used instead
+
 ; Note that the push and pop of ecx appears to
 ; be unnecessary but harmless. It was originally
 ; missing, but adding it didn't help
