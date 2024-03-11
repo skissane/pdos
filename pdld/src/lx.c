@@ -350,6 +350,22 @@ void lx_import_generate_import_with_dll_name (const char *import_name,
     symbol_record_external_symbol (symbol);
 }
 
+address_type lx_get_base_address (void)
+{    
+    return 0x10000;
+}
+
+void lx_before_link (void)
+{
+    struct section *section;
+
+    for (section = all_sections; section; section = section->next) {
+        if (section->section_alignment < 0x10000) {
+            section->section_alignment = 0x10000;
+        }
+    }
+}
+
 void lx_write (const char *filename)
 {
     FILE *outfile;

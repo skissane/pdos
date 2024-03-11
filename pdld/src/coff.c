@@ -40,8 +40,6 @@ static int nx_compat = 1;
 
 static int convert_to_flat = 0;
 
-static address_type user_specified_base_address = 0;
-
 static unsigned short wanted_Machine = 0;
 static int leading_underscore = 0;
 
@@ -253,9 +251,7 @@ static void write_sections (unsigned char *file)
 }
 
 address_type coff_get_base_address (void)
-{
-    if (user_specified_base_address) return user_specified_base_address;
-    
+{    
     if (ld_state->create_shared_library) return DEFAULT_DLL_IMAGE_BASE;
     return DEFAULT_EXE_IMAGE_BASE;
 }
@@ -2429,13 +2425,14 @@ static void use_option (enum option_index option_index, char *arg)
             {
                 char *p;
                 
-                user_specified_base_address = strtoul (arg, &p, 0);
+                ld_state->base_address = strtoul (arg, &p, 0);
                 if (*p != '\0') {
                     ld_error ("invalid start address number '%s'", arg);
                     break;
                 }
+                ld_state->use_custom_base_address = 1;
 
-                if (user_specified_base_address % 0x10000) {
+                if (ld_state->base_address % 0x10000) {
                     ld_warn ("base address must be a multiple of 64 KiB (0x10000) according to the specification");
                 }
             }

@@ -51,7 +51,11 @@ int main (int argc, char **argv)
 
     sections_destroy_empty_before_collapse ();
 
-    if (ld_state->oformat == LD_OFORMAT_COFF) coff_before_link ();
+    if (ld_state->oformat == LD_OFORMAT_COFF) {
+        coff_before_link ();
+    } else if (ld_state->oformat == LD_OFORMAT_LX) {
+        lx_before_link ();
+    }
     
     link ();
 
