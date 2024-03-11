@@ -113,24 +113,24 @@ static void write_relocations (unsigned char *file,
                                struct LX_HEADER_internal *lx_hdr_p,
                                size_t lx_hdr_offset)
 {
-    unsigned char *pos, *pos2;
+    unsigned char *page_e_pos, *frt_pos;
     struct section *section;
     size_t old_rec_offset = 0;
-    address_type cur_rva = all_sections ? all_sections->rva : 0;
 
-    pos = file + lx_hdr_p->FixupPageTableOffsetHdr + lx_hdr_offset;
-    pos2 = file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset;
+    page_e_pos = file + lx_hdr_p->FixupPageTableOffsetHdr + lx_hdr_offset;
+    frt_pos = file + lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset;
 
     for (section = all_sections; section; section = section->next) {
+        address_type cur_rva;
         struct section_part *part;
 
         /* BSS section has no page entries and no relocations. */
         if (section->is_bss) continue;
 
         cur_rva = section->rva;
-        old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-        bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-        pos += 4;
+        old_rec_offset = frt_pos - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+        bytearray_write_4_bytes (page_e_pos, old_rec_offset, LITTLE_ENDIAN);
+        page_e_pos += 4;
 
         for (part = section->first_part; part; part = part->next) {
             size_t i;
@@ -142,9 +142,9 @@ static void write_relocations (unsigned char *file,
                 rva = part->rva + part->relocation_array[i].offset;
 
                 while (rva >= cur_rva + lx_hdr_p->PageSize) {
-                    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-                    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-                    pos += 4;
+                    old_rec_offset = frt_pos - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+                    bytearray_write_4_bytes (page_e_pos, old_rec_offset, LITTLE_ENDIAN);
+                    page_e_pos += 4;
                     cur_rva += lx_hdr_p->PageSize;
                 }
                 
@@ -168,47 +168,47 @@ static void write_relocations (unsigned char *file,
                     flags = FIXUP_TARGET_FLAGS_INTERNAL_REFERENCE;
                     if (value > 0xffff) flags |= FIXUP_TARGET_FLAGS_32_BIT_OFFSET;
                     
-                    bytearray_write_1_bytes (pos2, 0x7, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 1, flags, LITTLE_ENDIAN);
-                    bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 4, source_section->target_index, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (frt_pos, 0x7, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (frt_pos + 1, flags, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (frt_pos + 2, rva - cur_rva, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (frt_pos + 4, source_section->target_index, LITTLE_ENDIAN);
                     if (value > 0xffff) {
-                        bytearray_write_4_bytes (pos2 + 5, value, LITTLE_ENDIAN);
-                        pos += 2;
+                        bytearray_write_4_bytes (frt_pos + 5, value, LITTLE_ENDIAN);
+                        frt_pos += 2;
                     } else {
-                        bytearray_write_2_bytes (pos2 + 5, value, LITTLE_ENDIAN);
+                        bytearray_write_2_bytes (frt_pos + 5, value, LITTLE_ENDIAN);
                     }
                     
-                    pos2 += 7;
+                    frt_pos += 7;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]
                            && (symbol = symbol_find (part->relocation_array[i].symbol->name))
                            && symbol->part == &fake_lx_part_s) {
-                    bytearray_write_1_bytes (pos2, 0x8, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 1, FIXUP_TARGET_FLAGS_IMPORT_BY_ORDINAL, LITTLE_ENDIAN);
-                    bytearray_write_2_bytes (pos2 + 2, rva - cur_rva, LITTLE_ENDIAN);
-                    bytearray_write_1_bytes (pos2 + 4, symbol->value >> 16, LITTLE_ENDIAN);
-                    bytearray_write_2_bytes (pos2 + 5, symbol->value & 0xffff, LITTLE_ENDIAN);
-                    pos2 += 7;
+                    bytearray_write_1_bytes (frt_pos, 0x8, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (frt_pos + 1, FIXUP_TARGET_FLAGS_IMPORT_BY_ORDINAL, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (frt_pos + 2, rva - cur_rva, LITTLE_ENDIAN);
+                    bytearray_write_1_bytes (frt_pos + 4, symbol->value >> 16, LITTLE_ENDIAN);
+                    bytearray_write_2_bytes (frt_pos + 5, symbol->value & 0xffff, LITTLE_ENDIAN);
+                    frt_pos += 7;
                 }
             }
         }
 
         while (section->rva + section->total_size >= cur_rva + lx_hdr_p->PageSize) {
-            old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-            bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-            pos += 4;
+            old_rec_offset = frt_pos - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+            bytearray_write_4_bytes (page_e_pos, old_rec_offset, LITTLE_ENDIAN);
+            page_e_pos += 4;
             cur_rva += lx_hdr_p->PageSize;
         }
     }
 
     /* Writes the terminating fixup page table entry. */
-    old_rec_offset = pos2 - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
-    bytearray_write_4_bytes (pos, old_rec_offset, LITTLE_ENDIAN);
-    pos += 4;
+    old_rec_offset = frt_pos - file - (lx_hdr_p->FixupRecordTableOffsetHdr + lx_hdr_offset);
+    bytearray_write_4_bytes (page_e_pos, old_rec_offset, LITTLE_ENDIAN);
+    page_e_pos += 4;
 
     if (dll_inames_size) {
-        pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
-        memcpy (pos, dll_inames, dll_inames_size);
+        page_e_pos = file + lx_hdr_p->ImportModuleTableOffsetHdr + lx_hdr_offset;
+        memcpy (page_e_pos, dll_inames, dll_inames_size);
     }
 }
 
