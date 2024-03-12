@@ -1045,18 +1045,19 @@ static void promptSymProc_underscore(char *prompt, int *index)
 static int runCmdLine(char *cmdLine)
 {
     int rc;
-    char savebuf[256];
-    strncpy(savebuf,buf,sizeof savebuf);
-    strncpy(buf,cmdLine,sizeof buf);
+    char savebuf[sizeof buf];
+
+    strcpy(savebuf, buf);
+    strcpy(buf, cmdLine);
     rc = processInput(false);
-    strncpy(buf,savebuf,sizeof buf);
+    strcpy(buf, savebuf);
     return rc;
 }
 
 /* $[ - run command terminated by ] */
 static void promptSymProc_lbracket(char *prompt, int *index)
 {
-    char cbuf[256];
+    char cbuf[sizeof buf];
     int j = 0;
     while (prompt[*index] != 0 && prompt[*index] != ']')
     {
@@ -3570,7 +3571,7 @@ static int cmd_save_run(char *arg)
     int attrs;                /* Attributes of existing file */
     FILE *fh;                 /* File to which we will write */
     int lineCount = 0;        /* How many lines processed so far */
-    char line[256];           /* Buffer for read lines */
+    char line[sizeof buf];    /* Buffer for read lines */
 
     /* Strip out the file name */
     CMD_REQUIRES_ARGS(arg);
