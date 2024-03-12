@@ -8,7 +8,7 @@
 # and by any means.
 
 # This makefile builds 32-bit pcomm.exe (COMMAND.EXE) on Windows.
-# makefile.pdw in PDPCLIB must be used before using this makefile to produce the pdos.a.
+# makefile.std in PDPCLIB must be used before using this makefile to produce the msvcrt.lib.
 
 CC=gccwin
 CFLAGS=-O2 -ansi
