@@ -45,7 +45,13 @@ ULONG APIENTRY DosWrite(ULONG hfile, void *ptr,
 
 void APIENTRY DosExit(int a, int b)
 {
-    exit(b);
+    /* I believe the reason you need terminate instead of exit is
+       because exit would be calling PDOS's exit to exit, but that
+       is not appropriate because the OS/2 executable has its own
+       start and exit - and it has already been through that. And
+       it is not appropriate for the OS, ie PDOS, to be exiting */
+    PosTerminate(b);
+    /* exit(b); */
 }
 
 ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
