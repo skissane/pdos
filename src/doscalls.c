@@ -50,8 +50,41 @@ void APIENTRY DosExit(int a, int b)
        is not appropriate because the OS/2 executable has its own
        start and exit - and it has already been through that. And
        it is not appropriate for the OS, ie PDOS, to be exiting */
+    /* However we currently don't have PosTerminate defined for
+       PDOS-generic so we can't use that unless we define it. This
+       is currently kludged as a workaround - ie call exit instead -
+       which is the correct thing to do for PDOS-generic anyway */
+    /* It is probably PDOS/386 that needs to change - exit() should
+       indeed be called in both cases. However, it will need start()
+       to be called first - probably in the same way that PDOS-generic
+       does it. ie detect a "standalone" variable and call start()
+       ourselves. That will require a change to start to allow a
+       different calling convention to "genmain". We could support
+       multiple calling conventions for different environments
+       potentially. But in the short term we only need the PDOS-generic
+       calling convention. But in the immediate term no change is
+       being made to start(). When start() is updated, it should
+       probably do a check in exit() to see if there is a deeper
+       runnum than currently being closed, because that points to
+       an integrity error - start hasn't been called one way or
+       another. Also we probably want an option in start to print
+       file leaks. Note that if we have a file leak currently, it
+       is likely that PDOS/386 will free the memory associated with
+       that file, but the file isn't actually closed. And without
+       the runnum being incremented any file leak in an OS/2 program
+       will presumably be associated with the command.exe - so that is
+       where the file will be closed. But the attempt to free the
+       associated memory - again - could cause an issue. Note that
+       it PDOS/386 doing a free by memid that would have freed the
+       memory. Before returning to command.exe. Also note that file
+       leaks are actually allowed by C90. And we can probably meet
+       that requirement rather than insisting on a stricter version
+       of C90. */
+#ifdef W32EMUL
+    exit(b);
+#else
     PosTerminate(b);
-    /* exit(b); */
+#endif
 }
 
 ULONG APIENTRY DosOpen(char *fnm, ULONG *handle, ULONG *action1,
