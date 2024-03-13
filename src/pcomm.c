@@ -41,14 +41,14 @@ void safegets(char *buffer, int size, bool use_history);
 #define MAX_COMMAND_HISTORY 32
 static int first_command_history = 0;
 static int last_command_history = 0;
-static char oldbufs[MAX_COMMAND_HISTORY][300];
+static char oldbufs[MAX_COMMAND_HISTORY][400];
 
 #define NEXT_HISTORY(idx) ((idx + 1) % MAX_COMMAND_HISTORY)
 #define PREVIOUS_HISTORY(idx) ((idx + MAX_COMMAND_HISTORY - 1) % MAX_COMMAND_HISTORY)
 
-static char buf[300];
+static char buf[400];
 #ifdef __32BIT__
-static unsigned char cmdt[300];
+static unsigned char cmdt[400];
 #else
 static unsigned char cmdt[140];
 #endif
