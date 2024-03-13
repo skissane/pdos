@@ -3947,6 +3947,7 @@ static int exeloadLoadLX(unsigned char **entry_point,
 #else
     if (fseek(fp, 0, SEEK_END) != 0)
     {
+        printf("unexpected fseek failure 1\n");
         return (2);
     }
     newpos = ftell(fp);
@@ -3959,6 +3960,8 @@ static int exeloadLoadLX(unsigned char **entry_point,
     }
     if (fseek(fp, e_lfanew + sizeof firstbit, SEEK_SET) != 0)
     {
+        printf("unexpected fseek failure 2\n");
+        free(base);
         return (2);
     }
     memcpy(base + e_lfanew, firstbit, sizeof firstbit);
