@@ -48,6 +48,9 @@ static char oldbufs[MAX_COMMAND_HISTORY][400];
 
 static char buf[400];
 #ifdef __32BIT__
+/* note that this later gets updated to include the full path of
+   the executable, so might want to add FILENAME_MAX to the size.
+   And use a define for this value of 400 too */
 static unsigned char cmdt[400];
 #else
 static unsigned char cmdt[140];
