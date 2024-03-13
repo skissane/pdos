@@ -1172,7 +1172,7 @@ __PDPCLIB_API__ int system(const char *string)
     char err_obj[100];
     APIRET rc;
     RESULTCODES results;
-    char cmdbuf[310];
+    char cmdbuf[400 + 10];
     char *cmdproc;
 
     cmdproc = getenv("COMSPEC");
@@ -1202,7 +1202,7 @@ __PDPCLIB_API__ int system(const char *string)
     STARTUPINFO si;
     DWORD ExitCode;
     char *cmdproc;
-    char cmdbuf[300];
+    char cmdbuf[400];
 
     cmdproc = getenv("COMSPEC");
     if (cmdproc == NULL)
@@ -1251,7 +1251,7 @@ __PDPCLIB_API__ int system(const char *string)
 #ifdef __MSDOS__
     int rc;
 #ifdef __PDOS386__
-    static unsigned char cmdt[300];
+    static unsigned char cmdt[400];
 #else
     static unsigned char cmdt[140];
 #endif
