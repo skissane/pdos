@@ -94,8 +94,13 @@ typedef unsigned short HFILE;
 typedef unsigned char UCHAR;
 
 typedef struct {
-    unsigned short codeTerminate;
-    unsigned short codeResult;
+#ifdef __16BIT__
+    USHORT codeTerminate;
+    USHORT codeResult;
+#else
+    ULONG codeTerminate;
+    ULONG codeResult;
+#endif
 } RESULTCODES;
 
 typedef struct {
