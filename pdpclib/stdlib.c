@@ -276,9 +276,32 @@ __PDPCLIB_API__ void *malloc(size_t size)
     }
     BaseAddress = (void *)((unsigned long)sel << 16);
 #else
+    /* AracOS had VIRTUALADDRESSLIMIT in config.sys set to
+       1536 MiB. This can be increased to a maximum of 3072,
+       but some hardware, e.g. video memory, doesn't like
+       that interference with "PCI space". Whatever decimal
+       value you choose, the hex value should end 00, ie be
+       a multiple of 64 MiB. (Thanks Dave Yeo for info) */
     ulAllocationFlags = PAG_COMMIT | PAG_WRITE | PAG_READ;
+
+    /* Setting this flag gets around some allocation limitation
+       that is probably related to the number of selectors of
+       an 80386 which we don't care about. ie it seems I can
+       only do about 8000 memory requests. We could use a
+       heap manager - ie memmgr - instead. */
+    /* Apparently OBJ_TILE (vs OBJ_ANY) is redundant since it
+       is a default, and causes memory requests to be aligned
+       on a 64k boundary. So 8192 * 64k maxes out the 512 MiB
+       allowed for tiled memory. OBJ_ANY doesn't give any
+       specific alignment apparently, but is presumably at
+       least 4k-aligned */
+    ulAllocationFlags |= OBJ_ANY;
+
     rc = DosAllocMem(&BaseAddress, ulObjectSize, ulAllocationFlags);
-    if (rc != 0) return (NULL);
+    if (rc != 0)
+    {
+        return (NULL);
+    }
 #endif
     *(size_t *)BaseAddress = size;
     BaseAddress = (char *)BaseAddress + sizeof(size_t);
@@ -1194,8 +1217,17 @@ __PDPCLIB_API__ int system(const char *string)
     {
         return (rc);
     }
+
+#if 0
+    if (results.codeTerminate != 0)
+    {
+        return (-(int)results.codeTerminate);
+    }
+#endif
+
     return ((int)results.codeResult);
 #endif
+
 #ifdef __WIN32__
     BOOL rc;
     PROCESS_INFORMATION pi;
