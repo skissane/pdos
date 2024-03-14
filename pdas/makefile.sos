@@ -9,6 +9,9 @@
 
 # You need to have built pdpclib with makefile.sos first
 
+# And because this program uses many small allocations,
+# you will need to build PDPCLIB with USE_MEMMGR
+
 # If you are using Windows to target OS/2 you will need to
 # uncomment the copy of wingen.exe and build the windows
 # version with makefile.std first and rename gen.exe to wingen.exe
