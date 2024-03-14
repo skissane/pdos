@@ -1,3 +1,8 @@
+# This builds the OS/2 32-bit version
+# You will need to build PDPCLIB with makefile.sos first
+# And you will need to use the USE_MEMMGR option because
+# this program apparently does lots of small memory requests
+
 VPATH=src;src/bytearray;src/hashtab
 CC=gccwin
 CFLAGS=-O2
