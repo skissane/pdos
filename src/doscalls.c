@@ -232,8 +232,8 @@ ULONG APIENTRY DosAllocMem(void *base, ULONG size, ULONG flags)
     char *p;
 
     p = malloc(size);
-    if (p == NULL) return (1);
     *(char **)base = p;
+    if (p == NULL) return (1);
     return (0);
 }
 
