@@ -71,6 +71,8 @@ http://www.edm2.com/index.php/Control_Program_Functions_List
 #define PAG_COMMIT 0x10
 #define PAG_WRITE 0x2
 #define PAG_READ 0x1
+#define OBJ_ANY 0x400
+#define OBJ_TILE 0x40
 #endif
 
 #ifndef __SUPPRESS__
