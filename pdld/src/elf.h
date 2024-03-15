@@ -17,7 +17,7 @@ typedef unsigned short Elf32_Half; /* 2 bytes. */
 
 #define EI_NIDENT 16 /* Size of e_ident on all systems. */
 
-struct Elf32_Ehdr {
+typedef struct {
     unsigned char e_ident[EI_NIDENT];
     Elf32_Half e_type;
     Elf32_Half e_machine;
@@ -32,7 +32,7 @@ struct Elf32_Ehdr {
     Elf32_Half e_shentsize;
     Elf32_Half e_shnum;
     Elf32_Half e_shstrndx;
-};
+} Elf32_Ehdr;
 
 /* e_ident index and value macros. */
 #define EI_MAG0 0
@@ -72,7 +72,7 @@ struct Elf32_Ehdr {
 #define EV_NONE 0
 #define EV_CURRENT 1
 
-struct Elf32_Shdr {
+typedef struct {
     Elf32_Word sh_name;
     Elf32_Word sh_type;
     Elf32_Word sh_flags;
@@ -83,7 +83,7 @@ struct Elf32_Shdr {
     Elf32_Word sh_info;
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
-};
+} Elf32_Shdr;
 
 /* Special section indexes. */
 #define SHN_UNDEF 0
@@ -113,14 +113,14 @@ struct Elf32_Shdr {
 #define SHF_MERGE 0x10
 #define SHF_STRINGS 0x20
 
-struct Elf32_Sym {
+typedef struct {
     Elf32_Word st_name;
     Elf32_Addr st_value;
     Elf32_Word st_size;
     unsigned char st_info;
     unsigned char st_other;
     Elf32_Half st_shndx;
-};
+} Elf32_Sym;
 
 #define STN_UNDEF 0
 
@@ -144,10 +144,10 @@ struct Elf32_Sym {
 #define STT_LOPROC 13
 #define STT_HIPROC 15
 
-struct Elf32_Rel {
+typedef struct {
     Elf32_Addr r_offset;
     Elf32_Word r_info;
-};
+} Elf32_Rel;
 
 #define ELF32_R_SYM(i) ((i) >> 8)
 #define ELF32_R_TYPE(i) ((unsigned char)(i))
@@ -166,7 +166,7 @@ struct Elf32_Rel {
 #define R_386_GOTOFF 9
 #define R_386_GOTPC 10
 
-struct Elf32_Phdr {
+typedef struct {
     Elf32_Word p_type;
     Elf32_Off p_offset;
     Elf32_Addr p_vaddr;
@@ -175,7 +175,7 @@ struct Elf32_Phdr {
     Elf32_Word p_memsz;
     Elf32_Word p_flags;
     Elf32_Word p_align;
-};
+} Elf32_Phdr;
 
 #define PT_NULL 0
 #define PT_LOAD 1

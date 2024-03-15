@@ -39,6 +39,7 @@ struct ld_state {
     const char *output_filename;
     enum ld_oformat oformat;
     const char *output_implib_filename;
+    int emit_relocs;
     int create_shared_library;
     int no_input_files_is_fine;
     
