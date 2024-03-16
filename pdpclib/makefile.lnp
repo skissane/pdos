@@ -5,11 +5,12 @@
 # pseudo-bios. It has no meaning outside of that -
 # it isn't Linux-related
 
-CC=gcc386
-#CC=gccwin
-AR=are86
-LD=lde86
-AS=ase86
+# This uses coff format until the link step
+
+CC=gccwin
+AR=xar
+LD=pdld --oformat elf
+AS=pdas --oformat coff
 COPTS=-D__W32EMUL__ -U__WIN32__ -S -O2 -D__gnu_linux__ -D__NOBIVA__ -I.
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
@@ -19,6 +20,7 @@ pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r pdplinux.a linstart.o linsupa.o stdio.o string.o stdlib.o
   $(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
   $(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
+  $(AR) s pdplinux.a
   $(LD) -s --emit-relocs -nostdlib -e __start -o pdptest.exe linstart.o pdptest.o pdplinux.a
 
 .c.o:
