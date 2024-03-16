@@ -41,12 +41,7 @@ int main (int argc, char **argv)
     symbols_init ();
 
     for (i = 0; i < argc; i++) {
-        if (ld_state->oformat == LD_OFORMAT_COFF
-            || ld_state->oformat == LD_OFORMAT_LX) {
-            if (input_filenames[i]) coff_read (input_filenames[i]);
-        } else if (ld_state->oformat == LD_OFORMAT_ELF) {
-            if (input_filenames[i]) elf_read (input_filenames[i]);
-        }
+        if (input_filenames[i]) read_input_file (input_filenames[i]);
     }
 
     sections_destroy_empty_before_collapse ();

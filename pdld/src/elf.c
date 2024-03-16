@@ -413,6 +413,9 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     struct section_part **part_p_array;
     Elf32_Half i;
 
+    struct section *bss_section = NULL;
+    long bss_section_number = 0;
+
     pos = file;
     CHECK_READ (pos, sizeof (ehdr));
     ehdr = *(Elf32_Ehdr *)pos;
@@ -546,6 +549,11 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                     CHECK_READ (pos, part->content_size);
                     memcpy (part->content, pos, part->content_size);
                 }
+
+                if (section->is_bss) {
+                    bss_section_number = i;
+                    bss_section = section;
+                }
                 
                 section_append_section_part (section, part);
 
@@ -605,8 +613,55 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
             symbol->section_number = elf_symbol->st_shndx;
 
             if (elf_symbol->st_shndx == SHN_UNDEF) {
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "+++ELF undefined symbols not yet supported");
+                symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                symbol->part = NULL;
+            } else if (elf_symbol->st_shndx == SHN_ABS) {
+                symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+                symbol->part = NULL;
+            } else if (elf_symbol->st_shndx == SHN_COMMON) {
+                if (symbol->size) {
+                    struct symbol *old_symbol = symbol_find (symbol->name);
+
+                    if (ELF32_ST_BIND (elf_symbol->st_info) != STB_GLOBAL) {
+                        ld_fatal_error ("non-global common symbol");
+                    }
+
+                    if (!old_symbol || symbol_is_undefined (old_symbol)) {
+                        struct section_part *bss_part;
+                        
+                        if (bss_section == NULL) {
+                            bss_section = section_find_or_make (".bss");
+
+                            bss_section->section_alignment = 4;
+                            bss_section->flags = translate_sh_flags_to_section_flags (SHF_WRITE | SHF_ALLOC);
+                            bss_section->is_bss = 1;
+                            bss_section_number = ehdr.e_shnum ? ehdr.e_shnum : 1;
+                        }
+                        
+                        bss_part = section_part_new (bss_section, of);
+                        section_append_section_part (bss_section, bss_part);
+
+                        bss_part->content_size = symbol->size;
+                        bss_part->alignment = symbol->value;
+                        symbol->part = bss_part;
+                        symbol->value = 0;
+                        symbol->section_number = bss_section_number;
+                    } else {
+                        if (symbol->size > old_symbol->size) {
+                            old_symbol->part->content_size = old_symbol->size = symbol->size;
+                        }
+                        if (symbol->value > old_symbol->part->alignment) {
+                            old_symbol->part->alignment = symbol->value;
+                        }
+                        
+                        symbol->value = 0;
+                        symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                        symbol->part = NULL;
+                    }
+                } else {
+                    symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                    symbol->part = NULL;
+                }
             } else if (elf_symbol->st_shndx >= SHN_LORESERVE
                        && elf_symbol->st_shndx <= SHN_HIRESERVE) {
                 ld_internal_error_at_source (__FILE__, __LINE__,
@@ -672,15 +727,8 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     return 0;
 }
 
-void elf_read (const char *filename)
+int elf_read (unsigned char *file, size_t file_size, const char *filename)
 {
-    unsigned char *file;
-    size_t file_size;
-
-    if (read_file_into_memory (filename, &file, &file_size)) {
-        ld_error ("failed to read file '%s' into memory", filename);
-        return;
-    }
 
     CHECK_READ (file, 4);
 
@@ -689,9 +737,8 @@ void elf_read (const char *filename)
         && file[EI_MAG2] == ELFMAG2
         && file[EI_MAG3] == ELFMAG3) {
         read_elf_object (file, file_size, filename);
-    } else {
-        ld_error ("unrecognized file format");
+        return INPUT_FILE_FINISHED;
     }
 
-    free (file);
+    return INPUT_FILE_UNRECOGNIZED;
 }

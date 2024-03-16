@@ -76,10 +76,9 @@ static void print_help (void)
     printf ("  -Map FILE                   Write a linker map to FILE\n");
     printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
-    printf ("  --oformat FORMAT            Create an output file and accept input files\n"
-            "                                in format FORMAT (default %s)\n",
+    printf ("  --oformat FORMAT            Create an output file in format FORMAT (default %s)\n",
             "coff");
-    printf ("                                Supported formats are: coff, elf, lx (coff input)\n");
+    printf ("                                Supported formats are: coff, elf, lx\n");
     printf ("  --out-implib FILE           Generate import library\n");
     printf ("  -q, --emit-relocs           Generate relocations in final output\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");

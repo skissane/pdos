@@ -2094,228 +2094,10 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
     return 0;
 }
 
-static void strip_trailing_spaces (char *str)
-{
-    char *p = str + strlen (str);
-
-    while (p > str && p[-1] == ' ') p--;
-
-    *p = '\0';
-}
-
-struct lm_offset_name_entry {
-    unsigned long offset;
-    char *name;
-};
-
-struct archive_member_header {
-    char *name;
-    unsigned long size;
-};
-
-static void read_archive_member_header (const unsigned char *pos, struct archive_member_header *hdr)
-{
-    struct IMAGE_ARCHIVE_MEMBER_HEADER_internal member_header;
-    char *tmp;
-
-    read_struct_IMAGE_ARCHIVE_MEMBER_HEADER (&member_header, pos);
-
-    hdr->name = xstrndup (member_header.Name, sizeof (member_header.Name));
-    strip_trailing_spaces (hdr->name);
-    tmp = xstrndup (member_header.Size, sizeof (member_header.Size));
-    strip_trailing_spaces (tmp);
-    hdr->size = strtoul (tmp, NULL, 10);
-    free (tmp);
-}
-
-static struct lm_offset_name_entry *read_linker_member (unsigned char *file, size_t file_size, unsigned long *NumberOfSymbols_p)
-{
-    unsigned long NumberOfSymbols;
-    struct lm_offset_name_entry *offset_name_table;
-
-    unsigned char *pos;
-
-    unsigned long i;
-    unsigned char *string_table_pos;
-
-    pos = file;
-
-    CHECK_READ (pos, 4);
-    bytearray_read_4_bytes (&NumberOfSymbols, pos, BIG_ENDIAN);
-    pos += 4;
-
-    offset_name_table = xmalloc (sizeof (*offset_name_table) * NumberOfSymbols);
-    string_table_pos = pos + NumberOfSymbols * 4;
-
-    for (i = 0; i < NumberOfSymbols; i++) {
-
-        CHECK_READ (pos, 4);
-        bytearray_read_4_bytes (&offset_name_table[i].offset, pos, BIG_ENDIAN);
-        pos += 4;
-        
-        CHECK_READ (string_table_pos, 1);
-        offset_name_table[i].name = (char *)string_table_pos;
-        string_table_pos += strlen ((char *)string_table_pos) + 1;
-
-    }
-
-    *NumberOfSymbols_p = NumberOfSymbols;
-
-    return offset_name_table;
-}
-
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
-static int read_coff_archive_member (unsigned char *file, size_t file_size, unsigned char *pos, const char *archive_name)
-{
-    struct archive_member_header hdr;
-    unsigned short Machine;
-    int ret;
-    char *filename;
-
-    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
-    read_archive_member_header (pos, &hdr);
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
-
-    {
-        size_t archive_name_len = strlen (archive_name);
-        size_t member_name_len = strlen (hdr.name);
-
-        /* Outside of members starting with '/' the '/' serves as name terminator
-         * according to the specification. */
-        if (member_name_len && hdr.name[member_name_len - 1] == '/' && hdr.name[0] != '/') member_name_len--;
-        
-        filename = xmalloc (archive_name_len + 1 + member_name_len + 1 + 1);
-        memcpy (filename, archive_name, archive_name_len);
-        filename[archive_name_len] = '(';
-        memcpy (filename + archive_name_len + 1, hdr.name, member_name_len);
-        filename[archive_name_len + 1 + member_name_len] = ')';
-        filename[archive_name_len + 1 + member_name_len + 1] = '\0';
-    }
-
-    CHECK_READ (pos, 2);
-    bytearray_read_2_bytes (&Machine, pos, LITTLE_ENDIAN);
-    if (Machine == IMAGE_FILE_MACHINE_I386
-        || Machine == IMAGE_FILE_MACHINE_AMD64) {
-        ret = !read_coff_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
-    } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
-        unsigned short Magic2;
-        
-        CHECK_READ (pos + 2, 2);
-        bytearray_read_2_bytes (&Magic2, pos + 2, LITTLE_ENDIAN);
-        if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) {
-            ret = read_import_object (pos, MIN (hdr.size, file_size - (pos - file)), filename);
-        } else goto unrecognized;
-
-        ret = 2 * !ret;
-    } else {
-unrecognized:
-        ld_error ("%s: unrecognized archive member object format", filename);
-        ret = 0;
-    }
-
-    free (hdr.name);
-    free (filename);
-
-    return ret;
-}    
-
-static void read_coff_archive (unsigned char *file, size_t file_size, const char *archive_name)
-{
-    struct archive_member_header hdr;
-
-    struct lm_offset_name_entry *offset_name_table;
-    unsigned long NumberOfSymbols;
-    unsigned long i;
-    
-    unsigned char *pos;
-
-    unsigned long start_header_object_offset = 0;
-    unsigned long end_header_object_offset = 0;
-
-    pos = file + strlen (IMAGE_ARCHIVE_START);
-    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
-    read_archive_member_header (pos, &hdr);
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
-
-    if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
-        offset_name_table = read_linker_member (pos, MIN (hdr.size, file_size - (pos - file)), &NumberOfSymbols);
-    } else {
-        offset_name_table = NULL;
-        ld_error ("IMAGE_ARCHIVE_LINKER_MEMBER missing from archive");
-    }
-
-    free (hdr.name);
-
-    if (offset_name_table == NULL) return;
-    
-    /* This is necessary because the member containing symbol "__head_something"
-     * contains the first part of the .idata content
-     * and the member containing symbol "_something_iname" contains the terminators for the .idata content.
-     * (Applies only to the traditional import library format,
-     * for the short format whole .idata is automatically generated.)*/
-    for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
-        if (strncmp (offset_name_table[i].name, "__head_", 7) == 0
-            || (wanted_Machine == IMAGE_FILE_MACHINE_AMD64
-                && strncmp (offset_name_table[i].name, "_head_", 6) == 0)) {
-            start_header_object_offset = offset_name_table[i].offset;
-        } else if (strlen (offset_name_table[i].name) > 6
-                   && strcmp (offset_name_table[i].name + strlen (offset_name_table[i].name) - 6, "_iname") == 0) {
-            end_header_object_offset = offset_name_table[i].offset;
-        }
-    }
-
-    if (start_header_object_offset)
-        read_coff_archive_member (file, file_size, file + start_header_object_offset, archive_name);
-
-    while (1) {
-        int change = 0;
-
-        for (i = 0; i < NumberOfSymbols; i++) {
-            int ret;
-            const struct symbol *symbol = symbol_find (offset_name_table[i].name);
-
-            if (symbol == NULL) continue;
-            if (!symbol_is_undefined (symbol)) continue;
-
-            if (offset_name_table[i].offset == start_header_object_offset
-                || offset_name_table[i].offset == end_header_object_offset) continue;
-            
-            pos = file + offset_name_table[i].offset;
-            ret = read_coff_archive_member (file, file_size, pos, archive_name);
-            if (ret == 0) return;
-            /* If the archive member is a real object (not short import entry),
-             * it might require more symbols. */
-            if (ret == 1) change = 1;
-        }
-
-        if (change == 0) break;
-    }
-
-    if (end_header_object_offset)
-        read_coff_archive_member (file, file_size, file + end_header_object_offset, archive_name);
-
-    if (current_import_dll_name) {
-        import_generate_end ();
-        free (current_import_dll_name);
-        current_import_dll_name = NULL;
-    }
-
-    free (offset_name_table);
-}
-
-void coff_read (const char *filename)
+int coff_read (unsigned char *file, size_t file_size, const char *filename)
 {
     unsigned short Machine;
-
-    unsigned char *file;
-    size_t file_size;
-
-    if (read_file_into_memory (filename, &file, &file_size)) {
-        ld_error ("failed to read file '%s' into memory", filename);
-        return;
-    }
-
+    
     CHECK_READ (file, strlen (IMAGE_ARCHIVE_START));
 
     bytearray_read_2_bytes (&Machine, file, LITTLE_ENDIAN);
@@ -2323,11 +2105,38 @@ void coff_read (const char *filename)
     if (Machine == IMAGE_FILE_MACHINE_I386
         || Machine == IMAGE_FILE_MACHINE_AMD64) {
         read_coff_object (file, file_size, filename);
-    } else if (memcmp (file, IMAGE_ARCHIVE_START, strlen (IMAGE_ARCHIVE_START)) == 0) {
-        read_coff_archive (file, file_size, filename);
-    } else ld_error ("unrecognized file format");
+        return INPUT_FILE_FINISHED;
+    } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
+        unsigned short Magic2;
+        
+        CHECK_READ (file + 2, 2);
+        bytearray_read_2_bytes (&Magic2, file + 2, LITTLE_ENDIAN);
+        if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) {
+            if (read_import_object (file, file_size, filename)) {
+                return INPUT_FILE_ERROR;
+            } else {
+                return INPUT_FILE_NO_NEW_SYMBOLS;
+            }
+        }
+    } else {
+        return INPUT_FILE_UNRECOGNIZED;
+    }
 
-    free (file);
+    return INPUT_FILE_FINISHED;
+}
+
+unsigned short coff_get_wanted_Machine (void)
+{
+    return wanted_Machine;
+}
+
+void coff_archive_end (void)
+{
+    if (current_import_dll_name) {
+        import_generate_end ();
+        free (current_import_dll_name);
+        current_import_dll_name = NULL;
+    }
 }
 
 #include "options.h"
