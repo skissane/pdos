@@ -1,0 +1,53 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# Produces Windows executable.
+# Links with PDPCLIB created by makefile.msv.
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+AS=pdas --oformat coff
+AR=xar
+COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include \
+    -Icpplib -Icpplib/include -I. -I../pdpclib \
+    -U__WIN32__ -D__NOBIVA__ -D__gnu_linux__
+
+all: clean pdcc.exe
+
+pdcc.exe: main.obj c_ppout.obj inc_path.obj cpplib.lib cclib.lib
+    $(LD) $(LDFLAGS) -o pdcc.exe ../pdpclib/linstart.o main.obj c_ppout.obj inc_path.obj cpplib.lib cclib.lib ../pdpclib/pdplinux.a
+
+cpplib.lib: cpplib/core.obj cpplib/directs.obj cpplib/errors.obj \
+          cpplib/expr.obj cpplib/files.obj cpplib/chars.obj \
+          cpplib/idents.obj cpplib/init.obj cpplib/lex.obj \
+          cpplib/macro.obj cpplib/support.obj cpplib/symtab.obj \
+          xmalloc.obj
+    rm -f cpplib.lib
+    $(AR) r cpplib.lib cpplib/core.obj cpplib/directs.obj cpplib/errors.obj
+    $(AR) r cpplib.lib cpplib/expr.obj cpplib/files.obj cpplib/chars.obj
+    $(AR) r cpplib.lib cpplib/idents.obj cpplib/init.obj cpplib/lex.obj
+    $(AR) r cpplib.lib cpplib/macro.obj cpplib/support.obj cpplib/symtab.obj
+    $(AR) r cpplib.lib xmalloc.obj
+    $(AR) s cpplib.lib
+
+cclib.lib: cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
+         xmalloc.obj
+    rm -f cclib.lib
+    $(AR) r cclib.lib cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj
+    $(AR) s cclib.lib
+
+.c.obj:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.obj cpplib/*.obj cpplib.lib cclib/*.obj cclib.lib pdcc.exe
