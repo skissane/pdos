@@ -22,4 +22,5 @@ pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
 	$(CC) $(COPTS) $<
 
 l64supa.o: l64supa.asm
-	as --64 --defsym STACKPARM=0 -o $@ $*.asm
+	as -o $@ $*.asm
+#	as --64 --defsym STACKPARM=0 -o $@ $*.asm
