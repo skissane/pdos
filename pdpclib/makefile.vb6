@@ -2,8 +2,6 @@
 # using Visual Studio
 # Note that with Visual Studio it appears to be
 # mandatory to use unsigned long long as size_t
-# I don't have a modern 64-bit assembler, so I can't
-# have a proper setjmp implementation yet.
 
 CC=cl
 AR=lib
