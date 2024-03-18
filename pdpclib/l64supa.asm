@@ -10,6 +10,12 @@
 
 # However, the syscall convention is rdi, rsi, rdx, r10, r8, r9
 
+
+.ifndef STACKPARM
+.set STACKPARM,0
+.endif
+
+
 .globl ___setj
 ___setj:
 .globl __setj
