@@ -1,15 +1,15 @@
 # Produces Linux executable
 # You should have build pdpclib with makefile.lnp first
 
-CC=gcc386
+CC=gccwin -U__WIN32__
 CFLAGS=-O2 -D__gnu_linux__ -D__NOBIVA__ -DNEED_AOUT \
     -DNEED_MZ -DNO_DLLENTRY -DW32EMUL -D__W32EMUL__ \
     -DNEED_OS2 \
     -D__32BIT__ -DHAVE_DIR
-LD=lde86
-LDFLAGS=
-AS=ase86
-AR=are86
+LD=pdld
+LDFLAGS=--no-insert-timestamp --oformat elf --emit-relocs
+AS=pdas --oformat coff
+AR=xar
 COPTS=-S $(CFLAGS) -ansi -I../bios -I../pdpclib -I../src
 
 all: clean bios
@@ -23,4 +23,4 @@ bios: bios.o ../bios/exeload.o ../src/doscalls.o
     rm -f $*.s
 
 clean:
-	rm -f *.o bios
+    rm -f *.o bios
