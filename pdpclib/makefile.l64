@@ -17,6 +17,7 @@ pdptest: linstart.o l64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
 	ar r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
 	gcc -static -s -m64 -nostdlib -o pdptest linstart.o l64supa.o pdptest.o pdplinux.a
+#	gcc -static -Wl,-e -Wl,__start -m64 -nostdlib -o pdptest linstart.o l64supa.o pdptest.o pdplinux.a
 
 .c.o:
 	$(CC) $(COPTS) $<
