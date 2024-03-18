@@ -373,9 +373,21 @@ unsigned int lin_read(int handle, void *buf, unsigned int len)
 
 unsigned long lin_seek(int handle, long offset, unsigned int whence)
 {
-    long dummy;
+    long newpos;
+    int rc;
 
-    return (PosMoveFilePointer(handle, offset, whence, &dummy));
+    if (handle < MAXFILES)
+    {
+        rc = PosMoveFilePointer(linfiles[handle].handle,
+                                offset,
+                                whence,
+                                &newpos);
+        if (rc == 0)
+        {
+            return (newpos);
+        }
+    }
+    return (-1);
 }
 
 int lin_close(int handle)
