@@ -1,0 +1,39 @@
+# This builds the Linux 32-bit version
+# You will need to build PDPCLIB with makefile.lnp first
+
+VPATH=src;src/bytearray;src/hashtab
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+AS=pdas --oformat coff
+COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common \
+    -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib \
+    -U__WIN32__ -D__NOBIVA__ \
+    -D__gnu_linux__
+
+OBJS=bytearray.obj elf.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj map.obj read.obj sections.obj symbols.obj xmalloc.obj
+
+TARGET=pdld.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/linstart.o $(OBJS) ../pdpclib/pdplinux.a
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f $(OBJS) $(TARGET)
+
+BOOTSTRAP_AS=aswin
+BOOTSTRAP_LD=ldwin
+
+bootstrap: set_bootstrap all
+
+set_bootstrap:
+  $(eval AS=$(BOOTSTRAP_AS))
+  $(eval LD=$(BOOTSTRAP_LD))
