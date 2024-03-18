@@ -597,3 +597,31 @@ int $0x80
 pop %ebx
 pop %ebp
 ret
+
+
+.intel_syntax noprefix
+
+.globl ___switch
+
+# From SubC, for SubC, then modified for intel syntax
+# internal switch(expr) routine
+# %esi = switch table, %eax = expr
+
+___switch:
+	push	esi
+	mov	esi,edx
+	mov	ebx,eax
+	cld
+	lodsd
+	mov	ecx,eax
+next:	lodsd
+	mov	edx,eax
+	lodsd
+	cmp	ebx,edx
+	jnz	no
+	pop	esi
+	jmp	eax
+no:	loop	next
+	lodsd
+	pop	esi
+	jmp	eax
