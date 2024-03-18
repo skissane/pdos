@@ -101,6 +101,7 @@ void lin_exit(int rc);
 unsigned int lin_write(int handle, void *buf, unsigned int len);
 int lin_open(char *fnm, unsigned int flags, unsigned int mode);
 unsigned int lin_read(int handle, void *buf, unsigned int len);
+unsigned long lin_seek(int handle, long offset, unsigned int whence);
 int lin_close(int handle);
 int lin_remove(void *name);
 int lin_getpid(void);
@@ -162,6 +163,13 @@ static void int80handler(union REGS *regsin,
             regsout->d.eax = lin_execve((void *)regsin->d.ebx,
                                         (void *)regsin->d.ecx,
                                         (void *)regsin->d.edx);
+            break;
+
+        /* lseek */
+        case 0x13:
+            regsout->d.eax = lin_seek(regsin->d.ebx,
+                                      regsin->d.ecx,
+                                      regsin->d.edx);
             break;
 
         /* getpid */
@@ -361,6 +369,13 @@ unsigned int lin_read(int handle, void *buf, unsigned int len)
         }
     }
     return (-1);
+}
+
+unsigned long lin_seek(int handle, long offset, unsigned int whence)
+{
+    long dummy;
+
+    return (PosMoveFilePointer(handle, offset, whence, &dummy));
 }
 
 int lin_close(int handle)
