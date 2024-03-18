@@ -199,11 +199,11 @@ static int open(const char *a, int b, int *c)
     }
     else if (b == 1)
     {
-        ret = __open(a, O_WRONLY | O_CREAT | O_TRUNC | oflag, 0664);
+        ret = __open(a, O_RDWR /*O_WRONLY*/ | O_CREAT | O_TRUNC | oflag, 0664);
     }
     else if (b == 0)
     {
-        ret = __open(a, O_RDONLY | oflag, 0);
+        ret = __open(a, O_RDWR /*O_RDONLY*/ | oflag, 0);
     }
     if (ret < 0)
     {
