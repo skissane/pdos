@@ -2,7 +2,7 @@
 # links with PDPCLIB created by makefile.lnp
 # Use SubC as compiler
 
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 
 all: world.exe
 

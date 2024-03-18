@@ -13,7 +13,7 @@
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include \

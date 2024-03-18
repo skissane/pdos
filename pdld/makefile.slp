@@ -5,7 +5,7 @@ VPATH=src;src/bytearray;src/hashtab
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common \
     -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib \

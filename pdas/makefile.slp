@@ -20,7 +20,7 @@ PREPROCESSOR=pdcc -E
 CFLAGS=-O2
 #CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I./src -I./src/hashtab -I../pdpclib \
   -U__WIN32__ -D__NOBIVA__ -D__gnu_linux__

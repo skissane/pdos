@@ -13,7 +13,7 @@ VPATH=../pdld/src;../pdld/src/bytearray
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common \
     -I../pdld/src -I../pdld/src/bytearray -I../pdpclib -U__WIN32__ -D__NOBIVA__ \
