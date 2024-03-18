@@ -102,6 +102,7 @@ unsigned int lin_write(int handle, void *buf, unsigned int len);
 int lin_open(char *fnm, unsigned int flags, unsigned int mode);
 unsigned int lin_read(int handle, void *buf, unsigned int len);
 int lin_close(int handle);
+int lin_remove(void *name);
 int lin_getpid(void);
 int lin_ioctl(int handle, int command, int parm);
 void *lin_mmap(void *p);
@@ -149,6 +150,11 @@ static void int80handler(union REGS *regsin,
         /* close */
         case 0x6:
             regsout->d.eax = lin_close(regsin->d.ebx);
+            break;
+
+        /* remove */
+        case 0xa:
+            regsout->d.eax = lin_remove((void *)regsin->d.ebx);
             break;
 
         /* execve */
@@ -370,6 +376,12 @@ int lin_close(int handle)
         return (0);
     }
     return (-1);
+}
+
+int lin_remove(void *name)
+{
+    remove(name);
+    return (0);
 }
 
 int lin_getpid(void)
