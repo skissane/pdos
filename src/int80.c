@@ -299,7 +299,7 @@ int lin_open(char *fnm, unsigned int flags, unsigned int mode)
         {
             if (!linfiles[x].inuse)
             {
-                if (flags & 1)
+                if (flags & 0x40) /* check for O_CREAT */
                 {
                     rc = PosCreatFile(fnm, 0, &handle);
                 }
