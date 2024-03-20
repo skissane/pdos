@@ -439,6 +439,24 @@ int xstrcasecmp (const char *s1, const char *s2) {
 
 }
 
+int xstrncasecmp (const char *s1, const char *s2, size_t n)
+{
+    const unsigned char *p1;
+    const unsigned char *p2;
+    size_t x = 0;
+
+    p1 = (const unsigned char *)s1;
+    p2 = (const unsigned char *)s2;
+    while (x < n) {
+        if (toupper (p1[x]) < toupper (p2[x])) return -1;
+        else if (toupper (p1[x]) > toupper (p2[x])) return 1;
+        else if (p1[x] == '\0') return 0;
+        x++;
+    }
+    
+    return 0;
+}
+
 char *xstrdup (const char *str) {
 
     char *ptr = xmalloc (strlen (str) + 1);
