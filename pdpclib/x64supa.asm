@@ -94,15 +94,138 @@ endif
 
 
 
+ifdef CC64
+
+# These routines were copied (and then modified) from bcclib.asm generated
+# by the public domain cc64, and are used for cc64
+# (Converted to PDAS .intel_syntax noprefix by guessing.)
+
+.globl m$ufloat_r64u32
+m$ufloat_r64u32:
+	mov ecx, ecx					# clear top half (already done if value just moved there)
+	cvtsi2sd xmm15, rcx
+	ret
+
+.globl m$ufloat_r32u32
+m$ufloat_r32u32:
+	mov ecx, ecx
+	cvtsi2ss xmm15, rcx
+	ret
+
+.globl m$ufloat_r64u64
+m$ufloat_r64u64:
+#jjj: jmp jjj
+#mov rax, 0x1234567
+#mov rax, 1234567
+#xorpd xmm15, xmm15
+#ret
+
+	cmp ecx, 0
+	jl fl1
+#number is positive, so can treat like i64
+	cvtsi2sd xmm15, rcx
+	ret
+fl1:						#negative value
+	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+	cvtsi2sd xmm15, rcx
+	addsd xmm15, QWORD PTR offset64[rip]	#(add 2**63 back to result)
+	ret
+
+.globl m$ufloat_r32u64
+m$ufloat_r32u64:
+	cmp ecx, 0
+	jl fl2
+#number is positive, so can treat like i64
+	cvtsi2ss xmm15, rcx
+	ret
+fl2:						#negative value
+	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+	cvtsi2ss xmm15, rcx
+	addss xmm15, DWORD PTR offset32[rip]	#(add 2**63 back to result)
+	ret
+
+.globl m$pushcallback
+m$pushcallback:
+	incd __ncallbacks[rip]
+        push r12
+	mov r12,__ncallbacks[rip]
+	shl r12,6					#8x8 bytes is size per entry
+	lea r11,callbackstack[rip]
+	add r11,r12
+        pop r12
+
+	mov [r11],rbx
+	mov [r11+8],rsi
+	mov [r11+16],rdi
+	mov [r11+24],r12
+	mov [r11+32],r13
+	mov [r11+40],r14
+	mov [r11+48],r15
+	ret
+
+.globl m$popcallback
+m$popcallback:
+        mov r12,__ncallbacks[rip]
+	shl r12,6					#8x8 bytes is size per entry
+	lea r11,callbackstack[rip]
+	add r11,r12
+	mov rbx,[r11]
+	mov rsi,[r11+8]
+	mov rdi,[r11+16]
+	mov r12,[r11+24]
+	mov r13,[r11+32]
+	mov r14,[r11+40]
+	mov r15,[r11+48]
+	decd __ncallbacks[rip]
+	ret
+
+endif
+
+
+
+
+
 .data
 
 ifndef PDAS
 public _fltused
 _fltused dd ?
 else
+.globl _fltused
+.p2align 2
 _fltused:
 .space 4
 endif
+
+
+
+
+
+
+
+ifdef CC64
+
+.section rdata
+mask63:
+	.quad 0x7fffffffffffffff
+offset64:
+	.quad 9223372036854775808		# 2**63 as r64
+offset32:
+	.quad 9223372036854775808		# 2**63 as r32
+
+
+.bss
+callbackstack:
+	.space 576			#8-level stack
+#	resb 5'120'000
+
+.globl __ncallbacks
+__ncallbacks:
+	.space 8
+
+endif
+
+
 
 
 
@@ -111,7 +234,6 @@ ifndef PDAS
 ; by pdas, but accepted by masm. masm requires the "end" and won't
 ; accept the "end" within an ifdef block
 endif
-
 
 ; /*
 end
