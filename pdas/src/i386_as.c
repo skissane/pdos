@@ -2326,6 +2326,12 @@ static int parse_operands (char **p_line)
         if (token_start != line) {
             int ret;
             char saved_ch;
+
+            if (instruction.operands > MAX_OPERANDS) {
+                as_error ("spurious operands; (%u operands/instruction max)",
+                          MAX_OPERANDS);
+                return 1;
+            }
             
             saved_ch = *line;
             *line = '\0';
