@@ -27,6 +27,7 @@ enum option_index {
     AS_OPTION_HELP,
     AS_OPTION_INCLUDE,
     AS_OPTION_LISTING,
+    AS_OPTION_NO_PSEUDO_DOT,
     AS_OPTION_OUTFILE,
     AS_OPTION_OFORMAT
 
@@ -34,13 +35,14 @@ enum option_index {
 
 static const struct as_option as_options[] = {
 
-    { "a",          AS_OPTION_LISTING,      AS_OPTION_HAS_OPTIONAL_ARG  },
-    { "-defsym",    AS_OPTION_DEFSYM,       AS_OPTION_HAS_ARG           },
-    { "-help",      AS_OPTION_HELP,         AS_OPTION_NO_ARG            },
-    { "I",          AS_OPTION_INCLUDE,      AS_OPTION_HAS_ARG           },
-    { "o",          AS_OPTION_OUTFILE,      AS_OPTION_HAS_ARG           },
-    { "-oformat",   AS_OPTION_OFORMAT,      AS_OPTION_HAS_ARG           },
-    { NULL,         0,                      0                           }
+    { "a",              AS_OPTION_LISTING,       AS_OPTION_HAS_OPTIONAL_ARG  },
+    { "-defsym",        AS_OPTION_DEFSYM,        AS_OPTION_HAS_ARG           },
+    { "-help",          AS_OPTION_HELP,          AS_OPTION_NO_ARG            },
+    { "I",              AS_OPTION_INCLUDE,       AS_OPTION_HAS_ARG           },
+    { "o",              AS_OPTION_OUTFILE,       AS_OPTION_HAS_ARG           },
+    { "-no-pseudo-dot", AS_OPTION_NO_PSEUDO_DOT, AS_OPTION_NO_ARG            },
+    { "-oformat",       AS_OPTION_OFORMAT,       AS_OPTION_HAS_ARG           },
+    { NULL,             0,                       0                           }
 
 };
 
@@ -136,6 +138,7 @@ static void _print_help (const char *name)
     printf ("    --defsym SYM=VAL      Define symbol SYM to given value\n");
     printf ("    --help                Print this help information\n");
     printf ("    -I DIR                Add DIR to search list for .include directives\n");
+    printf ("    --no-pseudo-dot       Accept pseudo-ops without dot prefix\n");
     printf ("    -o OBJFILE            Name the object-file output OBJFILE (default a.out)\n");
     printf ("    --oformat FORMAT      Create an output file in format FORMAT (default %s)\n", default_format);
     printf ("                              Supported formats are: a.out, coff, elf\n");
@@ -293,6 +296,10 @@ void as_parse_args (int *pargc, char ***pargv, int optind)
                     state->listing = xstrdup (optarg);
                 }
                 
+                break;
+
+            case AS_OPTION_NO_PSEUDO_DOT:
+                state->no_pseudo_dot = 1;
                 break;
             
             case AS_OPTION_OUTFILE:

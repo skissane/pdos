@@ -82,7 +82,11 @@ static void handler_ifdef (char **pp, int ifndef)
 
 int cond_can_ignore_line (const char *line)
 {
-    if (line[0] != '.') return cur_if_stack && cur_if_stack->ignoring;
+    if (line[0] != '.') {
+        if (!state->no_pseudo_dot) return cur_if_stack && cur_if_stack->ignoring;
+
+        line--;
+    }
     
     if (((line[1] == 'i'
           || line[1] == 'I')

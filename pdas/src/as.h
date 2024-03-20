@@ -36,6 +36,8 @@ struct as_state {
     int generate_listing;
     char *listing;
 
+    int no_pseudo_dot;
+
 };
 
 #define     ARRAY_SIZE(arr)             (sizeof (arr) / sizeof (arr[0]))

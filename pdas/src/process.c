@@ -1166,13 +1166,13 @@ int process (const char *fname)
             
             if (is_name_beginner ((int) *line)) {
                 char saved_c;
+                struct pseudo_op_entry *poe = NULL;
 
                 HANDLE_CONDITIONAL ();
                 
                 saved_c = get_symbol_name_end (&line);
                 
                 if (saved_c && (saved_c == ':' || (*skip_whitespace (line + 1)) == ':')) {
-                
                     symbol_label (start_p);
                     
                     *line = saved_c;
@@ -1184,28 +1184,29 @@ int process (const char *fname)
                     line = skip_whitespace (line + 1);
                     
                     continue;
-                
                 }
-                
-                if (*start_p == '.') {
-                
-                    char *p;
-                    struct pseudo_op_entry *poe;
 
-                    for (p = start_p + 1; *p; p++) {
+                {
+                    char *p;
+
+                    for (p = start_p; *p; p++) {
                         *p = tolower ((unsigned char)*p);
                     }
+                }
 
-                    poe = pseudo_op_find (start_p + 1);
+                if (state->no_pseudo_dot) {
+                    poe = pseudo_op_find (start_p);
+                }
+                
+                if (poe || *start_p == '.') {
+                    if (!poe) poe = pseudo_op_find (start_p + 1);
                     
                     if (poe == NULL) {
-                    
                         as_error ("unknown pseudo-op '%s'", start_p);
                         
                         *line = saved_c;
                         handler_ignore (&line);
                         continue;
-                    
                     }
                     
                     *line = saved_c;
@@ -1213,7 +1214,6 @@ int process (const char *fname)
                     
                     (*(poe->handler)) (&line);
                     continue;
-                
                 }
                 
                 *line = saved_c;
