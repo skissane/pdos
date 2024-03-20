@@ -155,6 +155,15 @@ struct pseudo_op_entry *coff_get_pseudo_op_table (void);
 void write_coff_file (void);
 void coff_x86_set_bits (int bits);
 
+/* cond.c */
+int cond_can_ignore_line (const char *line);
+void cond_end_of_file (void);
+void cond_handler_if (char **pp);
+void cond_handler_ifdef (char **pp);
+void cond_handler_ifndef (char **pp);
+void cond_handler_else (char **pp);
+void cond_handler_endif (char **pp);
+
 /* elf.c */
 struct pseudo_op_entry *elf_get_pseudo_op_table (void);
 void write_elf_file (void);
@@ -185,7 +194,8 @@ char *skip_whitespace (char *p);
 void *xmalloc (size_t size);
 void *xrealloc (void *ptr, size_t size);
 
-int   xstrcasecmp (const char *s1, const char *s2);
+int xstrcasecmp (const char *s1, const char *s2);
+int xstrncasecmp (const char *s1, const char *s2, size_t n);
 char *xstrdup (const char *str);
 char *xstrsep (char **stringp, const char *delim);
 

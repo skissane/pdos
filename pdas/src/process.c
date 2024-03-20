@@ -8,15 +8,15 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
-#include    <ctype.h>
-#include    <stddef.h>
-#include    <stdio.h>
-#include    <stdlib.h>
-#include    <string.h>
+#include <ctype.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include    "as.h"
-#include    "hashtab.h"
-#include    "cfi.h"
+#include "as.h"
+#include "hashtab.h"
+#include "cfi.h"
 
 static const char *filename;
 static unsigned long line_number;
@@ -973,10 +973,15 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "byte",       &handler_byte           },
     { "comm",       &handler_comm           },
     { "data",       &handler_data           },
+    { "else",       &cond_handler_else      },
+    { "endif",      &cond_handler_endif     },
     { "equ",        &handler_equ            },
     { "file",       &handler_ignore         },
     { "globl",      &handler_global         },
     { "global",     &handler_global         },
+    { "if",         &cond_handler_if        },
+    { "ifdef",      &cond_handler_ifdef     },
+    { "ifndef",     &cond_handler_ifndef    },
     { "include",    &handler_include        },
     { "lcomm",      &handler_lcomm          },
     { "linkonce",   &handler_linkonce       },
@@ -1111,8 +1116,14 @@ char get_symbol_name_end (char **pp) {
 
 }
 
-int process (const char *fname) {
+#define HANDLE_CONDITIONAL() \
+ if (cond_can_ignore_line (line)) { \
+     line = line_end; \
+     continue; \
+ }
 
+int process (const char *fname)
+{
     FILE *input;
     
     char *line;
@@ -1155,6 +1166,8 @@ int process (const char *fname) {
             
             if (is_name_beginner ((int) *line)) {
                 char saved_c;
+
+                HANDLE_CONDITIONAL ();
                 
                 saved_c = get_symbol_name_end (&line);
                 
@@ -1213,25 +1226,24 @@ int process (const char *fname) {
                 *(line++) = saved_c;
                 
                 continue;
-            
             }
             
             if (is_end_of_line[(int) *line]) {
-            
                 line++;
                 continue;
-            
             }
             
             if (is_comment_at_the_start_of_line[(int) *line]) {
                 break;
             }
+
+            HANDLE_CONDITIONAL ();
             
             demand_empty_rest_of_line (&line);
-        
         }
-    
     }
+
+    cond_end_of_file ();
     
     if (state->generate_listing) {
         update_listing_line (current_frag);
@@ -1241,7 +1253,6 @@ int process (const char *fname) {
     
     fclose (input);
     return 0;
-
 }
 
 void demand_empty_rest_of_line (char **pp) {
