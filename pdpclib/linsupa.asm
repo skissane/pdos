@@ -7,6 +7,25 @@
 
 # https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
+
+
+
+# We can use this as the entry point rather than _start(),
+# to take note of the stack pointer at entry, for potential
+# use by __start()
+
+.globl ___pdpent
+___pdpent:
+.globl __pdpent
+__pdpent:
+mov %esp, %ebp
+push %ebp
+call __start
+
+# Not expected to return, but better to loop than do random things
+loop5: jmp loop5
+
+
 .globl ___setj
 ___setj:
 .globl __setj
