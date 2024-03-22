@@ -399,7 +399,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     jmp_buf oldjb;
 #if !defined(__EFI__)
     int argc;
-    static char *argv[MAXPARMS + 1];
+    static char *int_argv[MAXPARMS + 1];
+    char **argv = int_argv;
 #endif
     int rc;
 #ifdef __AMIGA__
@@ -1102,10 +1103,22 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
         sprintf(fnm, "/proc/%d/cmdline", __getpid());
         pf = __open(fnm, 0, 0);
-        if (pf == -1)
+        /* note that the open syscall can return numbers other than
+           -1, e.g. -2, but most documentation is for open() which
+           is a wrapper that will return -1 and set errno based on
+           which negative value was returned */
+        if (pf < 0)
         {
+            /* could be early Linux userspace or chroot() jail - let's
+               take our chances with the stack */
+            argc = *(int *)p;
+            p += sizeof(char *); /* I think next parm will be on pointer
+                                    boundary - especially 64-bit */
+            argv = (char **)p;
+#if 0
             argc = 1;
             argv[0] = "";
+#endif
         }
         else
         {
