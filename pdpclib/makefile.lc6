@@ -3,10 +3,6 @@
 # executable but with Win64 calling conventions
 # for function calls (but not syscalls)
 
-# Note that after producing this pdptest.exe
-# you need to do (on the Linux system):
-# objcopy -O elf64-x86-64 pdptest.exe pdptest2.exe;./pdptest2.exe abc def
-
 CC=cc64
 CFLAGS=
 COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ -I . -I../src \
@@ -16,7 +12,7 @@ AR=xar
 #AR=arwin
 AS=pdas --oformat coff --64
 #AS=aswin
-LD=pdld --no-insert-timestamp
+LD=pdld --no-insert-timestamp --oformat elf
 #LD=ldwin
 
 all: pdptest.exe
