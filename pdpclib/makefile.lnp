@@ -21,7 +21,7 @@ pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
   $(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
   $(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
   $(AR) s pdplinux.a
-  $(LD) -s --emit-relocs -nostdlib -e __start -o pdptest.exe linstart.o pdptest.o pdplinux.a
+  $(LD) -s --emit-relocs -nostdlib -e __pdpent -o pdptest.exe linstart.o pdptest.o pdplinux.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
