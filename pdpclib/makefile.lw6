@@ -1,0 +1,29 @@
+# This is the makefile for Linux to build pdpclib using
+# the gccw64_l64 compiler, which uses the Win64 calling
+# convention, so we need to use l64supb.
+
+CC=gccw64_l64
+AS=pdas --oformat coff --64
+LD=pdld --oformat elf --no-insert-timestamp
+AR=xar
+
+COPTS=-S -O2 -U__WIN32__ -D__gnu_linux__ \
+    -D__64BIT__ -D__LONG64__ -I . -D__USEBIVA__ -fno-common
+
+pdptest: linstart.o l64supb.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o __memmgr.o
+	rm -f pdplinux.a
+	$(AR) r pdplinux.a linstart.o l64supb.o stdio.o string.o stdlib.o
+	$(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
+	$(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
+        $(AR) s pdplinux.a
+	$(LD) -s -e _start --image-base 0x400000 -nostdlib -o pdptest.exe linstart.o l64supb.o pdptest.o pdplinux.a
+
+.c.o:
+	$(CC) -o $*.s $(COPTS) $<
+        $(AS) --64 -o $@ $*.s
+        rm -f $*.s
+
+l64supb.o: l64supb.asm
+	$(AS) --64 --defsym STACKPARM=0 -o $@ $*.asm
