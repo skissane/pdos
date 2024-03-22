@@ -18,7 +18,7 @@ pdptest: linstart.o l64supb.o pdptest.o stdio.o string.o stdlib.o \
 	$(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
 	$(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
         $(AR) s pdplinux.a
-	$(LD) -s -e _start --image-base 0x400000 -nostdlib -o pdptest.exe linstart.o l64supb.o pdptest.o pdplinux.a
+	$(LD) -s -e ___pdpstart --image-base 0x400000 -nostdlib -o pdptest.exe linstart.o l64supb.o pdptest.o pdplinux.a
 
 .c.o:
 	$(CC) -o $*.s $(COPTS) $<
