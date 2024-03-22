@@ -6,11 +6,12 @@
 VPATH=src;src/bytearray;src/hashtab
 CC=gccwin
 CFLAGS=-O2
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
     --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
-COPTS=-S $(CFLAGS) -Wall -ansi -pedantic -fno-common \
+COPTS=-S $(CFLAGS) -Wall -fno-common \
     -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib \
     -U__WIN32__ -D__NOBIVA__ -D__HAVESYS__=_System \
     -D__OS2__ -D__32BIT__

@@ -2,11 +2,11 @@ VPATH=src;src/bytearray;src/hashtab
 CC=x86_64-w64-mingw32-gcc
 #CC=gccw64_l64
 CFLAGS=-O2 -Wno-builtin-declaration-mismatch
-#CFLAGS=-O2 -D__LONG64__ -ansi -pedantic-errors -D__STATIC__
+#CFLAGS=-O2 -D__LONG64__ -DNO_LONG_LONG -ansi -pedantic-errors -D__STATIC__
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp
 AS=pdas --oformat coff --64
-COPTS=-S $(CFLAGS) -Wall -ansi -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray -I./src/hashtab -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
 
 OBJS=bytearray.obj elf.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj map.obj read.obj sections.obj symbols.obj xmalloc.obj
 
