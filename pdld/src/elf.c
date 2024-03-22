@@ -204,6 +204,75 @@ static unsigned char *write_sections (unsigned char *file, Elf32_Ehdr *ehdr_p)
     return pos;
 }
 
+static unsigned char *write_sections64 (unsigned char *file, Elf64_Ehdr *ehdr_p)
+{
+    unsigned char *pos;
+    struct section *section;
+    Elf64_Phdr *phdr_p;
+    Elf64_Shdr *shdr_p = NULL;
+
+    pos = file + size_of_headers;
+
+    phdr_p = (void *)(file + ehdr_p->e_phoff);
+    if (generate_section_headers) {
+        shdr_p = (void *)(file + ehdr_p->e_shoff);
+        shdr_p->sh_type = SHT_NULL;
+        shdr_p->sh_link = SHN_UNDEF;
+        shdr_p++;
+    }
+
+    for (section = all_sections; section; section = section->next) {
+        phdr_p->p_type = PT_LOAD;
+        phdr_p->p_paddr = phdr_p->p_vaddr = ld_state->base_address + section->rva;
+        phdr_p->p_memsz = section->total_size;
+
+        if (!section->is_bss) {
+            phdr_p->p_filesz = section->total_size;
+            pos = file + ALIGN (pos - file, section->section_alignment);
+            phdr_p->p_offset = pos - file;
+
+            section_write (section, pos);
+            pos += section->total_size;
+        } else {
+            phdr_p->p_filesz = 0;
+            phdr_p->p_offset = 0;
+        }
+
+        phdr_p->p_flags = translate_section_flags_to_p_flags (section->flags);
+
+        /* Memory alignment and file alignment must be the same
+         * (so it is good to have RVA of first section
+         *  to be equal to its offset)
+         * but neither memory size nor file size need to be rounded.
+         */
+        phdr_p->p_align = section->section_alignment;
+
+        if (generate_section_headers) {
+            shdr_p->sh_type = section->is_bss ? SHT_NOBITS : SHT_PROGBITS;
+            shdr_p->sh_flags = translate_section_flags_to_sh_flags (section->flags);
+            shdr_p->sh_addr = phdr_p->p_vaddr;
+            shdr_p->sh_offset = phdr_p->p_offset;
+            shdr_p->sh_size = phdr_p->p_memsz;
+            shdr_p->sh_addralign = phdr_p->p_align;
+            shdr_p++;
+#if 0 /* Disabled for now. */
+            if (ld_state->emit_relocs) {
+                unsigned char *saved_pos = pos;
+
+                pos = write_relocs_for_section (file, pos, section, shdr_p);
+                if (pos != saved_pos) {
+                    shdr_p++;
+                }
+            }
+#endif
+        }
+
+        phdr_p++;
+    }
+
+    return pos;
+}
+
 address_type elf_get_first_section_rva (void)
 {
     if (all_sections == NULL) return size_of_headers;
@@ -235,6 +304,8 @@ static void translate_relocation (struct reloc_entry *reloc,
     }
 }
 
+static void elf64_write (const char *filename);
+
 void elf_write (const char *filename)
 {
     FILE *outfile;
@@ -245,6 +316,11 @@ void elf_write (const char *filename)
     Elf32_Ehdr ehdr;
 
     struct section *section;
+
+    if (ld_state->bits == 64) {
+        elf64_write (filename);
+        return;
+    }
 
     if (!(outfile = fopen (filename, "wb"))) {
         ld_error ("cannot open '%s' for writing", filename);
@@ -395,6 +471,171 @@ void elf_write (const char *filename)
     fclose (outfile);
 }
 
+static void elf64_write (const char *filename)
+{
+    FILE *outfile;
+    unsigned char *file;
+    size_t file_size;
+    unsigned char *pos;
+
+    Elf64_Ehdr ehdr;
+
+    struct section *section;
+
+    if (!(outfile = fopen (filename, "wb"))) {
+        ld_error ("cannot open '%s' for writing", filename);
+        return;
+    }
+
+    /* Relocations exist only in sections. */
+    if (ld_state->emit_relocs) generate_section_headers = 1;
+
+    if (ld_state->emit_relocs) {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "+++--emit-relocs is not yet supported for ELF 64");
+    }
+
+    memset (&ehdr, 0, sizeof (ehdr));
+    
+    ehdr.e_ident[EI_MAG0] = ELFMAG0;
+    ehdr.e_ident[EI_MAG1] = ELFMAG1;
+    ehdr.e_ident[EI_MAG2] = ELFMAG2;
+    ehdr.e_ident[EI_MAG3] = ELFMAG3;
+    ehdr.e_ident[EI_CLASS] = ELFCLASS64;
+    ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+    ehdr.e_ident[EI_VERSION] = EV_CURRENT;
+
+    ehdr.e_type = ET_EXEC;
+    ehdr.e_machine = EM_X86_64;
+    ehdr.e_version = EV_CURRENT;
+    ehdr.e_entry = ld_state->entry_point + ld_state->base_address;
+    ehdr.e_ehsize = sizeof (ehdr);
+
+    {
+        /* Current layout of executable is:
+         * Elf64_Ehdr
+         * Content of sections (including section name string table)
+         * Elf64_Phdr table (aligned just for readability)
+         * Elf64_Shdr table (aligned just for readability)
+         */
+        file_size = size_of_headers;
+
+        for (section = all_sections; section; section = section->next) {
+            if (!section->is_bss) {
+                file_size = ALIGN (file_size, section->section_alignment);
+                file_size += section->total_size;
+            }
+
+            if (ld_state->emit_relocs) {
+                size_t relocs_needed = section_get_num_relocs (section);
+
+                if (relocs_needed) {
+                    file_size = ALIGN (file_size, RELOC_SECTION_ALIGNMENT);
+                    file_size += relocs_needed * sizeof (Elf64_Rel);
+                }
+            }
+        }
+
+        if (generate_section_headers) {
+            size_t shstrtab_size;
+            shstrtab_size = 1 + sizeof (".shstrtab");
+
+            for (section = all_sections; section; section = section->next) {
+                if (ld_state->emit_relocs && section_get_num_relocs (section)) {
+                    shstrtab_size += sizeof (".rel") - 1;
+                }
+                shstrtab_size += strlen (section->name) + 1;
+            }
+
+            file_size += shstrtab_size;
+        }
+
+        file_size = ALIGN (file_size, sizeof (Elf64_Phdr));
+        ehdr.e_phoff = file_size;
+        ehdr.e_phentsize = sizeof (Elf64_Phdr);
+        ehdr.e_phnum = 0;
+        for (section = all_sections; section; section = section->next) {
+            ehdr.e_phnum++;
+        }
+        file_size += ehdr.e_phnum * sizeof (Elf64_Phdr);
+
+        if (generate_section_headers) {
+            file_size = ALIGN (file_size, sizeof (Elf64_Shdr));
+            ehdr.e_shoff = file_size;
+            ehdr.e_shentsize = sizeof (Elf64_Shdr);
+            ehdr.e_shnum = 1;
+            for (section = all_sections; section; section = section->next) {
+                section->target_index = ehdr.e_shnum++;
+                if (ld_state->emit_relocs && section_get_num_relocs (section)) {
+                    ehdr.e_shnum++;
+                }
+            }
+            ehdr.e_shstrndx = ehdr.e_shnum++;
+            
+            file_size += ehdr.e_shnum * sizeof (Elf64_Shdr);
+        }
+    }
+
+    file = xmalloc (file_size);
+    memset (file, 0, file_size);
+
+    pos = write_sections64 (file, &ehdr);
+
+    if (generate_section_headers) {
+        unsigned char *saved_pos;
+        Elf64_Shdr *shdr_p, *shstrshdr_p;
+
+        shdr_p = (void *)(file + ehdr.e_shoff);
+        shstrshdr_p = shdr_p + ehdr.e_shstrndx;
+        shdr_p++;
+        saved_pos = pos;
+        
+        shstrshdr_p->sh_name = 1;
+        shstrshdr_p->sh_type = SHT_STRTAB;
+        shstrshdr_p->sh_offset = saved_pos - file;
+        shstrshdr_p->sh_addralign = 1;
+
+        *pos = '\0';
+        pos++;
+        memcpy (pos, ".shstrtab", sizeof (".shstrtab"));
+        pos += sizeof (".shstrtab");
+
+        for (section = all_sections; section; section = section->next) {
+            int has_relocs = ld_state->emit_relocs && section_get_num_relocs (section);
+            size_t name_len = strlen (section->name);
+
+            if (has_relocs) {
+                memcpy (pos, ".rel", sizeof (".rel") - 1);
+                pos += sizeof (".rel") - 1;
+            }
+            shdr_p->sh_name = pos - saved_pos;
+            if (has_relocs) {
+                shdr_p++;
+                shdr_p->sh_name = pos - saved_pos - (sizeof (".rel") - 1);
+            }
+
+            memcpy (pos, section->name, name_len);
+            pos[name_len] = '\0';
+            pos += name_len + 1;
+
+            shdr_p++;
+        }
+
+        shstrshdr_p->sh_size = pos - saved_pos;
+    }
+
+    pos = file;
+
+    memcpy (pos, &ehdr, sizeof (ehdr));
+
+    if (fwrite (file, file_size, 1, outfile) != 1) {
+        ld_error ("writing '%s' file failed", filename);
+    }
+    
+    free (file);
+    fclose (outfile);
+}
+
 #define CHECK_READ(memory_position, size_to_read) \
     do { if (((memory_position) - file + (size_to_read) > file_size) \
              || (memory_position) < file) ld_fatal_error ("corrupted input file"); } while (0)
@@ -419,6 +660,14 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     pos = file;
     CHECK_READ (pos, sizeof (ehdr));
     ehdr = *(Elf32_Ehdr *)pos;
+
+    if (ld_state->bits == 64) {
+        ld_error ("%s: 32-bit object when other objects are %i-bit",
+                  filename, ld_state->bits);
+        return 1;
+    }
+
+    ld_state->bits = 32;
 
     if (ehdr.e_ident[EI_CLASS] != ELFCLASS32) {
         ld_error ("%s: Unsupported ELF file class", filename);

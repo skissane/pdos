@@ -1501,6 +1501,9 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     wanted_Machine = coff_hdr.Machine;
     if (wanted_Machine == IMAGE_FILE_MACHINE_I386) {
         leading_underscore = 1;
+        ld_state->bits = 32;
+    } else {
+        ld_state->bits = 64;
     }
 
     pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;

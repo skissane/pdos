@@ -8,12 +8,23 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+#include <stdint.h>
+
 /* Fixed size data types. All of them except Elf32_Half must be 4 bytes. */
 typedef unsigned long Elf32_Addr;
 typedef unsigned long Elf32_Off;
 typedef unsigned long Elf32_Word;
 typedef signed long Elf32_SWord;
 typedef unsigned short Elf32_Half; /* 2 bytes. */
+
+/* Fixed size data types, short should be 2 bytes, int 4 bytes. */
+typedef uint_fast64_t Elf64_Addr;
+typedef uint_fast64_t Elf64_Off;
+typedef unsigned short Elf64_Half;
+typedef unsigned int Elf64_Word;
+typedef signed int Elf64_Sword;
+typedef uint_fast64_t Elf64_Xword;
+typedef int_fast64_t Elf64_Sxword;
 
 #define EI_NIDENT 16 /* Size of e_ident on all systems. */
 
@@ -33,6 +44,23 @@ typedef struct {
     Elf32_Half e_shnum;
     Elf32_Half e_shstrndx;
 } Elf32_Ehdr;
+
+typedef struct {
+    unsigned char e_ident[EI_NIDENT];
+    Elf64_Half e_type;
+    Elf64_Half e_machine;
+    Elf64_Word e_version;
+    Elf64_Addr e_entry;
+    Elf64_Off e_phoff;
+    Elf64_Off e_shoff;
+    Elf64_Word e_flags;
+    Elf64_Half e_ehsize;
+    Elf64_Half e_phentsize;
+    Elf64_Half e_phnum;
+    Elf64_Half e_shentsize;
+    Elf64_Half e_shnum;
+    Elf64_Half e_shstrndx;
+} Elf64_Ehdr;
 
 /* e_ident index and value macros. */
 #define EI_MAG0 0
@@ -67,6 +95,7 @@ typedef struct {
 /* e_machine */
 #define EM_NONE 0
 #define EM_386 3 /* Intel 80386. */
+#define EM_X86_64 62 /* x86-64. */
 
 /* e_version */
 #define EV_NONE 0
@@ -84,6 +113,19 @@ typedef struct {
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
 } Elf32_Shdr;
+
+typedef struct {
+    Elf64_Word sh_name;
+    Elf64_Word sh_type;
+    Elf64_Xword sh_flags;
+    Elf64_Addr sh_addr;
+    Elf64_Off sh_offset;
+    Elf64_Xword sh_size;
+    Elf64_Word sh_link;
+    Elf64_Word sh_info;
+    Elf64_Xword sh_addralign;
+    Elf64_Xword sh_entsize;
+} Elf64_Shdr;
 
 /* Special section indexes. */
 #define SHN_UNDEF 0
@@ -122,6 +164,15 @@ typedef struct {
     Elf32_Half st_shndx;
 } Elf32_Sym;
 
+typedef struct {
+    Elf64_Word st_name;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf64_Half st_shndx;
+    Elf64_Addr st_value;
+    Elf64_Xword st_size;
+} Elf64_Sym;
+
 #define STN_UNDEF 0
 
 #define ELF32_ST_BIND(i) ((i)>>4)
@@ -149,9 +200,24 @@ typedef struct {
     Elf32_Word r_info;
 } Elf32_Rel;
 
+typedef struct {
+    Elf64_Addr r_offset;
+    Elf64_Xword r_info;
+} Elf64_Rel;
+
+typedef struct {
+    Elf64_Addr r_offset;
+    Elf64_Xword r_info;
+    Elf64_Sxword r_addend;
+} Elf64_Rela;
+
 #define ELF32_R_SYM(i) ((i) >> 8)
 #define ELF32_R_TYPE(i) ((unsigned char)(i))
 #define ELF32_R_INFO(s,t) (((s)<<8)+(unsigned char)(t))
+
+#define ELF64_R_SYM(i) ((i) >> 32)
+#define ELF64_R_TYPE(i) ((i) & 0xffffffff)
+#define ELF64_R_INFO(s,t) (((s) << 32)+((t) & 0xffffffff))
 
 /* Relocation types (bottom byte of r_info). */
 #define R_386_NONE 0
@@ -176,6 +242,17 @@ typedef struct {
     Elf32_Word p_flags;
     Elf32_Word p_align;
 } Elf32_Phdr;
+
+typedef struct {
+    Elf64_Word p_type;
+    Elf64_Word p_flags;
+    Elf64_Off p_offset;
+    Elf64_Addr p_vaddr;
+    Elf64_Addr p_paddr;
+    Elf64_Xword p_filesz;
+    Elf64_Xword p_memsz;
+    Elf64_Xword p_align;
+} Elf64_Phdr;
 
 #define PT_NULL 0
 #define PT_LOAD 1
