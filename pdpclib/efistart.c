@@ -815,6 +815,10 @@ know of any specific benefit it might bring and
 haven't tried it myself. Actually it looks to me like
 edk2-arm-code.fd is more likely to be correct. And
 presumably the syntax is the same as for the 80386.
+And for ARM64 you presumably want edk2-aarch64-code.fd
+And on Windows these are all available in
+C:\Program Files\qemu\share
+so you don't need to do a separate download
 
 
 For 80386 you need:
