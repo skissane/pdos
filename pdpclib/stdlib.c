@@ -141,6 +141,7 @@ void __exita(int a);
 #define PROT_EXEC 4
 #define MAP_ANONYMOUS 0x20
 #define MAP_PRIVATE 0x2
+#define MAP_32BIT 0x40
 #define MAP_SHARED 0x1
 #define MAP_FAILED ((void *)-1)
 #define O_RDWR   0x2
@@ -497,7 +498,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.addr = NULL;
         mms.length = size + sizeof(size_t);
         mms.prot = PROT_READ | PROT_WRITE | PROT_EXEC;
-        mms.flags = MAP_ANONYMOUS | MAP_PRIVATE;
+        mms.flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_32BIT;
         mms.fd = -1;
         mms.offset = 0;
         mms.offset2 = 0;
