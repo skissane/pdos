@@ -30,5 +30,9 @@ typedef struct {
     unsigned short oem_id; /* 36 24 */
     unsigned short oem_info; /* 38 26 */
     unsigned short reserved2[10]; /* Second set of reserved words */ /* 40 28 */
+#ifdef __LONG64__
+    unsigned int e_lfanew;
+#else
     unsigned long e_lfanew; /* Offset to the PE header. */ /* 60 3C */
+#endif
 } Mz_hdr;

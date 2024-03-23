@@ -11,14 +11,20 @@
 /*                                                                   */
 /*********************************************************************/
 
+#ifdef __LONG64__
+typedef unsigned int U32;
+#else
+typedef unsigned long U32;
+#endif
+
 /* In image files there is signature "PE\0\0" at e_lfanew
  * after which is the COFF header. */
 typedef struct {
     unsigned short Machine;
     unsigned short NumberOfSections;
-    unsigned long TimeDateStamp;
-    unsigned long PointerToSymbolTable; /* Deprecated, ignore. */
-    unsigned long NumberOfSymbols; /* Deprecated, ignore. */
+    U32 TimeDateStamp;
+    U32 PointerToSymbolTable; /* Deprecated, ignore. */
+    U32 NumberOfSymbols; /* Deprecated, ignore. */
     unsigned short SizeOfOptionalHeader;
     unsigned short Characteristics;
 } Coff_hdr;
@@ -46,60 +52,60 @@ typedef struct {
     unsigned short Magic;
     unsigned char MajorLinkerVersion;
     unsigned char MinorLinkerVersion;
-    unsigned long SizeOfCode;
-    unsigned long SizeOfInitializedData;
-    unsigned long SizeOfUninitializedData;
-    unsigned long AddressOfEntryPoint; /* Relative to ImageBase. */
-    unsigned long BaseOfCode;
+    U32 SizeOfCode;
+    U32 SizeOfInitializedData;
+    U32 SizeOfUninitializedData;
+    U32 AddressOfEntryPoint; /* Relative to ImageBase. */
+    U32 BaseOfCode;
 #ifndef TARGET_64BIT
-    unsigned long BaseOfData;
+    U32 BaseOfData;
 #endif
     /* Extension fields. */
 #ifdef W32HACK
-    unsigned long ImageBase;
+    U32 ImageBase;
 #else
     unsigned char *ImageBase;
 #endif
-    unsigned long SectionAlignment;
-    unsigned long FileAlignment;
+    U32 SectionAlignment;
+    U32 FileAlignment;
     unsigned short MajorOperatingSystemVersion;
     unsigned short MinorOperatingSystemVersion;
     unsigned short MajorImageVersion;
     unsigned short MinorImageVersion;
     unsigned short MajorSubsystemVersion;
     unsigned short MinorSubsystemVersion;
-    unsigned long Win32VersionValue; /* Reserved, should be 0. */
-    unsigned long SizeOfImage;
-    unsigned long SizeOfHeaders;
-    unsigned long CheckSum;
+    U32 Win32VersionValue; /* Reserved, should be 0. */
+    U32 SizeOfImage;
+    U32 SizeOfHeaders;
+    U32 CheckSum;
     unsigned short Subsystem;
     unsigned short DllCharacteristics;
-    unsigned long SizeOfStackReserve;
+    U32 SizeOfStackReserve;
 #ifdef TARGET_64BIT
-    unsigned long dummy1;
+    U32 dummy1;
 #endif
-    unsigned long SizeOfStackCommit;
+    U32 SizeOfStackCommit;
 #ifdef TARGET_64BIT
-    unsigned long dummy2;
+    U32 dummy2;
 #endif
-    unsigned long SizeOfHeapReserve;
+    U32 SizeOfHeapReserve;
 #ifdef TARGET_64BIT
-    unsigned long dummy3;
+    U32 dummy3;
 #endif
-    unsigned long SizeOfHeapCommit;
+    U32 SizeOfHeapCommit;
 #ifdef TARGET_64BIT
-    unsigned long dummy4;
+    U32 dummy4;
 #endif
-    unsigned long LoaderFlags; /* Reserved, should be 0. */
-    unsigned long NumberOfRvaAndSizes; /* Number of data directories. */
+    U32 LoaderFlags; /* Reserved, should be 0. */
+    U32 NumberOfRvaAndSizes; /* Number of data directories. */
 } Pe32_optional_hdr;
 
 #define MAGIC_PE32     0x10B
 #define MAGIC_PE32PLUS 0x20B
 
 typedef struct {
-    unsigned long VirtualAddress;
-    unsigned long Size;
+    U32 VirtualAddress;
+    U32 Size;
 } IMAGE_DATA_DIRECTORY;
 
 /* Indexes of data directories. */
@@ -108,30 +114,30 @@ typedef struct {
 #define DATA_DIRECTORY_REL 5
 
 typedef struct {
-    unsigned long Characteristics; /* Reserved. */
-    unsigned long TimeDateStamp;
+    U32 Characteristics; /* Reserved. */
+    U32 TimeDateStamp;
     unsigned short MajorVersion;
     unsigned short MinorVersion;
-    unsigned long Name;
-    unsigned long Base; /* Subtract from ordinals from Import tables. */
-    unsigned long NumberOfFunctions;
-    unsigned long NumberOfNames; /* How many functions are exported by name. */
-    unsigned long AddressOfFunctions;
-    unsigned long AddressOfNames;
-    unsigned long AddressOfNameOrdinals;
+    U32 Name;
+    U32 Base; /* Subtract from ordinals from Import tables. */
+    U32 NumberOfFunctions;
+    U32 NumberOfNames; /* How many functions are exported by name. */
+    U32 AddressOfFunctions;
+    U32 AddressOfNames;
+    U32 AddressOfNameOrdinals;
 } IMAGE_EXPORT_DIRECTORY;
 
 typedef struct {
-    unsigned long OriginalFirstThunk;
-    unsigned long TimeDateStamp;
-    unsigned long ForwarderChain;
-    unsigned long Name; /* DLL name RVA. */
-    unsigned long FirstThunk;
+    U32 OriginalFirstThunk;
+    U32 TimeDateStamp;
+    U32 ForwarderChain;
+    U32 Name; /* DLL name RVA. */
+    U32 FirstThunk;
 } IMAGE_IMPORT_DESCRIPTOR;
 
 typedef struct {
-    unsigned long PageRva;
-    unsigned long BlockSize; /* Number of all bytes in the block. */
+    U32 PageRva;
+    U32 BlockSize; /* Number of all bytes in the block. */
 } Base_relocation_block;
 
 /* Relocation types. */
@@ -141,15 +147,15 @@ typedef struct {
 
 typedef struct {
     unsigned char Name[8];
-    unsigned long VirtualSize;
-    unsigned long VirtualAddress;
-    unsigned long SizeOfRawData;
-    unsigned long PointerToRawData;
-    unsigned long PointerToRelocations;
-    unsigned long PointerToLinenumbers; /* Deprecated, ignore. */
+    U32 VirtualSize;
+    U32 VirtualAddress;
+    U32 SizeOfRawData;
+    U32 PointerToRawData;
+    U32 PointerToRelocations;
+    U32 PointerToLinenumbers; /* Deprecated, ignore. */
     unsigned short NumberOfRelocations;
     unsigned short NumberOfLinenumbers; /* Deprecated, ignore. */
-    unsigned long Characteristics;
+    U32 Characteristics;
 } Coff_section;
 
 /* Section Characteristics. */
