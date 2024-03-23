@@ -1096,6 +1096,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
    argc/argv provided on entry instead */
 
 #if defined(__gnu_linux__) && !defined(__MACOS__)
+    if (__runnum == 1)
     {
         char fnm[FILENAME_MAX];
         int pf;
@@ -1135,6 +1136,22 @@ __PDPCLIB_API__ int CTYP __start(char *p)
                 p += strlen(p) + 1;
                 argc++;
             }
+        }
+    }
+    else
+    {
+        /* we are expecting PDOS-generic format here
+           rather than Linux */
+        argv[0] = p;
+        p = strchr(p, ' ');
+        if (p == NULL)
+        {
+            p = "";
+        }
+        else
+        {
+            *p = '\0';
+            p++;
         }
     }
 #endif
@@ -1304,7 +1321,13 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 #endif
-#if !defined(__gnu_linux__) && !defined(__EFI__)
+#if !defined(__EFI__)
+
+#if defined(__gnu_linux__)
+    if (__runnum > 1)
+    {
+#endif
+
     while (*p == ' ')
     {
         p++;
@@ -1343,6 +1366,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         argv[x] = NULL;
         argc = x;
     }
+
+#if defined(__gnu_linux__)
+    }
+#endif
+
 #endif
 #ifdef PDOS_MAIN_ENTRY
     *i1 = argc;
@@ -1396,7 +1424,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
         else
         {
+#ifdef __CC64__
+            rc = (*__genmain)(argc, argv);
+#else
             rc = __genmain(argc, argv);
+#endif
             exit(rc); /* this will return to the above setjmp */
         }
     }
