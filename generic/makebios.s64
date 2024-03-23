@@ -1,0 +1,31 @@
+# Produces Linux x64 executable capable of running
+# certain Win64 executables
+# You should have build pdpclib with makefile.lw6 first
+
+CC=gccw64_l64
+CFLAGS=-O2
+COPTS=$(CFLAGS) -S -U__WIN32__ -D__gnu_linux__ -fno-common \
+    -I . -I ../pdpclib -I../src -I../bios \
+    -DNEED_MZ -DNOUNDMAIN -DXUSE_MEMMGR \
+    -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
+    -D__64BIT__ -D__LONG64__ -D__USEBIVA \
+    -DHAVE_DIR -DLINDIR -DTARGET_64BIT \
+    -DXW64HACK -DW64DLL
+
+AR=xar
+AS=pdas --oformat coff --64
+LD=pdld --no-insert-timestamp
+LDFLAGS=
+
+all: clean bios
+
+bios: bios.obj ../bios/exeload.obj
+  $(LD) -s --oformat elf -e ___pdpstart --image-base 0x400000 -nostdlib -o bios.exe ../pdpclib/linstart.obj bios.obj ../bios/exeload.obj ../pdpclib/pdplinux.a
+
+.c.obj:
+  $(CC) -o $*.s $(COPTS) $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o bios.exe
