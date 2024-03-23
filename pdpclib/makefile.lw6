@@ -8,7 +8,8 @@ LD=pdld --oformat elf --no-insert-timestamp
 AR=xar
 
 COPTS=-S -O2 -U__WIN32__ -D__gnu_linux__ \
-    -D__64BIT__ -D__LONG64__ -I . -D__USEBIVA__ -fno-common
+    -D__64BIT__ -D__LONG64__ -I . -D__USEBIVA__ -fno-common \
+    -D__W64SHELL__
 
 pdptest: linstart.o l64supb.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
