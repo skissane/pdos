@@ -1,4 +1,4 @@
-# This builds a PDOS-generic ELF executable for x6
+# This builds a PDOS-generic ELF executable for x64
 
 # although l64supa is linked in, it isn't used for any of
 # the linux functions. It is only used if some generated

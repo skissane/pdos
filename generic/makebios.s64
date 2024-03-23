@@ -8,7 +8,7 @@ COPTS=$(CFLAGS) -S -U__WIN32__ -D__gnu_linux__ -fno-common \
     -I . -I ../pdpclib -I../src -I../bios \
     -DNEED_MZ -DNOUNDMAIN -DXUSE_MEMMGR \
     -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
-    -D__64BIT__ -D__LONG64__ -D__USEBIVA \
+    -D__64BIT__ -D__LONG64__ -D__USEBIVA__ \
     -DHAVE_DIR -DLINDIR -DTARGET_64BIT \
     -DXW64HACK -DW64DLL
 
