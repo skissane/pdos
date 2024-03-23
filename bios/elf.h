@@ -12,10 +12,19 @@
 /*********************************************************************/
 
 /* Fixed size data types. All of them except Elf32_Half must be 4 bytes. */
+
+#ifdef __LONG64__
+typedef unsigned int Elf32_Addr;
+typedef unsigned int Elf32_Off;
+typedef unsigned int Elf32_Word;
+typedef signed int Elf32_Sword;
+#else
 typedef unsigned long Elf32_Addr;
 typedef unsigned long Elf32_Off;
 typedef unsigned long Elf32_Word;
 typedef signed long Elf32_Sword;
+#endif
+
 typedef unsigned short Elf32_Half; /* 2 bytes. */
 
 #define EI_NIDENT 16 /* Size of e_ident on all systems. */
