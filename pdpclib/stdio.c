@@ -321,7 +321,9 @@ __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 #endif
 
 #if defined(__W32EMUL__) || defined(__W32DLL__) || defined(__W64SHELL__)
+#ifndef __W64SHELL__
 static __DUMMYFILE _iob[3];
+#endif
 __DUMMYFILE *_imp___iob = _iob;
 #endif
 
