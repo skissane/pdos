@@ -1,0 +1,32 @@
+# Produces Win64 executable capable of running
+# certain Win64 executables and PDOS-generic executables
+# You should have build pdpclib with makefile.p64 first
+
+CC=gccw64_l64
+CFLAGS=-O2
+COPTS=$(CFLAGS) -S -D__WIN32__ -fno-common \
+    -I . -I ../pdpclib -I../src -I../bios \
+    -DNEED_MZ -DNOUNDMAIN -DXUSE_MEMMGR \
+    -DNEED_ELF \
+    -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
+    -D__64BIT__ -D__LONG64__ -D__USEBIVA__ \
+    -DXHAVE_DIR -DTARGET_64BIT \
+    -DXW64HACK -DW64DLL
+
+AR=xar
+AS=pdas --oformat coff --64
+LD=pdld --no-insert-timestamp
+LDFLAGS=
+
+all: clean bios
+
+bios: bios.obj ../bios/exeload.obj
+  $(LD) -s --oformat coff -nostdlib -o bios.exe ../pdpclib/p32start.obj bios.obj ../bios/exeload.obj ../pdpclib/pdpwin64.lib ../src/kernel32.lib
+
+.c.obj:
+  $(CC) -o $*.s $(COPTS) $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o bios.exe
