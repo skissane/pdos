@@ -3,7 +3,7 @@
 # And using the new standard tools
 
 CC=gccw64_l64
-CFLAGS=-O2 -D__LONG64__ -D__USEBIVA__
+CFLAGS=-O2 -D__LONG64__ -D__USEBIVA__ -D__W64SHELL__
 
 # Use these if you want to use mingw64 instead
 #CC=x86_64-w64-mingw32-gcc
