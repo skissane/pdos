@@ -143,14 +143,14 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
   PosGetDTA,
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) /* || defined(__ARM__) */
   PosFindFirst, PosFindNext,
 #else
   0, 0,
 #endif
   0, 0,
   ctime, time,
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) /* || defined(__ARM__) */
   PosChangeDir, PosMakeDir, PosRemoveDir,
 #else
   0, 0, 0,
@@ -1069,7 +1069,7 @@ void w32exit(int status)
 #endif
 
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) /* || defined(__ARM__) */
 
 void *PosGetDTA(void)
 {
