@@ -161,8 +161,14 @@ const char *section_get_name (section_t section) {
     return section->name;
 }
 
-unsigned int section_get_number (section_t section) {
+unsigned int section_get_number (section_t section)
+{
     return section->number;
+}
+
+void section_set_number (section_t section, unsigned int number)
+{
+    section->number = number;
 }
 
 unsigned int sections_get_count (void) {

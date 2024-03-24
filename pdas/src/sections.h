@@ -52,6 +52,7 @@ section_t section_get_next_section (section_t section);
 const char *section_get_name (section_t section);
 
 unsigned int section_get_number (section_t section);
+void section_set_number (section_t section, unsigned int number);
 unsigned int sections_get_count (void);
 
 void sections_chain_subsection_frags (void);
