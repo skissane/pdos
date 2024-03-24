@@ -11,6 +11,21 @@
 /*                                                                   */
 /*********************************************************************/
 
+/*
+Documentation of format can be found here:
+https://learn.microsoft.com/en-us/windows/win32/debug/pe-format
+*/
+
+/*
+ARM example:
+000080  50450000 C0010300 6628FF65 00000000  PE......f(.e....
+000090  00000000 E0000E02 0B010238 00020000  ...........8....
+0000A0  00040000 00000000 00100000 00100000  ................
+0000B0  00000000 00000100 00100000 00020000  ................
+0000C0  04000000 01000000 02000000 00000000  ................
+optional header appears to start at 0x98
+*/
+
 #ifdef __LONG64__
 typedef unsigned int U32;
 #else
@@ -33,6 +48,7 @@ typedef struct {
 #define IMAGE_FILE_MACHINE_UNKNOWN 0
 #define IMAGE_FILE_MACHINE_AMD64 0x8664
 #define IMAGE_FILE_MACHINE_I386 0x14c
+#define IMAGE_FILE_MACHINE_ARM 0x1c0
 
 /* Characteristics flags. */
 #define IMAGE_FILE_RELOCS_STRIPPED         0x0001
