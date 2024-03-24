@@ -284,11 +284,28 @@ static void translate_relocation (struct reloc_entry *reloc,
                                   Elf32_Rel *input_reloc,
                                   struct section_part *part)
 {
+    Elf32_Word symbol_index;
+    Elf32_Word rel_type;
+
+    symbol_index = ELF32_R_SYM (input_reloc->r_info);
+    rel_type = ELF32_R_TYPE (input_reloc->r_info);
+
+    if (symbol_index >= part->of->symbol_count) {
+        ld_error ("relocation has invalid symbol index");
+        goto bad;
+    }
+
+    if (input_reloc->r_offset >= part->content_size
+        || input_reloc->r_offset + 4 > part->content_size) {
+        ld_error ("relocation has invalid r_offset");
+        goto bad;
+    }
+    
     /* STN_UNDEF should be treated as absolute symbol with value 0 at index 0. */
-    reloc->symbol = part->of->symbol_array + ELF32_R_SYM (input_reloc->r_info);
+    reloc->symbol = part->of->symbol_array + symbol_index;
     reloc->offset = input_reloc->r_offset;
 
-    switch (ELF32_R_TYPE (input_reloc->r_info)) {
+    switch (rel_type) {
         case R_386_32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
         case R_386_PC32:
@@ -299,9 +316,16 @@ static void translate_relocation (struct reloc_entry *reloc,
         default:
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "+++relocation type 0x%02x not supported yet",
-                                         ELF32_R_TYPE (input_reloc->r_info));
+                                         rel_type);
             break;
     }
+
+    return;
+
+bad:
+    reloc->symbol = NULL;
+    reloc->offset = 0;
+    reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
 }
 
 static void elf64_write (const char *filename);
@@ -950,8 +974,18 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
 
         if (shdr_p->sh_type != SHT_REL || shdr_p->sh_size == 0) continue;
 
+        if (shdr_p->sh_info >= ehdr.e_shnum) {
+            ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
+        }
+
         part = part_p_array[shdr_p->sh_info];
-        if (!part) ld_fatal_error ("relocation section has invalid sh_info");
+        if (!part) {
+            ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
+        }
+        if (part->section->is_bss) {
+            ld_fatal_error ("%s: relocation section sh_info points to BSS section",
+                            filename);
+        }
 
         if (shdr_p->sh_entsize != sizeof (Elf32_Rel)) {
             ld_internal_error_at_source (__FILE__, __LINE__,
