@@ -82,7 +82,11 @@ struct coff_header_file {
 
 #define     IMAGE_FILE_MACHINE_UNKNOWN                      0x0
 #define     IMAGE_FILE_MACHINE_AMD64                        0x8664
-#define     IMAGE_FILE_MACHINE_I386                         0x014C
+#define     IMAGE_FILE_MACHINE_ARM                          0x1c0
+#define     IMAGE_FILE_MACHINE_ARM64                        0xaa64
+#define     IMAGE_FILE_MACHINE_ARMNT                        0x1c4
+#define     IMAGE_FILE_MACHINE_I386                         0x14c
+#define     IMAGE_FILE_MACHINE_THUMB                        0x1c2
 
 #define     IMAGE_FILE_RELOCS_STRIPPED                      0x0001
 #define     IMAGE_FILE_EXECUTABLE_IMAGE                     0x0002
