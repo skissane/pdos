@@ -22,6 +22,15 @@
 # preserved (for gccarm I think)
 
 
+.ifndef STACKPARM
+.set STACKPARM,0
+.endif
+
+.ifndef SUBC
+.set SUBC,0
+.endif
+
+
 # I haven't seen direct evidence that r2 and r3
 # need to be preserved in setjmp/longjmp, but
 # doing so anyway. ditto r12 and r1.
@@ -777,6 +786,7 @@ __aeabi_uidivmod:
 #        b      _memcpy
 
 
+.if SUBC
 # Support routines for SubC
 
 # unsigned integer divide
@@ -855,6 +865,9 @@ match:	add	r1,r1,#4
 	ldr	r0,[r1]
 	blx	r0
 
+.endif
+
+
 
 # This function is being defined, even for non-Linux,
 # as a hopefully temporary workaround for executing
@@ -864,7 +877,9 @@ match:	add	r1,r1,#4
 
         .globl  __nanosleep
         .globl  ___nanosleep
+.if ELF
         .type  __nanosleep, %function
+.endif
         .align  2
 __nanosleep:
 ___nanosleep:
@@ -894,7 +909,9 @@ nsok:   ldmia   sp!,{r7,pc}
 
         .globl  __cacheflush
         .globl  ___cacheflush
+.if ELF
         .type  __cacheflush, %function
+.endif
         .align  2
 __cacheflush:
 ___cacheflush:
