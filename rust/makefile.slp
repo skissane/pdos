@@ -1,0 +1,40 @@
+# Produce 32-bit Linux ELF executables
+# links with PDPCLIB created by makefile.lnp
+
+CC=gccwin
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs -e __pdpent
+AS=pdas --oformat coff
+AR=xar
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
+    -U__WIN32__ -DNEED_UNDMAIN \
+    -D__gnu_linux__ -D__NOBIVA__
+
+
+all: clean
+#  rm -f foo.s
+#  rm -f world.s
+#  rm -f libfoo.rlib
+#  rm -f world
+#
+#  rustc foo.rs --target=i686-pc-windows-gnu --emit asm -O --crate-type=lib
+#  rustc foo.rs --target=i686-pc-windows-gnu -O --crate-type=lib
+#  rustc world.rs --target=i686-pc-windows-gnu --emit asm -O --extern foo=libfoo.rlib
+#
+####  rustc foo.rs -O --crate-type=lib
+####  rustc world.rs -O --extern foo=libfoo.rlib
+#### ./world
+   $(AS) -o foo.o foo.s
+   $(AS) -o world.o world.s
+   $(CC) $(COPTS) -S -I../pdpclib extra.c
+   $(AS) -o extra.o extra.s
+   $(LD) $(LDFLAGS) -o world.exe ../pdpclib/linstart.o world.o foo.o extra.o ../pdpclib/pdplinux.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean:
+  rm -f *.o world.exe
