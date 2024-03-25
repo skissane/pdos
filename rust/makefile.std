@@ -15,4 +15,4 @@ all:
    pdas --oformat coff -o world.o world.s
    gccwin -S -I../pdpclib extra.c
    pdas --oformat coff -o extra.o extra.s
-   pdld --no-insert-timestamp -o world.exe ../pdpclib/w32start.obj world.o foo.o extra.o ../pdpclib/msvcrt.lib
+   pdld -s --no-insert-timestamp -o world.exe ../pdpclib/w32start.obj world.o foo.o extra.o ../pdpclib/msvcrt.lib
