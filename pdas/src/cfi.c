@@ -737,10 +737,21 @@ static void cfi_parse_separator (char **pp) {
 
 }
 
-static unsigned int cfi_parse_reg (char **pp) {
+static unsigned int cfi_parse_reg (char **pp)
+{
+    struct expr expr_s;
+    
+    expression_evaluate_and_read_into (pp, &expr_s);
 
-    return get_result_of_absolute_expression (pp);
+    switch (expr_s.type) {
+        case EXPR_TYPE_CONSTANT:
+        case EXPR_TYPE_REGISTER:
+            return expr_s.add_number;
 
+        default:
+            as_error ("bad_register expression");
+            return 0;
+    }
 }
 
 static void handler_cfi_instruction (char **pp, int instruction) {
