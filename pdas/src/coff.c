@@ -863,6 +863,10 @@ static void handler_section (char **pp) {
                         flags |= SECTION_FLAG_READONLY | SECTION_FLAG_NOREAD;
                         break;
 
+                    case 'i':
+                        flags |= SECTION_FLAG_DEBUGGING;
+                        break;
+
                     default:
 
                         as_warn ("unknown section attribute '%c'", attribute);
