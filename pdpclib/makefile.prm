@@ -5,7 +5,7 @@ AR=arprm
 LD=ldprm
 AS=asprm
 
-COPTS=-DEFITEST -S -O0 -fno-common -mapcs-32 -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__
+COPTS=-DARMPEHACK -S -O0 -fno-common -mapcs-32 -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
