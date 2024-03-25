@@ -13,7 +13,7 @@ AS=aserm
 AR=arerm
 COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
   -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DNEED_FLUSH \
-  -DGENSHELL -DHAVE_DIR -DLINDIR
+  -DGENSHELL -DHAVE_DIR -DLINDIR -D__gnu_linux__
 
 all: clean bios.exe
 
