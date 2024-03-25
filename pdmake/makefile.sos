@@ -9,7 +9,7 @@ LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
     --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
-AR=ar
+AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
     -U__WIN32__ -D__HAVESYS__=_System \
     -D__OS2__ -D__32BIT__ -D__NOBIVA__

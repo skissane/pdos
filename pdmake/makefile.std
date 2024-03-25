@@ -8,7 +8,7 @@ CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib
 AS=pdas --oformat coff
-AR=ar
+AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -D__WIN32__
 
 all: clean pdmake.exe
