@@ -172,6 +172,24 @@ static unsigned char *write_sections (unsigned char *file, const Elf32_Ehdr *ehd
         } else {
             shdr_p->sh_flags = (SHF_ALLOC | SHF_WRITE);
         }
+
+        {
+            Elf32_Shdr *custom_shdr_p = section_get_object_format_dependent_data (section);
+
+            if (custom_shdr_p) {
+                if (custom_shdr_p->sh_type) {
+                    shdr_p->sh_type = custom_shdr_p->sh_type;
+                }
+                if (custom_shdr_p->sh_flags) {
+                    shdr_p->sh_flags = custom_shdr_p->sh_flags;
+                }
+                if (custom_shdr_p->sh_entsize) {
+                    shdr_p->sh_entsize = custom_shdr_p->sh_entsize;
+                }
+                free (custom_shdr_p);
+                section_set_object_format_dependent_data (section, NULL);
+            }
+        }
         shdr_p++;
 
         {
@@ -194,6 +212,7 @@ static unsigned char *write_sections (unsigned char *file, const Elf32_Ehdr *ehd
 static void write_symbol (Elf32_Sym *sym, struct symbol *symbol)
 {
     unsigned char bind, type;
+    Elf32_Sym *custom_sym;
     
     sym->st_value = symbol_get_value (symbol);
     sym->st_size = 0;
@@ -212,15 +231,27 @@ static void write_symbol (Elf32_Sym *sym, struct symbol *symbol)
         type = STT_NOTYPE;
     }
 
-    sym->st_info = ELF32_ST_INFO (bind, type);
-
     if (symbol->section == absolute_section) {
         sym->st_shndx = SHN_ABS;
+    } else if (symbol->section == undefined_section && sym->st_value) {
+        sym->st_shndx = SHN_COMMON;
+        sym->st_size = sym->st_value;
+        sym->st_value = 0;
     } else if (symbol->section == undefined_section) {
         sym->st_shndx = SHN_UNDEF;
     } else {
         sym->st_shndx = section_get_number (symbol->section);
     }
+
+    if ((custom_sym = symbol->object_format_dependent_data)) {
+        if (custom_sym->st_value) {
+            sym->st_value = custom_sym->st_value;
+        }
+        free (custom_sym);
+        symbol->object_format_dependent_data = NULL;
+    }
+
+    sym->st_info = ELF32_ST_INFO (bind, type);
 }
 
 static unsigned char *write_symtab (unsigned char *file,
@@ -541,6 +572,19 @@ void write_elf_file (void)
     fclose (outfile);
 }
 
+void elf_comm_symbol_align (struct symbol *symbol, offset_t alignment)
+{
+    Elf32_Sym *sym = symbol->object_format_dependent_data;
+
+    if (!sym) {
+        sym = xmalloc (sizeof *sym);
+        memset (sym, 0, sizeof *sym);
+        symbol->object_format_dependent_data = sym;
+    }
+
+    sym->st_value = 1 << alignment;
+}
+
 static void handler_bss (char **pp)
 {
     section_subsection_set (bss_section, (subsection_t) get_result_of_absolute_expression (pp));
@@ -559,10 +603,216 @@ static void handler_ident (char **pp)
     section_subsection_set (saved_section, saved_subsection);
 }
 
+static void handler_local (char **pp)
+{
+    for (;;) {
+        struct symbol *symbol;
+        
+        const char *name;
+        char ch;
+        
+        *pp = skip_whitespace (*pp);
+        name = *pp;
+        
+        ch = get_symbol_name_end (pp);
+        
+        if (name == *pp) {
+            as_error ("expected symbol name");
+            **pp = ch;
+            ignore_rest_of_line (pp);
+            return;
+        }
+        
+        symbol = symbol_find_or_make (name);
+        symbol->flags |= SYMBOL_FLAG_LOCAL;
+        symbol->flags &= ~SYMBOL_FLAG_EXTERNAL;
+        
+        **pp = ch;
+        *pp = skip_whitespace (*pp);
+        
+        if (**pp != ',') break;
+        
+        ++*pp;
+    }
+    
+    demand_empty_rest_of_line (pp);
+}
+
+static void handler_section (char **pp)
+{
+    const char *name;
+    char ch;
+    Elf32_Word sh_flags = 0;
+    Elf32_Word sh_type = 0;
+    offset_t entsize = 0;
+    
+    *pp = skip_whitespace(*pp);
+    
+    /* Names with '-' ("...-note") and other characters that do not belong
+     * into names should be accepted too.
+     */
+    name = *pp;
+    while (**pp != ',' && **pp != ' ' && !is_end_of_line[(unsigned char)**pp]) {
+        ++*pp;
+    }
+    ch = **pp;
+    **pp = '\0';
+    
+    section_set_by_name (name);
+    
+    **pp = ch;
+    *pp = skip_whitespace (*pp);
+    
+    if (**pp == ',') {
+        char attribute;
+        
+        *pp = skip_whitespace (++*pp);
+
+        if (**pp != '"') {
+            as_warn ("character following name is not '\"'");
+            as_warn ("rest of line ignored; first ignored character is '%c'", **pp);
+            ignore_rest_of_line (pp);
+            return;
+        }
+
+        while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
+            switch (attribute) {
+                case 'a':
+                    sh_flags |= SHF_ALLOC;
+                    break;
+
+                case 'e':
+                    sh_flags |= SHF_EXCLUDE;
+                    break;
+
+                case 'w':
+                    sh_flags |= SHF_WRITE;
+                    break;
+
+                case 'x':
+                    sh_flags |= SHF_EXECINSTR;
+                    break;
+
+                case 'M':
+                    sh_flags |= SHF_MERGE;
+                    break;
+
+                case 'S':
+                    sh_flags |= SHF_STRINGS;
+                    break;
+
+                case 'T':
+                    sh_flags |= SHF_TLS;
+                    break;
+
+                default:
+                    as_warn ("unknown section attribute '%c'", attribute);
+                    break;
+
+            }
+        }
+
+        if (attribute == '"') {
+            ++*pp;
+        }
+    } else {
+        demand_empty_rest_of_line (pp);
+        return;
+    }        
+
+    *pp = skip_whitespace (*pp);
+    if (**pp == ',') {
+        *pp = skip_whitespace (++*pp);
+
+        if (**pp == '@') {
+            ++*pp;
+            name = *pp;
+            ch = get_symbol_name_end (pp);
+
+            if (!strcmp (name, "progbits")) {
+                sh_type = SHT_PROGBITS;
+            } else if (!strcmp (name, "nobits")) {
+                sh_type = SHT_NOBITS;
+            } else {
+                as_warn ("unrecognized section type");
+            }
+            
+            **pp = ch;
+        } else if (!is_end_of_line[(unsigned char)**pp]) {
+            as_warn ("rest of line ignored; first ignored character is '%c'", **pp);
+            ignore_rest_of_line (pp);
+            return;
+        }
+    }
+
+    *pp = skip_whitespace (*pp);
+    if (**pp == ',') {
+        *pp = skip_whitespace (++*pp);
+
+        entsize = get_result_of_absolute_expression (pp);
+        if (entsize < 0) {
+            as_warn ("invalid merge entity size");
+            entsize = 0;
+            sh_flags &= ~SHF_MERGE;
+        }            
+    } else if (sh_flags & SHF_MERGE) {
+        as_warn ("entity size for SHF_MERGE not specified; removed SHF_MERGE");
+    }
+
+    {
+        Elf32_Shdr *shdr_p;
+
+        shdr_p = section_get_object_format_dependent_data (current_section);
+        if (shdr_p) {
+            if (shdr_p->sh_flags != sh_flags) {
+                as_warn ("ignoring changed section attributes for %s",
+                         section_get_name (current_section));
+            }
+            if (shdr_p->sh_type != sh_type) {
+                as_warn ("ignoring changed section type for %s",
+                         section_get_name (current_section));
+            }
+            if (shdr_p->sh_entsize != entsize) {
+                as_warn ("ignoring changed entity size for %s",
+                         section_get_name (current_section));
+            }
+        } else {
+            shdr_p = xmalloc (sizeof *shdr_p);
+            memset (shdr_p, 0, sizeof *shdr_p);
+            shdr_p->sh_flags = sh_flags;
+            shdr_p->sh_type = sh_type;
+            shdr_p->sh_entsize = entsize;
+            section_set_object_format_dependent_data (current_section, shdr_p);
+
+            if (shdr_p->sh_flags & SHF_STRINGS) {
+                section_set_alignment_power (current_section, 0);
+            }
+        }
+    }
+    
+    demand_empty_rest_of_line (pp);
+}
+
+static void handler_size (char **pp)
+{
+    as_warn ("ELF .size is not yet supported");
+    ignore_rest_of_line (pp);
+}
+
+static void handler_type (char **pp)
+{
+    as_warn ("ELF .type is not yet supported");
+    ignore_rest_of_line (pp);
+}
+
 static struct pseudo_op_entry pseudo_op_table[] = {
 
     { "bss",        &handler_bss        },
     { "ident",      &handler_ident      },
+    { "local",      &handler_local      },
+    { "section",    &handler_section    },
+    { "size",       &handler_size       },
+    { "type",       &handler_type       },
     { 0,            0                   }
 
 };

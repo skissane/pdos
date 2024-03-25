@@ -319,10 +319,11 @@ static void handler_byte (char **pp) {
     handler_constant (pp, 1, 0);
 }
 
-static void handler_comm (char **pp) {
-
+static void handler_comm (char **pp)
+{
     struct expr expr;
     struct symbol *symbol;
+    offset_t alignment = 0;
     
     char *name;
     char *name_end;
@@ -334,14 +335,12 @@ static void handler_comm (char **pp) {
     ch = get_symbol_name_end (pp);
     
     if (name == *pp) {
-    
         as_error ("expected symbol name");
         
         **pp = ch;
         ignore_rest_of_line (pp);
         
         return;
-    
     }
     
     name_end = *pp;
@@ -356,35 +355,91 @@ static void handler_comm (char **pp) {
     absolute_expression_read_into (pp, &expr);
     
     if (expr.type == EXPR_TYPE_ABSENT) {
-    
         as_error ("missing size expression");
-        
         ignore_rest_of_line (pp);
         return;
-    
     }
     
     *name_end = '\0';
     
     symbol = symbol_find_or_make (name);
     *name_end = ch;
+
+    *pp = skip_whitespace (*pp);
+    if (**pp == ',') {
+        struct expr align_expr;
+        
+        ++*pp;
+        alignment = absolute_expression_read_into (pp, &align_expr);
+        
+        if (align_expr.type == EXPR_TYPE_ABSENT) {
+            as_error ("expected alignment after size");
+            ignore_rest_of_line (pp);
+            return;
+        }
+
+        if (alignment < 0) {
+            as_warn ("alignment negative; 0 assumed");
+            alignment = 0;
+        }
+
+        if (alignment != 0) {
+            offset_t i;
+
+            /* Converts to log2. */    
+            for (i = 0; (alignment & 1) == 0; alignment >>= 1, i++);
+            
+            if (alignment != 1) {
+                as_error ("alignment is not a power of 2!");
+            }
+            
+            alignment = i;
+        }
+    }
     
     if (symbol_is_undefined (symbol)) {
-    
-        symbol_set_value (symbol, expr.add_number);
-        symbol_set_external (symbol);
-    
+        if (symbol->flags & SYMBOL_FLAG_LOCAL) {
+            /* This is complicated way of doing .lcomm with alignment for ELF.
+             * When ".local symbol" and then ".comm symbol, size, alignment"
+             * is used, it should be translated into .lcomm.
+             * But when the order is reversed (.comm, then .local),
+             * regular .comm should be done...
+             */
+            section_t saved_section = current_section;
+            subsection_t saved_subsection = current_subsection;
+            
+            section_subsection_set (bss_section, 1);
+
+            if (alignment) {
+                frag_align (alignment, 0, 0);
+                section_record_alignment_power (current_section, alignment);
+            }
+            
+            symbol->section = bss_section;
+            symbol->frag = current_frag;
+            
+            symbol_set_value (symbol, current_frag->fixed_size);
+            frag_increase_fixed_size (expr.add_number);
+            
+            section_subsection_set (saved_section, saved_subsection);
+        } else {
+            symbol_set_value (symbol, expr.add_number);
+            symbol_set_external (symbol);
+            if (alignment) {
+                if (state->format == AS_FORMAT_ELF) {
+                    elf_comm_symbol_align (symbol, alignment);
+                } else {
+                    as_warn (".comm alignment is supported only for ELF");
+                }
+            }
+        }
     } else {
-    
         as_error ("symbol '%s' is already defined", symbol->name);
-        
         ignore_rest_of_line (pp);
         return;
-    
     }
     
     demand_empty_rest_of_line (pp);
-
 }
 
 static void handler_data (char **pp) {

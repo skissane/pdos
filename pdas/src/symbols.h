@@ -19,9 +19,10 @@ struct symbol {
     
     struct frag *frag;
     unsigned long flags;
-    
-#define     SYMBOL_FLAG_EXTERNAL                            0x01
-#define     SYMBOL_FLAG_SECTION_SYMBOL                      0x02
+
+#define SYMBOL_FLAG_LOCAL           0x01   
+#define SYMBOL_FLAG_EXTERNAL        0x02
+#define SYMBOL_FLAG_SECTION_SYMBOL  0x04
     
     struct symbol *next;
     

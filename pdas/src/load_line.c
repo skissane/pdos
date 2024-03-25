@@ -56,7 +56,7 @@ int load_line (char **line_p, char **line_end_p, char **real_line_p, size_t *rea
     while (1) {
         if (pos_in_line >= l_l_data->capacity || pos_in_real_line >= l_l_data->capacity) {
             l_l_data->capacity += CAPACITY_INCREMENT;
-            l_l_data->line = xrealloc (l_l_data->line, l_l_data->capacity + 2);
+            l_l_data->line = xrealloc (l_l_data->line, l_l_data->capacity + 3);
             l_l_data->real_line = xrealloc (l_l_data->real_line, l_l_data->capacity + 5);
         }
         
@@ -192,8 +192,14 @@ int load_line (char **line_p, char **line_end_p, char **real_line_p, size_t *rea
             strcpy (l_l_data->real_line + pos_in_real_line, "...\n");
             pos_in_real_line += 4;
             
-            l_l_data->line[pos_in_line] = '\n';
-            l_l_data->line[pos_in_line + 1] = '\0';
+            if (in_quote) {
+                l_l_data->line[pos_in_line] = '"';
+                l_l_data->line[pos_in_line + 1] = '\n';
+                l_l_data->line[pos_in_line + 2] = '\0';
+            } else {
+                l_l_data->line[pos_in_line] = '\n';
+                l_l_data->line[pos_in_line + 1] = '\0';
+            }
             
             get_filename_and_line_number (&filename, &line_number);
             
@@ -207,7 +213,13 @@ int load_line (char **line_p, char **line_end_p, char **real_line_p, size_t *rea
                 line_number = 0;
             }
             
-            as_warn_at (filename, line_number, "end of file not at end of line; newline inserted");
+            if (in_quote) {
+                as_warn_at (filename, line_number, "end of file in string; '\"' inserted");
+            } else if (in_block_comment) {
+                as_warn_at (filename, line_number, "end of file in comment");
+            } else {
+                as_warn_at (filename, line_number, "end of file not at end of line; newline inserted");
+            }
             
             l_l_data->end_of_prev_real_line = l_l_data->read_size = 0;
             

@@ -169,6 +169,7 @@ void cond_handler_endif (char **pp);
 /* elf.c */
 struct pseudo_op_entry *elf_get_pseudo_op_table (void);
 void write_elf_file (void);
+void elf_comm_symbol_align (struct symbol *symbol, offset_t alignment);
 
 /* error.c */
 unsigned long as_get_error_count (void);
