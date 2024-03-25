@@ -4,8 +4,8 @@
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
-    --stub ../pdpclib/needpdos.exe
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx
+#    --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
@@ -14,14 +14,14 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
 
 
 all: clean
-#  rm -f foo.s
-#  rm -f world.s
-#  rm -f libfoo.rlib
-#  rm -f world
+  rm -f foo.s
+  rm -f world.s
+  rm -f libfoo.rlib
+  rm -f world
 #
-#  rustc foo.rs --target=i686-pc-windows-gnu --emit asm -O --crate-type=lib
-#  rustc foo.rs --target=i686-pc-windows-gnu -O --crate-type=lib
-#  rustc world.rs --target=i686-pc-windows-gnu --emit asm -O --extern foo=libfoo.rlib
+  rustc foo.rs --target=i686-pc-windows-gnu --emit asm -O --crate-type=lib
+  rustc foo.rs --target=i686-pc-windows-gnu -O --crate-type=lib
+  rustc world.rs --target=i686-pc-windows-gnu --emit asm -O --extern foo=libfoo.rlib
 #
 ####  rustc foo.rs -O --crate-type=lib
 ####  rustc world.rs -O --extern foo=libfoo.rlib
