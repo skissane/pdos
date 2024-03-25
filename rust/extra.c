@@ -26,3 +26,10 @@ void stdio_print(int x, int y, int z, char *str)
     printf("%s", str);
     return;
 }
+
+#ifdef NEED_UNDMAIN
+void __main(void)
+{
+    return;
+}
+#endif
