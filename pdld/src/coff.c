@@ -86,8 +86,14 @@ struct export_name {
     enum export_type export_type;
 };
 
+struct exclude_symbol {
+    struct exclude_symbol *next;
+    char *name;
+};
+
 static struct name_list *export_name_list = NULL;
 static struct name_list **last_export_name_list_p = &export_name_list;
+static struct exclude_symbol *exclude_symbols = NULL;
 
 /* Shares the stub with LX. */
 void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p)
@@ -264,11 +270,16 @@ address_type coff_get_first_section_rva (void)
 static void export_symbol_callback (struct symbol *symbol)
 {
     if (symbol_is_undefined (symbol)) return;
+    if (symbol->flags & SYMBOL_FLAG_EXCLUDE_EXPORT) return;
 
     {
         struct name_list *name_list;
         name_list = xmalloc (sizeof (*name_list));
-        name_list->name = xstrdup (symbol->name);
+        if (leading_underscore && symbol->name[0] == '_') {
+            name_list->name = xstrdup (symbol->name + 1);
+        } else {
+            name_list->name = xstrdup (symbol->name);
+        }
         /* Not sure if this guessing is the correct way
          * of determing whether symbol should be exported as data. */
         name_list->info = (symbol->part->section->flags & SECTION_FLAG_CODE) ? 0 : 1;
@@ -281,18 +292,43 @@ static void export_symbol_callback (struct symbol *symbol)
 static void export_all_generate_names (void)
 {
     struct name_list *name_list, *next_name_list;
+    struct exclude_symbol *exclude_symbol;
 
     for (name_list = export_name_list;
          name_list;
          name_list = next_name_list) {
         next_name_list = name_list->next;
+        free (name_list->name);
         free (name_list);
     }
 
     export_name_list = NULL;
     last_export_name_list_p = &export_name_list;
+
+    for (exclude_symbol = exclude_symbols;
+         exclude_symbol;
+         exclude_symbol = exclude_symbol->next) {
+        struct symbol *symbol;
+
+        if ((symbol = symbol_find (exclude_symbol->name))) {
+            symbol->flags |= SYMBOL_FLAG_EXCLUDE_EXPORT;
+        }
+    }
     
-    symbols_for_each_global (&export_symbol_callback);    
+    symbols_for_each_global (&export_symbol_callback);
+}
+
+static void exclude_symbols_free (void)
+{
+    struct exclude_symbol *exclude_symbol;
+
+    for (exclude_symbol = exclude_symbols;
+         exclude_symbol;
+         exclude_symbol = exclude_symbols) {
+        exclude_symbols = exclude_symbol->next;
+        free (exclude_symbol->name);
+        free (exclude_symbol);
+    }
 }
 
 static char *unprefix_name (const char *orig_name)
@@ -741,6 +777,8 @@ void coff_before_link (void)
     struct section_part *part;
 
     if (export_all_symbols) export_all_generate_names ();
+
+    exclude_symbols_free ();
 
     if (export_name_list) {
         generate_edata ();
@@ -1407,6 +1445,24 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
                 name_list->next = NULL;
                 *last_export_name_list_p = name_list;
                 last_export_name_list_p = &name_list->next;
+            }
+            *q = saved_c;
+            p = q;
+        } else if (strncmp (p, "-exclude-symbols:", 17) == 0) {
+            char *q;
+            char saved_c;
+            
+            p += 17;
+            q = strchr (p, ' ');
+            if (q == NULL) q = p + strlen (p);
+            saved_c = *q;
+            *q = '\0';
+            {
+                struct exclude_symbol *exclude_symbol;
+                exclude_symbol = xmalloc (sizeof *exclude_symbol);
+                exclude_symbol->name = xstrdup (p);
+                exclude_symbol->next = exclude_symbols;
+                exclude_symbols = exclude_symbol;
             }
             *q = saved_c;
             p = q;

@@ -56,6 +56,7 @@ extern struct ld_state *ld_state;
 struct symbol {
 
     char *name;
+    flag_int flags;
     address_type value;
     address_type size;
     struct section_part *part;
@@ -65,6 +66,8 @@ struct symbol {
     int auxiliary; /* Such symbol should be ignored and is only a filler. */
 
 };
+
+#define SYMBOL_FLAG_EXCLUDE_EXPORT (1U << 0)
 
 #define UNDEFINED_SECTION_NUMBER 0
 #define ABSOLUTE_SECTION_NUMBER (-1)
