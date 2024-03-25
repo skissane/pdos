@@ -776,6 +776,17 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
 For ARM you need:
 
+qemu-system-arm -cpu cortex-a15 -M virt -pflash edk2-arm-code.fd -drive file=fat:rw:armtest -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
+
+Executable should be:
+armtest\efi\boot\bootarm.efi
+
+You can copy edk2-arm-code.fd from
+C:\Program Files\qemu\share
+
+
+Old instructions:
+
 rem https://aur.archlinux.org/packages/edk2-avmf
 rem was https://download-ib01.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/aarch64/os/Packages/e/edk2-arm-20220826gitba0e0e4c6a17-1.fc38.noarch.rpm
 rem now https://web.archive.org/web/20231102103634/https://download-ib01.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/aarch64/os/Packages/e/edk2-arm-20230825-25.fc40.noarch.rpm
@@ -783,9 +794,8 @@ rem use 7z then "zstd -d" then 7z to extract QEMU_EFI-pflash.raw
 
 qemu-system-arm -cpu cortex-a15 -M virt -pflash QEMU_EFI-pflash.raw -drive file=fat:rw:armtest -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
 
-Executable should be called:
 
-armtest\efi\boot\bootarm.efi
+Not clear if this works:
 
 On a modern Pinebook Pro if you want to enable KVM
 for near-native speeds, try:
@@ -810,11 +820,10 @@ You need aarch64 and then switch it off.
 The "nographic" stops a separate window from being
 opened and appears to be much faster.
 
-You may also wish to use edk2-arm-vars.fd but I don't
-know of any specific benefit it might bring and
-haven't tried it myself. Actually it looks to me like
-edk2-arm-code.fd is more likely to be correct. And
-presumably the syntax is the same as for the 80386.
+I suspect that replacing QEMU_EFI-pflash.raw with edk2-arm-code.fd
+above would work and comes bundled with qemu.
+
+And presumably the syntax is the same as for the 80386.
 And for ARM64 you presumably want edk2-aarch64-code.fd
 And on Windows these are all available in
 C:\Program Files\qemu\share
