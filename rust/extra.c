@@ -21,9 +21,9 @@ void lang_start_internal(void (**x)(void))
     return;
 }
 
-void stdio_print(int x, int y, int z, char *str)
+void stdio_print(int x, long *y, int z, char *str)
 {
-    printf("%s", str);
+    printf("%.*s", y[1], str);
     return;
 }
 
