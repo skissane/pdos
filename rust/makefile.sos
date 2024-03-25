@@ -4,8 +4,8 @@
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
-LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx
-#    --stub ../pdpclib/needpdos.exe
+LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat lx \
+    --stub ../pdpclib/needpdos.exe
 AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib \
