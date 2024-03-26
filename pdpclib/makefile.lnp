@@ -9,8 +9,15 @@
 
 CC=gccwin
 AR=xar
-LD=pdld --oformat elf
 AS=pdas --oformat coff
+
+# Alternative toolchain
+#CC=gcc --no-pie -m32 -fno-stack-protector -nostdlib
+#AR=ar
+#AS=pdas --oformat elf
+
+LD=pdld --oformat elf
+
 COPTS=-D__W32EMUL__ -U__WIN32__ -S -O2 -D__gnu_linux__ -D__NOBIVA__ -I.
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
