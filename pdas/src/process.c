@@ -1046,10 +1046,13 @@ static struct pseudo_op_entry pseudo_op_table[] = {
     { "quad",       &handler_quad           },
     { "rva",        &handler_rva            },
     { "set",        &handler_equ            },
+    { "skip",       &handler_space          },
     { "space",      &handler_space          },
     { "string",     &handler_asciz          },
     { "text",       &handler_text           },
+    { "value",      &handler_word           },
     { "word",       &handler_word           },
+    { "zero",       &handler_space          },
     { 0,            0                       }
 
 };
