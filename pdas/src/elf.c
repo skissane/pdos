@@ -23,21 +23,17 @@
 
 static size_t section_get_num_relocs (struct section *section)
 {
-    struct frag *frag;
+    struct fixup *fixup;
     size_t num_relocs = 0;
                     
     section_set (section);
-    
-    for (frag = current_frag_chain->first_frag; frag; frag = frag->next) {
-        struct fixup *fixup;
-        
-        for (fixup = current_frag_chain->first_fixup;
-             fixup;
-             fixup = fixup->next) {
-            if (fixup->done) continue;
+      
+    for (fixup = current_frag_chain->first_fixup;
+         fixup;
+         fixup = fixup->next) {
+        if (fixup->done) continue;
 
-            num_relocs++;
-        }
+        num_relocs++;
     }
 
     return num_relocs;
@@ -49,7 +45,7 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
                                                 Elf32_Shdr *shdr_p,
                                                 Elf32_Word symtab_index)
 {
-    struct frag *frag;
+    struct fixup *fixup;
     Elf32_Rel *rel;
     unsigned char *saved_pos = pos;
 
@@ -58,44 +54,40 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
 
     section_set (section);
     
-    for (frag = current_frag_chain->first_frag; frag; frag = frag->next) {
-        struct fixup *fixup;
+    for (fixup = current_frag_chain->first_fixup;
+         fixup;
+         fixup = fixup->next) {
+        unsigned long symbol_table_index;
+        unsigned char type = 0;
         
-        for (fixup = current_frag_chain->first_fixup;
-             fixup;
-             fixup = fixup->next) {
-            unsigned long symbol_table_index;
-            unsigned char type = 0;
-            
-            if (fixup->done) continue;
+        if (fixup->done) continue;
 
-            if (fixup->size != 4) {
-                as_fatal_error_at (NULL, 0,
-                                   "unsupported relocation size %u bytes"
-                                   " (only relocations with size 4 bytes are supported by ELF32)",
-                                   fixup->size);
-            }
-
-            symbol_table_index = symbol_get_symbol_table_index (fixup->add_symbol);
-            
-            switch (fixup->reloc_type) {
-                case RELOC_TYPE_DEFAULT:
-                    if (fixup->pcrel) {
-                        type = R_386_PC32;
-                    } else {
-                        type = R_386_32;
-                    }
-                    break;
-                
-                case RELOC_TYPE_RVA:
-                    type = R_386_RELATIVE;
-                    break;
-            }
-
-            rel->r_offset = fixup->frag->address + fixup->where;
-            rel->r_info = ELF32_R_INFO (symbol_table_index, type);
-            rel++;
+        if (fixup->size != 4) {
+            as_fatal_error_at (NULL, 0,
+                               "unsupported relocation size %u bytes"
+                               " (only relocations with size 4 bytes are supported by ELF32)",
+                               fixup->size);
         }
+
+        symbol_table_index = symbol_get_symbol_table_index (fixup->add_symbol);
+        
+        switch (fixup->reloc_type) {
+            case RELOC_TYPE_DEFAULT:
+                if (fixup->pcrel) {
+                    type = R_386_PC32;
+                } else {
+                    type = R_386_32;
+                }
+                break;
+            
+            case RELOC_TYPE_RVA:
+                type = R_386_RELATIVE;
+                break;
+        }
+
+        rel->r_offset = fixup->frag->address + fixup->where;
+        rel->r_info = ELF32_R_INFO (symbol_table_index, type);
+        rel++;
     }
 
     if (rel == (void *)pos) return saved_pos;
