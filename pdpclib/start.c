@@ -421,12 +421,15 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     unsigned char *env;
     unsigned char *nclsave;
 #endif
-#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
-        || defined(__gnu_linux__)
+#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     int parmLen;
     int progLen;
     char parmbuf[310]; /* z/VSE can have a PARM up to 300 characters */
 #endif
+#if defined(__gnu_linux__)
+    char parmbuf[410];
+#endif
+
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
