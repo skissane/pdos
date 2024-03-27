@@ -883,6 +883,52 @@ static void translate_relocation_64 (struct reloc_entry *reloc,
     }
 }
 
+static void translate_relocation_arm (struct reloc_entry *reloc,
+                                      struct relocation_entry_internal *input_reloc,
+                                      struct section_part *part)
+{
+    reloc->symbol = part->of->symbol_array + input_reloc->SymbolTableIndex;
+    reloc->offset = input_reloc->VirtualAddress;
+
+    switch (input_reloc->Type) {
+        case IMAGE_REL_ARM_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
+
+        case IMAGE_REL_ARM_ADDR32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+
+        case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
+
+        case IMAGE_REL_ARM_BRANCH24:
+#if 1
+            reloc->howto = &reloc_howtos[RELOC_TYPE_PC24];
+            /*reloc->addend += 3;*/ /* Does not help. */
+#else
+            reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
+#endif
+            break;
+#if 0 /*---*/
+        case IMAGE_REL_AMD64_REL32_1:
+        case IMAGE_REL_AMD64_REL32_2:
+        case IMAGE_REL_AMD64_REL32_3:
+        case IMAGE_REL_AMD64_REL32_4:
+        case IMAGE_REL_AMD64_REL32_5:
+        case IMAGE_REL_AMD64_SECTION:
+        case IMAGE_REL_AMD64_SECREL:
+        case IMAGE_REL_AMD64_SECREL7:
+        case IMAGE_REL_AMD64_TOKEN:
+        case IMAGE_REL_AMD64_SREL32:
+        case IMAGE_REL_AMD64_PAIR:
+        case IMAGE_REL_AMD64_SSPAN32:
+            ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
+            break;
+#endif
+        default:
+            /* There is no point in continuing, the object is broken. */
+            ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", input_reloc->Type, part->of->filename);
+            break;
+        
+    }
+}
+
 static void translate_relocation (struct reloc_entry *reloc,
                                   struct relocation_entry_internal *input_reloc,
                                   struct section_part *part)
@@ -891,6 +937,13 @@ static void translate_relocation (struct reloc_entry *reloc,
         translate_relocation_64 (reloc,
                                  input_reloc,
                                  part);
+        return;
+    }
+
+    if (wanted_Machine == IMAGE_FILE_MACHINE_ARM) {
+        translate_relocation_arm (reloc,
+                                  input_reloc,
+                                  part);
         return;
     }
 
@@ -1729,7 +1782,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     
                     CHECK_READ (pos, sizeof (struct relocation_entry_file) * section_hdr.NumberOfRelocations);
                     for (j = 0; j < section_hdr.NumberOfRelocations; j++) {
-                        read_struct_relocation_entry (&relocation,
+			read_struct_relocation_entry (&relocation,
                                                       pos + sizeof (struct relocation_entry_file) * j);
                         translate_relocation (part->relocation_array + j, &relocation, part);
                     }
@@ -2161,8 +2214,9 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
 
     bytearray_read_2_bytes (&Machine, file, LITTLE_ENDIAN);
 
-    if (Machine == IMAGE_FILE_MACHINE_I386
-        || Machine == IMAGE_FILE_MACHINE_AMD64) {
+    if (Machine == IMAGE_FILE_MACHINE_AMD64
+        || Machine == IMAGE_FILE_MACHINE_ARM
+        || Machine == IMAGE_FILE_MACHINE_I386) {
         read_coff_object (file, file_size, filename);
         return INPUT_FILE_FINISHED;
     } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {

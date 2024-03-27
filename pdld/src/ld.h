@@ -89,6 +89,7 @@ enum {
     RELOC_TYPE_64,
     RELOC_TYPE_32,
     
+    RELOC_TYPE_PC24,
     RELOC_TYPE_PC32,
     
     RELOC_TYPE_32_NO_BASE,

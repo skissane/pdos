@@ -394,6 +394,11 @@ struct relocation_entry_file {
 #define     IMAGE_REL_AMD64_PAIR                            0x000F
 #define     IMAGE_REL_AMD64_SSPAN32                         0x0010
 
+#define     IMAGE_REL_ARM_ABSOLUTE                          0x0000
+#define     IMAGE_REL_ARM_ADDR32                            0x0001
+#define     IMAGE_REL_ARM_ADDR32NB                          0x0002
+#define     IMAGE_REL_ARM_BRANCH24                          0x0003
+
 #define     IMAGE_REL_I386_ABSOLUTE                         0x0000
 #define     IMAGE_REL_I386_DIR16                            0x0001 /* No longer supported. */
 #define     IMAGE_REL_I386_REL16                            0x0002 /* No longer supported. */

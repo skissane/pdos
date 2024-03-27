@@ -34,6 +34,25 @@ void bytearray_read_2_bytes (unsigned short *value_p, const unsigned char *src, 
     }
 }
 
+void bytearray_read_3_bytes (unsigned long *value_p, const unsigned char *src, int little_endian)
+{
+    *value_p = 0;
+
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 3; i++) {
+            *value_p |= src[i] << (CHAR_BIT * i);
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 3; i++) {
+            *value_p |= src[3 - 1 - i] << (CHAR_BIT * i);
+        }
+    }
+}
+
 void bytearray_read_4_bytes (unsigned long *value_p, const unsigned char *src, int little_endian)
 {
     *value_p = 0;
@@ -71,6 +90,23 @@ void bytearray_write_2_bytes (unsigned char *dest, unsigned short value, int lit
 
         for (i = 0; i < 2; i++) {
             dest[2 - 1 - i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    }
+}
+
+void bytearray_write_3_bytes (unsigned char *dest, unsigned long value, int little_endian)
+{
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 3; i++) {
+            dest[i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 3; i++) {
+            dest[3 - 1 - i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
         }
     }
 }
