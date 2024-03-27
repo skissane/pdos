@@ -768,7 +768,7 @@ static void handler_section (char **pp)
                 as_warn ("ignoring changed entity size for %s",
                          section_get_name (current_section));
             }
-        } else {
+        } else {            
             shdr_p = xmalloc (sizeof *shdr_p);
             memset (shdr_p, 0, sizeof *shdr_p);
             shdr_p->sh_flags = sh_flags;
@@ -778,6 +778,10 @@ static void handler_section (char **pp)
 
             if (shdr_p->sh_flags & SHF_STRINGS) {
                 section_set_alignment_power (current_section, 0);
+            }
+            if (shdr_p->sh_flags & SHF_EXECINSTR) {
+                flag_int flags = section_get_flags (current_section);
+                section_set_flags (current_section, flags | SECTION_FLAG_CODE);
             }
         }
     }
