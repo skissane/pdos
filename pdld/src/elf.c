@@ -797,9 +797,15 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                 }
 
                 section = section_find_or_make (section_name);
+
+                if (shdr_p->sh_addralign < 0x1000) {
+                    /* Same alignment as for COFF input. */
+                    section->section_alignment = 0x1000;
+                }
                 if (shdr_p->sh_addralign > section->section_alignment) {
                     section->section_alignment = shdr_p->sh_addralign;
                 }
+
                 section->flags = translate_sh_flags_to_section_flags (shdr_p->sh_flags);
 
                 if (shdr_p->sh_type == SHT_NOBITS) {
