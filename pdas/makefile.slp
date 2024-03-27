@@ -17,8 +17,11 @@
 VPATH=src;src/hashtab
 CC=gccwin
 PREPROCESSOR=pdcc -E
-CFLAGS=-O2
-#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+#CFLAGS=-O2
+# Since we are statically-linking PDPCLIB, and since
+# PDPCLIB can't print a long-long, the PRIxVALUE in
+# listing.c will cause a crash if we don't use the following
+CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib --oformat elf --emit-relocs
 AS=pdas --oformat coff
