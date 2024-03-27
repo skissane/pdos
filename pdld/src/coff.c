@@ -893,7 +893,11 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
     switch (input_reloc->Type) {
         case IMAGE_REL_ARM_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
 
-        case IMAGE_REL_ARM_ADDR32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+        case IMAGE_REL_ARM_ADDR32:
+            reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+            /* The content of the field should be overwritten, not used as addend. */
+            bytearray_write_4_bytes (part->content + reloc->offset, 0, LITTLE_ENDIAN);
+            break;
 
         case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
