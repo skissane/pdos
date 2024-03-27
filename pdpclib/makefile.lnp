@@ -12,7 +12,8 @@ AR=xar
 AS=pdas --oformat coff
 
 # Alternative toolchain
-#CC=gcc --no-pie -m32 -fno-stack-protector -nostdlib
+# Disable builtins to stop memset calling memset
+#CC=gcc --no-pie -m32 -fno-stack-protector -nostdlib -fno-builtin
 #AR=ar
 #AS=pdas --oformat elf
 
