@@ -3260,6 +3260,16 @@ void machine_dependent_apply_fixup (struct fixup *fixup, value_t value)
         && symbol_get_section (fixup->add_symbol) != current_section) {
         value += machine_dependent_pcrel_from (fixup);
     }
+
+    /* Same adjustment as above, only without adding field size,
+     * is needed for ELF too.
+     */
+    if (state->format == AS_FORMAT_ELF
+        && fixup->pcrel
+        && fixup->add_symbol
+        && symbol_get_section (fixup->add_symbol) != current_section) {
+        value += fixup->where + fixup->frag->address;
+    }
     
     machine_dependent_number_to_chars (p, value, fixup->size);
 }
