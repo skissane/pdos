@@ -20,6 +20,8 @@ static struct section **last_section_p = &all_sections;
 struct object_file *all_object_files = NULL;
 static struct object_file **last_object_file_p = &all_object_files;
 
+static struct section *discarded_sections = NULL;
+
 struct section *section_find (const char *name)
 {
     struct section *section;
@@ -165,6 +167,35 @@ struct object_file *object_file_make (size_t symbol_count, const char *filename)
     return of;
 }
 
+static void free_discarded_section (struct section *section)
+{
+    struct subsection *subsection;
+    struct section_part *part, *next_part;
+
+    for (subsection = section->all_subsections; subsection; subsection = section->all_subsections) {
+        for (part = subsection->first_part; part; part = next_part) {
+            next_part = part->next;
+            free (part->content);
+            free (part->relocation_array);
+            free (part);
+        }
+        
+        section->all_subsections = subsection->next;
+        free (subsection->name);
+        free (subsection);
+    }
+
+    for (part = section->first_part; part; part = next_part) {
+        next_part = part->next;
+        free (part->content);
+        free (part->relocation_array);
+        free (part);
+    }
+
+    free (section->name);
+    free (section);
+}
+
 void sections_destroy (void)
 {
     {
@@ -193,6 +224,10 @@ void sections_destroy (void)
             free (section);
         }
 
+        for (section = discarded_sections; section; section = discarded_sections) {
+            discarded_sections = section->next;
+            free_discarded_section (section);
+        }
     }
 
     {
@@ -213,35 +248,6 @@ void sections_destroy (void)
         }
 
     }
-}
-
-static void free_section_before_collapse (struct section *section)
-{
-    struct subsection *subsection;
-    struct section_part *part, *next_part;
-
-    for (subsection = section->all_subsections; subsection; subsection = section->all_subsections) {
-        for (part = subsection->first_part; part; part = next_part) {
-            next_part = part->next;
-            free (part->content);
-            free (part->relocation_array);
-            free (part);
-        }
-        
-        section->all_subsections = subsection->next;
-        free (subsection->name);
-        free (subsection);
-    }
-
-    for (part = section->first_part; part; part = next_part) {
-        next_part = part->next;
-        free (part->content);
-        free (part->relocation_array);
-        free (part);
-    }
-
-    free (section->name);
-    free (section);
 }
 
 void sections_destroy_empty_before_collapse (void)
@@ -274,7 +280,12 @@ void sections_destroy_empty_before_collapse (void)
     done_section:
         if (empty) {
             *next_p = section->next;
-            free_section_before_collapse (section);
+            /* There still remain symbols referencing the discarded sections
+             * and delaying the freeing is easier and faster
+             * than searching for the affected symbols and changing them.
+             */
+            section->next = discarded_sections;
+            discarded_sections = section;
         } else {
             next_p = &section->next;
         }
