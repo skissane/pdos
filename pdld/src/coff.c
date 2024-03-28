@@ -901,9 +901,8 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
 
         case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
-        case IMAGE_REL_THUMB_BLX23: reloc->howto = &reloc_howtos[RELOC_TYPE_PC24_SHIFT2]; break;
-
-        case IMAGE_REL_ARM_BRANCH24:
+        case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_PC24_SHIFT2]; break;
+        
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
         case IMAGE_REL_ARM_SECREL:
@@ -911,6 +910,7 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
         case IMAGE_REL_THUMB_MOV32:
         case IMAGE_REL_THUMB_BRANCH20:
         case IMAGE_REL_THUMB_BRANCH24:
+        case IMAGE_REL_THUMB_BLX23:
         case IMAGE_REL_ARM_PAIR:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
             break;
