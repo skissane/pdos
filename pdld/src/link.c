@@ -10,21 +10,23 @@
  *****************************************************************************/
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ld.h"
 #include "xmalloc.h"
 #include "bytearray.h"
 
 const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
-    { 0, 0, 0, NULL, "RELOC_TYPE_IGNORED" },
+    { 0, 0, 0, 0, NULL, "RELOC_TYPE_IGNORED" },
     
-    { 8, 0, 0, NULL, "RELOC_TYPE_64" },
-    { 4, 0, 0, NULL, "RELOC_TYPE_32" },
+    { 8, 0, 0, 0, NULL, "RELOC_TYPE_64" },
+    { 4, 0, 0, 0, NULL, "RELOC_TYPE_32" },
 
-    { 3, 1, 0, NULL, "RELOC_TYPE_PC24" },
-    { 4, 1, 0, NULL, "RELOC_TYPE_PC32" },
+    { 4, 1, 0, 0, NULL, "RELOC_TYPE_PC32" },
 
-    { 4, 0, 1, NULL, "RELOC_TYPE_32_NO_BASE" },
+    { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
+
+    { 3, 1, 0, 2, NULL, "RELOC_TYPE_PC24_SHIFT2" },
 
 };
 
@@ -95,6 +97,12 @@ static void relocate_part (struct section_part *part)
             result -= part->rva + relocs[i].offset;
             result -= relocs[i].howto->size;
         }
+
+        if (relocs[i].howto->size < sizeof result) {
+            address_type mask = (((address_type)1) << (CHAR_BIT * relocs[i].howto->size)) - 1;
+            result &= mask;
+        }
+        result >>= relocs[i].howto->final_right_shift;
         
         switch (relocs[i].howto->size) {
             case 8:

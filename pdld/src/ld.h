@@ -77,6 +77,7 @@ struct reloc_howto {
     int size;
     int pc_relative;
     int no_base;
+    int final_right_shift;
 
     void *special_function; /* For special relocations. */
 
@@ -89,10 +90,11 @@ enum {
     RELOC_TYPE_64,
     RELOC_TYPE_32,
     
-    RELOC_TYPE_PC24,
     RELOC_TYPE_PC32,
     
     RELOC_TYPE_32_NO_BASE,
+
+    RELOC_TYPE_PC24_SHIFT2,
     
     RELOC_TYPE_END
 };

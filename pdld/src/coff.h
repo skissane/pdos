@@ -398,6 +398,15 @@ struct relocation_entry_file {
 #define     IMAGE_REL_ARM_ADDR32                            0x0001
 #define     IMAGE_REL_ARM_ADDR32NB                          0x0002
 #define     IMAGE_REL_ARM_BRANCH24                          0x0003
+#define     IMAGE_REL_ARM_BRANCH11                          0x0004
+#define     IMAGE_REL_ARM_SECTION                           0x000E
+#define     IMAGE_REL_ARM_SECREL                            0x000F
+#define     IMAGE_REL_ARM_MOV32                             0x0010
+#define     IMAGE_REL_THUMB_MOV32                           0x0011
+#define     IMAGE_REL_THUMB_BRANCH20                        0x0012
+#define     IMAGE_REL_THUMB_BRANCH24                        0x0014
+#define     IMAGE_REL_THUMB_BLX23                           0x0015
+#define     IMAGE_REL_ARM_PAIR                              0x0016
 
 #define     IMAGE_REL_I386_ABSOLUTE                         0x0000
 #define     IMAGE_REL_I386_DIR16                            0x0001 /* No longer supported. */

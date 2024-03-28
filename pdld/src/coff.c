@@ -901,30 +901,20 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
 
         case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
+        case IMAGE_REL_THUMB_BLX23: reloc->howto = &reloc_howtos[RELOC_TYPE_PC24_SHIFT2]; break;
+
         case IMAGE_REL_ARM_BRANCH24:
-#if 1
-            reloc->howto = &reloc_howtos[RELOC_TYPE_PC24];
-            /*reloc->addend += 3;*/ /* Does not help. */
-#else
-            reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
-#endif
-            break;
-#if 0 /*---*/
-        case IMAGE_REL_AMD64_REL32_1:
-        case IMAGE_REL_AMD64_REL32_2:
-        case IMAGE_REL_AMD64_REL32_3:
-        case IMAGE_REL_AMD64_REL32_4:
-        case IMAGE_REL_AMD64_REL32_5:
-        case IMAGE_REL_AMD64_SECTION:
-        case IMAGE_REL_AMD64_SECREL:
-        case IMAGE_REL_AMD64_SECREL7:
-        case IMAGE_REL_AMD64_TOKEN:
-        case IMAGE_REL_AMD64_SREL32:
-        case IMAGE_REL_AMD64_PAIR:
-        case IMAGE_REL_AMD64_SSPAN32:
+        case IMAGE_REL_ARM_BRANCH11:
+        case IMAGE_REL_ARM_SECTION:
+        case IMAGE_REL_ARM_SECREL:
+        case IMAGE_REL_ARM_MOV32:
+        case IMAGE_REL_THUMB_MOV32:
+        case IMAGE_REL_THUMB_BRANCH20:
+        case IMAGE_REL_THUMB_BRANCH24:
+        case IMAGE_REL_ARM_PAIR:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
             break;
-#endif
+        
         default:
             /* There is no point in continuing, the object is broken. */
             ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", input_reloc->Type, part->of->filename);
