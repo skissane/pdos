@@ -901,6 +901,14 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
 
         case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
+        /* Revision 8.2 of the specification from 2010-09-21
+         * says this should be the most significant 24 bits
+         * of 26-bit signed relative displacement
+         * but revision 11 (2017-01-23) and later say
+         * it is just 24-bit relative displacement.
+         * Currently it is applied as (displacement & 0xffffff) >> 2
+         * what does not match either description exactly (but works).
+         */
         case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_PC24_SHIFT2]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
