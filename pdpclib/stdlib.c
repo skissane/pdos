@@ -516,7 +516,12 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
         /* errors are high pointers - not sure how high - which
            seem to be a negative errno */
+        /* for MacOS they are low positive numbers */
+#ifdef __MACOS__
+        if (ptr < (void *)256)
+#else
         if (ptr > (void *)-256)
+#endif
         {
             ptr = NULL;
         }
