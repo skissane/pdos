@@ -140,9 +140,27 @@ void __exita(int a);
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define PROT_EXEC 4
+
+#ifdef __MACOS__
+#define MAP_ANONYMOUS 0x1000
+#else
 #define MAP_ANONYMOUS 0x20
+#endif
+
 #define MAP_PRIVATE 0x2
+
+#ifdef __MACOS__
+/* It seems MacOS on the ARM is not willing to return 32-bit memory,
+   so we need to switch it off. We only need it to overcome a
+   restriction in the gcc 3.2.3 x64 code generation that produces
+   code that needs to reside in the first 2 GiB of memory anyway.
+   That is not relevant in this situation. */
+/* #define MAP_32BIT 0x8000 */
+#define MAP_32BIT 0x0
+#else
 #define MAP_32BIT 0x40
+#endif
+
 #define MAP_SHARED 0x1
 #define MAP_FAILED ((void *)-1)
 #define O_RDWR   0x2
@@ -499,6 +517,12 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.addr = NULL;
         mms.length = size + sizeof(size_t);
 #ifdef __MACOS__
+        /* MacOS has a restriction that you can't create rwx memory,
+           so we need to drop execute permission. Instead you will
+           need to run a virtual machine of some sort, which is still
+           near native speed, and the Silicon M1 or whatever extensions
+           are disabled. That's how things like Linux manage to run
+           on an M1 */
         mms.prot = PROT_READ | PROT_WRITE;
 #else
         mms.prot = PROT_READ | PROT_WRITE | PROT_EXEC;
