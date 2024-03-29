@@ -2,7 +2,8 @@
 
 CC=gccprm
 AR=arprm
-LD=ldprm
+LD=ldprm -subsystem efi
+#LD=pdld -subsystem 10
 AS=asprm
 
 COPTS=-DARMPEHACK -S -O0 -fno-common -mapcs-32 -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__
@@ -14,7 +15,7 @@ OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
   $(AR) r pdpefi.a $(OBJS)
-  $(LD) -s -subsystem efi -e _efimain -nostdlib -o $(TARGET) pdptest.o $(OBJS)
+  $(LD) -s -e _efimain -nostdlib -o $(TARGET) pdptest.o $(OBJS)
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
