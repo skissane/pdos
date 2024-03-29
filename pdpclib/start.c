@@ -1496,8 +1496,9 @@ void __exit(int status)
     /* PDOS-generic under the pseudo-bios needs a longjmp currently,
        so adding that too. It might be better to make this (1)
        until specific systems are identified as failing */
-#if (defined(__64BIT__) && !defined(__WIN32__)) \
-    || defined(__PDOS386__)
+    /* ARM PE UEFI needs it too - biting the bullet and making it 1 */
+#if 1 /* (defined(__64BIT__) && !defined(__WIN32__)) \
+    || defined(__PDOS386__) */
     longjmp(jb, status);
 #endif
     return;
