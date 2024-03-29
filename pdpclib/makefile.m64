@@ -8,19 +8,11 @@
 # to do the same thing is a bit difficult, ie:
 # -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path`
 # -e ___pdpstart (add -arch arm64 to do cross-compile)
-#
-# Note that you can switch on optimization with clang
-# now that I have used an assembler entry point rather
-# than relying on unusual C to still behave sensibly.
-# So note that the entry point needs to be ___pdpstart,
-# not __start
-
-# MPROTECT is not currently working
 
 CC=clang
 COPTS=-c -O2 -D__ARM__ -fno-builtin -D__MACOS__ \
     -DXNEED_MPROTECT \
-    -DUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
+    -DXUSE_MEMMGR -D__64BIT__ -I . -fno-stack-protector
 
 pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -29,7 +21,7 @@ pdptest: linstart.o m64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdpmacos.a linstart.o m64supa.o stdio.o string.o stdlib.o
 	ar r pdpmacos.a start.o time.o errno.o assert.o signal.o
 	ar r pdpmacos.a locale.o ctype.o math.o __memmgr.o
-	clang -Wl,-e, -Wl,_start -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
+	clang -Wl,-e, -Wl,__start -o pdptest linstart.o m64supa.o pdptest.o pdpmacos.a
 
 .c.o:
 	$(CC) $(COPTS) $<

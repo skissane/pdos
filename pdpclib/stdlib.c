@@ -131,6 +131,7 @@ void *__mmap(mmstruc *mms);
 #endif
 
 int __munmap(void *a, size_t b);
+int __fork(void);
 long __clone(int a, void *b, void *c, void *d, void *e);
 int __waitid(int a, long pid, void *c, int d, void *e);
 int __execve(char *a, char **argv, void *c);
@@ -497,7 +498,11 @@ __PDPCLIB_API__ void *malloc(size_t size)
 
         mms.addr = NULL;
         mms.length = size + sizeof(size_t);
+#ifdef __MACOS__
+        mms.prot = PROT_READ | PROT_WRITE;
+#else
         mms.prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+#endif
         mms.flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_32BIT;
         mms.fd = -1;
         mms.offset = 0;

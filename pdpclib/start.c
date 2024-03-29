@@ -404,7 +404,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     int x;
     int oldglobrc = globrc;
     jmp_buf oldjb;
-#if !defined(__EFI__)
+#if !defined(__EFI__) && !defined(__MACOS__)
     int argc;
     static char *int_argv[MAXPARMS + 1];
     char **argv = int_argv;
@@ -1336,7 +1336,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 #endif
-#if !defined(__EFI__)
+#if !defined(__EFI__) && !defined(__MACOS__)
 
 #if defined(__gnu_linux__)
     if (__runnum > 1)
