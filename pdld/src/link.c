@@ -16,6 +16,10 @@
 #include "xmalloc.h"
 #include "bytearray.h"
 
+static void reloc_arm_26_pcrel (struct section_part *part,
+                                struct reloc_entry *rel,
+                                struct symbol *symbol);
+
 const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 0, 0, 0, 0, NULL, "RELOC_TYPE_IGNORED" },
     
@@ -26,9 +30,29 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
 
-    { 3, 1, 0, 2, NULL, "RELOC_TYPE_PC24_SHIFT2" },
+    { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
 };
+
+static void reloc_arm_26_pcrel (struct section_part *part,
+                                struct reloc_entry *rel,
+                                struct symbol *symbol)
+{
+    address_type result;
+    
+    bytearray_read_3_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+    result <<= 2;
+    /* The field is signed, so sign extend it. */
+    result = (result ^ 0x2000000) - 0x2000000;
+    result += rel->addend;
+    result += symbol_get_value_no_base (symbol);
+    /* The size of the field must not be subtracted
+     * even though it is PC relative relocation.
+     */
+    result -= part->rva + rel->offset;
+    result >>= 2;
+    bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+}
 
 static void relocate_part (struct section_part *part)
 {
@@ -41,11 +65,6 @@ static void relocate_part (struct section_part *part)
         address_type result;
 
         if (relocs[i].howto->size == 0) continue;
-
-        if (relocs[i].howto->special_function) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "special relocation functions are not yet supported");
-        }
 
         symbol = relocs[i].symbol;
         if (symbol_is_undefined (symbol)) {
@@ -63,6 +82,11 @@ static void relocate_part (struct section_part *part)
                           symbol->name);
                 continue;
             }
+        }
+
+        if (relocs[i].howto->special_function) {
+            (*relocs[i].howto->special_function) (part, &relocs[i], symbol);
+            continue;
         }
 
         switch (relocs[i].howto->size) {

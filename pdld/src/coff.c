@@ -906,10 +906,8 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
          * of 26-bit signed relative displacement
          * but revision 11 (2017-01-23) and later say
          * it is just 24-bit relative displacement.
-         * Currently it is applied as (displacement & 0xffffff) >> 2
-         * what does not match either description exactly (but works).
          */
-        case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_PC24_SHIFT2]; break;
+        case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_PC26]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
@@ -942,7 +940,8 @@ static void translate_relocation (struct reloc_entry *reloc,
         return;
     }
 
-    if (wanted_Machine == IMAGE_FILE_MACHINE_ARM) {
+    if (wanted_Machine == IMAGE_FILE_MACHINE_ARM
+        || wanted_Machine == IMAGE_FILE_MACHINE_THUMB) {
         translate_relocation_arm (reloc,
                                   input_reloc,
                                   part);
@@ -2218,7 +2217,8 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
 
     if (Machine == IMAGE_FILE_MACHINE_AMD64
         || Machine == IMAGE_FILE_MACHINE_ARM
-        || Machine == IMAGE_FILE_MACHINE_I386) {
+        || Machine == IMAGE_FILE_MACHINE_I386
+        || Machine == IMAGE_FILE_MACHINE_THUMB) {
         read_coff_object (file, file_size, filename);
         return INPUT_FILE_FINISHED;
     } else if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {

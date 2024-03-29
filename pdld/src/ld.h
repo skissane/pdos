@@ -73,13 +73,19 @@ struct symbol {
 #define ABSOLUTE_SECTION_NUMBER (-1)
 #define DEBUG_SECTION_NUMBER (-2)
 
+struct section_part;
+struct reloc_entry;
+
 struct reloc_howto {
     int size;
     int pc_relative;
     int no_base;
     int final_right_shift;
 
-    void *special_function; /* For special relocations. */
+    /* For special relocations. */
+    void (*special_function) (struct section_part *part,
+                              struct reloc_entry *rel,
+                              struct symbol *symbol);
 
     const char *name;
 };
@@ -94,7 +100,7 @@ enum {
     
     RELOC_TYPE_32_NO_BASE,
 
-    RELOC_TYPE_PC24_SHIFT2,
+    RELOC_TYPE_ARM_PC26,
     
     RELOC_TYPE_END
 };
