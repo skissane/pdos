@@ -795,10 +795,10 @@ rem use 7z then "zstd -d" then 7z to extract QEMU_EFI-pflash.raw
 qemu-system-arm -cpu cortex-a15 -M virt -pflash QEMU_EFI-pflash.raw -drive file=fat:rw:armtest -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
 
 
-Not clear if this works:
+This is known to work:
 
 On a modern Pinebook Pro if you want to enable KVM
-for near-native speeds, try:
+for near-native speeds:
 
 echo 0 > /sys/devices/system/cpu/cpu0/online
 echo 0 > /sys/devices/system/cpu/cpu1/online
@@ -807,6 +807,21 @@ echo 0 > /sys/devices/system/cpu/cpu3/online
 
 to allow KVM to have the necessary processors
 (use 1 to return them to the system)
+
+(it won't start without doing that)
+
+And then:
+
+~/bin/qemu-system-aarch64 -enable-kvm \
+  -cpu host,aarch64=off -M virt -m 512 -nographic \
+  -pflash edk2-arm-code.fd -drive file=fat:rw:armtest \
+  -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
+
+I have not done something CPU-intensive to confirm
+that KVM is really active, and hard floating point
+doesn't work (gives an exception).
+
+Not sure if this is of any use:
 
 ~/bin/qemu-system-aarch64 -enable-kvm \
   -cpu host,aarch64=off -M virt -m 512 -nographic \
