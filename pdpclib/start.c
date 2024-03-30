@@ -99,13 +99,6 @@ __POSGENOS__ - I give up.
 #include "stddef.h"
 #include "setjmp.h"
 
-#ifdef ARMPEHACK
-extern FILE permFiles[3];
-extern FILE *__stdin_ptr;
-extern FILE *__stdout_ptr;
-extern FILE *__stderr_ptr;
-#endif
-
 #if USE_MEMMGR
 #include "__memmgr.h"
 #endif
@@ -540,11 +533,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 
     if (__runnum == 1)
     {
-#ifdef ARMPEHACK
-    __stdin_ptr = &permFiles[0];
-    __stdout_ptr = &permFiles[1];
-    __stderr_ptr = &permFiles[2];
-#endif
     __stdin->quickBin = 0;
     __stdin->quickText = 0;
     __stdin->textMode = 1;
