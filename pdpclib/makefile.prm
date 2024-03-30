@@ -2,8 +2,8 @@
 
 CC=gccprm
 AR=arprm
-LD=ldprm -subsystem efi
-#LD=pdld -subsystem 10 --no-insert-timestamp
+#LD=ldprm -subsystem efi
+LD=pdld -subsystem 10 --no-insert-timestamp
 AS=asprm
 
 COPTS=-S -O0 -fno-common -mapcs-32 -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__
