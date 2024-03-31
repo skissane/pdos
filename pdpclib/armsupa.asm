@@ -1043,4 +1043,24 @@ ____floatsidf:
 ___truncdfsf2:
 ____truncdfsf2:
 
+.globl ___negdf2
+.globl ____negdf2
+___negdf2:
+____negdf2:
+
+.globl ___nedf2
+.globl ____nedf2
+___nedf2:
+____nedf2:
+
+.globl ___ledf2
+.globl ____ledf2
+___ledf2:
+____ledf2:
+
+.globl ___gedf2
+.globl ____gedf2
+___gedf2:
+____gedf2:
+
 mov pc,lr
