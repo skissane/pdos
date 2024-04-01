@@ -4340,7 +4340,9 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
         stream->ungetCh = -1;
     }
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if (defined(__gnu_linux__) || defined(__ARM__)) \
+    && !defined(__EFIBIOS__)
+
     if (stream == __stdin)
     {
         n--;
