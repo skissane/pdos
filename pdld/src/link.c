@@ -30,6 +30,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
 
+    { 4, 0, 0, 0, NULL, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
 };
@@ -106,6 +107,13 @@ static void relocate_part (struct section_part *part)
             default:
                 ld_internal_error_at_source (__FILE__, __LINE__,
                                              "invalid relocation size");
+        }
+
+        if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
+            /* Temporary workaround. */
+            if (symbol->part->section->is_bss) {
+                relocs[i].addend -= symbol->value;
+            } else result = 0;
         }
 
         result += relocs[i].addend;

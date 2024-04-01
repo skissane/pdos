@@ -100,6 +100,7 @@ enum {
     
     RELOC_TYPE_32_NO_BASE,
 
+    RELOC_TYPE_ARM_32,
     RELOC_TYPE_ARM_PC26,
     
     RELOC_TYPE_END

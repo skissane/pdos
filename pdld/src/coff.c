@@ -740,7 +740,8 @@ static int check_reloc_section_needed_section_part (const struct section_part *p
     
     for (i = 0; i < part->relocation_count; i++) {
         if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
-            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
             return 1;
         }
     }
@@ -893,11 +894,7 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
     switch (input_reloc->Type) {
         case IMAGE_REL_ARM_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
 
-        case IMAGE_REL_ARM_ADDR32:
-            reloc->howto = &reloc_howtos[RELOC_TYPE_32];
-            /* The content of the field should be overwritten, not used as addend. */
-            bytearray_write_4_bytes (part->content + reloc->offset, 0, LITTLE_ENDIAN);
-            break;
+        case IMAGE_REL_ARM_ADDR32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_32]; break;
 
         case IMAGE_REL_ARM_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
@@ -1030,7 +1027,8 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 
                 if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_64]) {
                     base_relocation_type = IMAGE_REL_BASED_DIR64;
-                } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                           || relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
                 } else {
                     continue;
@@ -1089,7 +1087,8 @@ void coff_after_link (void)
             relocs = part->relocation_array;
             for (i = 0; i < part->relocation_count; i++) {
                 if (relocs[i].howto != &reloc_howtos[RELOC_TYPE_64]
-                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_32]
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_32]) continue;
 
                 /* Relocations can be listed in any order, so it must not be assumed they have ascending RVAs.
                  * This workaround sometimes produces suboptimal results but the results should be always correct.
