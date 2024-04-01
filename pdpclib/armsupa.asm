@@ -938,30 +938,54 @@ ___cacheflush:
 # Pinebook Pro for unknown reasons (ldfd is an
 # illegal instruction).
 
-.globl ___addsf3
-.globl ____addsf33
-___addsf3:
-____addsf3:
+# Note that I suspect that the problem is that
+# floating point hasn't been initialized for some
+# reason - which is the normal default. But I am
+# not in a position to initialize floating point
+# on some environments like smartphones, as I don't
+# have privilege, which I assume I need. And even in
+# privileged environments, I wasn't able to get it
+# initialized - the CPACR seemed to be unable to be
+# read.
 
-.globl ___adddf3
-.globl ____adddf33
-___adddf3:
-____adddf3:
+# Fortunately I was able to get some public domain
+# floating point routines from the Plasma project.
+# Unfortunately those are only single precision.
+# Fortunately I was able to configure gccarm so that
+# "double" and "long double" were single precision.
+# So the remaining stubs should never be exercised.
 
-.globl ___subsf3
-.globl ____subsf33
-___subsf3:
-____subsf3:
+# I should probably delete them to failsafe this code,
+# but hopefully someone will provide double precision
+# earlier than that, or at least the ability to
+# convert between float and double so that I can do
+# double precision as single precision and then return
+# the compiler to its former glory.
+
+#.globl ___addsf3
+#.globl ____addsf33
+#___addsf3:
+#____addsf3:
+
+#.globl ___adddf3
+#.globl ____adddf33
+#___adddf3:
+#____adddf3:
+
+#.globl ___subsf3
+#.globl ____subsf33
+#___subsf3:
+#____subsf3:
 
 .globl ___subdf3
 .globl ____subdf33
 ___subdf3:
 ____subdf3:
 
-.globl ___mulsf3
-.globl ____mulsf33
-___mulsf3:
-____mulsf3:
+#.globl ___mulsf3
+#.globl ____mulsf33
+#___mulsf3:
+#____mulsf3:
 
 .globl ___muldf3
 .globl ____muldf3
@@ -973,60 +997,60 @@ ____muldf3:
 ___divdf3:
 ____divsd3:
 
-.globl ___divsf3
-.globl ____divsf33
-___divsf3:
-____divsf3:
+#.globl ___divsf3
+#.globl ____divsf33
+#___divsf3:
+#____divsf3:
 
-.globl ___floatsisf
-.globl ____floatsisf
-___floatsisf:
-____floatsisf:
+#.globl ___floatsisf
+#.globl ____floatsisf
+#___floatsisf:
+#____floatsisf:
 
-.globl ___gtsf2
-.globl ____gtsf2
-___gtsf2:
-____gtsf2:
+#.globl ___gtsf2
+#.globl ____gtsf2
+#___gtsf2:
+#____gtsf2:
 
 .globl ___gtdf2
 .globl ____gtdf2
 ___gtdf2:
 ____gtdf2:
 
-.globl ___ltsf2
-.globl ____ltsf2
-___ltsf2:
-____ltsf2:
+#.globl ___ltsf2
+#.globl ____ltsf2
+#___ltsf2:
+#____ltsf2:
 
 .globl ___ltdf2
 .globl ____ltdf2
 ___ltdf2:
 ____ltdf2:
 
-.globl ___nesf2
-.globl ____nesf2
-___nesf2:
-____nesf2:
+#.globl ___nesf2
+#.globl ____nesf2
+#___nesf2:
+#____nesf2:
 
-.globl ___eqsf2
-.globl ____eqsf2
-___eqsf2:
-____eqsf2:
+#.globl ___eqsf2
+#.globl ____eqsf2
+#___eqsf2:
+#____eqsf2:
 
 .globl ___eqdf2
 .globl ____eqdf2
 ___eqdf2:
 ____eqdf2:
 
-.globl ___fixsfsi
-.globl ____fixsfsi
-___fixsfsi:
-____fixsfsi:
+#.globl ___fixsfsi
+#.globl ____fixsfsi
+#___fixsfsi:
+#____fixsfsi:
 
-.globl ___fixdfsi
-.globl ____fixdfsi
-___fixdfsi:
-____fixdfsi:
+#.globl ___fixdfsi
+#.globl ____fixdfsi
+#___fixdfsi:
+#____fixdfsi:
 
 .globl ___extendsfdf2
 .globl ____extendsfdf2
