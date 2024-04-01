@@ -11,7 +11,7 @@ COPTS=-S -O0 -msoft-float -fno-common -mapcs-32 \
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
-    assert.o signal.o locale.o ctype.o math.o armsupa.o
+    assert.o signal.o locale.o ctype.o math.o armsupa.o fpfuncsa.o
 
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
