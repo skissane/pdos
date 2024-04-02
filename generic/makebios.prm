@@ -1,0 +1,27 @@
+# This builds 32-bit UEFI ARM executables
+# You must have built PDPCLIB with makefile.prm first
+
+CC=gccprm
+CFLAGS=-O0
+#LD=ldprm -subsystem efi
+LD=pdld --oformat coff --no-insert-timestamp --subsystem 10
+LDFLAGS=
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
+  -D__ARM__ -fno-common -mapcs-32 -DNEED_AOUT -DNEED_FLUSH \
+  -DGENSHELL \
+  -msoft-float -D__EFI__ -D__EFIBIOS__
+
+all: clean bios.exe
+
+bios.exe: bios.o ../bios/exeload.o
+    $(LD) $(LDFLAGS) -s -e _efimain -nostdlib -o bios.exe bios.o ../bios/exeload.o ../pdpclib/pdpefi.a
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o bios.exe
