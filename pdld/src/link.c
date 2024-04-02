@@ -16,9 +16,16 @@
 #include "xmalloc.h"
 #include "bytearray.h"
 
+static void reloc_arm_32 (struct section_part *part,
+                          struct reloc_entry *rel,
+                          struct symbol *symbol);
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
                                 struct symbol *symbol);
+
+static void reloc_generic (struct section_part *part,
+                           struct reloc_entry *rel,
+                           struct symbol *symbol);
 
 const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 0, 0, 0, 0, NULL, "RELOC_TYPE_IGNORED" },
@@ -30,10 +37,33 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
 
-    { 4, 0, 0, 0, NULL, "RELOC_TYPE_ARM_32" },
+    { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
 };
+
+static void reloc_arm_32 (struct section_part *part,
+                          struct reloc_entry *rel,
+                          struct symbol *symbol)
+{    
+    if (symbol->part->of == part->of) {
+        address_type addend;
+        
+        bytearray_read_4_bytes (&addend, part->content + rel->offset, LITTLE_ENDIAN);
+        
+        if (addend) {
+            /* If the target symbol is in same object file and the addend is not zero,
+             * the addend has the value of the symbol added in by assembler,
+             * so the value of the symbol needs to be subtracted before doing the relocation.
+             */
+            addend -= symbol->value;
+            bytearray_write_4_bytes (part->content + rel->offset, addend, LITTLE_ENDIAN);
+        }
+    }
+
+    /* Rest of the relocation is the same as regular 32-bit relocation. */
+    reloc_generic (part, rel, symbol);
+}
 
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
@@ -55,6 +85,71 @@ static void reloc_arm_26_pcrel (struct section_part *part,
     bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
 }
 
+static void reloc_generic (struct section_part *part,
+                           struct reloc_entry *rel,
+                           struct symbol *symbol)
+{
+    address_type result;
+    
+    switch (rel->howto->size) {
+        case 8:
+            /* It should be actually 8 bytes but 64-bit int is not yet available. */
+            bytearray_read_4_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            break;
+
+        case 4:
+            bytearray_read_4_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            break;
+
+        case 3:
+            bytearray_read_3_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            break;
+
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "invalid relocation size");
+    }
+
+    result += rel->addend;
+        
+    if (rel->howto->pc_relative
+        || rel->howto->no_base) {
+        result += symbol_get_value_no_base (symbol);
+    } else {
+        result += symbol_get_value_with_base (symbol);
+    }
+
+    if (rel->howto->pc_relative) {
+        result -= part->rva + rel->offset;
+        result -= rel->howto->size;
+    }
+
+    if (rel->howto->size < sizeof result) {
+        address_type mask = (((address_type)1) << (CHAR_BIT * rel->howto->size)) - 1;
+        result &= mask;
+    }
+    result >>= rel->howto->final_right_shift;
+    
+    switch (rel->howto->size) {
+        case 8:
+            /* It should be actually 8 bytes but 64-bit int is not yet available. */
+            bytearray_write_4_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            break;
+
+        case 4:
+            bytearray_write_4_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            break;
+
+        case 3:
+            bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            break;
+
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "invalid relocation size");
+    }
+}
+
 static void relocate_part (struct section_part *part)
 {
     struct reloc_entry *relocs;
@@ -63,7 +158,6 @@ static void relocate_part (struct section_part *part)
     relocs = part->relocation_array;
     for (i = 0; i < part->relocation_count; i++) {
         struct symbol *symbol;
-        address_type result;
 
         if (relocs[i].howto->size == 0) continue;
 
@@ -90,71 +184,7 @@ static void relocate_part (struct section_part *part)
             continue;
         }
 
-        switch (relocs[i].howto->size) {
-            case 8:
-                /* It should be actually 8 bytes but 64-bit int is not yet available. */
-                bytearray_read_4_bytes (&result, part->content + relocs[i].offset, LITTLE_ENDIAN);
-                break;
-
-            case 4:
-                bytearray_read_4_bytes (&result, part->content + relocs[i].offset, LITTLE_ENDIAN);
-                break;
-
-            case 3:
-                bytearray_read_3_bytes (&result, part->content + relocs[i].offset, LITTLE_ENDIAN);
-                break;
-
-            default:
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "invalid relocation size");
-        }
-
-        if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
-            /* Temporary workaround. */
-            if (result
-                && symbol->part->of == part->of) {
-                result -= symbol->value;
-            }
-        }
-
-        result += relocs[i].addend;
-        
-        if (relocs[i].howto->pc_relative
-            || relocs[i].howto->no_base) {
-            result += symbol_get_value_no_base (symbol);
-        } else {
-            result += symbol_get_value_with_base (symbol);
-        }
-
-        if (relocs[i].howto->pc_relative) {
-            result -= part->rva + relocs[i].offset;
-            result -= relocs[i].howto->size;
-        }
-
-        if (relocs[i].howto->size < sizeof result) {
-            address_type mask = (((address_type)1) << (CHAR_BIT * relocs[i].howto->size)) - 1;
-            result &= mask;
-        }
-        result >>= relocs[i].howto->final_right_shift;
-        
-        switch (relocs[i].howto->size) {
-            case 8:
-                /* It should be actually 8 bytes but 64-bit int is not yet available. */
-                bytearray_write_4_bytes (part->content + relocs[i].offset, result, LITTLE_ENDIAN);
-                break;
-
-            case 4:
-                bytearray_write_4_bytes (part->content + relocs[i].offset, result, LITTLE_ENDIAN);
-                break;
-
-            case 3:
-                bytearray_write_3_bytes (part->content + relocs[i].offset, result, LITTLE_ENDIAN);
-                break;
-
-            default:
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "invalid relocation size");
-        }
+        reloc_generic (part, &relocs[i], symbol);
     }
 }
 
