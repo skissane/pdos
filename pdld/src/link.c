@@ -111,9 +111,10 @@ static void relocate_part (struct section_part *part)
 
         if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
             /* Temporary workaround. */
-            if (symbol->part->section->is_bss) {
-                relocs[i].addend -= symbol->value;
-            } else result = 0;
+            if (result
+                && symbol->part->of == part->of) {
+                result -= symbol->value;
+            }
         }
 
         result += relocs[i].addend;
