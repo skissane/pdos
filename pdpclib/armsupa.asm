@@ -31,6 +31,14 @@
 .endif
 
 
+.globl ___gccmain
+.globl ____gccmain
+___gccmain:
+____gccmain:
+mov pc,lr
+
+
+
 # I haven't seen direct evidence that r2 and r3
 # need to be preserved in setjmp/longjmp, but
 # doing so anyway. ditto r12 and r1.
