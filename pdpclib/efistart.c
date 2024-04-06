@@ -663,6 +663,24 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #endif
 
 #if 0
+    if ((Status = print_string ("Hello, world!\n"))) {
+        return Status;
+    }
+
+    wait_for_input ();
+    
+    return_Status_if_fail (print_string ("\nFile test started\n"));
+    if ((Status2 = file_test (ImageHandle))) {
+        
+        return_Status_if_fail (print_string ("File test FAILED\n"));
+        wait_for_input ();
+        return Status2;
+        
+    }
+    return 0;
+#endif
+
+#if 0
     return_Status_if_fail (cursor_position_test ());
     return_Status_if_fail (ctrl_key_test ());
 #endif
@@ -712,21 +730,6 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
 
 #if 0
-    if ((Status = print_string ("Hello, world!\n"))) {
-        return Status;
-    }
-
-    wait_for_input ();
-    
-    return_Status_if_fail (print_string ("\nFile test started\n"));
-    if ((Status2 = file_test (ImageHandle))) {
-        
-        return_Status_if_fail (print_string ("File test FAILED\n"));
-        wait_for_input ();
-        return Status2;
-        
-    }
-
     return_Status_if_fail (print_string ("\nBlock test started\n"));
     if ((Status2 = block_test (ImageHandle))) {
         
