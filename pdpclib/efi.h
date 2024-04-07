@@ -505,6 +505,11 @@ struct _EFI_FILE_PROTOCOL;
 typedef EFI_STATUS (EFIAPI *EFI_FILE_OPEN) (IN struct _EFI_FILE_PROTOCOL *This,
                                             OUT struct _EFI_FILE_PROTOCOL **NewHandle,
                                             IN CHAR16 *FileName,
+#ifdef ARMHACK
+/* 64-bit parameters need to skip registers if required to align,
+   and gcc 3.2.3 is not currently doing that */
+                                            int dummy_align,
+#endif
                                             IN UINT64 OpenMode,
                                             IN UINT64 Attributes);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_CLOSE) (IN struct _EFI_FILE_PROTOCOL *This);
