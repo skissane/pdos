@@ -521,8 +521,14 @@ typedef EFI_STATUS (EFIAPI *EFI_FILE_WRITE) (IN struct _EFI_FILE_PROTOCOL *This,
                                              IN OUT UINTN *BufferSize,
                                              IN const void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
+#ifdef ARMHACK
+                                                    int dummy_align,
+#endif
                                                     OUT UINT64 *Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
+#ifdef ARMHACK
+                                                    int dummy_align,
+#endif
                                                     IN UINT64 Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_INFO) (IN struct _EFI_FILE_PROTOCOL *This,
                                                 IN EFI_GUID *InformationType,

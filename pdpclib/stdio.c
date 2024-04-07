@@ -4675,7 +4675,12 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         Position.a = newpos;
         Position.b = 0;
 #endif
+
+#ifdef ARMHACK
+        Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, 0, Position);
+#else
         Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, Position);
+#endif
         if (Status != EFI_SUCCESS)
         {
             return (-1);
