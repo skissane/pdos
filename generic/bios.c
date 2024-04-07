@@ -61,7 +61,7 @@ int __getdents(int dirfile, void *buf, int n);
 extern int __mmgid;
 #endif
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(__EFI__)
 #include <efi.h>
 static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
 static EFI_STATUS directory_test (void);
@@ -69,7 +69,8 @@ static EFI_STATUS directory_test (void);
 static int globrc = 0;
 #endif
 
-#if defined(W32EMUL) || defined(GENSHELL)
+#if (defined(W32EMUL) || defined(GENSHELL)) \
+    && !defined(__EFI__)
 static int globrc = 0;
 #endif
 
@@ -560,7 +561,8 @@ int main(int argc, char **argv)
 #if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
     if (strcmp(prog_name, "dir") == 0)
     {
-#if defined(W32EMUL) || defined(GENSHELL)
+#if (defined(W32EMUL) || defined(GENSHELL)) \
+    && !defined(__EFI__)
 
 #ifndef HAVE_DIR
         printf("sorry - dir not supported yet\n");
@@ -1182,7 +1184,7 @@ char *PosGetCommandLine(void)
     return (cmd);
 }
 
-#ifdef W64HACK
+#if defined(W64HACK) || defined(__EFI__)
 
 #define STATUS_IS_ERROR(a) (!!((a) >> (sizeof (a) * 8 - 1)))
 #define STATUS_GET_CODE(a) (((a) << 1) >> 1)
