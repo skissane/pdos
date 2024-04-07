@@ -1,0 +1,30 @@
+# This builds a PDOS-generic executable for ARM
+
+CC=gccprm
+CFLAGS=-O0
+#LD=ldprm -subsystem efi
+LD=pdld --oformat coff --no-insert-timestamp --subsystem 10
+LDFLAGS=
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -ansi -I. -I../pdpclib -I../src \
+  -D__ARM__ -fno-common -mapcs-32 -fno-builtin \
+  -msoft-float \
+  -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ 
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+  rm -f pcomm.exe
+  $(LD) $(LDFLAGS) -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+
+.c.o:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+.asm.o:
+  $(AS) --defsym LINUX=0 --defsym ELF=0 --defsym STACKPARM=0 -o $@ $<
+
+clean:
+  rm -f *.o pcomm.exe
