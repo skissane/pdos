@@ -1811,7 +1811,8 @@ static int exeloadLoadPE(unsigned char **entry_point,
     }
 #else
     if ((coff_hdr.Machine != IMAGE_FILE_MACHINE_UNKNOWN)
-        && (coff_hdr.Machine != IMAGE_FILE_MACHINE_I386))
+        && (coff_hdr.Machine != IMAGE_FILE_MACHINE_I386)
+        && (coff_hdr.Machine != IMAGE_FILE_MACHINE_THUMB))
     {
         if (coff_hdr.Machine == IMAGE_FILE_MACHINE_AMD64)
         {
