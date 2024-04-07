@@ -9,7 +9,7 @@ LDFLAGS=
 AS=asprm
 AR=arprm
 COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
-  -D__ARM__ -fno-common -mapcs-32 -DNEED_MZ -DNEED_FLUSH \
+  -D__ARM__ -fno-common -mapcs-32 -DNEED_MZ \
   -DGENSHELL -DARMHACK -DNO_DLLENTRY \
   -msoft-float -D__EFI__ -D__EFIBIOS__
 
