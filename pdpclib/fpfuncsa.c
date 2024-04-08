@@ -91,6 +91,7 @@ typedef unsigned char  uint8;
 #endif
 
 /***************** LibC ******************/
+#if 0
 #undef isprint
 #undef isspace
 #undef isdigit
@@ -148,6 +149,7 @@ int   rand(void);
 void  srand(unsigned int seed);
 long  strtol(const char *s, char **end, int base);
 char *itoa(int num, char *dst, int base);
+#endif
 
 #if 0 /* ndef NO_ELLIPSIS */
    typedef char* va_list;
@@ -158,7 +160,9 @@ char *itoa(int num, char *dst, int base);
    int sscanf(const char *s, const char *format, ...);
 #endif
 
+#if 0
 #define printf     UartPrintf
+#endif
 #ifndef _LIBC
 
 #if 0
@@ -375,7 +379,12 @@ int KeyboardGetch(void);
 #define FP_Mult    __mulsf3
 #define FP_Div     __divsf3
 #define FP_ToLong  __fixsfsi
+
+/* this one is guessed */
+#define FP_ToULong  __fixunssfsi
+
 #define FP_ToFloat __floatsisf
+#if 0
 #define sqrt FP_Sqrt
 #define cos  FP_Cos
 #define sin  FP_Sin
@@ -383,12 +392,14 @@ int KeyboardGetch(void);
 #define log  FP_Log
 #define exp  FP_Exp
 #endif
+#endif
 float FP_Neg(float a_fp);
 float FP_Add(float a_fp, float b_fp);
 float FP_Sub(float a_fp, float b_fp);
 float FP_Mult(float a_fp, float b_fp);
 float FP_Div(float a_fp, float b_fp);
 long  FP_ToLong(float a_fp);
+unsigned long  FP_ToULong(float a_fp);
 float FP_ToFloat(long af);
 int   FP_Cmp(float a_fp, float b_fp);
 float FP_Sqrt(float a);
@@ -402,12 +413,14 @@ float FP_Pow(float x, float y);
 
 /***************** Filesys ******************/
 #ifndef EXCLUDE_FILESYS
+#if 0
 #define FILE   OS_FILE
 #define fopen  OS_fopen
 #define fclose OS_fclose
 #define fread  OS_fread
 #define fwrite OS_fwrite
 #define fseek  OS_fseek
+#endif
 #endif
 #define _FILESYS_
 typedef struct OS_FILE_s OS_FILE;
@@ -652,6 +665,31 @@ float FP_Div(float a_fp, float b_fp)
 
 
 long FP_ToLong(float a_fp)
+{
+   unsigned long a;
+   unsigned long as;
+   long ae;
+   long af, shift;
+   a = FtoL(a_fp);
+   as = a >> 31;
+   ae = (a >> 23) & 0xff;
+   af = 0x00800000 | (a & 0x007fffff);
+   af <<= 7;
+   shift = -(ae - 0x80 - 29);
+   if(shift > 0) 
+   {
+      if(shift < 31) 
+         af >>= shift;
+      else 
+         af = 0;
+   }
+   af = as ? -af: af;
+   return af;
+}
+
+
+/* guessed */
+unsigned long FP_ToULong(float a_fp)
 {
    unsigned long a;
    unsigned long as;
