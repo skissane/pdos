@@ -828,7 +828,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
     unsigned char *elf_other_sections = NULL;
     Elf32_Addr lowest_p_vaddr = 0;
     Elf32_Word lowest_segment_align = 0;
-    unsigned char *exeStart = NULL;
+    unsigned char *exeStart;
+    void *orig_exeStart = NULL;
     unsigned char *bss;
     unsigned long exeLen;
     unsigned char firstbit[4];
@@ -893,13 +894,14 @@ static int exeloadLoadELF(unsigned char **entry_point,
             }
             elf_invalid = 1;
         }
-#if 0
-        if (elfHdr->e_ident[EI_OSABI] != ELFOSABI_NONE)
+
+        if (elfHdr->e_ident[EI_OSABI] != ELFOSABI_NONE
+            && elfHdr->e_ident[EI_OSABI] != ELFOSABI_ARM)
         {
-            printf("No OS or ABI specific extensions for ELF supported\n");
+            printf("Unsupported OS or ABI specific extensions for ELF\n");
             elf_invalid = 1;
         }
-#endif
+        
         /* Checks other parts of the header if the file can be loaded. */
         if (elfHdr->e_type == ET_REL)
         {
@@ -922,13 +924,14 @@ static int exeloadLoadELF(unsigned char **entry_point,
                    "files are supported\n");
             elf_invalid = 1;
         }
-#if 0
-        if (elfHdr->e_machine != EM_386)
+
+        if (elfHdr->e_machine != EM_386
+            && elfHdr->e_machine != EM_ARM)
         {
-            printf("Only Intel 386 architecture is supported\n");
+            printf("Only Intel 386 and ARM 32-bit architecture is supported\n");
             elf_invalid = 1;
         }
-#endif
+        
         if (doing_elf_exec)
         {
             if (elfHdr->e_phoff == 0 || elfHdr->e_phnum == 0)
@@ -1111,12 +1114,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
     /* Allocates memory for the process. */
     if (*loadloc != NULL)
     {
-        exeStart = *loadloc;
+        orig_exeStart = *loadloc;
     }
     else
     {
-        exeStart = malloc(exeLen);
+        orig_exeStart = malloc(exeLen);
     }
+    exeStart = orig_exeStart;
     if (exeStart == NULL)
     {
         printf("Insufficient memory to load ELF program\n");
@@ -1140,9 +1144,12 @@ static int exeloadLoadELF(unsigned char **entry_point,
         if (doing_elf_exec)
         {
             /* Aligns the exeStart on lowest segment alignment boundary. */
-            /*exeStart = (unsigned char *)((((unsigned long)exeStart
-                                           / lowest_segment_align) + 1)
-                                         * lowest_segment_align);*/
+            if (lowest_segment_align) {
+                exeStart = (void *)((((unsigned long)exeStart) / lowest_segment_align
+                                     + !!(((unsigned long)exeStart) % lowest_segment_align))
+                                    * lowest_segment_align);
+            }
+            
             /* +++Enable aligning. */
             for (segment = program_table;
                  segment < program_table + elfHdr->e_phnum;
@@ -1519,51 +1526,78 @@ static int exeloadLoadELF(unsigned char **entry_point,
                         }
                     }
 
-                    switch (ELF32_R_TYPE(currel->r_info))
-                    {
-                        case R_386_NONE:
-                            break;
-                        case R_386_32:
+                    if (elfHdr->e_machine == EM_386) {
+                        switch (ELF32_R_TYPE(currel->r_info))
+                        {
+                            case R_386_NONE:
+                                break;
+                            case R_386_32:
 #if 0
-                            /* Symbol value + addend.
-                             * But the addend is lost
-                             * because it is stored in the field
-                             * and the field is overwritten...
-                             */
-                            if (sym_table)
-                            {
-                                *target = sym_value;
-                            }
-                            /* Without symbol table,
-                             * the below way is the only option.
-                             */
-                            else 
+                                /* Symbol value + addend.
+                                 * But the addend is lost
+                                 * because it is stored in the field
+                                 * and the field is overwritten...
+                                 */
+                                if (sym_table)
+                                {
+                                    *target = sym_value;
+                                }
+                                /* Without symbol table,
+                                 * the below way is the only option.
+                                 */
+                                else 
 #endif
-                            /* So instead adjust the field
-                             * directly for the new base address
-                             * to preserve the addend
-                             * (and make symbol table unnecessary).
-                             * This assumes the linker does not output
-                             * relocations with absolute symbols.
-                             */
-                            {
-                                *target -= lowest_p_vaddr;
-                                *target += (unsigned long)exeStart;
-                            }
-                            break;
-                        case R_386_PC32:
-                            /* Symbol value + offset - absolute address
-                             * of the modified field. */
-                            /* I believe this is a PC-relative instruction, and
-                               as such, should not be altered. If you do alter it,
-                               terrible things happen */
+                                /* So instead adjust the field
+                                 * directly for the new base address
+                                 * to preserve the addend
+                                 * (and make symbol table unnecessary).
+                                 * This assumes the linker does not output
+                                 * relocations with absolute symbols.
+                                 */
+                                {
+                                    *target -= lowest_p_vaddr;
+                                    *target += (unsigned long)exeStart;
+                                }
+                                break;
+                            case R_386_PC32:
+                                /* Symbol value + offset - absolute address
+                                 * of the modified field. */
+                                /* I believe this is a PC-relative instruction, and
+                                   as such, should not be altered. If you do alter it,
+                                   terrible things happen */
 #if 0
-                            *target = (sym_value + (*target)
-                                       - (unsigned long)target);
+                                *target = (sym_value + (*target)
+                                           - (unsigned long)target);
 #endif
-                            break;
-                        default:
-                            printf("Unknown relocation type in ELF file\n");
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
+                    } else if (elfHdr->e_machine == EM_ARM) {
+                        switch (ELF32_R_TYPE(currel->r_info))
+                        {
+                            case R_ARM_NONE:
+                                /* Ignored. */
+                                break;
+                            case R_ARM_ABS32:
+#if 0
+                                if (sym_table)
+                                {
+                                    *target = sym_value;
+                                }
+                                else 
+#endif
+                                {
+                                    *target -= lowest_p_vaddr;
+                                    *target += (unsigned long)exeStart;
+                                }
+                                break;
+                            case R_ARM_PC24:
+                                /* Ignored. */
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
                     }
                 }
             }
@@ -1587,7 +1621,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
 
     if (*loadloc == NULL)
     {
-        *loadloc = exeStart;
+        *loadloc = orig_exeStart;
     }
     return (0);
 }
