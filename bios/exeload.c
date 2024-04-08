@@ -893,11 +893,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
             }
             elf_invalid = 1;
         }
+#if 0
         if (elfHdr->e_ident[EI_OSABI] != ELFOSABI_NONE)
         {
             printf("No OS or ABI specific extensions for ELF supported\n");
             elf_invalid = 1;
         }
+#endif
         /* Checks other parts of the header if the file can be loaded. */
         if (elfHdr->e_type == ET_REL)
         {
@@ -920,11 +922,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
                    "files are supported\n");
             elf_invalid = 1;
         }
+#if 0
         if (elfHdr->e_machine != EM_386)
         {
             printf("Only Intel 386 architecture is supported\n");
             elf_invalid = 1;
         }
+#endif
         if (doing_elf_exec)
         {
             if (elfHdr->e_phoff == 0 || elfHdr->e_phnum == 0)
