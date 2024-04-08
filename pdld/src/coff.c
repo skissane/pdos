@@ -1608,11 +1608,41 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     }
 
     wanted_Machine = coff_hdr.Machine;
-    if (wanted_Machine == IMAGE_FILE_MACHINE_I386) {
-        leading_underscore = 1;
-        ld_state->bits = 32;
-    } else {
-        ld_state->bits = 64;
+    switch (wanted_Machine) {
+        case IMAGE_FILE_MACHINE_AMD64:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_X64;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            ld_state->bits = 64;
+            break;
+        
+        case IMAGE_FILE_MACHINE_I386:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_I386
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_I386;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            leading_underscore = 1;
+            ld_state->bits = 32;
+            break;
+
+        case IMAGE_FILE_MACHINE_ARM:
+        case IMAGE_FILE_MACHINE_THUMB:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_ARM
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_ARM;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            ld_state->bits = 32;
+            break;
     }
 
     pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;

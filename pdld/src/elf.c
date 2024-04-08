@@ -74,9 +74,16 @@ static size_t section_get_num_relocs (struct section *section)
         size_t i;
         
         for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
-                || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
-                num_relocs++;
+            if (ld_state->target_machine == LD_TARGET_MACHINE_I386) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
+                    num_relocs++;
+                }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
+                    num_relocs++;
+                }
             }
         }
     }
@@ -102,16 +109,34 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
         for (i = 0; i < part->relocation_count; i++) {
             unsigned char type;
             
-            if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
-                continue;
-            } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
-                type = R_386_32;
-            } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
-                type = R_386_PC32;
+            if (ld_state->target_machine == LD_TARGET_MACHINE_I386) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    type = R_386_32;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
+                    type = R_386_PC32;
+                } else {
+                    ld_error ("%s cannot be converted to Elf32 relocation",
+                              part->relocation_array[i].howto->name);
+                    continue;
+                }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
+                    type = R_ARM_ABS32;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
+                    type = R_ARM_PC24;
+                } else {
+                    ld_error ("%s cannot be converted to Elf32 relocation",
+                              part->relocation_array[i].howto->name);
+                    continue;
+                }
             } else {
-                ld_error ("%s cannot be converted to Elf32 relocation",
-                          part->relocation_array[i].howto->name);
-                continue;
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocations for target %i not supported yet",
+                                             ld_state->target_machine);
             }
 
             rel->r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset;
@@ -305,19 +330,41 @@ static void translate_relocation (struct reloc_entry *reloc,
     reloc->symbol = part->of->symbol_array + symbol_index;
     reloc->offset = input_reloc->r_offset;
 
-    switch (rel_type) {
-        case R_386_32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+    if (ld_state->target_machine == LD_TARGET_MACHINE_I386) {
+        switch (rel_type) {
+            case R_386_NONE: goto bad; /* Ignored. */
+            
+            case R_386_32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
-        case R_386_PC32:
-            reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
-            reloc->addend += 4; /* ELF should not have the size of the field subtracted. */
-            break;
+            case R_386_PC32:
+                reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                reloc->addend += 4; /* ELF should not have the size of the field subtracted. */
+                break;
 
-        default:
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++relocation type 0x%02x not supported yet",
-                                         rel_type);
-            break;
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocation type 0x%02x not supported yet",
+                                             rel_type);
+                break;
+        }
+    } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+        switch (rel_type) {
+            case R_ARM_NONE: goto bad; /* Ignored. */
+
+            case R_ARM_PC24: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_PC26]; break;
+            
+            case R_ARM_ABS32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_32]; break;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocation type 0x%02x not supported yet",
+                                             rel_type);
+                break;
+        }
+    } else {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "+++relocations for target %i not supported yet",
+                                     ld_state->target_machine);
     }
 
     return;
@@ -365,7 +412,11 @@ void elf_write (const char *filename)
     ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 
     ehdr.e_type = ET_EXEC;
-    ehdr.e_machine = EM_386;
+    switch (ld_state->target_machine) {
+        case LD_TARGET_MACHINE_I386: ehdr.e_machine = EM_386; break;
+        case LD_TARGET_MACHINE_ARM: ehdr.e_machine = EM_ARM; break;
+        default: ehdr.e_machine = EM_NONE; break;
+    }
     ehdr.e_version = EV_CURRENT;
     ehdr.e_entry = ld_state->entry_point + ld_state->base_address;
     ehdr.e_ehsize = sizeof (ehdr);
@@ -713,9 +764,30 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return 1;
     }
 
-    if (ehdr.e_machine != EM_386) {
-        ld_error ("%s: e_machine is not EM_386", filename);
-        return 1;
+    switch (ehdr.e_machine) {
+        case EM_386:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_I386
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_I386;
+            } else {
+                ld_error ("%s: e_machine is not EM_386", filename);
+                return 1;
+            }
+            break;
+
+        case EM_ARM:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_ARM
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_ARM;
+            } else {
+                ld_error ("%s: e_machine is not EM_ARM", filename);
+                return 1;
+            }
+            break;
+
+        default:
+            ld_error ("%s: unrecognized e_machine %i", filename, ehdr.e_machine);
+            return 1;
     }
 
     if (ehdr.e_version != EV_CURRENT) {

@@ -82,6 +82,7 @@ typedef struct {
 #define EI_VERSION 6 /* Must be EV_CURRENT. */
 #define EI_OSABI 7
     #define ELFOSABI_NONE 0 /* No specific extensions. */
+    #define ELFOSABI_ARM 97
 #define EI_ABIVERSION 8 /* Should be set to 0. */
 #define EI_PAD 9 /* Start of pad bytes. Should be ignored. */
 
@@ -95,6 +96,7 @@ typedef struct {
 /* e_machine */
 #define EM_NONE 0
 #define EM_386 3 /* Intel 80386. */
+#define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
 
 /* e_version */
@@ -231,6 +233,10 @@ typedef struct {
 #define R_386_RELATIVE 8
 #define R_386_GOTOFF 9
 #define R_386_GOTPC 10
+
+#define R_ARM_NONE 0
+#define R_ARM_PC24 1
+#define R_ARM_ABS32 2
 
 typedef struct {
     Elf32_Word p_type;
