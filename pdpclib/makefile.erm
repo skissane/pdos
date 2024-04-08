@@ -4,6 +4,7 @@ CC=gccarm
 #CC=gccerm
 AR=arerm
 LD=lderm
+#LD=pdld --oformat elf
 AS=aserm
 COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ \
    -DNEED_MPROTECT -DSTACKPARM -I. \
