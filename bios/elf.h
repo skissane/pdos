@@ -62,6 +62,7 @@ typedef struct {
 #define EI_VERSION 6
 #define EI_OSABI 7
     #define ELFOSABI_NONE 0 /* No specific extensions. */
+    #define ELFOSABI_ARM 97
 #define EI_ABIVERSION 8
 #define EI_PAD 9 /* Start of pad bytes. Should be ignored. */
 
@@ -74,6 +75,8 @@ typedef struct {
 
 /* e_machine value macros. */
 #define EM_386 3 /* Intel 80386. */
+#define EM_ARM 40
+#define EM_X86_64 62 /* x86-64. */
 
 typedef struct {
     Elf32_Word p_type;
@@ -154,3 +157,8 @@ typedef struct {
 #define R_386_NONE 0
 #define R_386_32 1
 #define R_386_PC32 2
+
+#define R_ARM_NONE 0
+#define R_ARM_PC24 1
+#define R_ARM_ABS32 2
+
