@@ -7,15 +7,15 @@ CC=gccarm
 AR=ararm
 LD=ldarm
 AS=asarm
-COPTS=-S -O0 -D__ARM__ -mapcs-32 -D__UNOPT__ -I.
+COPTS=-msoft-float -S -O0 -D__ARM__ -mapcs-32 -D__UNOPT__ -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o math.o armsupa.o __memmgr.o
+       ctype.o math.o armsupa.o __memmgr.o fpfuncsa.o
   rm -f pdparm.a
   $(AR) r pdparm.a stdio.o string.o stdlib.o
   $(AR) r pdparm.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r pdparm.a ctype.o math.o armsupa.o __memmgr.o
+  $(AR) r pdparm.a ctype.o math.o armsupa.o __memmgr.o fpfuncsa.o
   $(LD) -N -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdparm.a
 
 .c.o:

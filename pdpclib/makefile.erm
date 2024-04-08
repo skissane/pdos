@@ -7,17 +7,17 @@ LD=lderm
 #LD=pdld --oformat elf
 AS=aserm
 COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ \
-   -DNEED_MPROTECT -DSTACKPARM -I. \
+   -DNEED_MPROTECT -DSTACKPARM -I. -msoft-float \
    -D__GENSHELL__
 #COPTS=-S -O2 -fno-common -mapcs-32 -D__ARM__ -DUSE_MEMMGR -DNEED_MPROTECT -DSTACKPARM -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o math.o armsupa.o __memmgr.o
+       ctype.o math.o armsupa.o __memmgr.o fpfuncsa.o
   rm -f pdperm.a
   $(AR) r pdperm.a stdio.o string.o stdlib.o
   $(AR) r pdperm.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r pdperm.a ctype.o math.o armsupa.o __memmgr.o
+  $(AR) r pdperm.a ctype.o math.o armsupa.o __memmgr.o fpfuncsa.o
   $(LD) --emit-relocs -e __start -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
   echo $(LD) -s -nostdlib -o pdptest.exe linstart.o pdptest.o pdperm.a
 

@@ -1,15 +1,15 @@
 # This builds a PDOS-generic executable for an ARM system
 
 CC=gccarm
-COPTS=-fno-builtin -fno-common -mapcs-32 -S -O0 -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ -I . -I../generic
+COPTS=-msoft-float -fno-builtin -fno-common -mapcs-32 -S -O0 -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ -I . -I../generic
 LD=ldarm
 AS=asarm
 
 all: clean pdptest.exe
 
-pdptest.exe: pgastart.o pdptest.o string.o armsupa.o
+pdptest.exe: pgastart.o pdptest.o string.o armsupa.o fpfuncsa.o
   rm -f pdptest.exe
-  $(LD) -N -s -e ___crt0 -o pdptest.exe pgastart.o pdptest.o string.o armsupa.o
+  $(LD) -N -s -e ___crt0 -o pdptest.exe pgastart.o pdptest.o string.o armsupa.o fpfuncsa.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
