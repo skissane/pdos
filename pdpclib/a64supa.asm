@@ -375,18 +375,18 @@ ___clone:
 
 
 
-# int ___waitpid(...);
+# int ___waitid(...);
 
-        .globl  __waitpid
-        .globl  ___waitpid
-        .type  __waitpid, %function
+        .globl  __waitid
+        .globl  ___waitid
+        .type  __waitid, %function
         .align  2
-__waitpid:
-___waitpid:
+__waitid:
+___waitid:
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#95
-#           @ SYS_waitpid
+#           @ SYS_waitid
 
         svc     #0
 
