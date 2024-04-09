@@ -410,6 +410,9 @@ void elf_write (const char *filename)
     ehdr.e_ident[EI_CLASS] = ELFCLASS32;
     ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
     ehdr.e_ident[EI_VERSION] = EV_CURRENT;
+    if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+        ehdr.e_ident[EI_OSABI] = ELFOSABI_ARM;
+    }
 
     ehdr.e_type = ET_EXEC;
     switch (ld_state->target_machine) {
@@ -420,6 +423,12 @@ void elf_write (const char *filename)
     ehdr.e_version = EV_CURRENT;
     ehdr.e_entry = ld_state->entry_point + ld_state->base_address;
     ehdr.e_ehsize = sizeof (ehdr);
+    if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+        /* Not sure what those flags mean
+         * but they are required.
+         */
+        ehdr.e_flags = 0x01000002;
+    }
 
     {
         /* Current layout of executable is:
