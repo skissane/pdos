@@ -875,4 +875,16 @@ Executable should be called:
 
 x64test\efi\boot\bootx64.efi
 
+
+
+For Aarch64 (ARM64) you probably need:
+
+qemu-system-aarch64 -drive if=pflash,format=raw,file=edk2-aarch64-code.fd -drive file=fat:rw:arm64test
+
+Executable should be called:
+
+arm64test\efi\boot\bootaa64.efi
+
+
+
 */
