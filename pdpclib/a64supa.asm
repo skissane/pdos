@@ -8,6 +8,46 @@
 # https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 
 
+.ifndef STACKPARM
+.set STACKPARM,0
+.endif
+
+.ifndef LINUX
+.set LINUX,0
+.endif
+
+
+# int setjmp(jmp_buf env);
+
+        .globl  __Ysetjmp
+        .globl  ___Ysetjmp
+        .type  __Ysetjmp, %function
+        .align  2
+__Ysetjmp:
+___Ysetjmp:
+        mov     x0, #0
+        ret
+
+
+
+# void longjmp(jmp_buf env, int v);
+
+        .globl  longjmp
+        .globl  _longjmp
+        .type  longjmp, %function
+        .align  2
+longjmp:
+_longjmp:
+        mov     x0, #0
+        ret
+
+
+
+
+
+.if LINUX
+
+
 # int ___write(int fd, void *buf, int len);
 
         .globl  __write
@@ -242,33 +282,6 @@ ___getpid:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
-
-
-
-# int setjmp(jmp_buf env);
-
-        .globl  __Ysetjmp
-        .globl  ___Ysetjmp
-        .type  __Ysetjmp, %function
-        .align  2
-__Ysetjmp:
-___Ysetjmp:
-        mov     x0, #0
-        ret
-
-
-
-# void longjmp(jmp_buf env, int v);
-
-        .globl  longjmp
-        .globl  _longjmp
-        .type  longjmp, %function
-        .align  2
-longjmp:
-_longjmp:
-        mov     x0, #0
-        ret
-
 
 
 
@@ -592,6 +605,12 @@ __getdents64:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+
+
+
+# LINUX
+.endif
+
 
 
 
