@@ -724,6 +724,8 @@ static void elf64_write (const char *filename)
     do { if (((memory_position) - file + (size_to_read) > file_size) \
              || (memory_position) < file) ld_fatal_error ("corrupted input file"); } while (0)
 
+static int read_elf64_object (unsigned char *file, size_t file_size, const char *filename);
+
 static int read_elf_object (unsigned char *file, size_t file_size, const char *filename)
 {
     Elf32_Ehdr ehdr;
@@ -744,6 +746,10 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     pos = file;
     CHECK_READ (pos, sizeof (ehdr));
     ehdr = *(Elf32_Ehdr *)pos;
+
+    if (ehdr.e_ident[EI_CLASS] == ELFCLASS64) {
+        return read_elf64_object (file, file_size, filename);
+    }
 
     if (ld_state->bits == 64) {
         ld_error ("%s: 32-bit object when other objects are %i-bit",
@@ -1089,6 +1095,368 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
             translate_relocation (part->relocation_array + j,
                                   (Elf32_Rel *)(pos + shdr_p->sh_entsize * j),
                                   part);
+        }
+    }
+
+    free (part_p_array);
+
+    return 0;
+}
+
+static int read_elf64_object (unsigned char *file, size_t file_size, const char *filename)
+{
+    Elf64_Ehdr ehdr;
+    Elf64_Shdr *shdr_p;
+
+    const char *section_name_string_table = NULL;
+    Elf64_Word section_name_string_table_size;
+
+    unsigned char *pos;
+
+    struct object_file *of;
+    struct section_part **part_p_array;
+    Elf64_Half i;
+
+    struct section *bss_section = NULL;
+    long bss_section_number = 0;
+
+    pos = file;
+    CHECK_READ (pos, sizeof (ehdr));
+    ehdr = *(Elf64_Ehdr *)pos;
+
+    if (ld_state->bits == 64) {
+        ld_error ("%s: 64-bit object when other objects are %i-bit",
+                  filename, ld_state->bits);
+        return 1;
+    }
+
+    ld_state->bits = 64;
+
+    if (ehdr.e_ident[EI_DATA] != ELFDATA2LSB) {
+        ld_error ("%s: Unsupported ELF data encoding", filename);
+        return 1;
+    }
+
+    if (ehdr.e_ident[EI_VERSION] != EV_CURRENT) {
+        ld_error ("%s: Unsupported ELF version", filename);
+        return 1;
+    }
+
+    if (ehdr.e_type != ET_REL) {
+        ld_error ("%s: e_type is not ET_REL", filename);
+        return 1;
+    }
+
+    switch (ehdr.e_machine) {
+        case EM_AARCH64:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_AARCH64;
+            } else {
+                ld_error ("%s: e_machine is not EM_AARCH64", filename);
+                return 1;
+            }
+            break;
+
+        default:
+            ld_error ("%s: unrecognized e_machine %i", filename, ehdr.e_machine);
+            return 1;
+    }
+
+    if (ehdr.e_version != EV_CURRENT) {
+        ld_error ("%s: e_version is not EV_CURRENT", filename);
+        return 1;
+    }
+
+    if (ehdr.e_ehsize < sizeof (ehdr)) {
+        ld_error ("%s: e_ehsize is too small", filename);
+        return 1;
+    }
+
+    if (ehdr.e_shoff == 0 || ehdr.e_shentsize == 0 || ehdr.e_shnum == 0) {
+        ld_error ("%s: missing section header table", filename);
+        return 1;
+    }
+
+    if (ehdr.e_shentsize < sizeof (Elf64_Shdr)) {
+        ld_error ("%s: e_shentsize is too small", filename);
+        return 1;
+    }
+
+    if (ehdr.e_shstrndx == 0 || ehdr.e_shstrndx >= ehdr.e_shnum) {
+        ld_error ("%s: missing section name string table", filename);
+        return 1;
+    }
+
+    pos = file + ehdr.e_shoff;
+    CHECK_READ (pos, ehdr.e_shentsize * ehdr.e_shnum);
+
+    pos += ehdr.e_shentsize * ehdr.e_shstrndx;
+    shdr_p = (void *)pos;
+
+    if (shdr_p->sh_type != SHT_STRTAB) {
+        ld_error ("section name string table does not have SHT_STRTAB type");
+        return 1;
+    }
+
+    section_name_string_table_size = shdr_p->sh_size;
+    pos = file + shdr_p->sh_offset;
+    CHECK_READ (pos, section_name_string_table_size);
+    section_name_string_table = (char *)pos;
+
+    part_p_array = xmalloc (sizeof (*part_p_array) * (ehdr.e_shnum + 1));
+    of = NULL;
+
+    for (i = 1; i < ehdr.e_shnum; i++) {
+        pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
+        shdr_p = (void *)pos;
+
+        if (shdr_p->sh_type != SHT_SYMTAB) continue;
+
+        if (of) ld_fatal_error ("more than 1 symbol table per object file");
+
+        of = object_file_make (shdr_p->sh_size / shdr_p->sh_entsize, filename);
+    }
+
+    if (!of) of = object_file_make (1, filename);
+
+    for (i = 1; i < ehdr.e_shnum; i++) {
+        pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
+        shdr_p = (void *)pos;
+
+        {
+            struct section *section;
+
+            {
+                char *section_name;
+                
+                if (shdr_p->sh_name < section_name_string_table_size) {
+                    section_name = xstrdup (section_name_string_table + shdr_p->sh_name);
+                } else ld_fatal_error ("invalid offset into string table");
+
+                if (shdr_p->sh_type != SHT_PROGBITS
+                    && shdr_p->sh_type != SHT_NOBITS) {
+                    part_p_array[i] = NULL;
+                    free (section_name);
+                    continue;
+                }
+
+                section = section_find_or_make (section_name);
+
+                if (shdr_p->sh_addralign < 0x1000) {
+                    /* Same alignment as for COFF input. */
+                    section->section_alignment = 0x1000;
+                }
+                if (shdr_p->sh_addralign > section->section_alignment) {
+                    section->section_alignment = shdr_p->sh_addralign;
+                }
+
+                section->flags = translate_sh_flags_to_section_flags (shdr_p->sh_flags);
+
+                if (shdr_p->sh_type == SHT_NOBITS) {
+                    section->is_bss = 1;
+                }
+
+                free (section_name);
+            }
+
+            {
+                struct section_part *part = section_part_new (section, of);
+
+                part->alignment = shdr_p->sh_addralign;
+
+                part->content_size = shdr_p->sh_size;
+                if (shdr_p->sh_type != SHT_NOBITS) {
+                    pos = file + shdr_p->sh_offset;
+                    part->content = xmalloc (part->content_size);
+
+                    CHECK_READ (pos, part->content_size);
+                    memcpy (part->content, pos, part->content_size);
+                }
+
+                if (section->is_bss) {
+                    bss_section_number = i;
+                    bss_section = section;
+                }
+                
+                section_append_section_part (section, part);
+
+                part_p_array[i] = part;
+            }
+        }
+    }
+
+    for (i = 1; i < ehdr.e_shnum; i++) {
+        const char *sym_strtab;
+        Elf64_Word sym_strtab_size;
+        Elf64_Word j;
+        
+        pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
+        shdr_p = (void *)pos;
+
+        if (shdr_p->sh_type != SHT_SYMTAB) continue;
+
+        if (shdr_p->sh_link == 0 || shdr_p->sh_link >= ehdr.e_shnum) {
+            ld_fatal_error ("symtab has invalid sh_link");
+        }
+        
+        pos = file + ehdr.e_shoff + shdr_p->sh_link * ehdr.e_shentsize;
+        {
+            const Elf64_Shdr *strtabhdr_p = (void *)pos;
+
+            if (strtabhdr_p->sh_type != SHT_STRTAB) {
+                ld_fatal_error ("symbol name string table does not have SHT_STRTAB type");
+            }
+
+            sym_strtab_size = strtabhdr_p->sh_size;
+            pos = file + strtabhdr_p->sh_offset;
+            CHECK_READ (pos, sym_strtab_size);
+            sym_strtab = (char *)pos;
+        }
+
+        pos = file + shdr_p->sh_offset;
+        CHECK_READ (pos, shdr_p->sh_size);
+
+        if (shdr_p->sh_entsize < sizeof (Elf64_Sym)) {
+            ld_fatal_error ("symbol table sh_entsize is too small");
+        }
+
+        for (j = 1; j < shdr_p->sh_size / shdr_p->sh_entsize; j++) {
+            Elf64_Sym *elf_symbol;
+            struct symbol *symbol = of->symbol_array + j;
+            
+            pos = file + shdr_p->sh_offset + j * shdr_p->sh_entsize;
+            elf_symbol = (void *)pos;
+
+            if (elf_symbol->st_name < sym_strtab_size) {
+                symbol->name = xstrdup (sym_strtab + elf_symbol->st_name);
+            } else ld_fatal_error ("invalid offset into string table");
+
+            symbol->value = elf_symbol->st_value;
+            symbol->size = elf_symbol->st_size;
+            symbol->section_number = elf_symbol->st_shndx;
+
+            if (elf_symbol->st_shndx == SHN_UNDEF) {
+                symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                symbol->part = NULL;
+            } else if (elf_symbol->st_shndx == SHN_ABS) {
+                symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+                symbol->part = NULL;
+            } else if (elf_symbol->st_shndx == SHN_COMMON) {
+                if (symbol->size) {
+                    struct symbol *old_symbol = symbol_find (symbol->name);
+
+                    if (ELF64_ST_BIND (elf_symbol->st_info) != STB_GLOBAL) {
+                        ld_fatal_error ("non-global common symbol");
+                    }
+
+                    if (!old_symbol || symbol_is_undefined (old_symbol)) {
+                        struct section_part *bss_part;
+                        
+                        if (bss_section == NULL) {
+                            bss_section = section_find_or_make (".bss");
+
+                            bss_section->section_alignment = 4;
+                            bss_section->flags = translate_sh_flags_to_section_flags (SHF_WRITE | SHF_ALLOC);
+                            bss_section->is_bss = 1;
+                            bss_section_number = ehdr.e_shnum ? ehdr.e_shnum : 1;
+                        }
+                        
+                        bss_part = section_part_new (bss_section, of);
+                        section_append_section_part (bss_section, bss_part);
+
+                        bss_part->content_size = symbol->size;
+                        bss_part->alignment = symbol->value;
+                        symbol->part = bss_part;
+                        symbol->value = 0;
+                        symbol->section_number = bss_section_number;
+                    } else {
+                        if (symbol->size > old_symbol->size) {
+                            old_symbol->part->content_size = old_symbol->size = symbol->size;
+                        }
+                        if (symbol->value > old_symbol->part->alignment) {
+                            old_symbol->part->alignment = symbol->value;
+                        }
+                        
+                        symbol->value = 0;
+                        symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                        symbol->part = NULL;
+                    }
+                } else {
+                    symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                    symbol->part = NULL;
+                }
+            } else if (elf_symbol->st_shndx >= SHN_LORESERVE
+                       && elf_symbol->st_shndx <= SHN_HIRESERVE) {
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++not yet supported symbol st_shndx: %hu",
+                                             elf_symbol->st_shndx);
+            } else if (elf_symbol->st_shndx >= ehdr.e_shnum) {
+                ld_error ("invalid symbol st_shndx: %hu", elf_symbol->st_shndx);
+                symbol->part = NULL;
+            } else {
+                symbol->part = part_p_array[elf_symbol->st_shndx];
+            }
+
+            switch (ELF64_ST_BIND (elf_symbol->st_info)) {
+                case STB_LOCAL:
+                    /* Do nothing */
+                    break;
+                
+                case STB_GLOBAL:
+                    symbol_record_external_symbol (symbol);
+                    break;
+                
+                default:
+                    ld_internal_error_at_source (__FILE__, __LINE__,
+                                                 "+++not yet supported symbol ELF64_ST_BIND: %u",
+                                                 ELF64_ST_BIND (elf_symbol->st_info));
+                    break;
+            }
+        }
+    }
+
+    for (i = 1; i < ehdr.e_shnum; i++) {
+        struct section_part *part;
+        size_t j;
+        
+        pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
+        shdr_p = (void *)pos;
+
+        if (shdr_p->sh_type != SHT_REL || shdr_p->sh_size == 0) continue;
+
+        if (shdr_p->sh_info >= ehdr.e_shnum) {
+            ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
+        }
+
+        part = part_p_array[shdr_p->sh_info];
+        if (!part) {
+            ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
+        }
+        if (part->section->is_bss) {
+            ld_fatal_error ("%s: relocation section sh_info points to BSS section",
+                            filename);
+        }
+
+        if (shdr_p->sh_entsize != sizeof (Elf64_Rel)) {
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "+++relocation shdr_p->sh_entsize not yet supported");
+        }
+
+        pos = file + shdr_p->sh_offset;
+        CHECK_READ (pos, shdr_p->sh_size);
+
+        part->relocation_count = shdr_p->sh_size / shdr_p->sh_entsize;
+        part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
+        
+        for (j = 0; j < part->relocation_count; j++) {
+#if 0
+            translate_relocation (part->relocation_array + j,
+                                  (Elf64_Rel *)(pos + shdr_p->sh_entsize * j),
+                                  part);
+#endif
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "+++ELF64 relocations not yet supported");
         }
     }
 

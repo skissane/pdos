@@ -809,7 +809,8 @@ void coff_before_link (void)
 
     size_of_headers += 4 /* "PE\0\0" */ + sizeof (struct coff_header_file);
 
-    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+        || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
         size_of_headers += sizeof (struct optional_header_plus_file);
     } else {
         size_of_headers += sizeof (struct optional_header_file);
@@ -1219,7 +1220,14 @@ void coff_write (const char *filename)
     memcpy (pos, "PE\0\0", 4);
     pos += 4;
 
-    coff_hdr.Machine = wanted_Machine;
+    switch (ld_state->target_machine) {
+        case LD_TARGET_MACHINE_I386: coff_hdr.Machine = IMAGE_FILE_MACHINE_I386; break;
+        case LD_TARGET_MACHINE_X64: coff_hdr.Machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case LD_TARGET_MACHINE_ARM: coff_hdr.Machine = IMAGE_FILE_MACHINE_THUMB; break;
+        case LD_TARGET_MACHINE_AARCH64: coff_hdr.Machine = IMAGE_FILE_MACHINE_ARM64; break;
+
+        default: coff_hdr.Machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
+    }
     coff_hdr.NumberOfSections = section_count ();
     
     if (insert_timestamp) {
@@ -1234,13 +1242,15 @@ void coff_write (const char *filename)
     
     coff_hdr.PointerToSymbolTable = 0;
     coff_hdr.NumberOfSymbols = 0;
-    coff_hdr.SizeOfOptionalHeader = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+    coff_hdr.SizeOfOptionalHeader = ((ld_state->target_machine == LD_TARGET_MACHINE_X64
+                                      || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64)
                                      ? sizeof (struct optional_header_plus_file)
                                      : sizeof (struct optional_header_file));   
     coff_hdr.SizeOfOptionalHeader += NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file);
     
     coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DEBUG_STRIPPED;
-    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+        || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
         coff_hdr.Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
     } else {
         coff_hdr.Characteristics |= IMAGE_FILE_32BIT_MACHINE;
@@ -1252,7 +1262,8 @@ void coff_write (const char *filename)
     write_struct_coff_header (pos, &coff_hdr);
     pos += sizeof (struct coff_header_file);
 
-    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+        || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
         memset (&optional_hdr_plus, 0, sizeof (optional_hdr_plus));
 
         optional_hdr_plus.Magic = PE32_PLUS_MAGIC;
@@ -1415,8 +1426,8 @@ void coff_write (const char *filename)
                              LITTLE_ENDIAN);
 
     if (convert_to_flat
-        && wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-        ld_error ("--convert-to-flat is not supported for 64-bit");
+        && wanted_Machine != IMAGE_FILE_MACHINE_I386) {
+        ld_error ("--convert-to-flat is supported only for i386");
         convert_to_flat = 0;
     }
 

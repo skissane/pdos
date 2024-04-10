@@ -98,6 +98,7 @@ typedef struct {
 #define EM_386 3 /* Intel 80386. */
 #define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
+#define EM_AARCH64 183
 
 /* e_version */
 #define EV_NONE 0
@@ -180,6 +181,10 @@ typedef struct {
 #define ELF32_ST_BIND(i) ((i)>>4)
 #define ELF32_ST_TYPE(i) ((i)&0xf)
 #define ELF32_ST_INFO(b,t) (((b)<<4)+((t)&0xf))
+
+#define ELF64_ST_BIND ELF32_ST_BIND
+#define ELF64_ST_TYPE ELF32_ST_TYPE
+#define ELF64_ST_INFO ELF32_ST_INFO
 
 /* Symbol binding. */
 #define STB_LOCAL 0
