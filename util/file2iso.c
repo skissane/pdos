@@ -20,17 +20,19 @@ https://wiki.osdev.org/ISO_9660
 #include <stdlib.h>
 #include <string.h>
 
-#define ROOT_LBN 17
-#define PATH_LBN ROOT_LBN + 2
+#define PVN_LBN 16
+#define PATH_LBN PVN_LBN + 2
 #define DIR_LBN PATH_LBN + 2
 #define FILE_LBN DIR_LBN + 1
 
-#define PATHENT_SIZE 9
+#define PATHENT_SIZE 10
 
 static void both_end32(unsigned char *p, unsigned long val);
 static void both_end16(unsigned char *p, unsigned long val);
 static void int32_lsb(unsigned char *p, unsigned long val);
 static void int32_msb(unsigned char *p, unsigned long val);
+static void int16_lsb(unsigned char *p, unsigned long val);
+static void int16_msb(unsigned char *p, unsigned long val);
 
 int main(int argc, char **argv)
 {
@@ -111,9 +113,18 @@ int main(int argc, char **argv)
     p += 2;
     both_end32(p, DIR_LBN);
     p += 8;
-    both_end32(p, tot_len);
-    p += 8 + 7;
+    both_end32(p, 2048 /* tot_len ? */);
+    p += 8;
+    p[0] = 0x7c;
+    p[1] = 1;
+    p[2] = 1;
+    p + 7;
     *p = 1 << 1; /* mark it as a directory - right? */
+    p++;
+    p += 2;
+    both_end16(p, 1);
+    p += 4;
+    *p = 0x01;
     both_end32(buf + 80, blocks);
     both_end16(buf + 120, 1);
     both_end16(buf + 124, 1);
@@ -121,6 +132,8 @@ int main(int argc, char **argv)
     int32_lsb(buf + 140, PATH_LBN);
     int32_msb(buf + 148, PATH_LBN + 1);
     buf[881] = 1;
+    memset(buf + 8, ' ', 72 - 8);
+    buf[8] = 'X';
     memset(buf + 318, ' ', 813 - 318);
     memcpy(buf + 813, "20240101000000000", 17);
     memcpy(buf + 830, "20240101000000000", 17);
@@ -138,14 +151,16 @@ int main(int argc, char **argv)
 
     /* first path table */
     memset(buf, '\0', sizeof buf);
-    buf[0] = PATHENT_SIZE;
+    buf[0] = 1; /* root directory is 1 byte */
     int32_lsb(buf + 2, DIR_LBN);
+    int16_lsb(buf + 6, 1); /* self-referencing I think */
     fwrite(buf, sizeof buf, 1, fq);
 
 
 
     /* second path table */
     int32_msb(buf + 2, DIR_LBN);
+    int16_msb(buf + 6, 1); /* self-referencing I think */
     fwrite(buf, sizeof buf, 1, fq);
 
 
@@ -162,7 +177,9 @@ int main(int argc, char **argv)
     p = buf + 10;
     both_end32(p, len_file);
 
-    buf[32] = fnm_len;
+    p = buf + 28;
+    both_end16(p, 1);
+
     p = buf + 33;
     strcpy(p, fnm);
     strcat(p, ";1");
@@ -171,6 +188,7 @@ int main(int argc, char **argv)
         *p = toupper((unsigned char)*p);
         p++;
     }
+    buf[32] = strlen(buf + 33);
     fwrite(buf, sizeof buf, 1, fq);
 
 
@@ -236,6 +254,22 @@ static void int32_msb(unsigned char *p, unsigned long val)
     val >>= 8;
     p[2] = val & 0xff;
     val >>= 8;
+    p[1] = val & 0xff;
+    val >>= 8;
+    p[0] = val & 0xff;
+    return;
+}
+
+static void int16_lsb(unsigned char *p, unsigned long val)
+{
+    p[0] = val & 0xff;
+    val >>= 8;
+    p[1] = val & 0xff;
+    return;
+}
+
+static void int16_msb(unsigned char *p, unsigned long val)
+{
     p[1] = val & 0xff;
     val >>= 8;
     p[0] = val & 0xff;
