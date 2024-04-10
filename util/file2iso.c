@@ -31,6 +31,9 @@ int main(int argc, char **argv)
     unsigned int checksum;
     int floppy;
     char *fnm;
+    int fnm_len;
+    int tot_len;
+    long len_file;
 
     if (argc <= 2)
     {
@@ -78,9 +81,32 @@ int main(int argc, char **argv)
 
     /* need directory info now */
     memset(buf, '\0', sizeof buf);
-    /* there seems to be 0x14 bytes of file information, followed
-       by the filename */
-    p = buf + 0x14;
+    fnm_len = strlen(fnm);
+    if ((fnm_len % 2) == 0)
+    {
+        fnm_len++;
+    }
+    tot_len = 33 + fnm_len;
+    if ((tot_len % 2) != 0)
+    {
+        tot_len++;
+    }
+    p = buf;
+    p[0] = tot_len;
+    /* 8 bytes to give the logical block number
+       presumably in ASCII */
+    p = buf + 2;
+    sprintf(p, "%8d", 19); /* 19 is somewhat of a guess */
+
+    /* length in bytes of the file. Is it printed decimal or hex or neither? */
+    fseek(fp, 0, SEEK_END);
+    len_file = ftell(fp);
+    rewind(fp);
+    p = buf + 10;
+    sprintf(p, "%8ld", len_file);
+
+    buf[32] = fnm_len;
+    p = buf + 33;
     strcpy(p, fnm);
     while (*p != '\0')
     {
@@ -88,6 +114,9 @@ int main(int argc, char **argv)
         p++;
     }
     fwrite(buf, sizeof buf, 1, fq);
+
+
+
 
     /* I don't think we need a section header, section entries
        and section entry extensions */
