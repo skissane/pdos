@@ -1,0 +1,21 @@
+# This is the makefile for Linux to build pdpclib for ARM64 UEFI using
+# the gcc compiler and pdld.
+#
+
+CC=gcc
+COPTS=-D__EFI__ -D__EFIBIOS__ -c -O2 -D__XARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__
+
+pdptest: efistart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o math.o __memmgr.o
+	rm -f pdplinux.a
+	ar r pdplinux.a efistart.o a64supa.o stdio.o string.o stdlib.o
+	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
+	ar r pdplinux.a locale.o ctype.o math.o __memmgr.o
+	pdld -o pdptest.efi --oformat coff --subsystem 10 efistart.o pdptest.o pdplinux.a
+
+.c.o:
+	$(CC) $(COPTS) $<
+
+a64supa.o: a64supa.asm
+	as --defsym STACKPARM=0 --defsym ELF=1 -o $@ $*.asm
