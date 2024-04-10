@@ -877,13 +877,15 @@ x64test\efi\boot\bootx64.efi
 
 
 
-For Aarch64 (ARM64) you probably need:
+For Aarch64 (ARM64) you need:
 
-qemu-system-aarch64 -drive if=pflash,format=raw,file=edk2-aarch64-code.fd -drive file=fat:rw:arm64test
+qemu-system-aarch64 -cpu cortex-a72 -M virt -drive if=pflash,format=raw,readonly=on,file=edk2-aarch64-code.fd -drive file=fat:rw:arm64test -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
 
-Executable should be called:
-
+Executable should be:
 arm64test\efi\boot\bootaa64.efi
+
+You can copy edk2-aarch64-code.fd from
+C:\Program Files\qemu\share
 
 
 
