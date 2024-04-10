@@ -388,7 +388,8 @@ void elf_write (const char *filename)
 
     struct section *section;
 
-    if (ld_state->bits == 64) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+        || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
         elf64_write (filename);
         return;
     }
@@ -1124,12 +1125,6 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
     CHECK_READ (pos, sizeof (ehdr));
     ehdr = *(Elf64_Ehdr *)pos;
 
-    if (ld_state->bits == 64) {
-        ld_error ("%s: 64-bit object when other objects are %i-bit",
-                  filename, ld_state->bits);
-        return 1;
-    }
-
     ld_state->bits = 64;
 
     if (ehdr.e_ident[EI_DATA] != ELFDATA2LSB) {
@@ -1474,7 +1469,7 @@ int elf_read (unsigned char *file, size_t file_size, const char *filename)
         && file[EI_MAG1] == ELFMAG1
         && file[EI_MAG2] == ELFMAG2
         && file[EI_MAG3] == ELFMAG3) {
-        read_elf_object (file, file_size, filename);
+        if (read_elf_object (file, file_size, filename)) return INPUT_FILE_ERROR;
         return INPUT_FILE_FINISHED;
     }
 
