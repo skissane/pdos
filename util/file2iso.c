@@ -21,11 +21,16 @@ https://wiki.osdev.org/ISO_9660
 #include <string.h>
 
 #define ROOT_LBN 17
-#define DIR_LBN ROOT_LBN + 2
+#define PATH_LBN ROOT_LBN + 2
+#define DIR_LBN PATH_LBN + 2
 #define FILE_LBN DIR_LBN + 1
+
+#define PATHENT_SIZE 9
 
 static void both_end32(unsigned char *p, unsigned long val);
 static void both_end16(unsigned char *p, unsigned long val);
+static void int32_lsb(unsigned char *p, unsigned long val);
+static void int32_msb(unsigned char *p, unsigned long val);
 
 int main(int argc, char **argv)
 {
@@ -94,6 +99,7 @@ int main(int argc, char **argv)
     blocks += FILE_LBN;
 
 
+
     /* primary volume descriptor */
     memset(buf, '\0', sizeof buf);
     buf[0] = 1;
@@ -111,7 +117,13 @@ int main(int argc, char **argv)
     both_end32(buf + 80, blocks);
     both_end16(buf + 120, 1);
     both_end16(buf + 124, 1);
+    both_end32(buf + 132, PATHENT_SIZE); /* path table size */
+    int32_lsb(buf + 140, PATH_LBN);
+    int32_msb(buf + 148, PATH_LBN + 1);
     buf[881] = 1;
+    memset(buf + 318, ' ', 813 - 318);
+    memcpy(buf + 813, "20240101000000000", 17);
+    memcpy(buf + 830, "20240101000000000", 17);
     fwrite(buf, sizeof buf, 1, fq);
 
 
@@ -124,8 +136,17 @@ int main(int argc, char **argv)
 
 
 
-    /* I'm hoping I don't need a path table */
+    /* first path table */
+    memset(buf, '\0', sizeof buf);
+    buf[0] = PATHENT_SIZE;
+    int32_lsb(buf + 2, DIR_LBN);
+    fwrite(buf, sizeof buf, 1, fq);
 
+
+
+    /* second path table */
+    int32_msb(buf + 2, DIR_LBN);
+    fwrite(buf, sizeof buf, 1, fq);
 
 
 
@@ -135,6 +156,8 @@ int main(int argc, char **argv)
     p[0] = tot_len;
     p = buf + 2;
     both_end32(p, FILE_LBN);
+
+    buf[18] = buf[19] = 1;
 
     p = buf + 10;
     both_end32(p, len_file);
@@ -192,5 +215,29 @@ static void both_end16(unsigned char *p, unsigned long val)
     p[0] = p[3] = val & 0xff;
     val >>= 8;
     p[1] = p[2] = val & 0xff;
+    return;
+}
+
+static void int32_lsb(unsigned char *p, unsigned long val)
+{
+    p[0] = val & 0xff;
+    val >>= 8;
+    p[1] = val & 0xff;
+    val >>= 8;
+    p[2] = val & 0xff;
+    val >>= 8;
+    p[3] = val & 0xff;
+    return;
+}
+
+static void int32_msb(unsigned char *p, unsigned long val)
+{
+    p[3] = val & 0xff;
+    val >>= 8;
+    p[2] = val & 0xff;
+    val >>= 8;
+    p[1] = val & 0xff;
+    val >>= 8;
+    p[0] = val & 0xff;
     return;
 }
