@@ -879,7 +879,8 @@ x64test\efi\boot\bootx64.efi
 
 For Aarch64 (ARM64) you need:
 
-qemu-system-aarch64 -cpu cortex-a72 -M virt -drive if=pflash,format=raw,readonly=on,file=edk2-aarch64-code.fd -drive file=fat:rw:arm64test -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
+qemu-system-aarch64 -cpu max -M virt -drive if=pflash,format=raw,readonly=on,file=edk2-aarch64-code.fd -drive file=fat:rw:arm64test -device ramfb -device qemu-xhci -device usb-tablet -device usb-kbd
+(-cpu cortex-a72 also works)
 
 Executable should be:
 arm64test\efi\boot\bootaa64.efi
@@ -887,6 +888,11 @@ arm64test\efi\boot\bootaa64.efi
 You can copy edk2-aarch64-code.fd from
 C:\Program Files\qemu\share
 
+If you are running on real ARM64 hardware then you can add "-enable-kvm"
+for a speedup of CPU-intensive applications (see the "arm" section above
+for more details). And "-nographic" can be added to speed up video - note
+that you will need to press ctrl-a x in order to exit instead of closing
+the window.
 
 
 */
