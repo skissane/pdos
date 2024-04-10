@@ -1,0 +1,19 @@
+VPATH=src;src/bytearray;src/hashtab
+CC=gcc
+CFLAGS=-O2
+COPTS=-c $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray -I./src/hashtab
+
+OBJS=bytearray.obj elf.obj coff.obj coff_bytearray.obj error.obj hashtab.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj map.obj read.obj sections.obj symbols.obj xmalloc.obj int64sup.obj
+
+TARGET=pdld.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(CC) $(LDFLAGS) -o $(TARGET) $(OBJS)
+
+.c.obj:
+  $(CC) $(COPTS) -o $@ $<
+
+clean:
+  rm -f $(OBJS) $(TARGET)
