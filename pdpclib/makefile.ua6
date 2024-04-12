@@ -3,7 +3,7 @@
 #
 
 CC=gcc
-COPTS=-D__EFI__ -D__EFIBIOS__ -c -O2 -D__XARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__
+COPTS=--no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__
 
 pdptest: efistart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
