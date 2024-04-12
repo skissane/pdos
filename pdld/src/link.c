@@ -23,6 +23,13 @@ static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
                                 struct symbol *symbol);
 
+static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
+                                           struct reloc_entry *rel,
+                                           struct symbol *symbol);
+static void reloc_aarch64_generic (struct section_part *part,
+                                   struct reloc_entry *rel,
+                                   struct symbol *symbol);
+
 static void reloc_generic (struct section_part *part,
                            struct reloc_entry *rel,
                            struct symbol *symbol);
@@ -40,6 +47,14 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
+    { 4, 1, 0, 0, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x1fffff },
+    { 2, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC", 0xfff },
+    { 2, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC", 0xfff },
+    { 2, 0, 0, 1, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC", 0xffe },
+    { 2, 0, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC", 0xffc },
+    { 2, 0, 0, 3, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC", 0xff8 },
+    { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_JUMP26", 0x3ffffff },
+    { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_CALL26", 0x3ffffff },
 };
 
 static void reloc_arm_32 (struct section_part *part,
@@ -83,6 +98,98 @@ static void reloc_arm_26_pcrel (struct section_part *part,
     result -= part->rva + rel->offset;
     result >>= 2;
     bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+}
+
+static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
+                                           struct reloc_entry *rel,
+                                           struct symbol *symbol)
+{
+    address_type result;
+    unsigned long field;
+
+    /* For unknown reason it works only when done this way
+     * even though it does not match the specification
+     * which says it should be [32:12] (both inclusive)
+     * of ((S + A) & ~0xfff) - (P & ~0xfff).
+     */
+    result = symbol_get_value_with_base (symbol) + rel->addend;
+    result -= ld_state->base_address + part->rva + rel->offset;
+    result >>= 12;
+    result <<= 3;
+
+    bytearray_read_4_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
+    field = ((field & ~(address_type)rel->howto->dst_mask)
+             | (((field & rel->howto->dst_mask) + result) & rel->howto->dst_mask));
+    bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+}
+
+static void reloc_aarch64_generic (struct section_part *part,
+                                   struct reloc_entry *rel,
+                                   struct symbol *symbol)
+{
+    address_type result, field;
+
+    result = rel->addend;
+    result += symbol_get_value_with_base (symbol);
+    if (rel->howto->pc_relative) {
+        result -= ld_state->base_address + part->rva + rel->offset;
+    }
+    
+    result >>= rel->howto->final_right_shift;
+
+    switch (rel->howto->size) {
+        case 8:
+            /* It should be actually 8 bytes but 64-bit int is not yet available. */
+            {
+                unsigned long field4;
+                bytearray_read_4_bytes (&field4, part->content + rel->offset, LITTLE_ENDIAN);
+                field = field4;
+            }
+            break;
+
+        case 4:
+            {
+                unsigned long field4;
+                bytearray_read_4_bytes (&field4, part->content + rel->offset, LITTLE_ENDIAN);
+                field = field4;
+            }
+            break;
+
+        case 2:
+            {
+                unsigned short field2;
+                bytearray_read_2_bytes (&field2, part->content + rel->offset, LITTLE_ENDIAN);
+                field = field2;
+            }
+            break;
+
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "invalid relocation size");
+    }
+
+    field = ((field & ~(address_type)rel->howto->dst_mask)
+             | (((field & rel->howto->dst_mask) + result) & rel->howto->dst_mask));
+
+    switch (rel->howto->size) {
+        case 8:
+            /* It should be actually 8 bytes but 64-bit int is not yet available. */
+            bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+            break;
+
+        case 4:
+            bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+            break;
+
+        case 2:
+            bytearray_write_2_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+            break;
+
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "invalid relocation size");
+    }
+    
 }
 
 static void reloc_generic (struct section_part *part,

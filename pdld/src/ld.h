@@ -97,6 +97,7 @@ struct reloc_howto {
                               struct symbol *symbol);
 
     const char *name;
+    address_type dst_mask;
 };
 
 enum {
@@ -111,6 +112,15 @@ enum {
 
     RELOC_TYPE_ARM_32,
     RELOC_TYPE_ARM_PC26,
+
+    RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21,
+    RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC,
+    RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC,
+    RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC,
+    RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC,
+    RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC,
+    RELOC_TYPE_AARCH64_JUMP26,
+    RELOC_TYPE_AARCH64_CALL26,
     
     RELOC_TYPE_END
 };

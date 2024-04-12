@@ -375,6 +375,81 @@ bad:
     reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
 }
 
+static void translate_relocation64_addend (struct reloc_entry *reloc,
+                                           Elf64_Rela *input_reloc,
+                                           struct section_part *part)
+{
+    Elf64_Word symbol_index;
+    Elf64_Word rel_type;
+
+    symbol_index = ELF64_R_SYM (input_reloc->r_info);
+    rel_type = ELF64_R_TYPE (input_reloc->r_info);
+
+    if (symbol_index >= part->of->symbol_count) {
+        ld_error ("relocation has invalid symbol index");
+        goto bad;
+    }
+
+    if (input_reloc->r_offset >= part->content_size) {
+        ld_error ("relocation has invalid r_offset");
+        goto bad;
+    }
+    
+    /* STN_UNDEF should be treated as absolute symbol with value 0 at index 0. */
+    reloc->symbol = part->of->symbol_array + symbol_index;
+    reloc->offset = input_reloc->r_offset;
+    reloc->addend = input_reloc->r_addend;
+
+    if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+        switch (rel_type) {
+            case R_AARCH64_NONE: goto bad; /* Ignored. */
+
+            case R_AARCH64_PREL32:
+                reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                reloc->addend += 4; /* ELF should not have the size of the field subtracted. */
+                break;
+
+            case R_AARCH64_ABS64: reloc->howto = &reloc_howtos[RELOC_TYPE_64]; break;
+            case R_AARCH64_ABS32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+
+            case R_AARCH64_ADR_PREL_PG_HI21: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21]; break;
+            
+            case R_AARCH64_ADD_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC]; break;
+            case R_AARCH64_LDST8_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC]; break;
+            case R_AARCH64_LDST16_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC]; break;
+            case R_AARCH64_LDST32_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC]; break;
+            case R_AARCH64_LDST64_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC]; break;
+
+            case R_AARCH64_JUMP26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_JUMP26]; break;
+            case R_AARCH64_CALL26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_CALL26]; break;
+
+            case R_AARCH64_ADR_GOT_PAGE:
+            case R_AARCH64_LD64_GOT_LO12_NC:
+                ld_warn ("Position Independent Executables are not supported, ignoring relocation type %u",
+                         rel_type);
+                goto bad;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocation type %u not supported yet",
+                                             rel_type);
+                break;
+        }
+    } else {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "+++relocations for target %i not supported yet",
+                                     ld_state->target_machine);
+    }
+
+    return;
+
+bad:
+    reloc->symbol = NULL;
+    reloc->offset = 0;
+    reloc->addend = 0;
+    reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
+}
+
 static void elf64_write (const char *filename);
 
 void elf_write (const char *filename)
@@ -1066,6 +1141,11 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
         shdr_p = (void *)pos;
 
+        if (shdr_p->sh_type == SHT_RELA) {
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "+++ELF32 relocations with addend (RELA) not yet supported");
+        }
+
         if (shdr_p->sh_type != SHT_REL || shdr_p->sh_size == 0) continue;
 
         if (shdr_p->sh_info >= ehdr.e_shnum) {
@@ -1418,7 +1498,9 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
         shdr_p = (void *)pos;
 
-        if (shdr_p->sh_type != SHT_REL || shdr_p->sh_size == 0) continue;
+        if ((shdr_p->sh_type != SHT_RELA
+             && shdr_p->sh_type != SHT_REL)
+            || shdr_p->sh_size == 0) continue;
 
         if (shdr_p->sh_info >= ehdr.e_shnum) {
             ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
@@ -1433,7 +1515,10 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
                             filename);
         }
 
-        if (shdr_p->sh_entsize != sizeof (Elf64_Rel)) {
+        if ((shdr_p->sh_type == SHT_RELA
+             && shdr_p->sh_entsize != sizeof (Elf64_Rela))
+            || (shdr_p->sh_type == SHT_REL
+                && shdr_p->sh_entsize != sizeof (Elf64_Rel))) {
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "+++relocation shdr_p->sh_entsize not yet supported");
         }
@@ -1445,13 +1530,14 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         
         for (j = 0; j < part->relocation_count; j++) {
-#if 0
-            translate_relocation (part->relocation_array + j,
-                                  (Elf64_Rel *)(pos + shdr_p->sh_entsize * j),
-                                  part);
-#endif
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++ELF64 relocations not yet supported");
+            if (shdr_p->sh_type == SHT_RELA) {
+                translate_relocation64_addend (part->relocation_array + j,
+                                               (Elf64_Rela *)(pos + shdr_p->sh_entsize * j),
+                                               part);
+            } else {
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++ELF64 relocations without addend not yet supported");
+            }
         }
     }
 
