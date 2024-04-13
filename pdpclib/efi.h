@@ -10,8 +10,13 @@
  *****************************************************************************/
 typedef unsigned char BOOLEAN;
 #if defined(__64BIT__) && !defined(__SUBC__)
+#ifdef __LONG64__
+typedef long INTN;
+typedef unsigned long UINTN;
+#else
 typedef long long INTN;
 typedef unsigned long long UINTN;
+#endif
 #else
 typedef int INTN;
 
