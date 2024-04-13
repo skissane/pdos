@@ -47,7 +47,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
-    { 4, 1, 0, 0, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x1fffff },
+    { 4, 1, 0, 9, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x60ffffe0 },
     { 4, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC", 0x3ffc00, 10 },
     { 2, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC", 0xfff },
     { 2, 0, 0, 1, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC", 0xffe },
@@ -106,16 +106,29 @@ static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
 {
     address_type result;
     unsigned long field;
+    address_type bottom_2_bits = 0;
 
-    /* For unknown reason it works only when done this way
-     * even though it does not match the specification
-     * which says it should be [32:12] (both inclusive)
-     * of ((S + A) & ~0xfff) - (P & ~0xfff).
+    /* The lowest 2 bits of immediate operand for ADRP are 0x60000000
+     * while the rest of immediate starts at 0x20.
+     * (adrp x0, 0x0000 is 0x90000000
+     *  adrp x0, 0x1000 is 0xb0000000,
+     *  adrp x0, 0x2000 is 0xd0000000,
+     *  adrp x0, 0x3000 is 0xf0000000,
+     *  adrp x0, 0x4000 is 0x90000020,
+     *  adrp x0, 0x5000 is 0xb0000020,
+     *  adrp x0, 0x6000 is 0xd0000020,
+     *  adrp x0, 0x7000 is 0xf0000020...)
      */
-    result = symbol_get_value_with_base (symbol) + rel->addend;
-    result -= ld_state->base_address + part->rva + rel->offset;
-    result >>= 12;
-    result <<= 3;
+
+    result = (symbol_get_value_with_base (symbol) + rel->addend) & ~(address_type)0xfff;
+    result -= (ld_state->base_address + part->rva + rel->offset) & ~(address_type)0xfff;
+    
+    if ((bottom_2_bits = result & 0x3000)) {
+        result &= ~bottom_2_bits;
+        bottom_2_bits >>= 12;
+    }
+    result >>= 9;
+    result |= bottom_2_bits << 29;
 
     bytearray_read_4_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
     field = ((field & ~(address_type)rel->howto->dst_mask)
