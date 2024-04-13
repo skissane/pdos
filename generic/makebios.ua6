@@ -1,0 +1,32 @@
+# Produces EFI executable.
+# We link with the library produced by makefile.ua6
+# And we use makefile.pa6 and makecomm.pa6
+# which are PE. Also makecomm.ea6 which is ELF
+
+# We need this executable to load below the 4 GiB mark.
+# So we use the image-base keyword on the link step
+
+CC=gcc
+AR=ar
+LD=pdld --no-insert-timestamp
+AS=as
+COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O0 -D__ARM__ \
+    -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__ \
+    -fno-common -ansi -I../pdpclib -I../bios -I../src \
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DGENSHELL -DNEED_ELF
+
+all: clean bios.exe
+
+OBJS=../bios/exeload.o
+
+bios.exe: bios.o $(OBJS)
+    $(LD) -s -subsystem 10 -e efimain -nostdlib --image-base 0x400000 -o bios.exe bios.o $(OBJS) ../pdpclib/pdpefi.a
+
+.c.o:
+    $(CC) $(COPTS) -o $@ $<
+
+.asm.o:
+    $(AS) -o $@ $<
+
+clean:
+    rm -f *.o bios.exe
