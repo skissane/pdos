@@ -1,0 +1,24 @@
+# This builds a 64-bit PDOS-generic PE executable for ARM
+
+CC=gcc
+COPTS=-S -O0 -fno-common -fno-builtin -DHAVE_DIR \
+    -D__PDOS386__ -D__PDOSGEN__ -D__USEBIVA__ \
+    -D__64BIT__ -fno-stack-protector --no-pie \
+    -I . -I../pdpclib -I../src
+
+all: clean pcomm.exe
+
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+  rm -f pcomm.exe
+  pdld -s -e __crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  as -o $@ $*.s
+  rm -f $*.s
+
+.asm.o:
+  as --defsym LINUX=0 --defsym ELF=1 --defsym STACKPARM=0 -o $@ $<
+
+clean:
+  rm -f pcomm.exe
