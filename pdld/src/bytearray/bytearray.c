@@ -61,7 +61,7 @@ void bytearray_read_4_bytes (unsigned long *value_p, const unsigned char *src, i
         int i;
 
         for (i = 0; i < 4; i++) {
-            *value_p |= src[i] << (CHAR_BIT * i);
+            *value_p |= (unsigned long)src[i] << (CHAR_BIT * i);
         }
     } else {
         int i;
