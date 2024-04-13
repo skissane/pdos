@@ -48,7 +48,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
 
     { 4, 1, 0, 0, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x1fffff },
-    { 2, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC", 0xfff },
+    { 4, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC", 0x3ffc00, 10 },
     { 2, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC", 0xfff },
     { 2, 0, 0, 1, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC", 0xffe },
     { 2, 0, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC", 0xffc },
@@ -136,6 +136,7 @@ static void reloc_aarch64_generic (struct section_part *part,
     }
     
     result >>= rel->howto->final_right_shift;
+    result <<= rel->howto->final_left_shift;
 
     switch (rel->howto->size) {
         case 8:

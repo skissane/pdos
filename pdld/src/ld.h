@@ -98,6 +98,7 @@ struct reloc_howto {
 
     const char *name;
     address_type dst_mask;
+    int final_left_shift;
 };
 
 enum {
