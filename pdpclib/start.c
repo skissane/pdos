@@ -1485,6 +1485,11 @@ void __exit(int status)
        so adding that too. It might be better to make this (1)
        until specific systems are identified as failing */
     /* ARM PE UEFI needs it too - biting the bullet and making it 1 */
+    /* 64-bit ARM UEFI was found to have a problem when longjmp wasn't
+       properly implemented and it was found to be that exit() was
+       defining __exit as a "noreturn" function and not generating
+       code that would allow a return. The "noreturn" was dropped for
+       this situation */
 #if 1 /* (defined(__64BIT__) && !defined(__WIN32__)) \
     || defined(__PDOS386__) */
     longjmp(jb, status);
