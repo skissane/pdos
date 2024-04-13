@@ -5240,6 +5240,11 @@ __PDPCLIB_API__ int fflush(FILE *stream)
         stream->bufStartR += actualWritten;
         stream->upto = stream->fbuf;
     }
+
+#ifdef __EFI__
+    /* ((EFI_FILE_PROTOCOL *)(stream->hfile))->Flush(stream->hfile); */
+#endif
+
 #endif
     return (0);
 }
