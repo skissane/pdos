@@ -397,13 +397,13 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     int x;
     int oldglobrc = globrc;
     jmp_buf oldjb;
+    static char *int_argv[MAXPARMS + 1];
 #if !defined(__EFI__) && !defined(__MACOS__)
     int argc;
     char **argv = int_argv;
 #else
     char *p;
 #endif
-    static char *int_argv[MAXPARMS + 1];
     int rc;
 #ifdef __AMIGA__
     struct Library *library;
