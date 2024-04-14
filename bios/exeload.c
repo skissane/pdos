@@ -814,6 +814,7 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
 #endif
 
 #if NEED_ELF
+#ifndef __64BIT__
 static int exeloadLoadELF(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc)
@@ -1631,6 +1632,648 @@ static int exeloadLoadELF(unsigned char **entry_point,
     }
     return (0);
 }
+#else /* ifndef __64BIT__ */
+static int exeloadLoadELF(unsigned char **entry_point,
+                          FILE *fp,
+                          unsigned char **loadloc)
+{
+    Elf64_Ehdr *elfHdr;
+    Elf64_Phdr *program_table = NULL;
+    Elf64_Phdr *segment;
+    Elf64_Shdr *section_table = NULL;
+    Elf64_Shdr *section;
+    unsigned char *elf_other_sections = NULL;
+    Elf64_Addr lowest_p_vaddr = 0;
+    Elf64_Word lowest_segment_align = 0;
+    unsigned char *exeStart;
+    void *orig_exeStart = NULL;
+    unsigned char *bss;
+    unsigned long exeLen;
+    unsigned char firstbit[4];
+    long newpos;
+    size_t readbytes;
+
+    if ((fseek(fp, 0, SEEK_SET) != 0)
+        || (fread(&firstbit, sizeof firstbit, 1, fp) != 1)
+        || (memcmp(&firstbit, "\x7f" "ELF", 4) != 0))
+    {
+        return (1);
+    }
+    {
+        int elf_invalid = 0;
+
+        /* Loads entire ELF header into memory. */
+        elfHdr = malloc(sizeof(Elf64_Ehdr));
+        if (elfHdr == NULL)
+        {
+            printf("Insufficient memory for ELF header\n");
+            return (2);
+        }
+        if ((fseek(fp, 0, SEEK_SET) != 0)
+            || (fread(elfHdr, sizeof(Elf64_Ehdr), 1, fp) != 1))
+        {
+            printf("Error occured while reading ELF header\n");
+            free(elfHdr);
+            return (2);
+        }
+
+        if (elfHdr->e_ident[EI_CLASS] != ELFCLASS64)
+        {
+            if (elfHdr->e_ident[EI_CLASS] == ELFCLASS32)
+            {
+                printf("32-bit ELF is not supported\n");
+            }
+            else if (elfHdr->e_ident[EI_CLASS] == ELFCLASSNONE)
+            {
+                printf("Invalid ELF class\n");
+            }
+            else
+            {
+                printf("Unknown ELF class: %u\n", elfHdr->e_ident[EI_CLASS]);
+            }
+            elf_invalid = 1;
+        }
+
+        if (elfHdr->e_ident[EI_DATA] != ELFDATA2LSB)
+        {
+            if (elfHdr->e_ident[EI_DATA] == ELFDATA2MSB)
+            {
+                printf("Big-endian ELF encoding is not supported\n");
+            }
+            else if (elfHdr->e_ident[EI_DATA] == ELFDATANONE)
+            {
+                printf("Invalid ELF data encoding\n");
+            }
+            else
+            {
+                printf("Unknown ELF data encoding: %u\n",
+                       elfHdr->e_ident[EI_DATA]);
+            }
+            elf_invalid = 1;
+        }
+
+        if (elfHdr->e_ident[EI_OSABI] != ELFOSABI_NONE
+            && elfHdr->e_ident[EI_OSABI] != ELFOSABI_ARM)
+        {
+            printf("Unsupported OS or ABI specific extensions for ELF\n");
+            elf_invalid = 1;
+        }
+        
+        /* Checks other parts of the header if the file can be loaded. */
+        if (elfHdr->e_type == ET_REL)
+        {
+            printf("ELF64 relocatable files are not supported\n");
+            elf_invalid = 1;
+        }
+        else if (elfHdr->e_type != ET_EXEC)
+        {
+            printf("Only ELF64 executable "
+                   "files are supported\n");
+            elf_invalid = 1;
+        }
+
+        if (elfHdr->e_machine != EM_AARCH64)
+        {
+            printf("Unsupported architecture %x\n", elfHdr->e_machine);
+            elf_invalid = 1;
+        }
+        
+        if (elfHdr->e_phoff == 0 || elfHdr->e_phnum == 0)
+        {
+            printf("Executable file is missing Program Header Table\n");
+            elf_invalid = 1;
+        }
+        if (elfHdr->e_phnum >= SHN_LORESERVE)
+        {
+            printf("Reserved indexes for e_phnum are not supported\n");
+            printf("e_phnum is %04x\n", elfHdr->e_phnum);
+            elf_invalid = 1;
+        }
+        if (elfHdr->e_phentsize != sizeof(Elf64_Phdr))
+        {
+            printf("Program Header Table entries have unsupported size\n");
+            printf("e_phentsize: %u supported size: %lu\n",
+                   elfHdr->e_phentsize, sizeof(Elf64_Phdr));
+            elf_invalid = 1;
+        }
+            
+        if (elf_invalid)
+        {
+            /* All problems with ELF header are reported
+             * and loading is stopped. */
+            printf("This ELF file cannot be loaded\n");
+            free(elfHdr);
+            return (2);
+        }
+        /* Loads Program Header Table if it is present. */
+        if (!(elfHdr->e_phoff == 0 || elfHdr->e_phnum == 0))
+        {
+            program_table = malloc(elfHdr->e_phnum * elfHdr->e_phentsize);
+            if (program_table == NULL)
+            {
+                printf("Insufficient memory for ELF Program Header Table\n");
+                free(elfHdr);
+                return (2);
+            }
+            if ((fseek(fp, elfHdr->e_phoff, SEEK_SET) != 0)
+                || (fread(program_table,
+                          elfHdr->e_phnum * elfHdr->e_phentsize,
+                          1,
+                          fp) != 1))
+            {
+                printf("Error occured while reading "
+                       "ELF Program Header Table\n");
+                free(elfHdr);
+                free(program_table);
+                return (2);
+            }
+        }
+        /* Loads Section Header Table if it is present. */
+        if (!(elfHdr->e_shoff == 0 || elfHdr->e_shnum == 0))
+        {
+            section_table = malloc(elfHdr->e_shnum * elfHdr->e_shentsize);
+            if (section_table == NULL)
+            {
+                printf("Insufficient memory for ELF Section Header Table\n");
+                free(elfHdr);
+                free(program_table);
+                return (2);
+            }
+            if ((fseek(fp, elfHdr->e_shoff, SEEK_SET) != 0)
+                || (fread(section_table,
+                          elfHdr->e_shnum * elfHdr->e_shentsize,
+                          1,
+                          fp) != 1))
+            {
+                printf("Error occured while reading "
+                       "ELF Section Header Table\n");
+                free(elfHdr);
+                free(program_table);
+                free(section_table);
+                return (2);
+            }
+        }
+    }
+
+    if (1)
+    {
+        /* Calculates how much memory is needed
+         * and allocates memory for sections used only for loading. */
+        unsigned long otherLen = 0;
+
+        exeLen = 0;
+        {
+            Elf64_Addr highest_p_vaddr = 0;
+            Elf64_Word highest_segment_memsz = 0;
+
+            for (segment = program_table;
+                 segment < program_table + elfHdr->e_phnum;
+                 segment++)
+            {
+                if (segment->p_type == PT_LOAD)
+                {
+                    if (!lowest_p_vaddr || lowest_p_vaddr > segment->p_vaddr)
+                    {
+                        lowest_p_vaddr = segment->p_vaddr;
+                        lowest_segment_align = segment->p_align;
+                    }
+                    if (highest_p_vaddr < segment->p_vaddr)
+                    {
+                        highest_p_vaddr = segment->p_vaddr;
+                        highest_segment_memsz = segment->p_memsz;
+                    }
+                }
+            }
+            exeLen = highest_p_vaddr - lowest_p_vaddr + highest_segment_memsz;
+            if (lowest_segment_align > 1)
+            {
+                /* Ensures alignment of the lowest segment.
+                 * 0 and 1 mean no alignment restrictions. */
+                exeLen += lowest_segment_align;
+            }
+        }
+        if (section_table)
+        {
+            for (section = section_table;
+                 section < section_table + elfHdr->e_shnum;
+                 section++)
+            {
+                unsigned long section_size = section->sh_size;
+                if (section->sh_addralign > 1)
+                {
+                    /* Some sections must be aligned
+                     * on sh_addralign byte boundaries.
+                     * 0 and 1 mean no alignment restrictions. */
+                    section_size += section->sh_addralign;
+                }
+                if ((section->sh_flags & SHF_ALLOC)
+                    && (section->sh_type != SHT_RELA)
+                    && (section->sh_type != SHT_REL))
+                {
+                    /* Section is needed while the program is running,
+                     * but if we are loading an executable file,
+                     * the memory is already counted
+                     * using Program Header Table. */
+                    continue;
+                }
+                else
+                {
+                    /* Section is used only for loading. */
+                   otherLen += section_size;
+                }
+            }
+            elf_other_sections = malloc(otherLen);
+            if (elf_other_sections == NULL)
+            {
+                printf("Insufficient memory to load ELF sections\n");
+                free(elfHdr);
+                free(program_table);
+                free(section_table);
+                return (2);
+            }
+        }
+    }
+    /* Allocates memory for the process. */
+    if (*loadloc != NULL)
+    {
+        orig_exeStart = *loadloc;
+    }
+    else
+    {
+        orig_exeStart = malloc(exeLen);
+    }
+    exeStart = orig_exeStart;
+    if (exeStart == NULL)
+    {
+        printf("Insufficient memory to load ELF program\n");
+        free(elfHdr);
+        free(program_table);
+        free(section_table);
+        free(elf_other_sections);
+        return (2);
+    }
+
+    if (1)
+    {
+        /* Loads all sections of ELF file with proper alignment,
+         * clears all SHT_NOBITS sections and stores the addresses
+         * in sh_addr of each section.
+         * bss is set now too. */
+        unsigned char *exe_addr = exeStart;
+        unsigned char *other_addr = elf_other_sections;
+
+        bss = NULL;
+        {
+            /* Aligns the exeStart on lowest segment alignment boundary. */
+            if (lowest_segment_align) {
+                exeStart = (void *)((((Elf64_Addr)exeStart) / lowest_segment_align
+                                     + !!(((Elf64_Addr)exeStart) % lowest_segment_align))
+                                    * lowest_segment_align);
+            }
+            
+            /* +++Enable aligning. */
+            for (segment = program_table;
+                 segment < program_table + elfHdr->e_phnum;
+                 segment++)
+            {
+                if (segment->p_type == PT_LOAD)
+                {
+                    exe_addr = exeStart + (segment->p_vaddr - lowest_p_vaddr);
+
+                    if ((fseek(fp, segment->p_offset, SEEK_SET) != 0)
+                        || (fread(exe_addr,
+                                  segment->p_filesz,
+                                  1,
+                                  fp) != 1))
+                    {
+                        printf("Error occured while reading ELF segment\n");
+                        free(elfHdr);
+                        free(program_table);
+                        free(section_table);
+                        free(elf_other_sections);
+                        return (2);
+                    }
+
+                    /* Bytes that are not present in file,
+                     * but must be present in memory must be set to 0. */
+                    if (segment->p_filesz < segment->p_memsz)
+                    {
+                        bss = exe_addr + (segment->p_filesz);
+                        memset(bss, '\0',
+                               segment->p_memsz - segment->p_filesz);
+                    }
+                }
+            }
+        }
+
+        for (section = section_table;
+             section < section_table + elfHdr->e_shnum;
+             section++)
+        {
+            if ((section->sh_flags & SHF_ALLOC)
+                && (section->sh_type != SHT_RELA)
+                && (section->sh_type != SHT_REL))
+            {
+                /* If we are loading executable file,
+                 * SHF_ALLOC sections are already loaded in segments. */
+                continue;
+            }
+            else
+            {
+                if (section->sh_addralign > 1)
+                {
+                    other_addr = (void *)((((Elf64_Addr)other_addr
+                                            / (section->sh_addralign)) + 1)
+                                          * (section->sh_addralign));
+                }
+                if (section->sh_type != SHT_NOBITS)
+                {
+                    if (section->sh_size != 0)
+                    {
+                        if ((fseek(fp, section->sh_offset, SEEK_SET) != 0)
+                            || (fread(other_addr,
+                                      section->sh_size,
+                                      1,
+                                      fp) != 1))
+                        {
+                            printf("Error occured while reading ELF section\n");
+                            free(elfHdr);
+                            free(program_table);
+                            free(section_table);
+                            free(elf_other_sections);
+                            return (2);
+                        }
+                    }
+                }
+                else
+                {
+                    /* All SHT_NOBITS should be cleared to 0. */
+                    memset(other_addr, '\0', section->sh_size);
+                }
+                /* sh_addr is 0 in relocatable files,
+                 * so we can use it to store the real address. */
+                section->sh_addr = (Elf64_Addr)other_addr;
+                other_addr += section->sh_size;
+            }
+        }
+    }
+    /* Program was successfully loaded from the file,
+     * no more errors can occur. */
+
+    /* Relocations. */
+    {
+        for (section = section_table;
+             section < section_table + elfHdr->e_shnum;
+             section++)
+        {
+            if (section->sh_type == SHT_RELA)
+            {
+                /* sh_link specifies the symbol table
+                 * and sh_info section being modified. */
+                Elf64_Sym *sym_table;
+                Elf64_Rela *startrel = (Elf64_Rela *)section->sh_addr;
+                Elf64_Rela *currel;
+
+                if (section->sh_entsize != sizeof(Elf64_Rela))
+                {
+                    printf("Invalid size of relocation entries in ELF file\n");
+                    continue;
+                }
+
+                if (section->sh_link == 0) {
+                    sym_table = NULL;
+                } else {
+                    sym_table = (Elf64_Sym *)(section_table
+                                              + (section->sh_link))->sh_addr;
+                }
+
+                /* I doubt that it is correct to be accessing the symbol
+                   table in order to do relocations - as you should be
+                   free to strip that */
+                for (currel = startrel;
+                     currel < (startrel
+                               + ((section->sh_size) / (section->sh_entsize)));
+                     currel++)
+                {
+                    /* For executable files, r_offset contains virtual address
+                     * of the field to which relocation should be applied,
+                     * so just subtracting the executable base address
+                     * (lowest_p_vaddr) is enough.
+                     */
+                    long *target = (long *)(exeStart
+                                            + (currel->r_offset
+                                               - lowest_p_vaddr));
+                    
+                    Elf64_Addr sym_value = 0;
+
+                    if (sym_table) {
+                        Elf64_Sym *symbol;
+                        
+                        symbol = sym_table + ELF64_R_SYM(currel->r_info);
+
+                        if (ELF64_R_SYM(currel->r_info) != STN_UNDEF)
+                        {
+                            if (symbol->st_shndx == SHN_ABS)
+                            {
+                                /* Absolute symbol, stores absolute value. */
+                                sym_value = symbol->st_value;
+                            }
+                            else if (symbol->st_shndx == SHN_UNDEF)
+                            {
+                                /* Dynamic linker should fill this symbol. */
+                                printf("Undefined symbol in ELF file\n");
+                                continue;
+                            }
+                            else if (symbol->st_shndx == SHN_XINDEX)
+                            {
+                                printf("Unsupported value in ELF symbol\n");
+                                printf("symbol->st_shndx: %x\n", symbol->st_shndx);
+                                continue;
+                            }
+                            else
+                            {
+                                /* Internal symbol. Must be converted
+                                 * to absolute symbol.*/
+                                sym_value = symbol->st_value;
+                                /* Adjusts the symbol value for new base address. */
+                                sym_value -= lowest_p_vaddr;
+                                sym_value += (Elf64_Addr)exeStart;
+                            }
+                        }
+                    }
+
+                    if (elfHdr->e_machine == EM_AARCH64) {
+                        switch (ELF64_R_TYPE(currel->r_info))
+                        {
+                            case R_AARCH64_NONE:
+                                break;
+                            case R_AARCH64_ABS64:
+#if 0
+                                /* Symbol value + addend.
+                                 * But the addend is lost
+                                 * because it is stored in the field
+                                 * and the field is overwritten...
+                                 */
+                                if (sym_table)
+                                {
+                                    *target = sym_value;
+                                }
+                                /* Without symbol table,
+                                 * the below way is the only option.
+                                 */
+                                else 
+#endif
+                                /* So instead adjust the field
+                                 * directly for the new base address
+                                 * to preserve the addend
+                                 * (and make symbol table unnecessary).
+                                 * This assumes the linker does not output
+                                 * relocations with absolute symbols.
+                                 */
+                                {
+                                    *target -= lowest_p_vaddr;
+                                    *target += (Elf64_Addr)exeStart;
+                                }
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
+                    }
+                }
+            }
+            else if (section->sh_type == SHT_REL)
+            {
+                /* sh_link specifies the symbol table
+                 * and sh_info section being modified. */
+                Elf64_Sym *sym_table;
+                Elf64_Rel *startrel = (Elf64_Rel *)section->sh_addr;
+                Elf64_Rel *currel;
+
+                if (section->sh_entsize != sizeof(Elf64_Rel))
+                {
+                    printf("Invalid size of relocation entries in ELF file\n");
+                    continue;
+                }
+
+                if (section->sh_link == 0) {
+                    sym_table = NULL;
+                } else {
+                    sym_table = (Elf64_Sym *)(section_table
+                                              + (section->sh_link))->sh_addr;
+                }
+
+                /* I doubt that it is correct to be accessing the symbol
+                   table in order to do relocations - as you should be
+                   free to strip that */
+                for (currel = startrel;
+                     currel < (startrel
+                               + ((section->sh_size) / (section->sh_entsize)));
+                     currel++)
+                {
+                    /* For executable files, r_offset contains virtual address
+                     * of the field to which relocation should be applied,
+                     * so just subtracting the executable base address
+                     * (lowest_p_vaddr) is enough.
+                     */
+                    long *target = (long *)(exeStart
+                                            + (currel->r_offset
+                                               - lowest_p_vaddr));
+                    
+                    Elf64_Addr sym_value = 0;
+
+                    if (sym_table) {
+                        Elf64_Sym *symbol;
+                        
+                        symbol = sym_table + ELF64_R_SYM(currel->r_info);
+
+                        if (ELF64_R_SYM(currel->r_info) != STN_UNDEF)
+                        {
+                            if (symbol->st_shndx == SHN_ABS)
+                            {
+                                /* Absolute symbol, stores absolute value. */
+                                sym_value = symbol->st_value;
+                            }
+                            else if (symbol->st_shndx == SHN_UNDEF)
+                            {
+                                /* Dynamic linker should fill this symbol. */
+                                printf("Undefined symbol in ELF file\n");
+                                continue;
+                            }
+                            else if (symbol->st_shndx == SHN_XINDEX)
+                            {
+                                printf("Unsupported value in ELF symbol\n");
+                                printf("symbol->st_shndx: %x\n", symbol->st_shndx);
+                                continue;
+                            }
+                            else
+                            {
+                                /* Internal symbol. Must be converted
+                                 * to absolute symbol.*/
+                                sym_value = symbol->st_value;
+                                /* Adjusts the symbol value for new base address. */
+                                sym_value -= lowest_p_vaddr;
+                                sym_value += (Elf64_Addr)exeStart;
+                            }
+                        }
+                    }
+
+                    if (elfHdr->e_machine == EM_AARCH64) {
+                        switch (ELF64_R_TYPE(currel->r_info))
+                        {
+                            case R_AARCH64_NONE:
+                                break;
+                            case R_AARCH64_ABS64:
+#if 0
+                                /* Symbol value + addend.
+                                 * But the addend is lost
+                                 * because it is stored in the field
+                                 * and the field is overwritten...
+                                 */
+                                if (sym_table)
+                                {
+                                    *target = sym_value;
+                                }
+                                /* Without symbol table,
+                                 * the below way is the only option.
+                                 */
+                                else 
+#endif
+                                /* So instead adjust the field
+                                 * directly for the new base address
+                                 * to preserve the addend
+                                 * (and make symbol table unnecessary).
+                                 * This assumes the linker does not output
+                                 * relocations with absolute symbols.
+                                 */
+                                {
+                                    *target -= lowest_p_vaddr;
+                                    *target += (Elf64_Addr)exeStart;
+                                }
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
+                    }
+                }
+            }
+        }
+    }
+        
+    *entry_point = exeStart + (elfHdr->e_entry - lowest_p_vaddr);
+
+    /* Frees memory not needed by the process. */
+    free(elfHdr);
+    free(program_table);
+    free(section_table);
+    free(elf_other_sections);
+
+    if (*loadloc == NULL)
+    {
+        *loadloc = orig_exeStart;
+    }
+    return (0);
+}
+#endif /* ifndef __64BIT__ */
 #endif
 
 #if NEED_MZ
