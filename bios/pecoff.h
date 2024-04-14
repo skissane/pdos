@@ -50,6 +50,7 @@ typedef struct {
 #define IMAGE_FILE_MACHINE_I386 0x14c
 #define IMAGE_FILE_MACHINE_ARM 0x1c0
 #define IMAGE_FILE_MACHINE_THUMB 0x1c2
+#define IMAGE_FILE_MACHINE_ARM64 0xaa64
 
 /* Characteristics flags. */
 #define IMAGE_FILE_RELOCS_STRIPPED         0x0001

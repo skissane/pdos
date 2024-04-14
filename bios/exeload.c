@@ -1842,9 +1842,10 @@ static int exeloadLoadPE(unsigned char **entry_point,
         return (2);
     }
 #if TARGET_64BIT
-    if (coff_hdr.Machine != IMAGE_FILE_MACHINE_AMD64)
+    if ((coff_hdr.Machine != IMAGE_FILE_MACHINE_AMD64)
+        && (coff_hdr.Machine != IMAGE_FILE_MACHINE_ARM64))
     {
-        printf("only 64-bit PE programs are supported\n");
+        printf("only certain 64-bit PE programs are supported\n");
         return (2);
     }
 #else
