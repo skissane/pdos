@@ -1,12 +1,12 @@
-# Produces Linux x64 executable for ARM
+# Produces Linux 64-bit executable for ARM
 # You should have build pdpclib with makefile.a64 first
 
 CC=gcc
 CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
-    -fno-stack-protector \
-    -D__NOBIVA__ -DUSE_MEMMGR -DNEED_ELF \
-    -DNO_DLLENTRY -DGENSHELL -D__ARM__ \
-    -D__64BIT__ -DHAVE_DIR -DLINDIR
+    -fno-stack-protector --no-pie -fno-common \
+    -D__USEBIVA__ -DNEED_ELF \
+    -DNO_DLLENTRY -DGENSHELL -D__ARM__ -D__LONG64__ \
+    -D__64BIT__ -DHAVE_DIR -DLINDIR -DNEED_MZ -DTARGET_64BIT
 LD=ld
 LDFLAGS=
 AS=as
@@ -16,7 +16,7 @@ COPTS=-S $(CFLAGS) -ansi -I../bios -I../pdpclib -I../src
 all: clean bios
 
 bios: bios.o ../bios/exeload.o
-  $(LD) -s -nostdlib -e __start -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../pdpclib/pdplinux.a
+  $(CC) -s -static -nostdlib -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../pdpclib/pdplinux.a
 
 .c.o:
     $(CC) $(COPTS) -I../bios -o $*.s $<
