@@ -1823,6 +1823,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
     Coff_hdr coff_hdr;
     Pe32_optional_hdr *optional_hdr;
     Coff_section *section_table, *section;
+    unsigned char *orig_exeStart;
     unsigned char *exeStart;
     int ret;
 
@@ -1923,12 +1924,13 @@ static int exeloadLoadPE(unsigned char **entry_point,
      * Size of image is obtained from the optional header. */
     if (*loadloc != NULL)
     {
-        exeStart = *loadloc;
+        orig_exeStart = *loadloc;
     }
     else
     {
-        exeStart = malloc(optional_hdr->SizeOfImage);
+        orig_exeStart = malloc(optional_hdr->SizeOfImage + 0x1000);
     }
+    exeStart = orig_exeStart;
     if (exeStart == NULL)
     {
         printf("Insufficient memory to load PE program\n");
@@ -1936,6 +1938,9 @@ static int exeloadLoadPE(unsigned char **entry_point,
         free(optional_hdr);
         return (2);
     }
+
+    exeStart = (void *)((((unsigned long)orig_exeStart + 0x1000)
+                       / 0x1000) * 0x1000);
 
     /* Loads all sections at their addresses. */
     for (section = section_table;
@@ -3534,7 +3539,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
     free(optional_hdr);
     if (*loadloc == NULL)
     {
-        *loadloc = exeStart;
+        *loadloc = orig_exeStart;
     }
     return (0);
 }
