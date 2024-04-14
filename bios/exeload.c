@@ -860,8 +860,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
             return (2);
         }
 
-        /* Checks e_ident if the program can be used on PDOS-32. */
-        if (elfHdr->e_ident[EI_CLASS] != ELFCLASS32)
+        /* Checks e_ident if the program can be used on PDOS-32
+           or other supported platform. */
+        if (elfHdr->e_ident[EI_CLASS] == ELFCLASS64)
+        {
+            /* allow through */
+        }
+        else if (elfHdr->e_ident[EI_CLASS] != ELFCLASS32)
         {
             if (elfHdr->e_ident[EI_CLASS] == ELFCLASS64)
             {
@@ -926,9 +931,10 @@ static int exeloadLoadELF(unsigned char **entry_point,
         }
 
         if (elfHdr->e_machine != EM_386
-            && elfHdr->e_machine != EM_ARM)
+            && elfHdr->e_machine != EM_ARM
+            && elfHdr->e_machine != EM_AARCH64)
         {
-            printf("Only Intel 386 and ARM 32-bit architecture is supported\n");
+            printf("Unsupported architecture %x\n", elfHdr->e_machine);
             elf_invalid = 1;
         }
         
