@@ -2136,7 +2136,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
                                 }
                                 break;
                             default:
-                                printf("Unknown relocation type in ELF file\n");
+                                printf("Unknown relocation type %x in ELF file\n",
+                                       (unsigned int)ELF64_R_TYPE(currel->r_info));
                         }
                     }
                 }
