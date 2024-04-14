@@ -1,5 +1,5 @@
 # This is the makefile for Linux to build pdpclib using
-# the gcc compiler.
+# the gcc compiler for 64-bit ARM.
 #
 
 CC=gcc
