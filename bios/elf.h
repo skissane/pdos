@@ -77,6 +77,7 @@ typedef struct {
 #define EM_386 3 /* Intel 80386. */
 #define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
+#define EM_AARCH64 183 /* ARM64 */
 
 typedef struct {
     Elf32_Word p_type;
