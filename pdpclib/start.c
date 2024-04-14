@@ -399,9 +399,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     jmp_buf oldjb;
 #if !defined(__EFI__) && !defined(__MACOS__)
     int argc;
-    static char *int_argv[MAXPARMS + 1];
     char **argv = int_argv;
+#else
+    char *p;
 #endif
+    static char *int_argv[MAXPARMS + 1];
     int rc;
 #ifdef __AMIGA__
     struct Library *library;
@@ -1170,6 +1172,30 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
 #endif
 
+#if defined(__EFI__)
+    if (__runnum != 1)
+    {
+        /* we are expecting PDOS-generic format here
+           rather than EFI */
+        /* Note that we shouldn't be extracting the pointer from argc
+           like this. We can use a global variable or standardize on
+           the interface to start */
+        argv = int_argv;
+        p = (char *)argc;
+        argv[0] = p;
+        p = strchr(p, ' ');
+        if (p == NULL)
+        {
+            p = "";
+        }
+        else
+        {
+            *p = '\0';
+            p++;
+        }
+    }
+#endif
+
 #if defined(__OS2__) && !defined(__16BIT__)
     reqFH = 0;
     DosSetRelMaxFH(&reqFH, &maxFH);
@@ -1324,9 +1350,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 #endif
-#if !defined(__EFI__) && !defined(__MACOS__)
+#if !defined(__MACOS__)
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__) || defined(__EFI__)
     if (__runnum > 1)
     {
 #endif
@@ -1370,7 +1396,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         argc = x;
     }
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__) || defined(__EFI__)
     }
 #endif
 
