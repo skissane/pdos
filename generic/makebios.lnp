@@ -15,7 +15,7 @@ COPTS=-S $(CFLAGS) -ansi -I../bios -I../pdpclib -I../src
 all: clean bios
 
 bios: bios.o ../bios/exeload.o ../src/doscalls.o
-  $(LD) -s -nostdlib -e __start -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../src/doscalls.o ../pdpclib/pdplinux.a
+  $(LD) $(LDFLAGS) -s -nostdlib -e __start -o bios.exe ../pdpclib/linstart.o bios.o ../bios/exeload.o ../src/doscalls.o ../pdpclib/pdplinux.a
 
 .c.o:
     $(CC) $(COPTS) -I../bios -o $*.s $<
