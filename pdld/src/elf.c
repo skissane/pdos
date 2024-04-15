@@ -84,6 +84,11 @@ static size_t section_get_num_relocs (struct section *section)
                     || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
                     num_relocs++;
                 }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    num_relocs++;
+                }
             }
         }
     }
@@ -142,6 +147,65 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
             rel->r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset;
             /* Symbol table is not yet supported. */
             rel->r_info = ELF32_R_INFO (0, type);
+            rel++;
+        }
+    }
+
+    if (rel == (void *)pos) return saved_pos;
+
+    shdr_p->sh_type = SHT_REL;
+    shdr_p->sh_flags = 0;
+    shdr_p->sh_addr = 0;
+    shdr_p->sh_offset = pos - file;
+    shdr_p->sh_size = (unsigned char *)rel - pos;
+    shdr_p->sh_link = 0; /* No symbol table exists. */
+    shdr_p->sh_info = section->target_index;
+    shdr_p->sh_addralign = RELOC_SECTION_ALIGNMENT;
+    shdr_p->sh_entsize = sizeof *rel;
+    
+    return (unsigned char *)rel;
+}
+
+static unsigned char *write_relocs_for_section64 (unsigned char *file,
+                                                  unsigned char *pos,
+                                                  struct section *section,
+                                                  Elf64_Shdr *shdr_p)
+{
+    struct section_part *part;
+    Elf64_Rel *rel;
+    unsigned char *saved_pos = pos;
+
+    pos = file + ALIGN (pos - file, RELOC_SECTION_ALIGNMENT);
+    rel = (void *)pos;
+
+    for (part = section->first_part; part; part = part->next) {
+        size_t i;
+        
+        for (i = 0; i < part->relocation_count; i++) {
+            Elf64_Xword type;
+            
+            if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]) {
+                    type = R_AARCH64_ABS64;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    type = R_AARCH64_ABS32;
+                } else {
+                    /* Other relocation types are not used by the loader anyway,
+                     * so currently there is no need to emit them.
+                     */
+                    continue;
+                }
+            } else {
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocations for target %i not supported yet",
+                                             ld_state->target_machine);
+            }
+
+            rel->r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset;
+            /* Symbol table is not yet supported. */
+            rel->r_info = ELF64_R_INFO ((Elf64_Xword)0, type);
             rel++;
         }
     }
@@ -280,16 +344,15 @@ static unsigned char *write_sections64 (unsigned char *file, Elf64_Ehdr *ehdr_p)
             shdr_p->sh_size = phdr_p->p_memsz;
             shdr_p->sh_addralign = phdr_p->p_align;
             shdr_p++;
-#if 0 /* Disabled for now. */
+
             if (ld_state->emit_relocs) {
                 unsigned char *saved_pos = pos;
 
-                pos = write_relocs_for_section (file, pos, section, shdr_p);
+                pos = write_relocs_for_section64 (file, pos, section, shdr_p);
                 if (pos != saved_pos) {
                     shdr_p++;
                 }
             }
-#endif
         }
 
         phdr_p++;
@@ -649,11 +712,6 @@ static void elf64_write (const char *filename)
 
     /* Relocations exist only in sections. */
     if (ld_state->emit_relocs) generate_section_headers = 1;
-
-    if (ld_state->emit_relocs) {
-        ld_internal_error_at_source (__FILE__, __LINE__,
-                                     "+++--emit-relocs is not yet supported for ELF 64");
-    }
 
     memset (&ehdr, 0, sizeof (ehdr));
     
