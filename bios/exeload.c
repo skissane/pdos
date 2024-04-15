@@ -2137,6 +2137,10 @@ static int exeloadLoadELF(unsigned char **entry_point,
                                     *target += (Elf64_Addr)exeStart;
                                 }
                                 break;
+                            case R_AARCH64_PREL32:
+                            case R_AARCH64_ADR_PREL_PG_HI21:
+                            case R_AARCH64_ADD_ABS_LO12_NC:
+                                break;
                             default:
                                 printf("Unknown relocation type %x in ELF file\n",
                                        (unsigned int)ELF64_R_TYPE(currel->r_info));
