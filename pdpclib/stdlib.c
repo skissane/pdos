@@ -257,6 +257,17 @@ static int ifree(void *ptr, size_t size)
 
 
 
+/* note that Win64 (probably officially Win32 too) requires
+   GlobalAlloc to be followed up by VirtualAlloc then
+   VirtualProtect to set PAGE_EXECUTE_READWRITE (0x40) if
+   you want to use this as a pseudo-bios, but
+   we are not currently doing that so it currently doesn't work */
+/* actually I am currently dependent on msvcrt malloc - so it
+   is that that isn't granting execute permission on win64,
+   but I think is on win32. So it would need to be updated here,
+   statically linked (or use pdpcrt) or switch to using
+   PDOS/x64 - possibly under qemu */
+
 __PDPCLIB_API__ void *malloc(size_t size)
 {
 #ifdef __AMIGA__
