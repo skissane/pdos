@@ -1,7 +1,7 @@
 # This builds EFI executables for x86_64 using cc64
 
 CC=cc64
-AR=ar
+AR=xar
 LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -D__CC64__ -D__CC64OS__
