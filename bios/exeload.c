@@ -933,7 +933,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
 
         if (elfHdr->e_machine != EM_386
             && elfHdr->e_machine != EM_ARM
-            && elfHdr->e_machine != EM_AARCH64)
+            && elfHdr->e_machine != EM_AARCH64
+            && elfHdr->e_machine != EM_X86_64)
         {
             printf("Unsupported architecture %x\n", elfHdr->e_machine);
             elf_invalid = 1;
@@ -1732,7 +1733,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
             elf_invalid = 1;
         }
 
-        if (elfHdr->e_machine != EM_AARCH64)
+        if ((elfHdr->e_machine != EM_AARCH64)
+            && (elfHdr->e_machine != EM_X86_64))
         {
             printf("Unsupported architecture %x\n", elfHdr->e_machine);
             elf_invalid = 1;
