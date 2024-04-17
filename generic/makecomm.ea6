@@ -6,11 +6,14 @@ COPTS=-S -O0 -fno-common -fno-builtin -DHAVE_DIR \
     -D__64BIT__ -fno-stack-protector --no-pie \
     -I . -I../pdpclib -I../src
 
+LD=ld
+#LD=pdld --oformat elf
+
 all: clean pcomm.exe
 
 pcomm.exe: ../pdpclib/pgastart.o pcomm.o
   rm -f pcomm.exe
-  ld --emit-relocs -s -e __crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  $(LD) --emit-relocs -s -e __crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
