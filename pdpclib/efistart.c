@@ -813,6 +813,16 @@ to allow KVM to have the necessary processors
 
 (it won't start without doing that)
 
+Although it seems that is only required if you build qemu
+yourself. If you do a pamac install of qemu - and aarch64
+seems to be the only "system" that can be installed - it
+seems that it must have that cpu manipulation built-in.
+You still need to copy the edk2 file the qemu source or
+build though, as that doesn't seem to be installed
+automatically via pamac, presumably because they're not
+catering for people who want to run PE executables.
+
+
 And then:
 
 ~/bin/qemu-system-aarch64 -enable-kvm \
