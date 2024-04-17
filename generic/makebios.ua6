@@ -1,7 +1,7 @@
 # Produces EFI executable.
 # We link with the library produced by makefile.ua6
 # And we use makefile.pa6 and makecomm.pa6
-# which are PE. Also makecomm.ea6 which is ELF
+# which are PE. Also makecomm.a64 (ELF) works
 
 # We need this executable to load below the 4 GiB mark.
 # So we use the image-base keyword on the link step
