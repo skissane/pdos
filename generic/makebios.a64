@@ -1,5 +1,5 @@
 # Produces Linux 64-bit executable for ARM
-# You should have build pdpclib with makefile.a64 first
+# You should have built pdpclib with makefile.a64 first
 
 CC=gcc
 CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
