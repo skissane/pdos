@@ -1,10 +1,14 @@
 # This builds EFI executables for the 80386
 
+# We need to disable the use of the non-C90 "long long"
+# I think because the infrastructure (PDPCLIB) doesn't
+# support it, but I haven't investigated
+
 CC=gccwin
 AR=arwin
 LD=ldwin
 AS=aswin
-COPTS=-S -O2 -D__EFI__ -U__WIN32__ -I. -fno-common -ansi
+COPTS=-D__NO_LONG_LONG__ -S -O2 -D__EFI__ -U__WIN32__ -I. -fno-common -ansi
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
