@@ -1,10 +1,10 @@
 # This builds EFI executables for the 80386
 
 CC=gccwin
-AR=ar
+AR=xar
 LD=pdld
 AS=pdas
-COPTS=-S -O2 -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -fno-common -ansi
+COPTS=-D__NO_LONG_LONG__ -S -O2 -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -fno-common -ansi
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
@@ -13,6 +13,7 @@ OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
 $(TARGET): clean pdptest.o $(OBJS)
   rm -f pdpefi.a
   $(AR) r pdpefi.a $(OBJS)
+  $(AR) s pdpefi.a
   $(LD) -s -subsystem 10 -e _efimain -nostdlib -o $(TARGET) pdptest.o $(OBJS)
 
 .c.o:
