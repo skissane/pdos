@@ -9,7 +9,7 @@ LD=ldwin
 LDFLAGS=
 AS=aswin
 AR=arwin
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -U__WIN32__ -D__EFI__ -D__EFIBIOS__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT
+COPTS=-D__NO_LONG_LONG__ -S $(CFLAGS) -fpack-struct -ansi -I../pdpclib -U__WIN32__ -D__EFI__ -D__EFIBIOS__ -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT
 
 all: clean bios.exe
 
