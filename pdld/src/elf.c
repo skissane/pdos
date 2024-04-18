@@ -724,7 +724,11 @@ static void elf64_write (const char *filename)
     ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 
     ehdr.e_type = ET_EXEC;
-    ehdr.e_machine = EM_X86_64;
+    switch (ld_state->target_machine) {
+        case LD_TARGET_MACHINE_X64: ehdr.e_machine = EM_X86_64; break;
+        case LD_TARGET_MACHINE_AARCH64: ehdr.e_machine = EM_AARCH64; break;
+        default: ehdr.e_machine = EM_NONE; break;
+    }
     ehdr.e_version = EV_CURRENT;
     ehdr.e_entry = ld_state->entry_point + ld_state->base_address;
     ehdr.e_ehsize = sizeof (ehdr);
