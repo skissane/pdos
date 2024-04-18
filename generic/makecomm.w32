@@ -2,7 +2,7 @@
 # No need to build a library, this is self-contained
 
 # The executable can be run under the BIOS built
-# with either makebios.w32 or makebios.lnp
+# with makebios.w32, makebios.lnp or makebios.efi
 
 # The executable is in a.out format
 
