@@ -1,5 +1,5 @@
 # Produces Linux executable
-# You should have build pdpclib with makefile.lnp first
+# You should have built pdpclib with makefile.lnp first
 
 CC=gccwin -U__WIN32__
 CFLAGS=-O2 -D__gnu_linux__ -D__NOBIVA__ -DNEED_AOUT \
