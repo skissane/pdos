@@ -1,7 +1,7 @@
 # Produces EFI executable.
 # We link with the library produced by makefile.ne6
 # And we use makefile.p64 and makecomm.p64
-# which are PE
+# which are PE. Or makecomm.c64
 
 # We need this executable to load below the 4 GiB mark.
 # So we use the image-base keyword on the link step
