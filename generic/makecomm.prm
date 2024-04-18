@@ -1,4 +1,5 @@
 # This builds a PDOS-generic executable for ARM
+# Using the UEFI calling convention
 
 CC=gccprm
 CFLAGS=-O0
