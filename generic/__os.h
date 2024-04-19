@@ -188,6 +188,8 @@ typedef struct {
     long (*Xatol)(const char *nptr);
     time_t (*Xmktime)(struct tm *timeptr);
     int (*Xvprintf)(const char *format, va_list arg);
+    int (*Xferror)(FILE *stream);
+    int (*Xputc)(int c, FILE *stream);
 } OS;
 
 extern OS *__os;

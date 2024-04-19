@@ -168,7 +168,7 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   sin, cos, tan, floor, asin, acos, atan, sinh, cosh, tanh,
   rand, srand, strftime, puts,
   pow, modf, log, log10, atan2, fabs, exp, sqrt,
-  strtok, atol, mktime, vprintf,
+  strtok, atol, mktime, vprintf, ferror, putc,
 };
 
 static int (*genstart)(OS *bios);
