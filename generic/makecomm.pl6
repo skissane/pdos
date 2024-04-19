@@ -3,7 +3,7 @@
 # No need to build a library, this is self-contained
 
 CC=gccw64_l64
-COPTS=-S -D__LONG64__ -D__USEBIVA__ -D__64BIT__ \
+COPTS=-S -O2 -D__LONG64__ -D__USEBIVA__ -D__64BIT__ \
     -D__PDOS386__ -DHAVE_DIR -D__PDOSGEN__ -DNEED_EXIT \
     -I. -I../pdpclib -I../src -fno-builtin -fno-common
 AS=pdas --64 --oformat coff
