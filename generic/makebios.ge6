@@ -1,0 +1,35 @@
+# Produces EFI executable.
+# We link with the library produced by makefile.ge6
+# And we use makecomm.pl6
+# which is PE with 64-bit long
+
+# We need this executable to load below the 2 GiB mark
+# due to code generation of gccw64 which should be changed one day.
+# So we use the image-base keyword on the link step
+
+CC=gccw64_l64
+AR=xar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+COPTS=-S -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
+    -I../pdpclib -I../bios -I. -DNEED_ELF -D__LONG64__ \
+    -D__W64SHELL__ \
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -D__USEBIVA__
+
+all: clean bios.exe
+
+OBJS=../bios/exeload.obj
+
+bios.exe: bios.obj $(OBJS)
+    $(LD) -s -subsystem 10 -e efimain -nostdlib --image-base 0x400000 -o bios.exe bios.obj $(OBJS) ../pdpclib/pdpefi.lib
+
+.c.obj:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+.asm.obj:
+    $(AS) -o $@ $<
+
+clean:
+    rm -f *.obj bios.exe
