@@ -1,5 +1,10 @@
 # This builds EFI executables for x86_64 using gccw64_l64
 
+# Be aware that if you don't use optimization, and you do a
+# large calloc, e.g. 500k, qemu-system-x86_64 8.2.2 on ARM64
+# takes a very long time - or possibly an infinite loop -
+# possibly due to a bug in the default accelerator.
+
 CC=gccw64_l64 -D__LONG64__
 AR=xar
 LD=pdld --no-insert-timestamp
