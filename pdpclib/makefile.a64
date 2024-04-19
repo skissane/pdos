@@ -3,7 +3,9 @@
 #
 
 CC=gcc
-COPTS=-c -O2 -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector --no-pie
+COPTS=-c -O2 -D__ARM__ -nostdinc -nostdlib -fno-builtin -D__64BIT__ -I . -fno-stack-protector --no-pie -D__USEBIVA__
+#LD=gcc -static
+LD=pdld --oformat elf --emit-relocs
 
 pdptest: linstart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
@@ -12,7 +14,7 @@ pdptest: linstart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
 	ar r pdplinux.a linstart.o a64supa.o stdio.o string.o stdlib.o
 	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
 	ar r pdplinux.a locale.o ctype.o math.o __memmgr.o
-	gcc -static -s -nostdlib -o pdptest linstart.o a64supa.o pdptest.o pdplinux.a
+	$(LD) -s -nostdlib -o pdptest linstart.o a64supa.o pdptest.o pdplinux.a
 
 .c.o:
 	$(CC) $(COPTS) $<
