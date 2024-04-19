@@ -7,7 +7,7 @@
 # So we use the image-base keyword on the link step
 
 CC=cc64
-AR=ar
+AR=xar
 LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -D__CC64__ \
