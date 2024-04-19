@@ -1,5 +1,11 @@
 # This builds EFI executables for x86_64 using cc64
 
+# At time of writing (2024-04-19), cc64 when used as a
+# cross compiler (from 32-bit x86 to 64-bit x64) was
+# buggy such that parameters don't work, and fgets from
+# stdin doesn't work. So it needs to be run under either
+# Win64 or UCX64, not Windows 2000
+
 CC=cc64
 AR=xar
 LD=pdld --no-insert-timestamp
