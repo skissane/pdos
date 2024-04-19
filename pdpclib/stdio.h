@@ -371,7 +371,10 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #endif
 
 #if !defined(__W64SHELL__) && !defined(__W32EMUL__) \
-    && !defined(__WIN32__) || defined(__STATIC__)
+    && !defined(__WIN32__) \
+    && !defined(__PDOSGEN__) \
+    || defined(__STATIC__)
+
 #define getchar() (getc(stdin))
 #define putchar(c) (putc((c), stdout))
 #define getc(stream) (fgetc((stream)))
@@ -427,6 +430,8 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #define setvbuf __os->Xsetvbuf
 #define puts __os->Xputs
 #define vprintf __os->Xvprintf
+#define ferror __os->Xferror
+#define putc __os->Xputc
 #endif
 
 #endif /* __STDIO_INCLUDED */
