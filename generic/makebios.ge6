@@ -7,6 +7,14 @@
 # due to code generation of gccw64 which should be changed one day.
 # So we use the image-base keyword on the link step
 
+# The specific technical reason is:
+# The code "movl $__os, %eax" will not work on x64 if the executable is above 2 GiB.
+
+# Correct way is either "leaq __os(%rip), %rax" or "movabs $__os, %rax".
+# The RIP relative way ("...(%rip)") is generally better as it does not
+# require any relocations when loading.
+
+
 CC=gccw64_l64
 AR=xar
 LD=pdld --no-insert-timestamp
