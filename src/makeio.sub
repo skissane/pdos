@@ -8,9 +8,11 @@
 # and by any means.
 
 # This makefile builds pload.com for PDOS/386 on Windows,
-# using SubC small memory model. The executable builds,
-# but has no chance of working currently. And it is probably
-# more appropriate to get SubC to generate huge memory model
+# using SubC small memory model. The executable works,
+# but requires pdos.sys to reside in the first 16 MiB
+# or something due to only signed 16-bit int available
+# for cluster/sector number.
+# It would be good to get SubC to generate huge memory model
 # code, with 32-bit ints, rather than emulate bits of that
 # all over the place in assembler. You will need to switch
 # to NEWMODEL in both compiler and assembler too.
