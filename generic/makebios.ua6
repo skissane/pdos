@@ -1,4 +1,4 @@
-# Produces EFI executable.
+# Produces 64-bit ARM EFI executable.
 # We link with the library produced by makefile.ua6
 # And we use makefile.pa6 and makecomm.pa6
 # which are PE. Also makecomm.a64 (ELF) works
