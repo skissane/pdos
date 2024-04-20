@@ -7,12 +7,12 @@
 # code requires it
 
 CC=gcc
-COPTS=-S -O0 -fno-common -fno-builtin -DHAVE_DIR -D__UNOPT__ \
+COPTS=-S -O2 -fno-common -fno-builtin -DHAVE_DIR -D__UNOPT__ \
     -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__USEBIVA__ \
     -D__64BIT__ -fno-stack-protector --no-pie \
     -I . -I../pdpclib -I../src
-LD=ld
-#LD=pdld --oformat elf
+#LD=ld
+LD=pdld --oformat elf
 
 all: clean pcomm.exe
 
