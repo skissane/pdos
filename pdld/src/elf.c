@@ -79,6 +79,12 @@ static size_t section_get_num_relocs (struct section *section)
                     || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
                     num_relocs++;
                 }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
+                    num_relocs++;
+                }
             } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
                     || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
@@ -184,7 +190,21 @@ static unsigned char *write_relocs_for_section64 (unsigned char *file,
         for (i = 0; i < part->relocation_count; i++) {
             Elf64_Xword type;
             
-            if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+            if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]) {
+                    type = R_X86_64_64;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    type = R_X86_64_32;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
+                    type = R_X86_64_PC32;
+                } else {
+                    ld_error ("%s cannot be converted to Elf64 relocation",
+                              part->relocation_array[i].howto->name);
+                    continue;
+                }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
                     continue;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]) {
