@@ -6,7 +6,7 @@
 
 CC=gccw64_l64
 AS=pdas --oformat coff --64
-LD=pdld --oformat elf --no-insert-timestamp
+LD=pdld --oformat elf --no-insert-timestamp --emit-relocs
 AR=xar
 
 COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ \
