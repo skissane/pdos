@@ -1371,6 +1371,14 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
                     section_name = xstrdup (section_name_string_table + shdr_p->sh_name);
                 } else ld_fatal_error ("invalid offset into string table");
 
+                if (*section_name) {
+                    /* Strips the ".something" suffix from ".section.something"
+                     * so all ".section..." content goes into one ".section" section.
+                     */
+                    char *p = strchr (section_name + 1, '.');
+                    if (p) *p = '\0';
+                }
+
                 if (shdr_p->sh_type != SHT_PROGBITS
                     && shdr_p->sh_type != SHT_NOBITS) {
                     part_p_array[i] = NULL;
