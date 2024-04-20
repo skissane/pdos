@@ -1,5 +1,8 @@
-# Produces Linux 64-bit executable for ARM
+# Produces Linux 64-bit ELF executable for ARM
 # You should have built pdpclib with makefile.a64 first
+
+# You can then use makecomm.a64 (for ELF executables)
+# or makecomm.pa6 (for PE executables)
 
 CC=gcc
 CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
