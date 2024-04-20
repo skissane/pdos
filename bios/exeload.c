@@ -2225,7 +2225,44 @@ static int exeloadLoadELF(unsigned char **entry_point,
                         }
                     }
 
-                    if (elfHdr->e_machine == EM_AARCH64) {
+                    if (elfHdr->e_machine == EM_X86_64) {
+                        switch (ELF64_R_TYPE(currel->r_info))
+                        {
+                            case R_X86_64_NONE:
+                                break;
+                            case R_X86_64_64:
+#if 0
+                                if (sym_table)
+                                {
+                                    *(Elf64_Addr *)target = sym_value;
+                                }
+                                else 
+#endif
+                                {
+                                    *(Elf64_Addr *)target -= lowest_p_vaddr;
+                                    *(Elf64_Addr *)target += (Elf64_Addr)exeStart;
+                                }
+                                break;
+                            case R_X86_64_PC32:
+                                /* Nothing needs to be done. */
+                                break;
+                            case R_X86_64_32:
+#if 0
+                                if (sym_table)
+                                {
+                                    *target = sym_value;
+                                }
+                                else 
+#endif
+                                {
+                                    *target -= lowest_p_vaddr;
+                                    *target += (Elf64_Addr)exeStart;
+                                }
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
+                    } else if (elfHdr->e_machine == EM_AARCH64) {
                         switch (ELF64_R_TYPE(currel->r_info))
                         {
                             case R_AARCH64_NONE:
