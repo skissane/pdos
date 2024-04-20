@@ -2140,6 +2140,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
                             case R_AARCH64_PREL32:
                             case R_AARCH64_ADR_PREL_PG_HI21:
                             case R_AARCH64_ADD_ABS_LO12_NC:
+                            case R_AARCH64_LDST64_ABS_LO12_NC:
                                 break;
                             default:
                                 printf("Unknown relocation type %x in ELF file\n",
