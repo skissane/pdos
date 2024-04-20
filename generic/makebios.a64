@@ -7,8 +7,8 @@ CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
     -D__USEBIVA__ -DNEED_ELF \
     -DNO_DLLENTRY -DGENSHELL -D__ARM__ -D__LONG64__ \
     -D__64BIT__ -DHAVE_DIR -DLINDIR -DNEED_MZ -DTARGET_64BIT
-#LD=pdld --oformat elf --emit-relocs
-LD=gcc -static
+LD=pdld --oformat elf --emit-relocs
+#LD=gcc -static
 LDFLAGS=
 AS=as
 AR=ar
