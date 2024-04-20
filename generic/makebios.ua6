@@ -10,7 +10,7 @@ CC=gcc
 AR=ar
 LD=pdld --no-insert-timestamp
 AS=as
-COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O0 -D__ARM__ \
+COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 -D__ARM__ \
     -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__ \
     -fno-common -ansi -I../pdpclib -I../bios -I../src \
     -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DGENSHELL -DNEED_ELF

@@ -1,7 +1,7 @@
 # This builds a 64-bit PDOS-generic PE executable for ARM
 
 CC=gcc
-COPTS=-S -O0 -fno-common -fno-builtin -DHAVE_DIR \
+COPTS=-S -O2 -fno-common -fno-builtin -DHAVE_DIR \
     -D__PDOS386__ -D__PDOSGEN__ -D__USEBIVA__ \
     -D__64BIT__ -fno-stack-protector --no-pie \
     -I . -I../pdpclib -I../src
