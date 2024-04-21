@@ -1,7 +1,8 @@
-# Produces EFI executable.
+# Produces x64 EFI executable.
 # We link with the library produced by makefile.ge6
 # And we use makecomm.pl6
 # which is PE with 64-bit long
+# makecomm.n64 (ELF) can also be used
 
 # We need this executable to load below the 2 GiB mark
 # due to code generation of gccw64 which should be changed one day.
