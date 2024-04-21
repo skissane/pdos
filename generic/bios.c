@@ -805,6 +805,12 @@ int main(int argc, char **argv)
 
 #if defined(__gnu_linux__) && defined(__64BIT__)
     p = calloc(1, 50000000);
+
+#ifdef WARN2G
+    printf("if %p is above 2 GiB, you will get a crash\n", p);
+    printf("(only if called program is using cc64/gccw64_l64/etc)\n");
+#endif
+
 #elif defined(__OS2__)
     p = NULL;
 #else
