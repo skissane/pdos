@@ -155,6 +155,17 @@ void __exita(int a);
    restriction in the gcc 3.2.3 x64 code generation that produces
    code that needs to reside in the first 2 GiB of memory anyway.
    That is not relevant in this situation. */
+/* I ran out of rope with this anyway - qemu-x86_64 (user, not
+   qemu-system-x86_64) running under
+   ARM64 returned an address above 2 GiB (above 4 GiB actually -
+   so flag wasn't respected) so I couldn't use it as a
+   pseudo-bios. However, I was able to switch to running a UEFI
+   executable under qemu-system-x86_64 instead (where there is
+   greater control over memory so it can be restricted to 2 GiB).
+   But either the code
+   generators (cc64 too) need to be fixed, or I need to switch
+   back to using MEMMGR and have an internal buffer in BSS,
+   where the load address can be controlled */
 /* #define MAP_32BIT 0x8000 */
 #define MAP_32BIT 0x0
 #else
