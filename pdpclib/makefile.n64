@@ -2,6 +2,8 @@
 # It produces an msvcrt.dll that allows you to run a
 # subset of Win64 executables
 
+# You need to use makek32.n64 in src first
+
 # Note that we export all symbols because cc64 isn't
 # generating the required .drectve section. We may
 # revisit this situation at a later date. If not by
