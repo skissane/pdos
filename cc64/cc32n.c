@@ -8386,7 +8386,7 @@ void msysnewc_nextfmtchars(i64 lastx) {
     L67 :;
     while (!!((i64)1)) {
         c = (u64)((*msysnewc_fmtstr));
-        switch ((i64)(c)) {
+        switch ((int)(c)) {
         case 35:;
         {
             if (!!(lastx)) {
@@ -8456,7 +8456,7 @@ void msysnewc_strtofmt(byte * s,i64 slen,struct msysnewc_fmtrec * fmt) {
     while (!!((u64)((*s)))) {
         c = (u64)((*s));
         ++s;
-        switch ((i64)(c)) {
+        switch ((int)(c)) {
         case 66:;
         case 98:;
         {
@@ -8477,7 +8477,7 @@ void msysnewc_strtofmt(byte * s,i64 slen,struct msysnewc_fmtrec * fmt) {
         {
             c = (u64)((*s));
             if (!!((u64)(c))) {
-                switch ((i64)(c)) {
+                switch ((int)(c)) {
                 case 48:;
                 case 49:;
                 case 50:;
@@ -8863,7 +8863,7 @@ static i64 msysnewc_i64mintostr(byte * s,i64 base,i64 sep) {
     i64 j;
     i64 k;
     i64 g;
-    switch (base) {
+    switch ((int)base) {
     case 10:;
     {
         strcpy((i8 *)(&t[((i64)0)]),(i8 *)((byte*)"9223372036854775808"));
@@ -8936,7 +8936,7 @@ static i64 msysnewc_strtostrfmt(byte * s,byte * t,i64 n,struct msysnewc_fmtrec *
         } else {
             memcpy((void *)(u),(void *)(s),(u32)(n));
         };
-        switch ((i64)((*fmt).lettercase)) {
+        switch ((int)((*fmt).lettercase)) {
         case 97:;
         {
             msysnewc_convlcstring(u);
@@ -9165,7 +9165,7 @@ L106 :;
     L108 :;
     while (!!((u64)((*s)))) {
         c = (u64)((*s++));
-        switch ((i64)(c)) {
+        switch ((int)(c)) {
         case 32:;
         case 9:;
         case 44:;
@@ -9236,7 +9236,7 @@ i64 msysnewc_strtoint(byte * s,i64 length,i64 base) {
     while (!!(length)) {
         c = (u64)((*s++));
         --length;
-        switch ((i64)(c)) {
+        switch ((int)(c)) {
         case 65:;
         case 66:;
         case 67:;
@@ -10147,7 +10147,7 @@ byte * mlib_extractpath(byte * s) {
     t = ((s + (i64)(strlen((i8 *)(s)))) - (i64)1);
     L180 :;
     while ((t >= s)) {
-        switch ((i64)((*t))) {
+        switch ((int)((*t))) {
         case 92:;
         case 47:;
         case 58:;
@@ -11426,7 +11426,7 @@ void cc_lex_lexreadtoken(void) {
     byte *  ss;
     cc_decls_nextlx.subcodex = (u64)((i64)0);
     L230 :;
-    switch ((i64)((*cc_lex_lxsptr++))) {
+    switch ((int)((*cc_lex_lxsptr++))) {
     case 65:;
     case 66:;
     case 67:;
@@ -11536,7 +11536,7 @@ L234 :;
     }break;
     case 48:;
     {
-        switch ((i64)((*cc_lex_lxsptr))) {
+        switch ((int)((*cc_lex_lxsptr))) {
         case 120:;
         case 88:;
         {
@@ -11641,7 +11641,7 @@ L237 :;
     }break;
     case 46:;
     {
-        switch ((i64)((*cc_lex_lxsptr))) {
+        switch ((int)((*cc_lex_lxsptr))) {
         case 46:;
         {
             ++cc_lex_lxsptr;
@@ -11824,7 +11824,7 @@ L237 :;
     }break;
     case 60:;
     {
-        switch ((i64)((*cc_lex_lxsptr))) {
+        switch ((int)((*cc_lex_lxsptr))) {
         case 61:;
         {
             ++cc_lex_lxsptr;
@@ -11848,7 +11848,7 @@ L237 :;
     }break;
     case 62:;
     {
-        switch ((i64)((*cc_lex_lxsptr))) {
+        switch ((int)((*cc_lex_lxsptr))) {
         case 61:;
         {
             ++cc_lex_lxsptr;
@@ -11906,7 +11906,7 @@ L237 :;
         if (!!(cc_lex_dowhitespace)) {
             cc_decls_nextlx.svalue = cc_lex_lxsptr;
             L238 :;
-            switch ((i64)((*cc_lex_lxsptr++))) {
+            switch ((int)((*cc_lex_lxsptr++))) {
             case 32:;
             case 9:;
             {
@@ -12207,7 +12207,7 @@ void cc_lex_lexsetup(void) {
     L244 :;
     for (i=(i64)0;i<=(i64)255;i+=(i64)1) {
 L245 :;
-        switch (i) {
+        switch ((int)i) {
         case 65:;
         case 66:;
         case 67:;
@@ -12407,7 +12407,7 @@ L245 :;
         }
         } //SW
 ;
-        switch (i) {
+        switch ((int)i) {
         case 48:;
         case 49:;
         case 50:;
@@ -12468,7 +12468,7 @@ static byte * cc_lex_scannumber(i64 base) {
     i64 c;
     dest = cc_lex_lxsptr;
     L248 :;
-    switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
     case 48:;
     case 49:;
     case 50:;
@@ -13084,7 +13084,7 @@ static void cc_lex_readhex(byte * pstart) {
     ll = (usigned = (i64)0);
     length = (i64)0;
     L301 :;
-    switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
     case 49:;
     case 50:;
     case 51:;
@@ -13192,7 +13192,7 @@ static void cc_lex_readbinary(byte * pstart) {
     p = cc_lex_lxsptr;
     leading = (i64)1;
     L303 :;
-    switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
     case 49:;
     {
         leading = (i64)0;
@@ -13264,7 +13264,7 @@ static void cc_lex_readoctal(byte * pstart) {
     ll = (usigned = (i64)0);
     length = (i64)0;
     L308 :;
-    switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
     case 49:;
     case 50:;
     case 51:;
@@ -13367,7 +13367,7 @@ L318 :;
     ;
     length = (cc_lex_lxsptr - p);
     L320 :;
-    switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
     case 46:;
     case 69:;
     case 101:;
@@ -13443,7 +13443,7 @@ L323 :;
 static i64 cc_lex_checknumbersuffix(void) {
     byte c;
     L325 :;
-    switch ((i64)((c = (u64)((*cc_lex_lxsptr++))))) {
+    switch ((int)((c = (u64)((*cc_lex_lxsptr++))))) {
     case 76:;
     case 108:;
     case 117:;
@@ -13642,7 +13642,7 @@ static void cc_lex_lxreadstring(i64 termchar,i64 fwide) {
     length = (i64)0;
     L342 :;
     while (1) {
-        switch ((c = (i64)((*cc_lex_lxsptr++)))) {
+        switch ((int)(c = (i64)((*cc_lex_lxsptr++)))) {
         case 92:;
         {
             if (!!(cc_lex_isincludefile)) {
@@ -13654,7 +13654,7 @@ static void cc_lex_lxreadstring(i64 termchar,i64 fwide) {
             //reenter:
 L345 :;
 ;
-            switch (c) {
+            switch ((int)c) {
             case 97:;
             {
                 c = (i64)7;
@@ -13688,7 +13688,7 @@ L345 :;
                 c = (i64)0;
                 L346 :;
                 while (1) {
-                    switch ((d = (i64)((*cc_lex_lxsptr++)))) {
+                    switch ((int)(d = (i64)((*cc_lex_lxsptr++)))) {
                     case 65:;
                     case 66:;
                     case 67:;
@@ -13742,7 +13742,7 @@ L345 :;
                 av_1 = (i64)2;
                 while (av_1-- > 0) {
 L348 :;
-                    switch ((d = (i64)((*cc_lex_lxsptr++)))) {
+                    switch ((int)(d = (i64)((*cc_lex_lxsptr++)))) {
                     case 48:;
                     case 49:;
                     case 50:;
@@ -15100,7 +15100,7 @@ void cc_lex_fastreadtoken(void) {
     byte *  p;
     cc_decls_nextlx.subcodex = (u64)((i64)0);
     L446 :;
-    switch ((i64)((*cc_lex_lxsptr++))) {
+    switch ((int)((*cc_lex_lxsptr++))) {
     case 35:;
     {
         p = (cc_lex_lxsptr - (i64)2);
@@ -16653,7 +16653,7 @@ void cc_lib_convertstring(byte * s,byte * t,i64 length) {
     while (av_1-- > 0) {
 L546 :;
         c = (i64)((*s++));
-        switch (c) {
+        switch ((int)c) {
         case 34:;
         {
             (*t++) = (u64)92u;
@@ -17704,10 +17704,10 @@ static i64 cc_parse_readdeclspec(struct cc_decls_strec * owner,i64 * linkage) {
     memset((void *)(&d),(i32)0,(u32)15u);
     fstruct = (mod = (i64)0);
     L608 :;
-    switch ((i64)(cc_decls_lx.symbol)) {
+    switch ((int)(cc_decls_lx.symbol)) {
     case 71:;
     {
-        switch ((i64)(cc_decls_lx.subcode)) {
+        switch ((int)(cc_decls_lx.subcode)) {
         case 5:;
         case 2:;
         case 6:;
@@ -17913,7 +17913,7 @@ L609 :;
 
 static i64 cc_parse_istypestarter(void) {
     struct cc_decls_strec *  d;
-    switch ((i64)(cc_decls_lx.symbol)) {
+    switch ((int)(cc_decls_lx.symbol)) {
     case 71:;
     {
         return (i64)1;
@@ -17987,7 +17987,7 @@ static struct cc_decls_unitrec * cc_parse_readassignexpr(void) {
 ;
     };
     p = cc_parse_readcondexpr();
-    switch ((opc = (i64)(cc_decls_lx.symbol))) {
+    switch ((int)(opc = (i64)(cc_decls_lx.symbol))) {
     case 11:;
     case 47:;
     case 48:;
@@ -18447,7 +18447,7 @@ static struct cc_decls_unitrec * cc_parse_readterm(void) {
     byte *  s;
     struct cc_decls_paramrec *  pm;
     i64 av_1;
-    switch ((i64)(cc_decls_lx.symbol)) {
+    switch ((int)(cc_decls_lx.symbol)) {
     case 59:;
     case 60:;
     {
@@ -18711,7 +18711,7 @@ L649 :;
     } //SW
 ;
     L651 :;
-    switch ((i64)(cc_decls_lx.symbol)) {
+    switch ((int)(cc_decls_lx.symbol)) {
     case 14:;
     {
         cc_lex_lex();
@@ -19239,7 +19239,7 @@ static struct cc_decls_unitrec * cc_parse_readstatement(void) {
     struct mlib_strbuffer *  ss;
     struct cc_decls_strec *  d;
     i64 index;
-    switch ((i64)(cc_decls_lx.symbol)) {
+    switch ((int)(cc_decls_lx.symbol)) {
     case 72:;
     {
         return cc_parse_readifstmt();
@@ -20027,7 +20027,7 @@ static struct cc_decls_unitrec * cc_parse_createlengthofop(struct cc_decls_unitr
     i64 t;
     i64 size;
     t = (i64)((*p).mode);
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 3:;
     {
         size = cc_decls_ttlength[((i64)((*(*p).def).mode))];
@@ -20070,7 +20070,7 @@ static struct cc_decls_unitrec * cc_parse_createaddrofop(struct cc_decls_unitrec
 L702 :;
 ;
     t = (i64)((*p).mode);
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 3:;
     {
         if (!!((i64)((*p).alength))) {
@@ -21392,7 +21392,7 @@ static struct cc_decls_unitrec * cc_parse_createsizeofop(struct cc_decls_unitrec
     i64 t;
     i64 size;
     t = (i64)((*p).mode);
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 3:;
     {
         if (!!((i64)((*p).alength))) {
@@ -21692,7 +21692,7 @@ static void cc_genmcl_genprocdef(struct cc_decls_strec * p) {
     d = (*p).deflist;
     L777 :;
     while (!!(d)) {
-        switch ((i64)((*d).nameid)) {
+        switch ((int)((*d).nameid)) {
         case 8:;
         {
             cc_libmcl_frameoffset -= cc_libmcl_roundsizetg(cc_decls_ttsize[((i64)((*d).mode))]);
@@ -22979,7 +22979,7 @@ static i64 cc_libmcl_issimple0(struct cc_decls_unitrec * p,i64 level) {
         return (i64)0;
     };
     a = (*p).a;
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 1:;
     case 3:;
     case 5:;
@@ -23380,7 +23380,7 @@ void cc_blockmcl_do_stmt(struct cc_decls_unitrec * p) {
     cc_decls_clineno = (i64)((((u64)((*p).fileno) << (i64)24) + (u64)((*p).lineno)));
     a = (*p).a;
     b = (*p).b;
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 6:;
     {
         L843 :;
@@ -23564,7 +23564,7 @@ static struct cc_libmcl_opndrec * cc_blockmcl_dx_expr(struct cc_decls_unitrec * 
     a = (*p).a;
     b = (*p).b;
     m = (i64)((*p).mode);
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 1:;
     {
         return cc_blockmcl_dx_const(p,reg);
@@ -24124,7 +24124,7 @@ static void cc_blockmcl_genjumpcond(i64 opc,struct cc_decls_unitrec * p,i64 lab,
     struct cc_libmcl_opndrec *  ax;
     q = (*p).a;
     r = (*p).b;
-    switch ((i64)((*p).tag)) {
+    switch ((int)((*p).tag)) {
     case 25:;
     {
         if ((opc==(i64)0)) {
@@ -24268,7 +24268,7 @@ static void cc_blockmcl_do_preincr(struct cc_decls_unitrec * a,i64 addop,i64 inc
 }
 
 static i64 cc_blockmcl_reversemclcond(i64 cond) {
-    switch (cond) {
+    switch ((int)cond) {
     case 12:;
     {
         cond = (i64)15;
@@ -26078,7 +26078,7 @@ void cc_genasm_mcltoa64(struct cc_libmcl_mclrec * m) {
     cond = (i64)((*m).cond);
     a = (*m).a;
     b = (*m).b;
-    switch (opcode) {
+    switch ((int)opcode) {
     case 1:;
     {
         cc_genasm_do_comment(a,b);
@@ -28253,7 +28253,7 @@ void ax_lex_lex(void) {
     byte *  pstart;
     ax_lex_lxsubcode = (i64)0;
     L1040 :;
-    switch ((c = (i64)((*ax_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*ax_lex_lxsptr++)))) {
     case 97:;
     case 98:;
     case 99:;
@@ -28290,7 +28290,7 @@ L1042 :;
 ;
         hsum = (csum = c);
         L1043 :;
-        switch ((c = (i64)((*ax_lex_lxsptr++)))) {
+        switch ((int)(c = (i64)((*ax_lex_lxsptr++)))) {
         case 97:;
         case 98:;
         case 99:;
@@ -28438,7 +28438,7 @@ L1044 :;
         pstart = ax_lex_lxsptr;
         hsum = (csum = (i64)0);
         L1045 :;
-        switch ((c = (i64)((*ax_lex_lxsptr)))) {
+        switch ((int)(c = (i64)((*ax_lex_lxsptr)))) {
         case 65:;
         case 66:;
         case 67:;
@@ -28596,7 +28596,7 @@ L1048 :;
         pstart = ax_lex_lxsptr;
         L1050 :;
         while (1) {
-            switch ((i64)((*ax_lex_lxsptr++))) {
+            switch ((int)((*ax_lex_lxsptr++))) {
             case 39:;
             {
                 goto L1051 ;
@@ -28629,7 +28629,7 @@ L1054 :;
         pstart = ax_lex_lxsptr;
         L1056 :;
         while (1) {
-            switch ((i64)((*ax_lex_lxsptr++))) {
+            switch ((int)((*ax_lex_lxsptr++))) {
             case 34:;
             {
                 ax_lex_lxsvalue = (byte *)(pstart);
@@ -28691,7 +28691,7 @@ void ax_lex_initlex(void) {
     L1058 :;
     for (i=(i64)0;i<=(i64)255;i+=(i64)1) {
 L1059 :;
-        switch (i) {
+        switch ((int)i) {
         case 65:;
         case 66:;
         case 67:;
@@ -28763,7 +28763,7 @@ L1059 :;
         }
         } //SW
 ;
-        switch (i) {
+        switch ((int)i) {
         case 48:;
         case 49:;
         case 50:;
@@ -28815,7 +28815,7 @@ static void ax_lex_readreal(byte (*s)[],i64 slen,i64 intlen,i64 exponseen) {
         };
         digs = (i64)0;
         L1062 :;
-        switch ((c = (i64)((*ax_lex_lxsptr++)))) {
+        switch ((int)(c = (i64)((*ax_lex_lxsptr++)))) {
         case 48:;
         case 49:;
         case 50:;
@@ -28904,7 +28904,7 @@ static void ax_lex_readnumber(i64 c) {
     slen = (i64)1;
     intlen = (i64)0;
     L1074 :;
-    switch ((c = (i64)((*ax_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*ax_lex_lxsptr++)))) {
     case 48:;
     case 49:;
     case 50:;
@@ -28964,7 +28964,7 @@ static void ax_lex_readbinary(void) {
     ndigs = (i64)0;
     ax_lex_lxvalue = (i64)0;
     L1080 :;
-    switch ((i64)((*ax_lex_lxsptr++))) {
+    switch ((int)((*ax_lex_lxsptr++))) {
     case 48:;
     {
         ax_lex_lxvalue = (ax_lex_lxvalue * (i64)2);
@@ -29013,7 +29013,7 @@ static void ax_lex_readhex(void) {
     ndigs = (i64)0;
     ax_lex_lxvalue = (i64)0;
     L1082 :;
-    switch ((c = (i64)((*ax_lex_lxsptr++)))) {
+    switch ((int)(c = (i64)((*ax_lex_lxsptr++)))) {
     case 48:;
     case 49:;
     case 50:;
@@ -29415,7 +29415,7 @@ void ax_parse_readmodule(i64 moduleno) {
     L1139 :;
     while ((ax_lex_lxsymbol == (i64)11)) {
         ax_lex_lex();
-        switch (ax_lex_lxsymbol) {
+        switch ((int)ax_lex_lxsymbol) {
         case 23:;
         {
             ax_parse_readinstr();
@@ -29548,7 +29548,7 @@ static void ax_parse_readinstr(void) {
     struct ax_decls_opndrec *  c;
     opcode = ax_lex_lxsubcode;
     ax_lex_lex();
-    switch (opcode) {
+    switch ((int)opcode) {
     case 110:;
     case 111:;
     case 112:;
@@ -29659,7 +29659,7 @@ static void ax_parse_readcondinstr(i64 opc) {
 static struct ax_decls_opndrec * ax_parse_readoperand(void) {
     struct ax_decls_opndrec *  p;
     i64 size;
-    switch (ax_lex_lxsymbol) {
+    switch ((int)ax_lex_lxsymbol) {
     case 24:;
     {
         p = ax_lib_regtable[(ax_lex_lxsubcode)-1][((i64)((*ax_lex_lxsymptr).regsize))-1];
@@ -29741,7 +29741,7 @@ static void ax_parse_readterm(void) {
     ax_parse_exprlabeldef = (struct ax_decls_strec *)(0);
     ax_parse_exprvalue = (i64)0;
     ax_parse_exprtype = (i64)0;
-    switch (ax_lex_lxsymbol) {
+    switch ((int)ax_lex_lxsymbol) {
     case 19:;
     case 20:;
     case 22:;
@@ -30758,7 +30758,7 @@ static void ax_genss_doinstr(struct ax_lib_mclrec * m,i64 index) {
     ax_genss_rex = (ax_genss_sizeoverride = (ax_genss_addroverride = (ax_genss_f2override = (ax_genss_f3override = (i64)0))));
     a = (*m).a;
     b = (*m).b;
-    switch ((i64)((*m).opcode)) {
+    switch ((int)((*m).opcode)) {
     case 4:;
     {
         d = (*a).labeldef;
@@ -31230,7 +31230,7 @@ static void ax_genss_genopnd(struct ax_decls_opndrec * a,i64 size) {
     if ((size == (i64)0)) {
         size = (i64)((*a).size);
     };
-    switch ((i64)((*a).mode)) {
+    switch ((int)((*a).mode)) {
     case 2:;
     case 3:;
     {
@@ -33920,7 +33920,7 @@ byte * ax_disasm_decodeinstr(byte * * cptr,byte * baseaddr) {
     //retry:
 L1327 :;
 ;
-    switch ((opc = (i64)((*ax_disasm_codeptr++)))) {
+    switch ((int)(opc = (i64)((*ax_disasm_codeptr++)))) {
     case 0:;
     case 1:;
     case 8:;
@@ -34561,7 +34561,7 @@ static void ax_disasm_decodetwobyteinstr(void) {
     i64 third;
     i64 imm;
     byte *  opcstr;
-    switch ((opc = (i64)((*ax_disasm_codeptr++)))) {
+    switch ((int)(opc = (i64)((*ax_disasm_codeptr++)))) {
     case 42:;
     {
         ax_disasm_decodeaddr((i64)1);
