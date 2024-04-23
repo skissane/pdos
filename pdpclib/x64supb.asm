@@ -168,12 +168,12 @@ offset32:
 
 
 .bss
-.p2align 3
+.balign 8
 callbackstack:
 	.space 576			#8-level stack
 #	resb 5'120'000
 
-.p2align 3
+.balign 8
 .globl __ncallbacks
 __ncallbacks:
 	.space 8
