@@ -405,6 +405,7 @@ int main(int argc, char **argv)
     FILE *scr = NULL;
     int quiet = 0;
     char new_prog_name[FILENAME_MAX];
+    int alloc_here = 1; /* we do initial allocation */
 
     bios.mem_amt = MEMAMT;
     bios.Xstdin = stdin;
@@ -803,27 +804,27 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if defined(__gnu_linux__) && defined(__64BIT__)
+/* cc64 uses lots of BSS - 47 MB - so on any environment that
+   it runs on, ie x64, need to bump up allocated memory - but
+   may as well just let exeload do that on those environments */
+#if defined(__gnu_linux__) && defined(__64BIT__) && defined(WARN2G)
     p = calloc(1, 50000000);
-
-#ifdef WARN2G
     printf("if %p is above 2 GiB, you will get a crash\n", p);
     printf("(only if called program is using cc64/gccw64_l64/etc)\n");
-#endif
 
-#elif defined(__OS2__)
+#elif defined(__OS2__) || defined(__64BIT__)
     p = NULL;
+    alloc_here = 0;
 #else
     p = calloc(1, 5000000);
 #endif
 
-#ifndef __OS2__
-    if (p == NULL)
+    if ((p == NULL) && alloc_here)
     {
         printf("insufficient memory\n");
         return (EXIT_FAILURE);
     }
-#endif
+
     salone = 0;
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
