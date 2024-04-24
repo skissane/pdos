@@ -1,6 +1,5 @@
-# This code was taken from the public domain SubC
-# Modified by Paul Edwards
-# All changes remain public domain
+# This code was written by Paul Edwards
+# Released to the public domain
 
 # 64-bit ARM (AArch64) needs the stack 16-byte aligned
 
@@ -25,6 +24,27 @@
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
+        str     x1,[x0,#52*2]
+        mov     x1,x0
+        str     x2,[x1,#40*2]
+        str     x3,[x1,#44*2]
+        str     x12,[x1,#48*2]
+        mov     x2,sp
+        str     x2,[x1]
+        str     x11,[x1,#4*2]
+#   @ fp
+        str     lr,[x1,#8*2]
+#    @ r14
+        str     x4,[x1,#12*2]
+        str     x5,[x1,#16*2]
+        str     x6,[x1,#20*2]
+        str     x7,[x1,#24*2]
+        str     x8,[x1,#28*2]
+        str     x9,[x1,#32*2]
+#   @ rfp
+        str     x10,[x1,#36*2]
+#  @ sl
+
         mov     x0, #0
         ret
 
@@ -38,7 +58,37 @@ ___Ysetjmp:
         .align  2
 longjmp:
 _longjmp:
-        mov     x0, #0
+
+        mov     x2,x0
+        mov     x0,x1
+
+        cmp     x0,#0
+# What do I need here?
+#        moveq   x0,#1
+
+        mov     x1,x2
+
+#        ldr     sp,[x1]
+        ldr     x2,[x1]
+        mov     sp,x2
+
+        ldr     x11,[x1,#4*2]
+#      @ fp
+        ldr     lr,[x1,#8*2]
+        str     lr,[sp]
+        ldr     x4,[x1,#12*2]
+        ldr     x5,[x1,#16*2]
+        ldr     x6,[x1,#20*2]
+        ldr     x7,[x1,#24*2]
+        ldr     x8,[x1,#28*2]
+        ldr     x9,[x1,#32*2]
+        ldr     x10,[x1,#36*2]
+        ldr     x2,[x1,#40*2]
+        ldr     x3,[x1,#44*2]
+        ldr     x12,[x1,#48*2]
+#  @ ip
+        ldr     x1,[x1,#52*2]
+#        mov     pc,lr
         ret
 
 
