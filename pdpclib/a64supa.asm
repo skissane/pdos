@@ -62,9 +62,11 @@ _longjmp:
         mov     x2,x0
         mov     x0,x1
 
+        cbnz    x0,notzero
         cmp     x0,#0
-# What do I need here?
 #        moveq   x0,#1
+        mov     x0,#1
+notzero:
 
         mov     x1,x2
 
