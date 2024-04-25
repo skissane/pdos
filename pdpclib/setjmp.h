@@ -25,7 +25,13 @@ typedef struct {
 #if defined(__64BIT__)
     long long retval;
     long long retaddr;
+
+#if defined(__ARM__) || defined(__ARMGEN__)
+    long long regs[32-2+1];
+#else
     long long regs[16-2+1];
+#endif
+
 #elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
     int regs[15];
 #elif defined(__AMIGA__)
