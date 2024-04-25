@@ -103,6 +103,8 @@ static void scalar_to_ymd(long scalar,
 {
    unsigned n;                /* compute inverse of years_to_days() */
 
+   /* protect against garbage values */
+   scalar = (unsigned long)scalar % (366 * 14700UL);
    n = (unsigned)((scalar * 400L) / 146097L);
    while (years_to_days(n) < scalar)
    {
