@@ -405,15 +405,21 @@ ___time:
         sub     sp,sp,#32
 # Note that this store is unusual
         str     x8, [sp, #16]
-        mov     x0, sp
+        str     x1, [sp, #24]
+# this is CLOCK_REALTIME
+        mov     x0, #0
+# this is a struct timespec
+# it contains number of seconds followed by
+# number of nanoseconds - both 64-bit values
+        mov     x1, sp
         mov     x8,#113
 #           @ SYS_clock_gettime
 
         svc     #0
-        ldr     x8,[sp, #0]
-# Don't know how to decipher the return from the svc yet,
-# so just set it to 0
-        mov     x0,#0
+        ldr     x1, [sp, #24]
+        ldr     x8,[sp, #16]
+# we are only interested in the number of seconds
+        ldr     x0, [sp, #0]
 # Unusual stack correction
         add     sp,sp,#32
         ret
