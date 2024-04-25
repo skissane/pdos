@@ -411,6 +411,9 @@ ___time:
 
         svc     #0
         ldr     x8,[sp, #0]
+# Don't know how to decipher the return from the svc yet,
+# so just set it to 0
+        mov     x0,#0
 # Unusual stack correction
         add     sp,sp,#32
         ret
