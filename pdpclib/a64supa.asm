@@ -66,6 +66,9 @@ ___Ysetjmp:
 
 # This doesn't assemble
 # The distance 32 appears to be too far
+# There is no sign that gcc is generating references to x31
+# so it is probably fine to do nothing. No sign of references
+# to x17 either.
 #        str     x31,[x1,#32*4*2]
 
         mov     x0, #0
