@@ -367,7 +367,7 @@ static void freadSlowB(void *ptr,
 
 /* I don't know if there is a better way to access the
    argument list than this split logic */
-#if defined(__USEBIVA__)
+#if defined(__USEBIVA__) && !defined(__NOSPECBIVA__)
 static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount);
 #define ACCESS_ARG arg
@@ -3453,7 +3453,7 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
             {
                 int extraCh;
 
-#if defined(__USEBIVA__)
+#if defined(__USEBIVA__) & !defined(__NOSPECBIVA__)
                 extraCh = examine(&format, fq, s, arg, chcount);
 #else
                 extraCh = examine(&format, fq, s, &arg, chcount);
@@ -3475,7 +3475,7 @@ static int vvprintf(const char *format, va_list arg, FILE *fq, char *s)
     return (chcount);
 }
 
-#if defined(__USEBIVA__)
+#if defined(__USEBIVA__) & !defined(__NOSPECBIVA__)
 static int examine(const char **formt, FILE *fq, char *s, va_list arg,
                    int chcount)
 #else

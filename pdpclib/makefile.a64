@@ -3,7 +3,9 @@
 #
 
 CC=gcc
-COPTS=-c -O2 -D__ARM__ -nostdinc -nostdlib -fno-builtin -D__64BIT__ -I . -fno-stack-protector --no-pie -D__USEBIVA__
+COPTS=-c -O2 -D__ARM__ -nostdinc -nostdlib -fno-builtin \
+    -D__64BIT__ -I . -fno-stack-protector --no-pie -D__USEBIVA__ \
+    -D__NOSPECBIVA__
 #LD=gcc -static
 LD=pdld --oformat elf --emit-relocs
 
