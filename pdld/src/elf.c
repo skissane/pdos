@@ -502,6 +502,7 @@ static void translate_relocation64_addend (struct reloc_entry *reloc,
             case R_AARCH64_LDST16_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC]; break;
             case R_AARCH64_LDST32_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC]; break;
             case R_AARCH64_LDST64_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC]; break;
+            case R_AARCH64_LDST128_ABS_LO12_NC: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST128_ABS_LO12_NC]; break;
 
             case R_AARCH64_JUMP26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_JUMP26]; break;
             case R_AARCH64_CALL26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_CALL26]; break;
