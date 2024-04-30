@@ -53,7 +53,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 4, 0, 0, 1, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC", 0x1ffc00, 10 },
     { 4, 0, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC", 0xffc00, 10 },
     { 4, 0, 0, 3, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC", 0x7fc00, 10 },
-    { 4, 0, 0, 4, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST128_ABS_LO12_NC", 0x3fc000, 10 },
+    { 4, 0, 0, 4, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_LDST128_ABS_LO12_NC", 0x3fc00, 10 },
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_JUMP26", 0x3ffffff },
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_CALL26", 0x3ffffff },
 };
