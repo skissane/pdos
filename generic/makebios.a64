@@ -7,7 +7,7 @@
 CC=gcc
 CFLAGS=-O2 -fno-builtin -D__gnu_linux__ \
     -fno-stack-protector --no-pie -fno-common \
-    -D__USEBIVA__ -DNEED_ELF \
+    -D__USEBIVA__ -DNEED_ELF -DNEED_MACHO \
     -DNO_DLLENTRY -DGENSHELL -D__ARM__ -D__LONG64__ \
     -D__64BIT__ -DHAVE_DIR -DLINDIR -DNEED_MZ -DTARGET_64BIT
 LD=pdld --oformat elf --emit-relocs
