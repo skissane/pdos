@@ -115,6 +115,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc);
 #endif
+
+#if NEED_MACHO
+static int exeloadLoadMacho(unsigned char **entry_point,
+                            FILE *fp,
+                            unsigned char **loadloc);
+#endif
+
 #if NEED_MVS
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
@@ -159,6 +166,11 @@ int exeloadDoload(unsigned char **entry_point,
 #endif
 #if NEED_AMIGA
     if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
+#endif
+#if NEED_MACHO
+    if (ret == 1) ret = exeloadLoadMacho((unsigned char **)entry_point,
+                                         fp,
+                                         (unsigned char **)loadloc);
 #endif
 #if NEED_MVS
     if (ret == 1) ret = exeloadLoadMVS((unsigned char **)entry_point,
@@ -809,6 +821,64 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
     /* printf("just set entry point, first byte %02X\n",
            *(unsigned char *)codestart); */
 
+    return (0);
+}
+#endif
+
+#if NEED_MACHO
+static int exeloadLoadMacho(unsigned char **entry_point,
+                            FILE *fp,
+                            unsigned char **loadloc)
+{
+    unsigned char firstbit[4];
+    long newpos;
+    size_t readbytes;
+    unsigned char *exeStart;
+    void *orig_exeStart = NULL;
+    unsigned long exeLen;
+
+    if ((fseek(fp, 0, SEEK_SET) != 0)
+        || (fread(&firstbit, sizeof firstbit, 1, fp) != 1)
+        || (memcmp(&firstbit, "\xcf\xfa\xed\xfe", 4) != 0))
+    {
+        return (1);
+    }
+
+    exeLen = 0x5000;
+    /* Allocates memory for the process. */
+    if (*loadloc != NULL)
+    {
+        orig_exeStart = *loadloc;
+    }
+    else
+    {
+        orig_exeStart = malloc(exeLen + 0x1000);
+    }
+
+    if (orig_exeStart == NULL)
+    {
+        printf("Insufficient memory to load Mach-O program\n");
+        return (2);
+    }
+
+    exeStart = (void *)((((unsigned long)orig_exeStart + 0x1000)
+                       / 0x1000) * 0x1000);
+
+    fseek(fp, 0x3f70, SEEK_SET);
+
+    fread(exeStart, 0x400, 1, fp);
+
+    /* don't call the puts */
+    *(unsigned int *)(exeStart + 0x18) = 0xd503201fU; /* NOP */
+
+    salone = 1;
+
+    *entry_point = exeStart + 0;
+
+    if (*loadloc == NULL)
+    {
+        *loadloc = orig_exeStart;
+    }
     return (0);
 }
 #endif
