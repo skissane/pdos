@@ -1,6 +1,9 @@
 # This is the makefile for Linux to build pdpclib for ARM64 UEFI using
 # the gcc compiler and pdld.
 
+# Probably want to add -ffixed-x18 if Windows or MacOS are involved, to
+# stop that register from being used
+
 CC=gcc
 COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__
 
