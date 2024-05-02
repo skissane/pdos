@@ -832,6 +832,7 @@ int main(int argc, char **argv)
         return (EXIT_FAILURE);
     }
     genstart = (void *)entry_point;
+    /* printf("entry_point is %p\n", entry_point); */
     /* printf("first byte of code is %02X\n", *(unsigned char *)entry_point); */
 
 #ifdef NEED_DELAY
@@ -898,7 +899,7 @@ int main(int argc, char **argv)
     if (salone)
     {
         __genmain = (void *)genstart;
-        rc = __start(NULL);
+        rc = __start(cmd);
         salone = 0;
         __genmain = 0;
     }
