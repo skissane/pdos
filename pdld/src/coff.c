@@ -939,6 +939,7 @@ static void translate_relocation (struct reloc_entry *reloc,
     }
 
     if (wanted_Machine == IMAGE_FILE_MACHINE_ARM
+        || wanted_Machine == IMAGE_FILE_MACHINE_ARMNT
         || wanted_Machine == IMAGE_FILE_MACHINE_THUMB) {
         translate_relocation_arm (reloc,
                                   input_reloc,
@@ -1223,7 +1224,22 @@ void coff_write (const char *filename)
     switch (ld_state->target_machine) {
         case LD_TARGET_MACHINE_I386: coff_hdr.Machine = IMAGE_FILE_MACHINE_I386; break;
         case LD_TARGET_MACHINE_X64: coff_hdr.Machine = IMAGE_FILE_MACHINE_AMD64; break;
-        case LD_TARGET_MACHINE_ARM: coff_hdr.Machine = IMAGE_FILE_MACHINE_THUMB; break;
+        
+        case LD_TARGET_MACHINE_ARM:
+            /* EFI rejects Thumb-2 little endian and ARM little endian,
+             * Windows rejects Thumb,
+             * so appropriate Machine is picked regardless of input Machine.
+             */
+            if (Subsystem == IMAGE_SUBSYSTEM_EFI_APPLICATION
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_ROM) {
+                coff_hdr.Machine = IMAGE_FILE_MACHINE_THUMB;
+            } else {
+                coff_hdr.Machine = IMAGE_FILE_MACHINE_ARMNT;
+            }
+            break;
+        
         case LD_TARGET_MACHINE_AARCH64: coff_hdr.Machine = IMAGE_FILE_MACHINE_ARM64; break;
 
         default: coff_hdr.Machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
@@ -1644,6 +1660,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             break;
 
         case IMAGE_FILE_MACHINE_ARM:
+        case IMAGE_FILE_MACHINE_ARMNT:
         case IMAGE_FILE_MACHINE_THUMB:
             if (ld_state->target_machine == LD_TARGET_MACHINE_ARM
                 || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
