@@ -2294,13 +2294,13 @@ static int parse_operands (char **p_line)
 
     while (*line != '\0') {
         char *token_start;
-        unsigned int paren_not_balanced;
-        paren_not_balanced = 0;
+        unsigned int paren_not_balanced = 0;
+        int skipped_comma = 0;
         
         line = skip_whitespace (line);
         token_start = line;
         
-        while (paren_not_balanced || (*line != ',')) {
+        while (paren_not_balanced || *line != ',') {
             if (*line == '\0') {
                 if (paren_not_balanced) {
                     as_error ("unbalanced parentheses in operand %u", instruction.operands);
@@ -2309,10 +2309,11 @@ static int parse_operands (char **p_line)
                 } else {
                     break;
                 }
-            } else if (line[0] == '#' || (line[0] == '/' && (line[1] == '/' || line[1] == '*'))) {
-                if (!paren_not_balanced) {
-                    break;
-                }
+            } else if (line[0] == '\'' && line[1] == ',' && !skipped_comma) {
+                /* Handles cases like "mov al, ','" or "mov $',, %al" or "mov $',', %al. */
+                line += 2;
+                skipped_comma = 1;
+                continue;
             }
             
             if (!intel_syntax) {
@@ -2347,21 +2348,6 @@ static int parse_operands (char **p_line)
             if (ret) {
                 *p_line = line;
                 return 1;
-            }
-        }
-        
-        if (line[0] == '#' || (line[0] == '/' && line[1] == '/')) {
-            break;
-        }
-        
-        if (line[0] == '/' && line[1] == '*') {
-            while (*line) {
-                if (line[0] == '*' && line[1] == '/') {
-                    line += 2;
-                    break;
-                }
-                
-                line++;
             }
         }
         
