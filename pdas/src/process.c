@@ -1348,24 +1348,25 @@ void ignore_rest_of_line (char **pp) {
 
 }
 
-char *find_end_of_line (char *line) {
-
+char *find_end_of_line (char *line)
+{
     while (!is_end_of_line[(int) *line]) {
-    
-        if (line++[0] == '\"') {
-        
+        if (line[0] == '\"') {
+            line++;
             while (*line && *line != '\"') {
-            
                 if (line++[0] == '\\' && *line) {
                     line++;
                 }
-            
             }
-        
+        } else if (line[0] == '\'') {
+            if (is_end_of_line[(int)line[1]] != 1) {
+                if (line[2] == '\'') line++;
+                line++;
+            }
         }
-    
+
+        line++;
     }
     
     return line;
-
 }

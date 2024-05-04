@@ -109,6 +109,11 @@ static char *read_character (char *p, uint_fast64_t *c) {
     
     } else {
         *c = *p++;
+        if (*c == '\0') {
+            as_warn ("single quote at the end of line; '\\n' assumed");
+            *c = '\n';
+            p--;
+        }
     }
     
     return p;
