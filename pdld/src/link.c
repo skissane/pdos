@@ -136,7 +136,7 @@ static void reloc_arm_thumb_mov32 (struct section_part *part,
     field |= ((extracted >> 11) << 10) & 0x400;
     field |= ((extracted >> 8) << 28) & 0x70000000;
     field |= (extracted << 16) & 0xff0000;
-    bytearray_write_4_bytes (part->content + rel->offset, result & 0xffff, LITTLE_ENDIAN);
+    bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
 
     extracted = (result >> 16) & 0xffff;
     bytearray_read_4_bytes (&field, part->content + rel->offset + 4, LITTLE_ENDIAN);
@@ -145,7 +145,7 @@ static void reloc_arm_thumb_mov32 (struct section_part *part,
     field |= ((extracted >> 11) << 10) & 0x400;
     field |= ((extracted >> 8) << 28) & 0x70000000;
     field |= (extracted << 16) & 0xff0000;
-    bytearray_write_4_bytes (part->content + rel->offset + 4, (result >> 16) & 0xffff, LITTLE_ENDIAN);
+    bytearray_write_4_bytes (part->content + rel->offset + 4, field, LITTLE_ENDIAN);
 }
 
 static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
