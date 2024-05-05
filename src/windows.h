@@ -12,6 +12,10 @@
 
 #include <stddef.h>
 
+#ifdef __ARM__
+#define __stdcall
+#endif
+
 /* Subheader: basetsd.h */
 #ifndef __EXPORT__
 
