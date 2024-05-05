@@ -144,6 +144,10 @@ static int check_Machine (unsigned short Machine, const char *filename)
             }
             ld_state->bits = 32;
             break;
+
+        default:
+            ld_error ("%s: unrecognized Machine %#x", filename, Machine);
+            return 1;
     }
 
     return 0;
@@ -809,7 +813,8 @@ static int check_reloc_section_needed_section_part (const struct section_part *p
     for (i = 0; i < part->relocation_count; i++) {
         if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
             || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
-            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
             return 1;
         }
     }
@@ -974,12 +979,13 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
          * it is just 24-bit relative displacement.
          */
         case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_PC26]; break;
+
+        case IMAGE_REL_THUMB_MOV32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
         case IMAGE_REL_ARM_SECREL:
         case IMAGE_REL_ARM_MOV32:
-        case IMAGE_REL_THUMB_MOV32:
         case IMAGE_REL_THUMB_BRANCH20:
         case IMAGE_REL_THUMB_BRANCH24:
         case IMAGE_REL_THUMB_BLX23:
@@ -1101,6 +1107,8 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_32]
                            || relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
+                } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
+                    base_relocation_type = IMAGE_REL_BASED_THUMB_MOV32;
                 } else {
                     continue;
                 }
@@ -1159,7 +1167,8 @@ void coff_after_link (void)
             for (i = 0; i < part->relocation_count; i++) {
                 if (relocs[i].howto != &reloc_howtos[RELOC_TYPE_64]
                     && relocs[i].howto != &reloc_howtos[RELOC_TYPE_32]
-                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_32]) continue;
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_32]
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) continue;
 
                 /* Relocations can be listed in any order, so it must not be assumed they have ascending RVAs.
                  * This workaround sometimes produces suboptimal results but the results should be always correct.
@@ -2154,9 +2163,19 @@ static void import_generate_import (const char *import_name,
         part = section_part_new (section, of);
         section_append_section_part (section, part);
 
-        part->content_size = 8;
-        part->content = xmalloc (part->content_size);
-        memcpy (part->content, "\xFF\x25\x00\x00\x00\x00\x90\x90", 8);
+        if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+            part->content_size = 12;
+            part->content = xmalloc (part->content_size);
+            memcpy (part->content,
+                    "\x40\xF2\x00\x0C" /* movw r12,0x0 */
+                    "\xC0\xF2\x00\x0C" /* movt r12,0x0 */
+                    "\xDC\xF8\x00\xF0" /* ldr pc,[r12] */,
+                    8);
+        } else {
+            part->content_size = 8;
+            part->content = xmalloc (part->content_size);
+            memcpy (part->content, "\xFF\x25\x00\x00\x00\x00\x90\x90", 8);
+        }
 
         symbol->name = xstrdup (import_name);
         symbol->value = 0;
@@ -2169,9 +2188,13 @@ static void import_generate_import (const char *import_name,
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         relocs = part->relocation_array;
         relocs[0].symbol = &of->symbol_array[0];
-        relocs[0].howto = ((ld_state->target_machine == LD_TARGET_MACHINE_X64)
-                           ? &reloc_howtos[RELOC_TYPE_PC32]
-                           : &reloc_howtos[RELOC_TYPE_32]);
+        if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32];
+        } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_PC32];
+        } else {
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_32];
+        }
         relocs[0].offset = 2;
     }
     
@@ -2222,12 +2245,6 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
     CHECK_READ (pos, sizeof (struct IMPORT_OBJECT_HEADER_file));
     read_struct_IMPORT_OBJECT_HEADER (&import_hdr, pos);
     pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
-
-    if (import_hdr.Machine != IMAGE_FILE_MACHINE_AMD64
-        && import_hdr.Machine != IMAGE_FILE_MACHINE_I386) {
-        ld_error ("unrecognized Machine in import header");
-        return 1;
-    }
 
     if (check_Machine (import_hdr.Machine, filename)) return 1;
 

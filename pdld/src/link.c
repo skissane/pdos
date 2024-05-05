@@ -22,6 +22,9 @@ static void reloc_arm_32 (struct section_part *part,
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
                                 struct symbol *symbol);
+static void reloc_arm_thumb_mov32 (struct section_part *part,
+                                   struct reloc_entry *rel,
+                                   struct symbol *symbol);
 
 static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
                                            struct reloc_entry *rel,
@@ -46,6 +49,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
+    { 4, 0, 0, 0, &reloc_arm_thumb_mov32, "RELOC_TYPE_ARM_THUMB_MOV32" },
 
     { 4, 1, 0, 9, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x60ffffe0 },
     { 4, 0, 0, 0, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC", 0x3ffc00, 10 },
@@ -99,6 +103,25 @@ static void reloc_arm_26_pcrel (struct section_part *part,
     result -= part->rva + rel->offset;
     result >>= 2;
     bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+}
+
+static void reloc_arm_thumb_mov32 (struct section_part *part,
+                                   struct reloc_entry *rel,
+                                   struct symbol *symbol)
+{
+    address_type result;
+    unsigned short field2;
+
+    bytearray_read_2_bytes (&field2, part->content + rel->offset + 2, LITTLE_ENDIAN);
+    result = field2;
+    bytearray_read_2_bytes (&field2, part->content + rel->offset + 6, LITTLE_ENDIAN);
+    result |= field2 << 16;
+    
+    result += rel->addend;
+    result += symbol_get_value_with_base (symbol);
+
+    bytearray_write_2_bytes (part->content + rel->offset + 2, result & 0xffff, LITTLE_ENDIAN);
+    bytearray_write_2_bytes (part->content + rel->offset + 6, (result >> 16) & 0xffff, LITTLE_ENDIAN);
 }
 
 static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
