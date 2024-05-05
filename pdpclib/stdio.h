@@ -247,8 +247,10 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
  * so __DUMMYFILE is used instead
  * and the pointers are converted
  * using __INTFILE macro. */
-#ifdef __64BIT__
+#if defined(__64BIT__)
 #define __DUMMYFILE_SIZE 48
+#elif defined(__ARM__)
+#define __DUMMYFILE_SIZE 56
 #else
 #define __DUMMYFILE_SIZE 32
 #endif
