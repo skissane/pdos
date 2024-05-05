@@ -1,0 +1,48 @@
+# This builds 32-bit Windows ARM (PE/coff) executables
+
+CC=gccprm
+AR=arprm
+LD=pdld --no-insert-timestamp
+AS=asprm
+
+COPTS=-S -O0 -msoft-float -fno-common -mapcs-32 \
+    -I../src -D__PDPCLIB_DLL -fno-leading-underscore \
+    -D__ARM__ -D__USEBIVA__ -I. -D__WIN32__
+
+TARGET=pdptest.exe
+OBJS=w32start.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
+    assert.obj signal.obj locale.obj ctype.obj math.obj armsupa.obj fpfuncsa.obj dllcrt.obj
+
+$(TARGET): clean pdptest.obj $(OBJS)
+  rm -f temp.lib
+  $(AR) r temp.lib $(OBJS)
+  $(LD) -s --no-insert-timestamp -o msvcrt.dll --shared --out-implib msvcrt.lib dllcrt.obj temp.lib ../src/kernel32.lib
+  rm -f temp.lib
+  $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib armsupa.obj
+
+w32start.obj: w32start.c
+  $(CC) -mapcs-32 -msoft-float -S -O2 -D__WIN32__ -D__ARM__ -DNOUNDMAIN -fno-leading-underscore -I . -I ../src -o $*.s $*.c
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
+pdptest.obj: pdptest.c
+  $(CC) -mapcs-32 -msoft-float -S -O2 -D__WIN32__ -D__ARM__ -fno-leading-underscore -I . -I ../src -o $*.s $*.c
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
+dllcrt.obj: dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -o $*.s $*.c
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
+.asm.obj:
+  $(AS) --defsym LINUX=0 --defsym ELF=0 -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
