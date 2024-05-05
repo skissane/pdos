@@ -40,7 +40,6 @@ static int nx_compat = 1;
 
 static int convert_to_flat = 0;
 
-static unsigned short wanted_Machine = 0;
 static int leading_underscore = 0;
 
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
@@ -105,6 +104,75 @@ void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p)
 unsigned long coff_get_SizeOfStackCommit (void)
 {
     return SizeOfStackCommit;
+}
+
+static int check_Machine (unsigned short Machine, const char *filename)
+{
+    switch (Machine) {
+        case IMAGE_FILE_MACHINE_AMD64:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_X64;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            ld_state->bits = 64;
+            break;
+        
+        case IMAGE_FILE_MACHINE_I386:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_I386
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_I386;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            leading_underscore = 1;
+            ld_state->bits = 32;
+            break;
+
+        case IMAGE_FILE_MACHINE_ARM:
+        case IMAGE_FILE_MACHINE_ARMNT:
+        case IMAGE_FILE_MACHINE_THUMB:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_ARM
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_ARM;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
+            ld_state->bits = 32;
+            break;
+    }
+
+    return 0;
+}
+
+static unsigned short get_Machine (void)
+{
+    switch (ld_state->target_machine) {
+        case LD_TARGET_MACHINE_I386: return IMAGE_FILE_MACHINE_I386;
+        case LD_TARGET_MACHINE_X64: return IMAGE_FILE_MACHINE_AMD64;
+        
+        case LD_TARGET_MACHINE_ARM:
+            /* EFI rejects Thumb-2 little endian and ARM little endian,
+             * Windows rejects Thumb,
+             * so appropriate Machine is picked regardless of input Machine.
+             */
+            if (Subsystem == IMAGE_SUBSYSTEM_EFI_APPLICATION
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER
+                || Subsystem == IMAGE_SUBSYSTEM_EFI_ROM) {
+                return IMAGE_FILE_MACHINE_THUMB;
+            } else {
+                return IMAGE_FILE_MACHINE_ARMNT;
+            }
+        
+        case LD_TARGET_MACHINE_AARCH64: return IMAGE_FILE_MACHINE_ARM64;
+
+        default: return IMAGE_FILE_MACHINE_UNKNOWN;
+    }
 }
 
 static unsigned long translate_section_flags_to_Characteristics (flag_int flags)
@@ -508,7 +576,7 @@ static void write_implib (const struct export_name *export_names,
             import_hdr.Magic1 = IMAGE_FILE_MACHINE_UNKNOWN;
             import_hdr.Magic2 = IMPORT_OBJECT_HDR_MAGIC2;
             import_hdr.Version = 0;
-            import_hdr.Machine = wanted_Machine;
+            import_hdr.Machine = get_Machine ();
 
             import_hdr.TimeDateStamp = lu_timestamp;
             
@@ -931,20 +999,21 @@ static void translate_relocation (struct reloc_entry *reloc,
                                   struct relocation_entry_internal *input_reloc,
                                   struct section_part *part)
 {
-    if (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) {
-        translate_relocation_64 (reloc,
-                                 input_reloc,
-                                 part);
-        return;
-    }
+    switch (ld_state->target_machine) {
+        case LD_TARGET_MACHINE_I386: break;
+        
+        case LD_TARGET_MACHINE_X64:
+            translate_relocation_64 (reloc, input_reloc, part);
+            return;
+        
+        case LD_TARGET_MACHINE_ARM:
+            translate_relocation_arm (reloc, input_reloc, part);
+            return;
 
-    if (wanted_Machine == IMAGE_FILE_MACHINE_ARM
-        || wanted_Machine == IMAGE_FILE_MACHINE_ARMNT
-        || wanted_Machine == IMAGE_FILE_MACHINE_THUMB) {
-        translate_relocation_arm (reloc,
-                                  input_reloc,
-                                  part);
-        return;
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "+++relocations for Machine %#x not supported yet",
+                                         get_Machine ());
     }
 
     reloc->symbol = part->of->symbol_array + input_reloc->SymbolTableIndex;
@@ -1221,29 +1290,7 @@ void coff_write (const char *filename)
     memcpy (pos, "PE\0\0", 4);
     pos += 4;
 
-    switch (ld_state->target_machine) {
-        case LD_TARGET_MACHINE_I386: coff_hdr.Machine = IMAGE_FILE_MACHINE_I386; break;
-        case LD_TARGET_MACHINE_X64: coff_hdr.Machine = IMAGE_FILE_MACHINE_AMD64; break;
-        
-        case LD_TARGET_MACHINE_ARM:
-            /* EFI rejects Thumb-2 little endian and ARM little endian,
-             * Windows rejects Thumb,
-             * so appropriate Machine is picked regardless of input Machine.
-             */
-            if (Subsystem == IMAGE_SUBSYSTEM_EFI_APPLICATION
-                || Subsystem == IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
-                || Subsystem == IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER
-                || Subsystem == IMAGE_SUBSYSTEM_EFI_ROM) {
-                coff_hdr.Machine = IMAGE_FILE_MACHINE_THUMB;
-            } else {
-                coff_hdr.Machine = IMAGE_FILE_MACHINE_ARMNT;
-            }
-            break;
-        
-        case LD_TARGET_MACHINE_AARCH64: coff_hdr.Machine = IMAGE_FILE_MACHINE_ARM64; break;
-
-        default: coff_hdr.Machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
-    }
+    coff_hdr.Machine = get_Machine ();
     coff_hdr.NumberOfSections = section_count ();
     
     if (insert_timestamp) {
@@ -1442,7 +1489,7 @@ void coff_write (const char *filename)
                              LITTLE_ENDIAN);
 
     if (convert_to_flat
-        && wanted_Machine != IMAGE_FILE_MACHINE_I386) {
+        && ld_state->target_machine != LD_TARGET_MACHINE_I386) {
         ld_error ("--convert-to-flat is supported only for i386");
         convert_to_flat = 0;
     }
@@ -1629,49 +1676,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     CHECK_READ (pos, sizeof (struct coff_header_file));
     read_struct_coff_header (&coff_hdr, pos);
 
-    if (wanted_Machine && wanted_Machine != coff_hdr.Machine) {
-        ld_error ("%s: Machine field mismatch between objects", filename);
-        return 1;
-    }
-
-    wanted_Machine = coff_hdr.Machine;
-    switch (wanted_Machine) {
-        case IMAGE_FILE_MACHINE_AMD64:
-            if (ld_state->target_machine == LD_TARGET_MACHINE_X64
-                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
-                ld_state->target_machine = LD_TARGET_MACHINE_X64;
-            } else {
-                ld_error ("%s: Machine field mismatch between objects", filename);
-                return 1;
-            }
-            ld_state->bits = 64;
-            break;
-        
-        case IMAGE_FILE_MACHINE_I386:
-            if (ld_state->target_machine == LD_TARGET_MACHINE_I386
-                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
-                ld_state->target_machine = LD_TARGET_MACHINE_I386;
-            } else {
-                ld_error ("%s: Machine field mismatch between objects", filename);
-                return 1;
-            }
-            leading_underscore = 1;
-            ld_state->bits = 32;
-            break;
-
-        case IMAGE_FILE_MACHINE_ARM:
-        case IMAGE_FILE_MACHINE_ARMNT:
-        case IMAGE_FILE_MACHINE_THUMB:
-            if (ld_state->target_machine == LD_TARGET_MACHINE_ARM
-                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
-                ld_state->target_machine = LD_TARGET_MACHINE_ARM;
-            } else {
-                ld_error ("%s: Machine field mismatch between objects", filename);
-                return 1;
-            }
-            ld_state->bits = 32;
-            break;
-    }
+    if (check_Machine (coff_hdr.Machine, filename)) return 1;
 
     pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, sizeof (struct string_table_header_file));
@@ -2063,7 +2068,7 @@ static void import_generate_import (const char *import_name,
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     
@@ -2077,7 +2082,7 @@ static void import_generate_import (const char *import_name,
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
@@ -2164,7 +2169,7 @@ static void import_generate_import (const char *import_name,
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         relocs = part->relocation_array;
         relocs[0].symbol = &of->symbol_array[0];
-        relocs[0].howto = ((wanted_Machine == IMAGE_FILE_MACHINE_AMD64)
+        relocs[0].howto = ((ld_state->target_machine == LD_TARGET_MACHINE_X64)
                            ? &reloc_howtos[RELOC_TYPE_PC32]
                            : &reloc_howtos[RELOC_TYPE_32]);
         relocs[0].offset = 2;
@@ -2193,14 +2198,14 @@ static void import_generate_end (void)
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (wanted_Machine == IMAGE_FILE_MACHINE_AMD64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 }
@@ -2224,10 +2229,7 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
         return 1;
     }
 
-    if (wanted_Machine && wanted_Machine != import_hdr.Machine) {
-        ld_error ("Machine field mismatch between objects and imports");
-        return 1;
-    }
+    if (check_Machine (import_hdr.Machine, filename)) return 1;
 
     if ((import_hdr.Type & 0x3) == IMPORT_CONST) {
         ld_internal_error_at_source (__FILE__, __LINE__,
@@ -2295,11 +2297,6 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
     }
 
     return INPUT_FILE_FINISHED;
-}
-
-unsigned short coff_get_wanted_Machine (void)
-{
-    return wanted_Machine;
 }
 
 void coff_archive_end (void)

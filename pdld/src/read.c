@@ -165,9 +165,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
 
     if (offset_name_table == NULL) return;
 
-    {
-        unsigned short Machine = coff_get_wanted_Machine ();
-        
+    {        
         /* This is necessary because the member containing symbol "__head_something"
          * contains the first part of the .idata content
          * and the member containing symbol "_something_iname" contains the terminators for the .idata content.
@@ -176,7 +174,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
          */
         for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
             if (strncmp (offset_name_table[i].name, "__head_", 7) == 0
-                || (Machine == IMAGE_FILE_MACHINE_AMD64
+                || (ld_state->target_machine == LD_TARGET_MACHINE_X64
                     && strncmp (offset_name_table[i].name, "_head_", 6) == 0)) {
                 start_header_object_offset = offset_name_table[i].offset;
             } else if (strlen (offset_name_table[i].name) > 6

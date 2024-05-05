@@ -247,7 +247,6 @@ void coff_after_link (void);
 void coff_write (const char *filename);
 int coff_read (unsigned char *file, size_t file_size, const char *filename);
 
-unsigned short coff_get_wanted_Machine (void);
 void coff_archive_end (void);
 
 void coff_print_help (void);
