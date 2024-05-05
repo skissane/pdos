@@ -2170,7 +2170,7 @@ static void import_generate_import (const char *import_name,
                     "\x40\xF2\x00\x0C" /* movw r12,0x0 */
                     "\xC0\xF2\x00\x0C" /* movt r12,0x0 */
                     "\xDC\xF8\x00\xF0" /* ldr pc,[r12] */,
-                    8);
+                    12);
         } else {
             part->content_size = 8;
             part->content = xmalloc (part->content_size);
@@ -2190,12 +2190,14 @@ static void import_generate_import (const char *import_name,
         relocs[0].symbol = &of->symbol_array[0];
         if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32];
+            relocs[0].offset = 0;
         } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_PC32];
+            relocs[0].offset = 2;
         } else {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_32];
+            relocs[0].offset = 2;
         }
-        relocs[0].offset = 2;
     }
     
     symbol->name = xmalloc (IMP_PREFIX_LEN + strlen (import_name) + 1);
