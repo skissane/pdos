@@ -54,7 +54,7 @@ typedef USHORT APIRET;
 void CTYP __datetime(void *ptr);
 #endif
 
-#if defined(__ARM__)
+#if defined(__ARM__) && !defined(__WIN32__)
 unsigned long __time(void);
 #endif
 
@@ -180,7 +180,7 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #endif
 #if defined(__MVS__) || defined(__CMS__)
     tt = __getclk(clk);
-#elif defined(__ARM__) && !defined(__EFI__)
+#elif defined(__ARM__) && !defined(__EFI__) && !defined(__WIN32__)
     tt = __time();
 #elif defined(__gnu_linux__)
     __time(&tt);
