@@ -22,6 +22,9 @@ static void reloc_arm_32 (struct section_part *part,
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
                                 struct symbol *symbol);
+static void reloc_arm_mov32 (struct section_part *part,
+                             struct reloc_entry *rel,
+                             struct symbol *symbol);
 static void reloc_arm_thumb_mov32 (struct section_part *part,
                                    struct reloc_entry *rel,
                                    struct symbol *symbol);
@@ -49,6 +52,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
+    { 4, 0, 0, 0, &reloc_arm_mov32, "RELOC_TYPE_ARM_MOV32" },
     { 4, 0, 0, 0, &reloc_arm_thumb_mov32, "RELOC_TYPE_ARM_THUMB_MOV32" },
 
     { 4, 1, 0, 9, &reloc_aarch64_hi21_page_pcrel, "RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21", 0x60ffffe0 },
@@ -103,6 +107,41 @@ static void reloc_arm_26_pcrel (struct section_part *part,
     result -= part->rva + rel->offset;
     result >>= 2;
     bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+}
+
+static void reloc_arm_mov32 (struct section_part *part,
+                             struct reloc_entry *rel,
+                             struct symbol *symbol)
+{
+    address_type result;
+    unsigned long field, extracted;
+
+    bytearray_read_4_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
+    extracted = field & 0xfff;
+    extracted |= ((field & 0xf0000) >> 16) << 12;
+    result = extracted;
+    
+    bytearray_read_4_bytes (&field, part->content + rel->offset + 4, LITTLE_ENDIAN);
+    extracted = field & 0xfff;
+    extracted |= ((field & 0xf0000) >> 16) << 12;
+    result |= extracted << 16;
+    
+    result += rel->addend;
+    result += symbol_get_value_with_base (symbol);
+
+    extracted = result & 0xffff;
+    bytearray_read_4_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
+    field &= ~0xf0fff;
+    field |= extracted & 0xfff;
+    field |= ((extracted >> 12) << 16) & 0xf0000;
+    bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+
+    extracted = (result >> 16) & 0xffff;
+    bytearray_read_4_bytes (&field, part->content + rel->offset + 4, LITTLE_ENDIAN);
+    field &= ~0xf0fff;
+    field |= extracted & 0xfff;
+    field |= ((extracted >> 12) << 16) & 0xf0000;
+    bytearray_write_4_bytes (part->content + rel->offset + 4, field, LITTLE_ENDIAN);
 }
 
 static void reloc_arm_thumb_mov32 (struct section_part *part,

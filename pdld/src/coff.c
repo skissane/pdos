@@ -814,6 +814,7 @@ static int check_reloc_section_needed_section_part (const struct section_part *p
         if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
             || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
             || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
+            || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_MOV32]
             || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
             return 1;
         }
@@ -980,12 +981,13 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
          */
         case IMAGE_REL_ARM_BRANCH24: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_PC26]; break;
 
+        case IMAGE_REL_ARM_MOV32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_MOV32]; break;
+        
         case IMAGE_REL_THUMB_MOV32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
         case IMAGE_REL_ARM_SECREL:
-        case IMAGE_REL_ARM_MOV32:
         case IMAGE_REL_THUMB_BRANCH20:
         case IMAGE_REL_THUMB_BRANCH24:
         case IMAGE_REL_THUMB_BLX23:
@@ -1107,6 +1109,8 @@ static void generate_base_relocation_block (struct section *reloc_section,
                 } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_32]
                            || relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
                     base_relocation_type = IMAGE_REL_BASED_HIGHLOW;
+                } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_MOV32]) {
+                    base_relocation_type = IMAGE_REL_BASED_ARM_MOV32;
                 } else if (relocs[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
                     base_relocation_type = IMAGE_REL_BASED_THUMB_MOV32;
                 } else {
@@ -1168,6 +1172,7 @@ void coff_after_link (void)
                 if (relocs[i].howto != &reloc_howtos[RELOC_TYPE_64]
                     && relocs[i].howto != &reloc_howtos[RELOC_TYPE_32]
                     && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_32]
+                    && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_MOV32]
                     && relocs[i].howto != &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) continue;
 
                 /* Relocations can be listed in any order, so it must not be assumed they have ascending RVAs.
@@ -2166,11 +2171,24 @@ static void import_generate_import (const char *import_name,
         if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
             part->content_size = 12;
             part->content = xmalloc (part->content_size);
+
+            /* Code for ARM mode is different from code for Thumb mode
+             * and currently ARM mode is being used.
+             */
+#define USE_ARM_IMPORT
+#ifdef USE_ARM_IMPORT
+            memcpy (part->content,
+                    "\x00\xC0\x00\xE3" /* movw r12,0x0 */
+                    "\x00\xC0\x40\xE3" /* movt r12,0x0 */
+                    "\x00\xF0\x9C\xE5" /* ldr pc,[r12] */,
+                    12);
+#else
             memcpy (part->content,
                     "\x40\xF2\x00\x0C" /* movw r12,0x0 */
                     "\xC0\xF2\x00\x0C" /* movt r12,0x0 */
                     "\xDC\xF8\x00\xF0" /* ldr pc,[r12] */,
                     12);
+#endif
         } else {
             part->content_size = 8;
             part->content = xmalloc (part->content_size);
@@ -2189,7 +2207,11 @@ static void import_generate_import (const char *import_name,
         relocs = part->relocation_array;
         relocs[0].symbol = &of->symbol_array[0];
         if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
+#ifdef USE_ARM_IMPORT
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_MOV32];
+#else
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32];
+#endif
             relocs[0].offset = 0;
         } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_PC32];
