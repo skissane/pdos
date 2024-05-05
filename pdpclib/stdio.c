@@ -97,11 +97,12 @@
 #if defined(__EFI__)
 /* don't define MSDOS for any EFI build */
 #elif defined(__PDOS386__) || defined(__gnu_linux__) || defined(__SMALLERC__) \
-    || defined(__ARM__)
+    || (defined(__ARM__) && !defined(__WIN32__))
 #define __MSDOS__
 #endif
 
-#if defined(__MSDOS__) && !defined(__gnu_linux__) && !defined(__ARM__)
+#if defined(__MSDOS__) && !defined(__gnu_linux__) \
+    && !(defined(__ARM__) && !defined(__WIN32__))
 #if defined(__WATCOMC__) && !defined(__32BIT__)
 #define CTYP __cdecl
 #else
@@ -160,7 +161,8 @@ typedef USHORT APIRET;
 
 static FILE  *myfile;
 
-#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__EFI__))
+#if defined(__gnu_linux__) \
+    || (defined(__ARM__) && !defined(__EFI__) && !defined(__WIN32__))
 
 extern int __open(const char *a, int b, int c);
 extern int __write(int a, const void *b, int c);
@@ -1123,7 +1125,7 @@ static void osfopen(void)
     }
     if (mode)
     {
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
         myfile->hfile = __open(fnm, 1, &errind);
 #else
         myfile->hfile = __creat(fnm, 0, &errind);
