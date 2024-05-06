@@ -38,7 +38,7 @@ int salone = 0;
 #define NO_DLLENTRY 1
 #endif
 
-#if defined(__ARM__) && defined(__GENSHELL__)
+#if defined(__ARM__) && defined(GENSHELL)
 #define W32EMUL
 #endif
 
