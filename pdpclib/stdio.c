@@ -308,7 +308,7 @@ __PDPCLIB_API__ FILE **__gterr(void)
     { return(&__stderr_ptr); }
 
 #if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__) \
-    || defined(__W64SHELL__)
+    || defined(__W64SHELL__) || defined(__ARM__)
 __PDPCLIB_API__ __DUMMYFILE _iob[3];
 
 /* Note that all compilers should probably be using this
@@ -317,7 +317,7 @@ __PDPCLIB_API__ __DUMMYFILE _iob[3];
    time I knew that the function even existed. */
 /* It doesn't appear to exist on Windows 2000 (32 bit) -
    dodged a bullet there */
-#if defined(__64BIT__)
+#if defined(__64BIT__) || defined(__ARM__)
 __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 {
     return (_iob);
@@ -327,7 +327,7 @@ __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 
 #if defined(__W32EMUL__) || defined(__W32DLL__) || defined(__W64SHELL__) \
     || defined(__GENSHELL__)
-#ifndef __W64SHELL__
+#if !defined(__W64SHELL__) && !defined(__ARM__)
 static __DUMMYFILE _iob[3];
 #endif
 __DUMMYFILE *_imp___iob = _iob;
