@@ -2812,7 +2812,38 @@ static int exeloadLoadPE(unsigned char **entry_point,
 #ifdef __ARM__
                     else if (rel_type == IMAGE_REL_BASED_ARM_MOV32)
                     {
-                        printf("mov32 unimplemented\n");
+                        unsigned long result;
+                        unsigned long field, extracted;
+
+                        field = *(unsigned long *)rel_target;
+                        extracted = field & 0xfff;
+                        extracted |= ((field & 0xf0000) >> 16) << 12;
+                        result = extracted;
+                        
+                        field = *(unsigned long *)(rel_target + 4);
+                        extracted = field & 0xfff;
+                        extracted |= ((field & 0xf0000) >> 16) << 12;
+                        result |= extracted << 16;
+                        
+                        if (lower_exeStart) {
+                            result -= image_diff;
+                        } else {
+                            result += image_diff;
+                        }
+
+                        extracted = result & 0xffff;
+                        field = *(unsigned long *)rel_target;
+                        field &= ~0xf0fff;
+                        field |= extracted & 0xfff;
+                        field |= ((extracted >> 12) << 16) & 0xf0000;
+                        *(unsigned long *)rel_target = field;
+
+                        extracted = (result >> 16) & 0xffff;
+                        field = *(unsigned long *)(rel_target + 4);
+                        field &= ~0xf0fff;
+                        field |= extracted & 0xfff;
+                        field |= ((extracted >> 12) << 16) & 0xf0000;
+                        *(unsigned long *)(rel_target + 4) = field;
                     }
 #endif
 #if TARGET_64BIT
