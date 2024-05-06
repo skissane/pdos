@@ -515,6 +515,25 @@ BOOL WINAPI WriteFileEx (HANDLE hFile,
     for (;;) ;
 }
 
+LPVOID WINAPI VirtualAlloc (LPVOID lpAddress,
+                            SIZE_T dwSize,
+                            DWORD flAllocationType,
+                            DWORD flProtect)
+{
+    unsigned int len = 28;
+    PosWriteFile(1, "VirtualAlloc unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
+BOOL WINAPI VirtualFree (LPVOID lpAddress,
+                         SIZE_T dwSize,
+                         DWORD dwFreeType)
+{
+    unsigned int len = 27;
+    PosWriteFile(1, "VirtualFree unimplemented\r\n", len, &len);
+    for (;;) ;
+}
+
 /* auto-genned dummy functions */
 
 BOOL WINAPI AllocConsole(void)
@@ -1518,18 +1537,6 @@ void WINAPI UnmapViewOfFile(void)
 {
     unsigned int len = 31;
     PosWriteFile(1, "UnmapViewOfFile unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI VirtualAlloc(void)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "VirtualAlloc unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI VirtualFree(void)
-{
-    unsigned int len = 27;
-    PosWriteFile(1, "VirtualFree unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI VirtualProtect(void)
