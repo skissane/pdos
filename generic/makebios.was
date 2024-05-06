@@ -1,0 +1,27 @@
+# This builds 32-bit Windows ARM executables
+# You must have built PDPCLIB with makefile.was first
+
+CC=gccprm
+CFLAGS=-O0
+LD=pdld --oformat coff --no-insert-timestamp
+LDFLAGS=
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
+  -D__ARM__ -fno-common -mapcs-32 -DNEED_MZ -DNEED_ELF \
+  -DGENSHELL -D__GENSHELL__ -DARMHACK -DNO_DLLENTRY \
+  -msoft-float -D__WIN32__ -fno-leading-underscore \
+  -D__STATIC__
+
+all: clean bios.exe
+
+bios.exe: bios.obj ../bios/exeload.obj
+    $(LD) $(LDFLAGS) -s -nostdlib -o bios.exe ../pdpclib/p32start.obj bios.obj ../bios/exeload.obj ../pdpclib/pdpwin32.lib ../src/kernel32.lib
+
+.c.obj:
+    $(CC) $(COPTS) -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+clean:
+    rm -f *.o bios.exe
