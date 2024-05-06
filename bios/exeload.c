@@ -38,6 +38,10 @@ int salone = 0;
 #define NO_DLLENTRY 1
 #endif
 
+#if defined(__ARM__) && defined(__GENSHELL__)
+#define W32EMUL
+#endif
+
 #ifdef __OS2__
 #include <os2.h>
 #endif
@@ -2622,6 +2626,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
 #else
     if ((coff_hdr.Machine != IMAGE_FILE_MACHINE_UNKNOWN)
         && (coff_hdr.Machine != IMAGE_FILE_MACHINE_I386)
+        && (coff_hdr.Machine != IMAGE_FILE_MACHINE_ARMNT)
         && (coff_hdr.Machine != IMAGE_FILE_MACHINE_THUMB))
     {
         if (coff_hdr.Machine == IMAGE_FILE_MACHINE_AMD64)
