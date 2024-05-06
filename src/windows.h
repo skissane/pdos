@@ -1448,3 +1448,16 @@ BOOL WINAPI UpdateWindow (HWND hWnd);
 /* Subheader: libloaderapi.h */
 #define GetModuleHandle GetModuleHandleA
 HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName);
+
+
+
+/* unknown header */
+
+#define MEM_RELEASE 0x8000
+#define MEM_COMMIT 0x1000
+#define MEM_RESERVE 0x2000
+#define PAGE_EXECUTE_READWRITE 0x40
+#define PAGE_READWRITE 0x4
+
+BOOL VirtualFree(LPVOID a, SIZE_T b, DWORD c);
+LPVOID VirtualAlloc(LPVOID a, SIZE_T b, DWORD c, DWORD d);
