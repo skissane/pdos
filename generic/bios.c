@@ -77,6 +77,8 @@ static int globrc = 0;
 #include "__os.h"
 #include "exeload.h"
 
+#define EXITMSG "enter command, exit to exit\n"
+
 #if defined(W64HACK) || defined(W32HACK) || defined(W64DLL)
 void w64exit(int status);
 #endif
@@ -496,7 +498,7 @@ int main(int argc, char **argv)
     if (!valid && !need_usage)
     {
         scr = stdin;
-        printf("enter commands, press enter to exit\n");
+        printf(EXITMSG);
     }
     do
     {
@@ -598,7 +600,7 @@ int main(int argc, char **argv)
         directory_test();
 #endif
         undo_redirection ();
-        printf("enter another command, enter to exit\n");
+        printf(EXITMSG);
         continue;
     }
     else if (strcmp(prog_name, "exit") == 0)
@@ -630,7 +632,7 @@ int main(int argc, char **argv)
         }
 #endif
         undo_redirection ();
-        printf("enter another command, exit to exit\n");
+        printf(EXITMSG);
         continue;
     }
     else if (strcmp(prog_name, "type") == 0)
@@ -647,7 +649,7 @@ int main(int argc, char **argv)
             fclose(fp);
         }
         undo_redirection ();
-        printf("enter another command, enter to exit\n");
+        printf(EXITMSG);
         continue;
     }
     else if (strcmp(prog_name, "copy") == 0)
@@ -689,7 +691,7 @@ int main(int argc, char **argv)
             }
         }
         undo_redirection ();
-        printf("enter another command, enter to exit\n");
+        printf(EXITMSG);
         continue;
     }
 #endif
@@ -797,7 +799,7 @@ int main(int argc, char **argv)
             printf("no such program %s\n", prog_name + 5);
 #endif
             undo_redirection ();
-            printf("enter another command\n");
+            printf(EXITMSG);
             continue;
         }
         fclose(fp);
@@ -934,9 +936,9 @@ int main(int argc, char **argv)
             break;
         }
 #if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
-    printf("enter another command, exit to exit\n");
+    printf(EXITMSG);
 #else
-    printf("enter another command, enter to exit\n");
+    printf(EXITMSG);
 #endif
     } while (1);
 
@@ -959,7 +961,7 @@ int main(int argc, char **argv)
     }
     else if (!shell)
     {
-        printf("press enter to exit\n");
+        printf(EXITMSG);
         fgets(buf, sizeof buf, stdin);
     }
     if ((scr != NULL) && (scr != stdin))
