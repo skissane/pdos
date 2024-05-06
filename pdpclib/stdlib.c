@@ -278,6 +278,9 @@ static int ifree(void *ptr, size_t size)
    but I think is on win32. So it would need to be updated here,
    statically linked (or use pdpcrt) or switch to using
    PDOS/x64 - possibly under qemu */
+/* I needed generic shell capability for Win32 ARM and GlobalAlloc
+   didn't give execute permission, and so I switched to VirtualAlloc
+   and it accepted execute as a parameter */
 
 __PDPCLIB_API__ void *malloc(size_t size)
 {
@@ -511,7 +514,10 @@ __PDPCLIB_API__ void *malloc(size_t size)
 #elif defined(__WIN32__)
     void *ptr;
 
-    ptr = GlobalAlloc(0, size + sizeof(size_t));
+    /* ptr = GlobalAlloc(0, size + sizeof(size_t)); */
+    ptr = VirtualAlloc(NULL, size + sizeof(size_t),
+                       MEM_COMMIT | MEM_RESERVE,
+                       PAGE_EXECUTE_READWRITE);
     if (ptr != NULL)
     {
         *(size_t *)ptr = size;
@@ -747,7 +753,10 @@ __PDPCLIB_API__ void free(void *ptr)
 #ifdef __WIN32__
     if (ptr != NULL)
     {
-        GlobalFree(((size_t *)ptr) - 1);
+        /* GlobalFree(((size_t *)ptr) - 1); */
+        VirtualFree((((size_t *)ptr) - 1),
+                    0,
+                    MEM_RELEASE);
     }
 #endif
 
