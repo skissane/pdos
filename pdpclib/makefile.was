@@ -1,0 +1,34 @@
+# This builds 32-bit Windows ARM (PE/coff) executables
+# with static linking
+
+CC=gccprm
+AR=arprm
+LD=pdld --no-insert-timestamp
+AS=asprm
+
+COPTS=-S -O0 -msoft-float -fno-common -mapcs-32 \
+    -I../src -fno-leading-underscore \
+    -D__ARM__ -D__USEBIVA__ -I. -D__WIN32__ \
+    -D__STATIC__ -DNOUNDMAIN
+
+TARGET=pdptest.exe
+OBJS=p32start.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
+    assert.obj signal.obj locale.obj ctype.obj math.obj armsupa.obj fpfuncsa.obj
+
+$(TARGET): clean pdptest.obj $(OBJS)
+  rm -f pdpwin32.lib
+  $(AR) r pdpwin32.lib $(OBJS)
+  $(AR) s pdpwin32.lib
+  $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe p32start.obj pdptest.obj pdpwin32.lib ../src/kernel32.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.obj $*.s
+  rm -f $*.s
+
+.asm.obj:
+  $(AS) --defsym LINUX=0 --defsym ELF=0 -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
