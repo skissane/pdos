@@ -251,7 +251,7 @@ __PDPCLIB_HEADFUNC FILE **__gterr(void);
 #if defined(__64BIT__)
 #define __DUMMYFILE_SIZE 48
 #elif defined(__ARM__)
-#define __DUMMYFILE_SIZE 56
+#define __DUMMYFILE_SIZE 32
 #else
 #define __DUMMYFILE_SIZE 32
 #endif
