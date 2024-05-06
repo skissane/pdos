@@ -3271,6 +3271,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)w32exit;
                         }
+#ifdef __ARM__
+                        else if (strcmp(hintname, "__iob_func") == 0)
+                        {
+                            *thunk = (unsigned long)__iob_func;
+                        }
+#endif
                         else if (strcmp((char *)hintname, "puts") == 0)
                         {
                             *thunk = (unsigned long)puts;
