@@ -53,6 +53,12 @@ typedef struct {
     long d7;
     long retaddr;
 #elif defined(__ARM__) || defined(__ARMGEN__)
+    /* I think we need to match msvcrt use, which I think
+       is fp, r4, r5, r6, r7, r8, r9, r10, r11, sp,
+          new pc (r15) = old lr (r14) I think,
+          fpscr (floating point status and control register),
+          then 8 * 64-bit floating point */
+    /* ip is scratch so doesn't need to be saved */
     void *sp;
     void *fp;
     int lr; /* was void *ip; */
@@ -67,9 +73,15 @@ typedef struct {
     int r3;
     int r12; /* ip */
     int r1;
+    int extra[13]; /* MSVCRT requires 28 total - retaddr below is extra 1 */
 #elif defined(__WIN32__) || defined(__32BIT__) \
     || (defined(__OS2__) && !defined(__16BIT__)) \
     || defined(__PDOS386__) || defined(__gnu_linux__) || defined(__EFI__)
+    /* not sure how we're getting away with not matching MSVCRT,
+       which I think is ebp, ebx, edi, esi, esp, eip, and then
+       10 * 32-bit crap for a total of 16 32-bit values. We only
+       have 15 here, because the 16th is the retval, which
+       doesn't need to be in this buffer as a separate entry I think */
     int ebx;
     int ecx;
     int edx;
