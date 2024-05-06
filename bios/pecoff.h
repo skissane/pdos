@@ -162,6 +162,7 @@ typedef struct {
 /* Relocation types. */
 #define IMAGE_REL_BASED_ABSOLUTE 0 /* Skip this relocation. */
 #define IMAGE_REL_BASED_HIGHLOW  3
+#define IMAGE_REL_BASED_ARM_MOV32 5
 #define IMAGE_REL_BASED_DIR64 10
 
 typedef struct {

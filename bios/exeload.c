@@ -2809,6 +2809,12 @@ static int exeloadLoadPE(unsigned char **entry_point,
                             *(unsigned char **)rel_target -= image_diff;
                         else *(unsigned char **)rel_target += image_diff;
                     }
+#ifdef __ARM__
+                    else if (rel_type == IMAGE_REL_BASED_ARM_MOV32)
+                    {
+                        printf("mov32 unimplemented\n");
+                    }
+#endif
 #if TARGET_64BIT
                     else if (rel_type == IMAGE_REL_BASED_DIR64)
                     {
