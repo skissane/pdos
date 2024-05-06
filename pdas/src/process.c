@@ -125,7 +125,7 @@ static void handler_align (char **pp, int first_arg_is_bytes)
     
     alignment = get_result_of_absolute_expression (pp);
 
-    if (first_arg_is_bytes) {
+    if (first_arg_is_bytes && alignment != 0) {
         offset_t i;
 
         /* Converts to log2. */    
