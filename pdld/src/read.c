@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "ld.h"
 #include "xmalloc.h"
@@ -45,7 +46,14 @@ struct archive_member_header {
     unsigned long size;
 };
 
-static void read_archive_member_header (const unsigned char *pos, struct archive_member_header *hdr)
+struct archive_longnames {
+    const char *names;
+    unsigned long size;
+};
+
+static int read_archive_member_header (const unsigned char *pos,
+                                       struct archive_member_header *hdr,
+                                       const struct archive_longnames *longnames)
 {
     struct IMAGE_ARCHIVE_MEMBER_HEADER_internal member_header;
     char *tmp;
@@ -54,10 +62,40 @@ static void read_archive_member_header (const unsigned char *pos, struct archive
 
     hdr->name = xstrndup (member_header.Name, sizeof (member_header.Name));
     strip_trailing_spaces (hdr->name);
+    if (hdr->name[0] == '/' && isdigit (hdr->name[1])) {
+        unsigned long i = strtoul (hdr->name + 1, NULL, 10);
+
+        if (!longnames->names) {
+            ld_warn ("archive member has longname but archive lacks longnames member");
+        } else if (i >= longnames->size) {
+            free (hdr->name);
+            ld_error ("longname index %lu larger than longnames size %lu",
+                      i, longnames->size);
+            return 1;
+        } else {
+            const char *p, *p2;
+            
+            free (hdr->name);
+            /* According to the specification,
+             * individual long names should be null-terminated
+             * but some tools do not follow that
+             * and use '\n' as terminator.
+             */
+            p = strchr (longnames->names + i, '\0');
+            p2 = strchr (longnames->names + i, '\n');
+            if (p2 && p2 < p) p = p2;
+
+            hdr->name = xstrndup (longnames->names + i, p - longnames->names - i);
+            strip_trailing_spaces (hdr->name);
+        }
+    }
+    
     tmp = xstrndup (member_header.Size, sizeof (member_header.Size));
     strip_trailing_spaces (tmp);
     hdr->size = strtoul (tmp, NULL, 10);
     free (tmp);
+
+    return 0;
 }
 
 static struct lm_offset_name_entry *read_linker_member (unsigned char *file, size_t file_size, unsigned long *NumberOfSymbols_p)
@@ -98,14 +136,18 @@ static struct lm_offset_name_entry *read_linker_member (unsigned char *file, siz
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static int read_archive_member (unsigned char *file, size_t file_size, unsigned char *pos, const char *archive_name)
+static int read_archive_member (unsigned char *file,
+                                size_t file_size,
+                                unsigned char *pos,
+                                const char *archive_name,
+                                const struct archive_longnames *longnames)
 {
     struct archive_member_header hdr;
     int ret;
     char *filename;
 
     CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
-    read_archive_member_header (pos, &hdr);
+    if (read_archive_member_header (pos, &hdr, longnames)) return INPUT_FILE_ERROR;
     pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
 
     {
@@ -146,12 +188,14 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     
     unsigned char *pos;
 
+    struct archive_longnames longnames = {NULL, 0};
+
     unsigned long start_header_object_offset = 0;
     unsigned long end_header_object_offset = 0;
 
     pos = file + strlen (IMAGE_ARCHIVE_START);
     CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
-    read_archive_member_header (pos, &hdr);
+    if (read_archive_member_header (pos, &hdr, &longnames)) return;
     pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
 
     if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
@@ -164,6 +208,33 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     free (hdr.name);
 
     if (offset_name_table == NULL) return;
+
+repeat:
+    pos += hdr.size;
+    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
+    if (read_archive_member_header (pos, &hdr, &longnames)) return;
+    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+
+    if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
+        /* Skips the optional second linker member
+         * which contains the same information as the first linker member,
+         * only in different format.
+         */
+        free (hdr.name);
+        goto repeat;
+    } else if (strcmp (hdr.name, IMAGE_ARCHIVE_LONGNAMES_MEMBER_Name) == 0) {
+        longnames.names = (char *)pos;
+        if (hdr.size > 0) {
+            CHECK_READ (pos, hdr.size);
+            longnames.size = hdr.size;
+            /* Longnames should be null-terminated
+             * but input cannot be trusted.
+             */
+            pos[hdr.size - 1] = '\0';
+        }
+    }
+
+    free (hdr.name);
 
     {        
         /* This is necessary because the member containing symbol "__head_something"
@@ -185,7 +256,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     }
 
     if (start_header_object_offset)
-        read_archive_member (file, file_size, file + start_header_object_offset, archive_name);
+        read_archive_member (file, file_size, file + start_header_object_offset, archive_name, &longnames);
 
     while (1) {
         int change = 0;
@@ -201,7 +272,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
                 || offset_name_table[i].offset == end_header_object_offset) continue;
             
             pos = file + offset_name_table[i].offset;
-            ret = read_archive_member (file, file_size, pos, archive_name);
+            ret = read_archive_member (file, file_size, pos, archive_name, &longnames);
             if (ret == INPUT_FILE_ERROR) return;
             /* If the archive member is a real object (not short import entry),
              * it might require more symbols. */
@@ -212,7 +283,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     }
 
     if (end_header_object_offset)
-        read_archive_member (file, file_size, file + end_header_object_offset, archive_name);
+        read_archive_member (file, file_size, file + end_header_object_offset, archive_name, &longnames);
 
     coff_archive_end ();
 

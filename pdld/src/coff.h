@@ -642,6 +642,7 @@ struct IMAGE_ARCHIVE_MEMBER_HEADER_file {
 };
 
 #define IMAGE_ARCHIVE_LINKER_MEMBER_Name "/"
+#define IMAGE_ARCHIVE_LONGNAMES_MEMBER_Name "//"
 
 struct IMPORT_OBJECT_HEADER_internal {
 
