@@ -2317,6 +2317,7 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
 
     if (Machine == IMAGE_FILE_MACHINE_AMD64
         || Machine == IMAGE_FILE_MACHINE_ARM
+        || Machine == IMAGE_FILE_MACHINE_ARMNT
         || Machine == IMAGE_FILE_MACHINE_I386
         || Machine == IMAGE_FILE_MACHINE_THUMB) {
         read_coff_object (file, file_size, filename);
