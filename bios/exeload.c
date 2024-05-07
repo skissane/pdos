@@ -3289,6 +3289,46 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)malloc;
                         }
+                        else if (strcmp((char *)hintname, "calloc") == 0)
+                        {
+                            *thunk = (unsigned long)calloc;
+                        }
+                        else if (strcmp((char *)hintname, "putchar") == 0)
+                        {
+                            *thunk = (unsigned long)putchar;
+                        }
+                        else if (strcmp((char *)hintname, "getenv") == 0)
+                        {
+                            *thunk = (unsigned long)getenv;
+                        }
+                        else if (strcmp((char *)hintname, "bsearch") == 0)
+                        {
+                            *thunk = (unsigned long)bsearch;
+                        }
+                        else if (strcmp((char *)hintname, "raise") == 0)
+                        {
+                            *thunk = (unsigned long)raise;
+                        }
+                        else if (strcmp((char *)hintname, "signal") == 0)
+                        {
+                            *thunk = (unsigned long)signal;
+                        }
+                        else if (strcmp((char *)hintname, "strpbrk") == 0)
+                        {
+                            *thunk = (unsigned long)strpbrk;
+                        }
+                        else if (strcmp((char *)hintname, "strspn") == 0)
+                        {
+                            *thunk = (unsigned long)strspn;
+                        }
+                        else if (strcmp((char *)hintname, "tmpnam") == 0)
+                        {
+                            *thunk = (unsigned long)tmpnam;
+                        }
+                        else if (strcmp((char *)hintname, "ldexp") == 0)
+                        {
+                            *thunk = (unsigned long)ldexp;
+                        }
                         else if (strcmp((char *)hintname, "abort") == 0)
                         {
                             *thunk = (unsigned long)abort;
