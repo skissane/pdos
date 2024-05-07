@@ -1,14 +1,15 @@
 # This builds ARM ELF executables for Linux
 
-CC=gccarm
+#CC=gccarm
 #CC=gccerm
+CC=gccprm
 AR=arerm
 #LD=lderm
 LD=pdld --oformat elf
 AS=aserm
-COPTS=-S -O0 -fno-common -mapcs-32 -D__UNOPT__ -D__ARM__ \
-   -DNEED_MPROTECT -DSTACKPARM -I. -msoft-float \
-   -D__GENSHELL__
+COPTS=-S -O0 -fno-common -mapcs-32 -D__ARM__ \
+   -I. -msoft-float -fno-leading-underscore \
+   -D__GENSHELL__ -D__USEBIVA__
 #COPTS=-S -O2 -fno-common -mapcs-32 -D__ARM__ -DUSE_MEMMGR -DNEED_MPROTECT -DSTACKPARM -I.
 
 pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
@@ -27,4 +28,4 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   rm -f $*.s
 
 .asm.o:
-  $(AS) --defsym LINUX=1 --defsym ELF=1 --defsym STACKPARM=1 -o $@ $<
+  $(AS) --defsym LINUX=1 --defsym ELF=1 --defsym STACKPARM=0 -o $@ $<
