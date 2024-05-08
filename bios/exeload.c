@@ -3329,6 +3329,46 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         {
                             *thunk = (unsigned long)ldexp;
                         }
+                        else if (strcmp((char *)hintname, "atof") == 0)
+                        {
+                            *thunk = (unsigned long)atof;
+                        }
+                        else if (strcmp((char *)hintname, "rename") == 0)
+                        {
+                            *thunk = (unsigned long)rename;
+                        }
+                        else if (strcmp((char *)hintname, "clearerr") == 0)
+                        {
+                            *thunk = (unsigned long)clearerr;
+                        }
+                        else if (strcmp((char *)hintname, "abs") == 0)
+                        {
+                            *thunk = (unsigned long)abs;
+                        }
+                        else if (strcmp((char *)hintname, "ctime") == 0)
+                        {
+                            *thunk = (unsigned long)ctime;
+                        }
+                        else if (strcmp((char *)hintname, "memchr") == 0)
+                        {
+                            *thunk = (unsigned long)memchr;
+                        }
+                        else if (strcmp((char *)hintname, "perror") == 0)
+                        {
+                            *thunk = (unsigned long)perror;
+                        }
+                        else if (strcmp((char *)hintname, "setlocale") == 0)
+                        {
+                            *thunk = (unsigned long)setlocale;
+                        }
+                        else if (strcmp((char *)hintname, "strncat") == 0)
+                        {
+                            *thunk = (unsigned long)strncat;
+                        }
+                        else if (strcmp((char *)hintname, "strtok") == 0)
+                        {
+                            *thunk = (unsigned long)strtok;
+                        }
                         else if (strcmp((char *)hintname, "abort") == 0)
                         {
                             *thunk = (unsigned long)abort;
