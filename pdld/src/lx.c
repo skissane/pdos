@@ -23,7 +23,7 @@
 
 static unsigned long api_type = MODULE_FLAGS_PM_WINDOWING_COMPATIBLE;
 
-static size_t size_of_headers = sizeof (struct LX_HEADER_file);
+static size_t size_of_headers = SIZEOF_struct_LX_HEADER_file;
 static size_t stack_size = 0x8000; /* Arbitrary. */
 
 static struct section_part fake_lx_part_s;
@@ -397,9 +397,9 @@ void lx_write (const char *filename)
     if (stub_file) {
         size_of_headers += stub_size;
     } else {
-        size_of_headers += sizeof (struct IMAGE_DOS_HEADER_file);
+        size_of_headers += SIZEOF_struct_IMAGE_DOS_HEADER_file;
     }
-    lx_hdr_offset = size_of_headers - sizeof (struct LX_HEADER_file);
+    lx_hdr_offset = size_of_headers - SIZEOF_struct_LX_HEADER_file;
 
     memset (&lx_hdr, 0, sizeof lx_hdr);
 
@@ -441,9 +441,9 @@ void lx_write (const char *filename)
         file_size += total_section_size_to_write;
         lx_hdr.ObjectTableOffsetHdr = file_size - lx_hdr_offset;
         lx_hdr.NumberOfObjectsInModule = object_index;
-        file_size += lx_hdr.NumberOfObjectsInModule * sizeof (struct object_table_entry_file);
+        file_size += lx_hdr.NumberOfObjectsInModule * SIZEOF_struct_object_table_entry_file;
         lx_hdr.ObjectPageTableOffsetHdr = file_size - lx_hdr_offset;
-        file_size += object_page_table_entries * sizeof (struct object_page_table_entry_file);
+        file_size += object_page_table_entries * SIZEOF_struct_object_page_table_entry_file;
         lx_hdr.ModuleNumberOfPages = object_page_table_entries;
 
         lx_hdr.ResidentNameTableOffsetHdr = file_size - lx_hdr_offset;
@@ -513,13 +513,13 @@ void lx_write (const char *filename)
         dos_hdr.Magic[0] = 'M';
         dos_hdr.Magic[1] = 'Z';
 
-        dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+        dos_hdr.SizeOfHeaderInParagraphs = SIZEOF_struct_IMAGE_DOS_HEADER_file / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
 
         dos_hdr.OffsetToRelocationTable = 0x40; /* LX specification requirement. */
-        dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
+        dos_hdr.OffsetToNewEXEHeader = SIZEOF_struct_IMAGE_DOS_HEADER_file;
 
         write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
-        pos += sizeof (struct IMAGE_DOS_HEADER_file);
+        pos += SIZEOF_struct_IMAGE_DOS_HEADER_file;
     }
 
     write_struct_LX_HEADER (pos, &lx_hdr);

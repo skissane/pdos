@@ -87,6 +87,7 @@ struct LX_HEADER_internal {
     
 };
 
+#define SIZEOF_struct_LX_HEADER_file 176
 struct LX_HEADER_file {
     
     unsigned char Magic[2]; /* "LX" */
@@ -172,6 +173,7 @@ struct object_table_entry_internal {
 
 };
 
+#define SIZEOF_struct_object_table_entry_file 24
 struct object_table_entry_file {
 
     unsigned char VirtualSize[4];
@@ -208,6 +210,7 @@ struct object_page_table_entry_internal {
 
 };
 
+#define SIZEOF_struct_object_page_table_entry_file 8
 struct object_page_table_entry_file {
 
     unsigned char PageDataOffset[4];

@@ -31,6 +31,7 @@ struct IMAGE_DOS_HEADER_internal {
 
 };
 
+#define SIZEOF_struct_IMAGE_DOS_HEADER_file 64
 struct IMAGE_DOS_HEADER_file {
 
     unsigned char Magic[2];
@@ -66,6 +67,7 @@ struct coff_header_internal {
 
 };
 
+#define SIZEOF_struct_coff_header_file 20
 struct coff_header_file {
 
     unsigned char Machine[2];
@@ -137,6 +139,7 @@ struct optional_header_internal {
 
 };
 
+#define SIZEOF_struct_optional_header_file 96
 struct optional_header_file {
 
     unsigned char Magic[2];
@@ -217,6 +220,7 @@ struct optional_header_plus_internal {
 
 };
 
+#define SIZEOF_struct_optional_header_plus_file 112
 struct optional_header_plus_file {
 
     unsigned char Magic[2];
@@ -286,6 +290,7 @@ struct IMAGE_DATA_DIRECTORY_internal {
     
 };
 
+#define SIZEOF_struct_IMAGE_DATA_DIRECTORY_file 8
 struct IMAGE_DATA_DIRECTORY_file {
     
     unsigned char VirtualAddress[4];
@@ -312,6 +317,7 @@ struct section_table_entry_internal {
 
 };
 
+#define SIZEOF_struct_section_table_entry_file 40
 struct section_table_entry_file {
 
     char Name[8];
@@ -367,6 +373,7 @@ struct relocation_entry_internal {
 
 };
 
+#define SIZEOF_struct_relocation_entry_file 10
 struct relocation_entry_file {
 
     unsigned char VirtualAddress[4];
@@ -433,6 +440,7 @@ struct symbol_table_entry_internal {
 
 };
 
+#define SIZEOF_struct_symbol_table_entry_file 18
 struct symbol_table_entry_file {
 
     char Name[8];
@@ -472,6 +480,7 @@ struct aux_section_symbol_internal {
 
 };
 
+#define SIZEOF_struct_aux_section_symbol_file 18
 struct aux_section_symbol_file {
 
     unsigned char Length[4];
@@ -497,6 +506,7 @@ struct string_table_header_internal {
 
 };
 
+#define SIZEOF_struct_string_table_header_file 4
 struct string_table_header_file {
 
     unsigned char StringTableSize[4]; /* Including the size of the header itself. */
@@ -519,6 +529,7 @@ struct IMAGE_EXPORT_DIRECTORY_internal {
 
 };
 
+#define SIZEOF_struct_IMAGE_EXPORT_DIRECTORY_file 40
 struct IMAGE_EXPORT_DIRECTORY_file {
 
     unsigned char ExportFlags[4];
@@ -539,6 +550,7 @@ struct EXPORT_Address_Table_internal {
     unsigned long FunctionRVA;
 };
 
+#define SIZEOF_struct_EXPORT_Address_Table_file 4
 struct EXPORT_Address_Table_file {
     unsigned char FunctionRVA[4];
 };
@@ -547,6 +559,7 @@ struct EXPORT_Name_Pointer_Table_internal {
     unsigned long FunctionNameRVA;
 };
 
+#define SIZEOF_struct_EXPORT_Name_Pointer_Table_file 4
 struct EXPORT_Name_Pointer_Table_file {
     unsigned char FunctionNameRVA[4];
 };
@@ -555,6 +568,7 @@ struct EXPORT_Ordinal_Table_internal {
     unsigned short FunctionOrdinal;
 };
 
+#define SIZEOF_struct_EXPORT_Ordinal_Table_file 2
 struct EXPORT_Ordinal_Table_file {
     unsigned char FunctionOrdinal[2];
 };
@@ -569,6 +583,7 @@ struct IMPORT_Directory_Table_internal {
 
 };
 
+#define SIZEOF_struct_IMPORT_Directory_Table_file 20
 struct IMPORT_Directory_Table_file {
 
     unsigned char ImportNameTableRVA[4];
@@ -586,6 +601,7 @@ struct IMAGE_BASE_RELOCATION_internal {
 
 };
 
+#define SIZEOF_struct_IMAGE_BASE_RELOCATION_file 8
 struct IMAGE_BASE_RELOCATION_file {
 
     unsigned char RVAOfBlock[4];
@@ -629,6 +645,7 @@ struct IMAGE_ARCHIVE_MEMBER_HEADER_internal {
 
 };
 
+#define SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file 60
 struct IMAGE_ARCHIVE_MEMBER_HEADER_file {
 
     char Name[16];
@@ -660,6 +677,7 @@ struct IMPORT_OBJECT_HEADER_internal {
 
 };
 
+#define SIZEOF_struct_IMPORT_OBJECT_HEADER_file 20
 struct IMPORT_OBJECT_HEADER_file {
 
     unsigned char Magic1[2];

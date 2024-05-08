@@ -505,8 +505,8 @@ static void write_implib (const struct export_name *export_names,
 
     num_linker_member_offsets = 0;
     for (i = 0; i < num_names; i++) {
-        file_size += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
-        file_size += sizeof (struct IMPORT_OBJECT_HEADER_file);
+        file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
+        file_size += SIZEOF_struct_IMPORT_OBJECT_HEADER_file;
         if (leading_underscore) file_size++;
         file_size += strlen (export_names[i].name) + 1;
         file_size += strlen (ld_state->output_filename) + 1;
@@ -524,7 +524,7 @@ static void write_implib (const struct export_name *export_names,
     }
 
     linker_member_size = ALIGN (linker_member_size, 2);
-    file_size += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file) + linker_member_size;
+    file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file + linker_member_size;
 
     file = xmalloc (file_size);
     memset (file, 0, file_size);
@@ -535,14 +535,14 @@ static void write_implib (const struct export_name *export_names,
     pos += strlen (IMAGE_ARCHIVE_START);
 
     write_archive_member_header (pos, IMAGE_ARCHIVE_LINKER_MEMBER_Name, linker_member_size, lu_timestamp);
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+    pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     bytearray_write_4_bytes (pos, num_linker_member_offsets, BIG_ENDIAN);
     pos += 4;
 
     offset_pos = pos;
     string_table_pos = pos + num_linker_member_offsets * 4;
-    pos = file + strlen (IMAGE_ARCHIVE_START) + sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file) + linker_member_size;
+    pos = file + strlen (IMAGE_ARCHIVE_START) + SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file + linker_member_size;
 
     for (i = 0; i < num_names; i++) {
 
@@ -567,12 +567,12 @@ static void write_implib (const struct export_name *export_names,
         }
 
         write_archive_member_header (pos, "IMPORT/",
-                                     sizeof (struct IMPORT_OBJECT_HEADER_file)
+                                     SIZEOF_struct_IMPORT_OBJECT_HEADER_file
                                      + (leading_underscore ? 1 : 0)
                                      + strlen (export_names[i].name) + 1
                                      + strlen (ld_state->output_filename) + 1,
                                      lu_timestamp);
-        pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+        pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
         {
             struct IMPORT_OBJECT_HEADER_internal import_hdr;
@@ -599,7 +599,7 @@ static void write_implib (const struct export_name *export_names,
             else import_hdr.Type |= IMPORT_NAME << 2;
 
             write_struct_IMPORT_OBJECT_HEADER (pos, &import_hdr);
-            pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
+            pos += SIZEOF_struct_IMPORT_OBJECT_HEADER_file;
 
             if (leading_underscore) pos++[0] = '_';
             strcpy ((char *)pos, export_names[i].name);
@@ -690,11 +690,11 @@ static void generate_edata (void)
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
     part = section_part_new (section, of);
 
-    part->content_size = (sizeof (struct IMAGE_EXPORT_DIRECTORY_file)
+    part->content_size = (SIZEOF_struct_IMAGE_EXPORT_DIRECTORY_file
                           + (num_names
-                             * (sizeof (struct EXPORT_Address_Table_file)
-                                + sizeof (struct EXPORT_Name_Pointer_Table_file)
-                                + sizeof (struct EXPORT_Ordinal_Table_file)))
+                             * (SIZEOF_struct_EXPORT_Address_Table_file
+                                + SIZEOF_struct_EXPORT_Name_Pointer_Table_file
+                                + SIZEOF_struct_EXPORT_Ordinal_Table_file))
                           + name_table_size);
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
@@ -709,11 +709,11 @@ static void generate_edata (void)
     of->symbol_array[0].part = part;
     of->symbol_array[0].section_number = 1;
 
-    name_table_offset = (sizeof (struct IMAGE_EXPORT_DIRECTORY_file)
+    name_table_offset = (SIZEOF_struct_IMAGE_EXPORT_DIRECTORY_file
                           + (num_names
-                             * (sizeof (struct EXPORT_Address_Table_file)
-                                + sizeof (struct EXPORT_Name_Pointer_Table_file)
-                                + sizeof (struct EXPORT_Ordinal_Table_file))));
+                             * (SIZEOF_struct_EXPORT_Address_Table_file
+                                + SIZEOF_struct_EXPORT_Name_Pointer_Table_file
+                                + SIZEOF_struct_EXPORT_Ordinal_Table_file)));
 
     {
         ied.ExportFlags = 0;
@@ -732,9 +732,9 @@ static void generate_edata (void)
         ied.OrdinalBase = OrdinalBase;
         ied.AddressTableEntries = num_names;
         ied.NumberOfNamePointers = num_names;
-        ied.ExportAddressTableRVA = sizeof (struct IMAGE_EXPORT_DIRECTORY_file);
-        ied.NamePointerRVA = ied.ExportAddressTableRVA + num_names * sizeof (struct EXPORT_Address_Table_file);
-        ied.OrdinalTableRVA = ied.NamePointerRVA + num_names * sizeof (struct EXPORT_Name_Pointer_Table_file);
+        ied.ExportAddressTableRVA = SIZEOF_struct_IMAGE_EXPORT_DIRECTORY_file;
+        ied.NamePointerRVA = ied.ExportAddressTableRVA + num_names * SIZEOF_struct_EXPORT_Address_Table_file;
+        ied.OrdinalTableRVA = ied.NamePointerRVA + num_names * SIZEOF_struct_EXPORT_Name_Pointer_Table_file;
 
         write_struct_IMAGE_EXPORT_DIRECTORY (part->content, &ied);
 
@@ -766,7 +766,7 @@ static void generate_edata (void)
             symbol->section_number = 0;
             symbol_record_external_symbol (symbol);
             
-            relocs[0].offset = ied.ExportAddressTableRVA + sizeof (struct EXPORT_Address_Table_file) * i;
+            relocs[0].offset = ied.ExportAddressTableRVA + SIZEOF_struct_EXPORT_Address_Table_file * i;
             relocs[0].symbol = symbol;
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
 
@@ -777,9 +777,9 @@ static void generate_edata (void)
             struct EXPORT_Name_Pointer_Table_internal npt;
             npt.FunctionNameRVA = name_table_offset;
             write_struct_EXPORT_Name_Pointer_Table (part->content + ied.NamePointerRVA
-                                                    + sizeof (struct EXPORT_Name_Pointer_Table_file) * i,
+                                                    + SIZEOF_struct_EXPORT_Name_Pointer_Table_file * i,
                                                     &npt);
-            relocs[0].offset = ied.NamePointerRVA + sizeof (struct EXPORT_Name_Pointer_Table_file) * i;
+            relocs[0].offset = ied.NamePointerRVA + SIZEOF_struct_EXPORT_Name_Pointer_Table_file * i;
             relocs[0].symbol = &of->symbol_array[0];
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE];
             relocs++;
@@ -788,7 +788,7 @@ static void generate_edata (void)
             struct EXPORT_Ordinal_Table_internal ot;
             ot.FunctionOrdinal = i;
             write_struct_EXPORT_Ordinal_Table (part->content + ied.OrdinalTableRVA
-                                               + sizeof (struct EXPORT_Ordinal_Table_file) * i,
+                                               + SIZEOF_struct_EXPORT_Ordinal_Table_file * i,
                                                &ot);
         }
         {
@@ -878,20 +878,20 @@ void coff_before_link (void)
     if (stub_file) {
         size_of_headers = stub_size;
     } else {
-        size_of_headers = sizeof (struct IMAGE_DOS_HEADER_file);
+        size_of_headers = SIZEOF_struct_IMAGE_DOS_HEADER_file;
     }
 
-    size_of_headers += 4 /* "PE\0\0" */ + sizeof (struct coff_header_file);
+    size_of_headers += 4 /* "PE\0\0" */ + SIZEOF_struct_coff_header_file;
 
     if (ld_state->target_machine == LD_TARGET_MACHINE_X64
         || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
-        size_of_headers += sizeof (struct optional_header_plus_file);
+        size_of_headers += SIZEOF_struct_optional_header_plus_file;
     } else {
-        size_of_headers += sizeof (struct optional_header_file);
+        size_of_headers += SIZEOF_struct_optional_header_file;
     }
     
-    size_of_headers += NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file);
-    size_of_headers += sizeof (struct section_table_entry_file) * section_count ();
+    size_of_headers += NUMBER_OF_DATA_DIRECTORIES * SIZEOF_struct_IMAGE_DATA_DIRECTORY_file;
+    size_of_headers += SIZEOF_struct_section_table_entry_file * section_count ();
     size_of_headers = ALIGN (size_of_headers, FileAlignment);
 
     /* .idata$2 contains Import Directory Table which needs to be terminated with null entry. */
@@ -902,7 +902,7 @@ void coff_before_link (void)
     
     part = section_part_new (section, object_file_make (0, FAKE_LD_FILENAME));
 
-    part->content_size = sizeof (struct IMPORT_Directory_Table_file);
+    part->content_size = SIZEOF_struct_IMPORT_Directory_Table_file;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
@@ -1083,7 +1083,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
 
     /* There must be even number of Base relocation WORDs
      * because the start of the blocks must be aligned on 4 byte boundary. */
-    ibr_hdr_p->SizeOfBlock = ALIGN (sizeof (struct IMAGE_BASE_RELOCATION_file) + num_relocs * 2, 4);
+    ibr_hdr_p->SizeOfBlock = ALIGN (SIZEOF_struct_IMAGE_BASE_RELOCATION_file + num_relocs * 2, 4);
 
     reloc_part = section_part_new (reloc_section, object_file_make (0, FAKE_LD_FILENAME));
     reloc_part->content_size = ibr_hdr_p->SizeOfBlock;
@@ -1091,7 +1091,7 @@ static void generate_base_relocation_block (struct section *reloc_section,
     reloc_part->content[reloc_part->content_size - 2] = reloc_part->content[reloc_part->content_size - 1] = 0;
 
     write_struct_IMAGE_BASE_RELOCATION (reloc_part->content, ibr_hdr_p);
-    write_pos = reloc_part->content + sizeof (struct IMAGE_BASE_RELOCATION_file);
+    write_pos = reloc_part->content + SIZEOF_struct_IMAGE_BASE_RELOCATION_file;
 
     for (section = saved_section; section; section = section->next) {
         struct section_part *part;
@@ -1293,12 +1293,12 @@ void coff_write (const char *filename)
         dos_hdr.Magic[0] = 'M';
         dos_hdr.Magic[1] = 'Z';
 
-        dos_hdr.SizeOfHeaderInParagraphs = sizeof (struct IMAGE_DOS_HEADER_file) / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
+        dos_hdr.SizeOfHeaderInParagraphs = SIZEOF_struct_IMAGE_DOS_HEADER_file / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
 
-        dos_hdr.OffsetToNewEXEHeader = sizeof (struct IMAGE_DOS_HEADER_file);
+        dos_hdr.OffsetToNewEXEHeader = SIZEOF_struct_IMAGE_DOS_HEADER_file;
 
         write_struct_IMAGE_DOS_HEADER (pos, &dos_hdr);
-        pos += sizeof (struct IMAGE_DOS_HEADER_file);
+        pos += SIZEOF_struct_IMAGE_DOS_HEADER_file;
     }
 
     memcpy (pos, "PE\0\0", 4);
@@ -1321,9 +1321,9 @@ void coff_write (const char *filename)
     coff_hdr.NumberOfSymbols = 0;
     coff_hdr.SizeOfOptionalHeader = ((ld_state->target_machine == LD_TARGET_MACHINE_X64
                                       || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64)
-                                     ? sizeof (struct optional_header_plus_file)
-                                     : sizeof (struct optional_header_file));   
-    coff_hdr.SizeOfOptionalHeader += NUMBER_OF_DATA_DIRECTORIES * sizeof (struct IMAGE_DATA_DIRECTORY_file);
+                                     ? SIZEOF_struct_optional_header_plus_file
+                                     : SIZEOF_struct_optional_header_file);   
+    coff_hdr.SizeOfOptionalHeader += NUMBER_OF_DATA_DIRECTORIES * SIZEOF_struct_IMAGE_DATA_DIRECTORY_file;
     
     coff_hdr.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DEBUG_STRIPPED;
     if (ld_state->target_machine == LD_TARGET_MACHINE_X64
@@ -1337,7 +1337,7 @@ void coff_write (const char *filename)
     if (!can_be_relocated) coff_hdr.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
 
     write_struct_coff_header (pos, &coff_hdr);
-    pos += sizeof (struct coff_header_file);
+    pos += SIZEOF_struct_coff_header_file;
 
     if (ld_state->target_machine == LD_TARGET_MACHINE_X64
         || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
@@ -1387,7 +1387,7 @@ void coff_write (const char *filename)
         optional_hdr_plus.NumberOfRvaAndSizes = NUMBER_OF_DATA_DIRECTORIES;
 
         write_struct_optional_header_plus (pos, &optional_hdr_plus);
-        pos += sizeof (struct optional_header_plus_file);
+        pos += SIZEOF_struct_optional_header_plus_file;
     } else {
         memset (&optional_hdr, 0, sizeof (optional_hdr));
 
@@ -1435,7 +1435,7 @@ void coff_write (const char *filename)
         optional_hdr.NumberOfRvaAndSizes = NUMBER_OF_DATA_DIRECTORIES;
 
         write_struct_optional_header (pos, &optional_hdr);
-        pos += sizeof (struct optional_header_file);
+        pos += SIZEOF_struct_optional_header_file;
     }
 
     {
@@ -1484,16 +1484,15 @@ void coff_write (const char *filename)
 
             }
             write_struct_IMAGE_DATA_DIRECTORY (pos, &idd);
-            pos += sizeof (struct IMAGE_DATA_DIRECTORY_file);
+            pos += SIZEOF_struct_IMAGE_DATA_DIRECTORY_file;
         }
-
     }
 
     for (section = all_sections; section; section = section->next) {
         struct section_table_entry_internal *hdr = section->object_dependent_data;
 
         write_struct_section_table_entry (pos, hdr);
-        pos += sizeof (struct section_table_entry_file);
+        pos += SIZEOF_struct_section_table_entry_file;
 
         free (hdr);
     }
@@ -1617,7 +1616,7 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
 
 union sym_tab_entry {
     struct symbol_table_entry_internal sym;
-    unsigned char aux[sizeof (struct symbol_table_entry_file)];
+    unsigned char aux[SIZEOF_struct_symbol_table_entry_file];
 };
 
 static union sym_tab_entry *read_symbol_table (unsigned char *file,
@@ -1632,13 +1631,13 @@ static union sym_tab_entry *read_symbol_table (unsigned char *file,
     unsigned char aux_num = 0;
 
     pos = file + coff_hdr_p->PointerToSymbolTable;
-    CHECK_READ (pos, sizeof (struct symbol_table_entry_file) * coff_hdr_p->NumberOfSymbols);
+    CHECK_READ (pos, SIZEOF_struct_symbol_table_entry_file * coff_hdr_p->NumberOfSymbols);
 
     read_symtab = xmalloc (sizeof (*read_symtab) * coff_hdr_p->NumberOfSymbols);
     
     memset (comdat_aux_symbol_indexes, 0, sizeof (*comdat_aux_symbol_indexes) * coff_hdr_p->NumberOfSections);
 
-    for (i = 0; i < coff_hdr_p->NumberOfSymbols; i++, pos += sizeof (struct symbol_table_entry_file)) {
+    for (i = 0; i < coff_hdr_p->NumberOfSymbols; i++, pos += SIZEOF_struct_symbol_table_entry_file) {
         if (aux_num) {
             memcpy (read_symtab[i].aux, pos, sizeof (read_symtab[i].aux));
             aux_num--;
@@ -1687,13 +1686,13 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     unsigned long i;
 
     pos = file;
-    CHECK_READ (pos, sizeof (struct coff_header_file));
+    CHECK_READ (pos, SIZEOF_struct_coff_header_file);
     read_struct_coff_header (&coff_hdr, pos);
 
     if (check_Machine (coff_hdr.Machine, filename)) return 1;
 
-    pos = file + coff_hdr.PointerToSymbolTable + sizeof (struct symbol_table_entry_file) * coff_hdr.NumberOfSymbols;
-    CHECK_READ (pos, sizeof (struct string_table_header_file));
+    pos = file + coff_hdr.PointerToSymbolTable + SIZEOF_struct_symbol_table_entry_file * coff_hdr.NumberOfSymbols;
+    CHECK_READ (pos, SIZEOF_struct_string_table_header_file);
     read_struct_string_table_header (&string_table_hdr, pos);
     if (string_table_hdr.StringTableSize < 4) ld_error ("invalid string table size: %lu", string_table_hdr.StringTableSize);
     else {
@@ -1717,8 +1716,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
     for (i = 0; i < coff_hdr.NumberOfSections; i++) {
 
-        pos = file + sizeof (struct coff_header_file) + sizeof (struct section_table_entry_file) * i;
-        CHECK_READ (pos, sizeof (struct section_table_entry_file));
+        pos = file + SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file * i;
+        CHECK_READ (pos, SIZEOF_struct_section_table_entry_file);
         read_struct_section_table_entry (&section_hdr, pos);
 
         if (section_hdr.Characteristics & IMAGE_SCN_LNK_REMOVE) {
@@ -1857,10 +1856,10 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     part->relocation_array = xcalloc (section_hdr.NumberOfRelocations, sizeof *part->relocation_array);
                     part->relocation_count = section_hdr.NumberOfRelocations;
                     
-                    CHECK_READ (pos, sizeof (struct relocation_entry_file) * section_hdr.NumberOfRelocations);
+                    CHECK_READ (pos, SIZEOF_struct_relocation_entry_file * section_hdr.NumberOfRelocations);
                     for (j = 0; j < section_hdr.NumberOfRelocations; j++) {
 			read_struct_relocation_entry (&relocation,
-                                                      pos + sizeof (struct relocation_entry_file) * j);
+                                                      pos + SIZEOF_struct_relocation_entry_file * j);
                         translate_relocation (part->relocation_array + j, &relocation, part);
                     }
                 }
@@ -1996,7 +1995,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
 
-    part->content_size = sizeof (struct IMPORT_Directory_Table_file);
+    part->content_size = SIZEOF_struct_IMPORT_Directory_Table_file;
     part->content = xmalloc (part->content_size);
 
     {
@@ -2266,9 +2265,9 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
     unsigned char *pos;
 
     pos = file;
-    CHECK_READ (pos, sizeof (struct IMPORT_OBJECT_HEADER_file));
+    CHECK_READ (pos, SIZEOF_struct_IMPORT_OBJECT_HEADER_file);
     read_struct_IMPORT_OBJECT_HEADER (&import_hdr, pos);
-    pos += sizeof (struct IMPORT_OBJECT_HEADER_file);
+    pos += SIZEOF_struct_IMPORT_OBJECT_HEADER_file;
 
     if (check_Machine (import_hdr.Machine, filename)) return 1;
 
@@ -2508,7 +2507,7 @@ static void use_option (enum option_index option_index, char *arg)
                     return;
                 }
 
-                if (stub_size < sizeof (struct IMAGE_DOS_HEADER_file)
+                if (stub_size < SIZEOF_struct_IMAGE_DOS_HEADER_file
                     || !(stub_file[0] == 'M' && stub_file[1] == 'Z')) {
                     free (stub_file);
                     stub_file = NULL;
@@ -2521,7 +2520,7 @@ static void use_option (enum option_index option_index, char *arg)
                  * so the header needs to be expanded and the stub adjusted. */
                 read_struct_IMAGE_DOS_HEADER (&dos_hdr, stub_file);
                 old_hdr_size = dos_hdr.SizeOfHeaderInParagraphs * IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
-                new_hdr_size = sizeof (struct IMAGE_DOS_HEADER_file);
+                new_hdr_size = SIZEOF_struct_IMAGE_DOS_HEADER_file;
                 if (old_hdr_size < new_hdr_size) {
                     unsigned char *new_stub;
                     

@@ -146,9 +146,9 @@ static int read_archive_member (unsigned char *file,
     int ret;
     char *filename;
 
-    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
+    CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, longnames)) return INPUT_FILE_ERROR;
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+    pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     {
         size_t archive_name_len = strlen (archive_name);
@@ -194,9 +194,9 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     unsigned long end_header_object_offset = 0;
 
     pos = file + strlen (IMAGE_ARCHIVE_START);
-    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
+    CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, &longnames)) return;
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+    pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
         offset_name_table = read_linker_member (pos, MIN (hdr.size, file_size - (pos - file)), &NumberOfSymbols);
@@ -211,9 +211,9 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
 
 repeat:
     pos += hdr.size;
-    CHECK_READ (pos, sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file));
+    CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, &longnames)) return;
-    pos += sizeof (struct IMAGE_ARCHIVE_MEMBER_HEADER_file);
+    pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
         /* Skips the optional second linker member
