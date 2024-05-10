@@ -12,7 +12,7 @@ COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../bios -I../src \
   -D__ARM__ -fno-common -mapcs-32 -DNEED_MZ -DNEED_ELF \
   -DGENSHELL -D__GENSHELL__ -DARMHACK -DNO_DLLENTRY \
   -msoft-float -D__EFI__ -D__EFIBIOS__ \
-  -fno-leading-underscore
+  -fno-leading-underscore -D__USEBIVA__
 
 all: clean bios.exe
 
