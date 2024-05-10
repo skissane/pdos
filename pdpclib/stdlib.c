@@ -341,18 +341,18 @@ __PDPCLIB_API__ void *malloc(size_t size)
         num_pages += 4096;
     }
     num_pages /= 4096;
-    x = *(size_t **)&mem;
 #if 0
     printf("requesting %d bytes\n", (int)size);
 #endif
     if (__gBS->AllocatePages(AllocateMaxAddress,
                              EfiLoaderData,
                              (UINTN)num_pages,
-                             (void *)&x)
+                             (void *)&mem)
         != EFI_SUCCESS)
     {
         return (NULL);
     }
+    x = *(size_t **)&mem;
     if (x == NULL)
     {
         return (NULL);
