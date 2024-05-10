@@ -286,7 +286,12 @@ typedef EFI_STATUS (EFIAPI *EFI_GET_MEMORY_MAP) (IN OUT UINTN *MemoryMapSize,
                                                  OUT UINTN *MapKey,
                                                  OUT UINTN *DescriptorSize,
                                                  OUT UINT32 *DescriptorVersion);
-typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_POOL) (IN EFI_MEMORY_TYPE PoolType, IN UINTN Size, OUT void **Buffer);
+typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_POOL) (IN EFI_MEMORY_TYPE PoolType,
+#ifdef ARMHACK
+                                                int dummy_align,
+#endif
+                                                IN UINTN Size,
+                                                OUT void **Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FREE_POOL) (IN void *Buffer);
 
 typedef EFI_STATUS (EFIAPI *EFI_WAIT_FOR_EVENT) (IN UINTN NumberOfEvents, IN EFI_EVENT *Event, OUT UINTN *Index);
