@@ -579,7 +579,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         }
         else
         {
-            *(size_t *)ptr = size + sizeof(size_t);
+            *(size_t *)ptr = size;
             ptr = (char *)ptr + sizeof(size_t);
         }
     }
@@ -765,7 +765,7 @@ __PDPCLIB_API__ void free(void *ptr)
     {
         ptr = (char *)ptr - sizeof(size_t);
         /* this returns 0 on success */
-        __munmap(ptr, *(size_t *)ptr);
+        __munmap(ptr, *(size_t *)ptr + sizeof(size_t));
     }
 #endif
 
