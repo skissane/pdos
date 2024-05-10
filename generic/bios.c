@@ -893,7 +893,10 @@ int main(int argc, char **argv)
         __mmgid += 256;
 #endif
 
-    fprintf(stderr, "about to execute program\n");
+    if (!quiet)
+    {
+        fprintf(stderr, "about to execute program\n");
+    }
 #if 1
 #ifdef __CC64__
     rc = (*genstart)(&bios);
@@ -958,6 +961,11 @@ int main(int argc, char **argv)
     if (scr == stdin)
     {
         /* pause has already been done, effectively */
+    }
+    else if (quiet)
+    {
+        /* for now, assume they want immediate exit */
+        /* we can add another parameter to force a pause if desired */
     }
     else if (!shell)
     {
