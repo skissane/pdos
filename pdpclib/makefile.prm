@@ -7,8 +7,8 @@ LD=pdld -subsystem 10 --no-insert-timestamp
 AS=asprm
 
 COPTS=-S -O0 -msoft-float -fno-common -mapcs-32 \
-    -D__ARM__ -D__NOBIVA__ -I. -D__EFI__ -D__EFIBIOS__ -DARMHACK \
-    -fno-leading-underscore -D__GENSHELL__
+    -D__ARM__ -D__USEBIVA__ -I. -D__EFI__ -D__EFIBIOS__ -DARMHACK \
+    -fno-leading-underscore -D__GENSHELL__ -D__NOSPECBIVA__
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
