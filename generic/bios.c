@@ -1209,7 +1209,11 @@ static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
 
     buf_size = sizeof (*Buffer) + 8 /* Just enough space for 5 CHAR16 FileName for demonstration. */;
 
+#ifdef ARMHACK
+    return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, 0, buf_size, (void **)&Buffer));
+#else
     return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+#endif
 
     while (1) {
         Read = buf_size;
@@ -1218,7 +1222,11 @@ static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
             __gBS->FreePool (Buffer);
             buf_size = Read;
             /* printf("HAD to increase size of buffer\n"); */
+#ifdef ARMHACK
+            return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, 0, buf_size, (void **)&Buffer));
+#else
             return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
+#endif
             return_Status_if_fail (dir->Read (dir, &buf_size, Buffer));
         }
 
