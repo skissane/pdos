@@ -2588,6 +2588,8 @@ void w32exit(int status)
 #endif
 
 
+#define STDTHUNK(x) { #x, (unsigned long)x },
+
 
 static int exeloadLoadPE(unsigned char **entry_point,
                          FILE *fp,
@@ -3252,13 +3254,145 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         /* Import by name. */
                         unsigned char *hintname = exeStart + ((*thunk) & 0x7fffffffUL);
                         int i;
+                        static struct { char *name; unsigned long val; }
+                            thunkarr[] = {
+STDTHUNK(puts)
+STDTHUNK(printf)
+STDTHUNK(malloc)
+STDTHUNK(calloc)
+STDTHUNK(putchar)
+STDTHUNK(getenv)
+STDTHUNK(bsearch)
+STDTHUNK(raise)
+STDTHUNK(signal)
+STDTHUNK(strpbrk)
+STDTHUNK(strspn)
+STDTHUNK(tmpnam)
+STDTHUNK(acos)
+STDTHUNK(asin)
+STDTHUNK(atan)
+STDTHUNK(atan2)
+STDTHUNK(cos)
+STDTHUNK(cosh)
+STDTHUNK(exp)
+STDTHUNK(fabs)
+STDTHUNK(floor)
+STDTHUNK(log)
+STDTHUNK(log10)
+STDTHUNK(modf)
+STDTHUNK(pow)
+STDTHUNK(rand)
+STDTHUNK(sin)
+STDTHUNK(sinh)
+STDTHUNK(srand)
+STDTHUNK(strftime)
+STDTHUNK(tan)
+STDTHUNK(tanh)
+STDTHUNK(ldexp)
+STDTHUNK(atof)
+STDTHUNK(rename)
+STDTHUNK(clearerr)
+STDTHUNK(abs)
+STDTHUNK(ctime)
+STDTHUNK(memchr)
+STDTHUNK(perror)
+STDTHUNK(setlocale)
+STDTHUNK(strncat)
+STDTHUNK(strtok)
+STDTHUNK(abort)
+STDTHUNK(atexit)
+STDTHUNK(atoi)
+STDTHUNK(strcpy)
+STDTHUNK(strcmp)
+STDTHUNK(strerror)
+STDTHUNK(strlen)
+STDTHUNK(strncmp)
+STDTHUNK(strrchr)
+STDTHUNK(strstr)
+STDTHUNK(system)
+STDTHUNK(fgets)
+STDTHUNK(fputs)
+STDTHUNK(feof)
+STDTHUNK(ferror)
+STDTHUNK(fread)
+STDTHUNK(fseek)
+STDTHUNK(ftell)
+STDTHUNK(fwrite)
+STDTHUNK(fflush)
+STDTHUNK(setvbuf)
+STDTHUNK(fputc)
+STDTHUNK(tmpfile)
+STDTHUNK(vfprintf)
+STDTHUNK(vsprintf)
+STDTHUNK(isalnum)
+STDTHUNK(isalpha)
+STDTHUNK(tolower)
+STDTHUNK(toupper)
+STDTHUNK(iscntrl)
+STDTHUNK(isdigit)
+STDTHUNK(islower)
+STDTHUNK(isprint)
+STDTHUNK(isupper)
+STDTHUNK(isxdigit)
+STDTHUNK(fopen)
+STDTHUNK(fprintf)
+STDTHUNK(fgetc)
+STDTHUNK(getc)
+STDTHUNK(putc)
+STDTHUNK(getchar)
+STDTHUNK(ungetc)
+STDTHUNK(sscanf)
+STDTHUNK(sprintf)
+STDTHUNK(remove)
+STDTHUNK(qsort)
+STDTHUNK(rewind)
+STDTHUNK(free)
+STDTHUNK(isspace)
+STDTHUNK(memcpy)
+STDTHUNK(memcmp)
+STDTHUNK(memset)
+STDTHUNK(memmove)
+STDTHUNK(realloc)
+STDTHUNK(strcat)
+STDTHUNK(strchr)
+STDTHUNK(strcspn)
+STDTHUNK(strtoul)
+STDTHUNK(strtol)
+STDTHUNK(strncpy)
+STDTHUNK(strtod)
+STDTHUNK(ceil)
+STDTHUNK(labs)
+STDTHUNK(sqrt)
+STDTHUNK(clock)
+STDTHUNK(time)
+STDTHUNK(localtime)
+STDTHUNK(fclose)
+STDTHUNK(_errno)
+STDTHUNK(_assert)
+                        { NULL, 0 }
+                        };
+                        int ti;
 
                         /* The first 2 bytes are hint index,
                          * so they are skipped to get the name. */
                         hintname += 2;
                         /* printf("hintname is X%sX\n", hintname); */
+                        ti = 0;
+                        while (thunkarr[ti].name != NULL)
+                        {
+                            if (strcmp(thunkarr[ti].name, hintname) == 0)
+                            {
+                                *thunk = thunkarr[ti].val;
+                                break;
+                            }
+                            ti++;
+                        }
+                        if (thunkarr[ti].name != NULL)
+                        {
+                            /* already found and processed */
+                        }
 #if defined(W32HACK)
-                        if (strcmp(hintname, "exit") == 0)
+                        else if (strcmp(hintname, "exit") == 0)
                         {
                             *thunk = (unsigned long)w64exit;
                         }
@@ -3267,7 +3401,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                             *thunk = (unsigned long)w32puts;
                         }
 #elif defined(W32EMUL)
-                        if (strcmp(hintname, "exit") == 0)
+                        else if (strcmp(hintname, "exit") == 0)
                         {
                             *thunk = (unsigned long)w32exit;
                         }
@@ -3277,378 +3411,6 @@ static int exeloadLoadPE(unsigned char **entry_point,
                             *thunk = (unsigned long)__iob_func;
                         }
 #endif
-                        else if (strcmp((char *)hintname, "puts") == 0)
-                        {
-                            *thunk = (unsigned long)puts;
-                        }
-                        else if (strcmp((char *)hintname, "printf") == 0)
-                        {
-                            *thunk = (unsigned long)printf;
-                        }
-                        else if (strcmp((char *)hintname, "malloc") == 0)
-                        {
-                            *thunk = (unsigned long)malloc;
-                        }
-                        else if (strcmp((char *)hintname, "calloc") == 0)
-                        {
-                            *thunk = (unsigned long)calloc;
-                        }
-                        else if (strcmp((char *)hintname, "putchar") == 0)
-                        {
-                            *thunk = (unsigned long)putchar;
-                        }
-                        else if (strcmp((char *)hintname, "getenv") == 0)
-                        {
-                            *thunk = (unsigned long)getenv;
-                        }
-                        else if (strcmp((char *)hintname, "bsearch") == 0)
-                        {
-                            *thunk = (unsigned long)bsearch;
-                        }
-                        else if (strcmp((char *)hintname, "raise") == 0)
-                        {
-                            *thunk = (unsigned long)raise;
-                        }
-                        else if (strcmp((char *)hintname, "signal") == 0)
-                        {
-                            *thunk = (unsigned long)signal;
-                        }
-                        else if (strcmp((char *)hintname, "strpbrk") == 0)
-                        {
-                            *thunk = (unsigned long)strpbrk;
-                        }
-                        else if (strcmp((char *)hintname, "strspn") == 0)
-                        {
-                            *thunk = (unsigned long)strspn;
-                        }
-                        else if (strcmp((char *)hintname, "tmpnam") == 0)
-                        {
-                            *thunk = (unsigned long)tmpnam;
-                        }
-                        else if (strcmp((char *)hintname, "ldexp") == 0)
-                        {
-                            *thunk = (unsigned long)ldexp;
-                        }
-                        else if (strcmp((char *)hintname, "atof") == 0)
-                        {
-                            *thunk = (unsigned long)atof;
-                        }
-                        else if (strcmp((char *)hintname, "rename") == 0)
-                        {
-                            *thunk = (unsigned long)rename;
-                        }
-                        else if (strcmp((char *)hintname, "clearerr") == 0)
-                        {
-                            *thunk = (unsigned long)clearerr;
-                        }
-                        else if (strcmp((char *)hintname, "abs") == 0)
-                        {
-                            *thunk = (unsigned long)abs;
-                        }
-                        else if (strcmp((char *)hintname, "ctime") == 0)
-                        {
-                            *thunk = (unsigned long)ctime;
-                        }
-                        else if (strcmp((char *)hintname, "memchr") == 0)
-                        {
-                            *thunk = (unsigned long)memchr;
-                        }
-                        else if (strcmp((char *)hintname, "perror") == 0)
-                        {
-                            *thunk = (unsigned long)perror;
-                        }
-                        else if (strcmp((char *)hintname, "setlocale") == 0)
-                        {
-                            *thunk = (unsigned long)setlocale;
-                        }
-                        else if (strcmp((char *)hintname, "strncat") == 0)
-                        {
-                            *thunk = (unsigned long)strncat;
-                        }
-                        else if (strcmp((char *)hintname, "strtok") == 0)
-                        {
-                            *thunk = (unsigned long)strtok;
-                        }
-                        else if (strcmp((char *)hintname, "abort") == 0)
-                        {
-                            *thunk = (unsigned long)abort;
-                        }
-                        else if (strcmp((char *)hintname, "atexit") == 0)
-                        {
-                            *thunk = (unsigned long)atexit;
-                        }
-                        else if (strcmp((char *)hintname, "atoi") == 0)
-                        {
-                            *thunk = (unsigned long)atoi;
-                        }
-                        else if (strcmp((char *)hintname, "strcpy") == 0)
-                        {
-                            *thunk = (unsigned long)strcpy;
-                        }
-                        else if (strcmp((char *)hintname, "strcmp") == 0)
-                        {
-                            *thunk = (unsigned long)strcmp;
-                        }
-                        else if (strcmp((char *)hintname, "strerror") == 0)
-                        {
-                            *thunk = (unsigned long)strerror;
-                        }
-                        else if (strcmp((char *)hintname, "strlen") == 0)
-                        {
-                            *thunk = (unsigned long)strlen;
-                        }
-                        else if (strcmp((char *)hintname, "strncmp") == 0)
-                        {
-                            *thunk = (unsigned long)strncmp;
-                        }
-                        else if (strcmp((char *)hintname, "strrchr") == 0)
-                        {
-                            *thunk = (unsigned long)strrchr;
-                        }
-                        else if (strcmp((char *)hintname, "strstr") == 0)
-                        {
-                            *thunk = (unsigned long)strstr;
-                        }
-                        else if (strcmp((char *)hintname, "system") == 0)
-                        {
-                            *thunk = (unsigned long)system;
-                        }
-                        else if (strcmp((char *)hintname, "fgets") == 0)
-                        {
-                            *thunk = (unsigned long)fgets;
-                        }
-                        else if (strcmp((char *)hintname, "fputs") == 0)
-                        {
-                            *thunk = (unsigned long)fputs;
-                        }
-                        else if (strcmp((char *)hintname, "feof") == 0)
-                        {
-                            *thunk = (unsigned long)feof;
-                        }
-                        else if (strcmp((char *)hintname, "ferror") == 0)
-                        {
-                            *thunk = (unsigned long)ferror;
-                        }
-                        else if (strcmp((char *)hintname, "fread") == 0)
-                        {
-                            *thunk = (unsigned long)fread;
-                        }
-                        else if (strcmp((char *)hintname, "fseek") == 0)
-                        {
-                            *thunk = (unsigned long)fseek;
-                        }
-                        else if (strcmp((char *)hintname, "ftell") == 0)
-                        {
-                            *thunk = (unsigned long)ftell;
-                        }
-                        else if (strcmp((char *)hintname, "fwrite") == 0)
-                        {
-                            *thunk = (unsigned long)fwrite;
-                        }
-                        else if (strcmp((char *)hintname, "fflush") == 0)
-                        {
-                            *thunk = (unsigned long)fflush;
-                        }
-                        else if (strcmp((char *)hintname, "setvbuf") == 0)
-                        {
-                            *thunk = (unsigned long)setvbuf;
-                        }
-                        else if (strcmp((char *)hintname, "fputc") == 0)
-                        {
-                            *thunk = (unsigned long)fputc;
-                        }
-                        else if (strcmp((char *)hintname, "tmpfile") == 0)
-                        {
-                            *thunk = (unsigned long)tmpfile;
-                        }
-                        else if (strcmp((char *)hintname, "vfprintf") == 0)
-                        {
-                            *thunk = (unsigned long)vfprintf;
-                        }
-                        else if (strcmp((char *)hintname, "vsprintf") == 0)
-                        {
-                            *thunk = (unsigned long)vsprintf;
-                        }
-                        else if (strcmp((char *)hintname, "isalnum") == 0)
-                        {
-                            *thunk = (unsigned long)isalnum;
-                        }
-                        else if (strcmp((char *)hintname, "isalpha") == 0)
-                        {
-                            *thunk = (unsigned long)isalpha;
-                        }
-                        else if (strcmp((char *)hintname, "tolower") == 0)
-                        {
-                            *thunk = (unsigned long)tolower;
-                        }
-                        else if (strcmp((char *)hintname, "toupper") == 0)
-                        {
-                            *thunk = (unsigned long)toupper;
-                        }
-                        else if (strcmp((char *)hintname, "iscntrl") == 0)
-                        {
-                            *thunk = (unsigned long)iscntrl;
-                        }
-                        else if (strcmp((char *)hintname, "isdigit") == 0)
-                        {
-                            *thunk = (unsigned long)isdigit;
-                        }
-                        else if (strcmp((char *)hintname, "islower") == 0)
-                        {
-                            *thunk = (unsigned long)islower;
-                        }
-                        else if (strcmp((char *)hintname, "isprint") == 0)
-                        {
-                            *thunk = (unsigned long)isprint;
-                        }
-                        else if (strcmp((char *)hintname, "isupper") == 0)
-                        {
-                            *thunk = (unsigned long)isupper;
-                        }
-                        else if (strcmp((char *)hintname, "isxdigit") == 0)
-                        {
-                            *thunk = (unsigned long)isxdigit;
-                        }
-                        else if (strcmp((char *)hintname, "fopen") == 0)
-                        {
-                            *thunk = (unsigned long)fopen;
-                        }
-                        else if (strcmp((char *)hintname, "fprintf") == 0)
-                        {
-                            *thunk = (unsigned long)fprintf;
-                        }
-                        else if (strcmp((char *)hintname, "fgetc") == 0)
-                        {
-                            *thunk = (unsigned long)fgetc;
-                        }
-                        else if (strcmp((char *)hintname, "getc") == 0)
-                        {
-                            *thunk = (unsigned long)getc;
-                        }
-                        else if (strcmp((char *)hintname, "putc") == 0)
-                        {
-                            *thunk = (unsigned long)putc;
-                        }
-                        else if (strcmp((char *)hintname, "getchar") == 0)
-                        {
-                            *thunk = (unsigned long)getchar;
-                        }
-                        else if (strcmp((char *)hintname, "ungetc") == 0)
-                        {
-                            *thunk = (unsigned long)ungetc;
-                        }
-                        else if (strcmp((char *)hintname, "sscanf") == 0)
-                        {
-                            *thunk = (unsigned long)sscanf;
-                        }
-                        else if (strcmp((char *)hintname, "sprintf") == 0)
-                        {
-                            *thunk = (unsigned long)sprintf;
-                        }
-                        else if (strcmp((char *)hintname, "remove") == 0)
-                        {
-                            *thunk = (unsigned long)remove;
-                        }
-                        else if (strcmp((char *)hintname, "qsort") == 0)
-                        {
-                            *thunk = (unsigned long)qsort;
-                        }
-                        else if (strcmp((char *)hintname, "rewind") == 0)
-                        {
-                            *thunk = (unsigned long)rewind;
-                        }
-                        else if (strcmp((char *)hintname, "free") == 0)
-                        {
-                            *thunk = (unsigned long)free;
-                        }
-                        else if (strcmp((char *)hintname, "isspace") == 0)
-                        {
-                            *thunk = (unsigned long)isspace;
-                        }
-                        else if (strcmp((char *)hintname, "memcpy") == 0)
-                        {
-                            *thunk = (unsigned long)memcpy;
-                        }
-                        else if (strcmp((char *)hintname, "memcmp") == 0)
-                        {
-                            *thunk = (unsigned long)memcmp;
-                        }
-                        else if (strcmp((char *)hintname, "memset") == 0)
-                        {
-                            *thunk = (unsigned long)memset;
-                        }
-                        else if (strcmp((char *)hintname, "memmove") == 0)
-                        {
-                            *thunk = (unsigned long)memmove;
-                        }
-                        else if (strcmp((char *)hintname, "realloc") == 0)
-                        {
-                            *thunk = (unsigned long)realloc;
-                        }
-                        else if (strcmp((char *)hintname, "strcat") == 0)
-                        {
-                            *thunk = (unsigned long)strcat;
-                        }
-                        else if (strcmp((char *)hintname, "strchr") == 0)
-                        {
-                            *thunk = (unsigned long)strchr;
-                        }
-                        else if (strcmp((char *)hintname, "strcspn") == 0)
-                        {
-                            *thunk = (unsigned long)strcspn;
-                        }
-                        else if (strcmp((char *)hintname, "strtoul") == 0)
-                        {
-                            *thunk = (unsigned long)strtoul;
-                        }
-                        else if (strcmp((char *)hintname, "strtol") == 0)
-                        {
-                            *thunk = (unsigned long)strtol;
-                        }
-                        else if (strcmp((char *)hintname, "strncpy") == 0)
-                        {
-                            *thunk = (unsigned long)strncpy;
-                        }
-                        else if (strcmp((char *)hintname, "strtod") == 0)
-                        {
-                            *thunk = (unsigned long)strtod;
-                        }
-                        else if (strcmp((char *)hintname, "ceil") == 0)
-                        {
-                            *thunk = (unsigned long)ceil;
-                        }
-                        else if (strcmp((char *)hintname, "labs") == 0)
-                        {
-                            *thunk = (unsigned long)labs;
-                        }
-                        else if (strcmp((char *)hintname, "sqrt") == 0)
-                        {
-                            *thunk = (unsigned long)sqrt;
-                        }
-                        else if (strcmp((char *)hintname, "clock") == 0)
-                        {
-                            *thunk = (unsigned long)clock;
-                        }
-                        else if (strcmp((char *)hintname, "time") == 0)
-                        {
-                            *thunk = (unsigned long)time;
-                        }
-                        else if (strcmp((char *)hintname, "localtime") == 0)
-                        {
-                            *thunk = (unsigned long)localtime;
-                        }
-                        else if (strcmp((char *)hintname, "fclose") == 0)
-                        {
-                            *thunk = (unsigned long)fclose;
-                        }
-                        else if (strcmp((char *)hintname, "_errno") == 0)
-                        {
-                            *thunk = (unsigned long)_errno;
-                        }
-                        else if (strcmp((char *)hintname, "_assert") == 0)
-                        {
-                            *thunk = (unsigned long)_assert;
-                        }
                         else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
                             *thunk = (unsigned long)getmainargs;
