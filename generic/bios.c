@@ -895,7 +895,9 @@ int main(int argc, char **argv)
 
     if (!quiet)
     {
-        fprintf(stderr, "about to execute program\n");
+        fprintf(stderr,
+                "about to execute program with entry point %p\n",
+                entry_point);
     }
 #if 1
 #ifdef __CC64__
