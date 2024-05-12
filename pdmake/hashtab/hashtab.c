@@ -96,7 +96,7 @@ static int rehash (struct hashtab *hashtab, size_t target_size)
     }
     
     hashtab->probe_limit = max (internal_log2 (hashtab->size), MINIMAL_PROBE_LIMIT);
-#ifdef __ARMGEN__
+#ifdef NOFLOAT
     /* ARM has problem with floating point,
      * so assume max_load_factor is always 0.5 and just divide by 2, rounding up.
      */
