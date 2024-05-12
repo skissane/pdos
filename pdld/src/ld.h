@@ -27,7 +27,8 @@ enum ld_target_machine {
     LD_TARGET_MACHINE_I386,
     LD_TARGET_MACHINE_X64,
     LD_TARGET_MACHINE_ARM,
-    LD_TARGET_MACHINE_AARCH64
+    LD_TARGET_MACHINE_AARCH64,
+    LD_TARGET_MACHINE_M68K
 };
 
 enum ld_oformat {
@@ -259,6 +260,9 @@ const struct long_option *coff_get_long_options (void);
 address_type elf_get_first_section_rva (void);
 void elf_write (const char *filename);
 int elf_read (unsigned char *file, size_t file_size, const char *filename);
+
+/* hunk.c */
+int hunk_read (unsigned char *file, size_t file_size, const char *filename);
 
 /* lx.c */
 void lx_import_generate_import_with_dll_name (const char *import_name,

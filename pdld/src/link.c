@@ -298,19 +298,26 @@ static void reloc_generic (struct section_part *part,
                            struct symbol *symbol)
 {
     address_type result;
+    int endianess;
+
+    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+        endianess = BIG_ENDIAN;
+    } else {
+        endianess = LITTLE_ENDIAN;
+    }
     
     switch (rel->howto->size) {
         case 8:
             /* It should be actually 8 bytes but 64-bit int is not yet available. */
-            bytearray_read_4_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
             break;
 
         case 4:
-            bytearray_read_4_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
             break;
 
         case 3:
-            bytearray_read_3_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+            bytearray_read_3_bytes (&result, part->content + rel->offset, endianess);
             break;
 
         default:
@@ -341,15 +348,15 @@ static void reloc_generic (struct section_part *part,
     switch (rel->howto->size) {
         case 8:
             /* It should be actually 8 bytes but 64-bit int is not yet available. */
-            bytearray_write_4_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            bytearray_write_4_bytes (part->content + rel->offset, result, endianess);
             break;
 
         case 4:
-            bytearray_write_4_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            bytearray_write_4_bytes (part->content + rel->offset, result, endianess);
             break;
 
         case 3:
-            bytearray_write_3_bytes (part->content + rel->offset, result, LITTLE_ENDIAN);
+            bytearray_write_3_bytes (part->content + rel->offset, result, endianess);
             break;
 
         default:

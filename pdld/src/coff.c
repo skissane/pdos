@@ -2332,6 +2332,8 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
             } else {
                 return INPUT_FILE_NO_NEW_SYMBOLS;
             }
+        } else {
+            return INPUT_FILE_UNRECOGNIZED;
         }
     } else {
         return INPUT_FILE_UNRECOGNIZED;

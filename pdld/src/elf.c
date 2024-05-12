@@ -578,6 +578,7 @@ void elf_write (const char *filename)
     switch (ld_state->target_machine) {
         case LD_TARGET_MACHINE_I386: ehdr.e_machine = EM_386; break;
         case LD_TARGET_MACHINE_ARM: ehdr.e_machine = EM_ARM; break;
+        case LD_TARGET_MACHINE_M68K: ehdr.e_machine = EM_M68K; break;
         default: ehdr.e_machine = EM_NONE; break;
     }
     ehdr.e_version = EV_CURRENT;

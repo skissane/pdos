@@ -96,6 +96,7 @@ typedef struct {
 /* e_machine */
 #define EM_NONE 0
 #define EM_386 3 /* Intel 80386. */
+#define EM_M68K 4
 #define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
 #define EM_AARCH64 183
