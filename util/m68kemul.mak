@@ -19,7 +19,7 @@ AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src \
     -I../../pdcrc -D__WIN32__ -D__NOBIVA__ -D__32BIT__ -D__STATIC__ \
-    -I../bios -DNEED_AMIGA
+    -I../bios -DNEED_AMIGA -DNEED_ELF
 
 all: clean m68kemul.exe
 
