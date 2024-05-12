@@ -10,7 +10,7 @@ VPATH=./hashtab
 #AR=arprm
 #COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
 #    -D__WIN32__ -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
-#    -D__USEBIVA__
+#    -D__USEBIVA__ -DNOFLOAT
 #EXTRA=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj
 
 
