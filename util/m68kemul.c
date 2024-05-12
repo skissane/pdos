@@ -85,7 +85,12 @@ while (1)
               );
         ptr = *((char **)sp + 1);
         /* not sure why we need - 8 here */
-        printf("%.3s\n", *((char **)sp + 1) - 8);
+        if (*((int *)sp + 2) == 1)
+        {
+            printf("%.*s\n",
+                   *((int *)sp + 0),
+                   *((char **)sp + 1) - 8);
+        }
 #if 0
         for (x = -50; x < 500; x++)
         {
