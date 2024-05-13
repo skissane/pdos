@@ -889,6 +889,23 @@ static int exeloadLoadMacho(unsigned char **entry_point,
 
 #if NEED_ELF
 #ifndef __64BIT__
+
+#define FIX_ENDIAN(x) \
+        if (big_endian) \
+        { \
+            x = ((x & 0xff) << 8) \
+                | ((x >> 8) & 0xff); \
+        }
+
+#define FIX_ENDIAN4(x) \
+        if (big_endian) \
+        { \
+            x = ((x & 0xff) << 24) \
+                | ((x & 0xff00U) << 8) \
+                | ((x >> 8) & 0xff00U) \
+                | ((x >> 24) & 0xff); \
+        }
+
 static int exeloadLoadELF(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc)
@@ -910,6 +927,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
     unsigned char firstbit[4];
     long newpos;
     size_t readbytes;
+    int big_endian = 0;
 
     if ((fseek(fp, 0, SEEK_SET) != 0)
         || (fread(&firstbit, sizeof firstbit, 1, fp) != 1)
@@ -957,13 +975,14 @@ static int exeloadLoadELF(unsigned char **entry_point,
             }
             elf_invalid = 1;
         }
-        if (elfHdr->e_ident[EI_DATA] != ELFDATA2LSB)
+        if (elfHdr->e_ident[EI_DATA] == ELFDATA2MSB)
         {
-            if (elfHdr->e_ident[EI_DATA] == ELFDATA2MSB)
-            {
-                printf("Big-endian ELF encoding is not supported\n");
-            }
-            else if (elfHdr->e_ident[EI_DATA] == ELFDATANONE)
+            /* printf("Big-endian ELF encoding is not supported\n"); */
+            big_endian = 1;
+        }
+        else if (elfHdr->e_ident[EI_DATA] != ELFDATA2LSB)
+        {
+            if (elfHdr->e_ident[EI_DATA] == ELFDATANONE)
             {
                 printf("Invalid ELF data encoding\n");
             }
@@ -981,7 +1000,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
             printf("Unsupported OS or ABI specific extensions for ELF\n");
             elf_invalid = 1;
         }
-        
+
+        FIX_ENDIAN(elfHdr->e_type);
         /* Checks other parts of the header if the file can be loaded. */
         if (elfHdr->e_type == ET_REL)
         {
@@ -1005,8 +1025,10 @@ static int exeloadLoadELF(unsigned char **entry_point,
             elf_invalid = 1;
         }
 
+        FIX_ENDIAN(elfHdr->e_machine);
         if (elfHdr->e_machine != EM_386
             && elfHdr->e_machine != EM_ARM
+            && elfHdr->e_machine != EM_68K
             && elfHdr->e_machine != EM_AARCH64
             && elfHdr->e_machine != EM_X86_64)
         {
@@ -1014,6 +1036,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
             elf_invalid = 1;
         }
         
+        FIX_ENDIAN(elfHdr->e_phnum);
+        FIX_ENDIAN4(elfHdr->e_phoff);
+        FIX_ENDIAN(elfHdr->e_phentsize);
+        FIX_ENDIAN(elfHdr->e_shnum);
+        FIX_ENDIAN4(elfHdr->e_shoff);
+        FIX_ENDIAN(elfHdr->e_shentsize);
+
         if (doing_elf_exec)
         {
             if (elfHdr->e_phoff == 0 || elfHdr->e_phnum == 0)
@@ -1158,7 +1187,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
                  section < section_table + elfHdr->e_shnum;
                  section++)
             {
-                unsigned long section_size = section->sh_size;
+                unsigned long section_size;
+
+                FIX_ENDIAN4(section->sh_size);
+                FIX_ENDIAN4(section->sh_flags);
+                FIX_ENDIAN4(section->sh_type);
+                FIX_ENDIAN4(section->sh_offset);
+                section_size = section->sh_size;
                 if (section->sh_addralign > 1)
                 {
                     /* Some sections must be aligned
@@ -1686,6 +1721,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
         }
     }
 
+    FIX_ENDIAN4(elfHdr->e_entry);
     if (doing_elf_rel)
     {
         *entry_point = exeStart + elfHdr->e_entry;
