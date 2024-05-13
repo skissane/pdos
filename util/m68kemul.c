@@ -46,11 +46,15 @@ static void doemul(void)
 {
 while (1)
 {
-    if ((*ip == 0x2f) && (ip[1] == 0x38))
+    /* 2f 38 references a 2-byte address. 3c a 4-byte value */
+    if ((*ip == 0x2f) && (ip[1] == 0x3c))
     {
         sp -= 4;
-        *(unsigned int *)sp = ((unsigned int)ip[2] << 8) | ip[3];
-        ip += 4;
+        *(unsigned int *)sp = ((unsigned int)ip[2] << 24)
+                              | ((unsigned int)ip[3] << 16)
+                              | ((unsigned int)ip[4] << 8)
+                              | ip[5];
+        ip += 6;
     }
     else if ((*ip == 0x2f) && (ip[1] == 0x08))
     {
@@ -67,11 +71,16 @@ while (1)
         printf("referencing %p\n", aregs[0]);
         ip += 6;
     }
-    else if (*ip == 0x20)
+    else if (*ip == 0x70)
+    {
+        dregs[0] = ip[1];
+        ip += 2;
+    }
+/*    else if (*ip == 0x20)
     {
         dregs[0] = *(unsigned short *)(ip + 2);
         ip += 4;
-    }
+    } */
     else if ((ip[0] == 0x4e) && (ip[1] == 0x40))
     {
         unsigned char *ptr;
