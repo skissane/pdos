@@ -279,6 +279,7 @@ static unsigned char *write_sections (unsigned char *file,
         struct Elf32_Phdr_internal phdr = {0};
         
         phdr.p_type = PT_LOAD;
+        if (strncmp (section->name, ".note", 5) == 0) phdr.p_type = PT_NOTE;
         phdr.p_paddr = phdr.p_vaddr = ld_state->base_address + section->rva;
         phdr.p_memsz = section->total_size;
 
@@ -307,6 +308,7 @@ static unsigned char *write_sections (unsigned char *file,
             struct Elf32_Shdr_internal shdr = {0};
             
             shdr.sh_type = section->is_bss ? SHT_NOBITS : SHT_PROGBITS;
+            if (strncmp (section->name, ".note", 5) == 0) shdr.sh_type = SHT_NOTE;
             shdr.sh_flags = translate_section_flags_to_sh_flags (section->flags);
             shdr.sh_addr = phdr.p_vaddr;
             shdr.sh_offset = phdr.p_offset;
