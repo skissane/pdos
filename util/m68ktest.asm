@@ -19,16 +19,16 @@
 myentry:
 
 # 1 = stdout handle
-        move.l 1, -(sp)
+        move.l #1, -(sp)
 
         lea msg, a0
         move.l a0, -(sp)
 
 # 3 = length
-        move.l 3, -(sp)
+        move.l #3, -(sp)
 
 # 4 = write
-        move.l 4, d0
+        move.l #4, d0
         trap #0
 
 zzz:    jmp zzz
