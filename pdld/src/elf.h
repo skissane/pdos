@@ -45,6 +45,41 @@ typedef struct {
     Elf32_Half e_shstrndx;
 } Elf32_Ehdr;
 
+struct Elf32_Ehdr_internal {
+    unsigned char e_ident[EI_NIDENT];
+    unsigned short e_type;
+    unsigned short e_machine;
+    unsigned long e_version;
+    unsigned long e_entry;
+    unsigned long e_phoff;
+    unsigned long e_shoff;
+    unsigned long e_flags;
+    unsigned short e_ehsize;
+    unsigned short e_phentsize;
+    unsigned short e_phnum;
+    unsigned short e_shentsize;
+    unsigned short e_shnum;
+    unsigned short e_shstrndx;
+};
+
+#define SIZEOF_struct_Elf32_Ehdr_file 52
+struct Elf32_Ehdr_file {
+    unsigned char e_ident[EI_NIDENT];
+    unsigned char e_type[2];
+    unsigned char e_machine[2];
+    unsigned char e_version[4];
+    unsigned char e_entry[4];
+    unsigned char e_phoff[4];
+    unsigned char e_shoff[4];
+    unsigned char e_flags[4];
+    unsigned char e_ehsize[2];
+    unsigned char e_phentsize[2];
+    unsigned char e_phnum[2];
+    unsigned char e_shentsize[2];
+    unsigned char e_shnum[2];
+    unsigned char e_shstrndx[2];
+};
+
 typedef struct {
     unsigned char e_ident[EI_NIDENT];
     Elf64_Half e_type;
@@ -96,7 +131,7 @@ typedef struct {
 /* e_machine */
 #define EM_NONE 0
 #define EM_386 3 /* Intel 80386. */
-#define EM_M68K 4
+#define EM_68K 4
 #define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
 #define EM_AARCH64 183
@@ -117,6 +152,33 @@ typedef struct {
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
 } Elf32_Shdr;
+
+struct Elf32_Shdr_internal {
+    unsigned long sh_name;
+    unsigned long sh_type;
+    unsigned long sh_flags;
+    unsigned long sh_addr;
+    unsigned long sh_offset;
+    unsigned long sh_size;
+    unsigned long sh_link;
+    unsigned long sh_info;
+    unsigned long sh_addralign;
+    unsigned long sh_entsize;
+};
+
+#define SIZEOF_struct_Elf32_Shdr_file 40
+struct Elf32_Shdr_file {
+    unsigned char sh_name[4];
+    unsigned char sh_type[4];
+    unsigned char sh_flags[4];
+    unsigned char sh_addr[4];
+    unsigned char sh_offset[4];
+    unsigned char sh_size[4];
+    unsigned char sh_link[4];
+    unsigned char sh_info[4];
+    unsigned char sh_addralign[4];
+    unsigned char sh_entsize[4];
+};
 
 typedef struct {
     Elf64_Word sh_name;
@@ -168,6 +230,25 @@ typedef struct {
     Elf32_Half st_shndx;
 } Elf32_Sym;
 
+struct Elf32_Sym_internal {
+    unsigned long st_name;
+    unsigned long st_value;
+    unsigned long st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    unsigned short st_shndx;
+};
+
+#define SIZEOF_struct_Elf32_Sym_file 16
+struct Elf32_Sym_file {
+    unsigned char st_name[4];
+    unsigned char st_value[4];
+    unsigned char st_size[4];
+    unsigned char st_info[1];
+    unsigned char st_other[1];
+    unsigned char st_shndx[2];
+};
+
 typedef struct {
     Elf64_Word st_name;
     unsigned char st_info;
@@ -207,6 +288,17 @@ typedef struct {
     Elf32_Addr r_offset;
     Elf32_Word r_info;
 } Elf32_Rel;
+
+struct Elf32_Rel_internal {
+    unsigned long r_offset;
+    unsigned long r_info;
+};
+
+#define SIZEOF_struct_Elf32_Rel_file 8
+struct Elf32_Rel_file {
+    unsigned char r_offset[4];
+    unsigned char r_info[4];
+};
 
 typedef struct {
     Elf64_Addr r_offset;
@@ -341,6 +433,29 @@ typedef struct {
     Elf32_Word p_flags;
     Elf32_Word p_align;
 } Elf32_Phdr;
+
+struct Elf32_Phdr_internal {
+    unsigned long p_type;
+    unsigned long p_offset;
+    unsigned long p_vaddr;
+    unsigned long p_paddr;
+    unsigned long p_filesz;
+    unsigned long p_memsz;
+    unsigned long p_flags;
+    unsigned long p_align;
+};
+
+#define SIZEOF_struct_Elf32_Phdr_file 32
+struct Elf32_Phdr_file {
+    unsigned char p_type[4];
+    unsigned char p_offset[4];
+    unsigned char p_vaddr[4];
+    unsigned char p_paddr[4];
+    unsigned char p_filesz[4];
+    unsigned char p_memsz[4];
+    unsigned char p_flags[4];
+    unsigned char p_align[4];
+};
 
 typedef struct {
     Elf64_Word p_type;

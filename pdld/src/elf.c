@@ -17,6 +17,10 @@
 #include "elf.h"
 #include "xmalloc.h"
 
+#include "elf_bytearray.h"
+
+static int endianess = LITTLE_ENDIAN;
+
 #define RELOC_SECTION_ALIGNMENT 4
 
 static int generate_section_headers = 1;
@@ -24,7 +28,7 @@ static int generate_section_headers = 1;
 /* Only the main ELF header has fixed position,
  * so only it needs to be counted.
  */
-static long size_of_headers = sizeof (Elf32_Ehdr);
+static long size_of_headers = SIZEOF_struct_Elf32_Ehdr_file;
 
 static Elf32_Word translate_section_flags_to_p_flags (flag_int flags)
 {
@@ -105,20 +109,21 @@ static size_t section_get_num_relocs (struct section *section)
 static unsigned char *write_relocs_for_section (unsigned char *file,
                                                 unsigned char *pos,
                                                 struct section *section,
-                                                Elf32_Shdr *shdr_p)
+                                                struct Elf32_Shdr_internal *shdr_p)
 {
     struct section_part *part;
-    Elf32_Rel *rel;
+    unsigned char *rel_pos;
     unsigned char *saved_pos = pos;
 
     pos = file + ALIGN (pos - file, RELOC_SECTION_ALIGNMENT);
-    rel = (void *)pos;
+    rel_pos = pos;
 
     for (part = section->first_part; part; part = part->next) {
         size_t i;
         
         for (i = 0; i < part->relocation_count; i++) {
             unsigned char type;
+            struct Elf32_Rel_internal rel;
             
             if (ld_state->target_machine == LD_TARGET_MACHINE_I386) {
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
@@ -150,26 +155,28 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
                                              ld_state->target_machine);
             }
 
-            rel->r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset;
+            rel.r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset;
             /* Symbol table is not yet supported. */
-            rel->r_info = ELF32_R_INFO (0, type);
-            rel++;
+            rel.r_info = ELF32_R_INFO (0, type);
+
+            write_struct_Elf32_Rel (rel_pos, &rel, endianess);
+            rel_pos += SIZEOF_struct_Elf32_Rel_file;
         }
     }
 
-    if (rel == (void *)pos) return saved_pos;
+    if (rel_pos == pos) return saved_pos;
 
     shdr_p->sh_type = SHT_REL;
     shdr_p->sh_flags = 0;
     shdr_p->sh_addr = 0;
     shdr_p->sh_offset = pos - file;
-    shdr_p->sh_size = (unsigned char *)rel - pos;
+    shdr_p->sh_size = rel_pos - pos;
     shdr_p->sh_link = 0; /* No symbol table exists. */
     shdr_p->sh_info = section->target_index;
     shdr_p->sh_addralign = RELOC_SECTION_ALIGNMENT;
-    shdr_p->sh_entsize = sizeof *rel;
+    shdr_p->sh_entsize = SIZEOF_struct_Elf32_Rel_file;
     
-    return (unsigned char *)rel;
+    return rel_pos;
 }
 
 static unsigned char *write_relocs_for_section64 (unsigned char *file,
@@ -245,69 +252,95 @@ static unsigned char *write_relocs_for_section64 (unsigned char *file,
     return (unsigned char *)rel;
 }
 
-static unsigned char *write_sections (unsigned char *file, Elf32_Ehdr *ehdr_p)
+static unsigned char *write_sections (unsigned char *file,
+                                      struct Elf32_Ehdr_internal *ehdr_p,
+                                      unsigned long shstrtab_i)
 {
     unsigned char *pos;
     struct section *section;
-    Elf32_Phdr *phdr_p;
-    Elf32_Shdr *shdr_p = NULL;
+    unsigned char *phdr_pos;
+    unsigned char *shdr_pos = NULL;
 
     pos = file + size_of_headers;
 
-    phdr_p = (void *)(file + ehdr_p->e_phoff);
+    phdr_pos = file + ehdr_p->e_phoff;
     if (generate_section_headers) {
-        shdr_p = (void *)(file + ehdr_p->e_shoff);
-        shdr_p->sh_type = SHT_NULL;
-        shdr_p->sh_link = SHN_UNDEF;
-        shdr_p++;
+        struct Elf32_Shdr_internal shdr = {0};
+        
+        shdr_pos = file + ehdr_p->e_shoff;
+        shdr.sh_type = SHT_NULL;
+        shdr.sh_link = SHN_UNDEF;
+
+        write_struct_Elf32_Shdr (shdr_pos, &shdr, endianess);
+        shdr_pos += SIZEOF_struct_Elf32_Shdr_file;
     }
 
     for (section = all_sections; section; section = section->next) {
-        phdr_p->p_type = PT_LOAD;
-        phdr_p->p_paddr = phdr_p->p_vaddr = ld_state->base_address + section->rva;
-        phdr_p->p_memsz = section->total_size;
+        struct Elf32_Phdr_internal phdr = {0};
+        
+        phdr.p_type = PT_LOAD;
+        phdr.p_paddr = phdr.p_vaddr = ld_state->base_address + section->rva;
+        phdr.p_memsz = section->total_size;
 
         if (!section->is_bss) {
-            phdr_p->p_filesz = section->total_size;
+            phdr.p_filesz = section->total_size;
             pos = file + ALIGN (pos - file, section->section_alignment);
-            phdr_p->p_offset = pos - file;
+            phdr.p_offset = pos - file;
 
             section_write (section, pos);
             pos += section->total_size;
         } else {
-            phdr_p->p_filesz = 0;
-            phdr_p->p_offset = 0;
+            phdr.p_filesz = 0;
+            phdr.p_offset = 0;
         }
 
-        phdr_p->p_flags = translate_section_flags_to_p_flags (section->flags);
+        phdr.p_flags = translate_section_flags_to_p_flags (section->flags);
 
         /* Memory alignment and file alignment must be the same
          * (so it is good to have RVA of first section
          *  to be equal to its offset)
          * but neither memory size nor file size need to be rounded.
          */
-        phdr_p->p_align = section->section_alignment;
+        phdr.p_align = section->section_alignment;
 
         if (generate_section_headers) {
-            shdr_p->sh_type = section->is_bss ? SHT_NOBITS : SHT_PROGBITS;
-            shdr_p->sh_flags = translate_section_flags_to_sh_flags (section->flags);
-            shdr_p->sh_addr = phdr_p->p_vaddr;
-            shdr_p->sh_offset = phdr_p->p_offset;
-            shdr_p->sh_size = phdr_p->p_memsz;
-            shdr_p->sh_addralign = phdr_p->p_align;
-            shdr_p++;
+            struct Elf32_Shdr_internal shdr = {0};
+            
+            shdr.sh_type = section->is_bss ? SHT_NOBITS : SHT_PROGBITS;
+            shdr.sh_flags = translate_section_flags_to_sh_flags (section->flags);
+            shdr.sh_addr = phdr.p_vaddr;
+            shdr.sh_offset = phdr.p_offset;
+            shdr.sh_size = phdr.p_memsz;
+            shdr.sh_addralign = phdr.p_align;
 
             if (ld_state->emit_relocs) {
+                struct Elf32_Shdr_internal rel_shdr = {0};
                 unsigned char *saved_pos = pos;
 
-                pos = write_relocs_for_section (file, pos, section, shdr_p);
-                if (pos != saved_pos) {
-                    shdr_p++;
+                pos = write_relocs_for_section (file, pos, section, &rel_shdr);
+                if (pos == saved_pos) {
+                    goto no_relocs_emitted;
                 }
+
+                shdr.sh_name = shstrtab_i + sizeof (".rel") - 1;
+                rel_shdr.sh_name = shstrtab_i;
+                shstrtab_i += sizeof (".rel") - 1 + strlen (section->name) + 1;
+
+                write_struct_Elf32_Shdr (shdr_pos, &shdr, endianess);
+                shdr_pos += SIZEOF_struct_Elf32_Shdr_file;
+                write_struct_Elf32_Shdr (shdr_pos, &rel_shdr, endianess);
+                shdr_pos += SIZEOF_struct_Elf32_Shdr_file;
+            } else {
+no_relocs_emitted:
+                shdr.sh_name = shstrtab_i;
+                shstrtab_i += strlen (section->name) + 1;
+                write_struct_Elf32_Shdr (shdr_pos, &shdr, endianess);
+                shdr_pos += SIZEOF_struct_Elf32_Shdr_file;
             }
         }
 
-        phdr_p++;
+        write_struct_Elf32_Phdr (phdr_pos, &phdr, endianess);
+        phdr_pos += SIZEOF_struct_Elf32_Phdr_file;
     }
 
     return pos;
@@ -543,7 +576,8 @@ void elf_write (const char *filename)
     size_t file_size;
     unsigned char *pos;
 
-    Elf32_Ehdr ehdr;
+    struct Elf32_Ehdr_internal ehdr;
+    unsigned long shstrtab_start_i = 0;
 
     struct section *section;
 
@@ -568,7 +602,14 @@ void elf_write (const char *filename)
     ehdr.e_ident[EI_MAG2] = ELFMAG2;
     ehdr.e_ident[EI_MAG3] = ELFMAG3;
     ehdr.e_ident[EI_CLASS] = ELFCLASS32;
-    ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+
+    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+        ehdr.e_ident[EI_DATA] = ELFDATA2MSB;
+        endianess = BIG_ENDIAN;
+    } else {
+        ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+    }
+
     ehdr.e_ident[EI_VERSION] = EV_CURRENT;
     if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
         ehdr.e_ident[EI_OSABI] = ELFOSABI_ARM;
@@ -578,7 +619,7 @@ void elf_write (const char *filename)
     switch (ld_state->target_machine) {
         case LD_TARGET_MACHINE_I386: ehdr.e_machine = EM_386; break;
         case LD_TARGET_MACHINE_ARM: ehdr.e_machine = EM_ARM; break;
-        case LD_TARGET_MACHINE_M68K: ehdr.e_machine = EM_M68K; break;
+        case LD_TARGET_MACHINE_M68K: ehdr.e_machine = EM_68K; break;
         default: ehdr.e_machine = EM_NONE; break;
     }
     ehdr.e_version = EV_CURRENT;
@@ -611,14 +652,14 @@ void elf_write (const char *filename)
 
                 if (relocs_needed) {
                     file_size = ALIGN (file_size, RELOC_SECTION_ALIGNMENT);
-                    file_size += relocs_needed * sizeof (Elf32_Rel);
+                    file_size += relocs_needed * SIZEOF_struct_Elf32_Rel_file;
                 }
             }
         }
 
         if (generate_section_headers) {
             size_t shstrtab_size;
-            shstrtab_size = 1 + sizeof (".shstrtab");
+            shstrtab_start_i = shstrtab_size = 1 + sizeof (".shstrtab");
 
             for (section = all_sections; section; section = section->next) {
                 if (ld_state->emit_relocs && section_get_num_relocs (section)) {
@@ -630,19 +671,19 @@ void elf_write (const char *filename)
             file_size += shstrtab_size;
         }
 
-        file_size = ALIGN (file_size, sizeof (Elf32_Phdr));
+        file_size = ALIGN (file_size, SIZEOF_struct_Elf32_Phdr_file);
         ehdr.e_phoff = file_size;
-        ehdr.e_phentsize = sizeof (Elf32_Phdr);
+        ehdr.e_phentsize = SIZEOF_struct_Elf32_Phdr_file;
         ehdr.e_phnum = 0;
         for (section = all_sections; section; section = section->next) {
             ehdr.e_phnum++;
         }
-        file_size += ehdr.e_phnum * sizeof (Elf32_Phdr);
+        file_size += ehdr.e_phnum * SIZEOF_struct_Elf32_Phdr_file;
 
         if (generate_section_headers) {
-            file_size = ALIGN (file_size, sizeof (Elf32_Shdr));
+            file_size = ALIGN (file_size, SIZEOF_struct_Elf32_Shdr_file);
             ehdr.e_shoff = file_size;
-            ehdr.e_shentsize = sizeof (Elf32_Shdr);
+            ehdr.e_shentsize = SIZEOF_struct_Elf32_Shdr_file;
             ehdr.e_shnum = 1;
             for (section = all_sections; section; section = section->next) {
                 section->target_index = ehdr.e_shnum++;
@@ -652,28 +693,28 @@ void elf_write (const char *filename)
             }
             ehdr.e_shstrndx = ehdr.e_shnum++;
             
-            file_size += ehdr.e_shnum * sizeof (Elf32_Shdr);
+            file_size += ehdr.e_shnum * SIZEOF_struct_Elf32_Shdr_file;
         }
     }
 
     file = xmalloc (file_size);
     memset (file, 0, file_size);
 
-    pos = write_sections (file, &ehdr);
+    pos = write_sections (file, &ehdr, shstrtab_start_i);
 
     if (generate_section_headers) {
         unsigned char *saved_pos;
-        Elf32_Shdr *shdr_p, *shstrshdr_p;
+        unsigned char *shdr_pos;
+        
+        struct Elf32_Shdr_internal shstrshdr = {0};
 
-        shdr_p = (void *)(file + ehdr.e_shoff);
-        shstrshdr_p = shdr_p + ehdr.e_shstrndx;
-        shdr_p++;
+        shdr_pos = file + ehdr.e_shoff + ehdr.e_shstrndx * SIZEOF_struct_Elf32_Shdr_file;
         saved_pos = pos;
         
-        shstrshdr_p->sh_name = 1;
-        shstrshdr_p->sh_type = SHT_STRTAB;
-        shstrshdr_p->sh_offset = saved_pos - file;
-        shstrshdr_p->sh_addralign = 1;
+        shstrshdr.sh_name = 1;
+        shstrshdr.sh_type = SHT_STRTAB;
+        shstrshdr.sh_offset = saved_pos - file;
+        shstrshdr.sh_addralign = 1;
 
         *pos = '\0';
         pos++;
@@ -688,25 +729,19 @@ void elf_write (const char *filename)
                 memcpy (pos, ".rel", sizeof (".rel") - 1);
                 pos += sizeof (".rel") - 1;
             }
-            shdr_p->sh_name = pos - saved_pos;
-            if (has_relocs) {
-                shdr_p++;
-                shdr_p->sh_name = pos - saved_pos - (sizeof (".rel") - 1);
-            }
 
             memcpy (pos, section->name, name_len);
             pos[name_len] = '\0';
             pos += name_len + 1;
-
-            shdr_p++;
         }
 
-        shstrshdr_p->sh_size = pos - saved_pos;
+        shstrshdr.sh_size = pos - saved_pos;
+        write_struct_Elf32_Shdr (shdr_pos, &shstrshdr, endianess);
     }
 
     pos = file;
 
-    memcpy (pos, &ehdr, sizeof (ehdr));
+    write_struct_Elf32_Ehdr (pos, &ehdr, endianess);
 
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
@@ -980,7 +1015,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return 1;
     }
 
-    if (ehdr.e_shentsize < sizeof (Elf32_Shdr)) {
+    if (ehdr.e_shentsize < SIZEOF_struct_Elf32_Shdr_file) {
         ld_error ("%s: e_shentsize is too small", filename);
         return 1;
     }
