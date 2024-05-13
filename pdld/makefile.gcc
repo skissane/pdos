@@ -3,7 +3,7 @@ CC=gcc
 CFLAGS=-O2
 COPTS=-c $(CFLAGS) -ansi -Wall -fno-common -I./src -I./src/bytearray -I./src/hashtab
 
-OBJS=bytearray.obj elf.obj coff.obj coff_bytearray.obj error.obj hashtab.obj hunk.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj map.obj read.obj sections.obj symbols.obj xmalloc.obj int64sup.obj
+OBJS=bytearray.obj elf.obj elf_bytearray.obj coff.obj coff_bytearray.obj error.obj hashtab.obj hunk.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj map.obj read.obj sections.obj symbols.obj xmalloc.obj int64sup.obj
 
 TARGET=pdld.exe
 
