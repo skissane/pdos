@@ -37,6 +37,16 @@ int main(void)
     }
     printf("entry point is %p\n", entry_point);
     printf("first byte %x\n", *entry_point);
+#if 0
+{
+unsigned char *ptr = entry_point;
+int x;
+        for (x = -4; x < 70; x++)
+        {
+            printf("%p %x\n", ptr + x, ptr[x]);
+        }
+}
+#endif
     ip = entry_point;
     doemul();
     return (0);
@@ -46,6 +56,7 @@ static void doemul(void)
 {
 while (1)
 {
+    printf("instruction is %x\n", *ip);
     /* 2f 38 references a 2-byte address. 3c a 4-byte value */
     if ((*ip == 0x2f) && (ip[1] == 0x3c))
     {
@@ -60,7 +71,21 @@ while (1)
     {
         sp -= 4;
         *(unsigned int *)sp = aregs[0];
+        printf("saving %x\n", *(unsigned int *)sp);
         ip += 2;
+    }
+    else if ((*ip == 0x24) && (ip[1] == 0x17))
+    {
+        dregs[2] = *(unsigned int *)sp;
+        printf("retrieving %x\n", dregs[2]);
+        ip += 2;
+    }
+    else if ((*ip == 0x41) && (ip[1] == 0xfa))
+    {
+        aregs[0] = (unsigned int)
+                   (ip + (ip[2] << 8) + ip[3] + 2);
+        printf("referencing1 %p\n", aregs[0]);
+        ip += 4;
     }
     else if (*ip == 0x41)
     {
@@ -68,12 +93,22 @@ while (1)
                    | ((unsigned int)ip[3] << 16)
                    | ((unsigned int)ip[4] << 8)
                    | ip[5];
-        printf("referencing %p\n", aregs[0]);
+        printf("referencing2 %p\n", aregs[0]);
         ip += 6;
     }
     else if (*ip == 0x70)
     {
         dregs[0] = ip[1];
+        ip += 2;
+    }
+    else if (*ip == 0x72)
+    {
+        dregs[1] = ip[1];
+        ip += 2;
+    }
+    else if (*ip == 0x76)
+    {
+        dregs[3] = ip[1];
         ip += 2;
     }
 /*    else if (*ip == 0x20)
@@ -86,19 +121,18 @@ while (1)
         unsigned char *ptr;
         int x;
 
-        printf("got trap!\n");
-        printf("stack values are %x %x %x\n",
-               *((int *)sp + 0),
-               *((int *)sp + 1),
-               *((int *)sp + 2)
+        printf("got trap %x!\n", dregs[0]);
+        printf("parms are %x %x %x\n",
+               dregs[1],
+               dregs[2],
+               dregs[3]
               );
-        ptr = *((char **)sp + 1);
-        /* not sure why we need - 8 here */
-        if (*((int *)sp + 2) == 1)
+        ptr = (unsigned char *)dregs[2];
+        if (dregs[1] == 1)
         {
             printf("%.*s\n",
-                   *((int *)sp + 0),
-                   *((char **)sp + 1) - 8);
+                   dregs[3],
+                   dregs[2]);
         }
 #if 0
         for (x = -50; x < 500; x++)
