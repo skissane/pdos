@@ -99,7 +99,11 @@ static size_t section_get_num_relocs (struct section *section)
                     || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
                     num_relocs++;
                 }
-            }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    num_relocs++;
+                }
+            } 
         }
     }
 
@@ -144,6 +148,16 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
                     type = R_ARM_ABS32;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
                     type = R_ARM_PC24;
+                } else {
+                    ld_error ("%s cannot be converted to Elf32 relocation",
+                              part->relocation_array[i].howto->name);
+                    continue;
+                }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    type = R_68K_32;
                 } else {
                     ld_error ("%s cannot be converted to Elf32 relocation",
                               part->relocation_array[i].howto->name);
@@ -279,7 +293,6 @@ static unsigned char *write_sections (unsigned char *file,
         struct Elf32_Phdr_internal phdr = {0};
         
         phdr.p_type = PT_LOAD;
-        if (strncmp (section->name, ".note", 5) == 0) phdr.p_type = PT_NOTE;
         phdr.p_paddr = phdr.p_vaddr = ld_state->base_address + section->rva;
         phdr.p_memsz = section->total_size;
 
@@ -308,7 +321,6 @@ static unsigned char *write_sections (unsigned char *file,
             struct Elf32_Shdr_internal shdr = {0};
             
             shdr.sh_type = section->is_bss ? SHT_NOBITS : SHT_PROGBITS;
-            if (strncmp (section->name, ".note", 5) == 0) shdr.sh_type = SHT_NOTE;
             shdr.sh_flags = translate_section_flags_to_sh_flags (section->flags);
             shdr.sh_addr = phdr.p_vaddr;
             shdr.sh_offset = phdr.p_offset;

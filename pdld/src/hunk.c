@@ -399,28 +399,6 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
 
     free (section_name);
 
-    {
-        struct object_file *of;
-        struct section *section;
-        struct section_part *part;
-
-        of = object_file_make (0, FAKE_LD_FILENAME);
-
-        section = section_find_or_make (".note.ABI-tag");
-        section->section_alignment = 4;
-        section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_READONLY;
-
-#define ABI_tag_content \
-        "\x00\x00\x00\x04""\x00\x00\x00\x10""\x00\x00\x00\x01""GNU\x00" \
-        "\x00\x00\x00\x00""\x00\x00\x00\x03""\x00\x00\x00\x02""\x00\x00\x00"
-        
-        part = section_part_new (section, of);
-        section_append_section_part (section, part);
-        part->content_size = sizeof (ABI_tag_content);
-        part->content = xmalloc (part->content_size);
-        memcpy (part->content, ABI_tag_content, part->content_size);
-    }
-
     return 0;
 }
 
