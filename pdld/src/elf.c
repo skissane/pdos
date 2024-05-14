@@ -626,7 +626,7 @@ void elf_write (const char *filename)
     }
     ehdr.e_version = EV_CURRENT;
     ehdr.e_entry = ld_state->entry_point + ld_state->base_address;
-    ehdr.e_ehsize = sizeof (ehdr);
+    ehdr.e_ehsize = SIZEOF_struct_Elf32_Ehdr_file;
     if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
         /* Not sure what those flags mean
          * but they are required.
