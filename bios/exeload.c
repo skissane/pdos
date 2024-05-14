@@ -1159,6 +1159,12 @@ static int exeloadLoadELF(unsigned char **entry_point,
                  segment < program_table + elfHdr->e_phnum;
                  segment++)
             {
+                FIX_ENDIAN4(segment->p_filesz);
+                FIX_ENDIAN4(segment->p_memsz);
+                FIX_ENDIAN4(segment->p_vaddr);
+                FIX_ENDIAN4(segment->p_align);
+                FIX_ENDIAN4(segment->p_offset);
+                FIX_ENDIAN4(segment->p_type);
                 if (segment->p_type == PT_LOAD)
                 {
                     if (!lowest_p_vaddr || lowest_p_vaddr > segment->p_vaddr)
@@ -1193,6 +1199,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
                 FIX_ENDIAN4(section->sh_flags);
                 FIX_ENDIAN4(section->sh_type);
                 FIX_ENDIAN4(section->sh_offset);
+                FIX_ENDIAN4(section->sh_addralign);
                 section_size = section->sh_size;
                 if (section->sh_addralign > 1)
                 {
@@ -1729,6 +1736,11 @@ static int exeloadLoadELF(unsigned char **entry_point,
     else
     {
         *entry_point = exeStart + (elfHdr->e_entry - lowest_p_vaddr);
+    }
+    if (big_endian)
+    {
+        /* hack +++ */
+        *entry_point = exeStart;
     }
 
     /* Frees memory not needed by the process. */
