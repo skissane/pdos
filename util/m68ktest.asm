@@ -10,7 +10,6 @@
 
 
 # a7=sp (stack)
-# not sure if order of stack pushes is correct
 
 
         .text
@@ -18,23 +17,26 @@
         .globl  myentry
 myentry:
 
-# 1 = stdout handle
-        move.l #1, -(sp)
+# 4 = Linux write syscall
+        move.l #4, d0
 
+# 1 = stdout handle
+        move.l #1, d1
+
+# Don't know if there is a nicer way of doing this
         lea msg, a0
         move.l a0, -(sp)
+        move.l (sp), d2
 
-# 3 = length
-        move.l #3, -(sp)
+# 3 = length of data to write
+        move.l #3, d3
 
-# 4 = write
-        move.l #4, d0
         trap #0
 
 zzz:    jmp zzz
 
 
 
-        .data
+#        .data
 
-msg:    dc.b 'H', 'i', '\n'
+msg: dc.b 'H', 'i', '\n'
