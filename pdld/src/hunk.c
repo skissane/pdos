@@ -25,10 +25,12 @@
 static int estimate (unsigned char *file,
                      size_t file_size,
                      const char *filename,
-                     unsigned long *num_hunks_p)
+                     size_t *num_hunks_p,
+                     size_t *num_symbols_p)
 {
     unsigned char *pos;
-    unsigned long num_hunks = 0;
+    size_t num_hunks = 0;
+    size_t num_symbols = 0;
     
     {
         /* HUNK_UNIT contains the object name, so it needs to be skipped. */
@@ -52,8 +54,11 @@ static int estimate (unsigned char *file,
         bytearray_read_4_bytes (&type, pos, BIG_ENDIAN);
         pos += 4;
 
+        if (type == HUNK_UNIT) break;
+
         if (type == HUNK_END) {
             num_hunks++;
+            num_symbols++;
             continue;
         }
 
@@ -76,18 +81,21 @@ static int estimate (unsigned char *file,
 
                 if (symbol_type == EXT_DEF) {
                     pos += 4;
-                } else if (symbol_type == EXT_RELREF32) {
+                } else if (symbol_type == EXT_REF32
+                           || symbol_type == EXT_RELREF32) {
                     unsigned long num_ref;
 
                     CHECK_READ (pos, 4);
                     bytearray_read_4_bytes (&num_ref, pos, BIG_ENDIAN);
                     pos += 4;
                     
+                    CHECK_READ (pos, num_ref * 4);
                     pos += num_ref * 4;
-                    ld_internal_error_at_source (__FILE__, __LINE__, "+++EXT_RELREF32 unsupported");
                 } else {
-                    ld_internal_error_at_source (__FILE__, __LINE__, "+++symbol type %#lx unsupported", symbol_type);
+                    ld_internal_error_at_source (__FILE__, __LINE__, "+++symbol type %lu unsupported", symbol_type);
                 }
+
+                num_symbols++;
             }
             
             continue;
@@ -141,13 +149,20 @@ static int estimate (unsigned char *file,
     }
     
     *num_hunks_p = num_hunks;
+    *num_symbols_p = num_symbols;
 
     return 0;
 }            
 
-static int read_hunk_object (unsigned char *file, size_t file_size, const char *filename)
+static int read_hunk_object (unsigned char *file,
+                             size_t file_size,
+                             const char *filename,
+                             unsigned char **end_pos_p)
 {
-    unsigned long num_hunks;
+    char *hunk_filename;
+    size_t num_hunks;
+    size_t num_symbols;
+    size_t symbol_i;
     
     unsigned char *pos;
 
@@ -155,7 +170,15 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
     struct section *section = NULL;
     struct section_part *part = NULL;
     char *section_name = NULL;
-    unsigned long section_i = 0;
+    size_t section_i = 0;
+    int ret = 0;
+
+    /* It is impossible to know how many sections (hunks)
+     * and symbols are there without parsing whole file,
+     * so the file is parsed twice.
+     */
+    estimate (file, file_size, filename, &num_hunks, &num_symbols);
+    if (num_hunks == 0) return 0;
 
     if (ld_state->target_machine == LD_TARGET_MACHINE_M68K
         || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
@@ -166,7 +189,7 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
     }
     
     {
-        /* HUNK_UNIT contains the object name, so it needs to be skipped. */
+        /* HUNK_UNIT contains the object name which is important when reading archives. */
         unsigned long name_size;
         
         pos = file + 4;
@@ -177,17 +200,33 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
         name_size *= 4;
         
         CHECK_READ (pos, name_size);
+        hunk_filename = xstrndup (pos, name_size);
         pos += name_size;
-    }
+        
+        if (strcmp (filename, hunk_filename)) {
+            char *new_filename;
+            size_t archive_name_len = strlen (filename);
+            size_t member_name_len = strlen (hunk_filename);
+            
+            new_filename = xmalloc (archive_name_len + 1 + member_name_len + 1 + 1);
+            memcpy (new_filename, filename, archive_name_len);
+            new_filename[archive_name_len] = '(';
+            memcpy (new_filename + archive_name_len + 1, hunk_filename, member_name_len);
+            new_filename[archive_name_len + 1 + member_name_len] = ')';
+            new_filename[archive_name_len + 1 + member_name_len + 1] = '\0';
 
-    /* It is impossible to know how many sections (hunks)
-     * and symbols are there without parsing whole file,
-     * so the file is parsed twice.
-     */
-    estimate (file, file_size, filename, &num_hunks);
-    if (num_hunks == 0) return 0;
+            free (hunk_filename);
+            hunk_filename = new_filename;
+        }
+        
+    }
     
-    of = object_file_make (num_hunks, filename);
+    of = object_file_make (num_symbols, hunk_filename);
+    free (hunk_filename);
+    /* It is simpler to place section (hunk) symbols at the beginning
+     * and access them like that instead of mixing them with other symbols.
+     */
+    symbol_i = num_hunks;
 
     while (pos < file + file_size) {
         unsigned long type;
@@ -195,6 +234,13 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
         CHECK_READ (pos, 4);
         bytearray_read_4_bytes (&type, pos, BIG_ENDIAN);
         pos += 4;
+
+        if (type == HUNK_UNIT) {
+            pos -= 4;
+            *end_pos_p = pos;
+            ret = 2;
+            break;
+        }
 
         if (type == HUNK_END) {
             section = NULL;
@@ -321,32 +367,80 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
             while (1) {
                 unsigned char symbol_type;
                 unsigned long name_size;
+                struct symbol *symbol;
                 
                 CHECK_READ (pos, 4);
                 bytearray_read_4_bytes (&name_size, pos, BIG_ENDIAN);
                 pos += 4;
 
                 if (name_size == 0) break;
+
+                symbol = of->symbol_array + symbol_i++;
                 
                 symbol_type = (name_size >> 24) & 0xff;
                 name_size &= 0xffffff;
                 name_size *= 4;
 
+                CHECK_READ (pos, name_size);
+                symbol->name = xstrndup (pos, name_size);
                 pos += name_size;
 
                 if (symbol_type == EXT_DEF) {
+                    unsigned long value;
+                    
+                    CHECK_READ (pos, 4);
+                    bytearray_read_4_bytes (&value, pos, BIG_ENDIAN);
                     pos += 4;
-                } else if (symbol_type == EXT_RELREF32) {
-                    unsigned long num_ref;
+
+                    symbol->value = value;
+                    symbol->size = 0;
+                    symbol->part = part;
+                    symbol->section_number = section_i + 1;
+                    symbol_record_external_symbol (symbol);
+                } else if (symbol_type == EXT_REF32
+                           || symbol_type == EXT_RELREF32) {
+                    unsigned long num_ref, i;
+                    struct reloc_entry *reloc;
+                    size_t old_reloc_count = part->relocation_count;
 
                     CHECK_READ (pos, 4);
                     bytearray_read_4_bytes (&num_ref, pos, BIG_ENDIAN);
                     pos += 4;
+
+                    symbol->value = 0;
+                    symbol->size = 0;
+                    symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                    symbol->part = NULL;
+                    symbol_record_external_symbol (symbol);
                     
-                    pos += num_ref * 4;
-                    ld_internal_error_at_source (__FILE__, __LINE__, "+++EXT_RELREF32 unsupported");
+                    part->relocation_count += num_ref;
+                    part->relocation_array = xrealloc (part->relocation_array,
+                                                       part->relocation_count
+                                                       * sizeof *part->relocation_array);
+                    memset (part->relocation_array + old_reloc_count,
+                            0,
+                            (part->relocation_count - old_reloc_count) * sizeof *part->relocation_array);
+
+                    reloc = part->relocation_array + old_reloc_count;
+
+                    CHECK_READ (pos, num_ref * 4);
+                    for (i = 0; i < num_ref; i++, reloc++) {
+                        unsigned long offset;
+
+                        bytearray_read_4_bytes (&offset, pos, BIG_ENDIAN);
+                        pos += 4;
+                        
+                        reloc->symbol = symbol;
+                        reloc->offset = offset;
+                        reloc->addend = 0;
+                        if (symbol_type == EXT_REF32) {
+                            reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+                        } else if (symbol_type == EXT_RELREF32) {
+                            reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                        }
+                    }
                 } else {
-                    ld_internal_error_at_source (__FILE__, __LINE__, "+++symbol type %#lx unsupported", symbol_type);
+                    ld_internal_error_at_source (__FILE__, __LINE__, "+++symbol type %lu unsupported", symbol_type);
                 }
             }
             
@@ -407,7 +501,7 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
 
     free (section_name);
 
-    return 0;
+    return ret;
 }
 
 int hunk_read (unsigned char *file, size_t file_size, const char *filename)
@@ -419,8 +513,23 @@ int hunk_read (unsigned char *file, size_t file_size, const char *filename)
     bytearray_read_4_bytes (&Magic, file, BIG_ENDIAN);
 
     if (Magic == HUNK_UNIT) {
-        if (read_hunk_object (file, file_size, filename)) return INPUT_FILE_ERROR;
-        return INPUT_FILE_FINISHED;
+        unsigned char *new_pos;
+
+        /* Hunk archives are just multiple object files
+         * starting with HUNK_UNIT merged into a single file,
+         * so keep reading the file until end is encountered.
+         */
+        while (1) {
+            int ret = read_hunk_object (file, file_size, filename, &new_pos);
+            if (ret == 1) {
+                return INPUT_FILE_ERROR;
+            } else if (ret == 2) {
+                file_size -= new_pos - file;
+                file = new_pos;
+                continue;
+            }        
+            return INPUT_FILE_FINISHED;
+        }
     } else {
         return INPUT_FILE_UNRECOGNIZED;
     }

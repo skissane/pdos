@@ -100,7 +100,8 @@ static size_t section_get_num_relocs (struct section *section)
                     num_relocs++;
                 }
             } else if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
-                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
                     num_relocs++;
                 }
             } 
@@ -158,6 +159,8 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
                     continue;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
                     type = R_68K_32;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
+                    type = R_68K_PC32;
                 } else {
                     ld_error ("%s cannot be converted to Elf32 relocation",
                               part->relocation_array[i].howto->name);
