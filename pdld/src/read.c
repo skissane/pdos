@@ -135,6 +135,7 @@ static struct lm_offset_name_entry *read_linker_member (unsigned char *file, siz
 }
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define ALREADY_READ_NAME "\0Already read"
 
 static int read_archive_member (unsigned char *file,
                                 size_t file_size,
@@ -147,7 +148,13 @@ static int read_archive_member (unsigned char *file,
     char *filename;
 
     CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
+    /* COFF COMDAT can result in symbols which should be in the member being discarded
+     * what would lead to reading the member twice,
+     * so this marks the member as read to prevent it.
+     */
+    if (memcmp (pos, ALREADY_READ_NAME, sizeof (ALREADY_READ_NAME)) == 0) return INPUT_FILE_NO_NEW_SYMBOLS;
     if (read_archive_member_header (pos, &hdr, longnames)) return INPUT_FILE_ERROR;
+    memcpy (pos, ALREADY_READ_NAME, sizeof (ALREADY_READ_NAME));
     pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     {

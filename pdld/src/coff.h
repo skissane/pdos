@@ -499,6 +499,8 @@ struct aux_section_symbol_file {
 #define IMAGE_COMDAT_SELECT_ANY 2
 #define IMAGE_COMDAT_SELECT_SAME_SIZE 3
 #define IMAGE_COMDAT_SELECT_EXACT_MATCH 4
+#define IMAGE_COMDAT_SELECT_ASSOCIATIVE 5
+#define IMAGE_COMDAT_SELECT_LARGEST 6
 
 struct string_table_header_internal {
 
