@@ -1200,6 +1200,10 @@ static int exeloadLoadELF(unsigned char **entry_point,
                 FIX_ENDIAN4(section->sh_type);
                 FIX_ENDIAN4(section->sh_offset);
                 FIX_ENDIAN4(section->sh_addralign);
+                FIX_ENDIAN4(section->sh_entsize);
+                FIX_ENDIAN4(section->sh_addr);
+                FIX_ENDIAN4(section->sh_link);
+                FIX_ENDIAN4(section->sh_info);
                 section_size = section->sh_size;
                 if (section->sh_addralign > 1)
                 {
@@ -1608,10 +1612,13 @@ static int exeloadLoadELF(unsigned char **entry_point,
                      * so just subtracting the executable base address
                      * (lowest_p_vaddr) is enough.
                      */
-                    long *target = (long *)(exeStart
-                                            + (currel->r_offset
-                                               - lowest_p_vaddr));
-                    
+                    long *target;
+
+                    FIX_ENDIAN4(currel->r_offset);
+                    FIX_ENDIAN4(currel->r_info);
+                    target = (long *)(exeStart
+                                      + (currel->r_offset
+                                      - lowest_p_vaddr));
                     Elf32_Addr sym_value = 0;
 
                     if (sym_table) {
@@ -1718,6 +1725,21 @@ static int exeloadLoadELF(unsigned char **entry_point,
                                 break;
                             case R_ARM_PC24:
                                 /* Ignored. */
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
+                    } else if (elfHdr->e_machine == EM_68K) {
+                        switch (ELF32_R_TYPE(currel->r_info))
+                        {
+                            case R_68K_NONE:
+                                /* Ignored. */
+                                break;
+                            case R_68K_32:
+                                FIX_ENDIAN4(*target);
+                                *target -= lowest_p_vaddr;
+                                *target += (unsigned long)exeStart;
+                                FIX_ENDIAN4(*target);
                                 break;
                             default:
                                 printf("Unknown relocation type in ELF file\n");
