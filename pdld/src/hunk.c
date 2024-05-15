@@ -264,6 +264,14 @@ static int read_hunk_object (unsigned char *file, size_t file_size, const char *
             free (section_name);
             section_name = NULL;
 
+            if (section->section_alignment < 0x1000) {
+                /* Same alignment as for COFF input,
+                 * needed for loading .text and .data
+                 * on separate memory pages.
+                 */
+                section->section_alignment = 0x1000;
+            }
+
             if (type == HUNK_CODE) {
                 section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_READONLY | SECTION_FLAG_CODE;
             } else if (type == HUNK_DATA) {
