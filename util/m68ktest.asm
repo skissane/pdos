@@ -5,7 +5,8 @@
 
 #asami -o m68ktest.o m68ktest.asm
 #ldami -s -o m68ktest.exe m68ktest.o
-
+#or
+#pdld -s --oformat elf --emit-relocs -o m68ktest.exe m68ktest.o
 #m68kemul m68ktest.exe
 
 
@@ -36,7 +37,6 @@ myentry:
 zzz:    jmp zzz
 
 
-
-#        .data
+        .data
 
 msg: dc.b 'H', 'i', '\n'
