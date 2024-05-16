@@ -28,13 +28,18 @@ ___longj:
 
 .globl ___pdpent
 ___pdpent:
-#        jsr __write
         jsr ___start
+
+# Not expecting to return here
+loop1:  jmp loop1
+
+
 
         .globl  ___write
 ___write:
 
         link a6, #0
+        movem.l d1-d3, -(sp)
 # 4 = Linux write syscall
         move.l #4, d0
 
@@ -49,18 +54,33 @@ ___write:
 
         trap #0
 
-#zzz:    jmp zzz
-
+        movem.l (sp), d1-d3
         unlk a6
         rts
 
 
-        .data
 
-msg: dc.b 'H', 'i', '\n'
+.globl ___exita
+___exita:
 
+        link a6, #0
+        move.l d1, -(sp)
 
-.text
+# 1 = Linux exit syscall
+        move.l #1, d0
+
+# return code
+        move.l 8(a6), d1
+
+        trap #0
+
+# Not expecting to return here
+loop2:  jmp loop2
+
+        move.l (sp), d1
+        unlk a6
+        rts
+
 
 .globl ___main
 ___main:
@@ -86,24 +106,10 @@ ___clone:
 ___waitid:
 .globl ___execve
 ___execve:
-.globl ___exita
-___exita:
 .globl ___ioctl
 ___ioctl:
 .globl ___getpid
 ___getpid:
-.globl ___open
-___open:
-.globl ___read
-___read:
-.globl ___close
-___close:
-.globl ___exita
-___exita:
-.globl ___exita
-___exita:
-.globl ___ioctl
-___ioctl:
 .globl ___time
 ___time:
 
