@@ -16,13 +16,22 @@
         .globl ___setj
         .globl ___longj
 
+
+
 # These need to be implemented
 
 ___setj:
+        move.l #0, d0
         rts
 
+
+
 ___longj:
+# not read for this yet
+loop0:  jmp loop0
         rts
+
+
 
 .ifdef LINUX
 
@@ -40,6 +49,7 @@ ___write:
 
         link a6, #0
         movem.l d1-d3, -(sp)
+
 # 4 = Linux write syscall
         move.l #4, d0
 
@@ -82,10 +92,48 @@ loop2:  jmp loop2
         rts
 
 
-.globl ___main
-___main:
+
+.globl ___getpid
+___getpid:
+
+# 20 = Linux exit syscall
+        move.l #20, d0
+        trap #0
+        rts
+
+
+
+
 .globl ___open
 ___open:
+
+        link a6, #0
+        movem.l d1-d3, -(sp)
+
+# 5 = Linux open syscall
+        move.l #5, d0
+
+# filename
+        move.l 8(a6), d1
+
+# flag
+        move.l 12(a6), d2
+
+# mode
+        move.l 16(a6), d3
+
+        trap #0
+
+        movem.l (sp), d1-d3
+        unlk a6
+        rts
+
+
+
+
+
+.globl ___main
+___main:
 .globl ___close
 ___close:
 .globl ___read
@@ -108,11 +156,10 @@ ___waitid:
 ___execve:
 .globl ___ioctl
 ___ioctl:
-.globl ___getpid
-___getpid:
 .globl ___time
 ___time:
 
+move.l #0, d0
 rts
 
 
