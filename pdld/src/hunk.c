@@ -436,6 +436,12 @@ static int read_hunk_object (unsigned char *file,
                         if (symbol_type == EXT_REF32) {
                             reloc->howto = &reloc_howtos[RELOC_TYPE_32];
                         } else if (symbol_type == EXT_RELREF32) {
+                            /* EXT_RELREF32 is relative to the beginning of the hunk,
+                             * not to the beginning of the field like ELF
+                             * or to the end of the field like x86 COFF,
+                             * so do not subtract the offset and the field size.
+                             */
+                            reloc->addend += offset + 4;
                             reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
                         }
                     }
