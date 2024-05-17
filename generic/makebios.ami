@@ -7,7 +7,8 @@ LD=ldami
 LDFLAGS=
 AS=asami
 AR=arami
-COPTS=-S $(CFLAGS) -ansi -I../pdpclib -D__AMIGA__ -D__NOBIVA__ -DNEED_AMIGA
+COPTS=-S $(CFLAGS) -m68020 -ansi -I../pdpclib -D__AMIGA__ \
+    -D__NOBIVA__ -DNEED_AMIGA -fno-common
 
 all: clean bios.exe
 
