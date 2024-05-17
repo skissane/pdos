@@ -978,7 +978,9 @@ static int exeloadLoadELF(unsigned char **entry_point,
         if (elfHdr->e_ident[EI_DATA] == ELFDATA2MSB)
         {
             /* printf("Big-endian ELF encoding is not supported\n"); */
+#ifndef NOBIG
             big_endian = 1;
+#endif
         }
         else if (elfHdr->e_ident[EI_DATA] != ELFDATA2LSB)
         {
