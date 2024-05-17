@@ -64,7 +64,7 @@ ___write:
 
         trap #0
 
-        movem.l (sp), d1-d3
+        movem.l (sp)+, d1-d3
         unlk a6
         rts
 
@@ -87,7 +87,7 @@ ___exita:
 # Not expecting to return here
 loop2:  jmp loop2
 
-        move.l (sp), d1
+        move.l (sp)+, d1
         unlk a6
         rts
 
@@ -124,7 +124,7 @@ ___open:
 
         trap #0
 
-        movem.l (sp), d1-d3
+        movem.l (sp)+, d1-d3
         unlk a6
         rts
 
@@ -151,7 +151,7 @@ ___read:
 
         trap #0
 
-        movem.l (sp), d1-d3
+        movem.l (sp)+, d1-d3
         unlk a6
         rts
 
@@ -172,7 +172,7 @@ ___close:
 
         trap #0
 
-        move.l (sp), d1
+        move.l (sp)+, d1
         unlk a6
         rts
 
@@ -193,7 +193,7 @@ ___mmap:
 
         trap #0
 
-        move.l (sp), d1
+        move.l (sp)+, d1
         unlk a6
         rts
 
@@ -218,7 +218,7 @@ ___munmap:
 
         trap #0
 
-        movem.l (sp), d1-d2
+        movem.l (sp)+, d1-d2
         unlk a6
         rts
 
@@ -242,7 +242,7 @@ ___rename:
 
         trap #0
 
-        movem.l (sp), d1-d2
+        movem.l (sp)+, d1-d2
         unlk a6
         rts
 
@@ -267,7 +267,7 @@ ___seek:
 
         trap #0
 
-        movem.l (sp), d1-d3
+        movem.l (sp)+, d1-d3
         unlk a6
         rts
 
@@ -286,7 +286,7 @@ ___remove:
 
         trap #0
 
-        move.l (sp), d1
+        move.l (sp)+, d1
         unlk a6
         rts
 
@@ -307,7 +307,7 @@ ___time:
 
         trap #0
 
-        move.l (sp), d1
+        move.l (sp)+, d1
         unlk a6
         rts
 
@@ -333,7 +333,7 @@ ___ioctl:
 
         trap #0
 
-        movem.l (sp), d1-d3
+        movem.l (sp)+, d1-d3
         unlk a6
         rts
 
