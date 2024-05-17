@@ -937,7 +937,7 @@ int main(int argc, char **argv)
 
     if (!quiet)
     {
-        printf("return from called program is %x\n", rc);
+        printf("return from called program is hex %x\n", rc);
     }
     free(p);
 
@@ -1349,15 +1349,20 @@ static struct ExecBase SysBase = {
 void *Input(void);
 void *c_Input(void)
 {
-    printf("in c_input\n");
     return (stdin);
 }
 
 void *Output(void);
 void *c_Output(void)
 {
-    printf("in c_output\n");
     return (stdout);
+}
+
+int c_Write(void *handle, void *buf, int len)
+{
+    int rc;
+    rc = fwrite(buf, 1, len, handle);
+    return (rc);
 }
 
 int callami2(unsigned int len, char *buf, void *sysbase, void *ep);

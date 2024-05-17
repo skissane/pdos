@@ -42,9 +42,7 @@ _callami2:
 .globl _Output
 _Output:
         link a6, #0
-        movem.l d1, -(sp)
         jsr _c_Output
-        lea 4(sp), sp
         unlk a6
         rts
 
@@ -52,9 +50,17 @@ _Output:
 .globl _Input
 _Input:
         link a6, #0
-        movem.l d1, -(sp)
         jsr _c_Input
-        lea 4(sp), sp
+        unlk a6
+        rts
+
+
+.globl _Write
+_Write:
+        link a6, #0
+        movem.l d1/d2/d3, -(sp)
+        jsr _c_Write
+        lea 12(sp), sp
         unlk a6
         rts
 
@@ -72,9 +78,13 @@ dc.l _Input
 
 # need another 48 characters
 
-nop
-nop
-nop
+#nop
+#nop
+#nop
+
+dc.b 0x4e, 0xf9
+dc.l _Write
+
 nop
 nop
 nop
