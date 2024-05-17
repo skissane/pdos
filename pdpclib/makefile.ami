@@ -6,7 +6,7 @@ LD=ldami
 AS=asami
 # Changing this to 68000 requires support routines that
 # do not currently exist
-COPTS=-m68020 -S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga
+COPTS=-m68020 -S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga -fno-common
 
 pdptest.exe: amistart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
