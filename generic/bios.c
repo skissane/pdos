@@ -937,7 +937,7 @@ int main(int argc, char **argv)
 
     if (!quiet)
     {
-        printf("return from called program is %d\n", rc);
+        printf("return from called program is %x\n", rc);
     }
     free(p);
 
@@ -1297,10 +1297,10 @@ struct Node {
     char *ln_Name;
 };
 
-static struct Node dosnode = {
+/* static struct Node dosnode = {
     NULL,
     {},
-    "dos.library" };
+    "dos.library" }; */
 
 struct Library {
     struct Node lib_Node;
@@ -1310,13 +1310,29 @@ struct Library {
 /* static struct Library doslib = {
     dosnode }; */
 
+static struct {
+    void *(*Input)(void);
+    char filler[50];
+    struct Node node;
+} dosfuncs = {
+  Input,
+  {},
+  {
+    NULL,
+    {},
+    "dos.library"
+  }
+  };
+
+static void *DOSBase = &dosfuncs.node;
+
 struct List {
     struct Node *lh_Head;
     char filler[10];
 };
 
 /* static struct List doslist = {
-    &doslib }; */
+    &dosfuncs.node }; */
 
 struct ExecBase {
     char filler[378];
@@ -1325,16 +1341,24 @@ struct ExecBase {
 
 static struct ExecBase SysBase = {
     {},
-    { &dosnode }
+    { &dosfuncs.node, {} },
     };
 
-/* need to populate this */
-static void *DOSBase = NULL;
+void *Input(void);
+void *c_Input(void)
+{
+    printf("in c_input\n");
+    return (stdin);
+}
 
 int callami2(unsigned int len, char *buf, void *sysbase, void *ep);
 
 static int callami(char *buf)
 {
+printf("SysBase is %p\n", &SysBase);
+printf("DOSBase is %p\n", DOSBase);
+printf("inputaddr is %p\n", &dosfuncs.Input);
+/* dosfuncs.Input(); */
     return (callami2(strlen(buf) + 0x80000000UL,
                      buf,
                      &SysBase,
