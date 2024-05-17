@@ -37,3 +37,13 @@ _callami2:
         movem.l (sp)+,d7/a0/a1
         unlk    a6
         rts
+
+.globl _Input
+_Input:
+qqq: jmp qqq
+        link a6, #0
+        movem.l d1, -(sp)
+        jsr _c_Input
+        lea 4(sp), sp
+        unlk a6
+        rts
