@@ -1339,9 +1339,11 @@ struct ExecBase {
     struct List LibList;
 };
 
+extern struct Node newdosbase;
+
 static struct ExecBase SysBase = {
     {},
-    { &dosfuncs.node, {} },
+    { &newdosbase /* &dosfuncs.node */, {} },
     };
 
 void *Input(void);
@@ -1351,14 +1353,17 @@ void *c_Input(void)
     return (stdin);
 }
 
+void *Output(void);
+void *c_Output(void)
+{
+    printf("in c_output\n");
+    return (stdout);
+}
+
 int callami2(unsigned int len, char *buf, void *sysbase, void *ep);
 
 static int callami(char *buf)
 {
-printf("SysBase is %p\n", &SysBase);
-printf("DOSBase is %p\n", DOSBase);
-printf("inputaddr is %p\n", &dosfuncs.Input);
-/* dosfuncs.Input(); */
     return (callami2(strlen(buf) + 0x80000000UL,
                      buf,
                      &SysBase,
