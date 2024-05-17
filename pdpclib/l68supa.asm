@@ -225,25 +225,127 @@ ___munmap:
 
 
 
+.globl ___rename
+___rename:
+
+        link a6, #0
+        movem.l d1-d2, -(sp)
+
+# 38 = Linux rename syscall
+        move.l #38, d0
+
+# old file
+        move.l 8(a6), d1
+
+# new file
+        move.l 12(a6), d2
+
+        trap #0
+
+        movem.l (sp), d1-d2
+        unlk a6
+        rts
+
+
+.globl ___seek
+___seek:
+
+        link a6, #0
+        movem.l d1-d3, -(sp)
+
+# 19 = Linux lseek syscall
+        move.l #19, d0
+
+# handle
+        move.l 8(a6), d1
+
+# offset
+        move.l 12(a6), d2
+
+# whence
+        move.l 16(a6), d3
+
+        trap #0
+
+        movem.l (sp), d1-d3
+        unlk a6
+        rts
+
+
+.globl ___remove
+___remove:
+
+        link a6, #0
+        move.l d1, -(sp)
+
+# 10 = Linux unlink syscall
+        move.l #10, d0
+
+# filename
+        move.l 8(a6), d1
+
+        trap #0
+
+        move.l (sp), d1
+        unlk a6
+        rts
+
+
+
+
+.globl ___time
+___time:
+
+        link a6, #0
+        move.l d1, -(sp)
+
+# 13 = Linux syscall to retrieve current time
+        move.l #13, d0
+
+# pointer to time_t
+        move.l 8(a6), d1
+
+        trap #0
+
+        move.l (sp), d1
+        unlk a6
+        rts
+
+
+
+.globl ___ioctl
+___ioctl:
+
+        link a6, #0
+        movem.l d1-d3, -(sp)
+
+# 54 = Linux ioctl syscall
+        move.l #54, d0
+
+# file descriptor
+        move.l 8(a6), d1
+
+# command
+        move.l 12(a6), d2
+
+# parameter
+        move.l 16(a6), d3
+
+        trap #0
+
+        movem.l (sp), d1-d3
+        unlk a6
+        rts
+
 
 .globl ___main
 ___main:
-.globl ___rename
-___rename:
-.globl ___seek
-___seek:
-.globl ___remove
-___remove:
 .globl ___clone
 ___clone:
 .globl ___waitid
 ___waitid:
 .globl ___execve
 ___execve:
-.globl ___ioctl
-___ioctl:
-.globl ___time
-___time:
 
 move.l #0, d0
 rts
