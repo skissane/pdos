@@ -1,0 +1,28 @@
+# Produces Linux ELF executable for 68020
+# Links against C library produced by makefile.ami
+
+CC=gccami
+CFLAGS=-O2
+LD=pdld --oformat elf
+LDFLAGS=
+AS=asami
+AR=arami
+COPTS=-S $(CFLAGS) -m68020 -ansi -I../pdpclib -I../src -D__gnu_linux__ \
+    -D__NOBIVA__ -DNEED_AMIGA -fno-common -D__M68K__ \
+    -I../amiga -DNOBIG
+
+all: clean bios.exe
+
+bios.exe: bios.o ../bios/exeload.o amiextra.o
+    $(LD) $(LDFLAGS) -s --emit-relocs -nostdlib -e ___pdpent -o bios.exe ../pdpclib/l68supa.o bios.o ../bios/exeload.o amiextra.o ../pdpclib/pdplinux.a
+
+.c.o:
+    $(CC) $(COPTS) -I../bios -o $*.s $<
+    $(AS) -o $@ $*.s
+    rm -f $*.s
+
+.asm.o:
+    $(AS) -o $@ $<
+
+clean:
+    rm -f *.o bios.exe
