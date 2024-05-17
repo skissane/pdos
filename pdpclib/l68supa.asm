@@ -11,6 +11,11 @@
 #  This uses the Motorola syntax                                      #
 #                                                                     #
 #######################################################################
+
+# I suspect the function calling convention doesn't require D1 to be
+# preserved, but I am currently preserving it. Can be changed.
+
+
 #
         .text
         .globl ___setj
