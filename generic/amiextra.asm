@@ -34,6 +34,6 @@ _callami2:
 
         jbsr 0(a1)
 
-        movem.l (sp),d7/a0/a1
+        movem.l (sp)+,d7/a0/a1
         unlk    a6
         rts
