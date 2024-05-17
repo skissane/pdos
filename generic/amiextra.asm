@@ -65,11 +65,22 @@ _Write:
         rts
 
 
+.globl _AllocMem
+_AllocMem:
+        link a6, #0
+        movem.l d0/d1, -(sp)
+        jsr _c_AllocMem
+        lea 8(sp), sp
+        unlk a6
+        rts
+
+
 
 table:
-
 #jmp fred
 
+
+# 60
 dc.b 0x4e, 0xf9
 dc.l _Output
 
@@ -116,3 +127,23 @@ nop
 dc.l libname
 
 libname: .ascii "dos.library"
+
+# Align
+dc.l 0
+
+
+table2:
+
+ds.b 180
+
+#198
+dc.b 0x4e, 0xf9
+dc.l _AllocMem
+
+ds.b 192
+
+.globl _SysBase
+_SysBase:
+ds.b 378
+
+dc.l _newdosbase

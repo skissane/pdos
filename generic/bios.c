@@ -1341,10 +1341,14 @@ struct ExecBase {
 
 extern struct Node newdosbase;
 
+extern struct ExecBase SysBase;
+
+#if 0
 static struct ExecBase SysBase = {
     {},
     { &newdosbase /* &dosfuncs.node */, {} },
     };
+#endif
 
 void *Input(void);
 void *c_Input(void)
@@ -1365,11 +1369,17 @@ int c_Write(void *handle, void *buf, int len)
     return (rc);
 }
 
+void *c_AllocMem(unsigned int amount, void *ptr)
+{
+    return (malloc(amount));
+}
+
 int callami2(unsigned int len, char *buf, void *sysbase, void *ep);
 
 static int callami(char *buf)
 {
-    return (callami2(strlen(buf) + 0x80000000UL,
+    /* seems we need to include NUL terminator in length */
+    return (callami2(strlen(buf) + 1 + 0x80000000UL,
                      buf,
                      &SysBase,
                      genstart));
