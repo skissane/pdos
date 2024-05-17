@@ -131,23 +131,109 @@ ___open:
 
 
 
+.globl ___read
+___read:
+
+        link a6, #0
+        movem.l d1-d3, -(sp)
+
+# 3 = Linux read syscall
+        move.l #3, d0
+
+# handle
+        move.l 8(a6), d1
+
+# data
+        move.l 12(a6), d2
+
+# length
+        move.l 16(a6), d3
+
+        trap #0
+
+        movem.l (sp), d1-d3
+        unlk a6
+        rts
+
+
+
+
+.globl ___close
+___close:
+
+        link a6, #0
+        move.l d1, -(sp)
+
+# 6 = Linux exit syscall
+        move.l #6, d0
+
+# handle
+        move.l 8(a6), d1
+
+        trap #0
+
+        move.l (sp), d1
+        unlk a6
+        rts
+
+
+
+
+.globl ___mmap
+___mmap:
+
+        link a6, #0
+        move.l d1, -(sp)
+
+# 90 = Linux mmap syscall
+        move.l #90, d0
+
+# struct
+        move.l 8(a6), d1
+
+        trap #0
+
+        move.l (sp), d1
+        unlk a6
+        rts
+
+
+
+
+
+.globl ___munmap
+___munmap:
+
+        link a6, #0
+        movem.l d1-d2, -(sp)
+
+# 91 = Linux munmap syscall
+        move.l #91, d0
+
+# addr
+        move.l 8(a6), d1
+
+# len
+        move.l 12(a6), d2
+
+        trap #0
+
+        movem.l (sp), d1-d2
+        unlk a6
+        rts
+
+
+
+
 
 .globl ___main
 ___main:
-.globl ___close
-___close:
-.globl ___read
-___read:
 .globl ___rename
 ___rename:
 .globl ___seek
 ___seek:
 .globl ___remove
 ___remove:
-.globl ___mmap
-___mmap:
-.globl ___munmap
-___munmap:
 .globl ___clone
 ___clone:
 .globl ___waitid
