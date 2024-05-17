@@ -56,6 +56,11 @@ int __rmdir(const char *filename);
 int __getdents(int dirfile, void *buf, int n);
 #endif
 
+#if defined(__gnu_linux__) && defined(__M68K__)
+static int callami(char *buf);
+#endif
+
+
 #ifdef FREEMEM
 #include <__memmgr.h>
 extern int __mmgid;
@@ -122,7 +127,8 @@ int getmainargs(int *_Argc, char ***_Argv);
 
 void *PosGetDTA(void);
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || defined(__ARM__) \
+   && !defined(__M68K__)
 #include <pos.h>
 
 static int dirfile;
@@ -146,14 +152,16 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
   fflush, setvbuf,
   PosGetDTA,
-#if defined(__gnu_linux__) /* || defined(__ARM__) */
+#if defined(__gnu_linux__) \
+   && !defined(__M68K__) /* || defined(__ARM__) */
   PosFindFirst, PosFindNext,
 #else
   0, 0,
 #endif
   0, 0,
   ctime, time,
-#if defined(__gnu_linux__) /* || defined(__ARM__) */
+#if defined(__gnu_linux__) \
+  && !defined(__M68K__) /* || defined(__ARM__) */
   PosChangeDir, PosMakeDir, PosRemoveDir,
 #else
   0, 0, 0,
@@ -902,6 +910,8 @@ int main(int argc, char **argv)
 #if 1
 #ifdef __CC64__
     rc = (*genstart)(&bios);
+#elif defined(__gnu_linux__) && defined(__M68K__)
+    rc = callami(cmd);
 #else
     if (salone)
     {
@@ -1091,7 +1101,8 @@ void w32exit(int status)
 #endif
 
 
-#if defined(__gnu_linux__) /* || defined(__ARM__) */
+#if defined(__gnu_linux__) \
+    && !defined(__M68K__) /* || defined(__ARM__) */
 
 void *PosGetDTA(void)
 {
@@ -1270,6 +1281,64 @@ static EFI_STATUS directory_test (void)
     EfiRoot->Close (EfiRoot);
 
     return Status;
+}
+
+#endif
+
+
+
+#if defined(__gnu_linux__) && defined(__M68K__)
+
+#include <clib/dos_protos.h>
+
+struct Node {
+    struct Node *ln_Succ;
+    char filler[6];
+    char *ln_Name;
+};
+
+static struct Node dosnode = {
+    NULL,
+    {},
+    "dos.library" };
+
+struct Library {
+    struct Node lib_Node;
+    /* other junk */
+};
+
+/* static struct Library doslib = {
+    dosnode }; */
+
+struct List {
+    struct Node *lh_Head;
+    char filler[10];
+};
+
+/* static struct List doslist = {
+    &doslib }; */
+
+struct ExecBase {
+    char filler[378];
+    struct List LibList;
+};
+
+static struct ExecBase SysBase = {
+    {},
+    { &dosnode }
+    };
+
+/* need to populate this */
+static void *DOSBase = NULL;
+
+int callami2(unsigned int len, char *buf, void *sysbase, void *ep);
+
+static int callami(char *buf)
+{
+    return (callami2(strlen(buf) + 0x80000000UL,
+                     buf,
+                     &SysBase,
+                     genstart));
 }
 
 #endif
