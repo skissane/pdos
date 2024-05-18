@@ -1378,9 +1378,26 @@ int callami2(unsigned int len, char *buf, void *sysbase, void *ep);
 
 static int callami(char *buf)
 {
+    char *p;
+
+    /* Amiga programs are only expecting to receive the parameters,
+       not the program name. */
+    p = strchr(buf, ' ');
+    if (p == NULL)
+    {
+        p = buf;
+    }
+    else
+    {
+        p++;
+    }
+
     /* seems we need to include NUL terminator in length */
-    return (callami2(strlen(buf) + 1 + 0x80000000UL,
-                     buf,
+    /* it could be a newline character that Amiga programs
+       are expecting - but PDPCLIB-based programs tolerate
+       either */
+    return (callami2(strlen(p) + 1 + 0x80000000UL,
+                     p,
                      &SysBase,
                      genstart));
 }
