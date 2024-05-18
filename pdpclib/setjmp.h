@@ -124,7 +124,7 @@ int __setj(jmp_buf env);
 #define setjmp(x) __Ysetjmp(x)
 int __Ysetjmp(jmp_buf env);
 
-#elif defined(__EFI__)
+#elif defined(__EFI__) || defined(__AMIGA__)
 #define setjmp(x) __setj(x)
 int __setj(jmp_buf env);
 

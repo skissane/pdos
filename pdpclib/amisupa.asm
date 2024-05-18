@@ -19,10 +19,107 @@
 # These need to be implemented
 
 ___setj:
+        link a6, #0
+        move.l a5, -(sp)
+        move.l 8(a6),a5
+
+        move.l a0, 0(a5)
+        move.l a1, 4(a5)
+        move.l a2, 8(a5)
+        move.l a3, 12(a5)
+        move.l a4, 16(a5)
+        move.l a5, 20(a5)
+# Defer storing original a6 into location 24
+
+# Stack that we want (basically) is in a6 now
+        move.l a6, 28(a5)
+        move.l d0, 32(a5)
+        move.l d1, 36(a5)
+        move.l d2, 40(a5)
+        move.l d3, 44(a5)
+        move.l d4, 48(a5)
+        move.l d5, 52(a5)
+        move.l d6, 56(a5)
+        move.l d7, 60(a5)
+
+# copy return address
+        move.l 4(a6), d0
+        move.l d0, 64(a5)
+
+# original a6 is here
+        move.l 0(a6), d0
+        move.l d0, 24(a5)
+
+        move.l #0, d0
+        move.l (sp)+, a5
+        unlk a6
         rts
 
+
 ___longj:
+        link a6, #0
+
+        move.l 8(a6), a5
+
+# retrieve return value before it is lost
+# save return value in jmpbuf for now
+#        move.l 12(a6), d0
+#        move.l d0, 32(a5)
+# actually, longjmp stores it directly into the jmpbuf
+# (our implementation)
+
+# switch to old stack (a7 = sp)
+        move.l 28(a5), sp
+
+# put old a6 on stack as it originally was, at the original offset
+# don't adjust the stack.
+#        move.l 24(a5), d0
+#        move.l d0, (sp)
+# Actually don't do that, as it is more effort to get unlk to work
+
+# put return address on stack as it originally was,
+# and at the original offset
+# don't adjust the stack as it is already set correctly
+        move.l 64(a5), d0
+        move.l d0, 4(sp)
+
+# we no longer care about the current a6, and a5 will be
+# last thing restored
+
+        move.l 0(a5), a0
+        move.l 4(a5), a1
+        move.l 8(a5), a2
+        move.l 12(a5), a3
+        move.l 16(a5), a4
+# Not ready for this yet
+#        move.l 20(a5), a5
+# This is required as we won't be using unlk
+        move.l 24(a5), a6
+# This has already been done
+#        move.l 28(a5), a7
+# Return value is not stored here
+#        move.l 32(a5), d0
+# It's actually here
+        move.l 68(a5), d0
+
+        move.l 36(a5), d1
+        move.l 40(a5), d2
+        move.l 44(a5), d3
+        move.l 48(a5), d4
+        move.l 52(a5), d5
+        move.l 56(a5), d6
+        move.l 60(a5), d7
+
+# Finally ready for this
+        move.l 20(a5), a5
+
+# a6 doesn't have the stack pointer, so don't do unlk
+# manually adjust stack instead, as a6 is already set
+#        unlk a6
+        lea 4(sp), sp
         rts
+
+
 
 # These are needed for 68000 support for VBCC
 # Note that just "rts" causes a crash
