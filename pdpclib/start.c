@@ -1516,6 +1516,11 @@ void __exit(int status)
        defining __exit as a "noreturn" function and not generating
        code that would allow a return. The "noreturn" was dropped for
        this situation */
+    /* Also note that (at least) gccami (68000) - even with -fno-builtin -
+       recognizes longjmp as a keyword and generates code (inc eliminates
+       code) that assumes that longjmp will not be returned from - so if
+       you haven't implemented longjmp yet, it's probably better to make
+       it go into an infinite loop as a failsafe */
 #if 1 /* (defined(__64BIT__) && !defined(__WIN32__)) \
     || defined(__PDOS386__) */
     longjmp(jb, status);

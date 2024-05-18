@@ -45,6 +45,12 @@ ___main:
 # then needs to be restored and the parameter placed in register d0
 # prior to return to the OS.
 
+# This is basically acting as a "poor man's longjmp". While it will
+# return to the correct address, none of the registers are expected
+# to be the same as what they were on entry. A normal operating
+# system like AmigaDOS is probably not dependent on a user's program
+# behaving nicely, but PDOS-generic is, so will get a crash on return.
+
         .globl ___exita
 ___exita:
         move.l  4(sp),d0
