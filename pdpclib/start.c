@@ -1539,11 +1539,20 @@ void __exit(int status)
 
     if (__runnum == 1)
     {
+/* The Amiga doesn't have a good exita - and all environments should
+   probably do the same - ie rely on longjmp working */
+#if !defined(__AMIGA__)
     __exita(status);
+#endif
+
+    /* and i think we now need this for all environments */
+    globrc = status;
+
     /* in case exita returns here, which is the case for PDOS-generic
        running under the pseudo-BIOS currently, decrement the run number
        so that we don't get called again */
     __runnum--;
+
     /* and we can't go through another longjmp either on
        some systems - supposedly/historically - hasn't
        yet been rationalized */
