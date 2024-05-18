@@ -1487,6 +1487,48 @@ __PDPCLIB_API__ void _exit(int status);
 __PDPCLIB_API__ void _cexit(void);
 __PDPCLIB_API__ void _c_exit(void);
 
+
+/* Exiting is very complicated.
+
+   Some systems such as *nix cannot be exited by doing a return
+   from the entry point, because they have an unusual stack, with
+   no return address. The proper solution to this is possibly to
+   have some assembler code as the entry point, and we return
+   cleanly to that, and then it can be responsible for doing the
+   exit syscall to return to the OS. But historically we have
+   done other semi-random things.
+
+   Other systems may REQUIRE you to exit the same way you were
+   entered, with a standard return. AmigaDOS may or may not be
+   one of those systems, but we are not set up to exit any other
+   way. A PDOS-generic app running under a pseudo-bios with the
+   C library being reused would be an example of a system requiring
+   (I think) clean exit.
+
+   All OSes could be burdened with the requirement to provide an
+   exit call - in which case they would be burdened with requiring
+   a working setjmp/longjmp.
+
+   Taking the burden off the OS means putting a burden on the app
+   to have a working setjmp/longjmp. Traditionally we have implemented
+   systems as proof of concept and setjmp/longjmp (more complicated
+   assembler) is deferred. At time of writing, we don't have it for
+   the 68000 and even on the x86 and ARM - although it exists and
+   works, it doesn't match msvcrt, so you may get a crash if setjmp
+   from PDPCLIB is used, but longjmp from real msvcrt.dll is used.
+
+   But the ideal is probably to get setjmp/longjmp working in both
+   the app and the OS so that a new OS, or a new app/C library, can
+   get a quick and clean result.
+
+   But until then, we probably need some defines that represent the
+   current situation. This rationalization has not yet been done. It
+   has always been adhoc, and not even been understood. Especially
+   when I was still experimenting with using the same C library to
+   run two different types of binaries (e.g. the mini replacement
+   for WINE).
+*/
+
 void __exit(int status)
 {
     /* Complete C library termination and exit with error code. */
@@ -1532,6 +1574,11 @@ void __exit(int status)
     longjmp(jb, status);
 
 }
+
+/* Not sure why this function exists */
+/* I can't see any user of it. It doesn't seem to be a C90
+   requirement. It was presumably added to be compatible with
+   msvcrt.dll, but the programs we build shouldn't be requiring that */
 
 __PDPCLIB_API__ void _exit(int status)
 {
