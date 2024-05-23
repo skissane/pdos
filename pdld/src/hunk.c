@@ -79,11 +79,18 @@ static int estimate (unsigned char *file,
 
                 pos += name_size;
 
-                if (symbol_type == EXT_DEF) {
+                if (symbol_type == EXT_DEF
+                    || symbol_type == EXT_ABS) {
                     pos += 4;
                 } else if (symbol_type == EXT_REF32
+                           || symbol_type == EXT_COMMON
                            || symbol_type == EXT_RELREF32) {
                     unsigned long num_ref;
+
+                    if (symbol_type == EXT_COMMON) {
+                        CHECK_READ (pos, 4);
+                        pos += 4;
+                    }
 
                     CHECK_READ (pos, 4);
                     bytearray_read_4_bytes (&num_ref, pos, BIG_ENDIAN);
@@ -172,6 +179,7 @@ static int read_hunk_object (unsigned char *file,
     char *section_name = NULL;
     size_t section_i = 0;
     int ret = 0;
+    struct section *bss_section = NULL;
 
     /* It is impossible to know how many sections (hunks)
      * and symbols are there without parsing whole file,
@@ -385,7 +393,8 @@ static int read_hunk_object (unsigned char *file,
                 symbol->name = xstrndup (pos, name_size);
                 pos += name_size;
 
-                if (symbol_type == EXT_DEF) {
+                if (symbol_type == EXT_DEF
+                    || symbol_type == EXT_ABS) {
                     unsigned long value;
                     
                     CHECK_READ (pos, 4);
@@ -394,24 +403,83 @@ static int read_hunk_object (unsigned char *file,
 
                     symbol->value = value;
                     symbol->size = 0;
-                    symbol->part = part;
-                    symbol->section_number = section_i + 1;
-                    symbol_record_external_symbol (symbol);
+                    if (symbol_type == EXT_DEF) {
+                        symbol->part = part;
+                        symbol->section_number = section_i + 1;
+                        symbol_record_external_symbol (symbol);
+                    } else if (symbol_type == EXT_ABS) {
+                        symbol->part = NULL;
+                        symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+                        /* Do not record absolute symbols as external,
+                         * they seem to not be actually used after being defined
+                         * and it is not clear how to handle duplicates.
+                         */
+                    }
                 } else if (symbol_type == EXT_REF32
+                           || symbol_type == EXT_COMMON
                            || symbol_type == EXT_RELREF32) {
                     unsigned long num_ref, i;
                     struct reloc_entry *reloc;
                     size_t old_reloc_count = part->relocation_count;
 
+                    if (symbol_type == EXT_COMMON) {
+                        unsigned long common_size;
+                        struct symbol *old_symbol = symbol_find (symbol->name);
+
+                        CHECK_READ (pos, 4);
+                        bytearray_read_4_bytes (&common_size, pos, BIG_ENDIAN);
+                        pos += 4;
+
+                        symbol->size = common_size;
+
+                        if (!old_symbol || symbol_is_undefined (old_symbol)) {
+                            struct section_part *bss_part;
+                            
+                            if (bss_section == NULL) {
+                                bss_section = section_find_or_make (".bss");
+
+                                if (bss_section->section_alignment < 0x1000) {
+                                    bss_section->section_alignment = 0x1000;
+                                }
+                                bss_section->flags = SECTION_FLAG_ALLOC;
+                                bss_section->is_bss = 1;
+                            }
+                            
+                            bss_part = section_part_new (bss_section, of);
+                            section_append_section_part (bss_section, bss_part);
+
+                            bss_part->content_size = symbol->size;
+                            bss_part->alignment = 4; /* Arbitrary. */
+                            symbol->part = bss_part;
+                            symbol->value = 0;
+                            /* The section number except for the special values
+                             * does not matter, so no need to use the actual .bss section number.
+                             */
+                            symbol->section_number = num_hunks + 1;
+                        } else {
+                            if (symbol->size > old_symbol->size) {
+                                old_symbol->part->content_size = old_symbol->size = symbol->size;
+                            }
+                            
+                            symbol->value = 0;
+                            symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                            symbol->part = NULL;
+                        }
+                        symbol_record_external_symbol (symbol);
+                    } else {
+                        symbol->value = 0;
+                        symbol->size = 0;
+                        symbol->section_number = UNDEFINED_SECTION_NUMBER;
+                        symbol->part = NULL;
+                        symbol_record_external_symbol (symbol);
+                    }
+
                     CHECK_READ (pos, 4);
                     bytearray_read_4_bytes (&num_ref, pos, BIG_ENDIAN);
                     pos += 4;
 
-                    symbol->value = 0;
-                    symbol->size = 0;
-                    symbol->section_number = UNDEFINED_SECTION_NUMBER;
-                    symbol->part = NULL;
-                    symbol_record_external_symbol (symbol);
+                    /* Likely case for EXT_COMMON. */
+                    if (num_ref == 0) continue;
                     
                     part->relocation_count += num_ref;
                     part->relocation_array = xrealloc (part->relocation_array,
@@ -433,7 +501,8 @@ static int read_hunk_object (unsigned char *file,
                         reloc->symbol = symbol;
                         reloc->offset = offset;
                         reloc->addend = 0;
-                        if (symbol_type == EXT_REF32) {
+                        if (symbol_type == EXT_REF32
+                            || symbol_type == EXT_COMMON) {
                             reloc->howto = &reloc_howtos[RELOC_TYPE_32];
                         } else if (symbol_type == EXT_RELREF32) {
                             /* EXT_RELREF32 is relative to the beginning of the hunk,
