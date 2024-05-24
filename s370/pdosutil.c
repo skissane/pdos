@@ -146,7 +146,7 @@ int findFile(int ipldev, char *dsn, int *c, int *h, int *r)
 
 /* Structures here are documented in Appendix B and E of
    MVS Program Management: Advanced Facilities SA22-7644-14:
-   http://publibfp.dhe.ibm.com/cgi-bin/bookmgr/BOOKS/iea2b2b1/CCONTENTS
+   https://publib.boulder.ibm.com/epubs/pdf/iea2b2b1.pdf
    and the IEBCOPY component is documented here:
    Appendix B of OS/390 DFSMSdfp Utilities SC26-7343-00
    or Appendix B of the z/OS equivalent SC26-7414-05 available here at
