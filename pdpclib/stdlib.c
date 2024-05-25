@@ -786,7 +786,8 @@ __PDPCLIB_API__ void abort(void)
 #if !defined(__EMX__) && !defined(__GNUC__) && !defined(__gnu_linux__) \
     && !defined(__ARM__) \
     || defined(WATLIN) \
-    || (defined(__ARM__) && defined(__64BIT__))
+    || (defined(__ARM__) && defined(__64BIT__)) \
+    || defined(__MSC__)
 void __exit(int status);
 #else
 void __exit(int status) __attribute__((noreturn));
