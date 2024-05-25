@@ -1,6 +1,10 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
 # with static linking using Microsoft's C compiler
 
+# Note that if you generate assembler using -Fa
+# you will need to comment out things like .drectve
+# in order for armasm to be able to assemble it
+
 #CC=gccprm
 CC=cl
 
