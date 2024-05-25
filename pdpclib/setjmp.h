@@ -114,7 +114,7 @@ typedef struct {
 
 __PDPCLIB_HEADFUNC void longjmp(jmp_buf env, int val);
 
-#if defined(__MSC__)
+#if defined(__MSC__) && !defined(__ARM__)
 #define setjmp(x) __setj(x)
 int __setj(jmp_buf env);
 
