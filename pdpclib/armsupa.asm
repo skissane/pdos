@@ -557,6 +557,7 @@ ___main:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot, r1 = rem
 
+        .globl  __rt_udiv
         .globl  __udivsi3
         .globl  ___udivsi3
 .if ELF
@@ -567,6 +568,7 @@ ___main:
         .type  __aeabi_uidiv, %function
 .endif
         .align  2
+__rt_udiv:
 __udivsi3:
 ___udivsi3:
 __aeabi_uidiv:
@@ -626,6 +628,7 @@ __aeabi_uidiv_trad:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot
 
+        .globl  __rt_sdiv
         .globl  __divsi3
         .globl  ___divsi3
 .if ELF
@@ -636,6 +639,7 @@ __aeabi_uidiv_trad:
         .type  __aeabi_idiv, %function
 .endif
         .align  2
+__rt_sdiv:
 __divsi3:
 ___divsi3:
 __aeabi_idiv:
