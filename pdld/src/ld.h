@@ -168,6 +168,9 @@ struct section_part {
 
     address_type rva;
 
+    /* COFF specific. */
+    unsigned long comdat_CheckSum;
+
 };
 
 struct subsection {

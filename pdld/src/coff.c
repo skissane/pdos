@@ -985,13 +985,13 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
         
         case IMAGE_REL_THUMB_MOV32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]; break;
 
+        case IMAGE_REL_THUMB_BRANCH24: /* Seems to be the same as BLX23. */
         case IMAGE_REL_THUMB_BLX23: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_BLX23]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
         case IMAGE_REL_ARM_SECREL:
         case IMAGE_REL_THUMB_BRANCH20:
-        case IMAGE_REL_THUMB_BRANCH24:
         case IMAGE_REL_ARM_PAIR:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
             break;
@@ -1729,6 +1729,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         {
             struct section *section;
             struct subsection *subsection;
+            unsigned long comdat_CheckSum = 0;
 
             {
                 char *section_name;
@@ -1780,16 +1781,157 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                  section_name);
                     }
 
-                    if (aux_symbol.Selection != IMAGE_COMDAT_SELECT_ANY) {
-                        ld_internal_error_at_source (__FILE__, __LINE__,
-                                                     "only IMAGE_COMDAT_SELECT_ANY Selection is supported for COMDAT");
-                    }
+                    comdat_CheckSum = aux_symbol.CheckSum;
 
-                    section = section_find (section_name);
-                    if (section) {
-                        if (p) subsection = subsection_find (section, p);
+                    if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+                        /* IMAGE_COMDAT_SELECT_ASSOCIATIVE is included
+                         * when the associated COMDAT section is included
+                         * and is discarded when the associated COMDAT section
+                         * is discarded.
+                         * That means the COMDAT code needs to be run recursively
+                         * but only once (because COMDAT chaining is not permitted).
+                         * Duplicating the code and using prefix "assoc_" was the easiest.
+                         */
+                        struct section_table_entry_internal assoc_section_hdr;
+                        char *assoc_section_name;
+                        char *assoc_p;
+                        struct aux_section_symbol_internal assoc_aux_symbol;
+                        unsigned long assoc_sym_i;
+                        unsigned long assoc_i;
+                        const struct section_part *existing_part = NULL;
 
-                        if (!p || subsection) {
+                        if (aux_symbol.Number < 1
+                            || aux_symbol.Number > coff_hdr.NumberOfSections) {
+                            ld_fatal_error ("%s: invalid COMDAT Number", filename);
+                        }
+
+                        assoc_i = aux_symbol.Number - 1;
+                        
+                        pos = file + SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file * assoc_i;
+                        CHECK_READ (pos, SIZEOF_struct_section_table_entry_file);
+                        read_struct_section_table_entry (&assoc_section_hdr, pos);
+
+                        if (!(section_hdr.Characteristics & IMAGE_SCN_LNK_COMDAT)) {
+                            ld_fatal_error ("%s: IMAGE_COMDAT_SELECT_ASSOCIATIVE associated with non-COMDAT section",
+                                            filename);
+                        }
+
+                        assoc_section_name = xstrndup (assoc_section_hdr.Name, 8);
+
+                        if (assoc_section_name[0] == '/') {
+                            unsigned long offset = 0;
+                            
+                            offset = strtoul (assoc_section_name + 1, NULL, 10);
+                            if (offset < string_table_hdr.StringTableSize) {
+                                free (assoc_section_name);
+                                section_name = xstrdup (string_table + offset);
+                            } else ld_fatal_error ("invalid offset into string table");
+                        }
+
+                        assoc_p = strchr (assoc_section_name, '$');
+                        if (assoc_p) {
+                            *assoc_p = '\0';
+                            assoc_p++;
+                        }
+
+                        assoc_sym_i = comdat_aux_symbol_indexes[assoc_i];
+                        read_struct_aux_section_symbol (&assoc_aux_symbol, read_symtab[assoc_sym_i].aux);
+
+                        if (assoc_aux_symbol.Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+                            ld_fatal_error ("%s: IMAGE_COMDAT_SELECT_ASSOCIATIVE associated with IMAGE_COMDAT_SELECT_ASSOCIATIVE",
+                                            filename);
+                        }
+                        
+                        if (assoc_aux_symbol.Selection != IMAGE_COMDAT_SELECT_ANY
+                            && assoc_aux_symbol.Selection != IMAGE_COMDAT_SELECT_NODUPLICATES) {
+                            ld_internal_error_at_source (__FILE__, __LINE__,
+                                                         "unsupported COMDAT Selection %u", assoc_aux_symbol.Selection);
+                        }
+
+                        section = section_find (assoc_section_name);
+                        if (section) {
+                            if (assoc_p) subsection = subsection_find (section, assoc_p);
+                            if (assoc_p && subsection) {
+                                struct section_part *part;
+
+                                for (part = subsection->first_part; part; part = part->next) {
+                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
+                                        existing_part = part;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                struct section_part *part;
+
+                                for (part = section->first_part; part; part = part->next) {
+                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
+                                        existing_part = part;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (existing_part && existing_part->of == of) existing_part = NULL;
+
+                        if (existing_part) {
+                            if (assoc_aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
+                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES)",
+                                                filename);
+                            }
+                            part_p_array[i + 1] = &dummy_comdat_part_s;
+                            free (assoc_section_name);
+                            free (section_name);
+                            continue;
+                        }
+
+                        free (assoc_section_name);
+                    } else {
+                        const struct section_part *existing_part = NULL;
+                        
+                        if (aux_symbol.Selection != IMAGE_COMDAT_SELECT_ANY
+                            && aux_symbol.Selection != IMAGE_COMDAT_SELECT_NODUPLICATES) {
+                            ld_internal_error_at_source (__FILE__, __LINE__,
+                                                         "unsupported COMDAT Selection %u", aux_symbol.Selection);
+                        }
+
+                        section = section_find (section_name);
+                        if (section) {
+                            if (p) subsection = subsection_find (section, p);
+                            if (p && subsection) {
+                                struct section_part *part;
+
+                                for (part = subsection->first_part; part; part = part->next) {
+                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
+                                        existing_part = part;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                struct section_part *part;
+
+                                for (part = section->first_part; part; part = part->next) {
+                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
+                                        existing_part = part;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        /* It is possible for one object file
+                         * to contain multiple identical COMDAT sections with the same checksum.
+                         * It is not clear what should be done in that case,
+                         * so it was arbitrarily decided to not discard the duplicates
+                         * if they come from the same object file.
+                         */
+                        if (existing_part && existing_part->of == of) existing_part = NULL;
+
+                        if (existing_part) {
+                            if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
+                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES)",
+                                                filename);
+                            }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
                             free (section_name);
                             continue;
@@ -1827,6 +1969,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
             {
                 struct section_part *part = section_part_new (section, of);
+
+                part->comdat_CheckSum = comdat_CheckSum;
 
                 part->alignment = translate_Characteristics_to_alignment (section_hdr.Characteristics);
 

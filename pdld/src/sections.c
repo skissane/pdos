@@ -120,7 +120,7 @@ struct subsection *subsection_find_or_make (struct section *section, const char 
 
 struct section_part *section_part_new (struct section *section, struct object_file *of)
 {
-    struct section_part *part = xmalloc (sizeof (*part));
+    struct section_part *part = xcalloc (1, sizeof *part);
 
     part->section = section;
     part->of = of;
