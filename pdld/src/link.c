@@ -205,10 +205,11 @@ static void reloc_arm_thumb_blx23 (struct section_part *part,
     result = (result ^ 0x400000) - 0x400000;
     result += rel->addend;
     result += symbol_get_value_no_base (symbol);
-    /* The size of the field must not be subtracted
-     * even though it is PC relative relocation.
-     */
     result -= part->rva + rel->offset;
+    /* Unlike other ARM PC relative relocations,
+     * the size of the field should be subtracted.
+     */
+    result -= rel->howto->size;
 
     field &= ~0x07ff07ff;
     field |= ((result & 0xffe) << 15) | ((result >> 12) & 0x7ff);    
