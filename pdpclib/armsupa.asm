@@ -117,6 +117,42 @@ _longjmp:
         ldr     r1,[r1,#52]
         mov     pc,lr
 
+
+# There is no such thing as 16-bit ARM
+# ARM was originally 32-bit
+# 16-bit is actually a 32-bit enhancement - providing more
+# compact instructions. This is called Thumb mode. In Thumb
+# mode, some instructions are 32-bit, but most are 16-bit I think
+# Windows 11 32-bit will enter an application in plain ARM mode.
+# But the Visual C compiler generates the more efficient Thumb
+# mode instructions, with no apparent option to restrict it to the
+# old ARM32. So we need a stub to switch to Thumb mode so that we
+# can call Microsoft-generated code. This stub is not suitable for
+# calling gccprm-generated code, which is old ARM32 (currently).
+
+# In order to get into Thumb mode, you simply add 1 to the target
+# address, and that low bit is ignored. All instructions are on a
+# 16 or 32-bit boundary, so the 1 would normally not be valid.
+# That's how it is possible to use it as a flag.
+# Some linkers will add the 1 automatically when they see that a
+# function being called is Thumb. But we are using a simpler
+# linker (pdld) which doesn't do that, and this code would be
+# inconsistent with a linker that does it automatically. We should
+# probably do an "or" instead of an add so that it works with
+# either.
+
+.globl __pdpent
+__pdpent:
+        stmfd   sp!,{lr}
+        ldr     r0,=mainCRTStartup
+# Activate Thumb mode by adding 1 (should probaby use OR instead,
+# in case the above ldr has already compensated for that)
+        add     r0, r0, #1
+# mainCRTStartup returns by moving lr into pc, and will restore
+# our original ARM mode (not Thumb) due to that, I think
+        blx     r0
+        ldmia   sp!,{pc}
+
 .if LINUX
 # void _exita(int rc);
 
@@ -557,6 +593,7 @@ ___main:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot, r1 = rem
 
+        .globl  __rt_udiv
         .globl  __udivsi3
         .globl  ___udivsi3
 .if ELF
@@ -567,6 +604,7 @@ ___main:
         .type  __aeabi_uidiv, %function
 .endif
         .align  2
+__rt_udiv:
 __udivsi3:
 ___udivsi3:
 __aeabi_uidiv:
@@ -626,6 +664,7 @@ __aeabi_uidiv_trad:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot
 
+        .globl  __rt_sdiv
         .globl  __divsi3
         .globl  ___divsi3
 .if ELF
@@ -636,6 +675,7 @@ __aeabi_uidiv_trad:
         .type  __aeabi_idiv, %function
 .endif
         .align  2
+__rt_sdiv:
 __divsi3:
 ___divsi3:
 __aeabi_idiv:
