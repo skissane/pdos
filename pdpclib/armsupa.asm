@@ -143,33 +143,15 @@ _longjmp:
 
 .globl __pdpent
 __pdpent:
-        stmfd   sp!,{r4,r5,r6,lr}
-        ldr     r6,=__pdpent2
-        add     r6, r6, #1
-        ldr     r4,=mainCRTStartup
-        ldr     r5,=rrr
-        ldr     lr,=kkk
-
-# The called routine appears to return using bx, so will
-# change mode back to ARM32 - which would be a good thing,
-# except that it means we can't call a routine that does
-# a move into pc to return. In order to get consistency,
-# we keep it (via lr) in Thumb mode and we will do the
-# transition back to ARM ourselves
-        add     lr, lr, #1
-        bx      r6
-rrr:
-        ldmia   sp!,{r4,r5,r6,pc}
-
-
-__pdpent2:
-# mov pc, r4
-.byte 0xa7, 0x46
-kkk:
-# bx r5
-.byte 0x28, 0x47
-
-
+        stmfd   sp!,{lr}
+        ldr     r0,=mainCRTStartup
+# Activate Thumb mode by adding 1 (should probaby use OR instead,
+# in case the above ldr has already compensated for that)
+        add     r0, r0, #1
+# mainCRTStartup returns by moving lr into pc, and will restore
+# our original ARM mode (not Thumb) due to that, I think
+        blx     r0
+        ldmia   sp!,{pc}
 
 .if LINUX
 # void _exita(int rc);
