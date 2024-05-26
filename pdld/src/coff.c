@@ -1624,7 +1624,8 @@ static union sym_tab_entry *read_symbol_table (unsigned char *file,
                                                size_t file_size,
                                                const char *filename,
                                                const struct coff_header_internal *coff_hdr_p,
-                                               unsigned long *comdat_aux_symbol_indexes)
+                                               unsigned long *comdat_aux_symbol_indexes,
+                                               unsigned long *comdat_comdat_symbol_indexes)
 {
     union sym_tab_entry *read_symtab;
     unsigned char *pos;
@@ -1655,6 +1656,8 @@ static union sym_tab_entry *read_symbol_table (unsigned char *file,
 
             if (!comdat_aux_symbol_indexes[sec_num]) {
                 comdat_aux_symbol_indexes[sec_num] = i + 1;
+            } else if (!comdat_comdat_symbol_indexes[sec_num]) {
+                comdat_comdat_symbol_indexes[sec_num] = i;
             }
         }
     }
@@ -1676,6 +1679,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     struct section_table_entry_internal section_hdr;
     union sym_tab_entry *read_symtab = NULL;
     unsigned long *comdat_aux_symbol_indexes;
+    unsigned long *comdat_comdat_symbol_indexes;
     struct section_part dummy_comdat_part_s;
 
     unsigned char *pos;
@@ -1706,11 +1710,13 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     bss_section = NULL;
     bss_section_number = 0;
 
-    comdat_aux_symbol_indexes = xmalloc (sizeof (*comdat_aux_symbol_indexes) * coff_hdr.NumberOfSections);
+    comdat_aux_symbol_indexes = xcalloc (coff_hdr.NumberOfSections, sizeof *comdat_aux_symbol_indexes);
+    comdat_comdat_symbol_indexes = xcalloc (coff_hdr.NumberOfSections, sizeof *comdat_comdat_symbol_indexes);
     if (coff_hdr.NumberOfSymbols) {
-        read_symtab = read_symbol_table (file, file_size, filename, &coff_hdr, comdat_aux_symbol_indexes);
+        read_symtab = read_symbol_table (file, file_size, filename, &coff_hdr, comdat_aux_symbol_indexes, comdat_comdat_symbol_indexes);
         if (read_symtab == NULL) {
             free (comdat_aux_symbol_indexes);
+            free (comdat_comdat_symbol_indexes);
             return 1;
         }
     }
@@ -1729,7 +1735,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         {
             struct section *section;
             struct subsection *subsection;
-            unsigned long comdat_CheckSum = 0;
 
             {
                 char *section_name;
@@ -1781,8 +1786,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                  section_name);
                     }
 
-                    comdat_CheckSum = aux_symbol.CheckSum;
-
                     if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
                         /* IMAGE_COMDAT_SELECT_ASSOCIATIVE is included
                          * when the associated COMDAT section is included
@@ -1793,12 +1796,13 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                          * Duplicating the code and using prefix "assoc_" was the easiest.
                          */
                         struct section_table_entry_internal assoc_section_hdr;
-                        char *assoc_section_name;
-                        char *assoc_p;
                         struct aux_section_symbol_internal assoc_aux_symbol;
                         unsigned long assoc_sym_i;
                         unsigned long assoc_i;
-                        const struct section_part *existing_part = NULL;
+                        
+                        const struct symbol *old_comdat_symbol;
+                        char *sym_name;
+                        struct symbol_table_entry_internal *coff_symbol;
 
                         if (aux_symbol.Number < 1
                             || aux_symbol.Number > coff_hdr.NumberOfSections) {
@@ -1816,24 +1820,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                             filename);
                         }
 
-                        assoc_section_name = xstrndup (assoc_section_hdr.Name, 8);
-
-                        if (assoc_section_name[0] == '/') {
-                            unsigned long offset = 0;
-                            
-                            offset = strtoul (assoc_section_name + 1, NULL, 10);
-                            if (offset < string_table_hdr.StringTableSize) {
-                                free (assoc_section_name);
-                                section_name = xstrdup (string_table + offset);
-                            } else ld_fatal_error ("invalid offset into string table");
-                        }
-
-                        assoc_p = strchr (assoc_section_name, '$');
-                        if (assoc_p) {
-                            *assoc_p = '\0';
-                            assoc_p++;
-                        }
-
                         assoc_sym_i = comdat_aux_symbol_indexes[assoc_i];
                         read_struct_aux_section_symbol (&assoc_aux_symbol, read_symtab[assoc_sym_i].aux);
 
@@ -1848,46 +1834,74 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                                          "unsupported COMDAT Selection %u", assoc_aux_symbol.Selection);
                         }
 
-                        section = section_find (assoc_section_name);
-                        if (section) {
-                            if (assoc_p) subsection = subsection_find (section, assoc_p);
-                            if (assoc_p && subsection) {
-                                struct section_part *part;
-
-                                for (part = subsection->first_part; part; part = part->next) {
-                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
-                                        existing_part = part;
-                                        break;
-                                    }
-                                }
-                            } else {
-                                struct section_part *part;
-
-                                for (part = section->first_part; part; part = part->next) {
-                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
-                                        existing_part = part;
-                                        break;
-                                    }
-                                }
-                            }
+                        if (comdat_comdat_symbol_indexes[assoc_i] == 0) {
+                            ld_fatal_error ("COMDAT section missing COMDAT symbol");
                         }
 
-                        if (existing_part && existing_part->of == of) existing_part = NULL;
+                        coff_symbol = &read_symtab[comdat_comdat_symbol_indexes[assoc_i]].sym;
 
-                        if (existing_part) {
+                        if (memcmp (coff_symbol->Name, "\0\0\0\0", 4) == 0) {
+                            unsigned long offset = 0;
+
+                            bytearray_read_4_bytes (&offset, (unsigned char *)(coff_symbol->Name + 4), LITTLE_ENDIAN);
+
+                            if (offset < string_table_hdr.StringTableSize) {
+                                sym_name = xstrdup (string_table + offset);
+                            } else ld_fatal_error ("invalid offset into string table");
+                        } else sym_name = xstrndup (coff_symbol->Name, 8);
+
+                        old_comdat_symbol = symbol_find (sym_name);
+                        free (sym_name);
+                        if (old_comdat_symbol && symbol_is_undefined (old_comdat_symbol)) {
+                            old_comdat_symbol = NULL;
+                        }
+
+                        if (old_comdat_symbol) {
                             if (assoc_aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
-                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES)",
-                                                filename);
+                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s'",
+                                                filename, old_comdat_symbol->name);
                             }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
-                            free (assoc_section_name);
                             free (section_name);
                             continue;
                         }
-
-                        free (assoc_section_name);
                     } else {
-                        const struct section_part *existing_part = NULL;
+                        /* The first symbol with specific section number
+                         * is always section symbol with auxiliary symbol.
+                         * The second symbol with the same section number
+                         * is a regular symbol which identifies the COMDAT section
+                         * (the section name and CheckSum do not matter at all).
+                         * All sections which define the same regular symbol
+                         * (so called "COMDAT symbol") are duplicates of each other.
+                         *
+                         * Checking for duplicate COMDAT sections can thus be done easily
+                         * by looking up the regular symbol ("COMDAT symbol") in global symbol hashtab.
+                         */
+                        const struct symbol *old_comdat_symbol;
+                        char *sym_name;
+                        struct symbol_table_entry_internal *coff_symbol;
+
+                        if (comdat_comdat_symbol_indexes[i] == 0) {
+                            ld_fatal_error ("COMDAT section missing COMDAT symbol");
+                        }
+
+                        coff_symbol = &read_symtab[comdat_comdat_symbol_indexes[i]].sym;
+
+                        if (memcmp (coff_symbol->Name, "\0\0\0\0", 4) == 0) {
+                            unsigned long offset = 0;
+
+                            bytearray_read_4_bytes (&offset, (unsigned char *)(coff_symbol->Name + 4), LITTLE_ENDIAN);
+
+                            if (offset < string_table_hdr.StringTableSize) {
+                                sym_name = xstrdup (string_table + offset);
+                            } else ld_fatal_error ("invalid offset into string table");
+                        } else sym_name = xstrndup (coff_symbol->Name, 8);
+
+                        old_comdat_symbol = symbol_find (sym_name);
+                        free (sym_name);
+                        if (old_comdat_symbol && symbol_is_undefined (old_comdat_symbol)) {
+                            old_comdat_symbol = NULL;
+                        }
                         
                         if (aux_symbol.Selection != IMAGE_COMDAT_SELECT_ANY
                             && aux_symbol.Selection != IMAGE_COMDAT_SELECT_NODUPLICATES) {
@@ -1895,49 +1909,10 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                                          "unsupported COMDAT Selection %u", aux_symbol.Selection);
                         }
 
-                        section = section_find (section_name);
-                        subsection = NULL;
-                        if (section) {
-                            if (p) subsection = subsection_find (section, p);
-                            if (p && subsection) {
-                                struct section_part *part;
-
-                                for (part = subsection->first_part; part; part = part->next) {
-                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
-                                        existing_part = part;
-                                        break;
-                                    }
-                                }
-                            } else {
-                                struct section_part *part;
-
-                                for (part = section->first_part; part; part = part->next) {
-                                    if (part->comdat_CheckSum == aux_symbol.CheckSum) {
-                                        existing_part = part;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        /* It is possible for one object file
-                         * to contain multiple identical COMDAT sections with the same checksum.
-                         * It is not clear what should be done in that case,
-                         * so it was arbitrarily decided to not discard the duplicates
-                         * if they come from the same object file.
-                         */
-                        if (existing_part && existing_part->of == of) existing_part = NULL;
-
-                        if (existing_part) {
+                        if (old_comdat_symbol) {
                             if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
-                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES), "
-                                                "section name '%s%s%s', first defined in %s, CheckSum: %#lx",
-                                                filename,
-                                                section->name,
-                                                (subsection ? "$" : ""),
-                                                (subsection ? subsection->name : ""),
-                                                existing_part->of->filename,
-                                                comdat_CheckSum);
+                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s'",
+                                                filename, old_comdat_symbol->name);
                             }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
                             free (section_name);
@@ -1976,8 +1951,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
             {
                 struct section_part *part = section_part_new (section, of);
-
-                part->comdat_CheckSum = comdat_CheckSum;
 
                 part->alignment = translate_Characteristics_to_alignment (section_hdr.Characteristics);
 
@@ -2125,6 +2098,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     }
 
     free (comdat_aux_symbol_indexes);
+    free (comdat_comdat_symbol_indexes);
     free (read_symtab);
     free (part_p_array);
 
