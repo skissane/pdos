@@ -1896,6 +1896,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                         }
 
                         section = section_find (section_name);
+                        subsection = NULL;
                         if (section) {
                             if (p) subsection = subsection_find (section, p);
                             if (p && subsection) {
@@ -1929,8 +1930,14 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                         if (existing_part) {
                             if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
-                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES)",
-                                                filename);
+                                ld_fatal_error ("%s: multiply defined symbol (duplicate IMAGE_COMDAT_SELECT_NODUPLICATES), "
+                                                "section name '%s%s%s', first defined in %s, CheckSum: %#lx",
+                                                filename,
+                                                section->name,
+                                                (subsection ? "$" : ""),
+                                                (subsection ? subsection->name : ""),
+                                                existing_part->of->filename,
+                                                comdat_CheckSum);
                             }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
                             free (section_name);
