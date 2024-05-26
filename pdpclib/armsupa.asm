@@ -117,6 +117,60 @@ _longjmp:
         ldr     r1,[r1,#52]
         mov     pc,lr
 
+
+# There is no such thing as 16-bit ARM
+# ARM was originally 32-bit
+# 16-bit is actually a 32-bit enhancement - providing more
+# compact instructions. This is called Thumb mode. In Thumb
+# mode, some instructions are 32-bit, but most are 16-bit I think
+# Windows 11 32-bit will enter an application in plain ARM mode.
+# But the Visual C compiler generates the more efficient Thumb
+# mode instructions, with no apparent option to restrict it to the
+# old ARM32. So we need a stub to switch to Thumb mode so that we
+# can call Microsoft-generated code. This stub is not suitable for
+# calling gccprm-generated code, which is old ARM32 (currently).
+
+# In order to get into Thumb mode, you simply add 1 to the target
+# address, and that low bit is ignored. All instructions are on a
+# 16 or 32-bit boundary, so the 1 would normally not be valid.
+# That's how it is possible to use it as a flag.
+# Some linkers will add the 1 automatically when they see that a
+# function being called is Thumb. But we are using a simpler
+# linker (pdld) which doesn't do that, and this code would be
+# inconsistent with a linker that does it automatically. We should
+# probably do an "or" instead of an add so that it works with
+# either.
+
+.globl __pdpent
+__pdpent:
+        stmfd   sp!,{r4,r5,r6,lr}
+        ldr     r6,=__pdpent2
+        add     r6, r6, #1
+        ldr     r4,=mainCRTStartup
+        ldr     r5,=rrr
+        ldr     lr,=kkk
+
+# The called routine appears to return using bx, so will
+# change mode back to ARM32 - which would be a good thing,
+# except that it means we can't call a routine that does
+# a move into pc to return. In order to get consistency,
+# we keep it (via lr) in Thumb mode and we will do the
+# transition back to ARM ourselves
+        add     lr, lr, #1
+        bx      r6
+rrr:
+        ldmia   sp!,{r4,r5,r6,pc}
+
+
+__pdpent2:
+# mov pc, r4
+.byte 0xa7, 0x46
+kkk:
+# bx r5
+.byte 0x28, 0x47
+
+
+
 .if LINUX
 # void _exita(int rc);
 
