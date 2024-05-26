@@ -30,6 +30,19 @@
 .set SUBC,0
 .endif
 
+.ifndef LINUX
+.set LINUX,0
+.endif
+
+.ifndef ELF
+.set ELF,0
+.endif
+
+.ifndef THUMBSTUB
+.set THUMBSTUB,0
+.endif
+
+
 
 .globl ___gccmain
 .globl ____gccmain
@@ -55,6 +68,14 @@ mov pc,lr
         .align  2
 __Ysetjmp:
 ___Ysetjmp:
+
+.if THUMBSTUB
+.byte 0x00, 0x20
+# mov r0, #0
+.byte 0xF7, 0x46
+# mov pc, lr
+.endif
+
 .if STACKPARM
         ldr     r0,[sp]         @ env
 .endif
