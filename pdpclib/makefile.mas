@@ -40,7 +40,7 @@ $(TARGET): clean pdptest.obj $(OBJS) armsupa.obj
   $(CC) $(COPTS) $<
 
 .asm.obj:
-  $(AS) --defsym LINUX=0 --defsym ELF=0 -o $@ $<
+  $(AS) --defsym THUMBSTUB=1 -o $@ $<
 
 clean:
   rm -f *.obj
