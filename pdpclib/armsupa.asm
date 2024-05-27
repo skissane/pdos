@@ -52,6 +52,7 @@ mov pc,lr
 
 
 
+.if !THUMBSTUB
 # I haven't seen direct evidence that r2 and r3
 # need to be preserved in setjmp/longjmp, but
 # doing so anyway. ditto r12 and r1.
@@ -138,6 +139,7 @@ _longjmp:
         ldr     r1,[r1,#52]
         mov     pc,lr
 
+.endif
 
 # There is no such thing as 16-bit ARM
 # ARM was originally 32-bit
@@ -614,6 +616,8 @@ ___main:
 # in:  r0 = num,  r1 = den
 # out: r0 = quot, r1 = rem
 
+.if !THUMBSTUB
+
         .globl  __rt_udiv
         .globl  __udivsi3
         .globl  ___udivsi3
@@ -831,6 +835,9 @@ __aeabi_uidivmod:
         bl      ___udivsi3_trad
         mov     r0,r1
         ldmia   sp!,{r2,pc}
+
+.endif
+
 
 
 # This is a call to memcpy where the parameters are
