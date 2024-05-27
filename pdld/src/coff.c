@@ -985,13 +985,14 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
         
         case IMAGE_REL_THUMB_MOV32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]; break;
 
+        case IMAGE_REL_THUMB_BRANCH20: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_BRANCH20]; break;
+
         case IMAGE_REL_THUMB_BRANCH24: /* Seems to be the same as BLX23. */
         case IMAGE_REL_THUMB_BLX23: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_BLX23]; break;
         
         case IMAGE_REL_ARM_BRANCH11:
         case IMAGE_REL_ARM_SECTION:
         case IMAGE_REL_ARM_SECREL:
-        case IMAGE_REL_THUMB_BRANCH20:
         case IMAGE_REL_ARM_PAIR:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
             break;
@@ -2075,7 +2076,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             symbol->section_number = DEBUG_SECTION_NUMBER;
             symbol->part = NULL;
         } else if (coff_symbol->SectionNumber > coff_hdr.NumberOfSections) {
-            ld_error ("invalid symbol SectionNumber: %hi", coff_symbol->SectionNumber);
+            ld_error ("%s: invalid SectionNumber %hi for symbol '%s'",
+                      filename, coff_symbol->SectionNumber, symbol->name);
             symbol->part = NULL;
         } else ld_internal_error_at_source (__FILE__, __LINE__,
                                             "+++not yet supported symbol SectionNumber: %hi",
@@ -2089,11 +2091,15 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         }
 
         if (coff_symbol->NumberOfAuxSymbols) {
-            for (i++; coff_symbol->NumberOfAuxSymbols; coff_symbol->NumberOfAuxSymbols--) {
-                symbol = of->symbol_array + i;
+            unsigned long j;
+            
+            for (j = 0; j < coff_symbol->NumberOfAuxSymbols; j++) {
+                symbol = of->symbol_array + i + 1 + j;
                 memset (symbol, 0, sizeof (*symbol));
                 symbol->auxiliary = 1;
             }
+
+            i += coff_symbol->NumberOfAuxSymbols;
         }
     }
 
