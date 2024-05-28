@@ -15,7 +15,7 @@ CC=cl
 #    -D__NOSPECBIVA__
 
 COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__STATIC__ \
-    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
+    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi- -DARMPEHACK
 
 #AR=arprm
 AR=lib
