@@ -6,19 +6,24 @@
 
 ;# int setjmp(jmp_buf env);
 
+; ARM32 may be:
+;  0000A0E1      nop
+; or
+; 00F020E3 (armasm)
+
+; Thumb may be:
+; C046          nop
+; or
+; 00BF (armasm)
+
+; this is not needed
+; thumb
+
+ area .text, code, readonly, align=2
+
         export  __Ysetjmp
 __Ysetjmp proc
 ;___Ysetjmp:
-
-;fff1:   
-         dcb 0x00, 0x20
-;        db 00h, 020h
-;# mov r0, #0
-;fff2:
-        dcb "\xF7\x46"
-;        db 0f7h, 046h
-;# mov pc, lr
-
 
         str     r1,[r0,#52]
         mov     r1,r0
