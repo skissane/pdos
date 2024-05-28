@@ -82,6 +82,7 @@ longjmp proc
 ;# unsigned integer divide
 ;# inner loop code taken from http://me.henri.net/fp-div.html
 ;# in:  r0 = num,  r1 = den
+; other way around in visual c
 ;# out: r0 = quot, r1 = rem
 
         export  __rt_udiv
@@ -94,6 +95,11 @@ __rt_udiv proc
 
         stmfd   sp!,{r2,lr}
 
+; swap r0 and r1 for visual c
+        mov     r2,r1
+        mov     r1,r0
+        mov     r0,r2
+
         rsb     r2,r1,#0
         mov     r1,#0
         adds    r0,r0,r0
@@ -102,6 +108,131 @@ __rt_udiv proc
         adcs    r1,r2,r1,lsl #1
         subcc   r1,r1,r2
         adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
 ;        .endr
 ;#        mov     pc,lr
         ldmia   sp!,{r2,pc}
@@ -128,6 +259,131 @@ ___udivsi3_trad proc
         adcs    r1,r2,r1,lsl #1
         subcc   r1,r1,r2
         adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
+        adcs    r1,r2,r1,lsl #1
+        subcc   r1,r1,r2
+        adcs    r0,r0,r0
+
 ;        .endr
         mov     pc,lr
 
@@ -136,7 +392,11 @@ ___udivsi3_trad proc
 
 ;# signed integer divide
 ;# in:  r0 = num,  r1 = den
+
+; (r0 and r1 the other way around in Visual C)
+
 ;# out: r0 = quot
+; (r1 has remainder in Visual C)
 
         export __rt_sdiv
 ;        import divz
@@ -151,6 +411,12 @@ __rt_sdiv proc
 ;# Need to preserve r2 because the
 ;# function we may call, doesn't
         stmfd   sp!,{r2,r3,lr}
+
+; swap r0 and r1
+        mov     r2,r1
+        mov     r1,r0
+        mov     r0,r2
+
         eor     r3,r0,r1        ;@ r3 = sign
         mov     r3,r3,asr#31
         cmp     r1,#0
