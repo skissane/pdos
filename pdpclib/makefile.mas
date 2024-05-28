@@ -40,7 +40,8 @@ $(TARGET): clean pdptest.obj $(OBJS) armsupa.obj armsupb.obj
   $(CC) $(COPTS) $<
 
 armsupb.obj: armsupb.asm
-   armasm -16 -o armsupb.obj armsupb.asm
+# we don't need an explicit -16
+  armasm -o armsupb.obj armsupb.asm
 
 .asm.obj:
   $(AS) --defsym THUMBSTUB=1 -o $@ $<
