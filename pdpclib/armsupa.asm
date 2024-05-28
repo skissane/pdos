@@ -70,13 +70,6 @@ mov pc,lr
 __Ysetjmp:
 ___Ysetjmp:
 
-.if THUMBSTUB
-.byte 0x00, 0x20
-# mov r0, #0
-.byte 0xF7, 0x46
-# mov pc, lr
-.endif
-
 .if STACKPARM
         ldr     r0,[sp]         @ env
 .endif
