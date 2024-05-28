@@ -157,6 +157,9 @@ _longjmp:
 # probably do an "or" instead of an add so that it works with
 # either.
 
+
+.if THUMBSTUB
+
 .globl __pdpent
 __pdpent:
         stmfd   sp!,{lr}
@@ -168,6 +171,10 @@ __pdpent:
 # our original ARM mode (not Thumb) due to that, I think
         blx     r0
         ldmia   sp!,{pc}
+
+.endif
+
+
 
 .if LINUX
 # void _exita(int rc);
