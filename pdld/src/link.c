@@ -16,9 +16,6 @@
 #include "xmalloc.h"
 #include "bytearray.h"
 
-static void reloc_arm_32 (struct section_part *part,
-                          struct reloc_entry *rel,
-                          struct symbol *symbol);
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
                                 struct symbol *symbol);
@@ -56,7 +53,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
 
-    { 4, 0, 0, 0, &reloc_arm_32, "RELOC_TYPE_ARM_32" },
+    { 4, 0, 0, 0, NULL, "RELOC_TYPE_ARM_32" },
     { 3, 1, 0, 2, &reloc_arm_26_pcrel, "RELOC_TYPE_ARM_PC26" },
     { 4, 0, 0, 0, &reloc_arm_mov32, "RELOC_TYPE_ARM_MOV32" },
     { 4, 0, 0, 0, &reloc_arm_thumb_mov32, "RELOC_TYPE_ARM_THUMB_MOV32" },
@@ -73,29 +70,6 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_JUMP26", 0x3ffffff },
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_CALL26", 0x3ffffff },
 };
-
-static void reloc_arm_32 (struct section_part *part,
-                          struct reloc_entry *rel,
-                          struct symbol *symbol)
-{    
-    if (symbol->part->of == part->of) {
-        address_type addend;
-        
-        bytearray_read_4_bytes (&addend, part->content + rel->offset, LITTLE_ENDIAN);
-        
-        if (addend) {
-            /* If the target symbol is in same object file and the addend is not zero,
-             * the addend has the value of the symbol added in by assembler,
-             * so the value of the symbol needs to be subtracted before doing the relocation.
-             */
-            addend -= symbol->value;
-            bytearray_write_4_bytes (part->content + rel->offset, addend, LITTLE_ENDIAN);
-        }
-    }
-
-    /* Rest of the relocation is the same as regular 32-bit relocation. */
-    reloc_generic (part, rel, symbol);
-}
 
 static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct reloc_entry *rel,
