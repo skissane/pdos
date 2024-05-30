@@ -1,6 +1,8 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
 # with static linking using Microsoft's C compiler
 
+# makek32.war needs to be run in src first
+
 # Note that if you generate assembler using -Fa
 # you will need to comment out things like .drectve
 # in order for armasm to be able to assemble it
@@ -15,7 +17,7 @@ CC=cl
 #    -D__NOSPECBIVA__
 
 COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__STATIC__ \
-    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi- -DARMPEHACK
+    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
 
 #AR=arprm
 AR=lib
