@@ -220,10 +220,7 @@ static int open(const char *a, int b, int *c)
 
 #endif
 
-#ifndef ARMPEHACK
-static
-#endif
-FILE permFiles[3];
+static FILE permFiles[3];
 
 #define unused(x) ((void)(x))
 #define outch(ch) ((fq == NULL) ? *s++ = (char)ch : putc(ch, fq))
