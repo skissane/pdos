@@ -69,3 +69,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved)
 
     return (TRUE);
 }
+
+#if defined(__MSC__)
+int _fltused;
+int _ftol2_sse;
+#endif
