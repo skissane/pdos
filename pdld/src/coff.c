@@ -1549,7 +1549,8 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
     p = temp_buf;
     while (*p) {
         while (*p == ' ') p++;
-        if (strncmp (p, "-export:", 8) == 0) {
+        if (strncmp (p, "-export:", 8) == 0
+            || strncmp (p, "/EXPORT:", 8) == 0) {
             char *q;
             char saved_c;
             int data = 0;
@@ -1566,7 +1567,8 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
                 
                 comma = strchr (p, ',');
                 if (comma) {
-                    if (strcmp (comma, ",data") == 0) data = 1;
+                    if (strcmp (comma, ",data") == 0
+                        || strcmp (comma, ",DATA") == 0) data = 1;
                     else {
                         ld_internal_error_at_source (__FILE__, __LINE__,
                                                      "unsupported comma argument to option -export: '%s'",
@@ -1727,11 +1729,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         pos = file + SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file * i;
         CHECK_READ (pos, SIZEOF_struct_section_table_entry_file);
         read_struct_section_table_entry (&section_hdr, pos);
-
-        if (section_hdr.Characteristics & IMAGE_SCN_LNK_REMOVE) {
-            part_p_array[i + 1] = NULL;
-            continue;
-        }
 
         {
             struct section *section;
@@ -1927,6 +1924,15 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                                    file_size,
                                                    file + section_hdr.PointerToRawData,
                                                    section_hdr.SizeOfRawData);
+                    part_p_array[i + 1] = NULL;
+                    free (section_name);
+                    continue;
+                }
+
+                if (section_hdr.Characteristics & IMAGE_SCN_LNK_REMOVE) {
+                    /* .drectve can have IMAGE_SCN_LNK_REMOVE set
+                     * but it must be interpreted anyway.
+                     */
                     part_p_array[i + 1] = NULL;
                     free (section_name);
                     continue;
