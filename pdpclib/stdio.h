@@ -293,8 +293,8 @@ extern __DUMMYFILE *_imp___iob;
 
 #if defined(__CC64__) || defined(__W64SHELL__) || defined(__ARM__)
 #if defined(__CC64OS__) || defined(__W64SHELL__) || defined(__ARM__)
-extern __DUMMYFILE _iob[3];
-extern __DUMMYFILE *__iob_func(void);
+extern __PDPCLIB_HEADFUNC __DUMMYFILE _iob[3];
+extern __PDPCLIB_HEADFUNC __DUMMYFILE *__iob_func(void);
 #endif
 #define stdin ((FILE *) __iob_func())
 #define stdout ((FILE *) (__iob_func() + 1))
