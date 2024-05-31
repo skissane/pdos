@@ -2919,6 +2919,49 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         field |= ((extracted >> 12) << 16) & 0xf0000;
                         *(unsigned long *)(rel_target + 4) = field;
                     }
+                    else if (rel_type == IMAGE_REL_BASED_THUMB_MOV32)
+                    {
+                        unsigned long result;
+                        unsigned long field, extracted;
+
+                        field = *(unsigned long *)rel_target;
+                        extracted = (field & 0xf) << 12;
+                        extracted |= ((field & 0x400) >> 10) << 11;
+                        extracted |= ((field & 0x70000000) >> 28) << 8;
+                        extracted |= (field & 0xff0000) >> 16;
+                        result = extracted;
+                        
+                        field = *(unsigned long *)(rel_target + 4);
+                        extracted = (field & 0xf) << 12;
+                        extracted |= ((field & 0x400) >> 10) << 11;
+                        extracted |= ((field & 0x70000000) >> 28) << 8;
+                        extracted |= (field & 0xff0000) >> 16;
+                        result |= extracted << 16;
+                        
+                        if (lower_exeStart) {
+                            result -= image_diff;
+                        } else {
+                            result += image_diff;
+                        }
+
+                        extracted = result & 0xffff;
+                        field = *(unsigned long *)rel_target;
+                        field &= ~0x70ff040f;
+                        field |= (extracted >> 12) & 0xf;
+                        field |= ((extracted >> 11) << 10) & 0x400;
+                        field |= ((extracted >> 8) << 28) & 0x70000000;
+                        field |= (extracted << 16) & 0xff0000;
+                        *(unsigned long *)rel_target = field;
+
+                        extracted = (result >> 16) & 0xffff;
+                        field = *(unsigned long *)(rel_target + 4);
+                        field &= ~0x70ff040f;
+                        field |= (extracted >> 12) & 0xf;
+                        field |= ((extracted >> 11) << 10) & 0x400;
+                        field |= ((extracted >> 8) << 28) & 0x70000000;
+                        field |= (extracted << 16) & 0xff0000;
+                        *(unsigned long *)(rel_target + 4) = field;
+                    }
 #endif
 #if TARGET_64BIT
                     else if (rel_type == IMAGE_REL_BASED_DIR64)
