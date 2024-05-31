@@ -218,6 +218,13 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
 
 repeat:
     pos += hdr.size;
+    /* Empty archive is allowed to contain just the first linker member
+     * and nothing more, so error should not be reported
+     * if the file ends exactly after the first linker member.
+     * (Empty archive might contain second linker member
+     *  and/or longnames member too, so this handles such case too.)
+     */
+    if (pos == file + file_size) return;
     CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, &longnames)) return;
     pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
