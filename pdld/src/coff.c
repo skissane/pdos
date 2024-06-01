@@ -41,6 +41,7 @@ static int nx_compat = 1;
 static int convert_to_flat = 0;
 
 static int leading_underscore = 0;
+static int arm_thumb_mode = 0;
 
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
 static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
@@ -1699,6 +1700,13 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
     if (check_Machine (coff_hdr.Machine, filename)) return 1;
 
+    /* IMAGE_FILE_MACHINE_ARMNT uses (new) Thumb mode code
+     * while IMAGE_FILE_MACHINE_THUMB actually uses ARM mode code.
+     * Only real object files should be used for determing which mode is used,
+     * not short import libraries.
+     */
+    if (coff_hdr.Machine == IMAGE_FILE_MACHINE_ARMNT) arm_thumb_mode = 1;
+
     pos = file + coff_hdr.PointerToSymbolTable + SIZEOF_struct_symbol_table_entry_file * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, SIZEOF_struct_string_table_header_file);
     read_struct_string_table_header (&string_table_hdr, pos);
@@ -2309,23 +2317,20 @@ static void import_generate_import (const char *import_name,
             part->content_size = 12;
             part->content = xmalloc (part->content_size);
 
-            /* Code for ARM mode is different from code for Thumb mode
-             * and currently ARM mode is being used.
-             */
-#define USE_ARM_IMPORT
-#ifdef USE_ARM_IMPORT
-            memcpy (part->content,
-                    "\x00\xC0\x00\xE3" /* movw r12,0x0 */
-                    "\x00\xC0\x40\xE3" /* movt r12,0x0 */
-                    "\x00\xF0\x9C\xE5" /* ldr pc,[r12] */,
-                    12);
-#else
-            memcpy (part->content,
-                    "\x40\xF2\x00\x0C" /* movw r12,0x0 */
-                    "\xC0\xF2\x00\x0C" /* movt r12,0x0 */
-                    "\xDC\xF8\x00\xF0" /* ldr pc,[r12] */,
-                    12);
-#endif
+            /* Code for ARM mode is different from code for Thumb mode. */
+            if (arm_thumb_mode) {
+                memcpy (part->content,
+                        "\x40\xF2\x00\x0C" /* movw r12,0x0 */
+                        "\xC0\xF2\x00\x0C" /* movt r12,0x0 */
+                        "\xDC\xF8\x00\xF0" /* ldr pc,[r12] */,
+                        12);
+            } else {
+                memcpy (part->content,
+                        "\x00\xC0\x00\xE3" /* movw r12,0x0 */
+                        "\x00\xC0\x40\xE3" /* movt r12,0x0 */
+                        "\x00\xF0\x9C\xE5" /* ldr pc,[r12] */,
+                        12);
+            }
         } else {
             part->content_size = 8;
             part->content = xmalloc (part->content_size);
@@ -2344,11 +2349,11 @@ static void import_generate_import (const char *import_name,
         relocs = part->relocation_array;
         relocs[0].symbol = &of->symbol_array[0];
         if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
-#ifdef USE_ARM_IMPORT
-            relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_MOV32];
-#else
-            relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32];
-#endif
+            if (arm_thumb_mode) {
+                relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32];
+            } else {
+                relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_MOV32];
+            }
             relocs[0].offset = 0;
         } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_PC32];
