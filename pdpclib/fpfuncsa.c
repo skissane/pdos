@@ -24,6 +24,17 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* IEEE double is 1 sign bit, 11 bits for exponent and 53 bits
+   precision (52 stored and 1 (of value 1) implied I believe) */
+
+/* IEEE single is 1 sign bit, 8 bits for exponent and 24 bits
+   precision (23 stored and 1 (of value 1) implied I believe) */
+
+/* we might be able to make use of the single precision floating
+   point by converting double to float and just living within
+   the limits */
+
+
 #include <stddef.h>
 #include <assert.h>
 
