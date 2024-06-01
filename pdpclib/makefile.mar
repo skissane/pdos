@@ -1,7 +1,7 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
 # using Visual C
 
-# run makek32.war first
+# run makek32.mar first
 
 CC=cl
 COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__PDPCLIB_DLL \
