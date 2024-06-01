@@ -1,7 +1,7 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
 # with static linking using Microsoft's C compiler
 
-# makek32.war needs to be run in src first
+# makek32.mar needs to be run in src first
 
 # Note that if you generate assembler using -Fa
 # you will need to comment out things like .drectve
