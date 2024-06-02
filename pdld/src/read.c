@@ -225,6 +225,10 @@ repeat:
      *  and/or longnames member too, so this handles such case too.)
      */
     if (pos == file + file_size) return;
+    /* Each archive member header starts on the first even address
+     * after the end of the previous archive member.
+     */
+    pos += (pos - file) & 1;
     CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, &longnames)) return;
     pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
