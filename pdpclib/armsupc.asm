@@ -5,7 +5,7 @@
 ;# as otherwise when we go to call msvcrt.dll we can't print
 ;# doubles
 
- area .text, code, readonly, align=4
+ area .text, code, readonly, align=4, arm
 
  import mainCRTStartup
  export __pdpent
