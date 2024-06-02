@@ -18,9 +18,7 @@ CC=cl
 COPTS=-c -I../pdpclib -D__ARM__ -I. -D__WIN32__ \
     -DNOLIBALLOC -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
 
-AR=lib
 LD=pdld --no-insert-timestamp
-AS=asprm
 
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
@@ -39,9 +37,6 @@ kernel32.obj: kernel32.c
 
 .c.obj:
   $(CC) $(COPTS) -D__32BIT__ $<
-
-.asm.obj:
-  asprm -o $@ -f coff $<
 
 clean:
   rm -f *.obj
