@@ -5,7 +5,7 @@
 
 CC=cl
 COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__PDPCLIB_DLL \
-    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
+    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Za -Zl -O2 -Oi-
 
 AR=lib
 LD=pdld --no-insert-timestamp
