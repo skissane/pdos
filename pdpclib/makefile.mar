@@ -41,7 +41,7 @@ armsupb.obj: armsupb.asm
   $(AS) -nologo -o armsupb.obj armsupb.asm
 
 .asm.obj:
-  $(AS) -nologo -32 -o $@ $<
+  $(AS) -nologo -o $@ $<
 
 clean:
   rm -f *.obj
