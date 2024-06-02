@@ -2083,6 +2083,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         } else if (coff_symbol->SectionNumber > 0
                    && coff_symbol->SectionNumber <= coff_hdr.NumberOfSections) {
             symbol->part = part_p_array[coff_symbol->SectionNumber];
+            if (coff_hdr.Machine == IMAGE_FILE_MACHINE_ARMNT
+                && symbol->part
+                && (symbol->part->section->flags & SECTION_FLAG_CODE)) {
+                symbol->value |= 1;
+            }
         } else if (coff_symbol->SectionNumber == IMAGE_SYM_ABSOLUTE) {
             symbol->section_number = ABSOLUTE_SECTION_NUMBER;
             symbol->part = NULL;
