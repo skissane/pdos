@@ -38,10 +38,10 @@ dllcrt.obj: dllcrt.c
 
 armsupb.obj: armsupb.asm
 # we don't need an explicit -16
-  $(AS) -o armsupb.obj armsupb.asm
+  $(AS) -nologo -o armsupb.obj armsupb.asm
 
 .asm.obj:
-  $(AS) -32 -o $@ $<
+  $(AS) -nologo -32 -o $@ $<
 
 clean:
   rm -f *.obj
