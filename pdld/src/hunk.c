@@ -208,7 +208,7 @@ static int read_hunk_object (unsigned char *file,
         name_size *= 4;
         
         CHECK_READ (pos, name_size);
-        hunk_filename = xstrndup (pos, name_size);
+        hunk_filename = xstrndup ((char *)pos, name_size);
         pos += name_size;
         
         if (strcmp (filename, hunk_filename)) {
@@ -390,7 +390,7 @@ static int read_hunk_object (unsigned char *file,
                 name_size *= 4;
 
                 CHECK_READ (pos, name_size);
-                symbol->name = xstrndup (pos, name_size);
+                symbol->name = xstrndup ((char *)pos, name_size);
                 pos += name_size;
 
                 if (symbol_type == EXT_DEF
