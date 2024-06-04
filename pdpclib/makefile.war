@@ -32,7 +32,7 @@ pdptest.obj: pdptest.c
   rm -f $*.s
 
 dllcrt.obj: dllcrt.c
-  $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -o $*.s $*.c
+  $(CC) $(COPTS) -D__EXPORT__ -DNEED_START -DNEED_MAIN -o $*.s $*.c
   $(AS) -o $*.obj $*.s
   rm -f $*.s
 

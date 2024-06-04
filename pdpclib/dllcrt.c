@@ -74,3 +74,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved)
 int _fltused;
 int _ftol2_sse;
 #endif
+
+
+#ifdef NEED_MAIN
+int main(void) { return 0; }
+#endif
