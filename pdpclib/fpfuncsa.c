@@ -30,6 +30,9 @@
 /* IEEE single is 1 sign bit, 8 bits for exponent and 24 bits
    precision (23 stored and 1 (of value 1) implied I believe) */
 
+/* the exponent effectively has the high bit set for 0 and above
+   - called the bias */
+
 /* we might be able to make use of the single precision floating
    point by converting double to float and just living within
    the limits */
@@ -1182,3 +1185,111 @@ void TestMathFull(void)
 
 
 #endif
+
+
+double __negdf2(double a_fp)
+{
+float a = a_fp;
+return -a;
+}
+
+double __adddf3(double a_fp, double b_fp)
+{
+float a = a_fp;
+float b = b_fp;
+return a + b;
+}
+
+double __subdf3(double a_fp, double b_fp)
+{
+float a = a_fp;
+float b = b_fp;
+return a - b;
+}
+
+double __muldf3(double a_fp, double b_fp)
+{
+float a = a_fp;
+float b = b_fp;
+return a * b;
+}
+
+double __divdf3(double a_fp, double b_fp)
+{
+float a = a_fp;
+float b = b_fp;
+return a / b;
+}
+
+int __ltdf2(double a, double b)
+{
+   return FP_Cmp(a, b);
+}
+
+int __ledf2(double a, double b)
+{
+   return FP_Cmp(a, b);
+}
+
+int __gtdf2(double a, double b)
+{
+   return FP_Cmp(a, b);
+}
+
+int __gedf2(double a, double b)
+{
+   return FP_Cmp(a, b);
+}
+
+int __eqdf2(double a, double b)
+{
+   return FtoL(a) != FtoL(b);
+}
+
+int __nedf2(double a, double b)
+{
+   return FtoL(a) != FtoL(b);
+}
+
+/* convert long to double */
+double __floatsidf(long x)
+{
+    float y = x;
+    return y;
+}
+
+/* convert double to long */
+long __fixdfsi(double x)
+{
+    float y = x;
+    return (long)y;
+}
+
+/* convert double into float */
+float __truncdfsf2(double x)
+{
+    unsigned long y1;
+    unsigned long y2;
+    unsigned long res;
+
+    y1 = *((unsigned int *)&x + 0);
+    y2 = *((unsigned int *)&x + 1);
+    res = (y1 & 0xc0000000UL) | ((y1 & 0x07ffffffUL) << 3) | ((y2 & 0xE000000UL) >> 29);
+    return (*(float *)&res);
+}
+
+/* convert float to double */
+double __extendsfdf2(float x)
+{
+    unsigned long y;
+    unsigned long res1;
+    unsigned long res2;
+    double res;
+
+    y = *(unsigned int *)&x;
+    res1 = (y & 0xc0000000UL) | ((y & 0x3fffffffUL) >> 3);
+    res2 = (y & 7) << 29;
+    *(unsigned int *)&res = res1;
+    *((unsigned int *)&res + 1) = res2;
+    return res;
+}
