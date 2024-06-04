@@ -42,6 +42,9 @@
 .set THUMBSTUB,0
 .endif
 
+.ifndef NEEDENT
+.set NEEDENT,0
+.endif
 
 
 .globl ___gccmain
@@ -158,7 +161,7 @@ _longjmp:
 # either.
 
 
-.if !THUMBSTUB
+.if NEEDENT
 
 
 # Note that although we don't really need to save r0, I am
