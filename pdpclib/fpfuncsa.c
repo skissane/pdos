@@ -1265,6 +1265,12 @@ long __fixdfsi(double x)
     return (long)y;
 }
 
+unsigned long __fixunsdfsi(double x)
+{
+    float y = x;
+    return (unsigned long)y;
+}
+
 /* convert double into float */
 float __truncdfsf2(double x)
 {
