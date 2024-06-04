@@ -446,6 +446,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         cmdlen--;
     }
     p[(size_t)cmdlen] = '\0';
+    /* structures to retrieve argv[0] are mentioned here:
+       https://www.amigans.net/modules/newbb/viewtopic.php?
+       post_id=148641#forumpost148641 */
     argv[0] = "UNKNOWN";
     DOSBase = NULL;
     library = (struct Library *)SysBase->LibList.lh_Head;
