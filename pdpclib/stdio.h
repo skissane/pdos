@@ -376,10 +376,9 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #endif
 
 #if !defined(__W64SHELL__) && !defined(__W32EMUL__) \
-    && !defined(__WIN32__) \
+    && !(defined(__WIN32__) && !defined(__STATIC__)) \
     && !defined(__PDOSGEN__) \
-    && !defined(__GENSHELL__) \
-    || defined(__STATIC__)
+    && !defined(__GENSHELL__)
 
 #define getchar() (getc(stdin))
 #define putchar(c) (putc((c), stdout))
