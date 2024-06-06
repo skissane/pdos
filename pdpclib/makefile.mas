@@ -22,6 +22,7 @@ COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__STATIC__ \
 #AR=arprm
 AR=lib
 LD=pdld --no-insert-timestamp -e __pdpent
+#LD=link
 AS=armasm
 
 TARGET=pdptest.exe
@@ -34,6 +35,7 @@ $(TARGET): clean pdptest.obj $(OBJS) armsupc.obj armsupb.obj
 #  $(AR) s pdpwin32.lib
   $(AR) -nologo -out:pdpwin32.lib $(OBJS)
   $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe p32start.obj pdptest.obj armsupc.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
+#  $(LD) -nologo -out:pdptest.exe -fixed:no p32start.obj pdptest.obj armsupc.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
 #  $(CC) $(COPTS) -o $*.s $<
