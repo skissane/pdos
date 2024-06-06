@@ -19,6 +19,7 @@ COPTS=-c -I../pdpclib -D__ARM__ -I. -D__WIN32__ \
     -DNOLIBALLOC -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
 
 LD=pdld --no-insert-timestamp
+#LD=link
 
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
@@ -28,6 +29,7 @@ all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
   $(LD) -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
+#  $(LD) -nologo -fixed:no -dll -out:kernel32.dll $(EXPORT_OBJS) $(OBJS)
 
 dllcrt.obj: ../pdpclib/dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ $<
