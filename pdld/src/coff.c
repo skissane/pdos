@@ -1862,7 +1862,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                             old_comdat_symbol = NULL;
                         }
 
-                        if (old_comdat_symbol) {
+                        if (old_comdat_symbol
+                            && coff_symbol->StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
                             if (assoc_aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
                                 ld_fatal_error ("%s: multiply defined COMDAT symbol '%s', first defined in '%s'",
                                                 filename, old_comdat_symbol->name,
@@ -1918,7 +1919,14 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                                                          "unsupported COMDAT Selection %u", aux_symbol.Selection);
                         }
 
-                        if (old_comdat_symbol) {
+                        /* If the COMDAT symbol is not external,
+                         * the COMDAT symbol would not be recorded
+                         * in global symbol hashtab anyway,
+                         * so just assume the COMDAT section is not actually COMDAT
+                         * instead of using only half of COMDAT logic.
+                         */
+                        if (old_comdat_symbol
+                            && coff_symbol->StorageClass == IMAGE_SYM_CLASS_EXTERNAL) {
                             if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
                                 ld_fatal_error ("%s: multiply defined COMDAT symbol '%s', first defined in '%s'",
                                                 filename, old_comdat_symbol->name,
