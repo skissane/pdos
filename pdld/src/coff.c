@@ -1864,8 +1864,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                         if (old_comdat_symbol) {
                             if (assoc_aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
-                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s'",
-                                                filename, old_comdat_symbol->name);
+                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s', first defined in '%s'",
+                                                filename, old_comdat_symbol->name,
+                                                old_comdat_symbol->part
+                                                ? old_comdat_symbol->part->of->filename
+                                                : "UNKNOWN");
                             }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
                             free (section_name);
@@ -1917,8 +1920,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                         if (old_comdat_symbol) {
                             if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_NODUPLICATES) {
-                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s'",
-                                                filename, old_comdat_symbol->name);
+                                ld_fatal_error ("%s: multiply defined COMDAT symbol '%s', first defined in '%s'",
+                                                filename, old_comdat_symbol->name,
+                                                old_comdat_symbol->part
+                                                ? old_comdat_symbol->part->of->filename
+                                                : "UNKNOWN");
                             }
                             part_p_array[i + 1] = &dummy_comdat_part_s;
                             free (section_name);
