@@ -15,7 +15,7 @@
 VPATH=../pdpclib
 
 CC=gccprm
-CFLAGS=-O2 -ansi
+CFLAGS=-O0 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -D__ARM__ -fno-leading-underscore -I ../pdpclib -I . -DNOLIBALLOC
 AS=asprm
 LD=pdld
