@@ -22,12 +22,12 @@ $(TARGET): clean pdptest.obj $(OBJS)
   $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib armsupa.obj
 
 w32start.obj: w32start.c
-  $(CC) -mapcs-32 -msoft-float -S -O2 -D__WIN32__ -D__ARM__ -DNOUNDMAIN -fno-leading-underscore -I . -I ../src -o $*.s $*.c
+  $(CC) -mapcs-32 -msoft-float -S -O0 -D__WIN32__ -D__ARM__ -DNOUNDMAIN -fno-leading-underscore -I . -I ../src -o $*.s $*.c
   $(AS) -o $*.obj $*.s
   rm -f $*.s
 
 pdptest.obj: pdptest.c
-  $(CC) -mapcs-32 -msoft-float -S -O2 -D__WIN32__ -D__ARM__ -fno-leading-underscore -I . -I ../src -o $*.s $*.c
+  $(CC) -mapcs-32 -msoft-float -S -O0 -D__WIN32__ -D__ARM__ -fno-leading-underscore -I . -I ../src -o $*.s $*.c
   $(AS) -o $*.obj $*.s
   rm -f $*.s
 
