@@ -34,7 +34,8 @@ enum ld_target_machine {
 enum ld_oformat {
     LD_OFORMAT_COFF,
     LD_OFORMAT_ELF,
-    LD_OFORMAT_LX
+    LD_OFORMAT_LX,
+    LD_OFORMAT_MAINFRAME
 };
 
 typedef unsigned long address_type;
@@ -280,6 +281,10 @@ void lx_write (const char *filename);
 void lx_print_help (void);
 void lx_use_option (int option_index, char *arg);
 const struct long_option *lx_get_long_options (void);
+
+/* mainframe.c */
+void mainframe_write (const char *filename);
+int mainframe_read (unsigned char *file, size_t file_size, const char *filename);
 
 /* map.c */
 void map_write (const char *filename);
