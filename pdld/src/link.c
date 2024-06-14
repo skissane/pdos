@@ -340,7 +340,8 @@ static void reloc_generic (struct section_part *part,
     address_type result;
     int endianess;
 
-    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K
+        || ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
         endianess = BIG_ENDIAN;
     } else {
         endianess = LITTLE_ENDIAN;
@@ -560,6 +561,10 @@ void link (void)
 
             case LD_OFORMAT_LX:
                 ld_state->base_address = lx_get_base_address ();
+                break;
+
+            case LD_OFORMAT_MAINFRAME:
+                ld_state->base_address = mainframe_get_base_address ();
                 break;
 
             default:
