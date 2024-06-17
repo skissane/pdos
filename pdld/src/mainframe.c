@@ -58,6 +58,7 @@ void mainframe_write (const char *filename)
     size_t cesd_size;
     size_t csect_hmaspzap_size, csect_linkage_size, csect_translator_size;
     size_t control_record_size;
+    size_t total_section_size_to_write = 0;
     size_t num_section_symbols = 0;
     size_t num_relocs = 0;
     unsigned char current_sector = 0x16; /* Arbitrary? */
@@ -68,7 +69,6 @@ void mainframe_write (const char *filename)
     }
 
     {
-        size_t total_section_size_to_write = 0;
         size_t cesd_i;
 
         file_size = 0;
@@ -205,15 +205,30 @@ void mainframe_write (const char *filename)
     /* Last 16 bytes of basic section of Data Extent Block (DEB),
      * highly device dependent, so just copied from working executable.
      */
-    memcpy (pos + 8,
-            "\x01\x00\x00\x00\xFF\x00\x00\x00\x8F\x0B\x66\x44\x04\x94\x70\xE8",
-            16);
+    pos[8] = 0x01; /* debnmext */
+    bytearray_write_3_bytes (pos + 8 + 1, 0x0, BIG_ENDIAN); /* debusrpb */
+    pos[8 + 4] = 0xff; /* debprotg */
+    bytearray_write_3_bytes (pos + 8 + 5, 0x0, BIG_ENDIAN); /* debdcbd */
+    pos[8 + 8] = 0x8f; /* debexscl */
+    bytearray_write_3_bytes (pos + 8 + 9, 0x0b6644, BIG_ENDIAN); /* debappb */
+    /* The following field (debucbad) is an irrelevant memory address
+     * which randomly changes, so it must be ingored when comparing executables.
+     */
+    bytearray_write_4_bytes (pos + 8 + 12, 0x049470e8, BIG_ENDIAN); /* debucbad */
+    
     /* First 16 extent descriptors from original DEB,
      * highly device dependent, so just copied from working executable.
      */
-    memcpy (pos + 24,
-            "\x50\x00\x72\xA0\x00\x00\x00\x01\x00\x00\x00\x0A\x00\x1D\x01\x2C",
-            16);
+    pos[24] = 0x50; /* debdvmod31 */
+    pos[24 + 1] = 0x00; /* debhmtrkhi */
+    bytearray_write_2_bytes (pos + 24 + 2, 0x72a0, BIG_ENDIAN); /* debstrcc */
+    bytearray_write_2_bytes (pos + 24 + 4, 0, BIG_ENDIAN); /* debstrhh */
+    bytearray_write_2_bytes (pos + 24 + 6, 0x1, BIG_ENDIAN); /* debendcc */
+    bytearray_write_2_bytes (pos + 24 + 8, 0, BIG_ENDIAN); /* debendhh */
+    bytearray_write_2_bytes (pos + 24 + 10, 0x0a, BIG_ENDIAN); /* debnmtrk */
+
+    bytearray_write_4_bytes (pos + 24 + 12, 0x001d012c, BIG_ENDIAN); /* unknown */
+
     memset (pos + 24 + 16, 0, 256 - 16);
 
     pos += SIZEOF_struct_COPYR2_file;
@@ -244,11 +259,42 @@ void mainframe_write (const char *filename)
             pos[30 + i] = tebc (ld_state->output_filename[i]);
         }
     }
-    /* 19 unknown bytes. */
+
+    /* PDS member entry. */
+    /* 4 unknown bytes. */
     memcpy (pos + 38,
-            "\x00\x00\x16\x2C\x00\x00\x1B\x00\x00\x00\x00\x00\x03\xF2\x00\x00\x20\x00\x20",
-            19);
-    /* 24 bit entry point. */
+            "\x00\x00\x16\x2C",
+            4);
+    /* PDS2TTRT - TTR OF FIRST BLOCK OF TEXT
+     * (Unknown meaning.)
+     */
+    bytearray_write_3_bytes (pos + 38 + 4, 0x1b, BIG_ENDIAN);
+    /* PDS2ZERO - ZERO */
+    pos[38 + 7] = 0;
+    /* PDS2TTRN - TTR OF NOTE LIST OR SCATTER/TRANSLATION TABLE.
+     * USED FOR MODULES IN SCATTER LOAD FORMAT OR OVERLAY STRUCTURE ONLY.
+     * (Scatter format is not used here at all, so set to 0.)
+     */
+    bytearray_write_3_bytes (pos + 38 + 8, 0, BIG_ENDIAN);
+    /* PDS2NL - NUMBER OF ENTRIES IN NOTE LIST
+     * FOR MODULES IN OVERLAY STRUCTURE, OTHERWISE ZERO
+     */
+    pos[38 + 11] = 0;
+
+    /* PDS2ATR1 */
+    pos[38 + 12] = PDS2EXEC;
+    if (!num_relocs) pos[38 + 12] |= PDS21BLK;
+
+    /* PDS2ATR2 */
+    pos[38 + 13] = PDS2FLVL | PDS2ORG0 | PDS2LEF;
+    if (ld_state->entry_point == 0) pos[38 + 13] |= PDS2EP0;
+    if (!num_relocs) pos[38 + 13] |= PDS2NRLD;
+
+    /* PDS2STOR - TOTAL CONTIGUOUS MAIN STORAGE REQUIREMENT OF MODULE */
+    bytearray_write_3_bytes (pos + 38 + 14, total_section_size_to_write, BIG_ENDIAN);
+    /* PDS2FTBL - LENGTH OF FIRST BLOCK OF TEXT */
+    bytearray_write_2_bytes (pos + 38 + 17, total_section_size_to_write, BIG_ENDIAN);
+    /* PDS2EPA - 24 bit entry point. */
     bytearray_write_3_bytes (pos + 57, ld_state->entry_point, BIG_ENDIAN);
     /* Unknown. */
     pos[60] = 0x88;
