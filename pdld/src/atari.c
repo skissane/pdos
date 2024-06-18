@@ -55,22 +55,26 @@ static unsigned long *get_reloc_offsets (size_t *num_relocs_p)
     text_section = section_find (".text");
     data_section = section_find (".data");
     
-    for (part = text_section->first_part; part; part = part->next) {
-        size_t i;
-        
-        for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+    if (text_section) {
+        for (part = text_section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
 
-            num_relocs++;
+                num_relocs++;
+            }
         }
     }
-    for (part = data_section->first_part; part; part = part->next) {
-        size_t i;
-        
-        for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+    if (data_section) {
+        for (part = data_section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
 
-            num_relocs++;
+                num_relocs++;
+            }
         }
     }
 
@@ -79,24 +83,28 @@ static unsigned long *get_reloc_offsets (size_t *num_relocs_p)
 
     reloc_offsets = xmalloc (num_relocs * sizeof *reloc_offsets);
     num_relocs = 0;
-    for (part = text_section->first_part; part; part = part->next) {
-        size_t i;
-        
-        for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+    if (text_section) {
+        for (part = text_section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
 
-            reloc_offsets[num_relocs] = part->rva + part->relocation_array[i].offset;
-            num_relocs++;
+                reloc_offsets[num_relocs] = part->rva + part->relocation_array[i].offset;
+                num_relocs++;
+            }
         }
     }
-    for (part = data_section->first_part; part; part = part->next) {
-        size_t i;
-        
-        for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+    if (data_section) {
+        for (part = data_section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
 
-            reloc_offsets[num_relocs] = part->rva + part->relocation_array[i].offset;
-            num_relocs++;
+                reloc_offsets[num_relocs] = part->rva + part->relocation_array[i].offset;
+                num_relocs++;
+            }
         }
     }
 
@@ -128,10 +136,26 @@ void atari_write (const char *filename)
     bss_section = section_find (".bss");
 
     ph.ph_branch = 0x601a;
-    /* Sections might not be contiguous because of RVA alignment. */
-    ph.ph_tlen = data_section->rva;
-    ph.ph_dlen = bss_section->rva - data_section->rva;
-    ph.ph_blen = bss_section->total_size;
+    /* Sections might not be contiguous because of RVA alignment.
+     * and some might not even exist (but their order is certain).
+     */
+    if (data_section) {
+        ph.ph_tlen = data_section->rva;
+        if (bss_section) {
+            ph.ph_dlen = bss_section->rva - data_section->rva;
+        } else {
+            ph.ph_dlen = data_section->total_size;
+        }
+    } else {
+        if (bss_section) {
+            ph.ph_tlen = bss_section->rva;
+        } else {
+            ph.ph_tlen = text_section ? text_section->total_size : 0;
+        }
+        ph.ph_dlen = 0;
+    }
+    
+    ph.ph_blen = bss_section ? bss_section->total_size : 0;
     ph.ph_slen = 0;
 
     reloc_offsets = get_reloc_offsets (&num_relocs);
@@ -162,9 +186,9 @@ void atari_write (const char *filename)
     write_struct_PH (pos, &ph);
     pos += SIZEOF_struct_PH_file;
     
-    section_write (text_section, pos);
+    if (text_section) section_write (text_section, pos);
     pos += ph.ph_tlen;
-    section_write (data_section, pos);
+    if (data_section) section_write (data_section, pos);
     pos += ph.ph_dlen;
 
     if (num_relocs) {
