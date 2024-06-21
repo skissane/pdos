@@ -555,6 +555,10 @@ void link (void)
 
     if (!ld_state->use_custom_base_address) {
         switch (ld_state->oformat) {
+            case LD_OFORMAT_AOUT:
+                ld_state->base_address = aout_get_base_address ();
+                break;
+            
             case LD_OFORMAT_ATARI:
                 ld_state->base_address = atari_get_base_address ();
                 break;

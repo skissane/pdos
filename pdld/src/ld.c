@@ -40,7 +40,8 @@ int main (int argc, char **argv)
         
     symbols_init ();
 
-    if (ld_state->oformat == LD_OFORMAT_ATARI) atari_init ();
+    if (ld_state->oformat == LD_OFORMAT_AOUT) aout_init ();
+    else if (ld_state->oformat == LD_OFORMAT_ATARI) atari_init ();
 
     for (i = 0; i < argc; i++) {
         if (input_filenames[i]) read_input_file (input_filenames[i]);
@@ -58,7 +59,9 @@ int main (int argc, char **argv)
 
     if (ld_state->oformat == LD_OFORMAT_COFF) coff_after_link ();
     
-    if (ld_state->oformat == LD_OFORMAT_ATARI) {
+    if (ld_state->oformat == LD_OFORMAT_AOUT) {
+        aout_write (ld_state->output_filename);
+    } else if (ld_state->oformat == LD_OFORMAT_ATARI) {
         atari_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_COFF) {
         coff_write (ld_state->output_filename);

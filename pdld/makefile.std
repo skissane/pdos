@@ -27,7 +27,7 @@ LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp
 
 
-OBJS=atari.obj atari_bytearray.obj bytearray.obj coff.obj coff_bytearray.obj elf.obj elf_bytearray.obj error.obj febc.obj hashtab.obj hunk.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj mainframe.obj map.obj read.obj sections.obj symbols.obj tebc.obj xmalloc.obj int64sup.obj
+OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj bytearray.obj coff.obj coff_bytearray.obj elf.obj elf_bytearray.obj error.obj febc.obj hashtab.obj hunk.obj ld.obj libld.obj link.obj lx.obj lx_bytearray.obj mainframe.obj map.obj read.obj sections.obj symbols.obj tebc.obj xmalloc.obj int64sup.obj
 
 TARGET=pdld.exe
 

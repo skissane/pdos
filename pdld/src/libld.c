@@ -37,6 +37,7 @@ static const struct short_option short_options[] = {
     
     { 'e', LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { 'M', LD_OPTION_MAP, OPTION_NO_ARG},
+    { 'N', LD_OPTION_IGNORED, OPTION_NO_ARG},
     { 'o', LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { 'q', LD_OPTION_EMIT_RELOCS, OPTION_NO_ARG},
     { 's', LD_OPTION_IGNORED, OPTION_NO_ARG},
@@ -53,6 +54,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
     { STR_AND_LEN("print-map"), LD_OPTION_MAP, OPTION_NO_ARG},
     { STR_AND_LEN("Map"), LD_OPTION_MAP_FILE, OPTION_HAS_ARG},
+    { STR_AND_LEN("omagic"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("nostdlib"), LD_OPTION_IGNORED, OPTION_NO_ARG},
     { STR_AND_LEN("output"), LD_OPTION_OUTPUT, OPTION_HAS_ARG},
     { STR_AND_LEN("oformat"), LD_OPTION_OFORMAT, OPTION_HAS_ARG},
@@ -74,11 +76,12 @@ static void print_help (void)
     printf ("  --help                      Print option help\n");
     printf ("  -M, --print-map             Print map file on standard output\n");
     printf ("  -Map FILE                   Write a linker map to FILE\n");
+    printf ("  -N, --omagic                Ignored\n");
     printf ("  -nostdlib                   Ignored\n");
     printf ("  -o FILE, --output FILE      Set output file name\n");
     printf ("  --oformat FORMAT            Create an output file in format FORMAT (default %s)\n",
             "coff");
-    printf ("                                Supported formats are: atari, coff, elf, lx, mainframe\n");
+    printf ("                                Supported formats are: a.out, atari, coff, elf, lx, mainframe\n");
     printf ("  --out-implib FILE           Generate import library\n");
     printf ("  -q, --emit-relocs           Generate relocations in final output\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");
@@ -133,7 +136,9 @@ static void use_option (int option_index, char *arg)
             break;
 
         case LD_OPTION_OFORMAT:
-            if (strcmp (arg, "atari") == 0) {
+            if (strcmp (arg, "a.out") == 0) {
+                ld_state->oformat = LD_OFORMAT_AOUT;
+            } else if (strcmp (arg, "atari") == 0) {
                 ld_state->oformat = LD_OFORMAT_ATARI;
             } else if (strcmp (arg, "coff") == 0) {
                 ld_state->oformat = LD_OFORMAT_COFF;
