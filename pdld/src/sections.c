@@ -39,22 +39,12 @@ struct section *section_find_or_make (const char *name)
 
     if (section) return section;
 
-    section = xmalloc (sizeof (*section));
+    section = xcalloc (1, sizeof *section);
     section->name = xstrdup (name);
-    section->flags = 0;
-    section->first_part = NULL;
+    
     section->last_part_p = &section->first_part;
-
-    section->all_subsections = NULL;
-
-    section->total_size = 0;
-    section->is_bss = 0;
-    section->rva = 0;
     section->section_alignment = 1;
-
-    section->object_dependent_data = NULL;
-
-    section->next = NULL;
+    
     *last_section_p = section;
     last_section_p = &section->next;
 
