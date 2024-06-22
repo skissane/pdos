@@ -439,7 +439,7 @@ address_type elf_get_first_section_rva (void)
 }
 
 static void translate_relocation (struct reloc_entry *reloc,
-                                  Elf32_Rel *input_reloc,
+                                  struct Elf32_Rel_internal *input_reloc,
                                   struct section_part *part)
 {
     Elf32_Word symbol_index;
@@ -940,8 +940,8 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
 
 static int read_elf_object (unsigned char *file, size_t file_size, const char *filename)
 {
-    Elf32_Ehdr ehdr;
-    Elf32_Shdr *shdr_p;
+    struct Elf32_Ehdr_internal ehdr;
+    struct Elf32_Shdr_internal shdr;
 
     const char *section_name_string_table = NULL;
     Elf32_Word section_name_string_table_size;
@@ -955,9 +955,11 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     struct section *bss_section = NULL;
     long bss_section_number = 0;
 
+    endianess = LITTLE_ENDIAN;
+
     pos = file;
-    CHECK_READ (pos, sizeof (ehdr));
-    ehdr = *(Elf32_Ehdr *)pos;
+    CHECK_READ (pos, SIZEOF_struct_Elf32_Ehdr_file);
+    read_struct_Elf32_Ehdr (&ehdr, pos, endianess);
 
     if (ehdr.e_ident[EI_CLASS] == ELFCLASS64) {
         return read_elf64_object (file, file_size, filename);
@@ -976,7 +978,12 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return 1;
     }
 
-    if (ehdr.e_ident[EI_DATA] != ELFDATA2LSB) {
+    if (ehdr.e_ident[EI_DATA] == ELFDATA2LSB) {
+        /* Nothing needs to be done. */
+    } else if (ehdr.e_ident[EI_DATA] == ELFDATA2MSB) {
+        endianess = BIG_ENDIAN;
+        read_struct_Elf32_Ehdr (&ehdr, pos, endianess);
+    } else {
         ld_error ("%s: Unsupported ELF data encoding", filename);
         return 1;
     }
@@ -998,6 +1005,16 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                 ld_state->target_machine = LD_TARGET_MACHINE_I386;
             } else {
                 ld_error ("%s: e_machine is not EM_386", filename);
+                return 1;
+            }
+            break;
+
+        case EM_S370:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_MAINFRAME;
+            } else {
+                ld_error ("%s: e_machine is not EM_S370", filename);
                 return 1;
             }
             break;
@@ -1046,15 +1063,15 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
     CHECK_READ (pos, ehdr.e_shentsize * ehdr.e_shnum);
 
     pos += ehdr.e_shentsize * ehdr.e_shstrndx;
-    shdr_p = (void *)pos;
+    read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
-    if (shdr_p->sh_type != SHT_STRTAB) {
+    if (shdr.sh_type != SHT_STRTAB) {
         ld_error ("section name string table does not have SHT_STRTAB type");
         return 1;
     }
 
-    section_name_string_table_size = shdr_p->sh_size;
-    pos = file + shdr_p->sh_offset;
+    section_name_string_table_size = shdr.sh_size;
+    pos = file + shdr.sh_offset;
     CHECK_READ (pos, section_name_string_table_size);
     section_name_string_table = (char *)pos;
 
@@ -1063,20 +1080,20 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
 
     for (i = 1; i < ehdr.e_shnum; i++) {
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
-        shdr_p = (void *)pos;
+        read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
-        if (shdr_p->sh_type != SHT_SYMTAB) continue;
+        if (shdr.sh_type != SHT_SYMTAB) continue;
 
         if (of) ld_fatal_error ("more than 1 symbol table per object file");
 
-        of = object_file_make (shdr_p->sh_size / shdr_p->sh_entsize, filename);
+        of = object_file_make (shdr.sh_size / shdr.sh_entsize, filename);
     }
 
     if (!of) of = object_file_make (1, filename);
 
     for (i = 1; i < ehdr.e_shnum; i++) {
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
-        shdr_p = (void *)pos;
+        read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
         {
             struct section *section;
@@ -1084,12 +1101,12 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
             {
                 char *section_name;
                 
-                if (shdr_p->sh_name < section_name_string_table_size) {
-                    section_name = xstrdup (section_name_string_table + shdr_p->sh_name);
+                if (shdr.sh_name < section_name_string_table_size) {
+                    section_name = xstrdup (section_name_string_table + shdr.sh_name);
                 } else ld_fatal_error ("invalid offset into string table");
 
-                if (shdr_p->sh_type != SHT_PROGBITS
-                    && shdr_p->sh_type != SHT_NOBITS) {
+                if (shdr.sh_type != SHT_PROGBITS
+                    && shdr.sh_type != SHT_NOBITS) {
                     part_p_array[i] = NULL;
                     free (section_name);
                     continue;
@@ -1097,17 +1114,17 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
 
                 section = section_find_or_make (section_name);
 
-                if (shdr_p->sh_addralign < 0x1000) {
+                if (shdr.sh_addralign < 0x1000) {
                     /* Same alignment as for COFF input. */
                     section->section_alignment = 0x1000;
                 }
-                if (shdr_p->sh_addralign > section->section_alignment) {
-                    section->section_alignment = shdr_p->sh_addralign;
+                if (shdr.sh_addralign > section->section_alignment) {
+                    section->section_alignment = shdr.sh_addralign;
                 }
 
-                section->flags = translate_sh_flags_to_section_flags (shdr_p->sh_flags);
+                section->flags = translate_sh_flags_to_section_flags (shdr.sh_flags);
 
-                if (shdr_p->sh_type == SHT_NOBITS) {
+                if (shdr.sh_type == SHT_NOBITS) {
                     section->is_bss = 1;
                 }
 
@@ -1117,11 +1134,11 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
             {
                 struct section_part *part = section_part_new (section, of);
 
-                part->alignment = shdr_p->sh_addralign;
+                part->alignment = shdr.sh_addralign;
 
-                part->content_size = shdr_p->sh_size;
-                if (shdr_p->sh_type != SHT_NOBITS) {
-                    pos = file + shdr_p->sh_offset;
+                part->content_size = shdr.sh_size;
+                if (shdr.sh_type != SHT_NOBITS) {
+                    pos = file + shdr.sh_offset;
                     part->content = xmalloc (part->content_size);
 
                     CHECK_READ (pos, part->content_size);
@@ -1146,61 +1163,63 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         Elf32_Word j;
         
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
-        shdr_p = (void *)pos;
+        read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
-        if (shdr_p->sh_type != SHT_SYMTAB) continue;
+        if (shdr.sh_type != SHT_SYMTAB) continue;
 
-        if (shdr_p->sh_link == 0 || shdr_p->sh_link >= ehdr.e_shnum) {
+        if (shdr.sh_link == 0 || shdr.sh_link >= ehdr.e_shnum) {
             ld_fatal_error ("symtab has invalid sh_link");
         }
         
-        pos = file + ehdr.e_shoff + shdr_p->sh_link * ehdr.e_shentsize;
+        pos = file + ehdr.e_shoff + shdr.sh_link * ehdr.e_shentsize;
         {
-            const Elf32_Shdr *strtabhdr_p = (void *)pos;
+            struct Elf32_Shdr_internal strtabhdr;
 
-            if (strtabhdr_p->sh_type != SHT_STRTAB) {
+            read_struct_Elf32_Shdr (&strtabhdr, pos, endianess);
+
+            if (strtabhdr.sh_type != SHT_STRTAB) {
                 ld_fatal_error ("symbol name string table does not have SHT_STRTAB type");
             }
 
-            sym_strtab_size = strtabhdr_p->sh_size;
-            pos = file + strtabhdr_p->sh_offset;
+            sym_strtab_size = strtabhdr.sh_size;
+            pos = file + strtabhdr.sh_offset;
             CHECK_READ (pos, sym_strtab_size);
             sym_strtab = (char *)pos;
         }
 
-        pos = file + shdr_p->sh_offset;
-        CHECK_READ (pos, shdr_p->sh_size);
+        pos = file + shdr.sh_offset;
+        CHECK_READ (pos, shdr.sh_size);
 
-        if (shdr_p->sh_entsize < sizeof (Elf32_Sym)) {
+        if (shdr.sh_entsize < sizeof (Elf32_Sym)) {
             ld_fatal_error ("symbol table sh_entsize is too small");
         }
 
-        for (j = 1; j < shdr_p->sh_size / shdr_p->sh_entsize; j++) {
-            Elf32_Sym *elf_symbol;
+        for (j = 1; j < shdr.sh_size / shdr.sh_entsize; j++) {
+            struct Elf32_Sym_internal elf_symbol;
             struct symbol *symbol = of->symbol_array + j;
             
-            pos = file + shdr_p->sh_offset + j * shdr_p->sh_entsize;
-            elf_symbol = (void *)pos;
+            pos = file + shdr.sh_offset + j * shdr.sh_entsize;
+            read_struct_Elf32_Sym (&elf_symbol, pos, endianess);
 
-            if (elf_symbol->st_name < sym_strtab_size) {
-                symbol->name = xstrdup (sym_strtab + elf_symbol->st_name);
+            if (elf_symbol.st_name < sym_strtab_size) {
+                symbol->name = xstrdup (sym_strtab + elf_symbol.st_name);
             } else ld_fatal_error ("invalid offset into string table");
 
-            symbol->value = elf_symbol->st_value;
-            symbol->size = elf_symbol->st_size;
-            symbol->section_number = elf_symbol->st_shndx;
+            symbol->value = elf_symbol.st_value;
+            symbol->size = elf_symbol.st_size;
+            symbol->section_number = elf_symbol.st_shndx;
 
-            if (elf_symbol->st_shndx == SHN_UNDEF) {
+            if (elf_symbol.st_shndx == SHN_UNDEF) {
                 symbol->section_number = UNDEFINED_SECTION_NUMBER;
                 symbol->part = NULL;
-            } else if (elf_symbol->st_shndx == SHN_ABS) {
+            } else if (elf_symbol.st_shndx == SHN_ABS) {
                 symbol->section_number = ABSOLUTE_SECTION_NUMBER;
                 symbol->part = NULL;
-            } else if (elf_symbol->st_shndx == SHN_COMMON) {
+            } else if (elf_symbol.st_shndx == SHN_COMMON) {
                 if (symbol->size) {
                     struct symbol *old_symbol = symbol_find (symbol->name);
 
-                    if (ELF32_ST_BIND (elf_symbol->st_info) != STB_GLOBAL) {
+                    if (ELF32_ST_BIND (elf_symbol.st_info) != STB_GLOBAL) {
                         ld_fatal_error ("non-global common symbol");
                     }
 
@@ -1240,19 +1259,19 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                     symbol->section_number = UNDEFINED_SECTION_NUMBER;
                     symbol->part = NULL;
                 }
-            } else if (elf_symbol->st_shndx >= SHN_LORESERVE
-                       && elf_symbol->st_shndx <= SHN_HIRESERVE) {
+            } else if (elf_symbol.st_shndx >= SHN_LORESERVE
+                       && elf_symbol.st_shndx <= SHN_HIRESERVE) {
                 ld_internal_error_at_source (__FILE__, __LINE__,
                                              "+++not yet supported symbol st_shndx: %hu",
-                                             elf_symbol->st_shndx);
-            } else if (elf_symbol->st_shndx >= ehdr.e_shnum) {
-                ld_error ("invalid symbol st_shndx: %hu", elf_symbol->st_shndx);
+                                             elf_symbol.st_shndx);
+            } else if (elf_symbol.st_shndx >= ehdr.e_shnum) {
+                ld_error ("invalid symbol st_shndx: %hu", elf_symbol.st_shndx);
                 symbol->part = NULL;
             } else {
-                symbol->part = part_p_array[elf_symbol->st_shndx];
+                symbol->part = part_p_array[elf_symbol.st_shndx];
             }
 
-            switch (ELF32_ST_BIND (elf_symbol->st_info)) {
+            switch (ELF32_ST_BIND (elf_symbol.st_info)) {
                 case STB_LOCAL:
                     /* Do nothing */
                     break;
@@ -1264,7 +1283,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                 default:
                     ld_internal_error_at_source (__FILE__, __LINE__,
                                                  "+++not yet supported symbol ELF32_ST_BIND: %u",
-                                                 ELF32_ST_BIND (elf_symbol->st_info));
+                                                 ELF32_ST_BIND (elf_symbol.st_info));
                     break;
             }
         }
@@ -1275,20 +1294,20 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         size_t j;
         
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
-        shdr_p = (void *)pos;
+        read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
-        if (shdr_p->sh_type == SHT_RELA) {
+        if (shdr.sh_type == SHT_RELA) {
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "+++ELF32 relocations with addend (RELA) not yet supported");
         }
 
-        if (shdr_p->sh_type != SHT_REL || shdr_p->sh_size == 0) continue;
+        if (shdr.sh_type != SHT_REL || shdr.sh_size == 0) continue;
 
-        if (shdr_p->sh_info >= ehdr.e_shnum) {
+        if (shdr.sh_info >= ehdr.e_shnum) {
             ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
         }
 
-        part = part_p_array[shdr_p->sh_info];
+        part = part_p_array[shdr.sh_info];
         if (!part) {
             ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
         }
@@ -1297,21 +1316,21 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                             filename);
         }
 
-        if (shdr_p->sh_entsize != sizeof (Elf32_Rel)) {
+        if (shdr.sh_entsize != sizeof (Elf32_Rel)) {
             ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++relocation shdr_p->sh_entsize not yet supported");
+                                         "+++relocation shdr.sh_entsize not yet supported");
         }
 
-        pos = file + shdr_p->sh_offset;
-        CHECK_READ (pos, shdr_p->sh_size);
+        pos = file + shdr.sh_offset;
+        CHECK_READ (pos, shdr.sh_size);
 
-        part->relocation_count = shdr_p->sh_size / shdr_p->sh_entsize;
+        part->relocation_count = shdr.sh_size / shdr.sh_entsize;
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
 
         for (j = 0; j < part->relocation_count; j++) {
-            translate_relocation (part->relocation_array + j,
-                                  (Elf32_Rel *)(pos + shdr_p->sh_entsize * j),
-                                  part);
+            struct Elf32_Rel_internal rel;
+            read_struct_Elf32_Rel (&rel, pos + shdr.sh_entsize * j, endianess);
+            translate_relocation (part->relocation_array + j, &rel, part);
         }
     }
 

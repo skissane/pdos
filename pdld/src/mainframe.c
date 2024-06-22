@@ -67,7 +67,7 @@ void mainframe_write (const char *filename)
         ld_error ("cannot open '%s' for writing", filename);
         return;
     }
-
+    
     {
         size_t cesd_i;
 
@@ -81,9 +81,6 @@ void mainframe_write (const char *filename)
         file_size += SIZEOF_struct_member_data_header_file;
         /* Load module, the program itself. */
         cesd_size = 8; /* CESD Record. */
-        for (section = all_sections; section; section = section->next) {
-            section->target_index = 0;
-        }
         cesd_i = 1;
         for (of = all_object_files; of; of = of->next) {
             size_t i;
@@ -232,7 +229,7 @@ void mainframe_write (const char *filename)
     memset (pos + 24 + 16, 0, 256 - 16);
 
     pos += SIZEOF_struct_COPYR2_file;
-
+    
     /* Directory Block Record, Block Descriptor Word is stripped. */
     pos -= 4;
     /* Record Descriptor Word,
@@ -333,7 +330,7 @@ void mainframe_write (const char *filename)
     bytearray_write_2_bytes (pos + 6, cesd_size - 8, BIG_ENDIAN); /* ESD data size. */
 
     pos += 8;
-
+    
     /* CESD data, symbol table. */
     for (of = all_object_files; of; of = of->next) {
         size_t i;
@@ -374,7 +371,7 @@ void mainframe_write (const char *filename)
                  * CESD index of section symbol from the object module
                  * in which was this symbol defined.
                  */
-                {
+                if (symbol->part) {
                     struct symbol *section_symbol;
 
                     section_symbol = symbol->part->of->symbol_array + symbol->section_number;
@@ -384,7 +381,7 @@ void mainframe_write (const char *filename)
             pos += 16;
         }
     }
-
+    
     /* Member Data. */
     pos[0] = 0x00;
     bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
