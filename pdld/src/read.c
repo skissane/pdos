@@ -319,6 +319,7 @@ static int read_file (unsigned char *file, size_t file_size, const char *filenam
         return INPUT_FILE_FINISHED;
     }
 
+    if ((ret = aout_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = coff_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = elf_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = hunk_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
