@@ -1,5 +1,7 @@
 # This builds a PDOS-generic executable for ARM
-# Using the UEFI calling convention
+# Using the standard ARM32 (including UEFI) calling convention
+# We don't have an appropriate subsystem for this executable
+# as it is neither Windows nor UEFI - it is PDOS-generic
 
 CC=gccprm
 CFLAGS=-O0
@@ -10,7 +12,7 @@ AS=asprm
 AR=arprm
 COPTS=-S $(CFLAGS) -ansi -I. -I../pdpclib -I../src \
   -D__ARM__ -fno-common -mapcs-32 -fno-builtin \
-  -msoft-float \
+  -msoft-float -DHAVE_DIR \
   -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ 
 
 all: clean pcomm.exe
