@@ -28,6 +28,8 @@ static FILE *outf;
 
 static int compress = 0;
 
+static int align = 0;
+
 static int stage = 1;
 
 static long startcd;
@@ -166,9 +168,11 @@ static int dolevel(void)
             char buf[512];
             size_t cnt;
             long filelen;
-            long fnmlen;
+            short fnmlen;
+            short extralen = 0;
             CRC32 crc;
             int c;
+            int alignval;
 
             strcpy(in, from);
             strcat(in, "/");
@@ -183,6 +187,17 @@ static int dolevel(void)
                 p += 2;
             }
             fnmlen = strlen(p);
+            if (align && (fnmlen >= 3))
+            {
+                if (strcmp(p + fnmlen - 3, ".so") == 0)
+                {
+                    alignval = 4096;
+                }
+                else
+                {
+                    alignval = 4096; /* should be 4 */
+                }
+            }
             if (stage == 1)
             {
                 printf("%s\n", p);
@@ -219,11 +234,27 @@ static int dolevel(void)
             /* this needs to be changed */
             fwrite(&filelen, 4, 1, outf);
             fwrite(&filelen, 4, 1, outf);
-            fwrite(&fnmlen, 4, 1, outf);
+            fwrite(&fnmlen, 2, 1, outf);
+            if (align)
+            {
+                long pos;
+
+                pos = ftell(outf);
+                pos += 2;
+                pos %= alignval;
+                if (pos != 0)
+                {
+                    extralen = alignval - pos;
+                }
+            }
+            if (stage == 1)
+            {
+                fwrite(&extralen, 2, 1, outf);
+            }
             if (stage == 2)
             {
-                fwrite("\x00\x00\x00\x00\x00\x00\x20\x00", 8, 1, outf);
-                fwrite("\x00\x00", 2, 1, outf);
+                fwrite("\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00",
+                       12, 1, outf);
                 /* this needs to change */
                 fwrite(&logupto, 4, 1, outf);
             }
@@ -231,6 +262,14 @@ static int dolevel(void)
             if(stage == 1)
             {
                 rewind(fp);
+                if (align)
+                {
+                    int x;
+                    for (x = 0; x < extralen; x++)
+                    {
+                        fputc('\x00', outf);
+                    }
+                }
                 while ((cnt = fread(buf, 1, sizeof buf, fp)) > 0)
                 {
                     fwrite(buf, 1, cnt, outf);
@@ -250,6 +289,7 @@ static int dolevel(void)
             numfiles++;
             logupto += filelen;
             logupto += fnmlen;
+            logupto += extralen;
             logupto += 30; /* overhead */
             cdlen += fnmlen;
             cdlen += 46; /* overhead */
