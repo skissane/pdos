@@ -191,6 +191,7 @@ typedef struct {
     int (*Xferror)(FILE *stream);
     int (*Xputc)(int c, FILE *stream);
     int (*Xfeof)(FILE *stream);
+    int (*Xgetc)(FILE *stream);
 } OS;
 
 extern OS *__os;
