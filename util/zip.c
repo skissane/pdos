@@ -195,7 +195,7 @@ static int dolevel(void)
                 }
                 else
                 {
-                    alignval = 4096; /* should be 4 */
+                    alignval = 4;
                 }
             }
             if (stage == 1)
@@ -240,7 +240,8 @@ static int dolevel(void)
                 long pos;
 
                 pos = ftell(outf);
-                pos += 2;
+                pos += 2; /* account for extralen value */
+                pos += fnmlen;
                 pos %= alignval;
                 if (pos != 0)
                 {
