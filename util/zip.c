@@ -263,7 +263,7 @@ static int dolevel(void)
             {
                 long pos;
 
-                pos = ftell(outf);
+                pos = logupto + 28;
                 pos += 2; /* account for extralen value */
                 pos += fnmlen;
                 pos %= alignval;
@@ -281,17 +281,17 @@ static int dolevel(void)
                 fwrite(&logupto, 4, 1, outf);
             }
             fprintf(outf, "%s", p);
+            if (align)
+            {
+                int x;
+                for (x = 0; x < extralen; x++)
+                {
+                    fputc('\x00', outf);
+                }
+            }
             if (stage == 1)
             {
                 rewind(fp);
-                if (align)
-                {
-                    int x;
-                    for (x = 0; x < extralen; x++)
-                    {
-                        fputc('\x00', outf);
-                    }
-                }
                 while ((cnt = fread(buf, 1, sizeof buf, fp)) > 0)
                 {
                     fwrite(buf, 1, cnt, outf);
@@ -314,6 +314,7 @@ static int dolevel(void)
             logupto += extralen;
             logupto += 30; /* overhead */
             cdlen += fnmlen;
+            cdlen += extralen;
             cdlen += 46; /* overhead */
         }
         ret = PosFindNext();
