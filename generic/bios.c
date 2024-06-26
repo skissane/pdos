@@ -131,9 +131,19 @@ void *PosGetDTA(void);
    && !defined(__M68K__)
 #include <pos.h>
 
+static DTA origdta;
+
 static int dirfile;
 
-static DTA origdta;
+struct dirsave {
+    int dirfilesave;
+    unsigned char buf[500];
+    int upto;
+    int avail;
+};
+
+struct dirsave *curdirsave = NULL;
+
 
 int PosFindFirst(char *pat, int attrib);
 int PosFindNext(void);
@@ -1111,10 +1121,6 @@ void *PosGetDTA(void)
 
 static int ff_search(void)
 {
-    static unsigned char buf[500];
-    static int upto = 0;
-    static int avail = 0;
-
 #ifdef __MACOS__
     return (1);
 #else
@@ -1130,22 +1136,26 @@ static int ff_search(void)
 #define EXTRAPAD 0
 #endif
 
-    if (avail <= 0)
+    if (curdirsave->avail <= 0)
     {
-        avail = __getdents(dirfile, buf, 500);
-        if (avail <= 0)
+        curdirsave->avail = __getdents(dirfile, curdirsave->buf, 500);
+        if (curdirsave->avail <= 0)
         {
             __close(dirfile);
+            free(curdirsave);
+            curdirsave = NULL;
             return (1);
         }
     }
     strncpy((char *)origdta.file_name,
-            (char *)buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+            (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
+                    + sizeof(short) + EXTRAPAD,
             sizeof origdta.file_name);
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
 
     strncpy((char *)origdta.lfn,
-            (char *)buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD,
+            (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
+                    + sizeof(short) + EXTRAPAD,
             sizeof origdta.lfn);
     origdta.lfn[sizeof origdta.lfn - 1] = '\0';
 
@@ -1153,14 +1163,15 @@ static int ff_search(void)
 
     /* DT_DIR = 4 - directory
        DT_REG = 8 - normal file
-       DT_UNKNOWN = 0 - . and .. appear as this
-       as such, we treat everything not 8 as a directory */
-    if (*(buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD
-                     + strlen(buf + upto + sizeof(long) * 2
-                            + sizeof(short) + EXTRAPAD)
-                     + 2
-         ) != 8   /* 8 = DT_REG */
-       )
+       DT_UNKNOWN = 0
+     */
+    if (*(curdirsave->buf + curdirsave->upto
+          + *(unsigned short *)(curdirsave->buf
+                                + curdirsave->upto
+                                + sizeof(long) * 2)
+          -1
+         )
+        == 4)
     {
         origdta.attrib = FILE_ATTR_DIRECTORY;
     }
@@ -1171,11 +1182,13 @@ static int ff_search(void)
 
 #endif
 
-    upto += *(short *)(buf + upto + sizeof(long) * 2);
+    curdirsave->upto += *(short *)(curdirsave->buf
+                                   + curdirsave->upto
+                                   + sizeof(long) * 2);
 
-    if (upto >= avail)
+    if (curdirsave->upto >= curdirsave->avail)
     {
-        upto = avail = 0;
+        curdirsave->upto = curdirsave->avail = 0;
     }
     return (0);
 #endif
@@ -1196,14 +1209,32 @@ int PosFindFirst(char *pat, int attrib)
     }
     dirfile = __open(cwd2, 0, 0);
 #else
-    dirfile = __open(".", 0, 0);
+    if (strcmp(pat, "") == 0)
+    {
+        pat = ".";
+    }
+    dirfile = __open(pat, 0, 0);
 #endif
     if (dirfile < 0) return (1);
+    {
+        curdirsave = malloc(sizeof(struct dirsave));
+        if (curdirsave == NULL)
+        {
+            __close(dirfile);
+            return (1);
+        }
+        *(struct dirsave **)&origdta = curdirsave;
+        curdirsave->upto = 0;
+        curdirsave->avail = 0;
+        curdirsave->dirfilesave = dirfile;
+    }
     return (ff_search());
 }
 
 int PosFindNext(void)
 {
+    curdirsave = *(struct dirsave **)&origdta;
+    dirfile = curdirsave->dirfilesave;
     return (ff_search());
 }
 
