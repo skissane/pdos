@@ -45,8 +45,9 @@ static int dolevel(void);
 int main(int argc, char **argv)
 {
     char *p;
+    int argupto = 1;
 
-    if (argc != 4)
+    if (argc < 4)
     {
         printf("usage: zip <-0rX/-9rX> <destfile> <filespec>\n");
         printf("zips up files into a zip archive\n");
@@ -54,14 +55,20 @@ int main(int argc, char **argv)
         printf("or zip -0rX \\download\\fred.zip mydir\n");
         printf("note that this only runs under PDOS/386 because it uses\n");
         printf("a 32-bit DTA which is not available in normal windows\n");
+        printf("-align as first argument also available\n");
         return (EXIT_FAILURE);
     }
     dta = PosGetDTA();
-    if (strcmp(*(argv + 1), "-0rX") == 0)
+    if (strcmp(*(argv + argupto), "-align") == 0)
+    {
+        align = 1;
+        argupto++;
+    }
+    if (strcmp(*(argv + argupto), "-0rX") == 0)
     {
         compress = 0;
     }
-    else if (strcmp(*(argv + 1), "-9rX") == 0)
+    else if (strcmp(*(argv + argupto), "-9rX") == 0)
     {
         compress = 1;
     }
@@ -70,22 +77,24 @@ int main(int argc, char **argv)
         printf("need either -0rX or -9rX\n");
         return (EXIT_FAILURE);
     }
-    outf = fopen(*(argv + 2), "wb");
+    argupto++;
+    outf = fopen(*(argv + argupto), "wb");
     if (outf == NULL)
     {
-        printf("failed to open %s for writing\n", *(argv + 2));
+        printf("failed to open %s for writing\n", *(argv + argupto));
         return (EXIT_FAILURE);
     }
-    p = strchr(*(argv + 3), '.');
+    argupto++;
+    p = strchr(*(argv + argupto), '.');
     if (p == NULL)
     {
-        strcpy(from, *(argv + 3));
+        strcpy(from, *(argv + argupto));
         strcpy(filespec, "*");
     }
     else
     {
         strcpy(from, ".");
-        strcpy(filespec, *(argv + 3));
+        strcpy(filespec, *(argv + argupto));
     }
     numfiles = 0;
     logupto = 0;
