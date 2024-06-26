@@ -1149,6 +1149,28 @@ static int ff_search(void)
             sizeof origdta.lfn);
     origdta.lfn[sizeof origdta.lfn - 1] = '\0';
 
+#if EXTRAPAD == 0
+
+    /* DT_DIR = 4 - directory
+       DT_REG = 8 - normal file
+       DT_UNKNOWN = 0 - . and .. appear as this
+       as such, we treat everything not 8 as a directory */
+    if (*(buf + upto + sizeof(long) * 2 + sizeof(short) + EXTRAPAD
+                     + strlen(buf + upto + sizeof(long) * 2
+                            + sizeof(short) + EXTRAPAD)
+                     + 2
+         ) != 8   /* 8 = DT_REG */
+       )
+    {
+        origdta.attrib = FILE_ATTR_DIRECTORY;
+    }
+    else
+    {
+        origdta.attrib = 0;
+    }
+
+#endif
+
     upto += *(short *)(buf + upto + sizeof(long) * 2);
 
     if (upto >= avail)
