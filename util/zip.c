@@ -272,19 +272,16 @@ static int dolevel(void)
                     extralen = alignval - pos;
                 }
             }
-            if (stage == 1)
-            {
-                fwrite(&extralen, 2, 1, outf);
-            }
+            fwrite(&extralen, 2, 1, outf);
             if (stage == 2)
             {
-                fwrite("\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00",
-                       12, 1, outf);
+                fwrite("\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00",
+                       10, 1, outf);
                 /* this needs to change */
                 fwrite(&logupto, 4, 1, outf);
             }
             fprintf(outf, "%s", p);
-            if(stage == 1)
+            if (stage == 1)
             {
                 rewind(fp);
                 if (align)
