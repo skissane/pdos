@@ -221,24 +221,24 @@ static int dolevel(void)
             {
                 fwrite("\x50\x4B\x03\x04\x0A\x00\x00\x00", 8, 1, outf);
                 fwrite("\x00\x00\xCB\x4C\x75\x55", 6, 1, outf);
-                crc32Init(&crc);
-                while ((c = getc(fp)) != EOF)
-                {
-                    crc32Update(&crc, c);
-                }
-                crc32Finalize(&crc);
-                fputc(crc32Byte4(&crc), outf);
-                fputc(crc32Byte3(&crc), outf);
-                fputc(crc32Byte2(&crc), outf);
-                fputc(crc32Byte1(&crc), outf);
             }
             else if (stage == 2)
             {
                 fwrite("\x50\x4B\x01\x02\x1E\x00\x0A\x00", 8, 1, outf);
                 fwrite("\x00\x00\x00\x00\xCB\x4C\x75\x55", 8, 1, outf);
-                fwrite("\x7C\xC7\x8A\x45", 4, 1, outf);
-                fseek(fp, 0, SEEK_END);
+                /* fwrite("\x7C\xC7\x8A\x45", 4, 1, outf); */
+                /* fseek(fp, 0, SEEK_END); */
             }
+            crc32Init(&crc);
+            while ((c = getc(fp)) != EOF)
+            {
+                crc32Update(&crc, c);
+            }
+            crc32Finalize(&crc);
+            fputc(crc32Byte4(&crc), outf);
+            fputc(crc32Byte3(&crc), outf);
+            fputc(crc32Byte2(&crc), outf);
+            fputc(crc32Byte1(&crc), outf);
             filelen = ftell(fp);
             /* this needs to be changed */
             fwrite(&filelen, 4, 1, outf);
