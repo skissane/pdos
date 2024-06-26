@@ -149,21 +149,6 @@ static int dolevel(void)
     *p = '\0';
     while (ret == 0)
     {
-#if 1
-        /* for some reason .so are coming through as unknown
-           instead of files - we fix that here */
-        {
-            int len;
-            len = strlen(dta->lfn);
-            if (len >= 3)
-            {
-                if (strcmp(dta->lfn + len - 3, ".so") == 0)
-                {
-                    dta->attrib = 0;
-                }
-            }
-        }
-#endif
         if ((dta->attrib & FILE_ATTR_DIRECTORY) != 0)
         {
             strcat(from, "/");
