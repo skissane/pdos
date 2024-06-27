@@ -8,7 +8,7 @@
 # and by any means.
 
 # Produces Windows executable.
-# Links with PDPCLIB created by makefile.msv.
+# Links with PDPCLIB created by makefile.std.
 
 CC=gccwin
 CFLAGS=-O2
@@ -20,8 +20,8 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I../pdpclib -I../src -I../../pdcrc -D__WIN
 
 all: clean zip.exe
 
-zip.exe: zip.obj ../src/pos.obj ../src/support.obj
-    $(LD) $(LDFLAGS) -s --no-insert-timestamp -o zip.exe ../pdpclib/w32start.obj zip.obj ../src/pos.obj ../src/support.obj ../pdpclib/msvcrt.lib
+zip.exe: zip.obj ../src/pos.obj ../src/supportf.obj
+    $(LD) $(LDFLAGS) -s --no-insert-timestamp -o zip.exe ../pdpclib/w32start.obj zip.obj ../src/pos.obj ../src/supportf.obj ../pdpclib/msvcrt.lib
 
 .c.obj:
     $(CC) $(COPTS) -o $*.s $<
