@@ -13,11 +13,11 @@
 # Using the standard ARM32 (including UEFI) calling convention
 # We don't have an appropriate subsystem for this executable
 # as it is neither Windows nor UEFI - it is PDOS-generic
+# So we set it to 0 - unknown
 
 CC=gccprm
 CFLAGS=-O0
-#LD=ldprm -subsystem efi
-LD=pdld --oformat coff --no-insert-timestamp --subsystem 10
+LD=pdld --oformat coff --no-insert-timestamp --subsystem 0
 LDFLAGS=
 AS=asprm
 AR=arprm
