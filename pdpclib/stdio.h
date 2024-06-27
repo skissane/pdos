@@ -439,6 +439,8 @@ __PDPCLIB_HEADFUNC int ferror(FILE *stream);
 #define putc __os->Xputc
 #define getc __os->Xgetc
 #define feof __os->Xfeof
+#define putchar __os->Xputchar
+#define getchar __os->Xgetchar
 #endif
 
 #endif /* __STDIO_INCLUDED */
