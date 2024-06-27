@@ -1214,6 +1214,10 @@ int PosFindFirst(char *pat, int attrib)
     {
         pat = ".";
     }
+    else if (strcmp(pat, "*.*") == 0)
+    {
+        pat = ".";
+    }
     dirfile = __open(pat, 0, 0);
 #endif
     if (dirfile < 0) return (1);
