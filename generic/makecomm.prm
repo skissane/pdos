@@ -2,11 +2,16 @@
 # Using the standard ARM32 (including UEFI) calling convention
 # We don't have an appropriate subsystem for this executable
 # as it is neither Windows nor UEFI - it is PDOS-generic
+# So we set it to 0 (unknown)
+
+# At time of writing we didn't actually need the memcpy
+# from string.o, but it is required by other applications
+# like msged, and this is the place where it is currently built
 
 CC=gccprm
 CFLAGS=-O0
 #LD=ldprm -subsystem efi
-LD=pdld --oformat coff --no-insert-timestamp --subsystem 10
+LD=pdld --oformat coff --no-insert-timestamp --subsystem 0
 LDFLAGS=
 AS=asprm
 AR=arprm
@@ -17,9 +22,9 @@ COPTS=-S $(CFLAGS) -ansi -I. -I../pdpclib -I../src \
 
 all: clean pcomm.exe
 
-pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o ../pdpclib/string.o
   rm -f pcomm.exe
-  $(LD) $(LDFLAGS) -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+  $(LD) $(LDFLAGS) -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o ../pdpclib/armsupa.o
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
