@@ -214,7 +214,9 @@ ___exita:
 
         .globl  __write
         .globl  ___write
+.if ELF
         .type  __write, %function
+.endif
         .align  2
 __write:
 ___write:
@@ -232,7 +234,9 @@ wrtok:  ldmia   sp!,{r2,r7,pc}
 
         .globl  __read
         .globl  ___read
+.if ELF
         .type  __read, %function
+.endif
         .align  2
 __read:
 ___read:
@@ -250,7 +254,9 @@ redok:  ldmia   sp!,{r2,r7,pc}
 
         .globl  __seek
         .globl  ___seek
+.if ELF
         .type  __seek, %function
+.endif
         .align  2
 __seek:
 ___seek:
@@ -269,7 +275,9 @@ lskok:
 
         .globl  __creat
         .globl  ___creat
+.if ELF
         .type  __creat, %function
+.endif
         .align  2
 __creat:
 ___creat:
@@ -287,7 +295,9 @@ crtok:  ldmia   sp!,{r7,pc}
 
         .globl  __open
         .globl  ___open
+.if ELF
         .type  __open, %function
+.endif
         .align  2
 __open:
 ___open:
@@ -305,7 +315,9 @@ opnok:  ldmia   sp!,{r2,r7,pc}
 
         .globl  __close
         .globl  ___close
+.if ELF
         .type  __close, %function
+.endif
         .align  2
 __close:
 ___close:
@@ -321,7 +333,9 @@ clsok:  ldmia   sp!,{r7,pc}
 
         .globl  __remove
         .globl  ___remove
+.if ELF
         .type  __remove, %function
+.endif
         .align  2
 __remove:
 ___remove:
@@ -337,7 +351,9 @@ unlok:  ldmia   sp!,{r7,pc}
 
         .globl  __rename
         .globl  ___rename
+.if ELF
         .type  __rename, %function
+.endif
         .align  2
 __rename:
 ___rename:
@@ -354,7 +370,9 @@ renok:  ldmia   sp!,{r7,pc}
 
         .globl  __time
         .globl  ___time
+.if ELF
         .type  __time, %function
+.endif
         .align  2
 __time:
 ___time:
@@ -372,7 +390,9 @@ timok:  ldr     r0,[sp]
 
         .globl  __mprotect
         .globl  ___mprotect
+.if ELF
         .type  __mprotect, %function
+.endif
         .align  2
 __mprotect:
 ___mprotect:
@@ -394,7 +414,9 @@ mpok:   ldmia   sp!,{r2,r7,pc}
 
         .globl  __getdents
         .globl  ___getdents
+.if ELF
         .type  __getdents, %function
+.endif
         .align  2
 __getdents:
 ___getdents:
@@ -419,7 +441,9 @@ gdok:   ldmia   sp!,{r1,r2,r7,pc}
 
         .globl  __ioctl
         .globl  ___ioctl
+.if ELF
         .type  __ioctl, %function
+.endif
         .align  2
 __ioctl:
 ___ioctl:
@@ -440,7 +464,9 @@ iocok:  ldmia   sp!,{r2,r7,pc}
 
         .globl  __getpid
         .globl  ___getpid
+.if ELF
         .type  __getpid, %function
+.endif
         .align  2
 __getpid:
 ___getpid:
@@ -456,7 +482,9 @@ pidok:  ldmia   sp!,{r7,pc}
 
         .globl  __clone
         .globl  ___clone
+.if ELF
         .type  __clone, %function
+.endif
         .align  2
 __clone:
 ___clone:
@@ -479,7 +507,9 @@ ___clone:
 
         .globl  __waitid
         .globl  ___waitid
+.if ELF
         .type  __waitid, %function
+.endif
         .align  2
 __waitid:
 ___waitid:
@@ -502,7 +532,9 @@ ___waitid:
 
         .globl  __execve
         .globl  ___execve
+.if ELF
         .type  __execve, %function
+.endif
         .align  2
 __execve:
 ___execve:
@@ -523,7 +555,9 @@ ___execve:
 
         .globl  __mmap
         .globl  ___mmap
+.if ELF
         .type  __mmap, %function
+.endif
         .align  2
 __mmap:
 ___mmap:
@@ -546,7 +580,9 @@ ___mmap:
 
         .globl  __munmap
         .globl  ___munmap
+.if ELF
         .type  __munmap, %function
+.endif
         .align  2
 __munmap:
 ___munmap:
@@ -570,7 +606,9 @@ ___munmap:
 
         .globl  __chdir
         .globl  ___chdir
+.if ELF
         .type  __chdir, %function
+.endif
         .align  2
 __chdir:
 ___chdir:
@@ -586,7 +624,9 @@ cdok:  ldmia   sp!,{r7,pc}
 
         .globl  __mkdir
         .globl  ___mkdir
+.if ELF
         .type  __mkdir, %function
+.endif
         .align  2
 __mkdir:
 ___mkdir:
@@ -603,7 +643,9 @@ mdok:  ldmia   sp!,{r7,pc}
 
         .globl  __rmdir
         .globl  ___rmdir
+.if ELF
         .type  __rmdir, %function
+.endif
         .align  2
 __rmdir:
 ___rmdir:
