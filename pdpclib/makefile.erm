@@ -3,10 +3,10 @@
 #CC=gccarm
 #CC=gccerm
 CC=gccprm
-AR=arerm
+AR=arprm
 #LD=lderm
 LD=pdld --oformat elf
-AS=aserm
+AS=asprm
 COPTS=-S -O0 -fno-common -mapcs-32 -D__ARM__ \
    -I. -msoft-float -fno-leading-underscore \
    -D__GENSHELL__ -D__USEBIVA__ -D__NOSPECBIVA__
