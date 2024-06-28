@@ -28,4 +28,4 @@ pdptest.exe: linstart.o pdptest.o stdio.o string.o stdlib.o \
   rm -f $*.s
 
 .asm.o:
-  $(AS) --defsym LINUX=1 --defsym ELF=1 --defsym STACKPARM=0 -o $@ $<
+  $(AS) --defsym LINUX=1 --defsym ELF=0 --defsym STACKPARM=0 -o $@ $<
