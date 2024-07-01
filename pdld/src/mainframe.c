@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "ld.h"
 #include "febc.h"
@@ -246,14 +247,14 @@ void mainframe_write (const char *filename)
     memset (pos + 20, 0xFF, 8);
     /* Unknown length field. */
     bytearray_write_2_bytes (pos + 28, 0x32, BIG_ENDIAN);
-    /* 8 bytes long EBDIC program name. */
+    /* 8 bytes long EBDIC uppercase program name. */
     {
         int i;
 
-        memset (pos + 30, '\0', 8);
+        memset (pos + 30, tebc (' '), 8);
         for (i = 0; i < 8 && ld_state->output_filename[i]; i++) {
             if (i > 0 && ld_state->output_filename[i] == '.') break;
-            pos[30 + i] = tebc (ld_state->output_filename[i]);
+            pos[30 + i] = tebc (toupper (ld_state->output_filename[i]));
         }
     }
 
