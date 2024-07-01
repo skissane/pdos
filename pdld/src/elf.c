@@ -462,7 +462,7 @@ static void translate_relocation (struct reloc_entry *reloc,
     /* STN_UNDEF should be treated as absolute symbol with value 0 at index 0. */
     reloc->symbol = part->of->symbol_array + symbol_index;
     reloc->offset = input_reloc->r_offset;
-
+    
     if (ld_state->target_machine == LD_TARGET_MACHINE_I386) {
         switch (rel_type) {
             case R_386_NONE: goto bad; /* Ignored. */
@@ -487,6 +487,19 @@ static void translate_relocation (struct reloc_entry *reloc,
             case R_ARM_PC24: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_PC26]; break;
             
             case R_ARM_ABS32: reloc->howto = &reloc_howtos[RELOC_TYPE_ARM_32]; break;
+
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "+++relocation type 0x%02x not supported yet",
+                                             rel_type);
+                break;
+        }
+    } else if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
+        /* Assume it is the same as for i386 for now. */
+        switch (rel_type) {
+            case R_386_NONE: goto bad; /* Ignored. */
+            
+            case R_386_32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
 
             default:
                 ld_internal_error_at_source (__FILE__, __LINE__,
@@ -1039,7 +1052,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return 1;
     }
 
-    if (ehdr.e_ehsize < sizeof (ehdr)) {
+    if (ehdr.e_ehsize < SIZEOF_struct_Elf32_Ehdr_file) {
         ld_error ("%s: e_ehsize is too small", filename);
         return 1;
     }
@@ -1190,7 +1203,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         pos = file + shdr.sh_offset;
         CHECK_READ (pos, shdr.sh_size);
 
-        if (shdr.sh_entsize < sizeof (Elf32_Sym)) {
+        if (shdr.sh_entsize < SIZEOF_struct_Elf32_Sym_file) {
             ld_fatal_error ("symbol table sh_entsize is too small");
         }
 
@@ -1296,12 +1309,9 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         pos = file + ehdr.e_shoff + i * ehdr.e_shentsize;
         read_struct_Elf32_Shdr (&shdr, pos, endianess);
 
-        if (shdr.sh_type == SHT_RELA) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++ELF32 relocations with addend (RELA) not yet supported");
-        }
-
-        if (shdr.sh_type != SHT_REL || shdr.sh_size == 0) continue;
+        if ((shdr.sh_type != SHT_RELA
+             && shdr.sh_type != SHT_REL)
+            || shdr.sh_size == 0) continue;
 
         if (shdr.sh_info >= ehdr.e_shnum) {
             ld_fatal_error ("%s: relocation section has invalid sh_info", filename);
@@ -1316,7 +1326,10 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                             filename);
         }
 
-        if (shdr.sh_entsize != sizeof (Elf32_Rel)) {
+        if ((shdr.sh_type == SHT_RELA
+             && shdr.sh_entsize != SIZEOF_struct_Elf32_Rela_file)
+            || (shdr.sh_type == SHT_REL
+                && shdr.sh_entsize != SIZEOF_struct_Elf32_Rel_file)) {
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "+++relocation shdr.sh_entsize not yet supported");
         }
@@ -1327,10 +1340,23 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         part->relocation_count = shdr.sh_size / shdr.sh_entsize;
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
 
-        for (j = 0; j < part->relocation_count; j++) {
-            struct Elf32_Rel_internal rel;
-            read_struct_Elf32_Rel (&rel, pos + shdr.sh_entsize * j, endianess);
-            translate_relocation (part->relocation_array + j, &rel, part);
+        if (shdr.sh_type == SHT_RELA) {
+            for (j = 0; j < part->relocation_count; j++) {
+                struct Elf32_Rela_internal rela;
+                struct Elf32_Rel_internal rel;
+                
+                read_struct_Elf32_Rela (&rela, pos + shdr.sh_entsize * j, endianess);
+                rel.r_offset = rela.r_offset;
+                rel.r_info = rela.r_info;
+                part->relocation_array[j].addend = rela.r_addend;
+                translate_relocation (part->relocation_array + j, &rel, part);
+            }
+        } else {
+            for (j = 0; j < part->relocation_count; j++) {
+                struct Elf32_Rel_internal rel;
+                read_struct_Elf32_Rel (&rel, pos + shdr.sh_entsize * j, endianess);
+                translate_relocation (part->relocation_array + j, &rel, part);
+            }
         }
     }
 

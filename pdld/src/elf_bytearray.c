@@ -78,6 +78,15 @@ void read_struct_Elf32_Rel (struct Elf32_Rel_internal *Elf32_Rel_internal, const
     COPY(Elf32_Rel, r_info, 4);
 }
 
+void read_struct_Elf32_Rela (struct Elf32_Rela_internal *Elf32_Rela_internal, const void *memory, int endianess)
+{
+    const struct Elf32_Rela_file *Elf32_Rela_file = memory;
+    
+    COPY(Elf32_Rela, r_offset, 4);
+    COPY(Elf32_Rela, r_info, 4);
+    COPY(Elf32_Rela, r_addend, 4);
+}
+
 void read_struct_Elf32_Phdr (struct Elf32_Phdr_internal *Elf32_Phdr_internal, const void *memory, int endianess)
 {
     const struct Elf32_Phdr_file *Elf32_Phdr_file = memory;
@@ -154,6 +163,15 @@ void write_struct_Elf32_Rel (void *memory, const struct Elf32_Rel_internal *Elf3
 
     COPY(Elf32_Rel, r_offset, 4);
     COPY(Elf32_Rel, r_info, 4);
+}
+
+void write_struct_Elf32_Rela (void *memory, const struct Elf32_Rela_internal *Elf32_Rela_internal, int endianess)
+{
+    struct Elf32_Rela_file *Elf32_Rela_file = memory;
+
+    COPY(Elf32_Rela, r_offset, 4);
+    COPY(Elf32_Rela, r_info, 4);
+    COPY(Elf32_Rela, r_addend, 4);
 }
 
 void write_struct_Elf32_Phdr (void *memory, const struct Elf32_Phdr_internal *Elf32_Phdr_internal, int endianess)

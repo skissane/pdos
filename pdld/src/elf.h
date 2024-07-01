@@ -14,7 +14,7 @@
 typedef unsigned long Elf32_Addr;
 typedef unsigned long Elf32_Off;
 typedef unsigned long Elf32_Word;
-typedef signed long Elf32_SWord;
+typedef signed long Elf32_Sword;
 typedef unsigned short Elf32_Half; /* 2 bytes. */
 
 /* Fixed size data types, short should be 2 bytes, int 4 bytes. */
@@ -300,6 +300,25 @@ struct Elf32_Rel_internal {
 struct Elf32_Rel_file {
     unsigned char r_offset[4];
     unsigned char r_info[4];
+};
+
+typedef struct {
+    Elf32_Addr r_offset;
+    Elf32_Word r_info;
+    Elf32_Sword r_addend;
+} Elf32_Rela;
+
+struct Elf32_Rela_internal {
+    unsigned long r_offset;
+    unsigned long r_info;
+    unsigned long r_addend;
+};
+
+#define SIZEOF_struct_Elf32_Rela_file 12
+struct Elf32_Rela_file {
+    unsigned char r_offset[4];
+    unsigned char r_info[4];
+    unsigned char r_addend[4];
 };
 
 typedef struct {
