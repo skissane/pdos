@@ -56,6 +56,7 @@ void mainframe_write (const char *filename)
 
     struct section *section;
     struct object_file *of;
+    size_t cesd_i;
     size_t cesd_size;
     size_t csect_hmaspzap_size, csect_linkage_size, csect_translator_size;
     size_t control_record_size;
@@ -70,8 +71,6 @@ void mainframe_write (const char *filename)
     }
     
     {
-        size_t cesd_i;
-
         file_size = 0;
 
         file_size += SIZEOF_struct_COPYR1_file - 4;
@@ -79,9 +78,8 @@ void mainframe_write (const char *filename)
         file_size += 8 + 276 + 12 - 4; /* Directory Block Record. */
         file_size += 8 - 4; /* Member Data Record header. */
 
-        file_size += SIZEOF_struct_member_data_header_file;
         /* Load module, the program itself. */
-        cesd_size = 8; /* CESD Record. */
+        /* CESD Records (symbol table). */
         cesd_i = 1;
         for (of = all_object_files; of; of = of->next) {
             size_t i;
@@ -115,10 +113,16 @@ void mainframe_write (const char *filename)
                 cesd_i++;
             }
         }
-        if (16 * (cesd_i - 1) > 240) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++CESD data size exceeds 240 bytes");
-        }
+
+        /* One CESD Record can have at most 248 bytes:
+         * 8 bytes of header + 240 bytes of ESD Data.
+         * One symbol takes up 16 bytes of ESD Data,
+         * so one CESD Record stores at most 15 symbols (15 * 16 = 240)
+         * and if there are more symbols than 15,
+         * multiple CESD Records must be used.
+         */
+        file_size += ((cesd_i - 1) / 15 + !!((cesd_i - 1) % 15)) * SIZEOF_struct_member_data_header_file;
+        cesd_size = ((cesd_i - 1) / 15 + !!((cesd_i - 1) % 15)) * 8;
         cesd_size += 16 * (cesd_i - 1);
         file_size += cesd_size;
 
@@ -310,29 +314,8 @@ void mainframe_write (const char *filename)
 
     pos += 8;
     
-    /* Member Data. */
-    /* Flag, 0x00 is member data. */
-    pos[0] = 0x00;
-    /* Count field, 8 bytes, CCHHRKDD,
-     * CC is sector count, R is sector number,
-     * K (key) is unused, DD is data length (size of sector).
-     */
-    bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-    pos[4 + 4] = current_sector++;
-    bytearray_write_2_bytes (pos + 4 + 6, cesd_size, BIG_ENDIAN);
-    pos += 12;
-    
-    /* The load module, CESD record. */
-    pos[0] = 0x20; /* Identification, CESD. */
-    pos[1] = 0; /* Flag, use segment numbers in CESD data. */
-    bytearray_write_2_bytes (pos + 4,
-                             all_sections ? all_sections->target_index : 0,
-                             BIG_ENDIAN); /* ESDID of the first ESD item. */
-    bytearray_write_2_bytes (pos + 6, cesd_size - 8, BIG_ENDIAN); /* ESD data size. */
-
-    pos += 8;
-    
-    /* CESD data, symbol table. */
+    /* The load module, CESD Records (symbol table). */
+    cesd_i = 1;
     for (of = all_object_files; of; of = of->next) {
         size_t i;
 
@@ -344,6 +327,33 @@ void mainframe_write (const char *filename)
                 symbol = symbol_find (symbol->name);
             }
             if (symbol->flags & SYMBOL_FLAG_INTERNAL2) continue;
+
+            if ((cesd_i - 1) % 15 == 0) {
+                size_t this_size = cesd_size > 248 ? 248 : cesd_size;
+                
+                /* Member Data. */
+                /* Flag, 0x00 is member data. */
+                pos[0] = 0x00;
+                /* Count field, 8 bytes, CCHHRKDD,
+                 * CC is sector count, R is sector number,
+                 * K (key) is unused, DD is data length (size of sector).
+                 */
+                bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
+                pos[4 + 4] = current_sector++;
+                bytearray_write_2_bytes (pos + 4 + 6, this_size, BIG_ENDIAN);
+                pos += 12;
+                
+                /* CESD Record. */
+                pos[0] = 0x20; /* Identification, CESD. */
+                pos[1] = 0; /* Flag, use segment numbers in CESD data. */
+                bytearray_write_2_bytes (pos + 4,
+                                         cesd_i,
+                                         BIG_ENDIAN); /* ESDID of the first ESD item in this record. */
+                bytearray_write_2_bytes (pos + 6, this_size - 8, BIG_ENDIAN); /* ESD data size. */
+
+                cesd_size -= this_size;
+                pos += 8;
+            }
 
             symbol->flags |= SYMBOL_FLAG_INTERNAL2;
             if (symbol->section_number == i) {
@@ -379,6 +389,7 @@ void mainframe_write (const char *filename)
                     bytearray_write_3_bytes (pos + 13, section_symbol->value, BIG_ENDIAN);
                 }
             }
+            cesd_i++;
             pos += 16;
         }
     }
