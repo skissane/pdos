@@ -535,7 +535,8 @@ typedef struct {
     /* x'40' seems to be internal use. also x'44', x'48', x'4c' */
     /* so we will try using x'40' for generic device */
     int gendev;
-    char unused4[14];
+    int fbadev;
+    char unused4[10];
     /* x'52' is lrecl */
     short dcblrecl;
     int dcbnotepoint; /* offset 84+1 */
@@ -880,6 +881,7 @@ static int pdosNewF(PDOS *pdos, char *parm);
 static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
 static int pdosDumpBlk(PDOS *pdos, char *parm);
+static int pdosDumpFba(PDOS *pdos, char *parm);
 static int pdosZapBlk(PDOS *pdos, char *parm);
 static int pdosNewBlk(PDOS *pdos, char *parm);
 static int pdosRamDisk(PDOS *pdos, char *parm);
@@ -2261,6 +2263,11 @@ static void pdosProcessSVC(PDOS *pdos)
             {
                 gendcb->gendev = strtoul(lastds + 3, NULL, 16);
             }
+            else if ((strchr(lastds, ':') != NULL)
+                && (ins_strncmp(lastds, "fba", 3) == 0))
+            {
+                gendcb->fbadev = strtoul(lastds + 3, NULL, 16);
+            }
             else if (findFile(pdos->ipldev, lastds, &cyl, &head, &rec) == 0)
             {
                 rec = 0; /* so that we can do increments */
@@ -2425,6 +2432,16 @@ static void pdosProcessSVC(PDOS *pdos)
             *pdos->context->postecb = 
                 pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
                 pdosDumpBlk(pdos, parm);
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[1] = 
+                (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
+        }
+        else if (memcmp(prog, "DUMPFBA", 7) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            *pdos->context->postecb = 
+                pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
+                pdosDumpFba(pdos, parm);
             pdos->context->regs[15] = 0;
             pdos->context->regs[1] = 
                 (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
@@ -3830,6 +3847,109 @@ static int pdosDumpBlk(PDOS *pdos, char *parm)
     printf("dumping cylinder %d, head %d, record %d of device %x\n",
            cyl, head, rec, dev);
     cnt = rdblock(dev, cyl, head, rec, tbuf, MAXBLKSZ, 0x0e);
+    if (cnt > 0)
+    {
+        if (cnt <= skip)
+        {
+            cnt = 0;
+        }
+        else if ((skip + count) > cnt)
+        {
+            cnt = cnt - skip;
+        }
+        else
+        {
+            cnt = count;
+        }
+        for (i = skip; i < skip + cnt; i++)
+        {
+            c = tbuf[i];
+            if (x % 16 == 0)
+            {
+                memset(prtln, ' ', sizeof prtln);
+                sprintf(prtln, "%0.6lX   ", skip + x);
+                pos1 = 8;
+                pos2 = 45;
+            }
+            sprintf(prtln + pos1, "%0.2X", c);
+            if (isprint((unsigned char)c))
+            {
+                sprintf(prtln + pos2, "%c", c);
+            }
+            else
+            {
+                sprintf(prtln + pos2, ".");
+            }
+            pos1 += 2;
+            *(prtln + pos1) = ' ';
+            pos2++;
+            if (x % 4 == 3)
+            {
+                *(prtln + pos1++) = ' ';
+            }
+            if (x % 16 == 15)
+            {
+                printf("%s\n", prtln);
+            }
+            x++;
+        }
+        if (x % 16 != 0)
+        {
+            printf("%s\n", prtln);
+        }
+    }
+    
+    return (cnt);
+}
+
+
+/* dump FBA Block */
+
+static int pdosDumpFba(PDOS *pdos, char *parm)
+{
+    unsigned int blocknr;
+    char tbuf[MAXBLKSZ];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret = 0;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    int dev;
+    int n;
+    int skip = 0;
+    int count = INT_MAX;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%x %i %i %i",
+               &dev, &blocknr, &skip, &count);
+    if (n < 2)
+    {
+        printf("usage: dumpblk dev(x) blocknr(d) [start] [len]\n");
+        printf("dev of 0 will use IPL device\n");
+        return (0);
+    }
+    if (dev == 0)
+    {
+        dev = pdos->ipldev;
+    }
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
+    printf("dumping block %d of device %x\n",
+           blocknr, dev);
+    cnt = rdfba(dev, blocknr, tbuf, MAXBLKSZ);
     if (cnt > 0)
     {
         if (cnt <= skip)
