@@ -1004,15 +1004,17 @@ RFFINCHN EQU   *
 *
          DS    0D
 * Define extent data
-RFDEDAT  DC    X'000000000000'
+* 2nd and 3rd byte of 0 is considered default of 512
+RFDEDAT  DC    X'00000000'
 FBLKNUM  DC    F'0'
-         DC    X'000000000000'
-         DC    X'000000000000'
+         DC    X'00000000'
+         DC    X'00000000'
+* 6 = read
 * 1 = read 1 block. At 0 offset from beginning of extent
-RFLOCDAT DC    X'000000000001'
-         DC    X'000000000000'
-RFRDDAT  DC    X'000000000000'
-         DC    X'000000000000'
+RFLOCDAT DC    X'06000001'
+         DC    X'00000000'
+RFRDDAT  DC    X'00000000'
+         DC    X'00000000'
 *
 *
 *
