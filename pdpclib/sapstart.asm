@@ -878,6 +878,166 @@ RTNEWIO  DC    A(X'00040000'+AM64BIT)
 *
 *
 *
+**********************************************************************
+*                                                                    *
+*  RDFBA - read a block from an FBA device                           *
+*                                                                    *
+*  parameter 1 = device                                              *
+*  parameter 2 = blocknr                                             *
+*  parameter 3 = buffer                                              *
+*  parameter 4 = size of buffer                                      *
+*                                                                    *
+*  return = length of data read, or -1 on error                      *
+*                                                                    *
+**********************************************************************
+         ENTRY RDFBA
+RDFBA    DS    0H
+         SAVE  (14,12),,RDFBA
+         LR    R12,R15
+         USING RDFBA,R12
+         USING PSA,R0
+*
+         L     R10,0(R1)    Device number
+         L     R2,4(R1)    Blocknr
+         ST    R2,FBLKNUM
+         L     R2,8(R1)    Buffer
+* It is a requirement of using this routine that V=R. If it is
+* ever required to support both V and R, then LRA could be used,
+* and check for a 0 return, and if so, do a BNZ.
+*         LRA   R2,0(R2)     Get real address
+         L     R7,12(R1)    Bytes to read
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RFC390B
+         STCM  R2,B'0111',RFLDCCW+1   This requires BTL buffer
+         STH   R7,RFLDCCW+6  Store in READ CCW
+         AGO   .RFC390C
+.RFC390B ANOP
+         ST    R2,RFLDCCW+4
+         STH   R7,RFLDCCW+2
+.RFC390C ANOP
+*
+* Interrupt needs to point to CONT now. Again, I would hope for
+* something more sophisticated in PDOS than this continual
+* initialization.
+*
+         AIF   ('&XSYS' EQ 'ZARCH').ZRFNIO
+         MVC   FLCINPSW(8),RFNEWIO
+         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
+         AGO .ZRFNIOA
+.ZRFNIO  ANOP
+         MVC   FLCEINPW(16),RFNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
+.ZRFNIOA ANOP
+*
+* R3 points to CCW chain
+         LA    R3,RFBEGCHN
+         ST    R3,FLCCAW    Store in CAW
+*
+*
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RFSIO3B
+         SIO   0(R10)
+*         TIO   0(R10)
+         AGO   .RFSIO2B
+.RFSIO3B ANOP
+         LR    R1,R10       R1 needs to contain subchannel
+         LA    R9,RFIRB
+         LA    R10,RFORB
+         MSCH  0(R10)       Enable subchannel
+         TSCH  0(R9)        Clear pending interrupts
+         SSCH  0(R10)
+.RFSIO2B ANOP
+*
+*
+         LPSW  RFWTNOER     Wait for an interrupt
+         DC    H'0'
+RFCONT   DS    0H           Interrupt will automatically come here
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RFSIO3H
+         SH    R7,FLCCSW+6  Subtract residual count to get bytes read
+         LR    R15,R7
+* After a successful CCW chain, CSW should be pointing to end
+         CLC   FLCCSW(4),=A(RFFINCHN)
+         BE    RFALFINE
+         AGO   .RFSIO2H
+.RFSIO3H ANOP
+         TSCH  0(R9)
+         SH    R7,10(R9)
+         LR    R15,R7
+         CLC   4(4,R9),=A(RFFINCHN)
+         BE    RFALFINE
+.RFSIO2H ANOP
+         L     R15,=F'-1'   error return
+RFALFINE DS    0H
+         RETURN (14,12),RC=(15)
+         LTORG
+*
+*
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').RFNOT3B
+         DS    0F
+RFIRB    DS    24F
+RFORB    DS    0F
+         DC    F'0'
+         DC    X'0080FF00'  Logical-Path Mask (enable all?) + format-1
+         DC    A(RFBEGCHN)
+         DC    5F'0'
+.RFNOT3B ANOP
+*
+*
+RFBEGCHN DS    0D         
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').RFC390
+* X'63' = Define Extent
+RFDFEXT  CCW   X'63',RFDEDAT,X'40',16     40 = chain command
+* X'43' = locate
+RFLOCATE CCW   X'43',RFLOCDAT,X'40',8    40 = chain command
+* X'42' = read data
+RFLDCCW  CCW   X'42',0,X'20',32767      20 = ignore length issues
+         AGO   .RFC390F
+.RFC390  ANOP
+* X'63' = Define Extent
+RFDFEXT  CCW1   X'63',RFDEDAT,X'40',16     40 = chain command
+* X'43' = locate
+RFLOCATE CCW1   X'43',RFLOCDAT,X'40',8    40 = chain command
+* X'42' = read data
+RFLDCCW  CCW1   X'42',0,X'20',32767      20 = ignore length issues
+.RFC390F ANOP
+RFFINCHN EQU   *
+         DS    0H
+*
+*
+         DS    0D
+* Define extent data
+RFDEDAT  DC    X'000000000000'
+FBLKNUM  DC    F'0'
+         DC    X'000000000000'
+         DC    X'000000000000'
+* 1 = read 1 block. At 0 offset from beginning of extent
+RFLOCDAT DC    X'000000000001'
+         DC    X'000000000000'
+RFRDDAT  DC    X'000000000000'
+         DC    X'000000000000'
+*
+*
+*
+         DS    0D
+* I/O, machine check, EC, wait, DAT on
+RFWTNOER DC    A(X'060E0000')
+         DC    A(AMBIT)  no error
+*
+         AIF   ('&XSYS' EQ 'ZARCH').RFZNIO
+* machine check, EC, DAT off
+RFNEWIO  DC    A(X'000C0000')
+         DC    A(AMBIT+RFCONT)  continuation after I/O request
+         AGO   .RFNZIOA
+*
+.RFZNIO  ANOP
+RFNEWIO  DC    A(X'00040000'+AM64BIT)
+         DC    A(AMBIT)
+         DC    A(0)
+         DC    A(RFCONT)  continuation after I/O request
+.RFNZIOA ANOP
+*
+         DROP  ,
+*
+*
+*
          CVT   DSECT=YES
          IKJTCB
          IEZJSCB
