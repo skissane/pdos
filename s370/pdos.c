@@ -78,7 +78,7 @@
 
 /* force the use of EBCDIC ANSI even on a 3270 terminal,
    so that real hardware with an OSA-ICC can be used */
-#define FORCEANSI
+/* #define FORCEANSI */
 
 #define S370_MAXMB 16 /* maximum MB in a virtual address space for S/370 */
 #define NUM_GPR 16 /* number of general purpose registers */
