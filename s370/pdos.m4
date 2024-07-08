@@ -525,7 +525,7 @@ undivert(multisc.s)dnl
 //SYSTERM  DD  SYSOUT=*
 //SYSIN    DD  DUMMY
 //*
-//PLOAD    EXEC PGM=LOADZERO,PARM='dd:in dd:out'
+//PDOS     EXEC PGM=LOADZERO,PARM='dd:in dd:out'
 //STEPLIB  DD  DSN=OZPD.LINKLIB,DISP=SHR
 //IN       DD  DSN=&&COPY2,DISP=(OLD,DELETE)
 //OUT      DD  DSN=&&HEX(PDOSIMG),DISP=(OLD,PASS)
