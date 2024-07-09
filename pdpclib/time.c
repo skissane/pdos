@@ -148,7 +148,8 @@ __PDPCLIB_API__ time_t time(time_t *timer)
         int hundredths;
     } dt;
 #endif
-#if defined(__MVS__) || defined(__CMS__)
+#if defined(__MVS__) || defined(__CMS__) \
+    || defined(__MF32__)
     unsigned int clk[2];
 #endif
 
@@ -178,7 +179,8 @@ __PDPCLIB_API__ time_t time(time_t *timer)
 #if defined(__MSDOS__)
     __datetime(&dt);
 #endif
-#if defined(__MVS__) || defined(__CMS__)
+#if defined(__MVS__) || defined(__CMS__) \
+    || defined(__MF32__)
     tt = __getclk(clk);
 #elif defined(__ARM__) && !defined(__EFI__) && !defined(__WIN32__)
     tt = __time();

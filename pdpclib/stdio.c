@@ -81,6 +81,10 @@
 #include "limits.h"
 #include "stddef.h"
 
+#ifdef __ZPDOSGPB__
+extern int __consdn;
+#endif
+
 #if defined(__PDOS386__)
 #include <pos.h>
 #endif
@@ -1927,6 +1931,9 @@ __PDPCLIB_API__ int fclose(FILE *stream)
 #if !defined(__MVS__) && !defined(__CMS__)
 static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 {
+#ifdef __ZPDOSGPB__
+    int tempRead;
+#endif
 #ifdef __AMIGA__
     long tempRead;
 #endif
@@ -1968,6 +1975,23 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     static char pending[20];
     static int genuine = -1;
 #endif
+#endif
+
+#ifdef __ZPDOSGPB__
+    if (stream->permfile)
+    {
+        tempRead = __consrd(/* __consdn, */ ptr, toread);
+        *actualRead = tempRead;
+    }
+    else
+    {
+        tempRead = __rdfba(stream->devnum, ptr, toread);
+        if (tempRead != toread)
+        {
+            stream->errorInd = 1;
+            *actualRead = 0;
+        }
+    }
 #endif
 
 #ifdef __AMIGA__
@@ -2874,6 +2898,11 @@ static void iwrite(FILE *stream,
     size_t tempWritten;
     int errind;
 #endif
+
+#ifdef __ZPDOSGPB__
+    int tempWritten;
+#endif
+
 #ifdef __EFI__
     size_t tempWritten;
     static CHAR16 onechar[2] = {0, '\0'};
@@ -2885,6 +2914,23 @@ static void iwrite(FILE *stream,
     static int numansi = 0;
     static char ansibuf[50];
     static int currentAttrib = 0;
+#endif
+
+#ifdef __ZPDOSGPB__
+    if (stream->permfile)
+    {
+        tempWritten = __conswr(/* __consdn, */ ptr, towrite);
+    }
+    else
+    {
+        tempWritten = __wrfba(stream->devnum, ptr, towrite);
+    }
+    if (tempWritten != towrite)
+    {
+        stream->errorInd = 1;
+        tempWritten = 0;
+        errno = 1;
+    }
 #endif
 
 #ifdef __AMIGA__

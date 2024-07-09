@@ -39,6 +39,7 @@ typedef unsigned long long size_t;
 
 #endif
 #elif (defined(__MVS__) \
+    || defined(__MF32__) \
     || defined(__CMS__) || defined(__VSE__) || defined(__SMALLERC__) \
     || defined(__ARM__) \
     || defined(__SZ4__))
@@ -84,6 +85,7 @@ typedef struct
     || defined(__32BIT__) || defined(__PDOS386__))
     unsigned long hfile;  /* OS/2 file handle */
 #elif (defined(__MSDOS__) || defined(__DOS__) || defined(__POWERC) \
+    || defined(__ZPDOSGPB__) \
     || defined(__SMALLERC__) || defined(__OS2__))
     int hfile; /* dos file handle */
 #elif defined(__WIN32__) || defined(__AMIGA__) || defined(__EFI__)
@@ -93,6 +95,10 @@ typedef struct
 #endif
 #if defined(__EFIBIOS__)
     int block;
+    unsigned long sector;
+#endif
+#if defined(__ZPDOSGPB__)
+    unsigned int devnum;
     unsigned long sector;
 #endif
 

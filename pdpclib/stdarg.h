@@ -18,6 +18,7 @@
 /* and they haven't been implemented in PDOS/386 either */
 #if 0
 if defined(__GNUC__) && !defined(__MVS__) && !defined(__CMS__) \
+    && !defined(__MF32__) \
     && !defined(__VSE__) && !defined(__EMX__) && !defined(__PDOS386__) \
     && !defined(__gnu_linux__) && !defined(__NOBIVA__) \
     && !defined(__ARM__)

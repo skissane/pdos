@@ -32,7 +32,8 @@ typedef struct {
     long long regs[16-2+1];
 #endif
 
-#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
+    || defined(__MF32__)
     int regs[15];
 #elif defined(__AMIGA__)
     long a0;
@@ -136,7 +137,8 @@ int __cdecl __setj(jmp_buf env);
 int __setj(jmp_buf env);
 #endif
 
-#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
+    || defined(__MF32__)
 #define setjmp(x) __setj(x)
 
 #else

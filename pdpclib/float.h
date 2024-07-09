@@ -13,7 +13,8 @@
 #ifndef __FLOAT_INCLUDED
 #define __FLOAT_INCLUDED
 
-#if defined(__CMS__) || defined(__MVS__) || defined(__VSE__)
+#if defined(__CMS__) || defined(__MVS__) || defined(__VSE__) \
+    || defined(__MF32__)
 /*
   IBM 360 & 370 use "HEX" floating point
   float is 32 bits, double & long double are 64 bit.
