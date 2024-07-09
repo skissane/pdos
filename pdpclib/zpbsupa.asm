@@ -89,6 +89,7 @@ AM64BIT  EQU X'00000000'
 *                                                                    *
 *  parameter 1 = buffer length                                       *
 *  parameter 2 = buffer                                              *
+*  parameter 3 = CR required flag                                    *
 *                                                                    *
 **********************************************************************
          ENTRY @@CONSWR
