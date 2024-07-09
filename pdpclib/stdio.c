@@ -2919,7 +2919,13 @@ static void iwrite(FILE *stream,
 #ifdef __ZPDOSGPB__
     if (stream->permfile)
     {
-        tempWritten = __conswr(/* __consdn, */ ptr, towrite);
+        char *s;
+        s = memchr(ptr, '\r', towrite);
+        if (s != NULL)
+        {
+            towrite = s - (char *)ptr;
+        }
+        tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
     }
     else
     {
