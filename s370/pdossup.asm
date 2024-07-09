@@ -807,6 +807,168 @@ WTNEWIO  DC    A(X'00040000'+AM64BIT)
 *
 **********************************************************************
 *                                                                    *
+*  WRFBA - write a block to an FBA disk                              *
+*                                                                    *
+*  parameter 1 = device                                              *
+*  parameter 2 = block number                                        *
+*  parameter 3 = buffer                                              *
+*  parameter 4 = size of buffer                                      *
+*                                                                    *
+*  return = length of data written, or -1 on error                   *
+*                                                                    *
+**********************************************************************
+         ENTRY WRFBA
+WRFBA   DS    0H
+         SAVE  (14,12),,WRFBA
+         LR    R12,R15
+         USING WRFBA,R12
+         USING PSA,R0
+*
+         L     R10,0(R1)    Device number
+         L     R2,4(R1)    Block number
+         ST    R2,WFBLKNUM
+         L     R2,8(R1)    Buffer
+* It is a requirement of using this routine that V=R. If it is
+* ever required to support both V and R, then LRA could be used,
+* and check for a 0 return, and if so, do a BNZ.
+*         LRA   R2,0(R2)     Get real address
+         L     R7,12(R1)    Bytes to write
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WFC390B
+         STCM  R2,B'0111',WFLDCCW+1   This requires BTL buffer
+         STH   R7,WFLDCCW+6  Store in WRITE CCW
+         AGO   .WFC390C
+.WFC390B ANOP
+         ST    R2,WFLDCCW+4
+         STH   R7,WFLDCCW+2
+.WFC390C ANOP
+*
+* Interrupt needs to point to CONT now. Again, I would hope for
+* something more sophisticated in PDOS than this continual
+* initialization.
+*
+         AIF   ('&XSYS' EQ 'ZARCH').ZWFNIO
+         MVC   FLCINPSW(8),WFNEWIO
+         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
+         AGO .ZWFNIOA
+.ZWFNIO  ANOP
+         MVC   FLCEINPW(16),WFNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
+.ZWFNIOA ANOP
+*
+* R3 points to CCW chain
+         LA    R3,WFBEGCHN
+         ST    R3,FLCCAW    Store in CAW
+*
+*
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WFSIO3B
+         SIO   0(R10)
+*         TIO   0(R10)
+         AGO   .WFSIO2B
+.WFSIO3B ANOP
+         LR    R1,R10       R1 needs to contain subchannel
+         LA    R9,WFIRB
+         LA    R10,WFORB
+         MSCH  0(R10)       Enable subchannel
+         TSCH  0(R9)        Clear pending interrupts
+         SSCH  0(R10)
+.WFSIO2B ANOP
+*
+*
+         LPSW  WFWTNOER     Wait for an interrupt
+         DC    H'0'
+WFCONT   DS    0H           Interrupt will automatically come here
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WFSIO3H
+         SH    R7,FLCCSW+6  Subtract residual count to get bytes read
+         LR    R15,R7
+* After a successful CCW chain, CSW should be pointing to end
+         CLC   FLCCSW(4),=A(WFFINCHN)
+         BE    WFALFINE
+         AGO   .WFSIO2H
+.WFSIO3H ANOP
+         TSCH  0(R9)
+         SH    R7,10(R9)
+         LR    R15,R7
+         CLC   4(4,R9),=A(WFFINCHN)
+         BE    WFALFINE
+.WFSIO2H ANOP
+         L     R15,=F'-1'   error return
+WFALFINE DS    0H
+         RETURN (14,12),RC=(15)
+         LTORG
+*
+*
+         AIF   ('&XSYS' NE 'S390' AND '&XSYS' NE 'ZARCH').WFNOT3B
+         DS    0F
+WFIRB    DS    24F
+WFORB    DS    0F
+         DC    F'0'
+         DC    X'0080FF00'  Logical-Path Mask (enable all?) + format-1
+         DC    A(WFBEGCHN)
+         DC    5F'0'
+.WFNOT3B ANOP
+*
+*
+*
+WFBEGCHN DS    0D         
+         AIF   ('&XSYS' EQ 'S390' OR '&XSYS' EQ 'ZARCH').WFC390
+* X'63' = Define Extent
+WFDFEXT  CCW   X'63',WFDEDAT,X'40',16     40 = chain command
+* X'43' = locate
+WFLOCATE CCW   X'43',WFLOCDAT,X'40',8    40 = chain command
+* X'41' = write data
+WFLDCCW  CCW   X'41',0,X'20',32767      20 = ignore length issues
+         AGO   .WFC390F
+.WFC390  ANOP
+* X'63' = Define Extent
+WFDFEXT  CCW1   X'63',WFDEDAT,X'40',16     40 = chain command
+* X'43' = locate
+WFLOCATE CCW1   X'43',WFLOCDAT,X'40',8    40 = chain command
+* X'41' = write data
+WFLDCCW  CCW1   X'41',0,X'20',32767      20 = ignore length issues
+.WFC390F ANOP
+WFFINCHN EQU   *
+         DS    0H
+*
+*
+         DS    0D
+* Define extent data
+* C0 = enable write
+* 2nd and 3rd byte of 0 is considered default of 512
+WFDEDAT  DC    X'C0000000'
+WFBLKNUM DC    F'0'
+         DC    X'00000000'
+         DC    X'00000000'
+* first 1 = write
+* second 1 = write 1 block. At 0 offset from beginning of extent
+WFLOCDAT DC    X'01000001'
+         DC    X'00000000'
+*
+*
+*
+         DS    0D
+* I/O, machine check, EC, wait, DAT on
+WFWTNOER DC    A(X'060E0000')
+         DC    A(AMBIT)  no error
+*
+         AIF   ('&XSYS' EQ 'ZARCH').WFZNIO
+* machine check, EC, DAT off
+WFNEWIO  DC    A(X'000C0000')
+         DC    A(AMBIT+WFCONT)  continuation after I/O request
+         AGO   .WFNZIOA
+*
+.WFZNIO  ANOP
+WFNEWIO  DC    A(X'00040000'+AM64BIT)
+         DC    A(AMBIT)
+         DC    A(0)
+         DC    A(WFCONT)  continuation after I/O request
+.WFNZIOA ANOP
+*
+         DROP  ,
+*
+*
+*
+**********************************************************************
+*                                                                    *
 *  DSECTS                                                            *
 *                                                                    *
 **********************************************************************
