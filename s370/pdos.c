@@ -882,6 +882,7 @@ static int pdosGetMaxima(PDOS *pdos, int *dircyl, int *dirhead,
                          int *dirrec, int *datacyl);
 static int pdosDumpBlk(PDOS *pdos, char *parm);
 static int pdosDumpFba(PDOS *pdos, char *parm);
+static int pdosZapFba(PDOS *pdos, char *parm);
 static int pdosZapBlk(PDOS *pdos, char *parm);
 static int pdosNewBlk(PDOS *pdos, char *parm);
 static int pdosRamDisk(PDOS *pdos, char *parm);
@@ -2446,6 +2447,16 @@ static void pdosProcessSVC(PDOS *pdos)
             pdos->context->regs[1] = 
                 (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
         }
+        else if (memcmp(prog, "ZAPFBA", 6) == 0)
+        {
+            parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
+            *pdos->context->postecb = 
+                pdos->aspaces[pdos->curr_aspace].o.tcb.tcbcmp =
+                pdosZapFba(pdos, parm);
+            pdos->context->regs[15] = 0;
+            pdos->context->regs[1] = 
+                (int)&pdos->aspaces[pdos->curr_aspace].o.tcb;
+        }
         else if (memcmp(prog, "ZAPBLK", 6) == 0)
         {
             parm = (char *)((unsigned int)parm & 0x7FFFFFFFUL);
@@ -3933,7 +3944,7 @@ static int pdosDumpFba(PDOS *pdos, char *parm)
                &dev, &blocknr, &skip, &count);
     if (n < 2)
     {
-        printf("usage: dumpblk dev(x) blocknr(d) [start] [len]\n");
+        printf("usage: dumpfba dev(x) blocknr(i) [start] [len]\n");
         printf("dev of 0 will use IPL device\n");
         return (0);
     }
@@ -3947,7 +3958,7 @@ static int pdosDumpFba(PDOS *pdos, char *parm)
         dev = getssid(dev);
     }
 #endif
-    printf("dumping block %d of device %x\n",
+    printf("dumping block %u of device %x\n",
            blocknr, dev);
     cnt = rdfba(dev, blocknr, tbuf, MAXBLKSZ);
     if (cnt > 0)
@@ -3999,6 +4010,71 @@ static int pdosDumpFba(PDOS *pdos, char *parm)
         if (x % 16 != 0)
         {
             printf("%s\n", prtln);
+        }
+    }
+    
+    return (cnt);
+}
+
+
+/* zap FBA block */
+
+static int pdosZapFba(PDOS *pdos, char *parm)
+{
+    unsigned int blocknr;
+    char tbuf[MAXBLKSZ];
+    long cnt = -1;
+    int lastcnt = 0;
+    int ret = 0;
+    int c, pos1, pos2;
+    long x = 0L;
+    char prtln[100];
+    long i;
+    long start = 0;
+    int off;
+    int nval;
+    int dev;
+    int n;
+
+    tbuf[0] = '\0';
+    i = *(short *)parm;
+    parm += sizeof(short);
+    if (i < (sizeof tbuf - 1))
+    {
+        memcpy(tbuf, parm, i);
+        tbuf[i] = '\0';
+    }
+    n = sscanf(tbuf, "%x %i %i %i", &dev, &blocknr, &off, &nval);
+    if (n != 4)
+    {
+        printf("usage: zapfba dev(x) blocknr(i) off(i) nval(i)\n");
+        printf("dev of 0 will use IPL device\n");
+        return (0);
+    }
+    if (dev == 0)
+    {
+        dev = pdos->ipldev;
+    }
+#if defined(S390) || defined(ZARCH)
+    if ((dev != 0) && (dev < 0x10000))
+    {
+        dev = getssid(dev);
+    }
+#endif
+    printf("zapping block %u, "
+           "byte %X of device %x to %0.2X\n",
+           blocknr, off, dev, nval);
+    cnt = rdfba(dev, blocknr, tbuf, MAXBLKSZ);
+    if (cnt > 0)
+    {
+        if (off >= cnt)
+        {
+            printf("byte to zap is out of range\n");
+        }
+        else
+        {
+            tbuf[off] = nval;
+            wrfba(dev, blocknr, tbuf, cnt);
         }
     }
     
