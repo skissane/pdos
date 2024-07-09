@@ -331,6 +331,20 @@ ADISP    DS    0H
          LM    R0,R15,FLCGRSAV        Load application registers
          LPSW  SVCOPSW                App returns to old PSW
          DC    H'0'
+*
+* We will need to switch to LPSWE at some point, otherwise
+* we can't execute programs above 2 GiB
+* And that will need a 16-byte PSW, not the short form
+* It is unlikely this would be used on S/380 - that is more
+* likely to use another bit in the 64-bit PSW to store the
+* high bit of the execution address - if there is ever a
+* reason to use it at all.
+* We are assembling it just to have a record of the opcode.
+* It is not currently being executed.
+         AIF ('&XSYS' NE 'ZARCH').ZLPSWE
+         LPSWE SVCOPSW
+.ZLPSWE  ANOP
+*
 ADISPRET DS    0H
          LA    R15,0
 ADISPRT2 DS    0H
