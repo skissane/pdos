@@ -7,7 +7,8 @@
 *
 ***********************************************************************
 *
-*  MUSSUPA - Support routines for PDPCLIB under MUSIC
+*  SAPSUPA - Support routines for PDPCLIB to support standalone
+*  programs
 *
 *  It is currently coded for GCC, but IBM C functionality is
 *  still there, it's just not being tested after any change.
