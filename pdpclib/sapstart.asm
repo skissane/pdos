@@ -1013,8 +1013,6 @@ FBLKNUM  DC    F'0'
 * 1 = read 1 block. At 0 offset from beginning of extent
 RFLOCDAT DC    X'06000001'
          DC    X'00000000'
-RFRDDAT  DC    X'00000000'
-         DC    X'00000000'
 *
 *
 *
