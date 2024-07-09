@@ -13,4 +13,8 @@ gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . signal.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . __memmgr.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . pdptest.c
 m4 -I . pdpzpb.m4 >pdpzpb.jcl
-rem call runmvs pdpzpb.jcl output.txt
+call runmvs pdpzpb.jcl output.txt none pdptest.exe
+rem we need to signal to sapstart that this is already loaded
+rem in memory so it doesn't need to attempt to self-load
+rem this offset will change if sapstart ever changes
+zap pdptest.exe 0x23cb 0x01
