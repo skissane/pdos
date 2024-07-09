@@ -121,6 +121,10 @@ extern void (*__userExit[__NATEXIT])(void);
 #include <os2.h>
 #endif
 
+#ifdef __ZPDOSGPB__
+extern int __consdn;
+#endif
+
 #ifdef __WIN32__
 #include <windows.h>
 #endif
@@ -629,6 +633,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     memmgrDefaults(&__memmgr);
     memmgrInit(&__memmgr);
 #endif
+
+#ifdef __ZPDOSGPB__
+    __consdn = 0x10000;
+#if USE_MEMMGR
+    memmgrSupply(&__memmgr, (void *)0x04100000, 32 * 1024 * 1024);
+#endif
+#endif
+
     }
 
 #else
