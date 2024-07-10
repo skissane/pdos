@@ -833,7 +833,7 @@ static void osfopen(void)
          || (strncmp(fnm, "FBA", 3) == 0))
         && (strchr(fnm, ':') != NULL))
     {
-        myfile->devnum = strtol(fnm + 3, NULL, 16);
+        myfile->devnum = strtoul(fnm + 3, NULL, 16);
         if (myfile->devnum < 0x10000)
         {
             myfile->devnum = __getssid(myfile->devnum);
@@ -2037,17 +2037,19 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
     else if (stream->sector > 3)
     {
-        stream->errorInd = 1;
+        /* stream->errorInd = 1; */
         *actualRead = 0;
     }
     else
     {
+        toread = 512; /* +++ need to loop instead */
         tempRead = __rdfba(stream->devnum, stream->sector++, ptr, toread);
         if (tempRead != toread)
         {
             stream->errorInd = 1;
             *actualRead = 0;
         }
+        *actualRead = tempRead;
     }
 #endif
 
