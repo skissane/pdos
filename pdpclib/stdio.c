@@ -801,6 +801,53 @@ char __cwd[FILENAME_MAX] = "";
 
 static void osfopen(void)
 {
+
+#ifdef __ZPDOSGPB__
+    int mode;
+
+    if ((modeType == 1) || (modeType == 4)
+        || (modeType == 7) || (modeType == 10))
+    {
+        mode = 0; /* read */
+    }
+    else if ((modeType == 2) || (modeType == 5)
+             || (modeType == 8) || (modeType == 11))
+    {
+        mode = 1; /* write */
+    }
+    else
+    {
+        mode = 2; /* append or otherwise unsupported */
+        /* because we don't have append mode implemented
+           at the moment on AMIGA, just return with an
+           error immediately */
+        err = 1;
+        errno = 2;
+        return;
+    }
+    if (strcmp(fnm, "!BOOT") == 0)
+    {
+        fnm = "fba1b2:";
+    }
+    if (((strncmp(fnm, "fba", 3) == 0)
+         || (strncmp(fnm, "FBA", 3) == 0))
+        && (strchr(fnm, ':') != NULL))
+    {
+        myfile->devnum = strtol(fnm + 3, NULL, 16);
+        if (myfile->devnum < 0x10000)
+        {
+            myfile->devnum = __getssid(myfile->devnum);
+        }
+        myfile->sector = 0;
+    }
+    else
+    {
+        err = 1;
+        errno = 1;
+    }
+#endif
+
+
 #ifdef __AMIGA__
     int mode;
 
@@ -1988,9 +2035,14 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         }
         *actualRead = tempRead;
     }
+    else if (stream->sector > 3)
+    {
+        stream->errorInd = 1;
+        *actualRead = 0;
+    }
     else
     {
-        tempRead = __rdfba(stream->devnum, ptr, toread);
+        tempRead = __rdfba(stream->devnum, stream->sector++, ptr, toread);
         if (tempRead != toread)
         {
             stream->errorInd = 1;
@@ -2932,9 +2984,15 @@ static void iwrite(FILE *stream,
         }
         tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
     }
+    else if (stream->sector > 3)
+    {
+        stream->errorInd = 1;
+        tempWritten = 0;
+        errno = 1;
+    }
     else
     {
-        tempWritten = __wrfba(stream->devnum, ptr, towrite);
+        tempWritten = __wrfba(stream->devnum, stream->sector++, ptr, towrite);
     }
     if (tempWritten != towrite)
     {
@@ -7898,3 +7956,25 @@ static void dblcvt(double num, int cnvtype, int nwidth,
     strcat(result,work);
     return;
 }
+
+
+#ifdef __ZPDOSGPB__
+int __getssid(int devnum)
+{
+    int ssid = 0x10000;
+    int tempdn;
+
+    while (1)
+    {
+        tempdn = __getdvn(ssid);
+        if (tempdn == 0)
+        {
+            ssid = 0;
+            break;
+        }
+        if (tempdn == devnum) break;
+        ssid++;
+    }
+    return (ssid);
+}
+#endif
