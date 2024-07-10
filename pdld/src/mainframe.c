@@ -590,6 +590,25 @@ void mainframe_write (const char *filename)
     bytearray_write_2_bytes (pos + 4 + 6, 0, BIG_ENDIAN);
     pos += 12;
 
+    /* Repurposed section symbol value field
+     * must be restored so section symbols
+     * have correct values when printing map.
+     */
+    for (of = all_object_files; of; of = of->next) {
+        size_t i;
+
+        for (i = 1; i < of->symbol_count; i++) {
+            struct symbol *symbol = of->symbol_array + i;
+
+            if (!symbol->name && symbol->section_number != i) continue;
+            if (symbol_is_undefined (symbol)) continue;
+            
+            if (symbol->section_number == i) {
+                symbol->value = 0;
+            } 
+        }
+    }
+
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
     }
