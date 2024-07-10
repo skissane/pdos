@@ -198,6 +198,8 @@ typedef unsigned long fpos_t;
 /* also add in room for a RDW and dword align it just to be
    on the safe side */
 #define BUFSIZ 32768
+#elif defined(__ZPDOSGPB__)
+#define BUFSIZ 512
 #elif defined(__CMS__)
 /* similar considerations for CMS as MVS */
 #define BUFSIZ 65544
