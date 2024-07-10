@@ -812,6 +812,37 @@ WFNEWIO  DC    A(X'00040000'+AM64BIT)
 *
 *
 *
+**********************************************************************
+*                                                                    *
+*  @@GETDVN - get device number from an SSID                         *
+*                                                                    *
+*  parameter 1 = SSID                                                *
+*                                                                    *
+*  returns either device number or 0 if error                        *
+*                                                                    *
+**********************************************************************
+         ENTRY @@GETDVN
+@@GETDVN DS    0H
+         SAVE  (14,12),,@@GETDVN
+         LR    R12,R15
+         USING @@GETDVN,R12
+*
+         L     R1,0(R1)    Get parameter one into R1
+* R1 needs to contain subsystem identification word (aka SSID)
+         LA    R15,0
+         STSCH DNSCHIB
+         BNZ   DNRET
+         ICM   R15,B'0011',DNSCHIB+6
+*
+DNRET    DS    0H
+         RETURN (14,12),RC=(15)
+         LTORG
+* SCHIB (Subchannel-Information Block) seems to be 13 fullwords
+DNSCHIB  DS    13F
+         DROP  ,
+*
+*
+*
 ***********************************************************************
 *                                                                     *
 *  GETCLCK - GET THE VALUE OF THE MVS CLOCK TIMER AND MOVE IT TO AN   *
