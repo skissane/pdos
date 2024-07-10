@@ -153,13 +153,15 @@ void mainframe_write (const char *filename)
             }
         }
 
-        if (num_relocs * 8 > 240) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++Relocation Dictionary Record data size exceeds 240 bytes");
-        }
         if (num_relocs) {
-            file_size += SIZEOF_struct_member_data_header_file;
-            file_size += 16 + num_relocs * 8;
+            /* One RLD Record can have at most 256 bytes:
+             * 16 bytes of header + 240 bytes od RLD Data.
+             * One relocation takes up 8 bytes,
+             * so one RLD Record stores at most 30 relocations (30 * 8 = 240).
+             */
+            file_size += (num_relocs / 30 + !!(num_relocs % 30)) * SIZEOF_struct_member_data_header_file;
+            file_size += (num_relocs / 30 + !!(num_relocs % 30)) * 16;
+            file_size += 8 * num_relocs;
         }
 
         /* Member Data Record EOF. */
@@ -533,18 +535,7 @@ void mainframe_write (const char *filename)
     }
     
     if (num_relocs) {
-        /* Member Data. */
-        pos[0] = 0x00;
-        bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-        pos[4 + 4] = current_sector++;
-        bytearray_write_2_bytes (pos + 4 + 6, 16 + num_relocs * 8, BIG_ENDIAN);
-        pos += 12;
-
-        /* Relocation Dictionary Record. */
-        pos[0] = 0x2; /* Identification, 0x2 means Relocation Dictionary Record. */
-        pos[0] |= 0xC; /* Last record in the file. */
-        bytearray_write_2_bytes (pos + 6, num_relocs * 8, BIG_ENDIAN); /* Count-in bytes of relocation data. */
-        pos += 16;
+        size_t reloc_i = 1;
 
         for (section = all_sections; section; section = section->next) {
             struct section_part *part;
@@ -555,6 +546,25 @@ void mainframe_write (const char *filename)
                 for (i = 0; i < part->relocation_count; i++) {
                     struct reloc_entry *reloc;
                     struct symbol *target_symbol;
+
+                    if ((reloc_i - 1) % 30 == 0) {
+                        size_t this_relocs = num_relocs > 30 ? 30 : num_relocs;
+                        /* Member Data. */
+                        pos[0] = 0x00;
+                        bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
+                        pos[4 + 4] = current_sector++;
+                        bytearray_write_2_bytes (pos + 4 + 6, 16 + this_relocs * 8, BIG_ENDIAN);
+                        pos += 12;
+
+                        /* Relocation Dictionary Record. */
+                        pos[0] = 0x2; /* Identification, 0x2 means Relocation Dictionary Record. */
+                        if (num_relocs == this_relocs) {
+                            pos[0] |= 0xC; /* Last record in the file. */
+                        }
+                        bytearray_write_2_bytes (pos + 6, this_relocs * 8, BIG_ENDIAN); /* Count-in bytes of relocation data. */
+                        num_relocs -= this_relocs;
+                        pos += 16;
+                    }
 
                     reloc = part->relocation_array + i;
                     target_symbol = reloc->symbol;
@@ -576,6 +586,7 @@ void mainframe_write (const char *filename)
                     }
                     
                     pos += 8;
+                    reloc_i++;
                 }
             }
         }
