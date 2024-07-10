@@ -644,7 +644,14 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #ifdef __ZPDOSGPB__
-    __consdn = 0x10000;
+    if (__consdn == 0)
+    {
+        __consdn = 0x10000;
+    }
+    else if (__consdn < 0x10000)
+    {
+        __consdn = __getssid(__consdn);
+    }
 #if USE_MEMMGR
     memmgrSupply(&__memmgr, (void *)0x04100000, 32 * 1024 * 1024);
 #endif
