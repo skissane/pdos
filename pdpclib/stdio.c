@@ -2035,21 +2035,35 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         }
         *actualRead = tempRead;
     }
-    else if (stream->sector > 3)
+    else if ((toread % 512) != 0)
     {
-        /* stream->errorInd = 1; */
+        stream->errorInd = 1;
+        *actualRead = 0;
+    }
+    else if (stream->sector >= 954578)
+    {
         *actualRead = 0;
     }
     else
     {
-        toread = 512; /* +++ need to loop instead */
-        tempRead = __rdfba(stream->devnum, stream->sector++, ptr, toread);
-        if (tempRead != toread)
+        *actualRead = 0;
+        while (*actualRead != toread)
         {
-            stream->errorInd = 1;
-            *actualRead = 0;
+            tempRead = __rdfba(stream->devnum,
+                               stream->sector++,
+                               (char *)ptr + *actualRead,
+                               512);
+            if (tempRead != 512)
+            {
+                stream->errorInd = 1;
+                break;
+            }
+            *actualRead += 512;
+            if (stream->sector >= 954578)
+            {
+                break;
+            }
         }
-        *actualRead = tempRead;
     }
 #endif
 
@@ -2986,15 +3000,34 @@ static void iwrite(FILE *stream,
         }
         tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
     }
-    else if (stream->sector > 3)
+    else if ((towrite % 512) != 0)
     {
         stream->errorInd = 1;
         tempWritten = 0;
         errno = 1;
     }
+    /* else if (stream->sector > 3)
+    {
+        stream->errorInd = 1;
+        tempWritten = 0;
+        errno = 1;
+    } */
     else
     {
-        tempWritten = __wrfba(stream->devnum, stream->sector++, ptr, towrite);
+        int zzz;
+        tempWritten = 0;
+        while (tempWritten != towrite)
+        {
+            zzz = __wrfba(stream->devnum,
+                          stream->sector++,
+                          (char *)ptr + tempWritten,
+                          512);
+            if (zzz != 512)
+            {
+                break;
+            }
+            tempWritten += 512;
+        }
     }
     if (tempWritten != towrite)
     {
@@ -4733,7 +4766,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 
     if (whence == SEEK_END)
     {
-        char buf[1000];
+        char buf[1024];
 
         if (stream->mode == __WRITE_MODE)
         {
@@ -4763,6 +4796,9 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
     }
     else
     {
+#ifdef __ZPDOSGPB__
+        stream->sector = newpos / 512;
+#endif
 #ifdef __AMIGA__
         retpos = Seek(stream->hfile, newpos, OFFSET_BEGINNING);
         if (retpos == -1)
