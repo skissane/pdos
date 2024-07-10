@@ -847,7 +847,13 @@ int main(int argc, char **argv)
     }
 
     salone = 0;
-    if (exeloadDoload(&entry_point, prog_name, &p) != 0)
+    if ((strncmp(prog_name, "addr=", 5) == 0)
+        || (strncmp(prog_name, "ADDR=", 5) == 0)
+       )
+    {
+        entry_point = (void *)strtoul(prog_name + 5, NULL, 16);
+    }
+    else if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
         return (EXIT_FAILURE);
@@ -978,6 +984,7 @@ int main(int argc, char **argv)
         printf("valid options are -quiet and -shell\n");
         printf("e.g. bios -shell pdos.exe uc8086.vhd\n");
         printf("e.g. bios pcomm.exe\n");
+        printf("e.g. bios addr=0x1000000\n");
         return (EXIT_FAILURE);
     }
     if (scr == stdin)
