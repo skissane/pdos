@@ -1980,7 +1980,12 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __ZPDOSGPB__
     if (stream->permfile)
     {
-        tempRead = __consrd(/* __consdn, */ ptr, toread);
+        tempRead = __consrd(/* __consdn, */ toread, ptr);
+        if (tempRead >= 0)
+        {
+            *((char *)ptr + tempRead) = '\n';
+            tempRead++;
+        }
         *actualRead = tempRead;
     }
     else
