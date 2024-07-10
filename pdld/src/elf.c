@@ -1215,7 +1215,11 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
             read_struct_Elf32_Sym (&elf_symbol, pos, endianess);
 
             if (elf_symbol.st_name < sym_strtab_size) {
-                symbol->name = xstrdup (sym_strtab + elf_symbol.st_name);
+                if (sym_strtab[elf_symbol.st_name] == '\0') {
+                    symbol->name = xstrdup (UNNAMED_SYMBOL_NAME);
+                } else {
+                    symbol->name = xstrdup (sym_strtab + elf_symbol.st_name);
+                }
             } else ld_fatal_error ("invalid offset into string table");
 
             symbol->value = elf_symbol.st_value;
@@ -1593,7 +1597,11 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
             elf_symbol = (void *)pos;
 
             if (elf_symbol->st_name < sym_strtab_size) {
-                symbol->name = xstrdup (sym_strtab + elf_symbol->st_name);
+                if (sym_strtab[elf_symbol->st_name] == '\0') {
+                    symbol->name = xstrdup (UNNAMED_SYMBOL_NAME);
+                } else {
+                    symbol->name = xstrdup (sym_strtab + elf_symbol->st_name);
+                }
             } else ld_fatal_error ("invalid offset into string table");
 
             symbol->value = elf_symbol->st_value;
