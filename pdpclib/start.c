@@ -428,12 +428,21 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if defined(__gnu_linux__)
     char parmbuf[410];
 #endif
-
+#ifdef __ZPDOSGPB__
+    char parmbuf[65];
+#endif
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
 
     __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
+
+#ifdef __ZPDOSGPB__
+    memcpy(parmbuf, (char *)0x280, 64);
+    parmbuf[64] = '\0';
+    p = parmbuf;
+    argv[0] = "UNKNOWN";
+#endif
 
 #ifdef __AMIGA__
     if (cmdlen >= 0x80000000UL)
