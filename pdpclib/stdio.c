@@ -2997,6 +2997,11 @@ static void iwrite(FILE *stream,
         if (s != NULL)
         {
             towrite = s - (char *)ptr;
+            if (towrite == 0)
+            {
+                towrite = 1;
+                *(char *)ptr = ' ';
+            }
         }
         tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
     }
