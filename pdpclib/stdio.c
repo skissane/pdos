@@ -6657,6 +6657,12 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
                             break;
                         }
                         fulllen = (stream->fbuf[0] << 8) | stream->fbuf[1];
+                        if (fulllen > BUFSIZ)
+                        {
+                            stream->errorInd = 1;
+                            nmemb = 0;
+                            break;
+                        }
                         if (fulllen == 0)
                         {
                             /* here we allow for the possibility that
