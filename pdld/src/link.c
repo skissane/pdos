@@ -347,26 +347,31 @@ static void reloc_generic (struct section_part *part,
         endianess = LITTLE_ENDIAN;
     }
     
-    switch (rel->howto->size) {
-        case 8:
-            /* It should be actually 8 bytes but 64-bit int is not yet available. */
-            bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
-            break;
+    /* If explicit addend is provided (ELF RELA),
+     * the implicit addend should not be used.
+     */
+    if (rel->addend) {
+        result = rel->addend;
+    } else {
+        switch (rel->howto->size) {
+            case 8:
+                /* It should be actually 8 bytes but 64-bit int is not yet available. */
+                bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
+                break;
 
-        case 4:
-            bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
-            break;
+            case 4:
+                bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
+                break;
 
-        case 3:
-            bytearray_read_3_bytes (&result, part->content + rel->offset, endianess);
-            break;
+            case 3:
+                bytearray_read_3_bytes (&result, part->content + rel->offset, endianess);
+                break;
 
-        default:
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "invalid relocation size");
+            default:
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "invalid relocation size");
+        }
     }
-
-    result += rel->addend;
         
     if (rel->howto->pc_relative
         || rel->howto->no_base) {
