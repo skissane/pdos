@@ -1876,7 +1876,9 @@ __PDPCLIB_API__ int fclose(FILE *stream)
     __close(stream->hfile);
 #endif
 #if defined(__MVS__) || defined(__CMS__)
-    if ((stream->mode == __WRITE_MODE) && (stream->upto != stream->fbuf))
+    if ((stream->mode == __WRITE_MODE)
+        && (stream->upto != stream->fbuf)
+        && !stream->errorInd)
     {
         if (stream->reallyu)
         {
@@ -5370,7 +5372,9 @@ __PDPCLIB_API__ FILE *freopen(const char *filename,
 __PDPCLIB_API__ int fflush(FILE *stream)
 {
 #if defined(__MVS__) || defined(__CMS__)
-    if ((stream->mode == __WRITE_MODE) && (stream->upto != stream->fbuf))
+    if ((stream->mode == __WRITE_MODE)
+        && (stream->upto != stream->fbuf)
+        && !stream->errorInd)
     {
         if (stream->reallyu)
         {
