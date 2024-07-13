@@ -21,7 +21,7 @@ all: clean pdos.exe
 
 pdos.exe: $(OBJ1)
   rm -f pdos.exe
-  pdld --oformat mainframe -e __crt0 -o pdos.exe $(OBJ1) $(OBJ2)
+  pdld --oformat mainframe -e __crt0 -o pdos.exe $(OBJ1) ../pdpclib/pdosgeno.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
