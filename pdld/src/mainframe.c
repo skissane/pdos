@@ -186,6 +186,10 @@ void mainframe_write (const char *filename)
         for (section = all_sections; section; section = section->next) {
             if (section->is_bss) continue;
 
+            file_size += (((ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) / CHUNK_SIZE
+                           + !!(ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) % CHUNK_SIZE)) - 1)
+                          * (SIZEOF_struct_member_data_header_file
+                             + 20 /* Dictionary Record. */));
             file_size += ((ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) / CHUNK_SIZE
                            + !!(ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) % CHUNK_SIZE))
                           * (SIZEOF_struct_member_data_header_file
@@ -538,7 +542,11 @@ void mainframe_write (const char *filename)
     bytearray_write_3_bytes (pos + 8 + 1, all_sections ? all_sections->rva : 0, BIG_ENDIAN);
     pos[8 + 4] = 0x40;
     bytearray_write_3_bytes (pos + 8 + 5,
-                             all_sections ? ALIGN (all_sections->total_size, DEFAULT_PART_ALIGNMENT) : 0,
+                             all_sections
+                             ? (ALIGN (all_sections->total_size, DEFAULT_PART_ALIGNMENT) > CHUNK_SIZE
+                                ? CHUNK_SIZE
+                                : ALIGN (all_sections->total_size, DEFAULT_PART_ALIGNMENT))
+                             : 0,
                              BIG_ENDIAN);
     pos += 16;
     /* CESD section symbol indexes and original section sizes (rounded up to 8 bytes). */
@@ -568,7 +576,53 @@ void mainframe_write (const char *filename)
         while (section_size) {
             size_t this_size = section_size > CHUNK_SIZE ? CHUNK_SIZE : section_size;
 
-            pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
+            if (section_size == ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT)) {
+                pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
+            } else {
+                pos = write_member_data_record (pos, 20, &current_sector, &saved_pos);
+
+                /* Dictionary Record.
+                 *
+                 * More complex Relocation Dictionary record
+                 * which signals that the following record is a text record
+                 * (necessary for all text records except the first one
+                 *  because the first one has Control Record).
+                 * It is simpler to have all relocations in one place after all text records,
+                 * so the relocation data are not used here.
+                 */
+                pos[0] = 0x3; /* Identification, 0x3 means Dictionary Record. */
+                if (!num_relocs && this_size == section_size) {
+                    pos[0] |= 0xC; /* There are no more records in the file after the following text record. */
+                }
+                bytearray_write_2_bytes (pos + 4, 4, BIG_ENDIAN); /* Count, in bytes, of control information after relocation data. */
+                bytearray_write_2_bytes (pos + 6, 0, BIG_ENDIAN); /* Count-in bytes of relocation data. */
+                /* Channel Command Word,
+                 * 8-bit channel Command Code (should be 0x6),
+                 * 24-bit address,
+                 * 8-bit flag (should be 0x40),
+                 * 24-bit count.
+                 */
+                pos[8] = 0x06;
+                bytearray_write_3_bytes (pos + 8 + 1,
+                                         section->rva + ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) - section_size,
+                                         BIG_ENDIAN);
+                pos[8 + 4] = 0x40;
+                bytearray_write_3_bytes (pos + 8 + 5,
+                                         this_size,
+                                         BIG_ENDIAN);
+                pos += 16;
+
+                bytearray_write_2_bytes (pos, section->target_index, BIG_ENDIAN); /* CESD index of the section. */
+                bytearray_write_2_bytes (pos + 2, this_size, BIG_ENDIAN); /* Length of the following text record. */
+                pos += 4;
+
+                /* Member Data. */
+                pos[0] = 0x00;
+                bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
+                pos[4 + 4] = current_sector++;
+                bytearray_write_2_bytes (pos + 4 + 6, this_size, BIG_ENDIAN);
+                pos += 12;
+            }
 
             memcpy (pos,
                     tmp + ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) - section_size,
