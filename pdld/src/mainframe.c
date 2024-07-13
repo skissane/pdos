@@ -34,6 +34,10 @@
 #define TRANSLATOR_VERSION 0x0201
 #define TRANSLATION_DATE LINKAGE_DATE
 
+#define CHUNK_SIZE 6144
+/* Member Data Record header size without Block Descriptor Word. */
+#define MEMBER_DATA_RECORD_HEADER_SIZE (8 - 4)
+
 /* Output CESD should not have duplicate symbols,
  * so they need to be marked after being seen.
  * (The symbols are output in the original order,
@@ -45,6 +49,47 @@
 address_type mainframe_get_base_address (void)
 {    
     return 0;
+}
+
+static unsigned char *write_member_data_record (unsigned char *pos,
+                                                size_t size,
+                                                unsigned char *current_sector_p,
+                                                unsigned char **saved_pos_p)
+{
+    if (*saved_pos_p) {
+        bytearray_write_2_bytes (*saved_pos_p + 4, pos - (*saved_pos_p + 4), BIG_ENDIAN);
+    }
+
+    if (size == 0) {
+        /* End-of-file, so just update the current record. */
+        *saved_pos_p = NULL;
+        return pos;
+    }
+    
+    /* Member Data Record (contains the load module), Block Descriptor Word is stripped. */
+    pos -= 4;
+    /* Record Descriptor Word,
+     * length of Member Data Record including this field.
+     *
+     * While it is possible to calculate the length in advance,
+     * saving the position and updating the field later is simpler. 
+     */
+    *saved_pos_p = pos;
+    pos += 8;
+    
+    /* Member Data. */
+    /* Flag, 0x00 is member data. */
+    pos[0] = 0x00;
+    /* Count field, 8 bytes, CCHHRKDD,
+     * CC is sector count, R is sector number,
+     * K (key) is unused, DD is data length (size of sector).
+     */
+    bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
+    pos[4 + 4] = (*current_sector_p)++;
+    bytearray_write_2_bytes (pos + 4 + 6, size, BIG_ENDIAN);
+    pos += 12;
+
+    return pos;
 }
 
 void mainframe_write (const char *filename)
@@ -64,6 +109,7 @@ void mainframe_write (const char *filename)
     size_t num_section_symbols = 0;
     size_t num_relocs = 0;
     unsigned char current_sector = 0x16; /* Arbitrary? */
+    unsigned char *saved_pos = NULL;
 
     if (!(outfile = fopen (filename, "wb"))) {
         ld_error ("cannot open '%s' for writing", filename);
@@ -76,7 +122,7 @@ void mainframe_write (const char *filename)
         file_size += SIZEOF_struct_COPYR1_file - 4;
         file_size += SIZEOF_struct_COPYR2_file - 4;
         file_size += 8 + 276 + 12 - 4; /* Directory Block Record. */
-        file_size += 8 - 4; /* Member Data Record header. */
+        file_size += MEMBER_DATA_RECORD_HEADER_SIZE;
 
         /* Load module, the program itself. */
         /* CESD Records (symbol table). */
@@ -121,7 +167,8 @@ void mainframe_write (const char *filename)
          * and if there are more symbols than 15,
          * multiple CESD Records must be used.
          */
-        file_size += ((cesd_i - 1) / 15 + !!((cesd_i - 1) % 15)) * SIZEOF_struct_member_data_header_file;
+        file_size += ((cesd_i - 1) / 15 + !!((cesd_i - 1) % 15)) * (SIZEOF_struct_member_data_header_file
+                                                                    + MEMBER_DATA_RECORD_HEADER_SIZE);
         cesd_size = ((cesd_i - 1) / 15 + !!((cesd_i - 1) % 15)) * 8;
         cesd_size += 16 * (cesd_i - 1);
         file_size += cesd_size;
@@ -137,10 +184,13 @@ void mainframe_write (const char *filename)
         file_size += control_record_size = 16 + num_section_symbols * 4;
 
         for (section = all_sections; section; section = section->next) {
-            if (!section->is_bss) {
-                file_size += SIZEOF_struct_member_data_header_file;
-                total_section_size_to_write += ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT);
-            }
+            if (section->is_bss) continue;
+
+            file_size += ((ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) / CHUNK_SIZE
+                           + !!(ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) % CHUNK_SIZE))
+                          * (SIZEOF_struct_member_data_header_file
+                             + MEMBER_DATA_RECORD_HEADER_SIZE));
+            total_section_size_to_write += ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT);
         }
         
         file_size += total_section_size_to_write;
@@ -159,7 +209,8 @@ void mainframe_write (const char *filename)
              * One relocation takes up 8 bytes,
              * so one RLD Record stores at most 30 relocations (30 * 8 = 240).
              */
-            file_size += (num_relocs / 30 + !!(num_relocs % 30)) * SIZEOF_struct_member_data_header_file;
+            file_size += (num_relocs / 30 + !!(num_relocs % 30)) * (SIZEOF_struct_member_data_header_file
+                                                                    + MEMBER_DATA_RECORD_HEADER_SIZE);
             file_size += (num_relocs / 30 + !!(num_relocs % 30)) * 16;
             file_size += 8 * num_relocs;
         }
@@ -216,7 +267,7 @@ void mainframe_write (const char *filename)
     pos[8 + 8] = 0x8f; /* debexscl */
     bytearray_write_3_bytes (pos + 8 + 9, 0x0b6644, BIG_ENDIAN); /* debappb */
     /* The following field (debucbad) is an irrelevant memory address
-     * which randomly changes, so it must be ingored when comparing executables.
+     * which randomly changes, so it must be ignored when comparing executables.
      */
     bytearray_write_4_bytes (pos + 8 + 12, 0x049470e8, BIG_ENDIAN); /* debucbad */
     
@@ -297,7 +348,9 @@ void mainframe_write (const char *filename)
     /* PDS2STOR - TOTAL CONTIGUOUS MAIN STORAGE REQUIREMENT OF MODULE */
     bytearray_write_3_bytes (pos + 38 + 14, total_section_size_to_write, BIG_ENDIAN);
     /* PDS2FTBL - LENGTH OF FIRST BLOCK OF TEXT */
-    bytearray_write_2_bytes (pos + 38 + 17, total_section_size_to_write, BIG_ENDIAN);
+    bytearray_write_2_bytes (pos + 38 + 17,
+                             total_section_size_to_write > CHUNK_SIZE ? CHUNK_SIZE : total_section_size_to_write,
+                             BIG_ENDIAN);
     /* PDS2EPA - 24 bit entry point. */
     bytearray_write_3_bytes (pos + 57, ld_state->entry_point, BIG_ENDIAN);
     /* Unknown. */
@@ -307,14 +360,6 @@ void mainframe_write (const char *filename)
     memset (pos + 66, 0xFF, 8);
     
     pos += 8 + 276 + 12;
-
-    /* Member Data Record (contains the load module), Block Descriptor Word is stripped. */
-    pos -= 4;
-    /* Record Descriptor Word,
-     * length of Member Data Record including this field.*/
-    bytearray_write_2_bytes (pos + 4, file_size - (pos + 4 - file), BIG_ENDIAN);
-
-    pos += 8;
     
     /* The load module, CESD Records (symbol table). */
     cesd_i = 1;
@@ -332,18 +377,8 @@ void mainframe_write (const char *filename)
 
             if ((cesd_i - 1) % 15 == 0) {
                 size_t this_size = cesd_size > 248 ? 248 : cesd_size;
-                
-                /* Member Data. */
-                /* Flag, 0x00 is member data. */
-                pos[0] = 0x00;
-                /* Count field, 8 bytes, CCHHRKDD,
-                 * CC is sector count, R is sector number,
-                 * K (key) is unused, DD is data length (size of sector).
-                 */
-                bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-                pos[4 + 4] = current_sector++;
-                bytearray_write_2_bytes (pos + 4 + 6, this_size, BIG_ENDIAN);
-                pos += 12;
+
+                pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
                 
                 /* CESD Record. */
                 pos[0] = 0x20; /* Identification, CESD. */
@@ -518,20 +553,31 @@ void mainframe_write (const char *filename)
                 pos += 4;
             }
         }
-    } 
+    }
 
     for (section = all_sections; section; section = section->next) {
+        unsigned char *tmp;
+        size_t section_size;
+        
         if (section->is_bss) continue;
 
-        /* Member Data. */
-        pos[0] = 0x00;
-        bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-        pos[4 + 4] = current_sector++;
-        bytearray_write_2_bytes (pos + 4 + 6, ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT), BIG_ENDIAN);
-        pos += 12;
-        
-        section_write (section, pos);
-        pos += ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT);
+        tmp = xcalloc (ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT), 1);
+        section_write (section, tmp);
+
+        section_size = ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT);
+        while (section_size) {
+            size_t this_size = section_size > CHUNK_SIZE ? CHUNK_SIZE : section_size;
+
+            pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
+
+            memcpy (pos,
+                    tmp + ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) - section_size,
+                    this_size);
+            section_size -= this_size;
+            pos += this_size;
+        }
+
+        free (tmp);
     }
     
     if (num_relocs) {
@@ -549,12 +595,8 @@ void mainframe_write (const char *filename)
 
                     if ((reloc_i - 1) % 30 == 0) {
                         size_t this_relocs = num_relocs > 30 ? 30 : num_relocs;
-                        /* Member Data. */
-                        pos[0] = 0x00;
-                        bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-                        pos[4 + 4] = current_sector++;
-                        bytearray_write_2_bytes (pos + 4 + 6, 16 + this_relocs * 8, BIG_ENDIAN);
-                        pos += 12;
+
+                        pos = write_member_data_record (pos, 16 + this_relocs * 8, &current_sector, &saved_pos);
 
                         /* Relocation Dictionary Record. */
                         pos[0] = 0x2; /* Identification, 0x2 means Relocation Dictionary Record. */
@@ -600,6 +642,8 @@ void mainframe_write (const char *filename)
     pos[4 + 4] = current_sector++;
     bytearray_write_2_bytes (pos + 4 + 6, 0, BIG_ENDIAN);
     pos += 12;
+
+    pos = write_member_data_record (pos, 0, &current_sector, &saved_pos);
 
     /* Repurposed section symbol value field
      * must be restored so section symbols
