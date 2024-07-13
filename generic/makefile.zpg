@@ -7,21 +7,14 @@ CC=gcc370
 COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOS386__ \
     -D__NOBIVA__ -I . -I../pdpclib -I../src -I../bios -DNEED_MVS
 
-OBJ1=genstart.o pdos.o ..\bios\exeload.o \
-    ..\pdpclib\__memmgr.o ..\src\fat.o
-
-OBJ2=..\pdpclib\stdio.o ..\pdpclib\string.o ..\pdpclib\stdlib.o \
-..\pdpclib\zpgsupa.o ..\pdpclib\start.o ..\pdpclib\time.o \
-..\pdpclib\errno.o ..\pdpclib\assert.o ..\pdpclib\signal.o \
-..\pdpclib\locale.o ..\pdpclib\ctype.o ..\pdpclib\setjmp.o \
-..\pdpclib\math.o ..\pdpclib\pdossupc.o
-
+OBJ=genstart.o pdos.o ..\bios\exeload.o \
+   ..\pdpclib\__memmgr.o ..\src\fat.o
 
 all: clean pdos.exe
 
-pdos.exe: $(OBJ1)
+pdos.exe: $(OBJ)
   rm -f pdos.exe
-  pdld --oformat mainframe -e __crt0 -o pdos.exe $(OBJ1) ../pdpclib/pdosgeno.a
+  pdld --oformat mainframe -e __crt0 -o pdos.exe $(OBJ) ../pdpclib/pdosgeno.a
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
