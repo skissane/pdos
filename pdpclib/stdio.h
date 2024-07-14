@@ -99,6 +99,7 @@ typedef struct
 #endif
 #if defined(__ZPDOSGPB__)
     unsigned int devnum;
+    unsigned int devtype;
     unsigned long sector;
 #endif
 
