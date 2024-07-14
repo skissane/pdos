@@ -146,9 +146,13 @@ int main(int argc, char **argv)
         bios->Xprintf("failed to do promised malloc\n");
         return (EXIT_FAILURE);
     }
+
     /* C library will have done this already */
     /* for some implementations maybe? */
     /* no, I don't think any implementations will do this */
+    /* They probably should - zpdos is trying that */
+    /* Not clear how anything couldn't */
+
 #ifndef DONT_MM
     memmgrDefaults(&__memmgr);
     memmgrInit(&__memmgr);
