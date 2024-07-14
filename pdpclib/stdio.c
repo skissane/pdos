@@ -838,7 +838,19 @@ static void osfopen(void)
         {
             myfile->devnum = __getssid(myfile->devnum);
         }
+        myfile->devtype = 1;
         myfile->sector = 0;
+    }
+    else if (((strncmp(fnm, "tap", 3) == 0)
+              || (strncmp(fnm, "TAP", 3) == 0))
+             && (strchr(fnm, ':') != NULL))
+    {
+        myfile->devnum = strtoul(fnm + 3, NULL, 16);
+        if (myfile->devnum < 0x10000)
+        {
+            myfile->devnum = __getssid(myfile->devnum);
+        }
+        myfile->devtype = 2;
     }
     else
     {
@@ -2037,6 +2049,19 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         }
         *actualRead = tempRead;
     }
+    else if (stream->devtype == 2)
+    {
+        tempRead = __rdtape(stream->devnum, ptr, toread);
+        if (tempRead >= 0)
+        {
+            *actualRead = tempRead;
+        }
+        else
+        {
+            stream->errorInd = 1;
+            *actualRead = 0;
+        }
+    }
     else if ((toread % 512) != 0)
     {
         stream->errorInd = 1;
@@ -3006,6 +3031,16 @@ static void iwrite(FILE *stream,
             }
         }
         tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
+    }
+    else if (stream->devtype == 2)
+    {
+        tempWritten = __wrtape(stream->devnum, ptr, towrite);
+        if (tempWritten != towrite)
+        {
+            stream->errorInd = 1;
+            tempWritten = 0;
+            errno = 1;
+        }
     }
     else if ((towrite % 512) != 0)
     {
