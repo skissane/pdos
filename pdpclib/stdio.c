@@ -2051,15 +2051,23 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
     else if (stream->devtype == 2)
     {
-        tempRead = __rdtape(stream->devnum, ptr, toread);
-        if (tempRead >= 0)
+        *actualRead = 0;
+        /* this will only work if blocks are 6144 bytes long
+           each, other than the last */
+        while (*actualRead < toread)
         {
-            *actualRead = tempRead;
-        }
-        else
-        {
-            stream->errorInd = 1;
-            *actualRead = 0;
+            tempRead = __rdtape(stream->devnum,
+                                (char *)ptr + *actualRead,
+                                6144);
+            if (tempRead > 0)
+            {
+                *actualRead += tempRead;
+            }
+            else
+            {
+                /* any error is treated as EOF for now */
+                break;
+            }
         }
     }
     else if ((toread % 512) != 0)
