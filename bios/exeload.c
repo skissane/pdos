@@ -5374,7 +5374,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
    http://publibz.boulder.ibm.com/epubs/pdf/dgt2u140.pdf
 */
 
-#define PE_DEBUG 1
+#define PE_DEBUG 0
 
 static int fixPE(unsigned char *buf,
                  size_t *len,
