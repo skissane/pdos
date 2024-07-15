@@ -5699,8 +5699,8 @@ static int processRLD(unsigned char *buf,
             return (-1);
         }
         a = ((unsigned long)r[0] << 16)
-            || ((unsigned long)r[1] << 8)
-            || r[2];
+            | ((unsigned long)r[1] << 8)
+            | r[2];
         /* +++ need bounds checking on this OS code */
         /* printf("need to zap %d bytes at offset %6x\n", ll, a); */
         zaploc = (unsigned int *)(buf + a);
