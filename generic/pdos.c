@@ -365,7 +365,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
 
 int PosCloseFile(int fno)
 {
-    /* printf("got request to close\n"); */
+    /* printf("got request to close %d\n", fno); */
     if (handles[fno].fptr)
     {
         bios->Xfclose(handles[fno].fptr);
@@ -477,9 +477,15 @@ int PosWriteFile(int fh,
 
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
-    /* bios->fseek((void *)handle, offset, SEEK_SET);
-    *newpos = offset; */
-    *newpos = fatSeek(&fat, &handles[handle].ff, offset, whence);
+    if (handles[handle].fptr != NULL)
+    {
+        bios->Xfseek((void *)handle, offset, SEEK_SET);
+        *newpos = offset;
+    }
+    else
+    {
+        *newpos = fatSeek(&fat, &handles[handle].ff, offset, whence);
+    }
     return (0);
 }
 
