@@ -695,7 +695,7 @@ __PDPCLIB_API__ void free(void *ptr)
 #endif
 
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) && !defined(USE_MEMMGR)
 #if defined(__32BIT__) && !defined(NOLIBALLOC)
     __free(ptr);
 #else
