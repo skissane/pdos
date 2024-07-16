@@ -335,7 +335,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
         name++;
         bios_file = 1;
     }
-    else if (strchr(name, ':') == 0)
+    else if (strchr(name, ':') != NULL)
     {
         /* this allows a device to be opened, but we need better
            logic for when we want to reference a file on an FAT
