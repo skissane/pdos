@@ -258,6 +258,12 @@ int main(int argc, char **argv)
                {
                    *p = '\0';
                }
+               strcpy(mycmdline, pcomm_name);
+               p = strchr(pcomm_name, ' ');
+               if (p != NULL)
+               {
+                   *p = '\0';
+               }
                printf("shell name is %s\n", pcomm_name);
             }
             bios->Xfclose(fp);
