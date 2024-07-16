@@ -668,7 +668,8 @@ void mainframe_write (const char *filename)
                         target_symbol = symbol_find (target_symbol->name);
                     }
                     /* CESD index for target symbol (obtained from repurposed symbol size field). */
-                    if (target_symbol->section_number == target_symbol - target_symbol->part->of->symbol_array) {
+                    if (target_symbol->part
+                        && target_symbol->section_number == target_symbol - target_symbol->part->of->symbol_array) {
                         /* Section symbols have their CESD index stored in value field. */
                         bytearray_write_2_bytes (pos, target_symbol->value, BIG_ENDIAN);
                     } else {
