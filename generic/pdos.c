@@ -133,6 +133,10 @@ int main(int argc, char **argv)
     int ret;
     unsigned char lbabuf[4];
     void *mem_base;
+    int argupto = 1;
+    int havedisk = 0;
+    char *config = NULL;
+    char *pcomm_name = ":pcomm.exe";
 
     __genstart = 1;
     os.main = &__genmain;
@@ -165,12 +169,21 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         printf("must provide disk name as a parameter\n");
-        printf("this might change in the future\n");
+        printf("or at least -c config.sys or whatever\n");
         bios->free(mem_base);
         return (EXIT_FAILURE);
     }
     printf("before printing parm\n");
     printf("argv1 is %s\n", argv[1]);
+    if ((strcmp(argv[1], "-c") == 0)
+        || (strcmp(argv[1], "-C") == 0)
+       )
+    {
+        config = argv[2];
+        argupto += 2;
+    }
+    if (argc > argupto)
+    {
     printf("about to open\n");
     /* for (;;) ; */
     disk = bios->Xfopen(argv[1], "r+b");
@@ -221,7 +234,36 @@ int main(int argc, char **argv)
     printf("fat type is %.5s\n", &sect[0x36]);
     fatDefaults(&fat);
     fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
-    if (exeloadDoload(&entry_point, ":pcomm.exe", &p) != 0)
+    }
+
+
+    if (config != NULL)
+    {
+        if (strchr(config, ':') != NULL)
+        {
+            FILE *fp;
+            char buf[100];
+            char *p;
+
+            printf("opening %s\n", config);
+            fp = bios->Xfopen(config, "r");
+            bios->Xfgets(buf, sizeof buf, fp);
+            p = strchr(buf, '=');
+            if (p != NULL)
+            {
+               p++;
+               pcomm_name = p;
+               p = strchr(pcomm_name, '\n');
+               if (p != NULL)
+               {
+                   *p = '\0';
+               }
+               printf("shell name is %s\n", pcomm_name);
+            }
+            bios->Xfclose(fp);
+        }
+    }
+    if (exeloadDoload(&entry_point, pcomm_name, &p) != 0)
     {
         printf("failed to load program\n");
         for (;;) ;
@@ -277,6 +319,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
 {
     int ret;
     int x;
+    int bios_file = 0;
 
     printf("got request to open %s\n", name);
     for (x = 3; x < MAX_HANDLE; x++)
@@ -289,7 +332,19 @@ int PosOpenFile(const char *name, int mode, int *handle)
     }
     if (name[0] == ':')
     {
-        handles[x].fptr = bios->Xfopen(name + 1, "rb");
+        name++;
+        bios_file = 1;
+    }
+    else if (strchr(name, ':') == 0)
+    {
+        /* this allows a device to be opened, but we need better
+           logic for when we want to reference a file on an FAT
+           drive */
+        bios_file = 1;
+    }
+    if (bios_file)
+    {
+        handles[x].fptr = bios->Xfopen(name, "rb");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
@@ -385,6 +440,7 @@ int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
         if (handles[fh].fptr != NULL)
         {
             *readbytes = bios->Xfread(data, 1, bytes, handles[fh].fptr);
+            /* printf("got %d bytes from bios\n", *readbytes); */
         }
         else
         {
