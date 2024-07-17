@@ -1,7 +1,8 @@
 # This builds a PDOS-generic executable for the mainframe
 
 CC=gcc370
-COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOSGEN__ \
+   -DHAVE_DIR -D__NOBIVA__ -I . -I../pdpclib -I../src
 
 all: clean pcomm.exe
 
