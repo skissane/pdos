@@ -827,7 +827,7 @@ static void osfopen(void)
     }
     if (strcmp(fnm, "!BOOT") == 0)
     {
-        fnm = "fba1b2:";
+        fnm = "fba1b1:";
     }
     if (((strncmp(fnm, "fba", 3) == 0)
          || (strncmp(fnm, "FBA", 3) == 0))
