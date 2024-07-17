@@ -193,7 +193,19 @@ int main(void)
         }
         else
         {
-            printf("unknown command\n");
+            POSEXEC_PARMBLOCK pb = { 0 };
+            char progname[50];
+
+            strncpy(progname, buf, sizeof progname);
+            progname[49] = '\0';
+            p = strchr(progname, ' ');
+            if (p != NULL)
+            {
+                *p = '\0';
+            }
+            pb.cmdtail = buf;
+            PosExec(progname, &pb);
+            /* printf("unknown command\n"); */
         }
     }
     return (0);

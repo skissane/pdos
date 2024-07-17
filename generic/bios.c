@@ -189,7 +189,7 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   rand, srand, strftime, puts,
   pow, modf, log, log10, atan2, fabs, exp, sqrt,
   strtok, atol, mktime, vprintf, ferror, putc, feof, getc,
-  getchar, putchar,
+  getchar, putchar, 0 /* PosExec */,
 };
 
 static int (*genstart)(OS *bios);

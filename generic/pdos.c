@@ -73,7 +73,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   rand, srand, strftime, puts,
   pow, modf, log, log10, atan2, fabs, exp, sqrt,
   strtok, atol, mktime, vprintf, ferror, putc, feof, getc,
-  getchar, putchar,
+  getchar, putchar, PosExec,
 };
 
 static int (*pgastart)(OS *os);
@@ -106,6 +106,10 @@ static struct {
     FATFILE ff;
 } handles[MAX_HANDLE];
 
+
+static void runexe(char *prog_name);
+
+
 static void readLogical(void *diskptr, unsigned long sector, void *buf);
 static void writeLogical(void *diskptr, unsigned long sector, void *buf);
 static void getDateTime(FAT_DATETIME *ptr);
@@ -128,9 +132,6 @@ int biosmain(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    unsigned char *entry_point;
-    unsigned char *p = NULL;
-    int ret;
     unsigned char lbabuf[4];
     void *mem_base;
     int argupto = 1;
@@ -269,11 +270,30 @@ int main(int argc, char **argv)
             bios->Xfclose(fp);
         }
     }
-    if (exeloadDoload(&entry_point, pcomm_name, &p) != 0)
+    runexe(pcomm_name);
+    /* we need to rely on the C library to do the termination when it
+       has finished closing files */
+#ifndef DONT_MM
+    memmgrTerm(&__memmgr);
+#endif
+    return (0);
+}
+
+
+
+/* mycmdline must have been populated first */
+
+static void runexe(char *prog_name)
+{
+    unsigned char *entry_point;
+    unsigned char *p = NULL;
+    int ret;
+
+    if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load program\n");
         for (;;) ;
-        return (EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     pgastart = (void *)entry_point;
 
@@ -309,17 +329,13 @@ int main(int argc, char **argv)
 #endif
 
 
-
     printf("about to call app\n");
     ret = pgastart(&os);
     printf("return from app is %d\n", ret);
-    /* we need to rely on the C library to do the termination when it
-       has finished closing files */
-#ifndef DONT_MM
-    memmgrTerm(&__memmgr);
-#endif
-    return (0);
+    return;
 }
+
+
 
 int PosOpenFile(const char *name, int mode, int *handle)
 {
@@ -557,6 +573,8 @@ int PosRenameFile(const char *old, const char *new)
 
 int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
+    strcpy(mycmdline, parmblock->cmdtail);
+    runexe(prog);
     return (0);
 }
 

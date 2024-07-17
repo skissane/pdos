@@ -28,6 +28,8 @@
 #include <stdarg.h>
 #include <math.h>
 
+#include <pos.h>
+
 typedef struct {
     /* a BIOS may not have this, as it implies the existence of a
        complete C library, not typical for a real BIOS. Even an OS
@@ -71,16 +73,16 @@ typedef struct {
     int (*Xfputc)(int c, FILE *stream);
     int (*Xfflush)(FILE *stream);
     int (*Xsetvbuf)(FILE *stream, char *buf, int mode, size_t size);
-    void *(*PosGetDTA)(void);
-    int (*PosFindFirst)(char *pat, int attrib);
-    int (*PosFindNext)(void);
-    int (*PosGetDeviceInformation)(int handle, unsigned int *devinfo);
-    int (*PosSetDeviceInformation)(int handle, unsigned int devinfo);
+    void *(*XPosGetDTA)(void);
+    int (*XPosFindFirst)(char *pat, int attrib);
+    int (*XPosFindNext)(void);
+    int (*XPosGetDeviceInformation)(int handle, unsigned int *devinfo);
+    int (*XPosSetDeviceInformation)(int handle, unsigned int devinfo);
     char *(*Xctime)(const time_t *timer);
     time_t (*Xtime)(time_t *timer);
-    int (*PosChangeDir)(const char *to);
-    int (*PosMakeDir)(const char *dname);
-    int (*PosRemoveDir)(const char *dname);
+    int (*XPosChangeDir)(const char *to);
+    int (*XPosMakeDir)(const char *dname);
+    int (*XPosRemoveDir)(const char *dname);
     int (*Xremove)(const char *filename);
     void *(*memcpy)(void *s1, const void *s2, size_t n);
     char *(*strncpy)(char *s1, const char *s2, size_t n);
@@ -194,6 +196,7 @@ typedef struct {
     int (*Xgetc)(FILE *stream);
     int (*Xgetchar)(void);
     int (*Xputchar)(int c);
+    int (*XPosExec)(char *prog_name, POSEXEC_PARMBLOCK *pb);
 } OS;
 
 extern OS *__os;

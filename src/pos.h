@@ -536,12 +536,13 @@ typedef struct {
 #if defined(__PDOSGEN__)
 #include <__os.h>
 
-#define PosGetDTA __os->PosGetDTA
-#define PosFindFirst __os->PosFindFirst
-#define PosFindNext __os->PosFindNext
-#define PosChangeDir __os->PosChangeDir
-#define PosMakeDir __os->PosMakeDir
-#define PosRemoveDir __os->PosRemoveDir
+#define PosGetDTA __os->XPosGetDTA
+#define PosFindFirst __os->XPosFindFirst
+#define PosFindNext __os->XPosFindNext
+#define PosChangeDir __os->XPosChangeDir
+#define PosMakeDir __os->XPosMakeDir
+#define PosRemoveDir __os->XPosRemoveDir
+#define PosExec __os->XPosExec
 #endif
 
 
