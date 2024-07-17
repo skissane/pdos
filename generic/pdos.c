@@ -187,10 +187,10 @@ int main(int argc, char **argv)
     {
     printf("about to open\n");
     /* for (;;) ; */
-    disk = bios->Xfopen(argv[1], "r+b");
+    disk = bios->Xfopen(argv[argupto], "r+b");
     if (disk == NULL)
     {
-        printf("can't open hard disk\n");
+        printf("can't open hard disk %s\n", argv[argupto]);
         return (EXIT_FAILURE);
     }
     printf("done open\n");
