@@ -404,6 +404,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 {
     int ret;
     int x;
+    int bios_file = 0;
 
     printf("got request to create %s\n", name);
     for (x = 3; x < MAX_HANDLE; x++)
@@ -416,7 +417,19 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     }
     if (name[0] == ':')
     {
-        handles[x].fptr = bios->Xfopen(name + 1, "wb");
+        name++;
+        bios_file = 1;
+    }
+    else if (strchr(name, ':') != NULL)
+    {
+        /* this allows a device to be opened, but we need better
+           logic for when we want to reference a file on an FAT
+           drive */
+        bios_file = 1;
+    }
+    if (bios_file)
+    {
+        handles[x].fptr = bios->Xfopen(name, "wb");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
@@ -501,7 +514,7 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
     if (handles[handle].fptr != NULL)
     {
-        bios->Xfseek((void *)handle, offset, SEEK_SET);
+        bios->Xfseek(handles[handle].fptr, offset, SEEK_SET);
         *newpos = offset;
     }
     else
