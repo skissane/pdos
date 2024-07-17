@@ -4800,11 +4800,15 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 
     stream = __INTFILE(stream);
 
+#ifdef __ZPDOSGPB__
+    oldpos = stream->sector * 512;
+#else
     oldpos = stream->bufStartR + (stream->upto - stream->fbuf);
     if (stream->mode == __WRITE_MODE)
     {
         fflush(stream);
     }
+#endif
     if (whence == SEEK_SET)
     {
         newpos = offset;
@@ -4816,7 +4820,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 
     if (whence == SEEK_END)
     {
-        char buf[1024];
+        char buf[512];
 
         if (stream->mode == __WRITE_MODE)
         {
@@ -4829,6 +4833,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         newpos = ftell(stream);
         fseek(stream, newpos, SEEK_SET);
     }
+#ifndef __ZPDOSGPB__
     else if ((newpos >= stream->bufStartR)
         /* when seeking repeatedly to the same location, the new position
            will be pointing to the end of the buffer, so we want <= not < */
@@ -4844,6 +4849,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
     {
         stream->upto = stream->fbuf + (size_t)(newpos - stream->bufStartR);
     }
+#endif
     else
     {
 #ifdef __ZPDOSGPB__
