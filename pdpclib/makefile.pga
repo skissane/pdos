@@ -1,7 +1,8 @@
 # This builds a PDOS-generic executable
 
 CC=gccwin
-COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../generic
+COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ -D__PDOSGEN__ \
+    -D__NOBIVA__ -I . -I../generic -I../src
 
 all: clean pdptest.exe
 
