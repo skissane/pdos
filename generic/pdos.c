@@ -92,6 +92,9 @@ static unsigned char sect[SECTSZ];
 static FAT fat;
 static FATFILE fatfile;
 
+static void *mem_base;
+
+
 #ifdef __SUBC__
 static char myname[1];
 #else
@@ -133,7 +136,6 @@ int biosmain(int argc, char **argv)
 int main(int argc, char **argv)
 {
     unsigned char lbabuf[4];
-    void *mem_base;
     int argupto = 1;
     int havedisk = 0;
     char *config = NULL;
