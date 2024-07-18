@@ -203,7 +203,7 @@ int main(void)
             {
                 *p = '\0';
             }
-            pb.cmdtail = buf;
+            pb.cmdtail = (unsigned char *)buf;
             PosExec(progname, &pb);
             /* printf("unknown command\n"); */
         }
