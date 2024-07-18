@@ -1,7 +1,9 @@
 # This builds a PDOS-generic executable for an ARM system
 
 CC=gccarm
-COPTS=-msoft-float -fno-builtin -fno-common -mapcs-32 -S -O0 -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__ -I . -I../generic
+COPTS=-msoft-float -fno-builtin -fno-common -mapcs-32 -S -O0 \
+    -D__UNOPT__ -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ \
+    -D__NOBIVA__ -I . -I../generic -I../src
 LD=ldarm
 AS=asarm
 
