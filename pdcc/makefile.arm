@@ -16,7 +16,10 @@ LD=ldarm -N -e ___crt0
 LDFLAGS=
 AS=asarm
 AR=ararm
-COPTS=-S $(CFLAGS) -mapcs-32 -fno-builtin -fno-common -ansi -Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -I../generic -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -mapcs-32 -fno-builtin -fno-common -ansi \
+    -Icclib -Icclib/include -Icpplib -Icpplib/include \
+    -I. -I../pdpclib -I../generic -I../src \
+    -D__PDOS386__ -D__PDOSGEN__ -D__ARMGEN__ -D__NOBIVA__
 
 all: clean pdcc.exe
 
