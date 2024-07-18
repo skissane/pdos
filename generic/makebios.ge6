@@ -21,7 +21,7 @@ AR=xar
 LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
 COPTS=-S -O2 -D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
-    -I../pdpclib -I../bios -I. -DNEED_ELF -D__LONG64__ \
+    -I../pdpclib -I../bios -I../src -I. -DNEED_ELF -D__LONG64__ \
     -D__W64SHELL__ -fno-builtin -fno-common -D__NO_LONG_LONG__ \
     -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64HACK -D__USEBIVA__
 
