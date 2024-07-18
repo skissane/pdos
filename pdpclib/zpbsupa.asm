@@ -630,7 +630,7 @@ RFLOCDAT DC    X'06000001'
 *
          DS    0D
 * I/O, machine check, EC, wait, DAT on
-RFWTNOER DC    A(X'060E0000')
+RFWTNOER DC    A(X'060E0000'+AM64BIT)
          DC    A(AMBIT)  no error
 *
          AIF   ('&XSYS' EQ 'ZARCH').RFZNIO
@@ -792,7 +792,7 @@ WFLOCDAT DC    X'01000001'
 *
          DS    0D
 * I/O, machine check, EC, wait, DAT on
-WFWTNOER DC    A(X'060E0000')
+WFWTNOER DC    A(X'060E0000'+AM64BIT)
          DC    A(AMBIT)  no error
 *
          AIF   ('&XSYS' EQ 'ZARCH').WFZNIO
