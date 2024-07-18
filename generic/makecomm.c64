@@ -1,5 +1,6 @@
 # This builds a PDOS-generic executable
-# No need to build a library, this is self-contained
+# makefile.ge6 in pdpclib needs to be run first
+# in order to get string.obj
 
 CC=cc64
 PP=-D__MSC__ -D__64BIT__ -D__PDOS386__ -DHAVE_DIR -D__PDOSGEN__ -DNEED_EXIT -I. -I../pdpclib -I../src
@@ -12,7 +13,7 @@ pcomm.exe: ../pdpclib/pgastart.o pcomm.o
 #  link -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
 #  x86_64-w64-mingw32-ld -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
 #  link /LARGEADDRESSAWARE:NO -nologo -fixed:no -nodefaultlib -entry:__crt0 -out:pcomm.exe ../pdpclib/pgastart.o pcomm.o
-  pdld --no-insert-timestamp -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  pdld --no-insert-timestamp -s -e __crt0 -nostdlib -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.obj
 
 .c.o:
   pdcc -E $(PP) -o $*.i $<
