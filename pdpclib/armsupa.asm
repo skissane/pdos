@@ -1110,25 +1110,25 @@ ___cacheflush:
 #___subsf3:
 #____subsf3:
 
-.globl ___subdf3
-.globl ____subdf33
-___subdf3:
-____subdf3:
+#.globl ___subdf3
+#.globl ____subdf3
+#___subdf3:
+#____subdf3:
 
 #.globl ___mulsf3
-#.globl ____mulsf33
+#.globl ____mulsf3
 #___mulsf3:
 #____mulsf3:
 
-.globl ___muldf3
-.globl ____muldf3
-___muldf3:
-____muldf3:
+#.globl ___muldf3
+#.globl ____muldf3
+#___muldf3:
+#____muldf3:
 
-.globl ___divdf3
-.globl ____divdf3
-___divdf3:
-____divsd3:
+#.globl ___divdf3
+#.globl ____divdf3
+#___divdf3:
+#____divsd3:
 
 #.globl ___divsf3
 #.globl ____divsf33
@@ -1145,20 +1145,20 @@ ____divsd3:
 #___gtsf2:
 #____gtsf2:
 
-.globl ___gtdf2
-.globl ____gtdf2
-___gtdf2:
-____gtdf2:
+#.globl ___gtdf2
+#.globl ____gtdf2
+#___gtdf2:
+#____gtdf2:
 
 #.globl ___ltsf2
 #.globl ____ltsf2
 #___ltsf2:
 #____ltsf2:
 
-.globl ___ltdf2
-.globl ____ltdf2
-___ltdf2:
-____ltdf2:
+#.globl ___ltdf2
+#.globl ____ltdf2
+#___ltdf2:
+#____ltdf2:
 
 #.globl ___nesf2
 #.globl ____nesf2
@@ -1170,10 +1170,10 @@ ____ltdf2:
 #___eqsf2:
 #____eqsf2:
 
-.globl ___eqdf2
-.globl ____eqdf2
-___eqdf2:
-____eqdf2:
+#.globl ___eqdf2
+#.globl ____eqdf2
+#___eqdf2:
+#____eqdf2:
 
 #.globl ___fixsfsi
 #.globl ____fixsfsi
@@ -1185,39 +1185,39 @@ ____eqdf2:
 #___fixdfsi:
 #____fixdfsi:
 
-.globl ___extendsfdf2
-.globl ____extendsfdf2
-___extendsfdf2:
-____extendsfdf2:
+#.globl ___extendsfdf2
+#.globl ____extendsfdf2
+#___extendsfdf2:
+#____extendsfdf2:
 
-.globl ___floatsidf
-.globl ____floatsidf
-___floatsidf:
-____floatsidf:
+#.globl ___floatsidf
+#.globl ____floatsidf
+#___floatsidf:
+#____floatsidf:
 
-.globl ___truncdfsf2
-.globl ____truncdfsf2
-___truncdfsf2:
-____truncdfsf2:
+#.globl ___truncdfsf2
+#.globl ____truncdfsf2
+#___truncdfsf2:
+#____truncdfsf2:
 
-.globl ___negdf2
-.globl ____negdf2
-___negdf2:
-____negdf2:
+#.globl ___negdf2
+#.globl ____negdf2
+#___negdf2:
+#____negdf2:
 
-.globl ___nedf2
-.globl ____nedf2
-___nedf2:
-____nedf2:
+#.globl ___nedf2
+#.globl ____nedf2
+#___nedf2:
+#____nedf2:
 
-.globl ___ledf2
-.globl ____ledf2
-___ledf2:
-____ledf2:
+#.globl ___ledf2
+#.globl ____ledf2
+#___ledf2:
+#____ledf2:
 
-.globl ___gedf2
-.globl ____gedf2
-___gedf2:
-____gedf2:
+#.globl ___gedf2
+#.globl ____gedf2
+#___gedf2:
+#____gedf2:
 
-mov pc,lr
+#mov pc,lr
