@@ -366,6 +366,23 @@ static int exeloadLoadMVS(unsigned char **entry_point,
     }
     rewind(fp);
     readbytes = fread(*loadloc, 1, 1000000, fp);
+    if ((readbytes == 1000000) && didalloc)
+    {
+        size_t newsize;
+
+        fseek(fp, 0, SEEK_SET);
+        newsize = ftell(fp);
+        printf("newsize %u\n", newsize);
+        newsize = 5000000;
+        free(*loadloc);
+        *loadloc = malloc(newsize);
+        if (*loadloc == NULL)
+        {
+            return (1);
+        }
+        rewind(fp);
+        readbytes = fread(*loadloc, 1, newsize, fp);
+    }
     /* printf("read %d bytes\n", (int)readbytes); */
 
     /* the last parameter is an unsigned long because the code allows
