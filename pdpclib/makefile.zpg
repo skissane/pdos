@@ -1,21 +1,24 @@
 # This builds a PDOS-generic executable for the mainframe
 
+# We don't normally need the assembler support file, but we build
+# it here for others to use
+
 CC=gcc370
 COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOSGEN__ \
     -D__NOBIVA__ -I . -I../generic -I../src
 
 all: clean pdptest.exe
 
-pdptest.exe: pgastart.o pdptest.o
+pdptest.exe: pgastart.o pdptest.o zpgsupa.o
   rm -f pdptest.exe
-  pdld --oformat mainframe -e __crt0 -o pdptest.exe pgastart.o pdptest.o
+  pdld --oformat mainframe -e __crt0 -o pdptest.exe pgastart.o pdptest.o zpgsupa.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
   as370 -o $@ $*.s
   rm -f $*.s
 
-.asm.obj:
+.asm.o:
   as370 -o $@ $<
 
 clean:
