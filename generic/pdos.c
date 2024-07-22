@@ -20,6 +20,7 @@
 #include <locale.h>
 #include <ctype.h>
 #include <assert.h>
+#include <setjmp.h>
 
 #include <pos.h>
 
@@ -73,7 +74,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   rand, srand, strftime, puts,
   pow, modf, log, log10, atan2, fabs, exp, sqrt,
   strtok, atol, mktime, vprintf, ferror, putc, feof, getc,
-  getchar, putchar, PosExec,
+  getchar, putchar, PosExec, longjmp,
 };
 
 static int (*pgastart)(OS *os);

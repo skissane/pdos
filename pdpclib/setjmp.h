@@ -146,4 +146,11 @@ int __setj(jmp_buf env);
 int _setjmp(jmp_buf env);
 #endif
 
+#if defined(__PDOSGEN__)
+#include <__os.h>
+
+#define longjmp __os->Xlongjmp
+#endif
+
+
 #endif

@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
+#include <setjmp.h>
 
 #include <pos.h>
 
@@ -197,6 +198,7 @@ typedef struct {
     int (*Xgetchar)(void);
     int (*Xputchar)(int c);
     int (*XPosExec)(char *prog_name, POSEXEC_PARMBLOCK *pb);
+    void (*Xlongjmp)(jmp_buf env, int val);
 } OS;
 
 extern OS *__os;
