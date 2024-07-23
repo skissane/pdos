@@ -524,7 +524,7 @@ int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
     {
         *newpos = fatSeek(&fat, &handles[handle].ff, offset, whence);
     }
-    return (0);
+    return (*newpos);
 }
 
 void *PosAllocMem(unsigned int size, unsigned int flags)
