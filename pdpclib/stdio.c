@@ -4959,7 +4959,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 #endif
 #ifdef __MSDOS__
         ret = __seek(stream->hfile, newpos, SEEK_SET);
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || defined(__ARM__) || defined(__PDOS386__)
         if (ret == -1) return (ret);
 #else
         if (ret) return (ret);
