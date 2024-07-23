@@ -332,9 +332,9 @@ static void runexe(char *prog_name)
 #endif
 
 
-    printf("about to call app\n");
+    printf("about to call app at address %p\n", pgastart);
     ret = pgastart(&os);
-    printf("return from app is %d\n", ret);
+    printf("return from app is hex %x\n", ret);
     return;
 }
 
