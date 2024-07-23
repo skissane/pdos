@@ -370,10 +370,8 @@ static int exeloadLoadMVS(unsigned char **entry_point,
     {
         size_t newsize;
 
-        fseek(fp, 0, SEEK_SET);
+        fseek(fp, 0, SEEK_END);
         newsize = ftell(fp);
-        printf("newsize %u\n", newsize);
-        newsize = 5000000;
         free(*loadloc);
         *loadloc = malloc(newsize);
         if (*loadloc == NULL)
