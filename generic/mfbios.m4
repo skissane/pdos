@@ -117,6 +117,10 @@ undivert(signal.s)dnl
 //SYSIN  DD  *
 undivert(__memmgr.s)dnl
 /*
+//ZPBSUPC  EXEC PDPASM
+//SYSIN  DD  *
+undivert(zpbsupc.s)dnl
+/*
 //BIOS EXEC PDPASM
 //SYSIN  DD  *
 undivert(bios.s)dnl
