@@ -884,6 +884,48 @@ DNSCHIB  DS    13F
 *
 **********************************************************************
 *                                                                    *
+*  LCREG1 - load control register 1                                  *
+*                                                                    *
+*  parameter 1 = value                                               *
+*                                                                    *
+**********************************************************************
+         ENTRY @@LCREG1
+@@LCREG1 DS    0H
+         SAVE  (14,12),,@@LCREG1
+         LR    R12,R15
+         USING @@LCREG1,R12
+*
+         LCTL  1,1,0(R1)
+*
+         LA    R15,0
+         RETURN (14,12),RC=(15)
+         LTORG
+*
+*
+*
+**********************************************************************
+*                                                                    *
+*  DATON - switch on DAT                                             *
+*                                                                    *
+**********************************************************************
+         ENTRY @@DATON
+@@DATON    DS    0H
+         SAVE  (14,12),,@@DATON
+         LR    R12,R15
+         USING @@DATON,R12
+*
+         STOSM CURRMASK,X'04'
+*
+         LA    R15,0
+         RETURN (14,12),RC=(15)
+         LTORG
+*
+CURRMASK DS    C
+*
+*
+*
+**********************************************************************
+*                                                                    *
 *  @@RDTAPE - read a block from tape                                 *
 *                                                                    *
 *  parameter 1 = device                                              *
