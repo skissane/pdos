@@ -655,6 +655,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if USE_MEMMGR
     memmgrSupply(&__memmgr, (void *)0x04100000, 32 * 1024 * 1024);
 #endif
+    /* __map4gb(); */
 #endif
 
     }
