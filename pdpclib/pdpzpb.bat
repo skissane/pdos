@@ -11,6 +11,7 @@ gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . math.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . setjmp.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . signal.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . __memmgr.c
+gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . zpbsupc.c
 gccmvs -Os -U__MVS__ -D__MF32__ -D__ZPDOSGPB__ -DUSE_MEMMGR -S -I . pdptest.c
 m4 -I . pdpzpb.m4 >pdpzpb.jcl
 call runmvs pdpzpb.jcl output.txt none pdptest.exe
