@@ -653,7 +653,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         __consdn = __getssid(__consdn);
     }
 #if USE_MEMMGR
-    memmgrSupply(&__memmgr, (void *)0x04100000, 32 * 1024 * 1024);
+    memmgrSupply(&__memmgr, (void *)0x04100000, 100 * 1024 * 1024);
 #endif
     /* __map4gb(); */
 #endif
