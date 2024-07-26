@@ -105,6 +105,8 @@ extern int (*__genmain)(int argc, char **argv);
 
 #ifdef __64BIT__
 #define MEMAMT 100*1000*1000
+#elif defined(__ZPDOSGPB__)
+#define MEMAMT 70*1000*1000
 #else
 #define MEMAMT 24*1000*1000
 #endif
