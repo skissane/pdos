@@ -650,11 +650,12 @@ NOCRREQ  DS    0H
 *
          AIF   ('&XSYS' EQ 'ZARCH').ZNEWIOA
          MVC   FLCINPSW(8),CNEWIO
+         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
          AGO   .ZNEWIOB
 .ZNEWIOA ANOP
          MVC   FLCEINPW(16),CNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
 .ZNEWIOB ANOP
-         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
 * R3 points to CCW chain
          LA    R3,CCHAIN
          ST    R3,FLCCAW    Store in CAW
@@ -772,11 +773,12 @@ CNEWIO   DC    A(X'00040000'+AM64BIT)
 *
          AIF   ('&XSYS' EQ 'ZARCH').ZNEWIOG
          MVC   FLCINPSW(8),CRNEWIO
+         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
          AGO   .ZNEWIOH
 .ZNEWIOG ANOP
          MVC   FLCEINPW(16),CRNEWIO
+         STOSM FLCEINPW,X'00'  Work with DAT on or OFF
 .ZNEWIOH ANOP
-         STOSM FLCINPSW,X'00'  Work with DAT on or OFF
 * R3 points to CCW chain
          LA    R3,CRDCHN
          ST    R3,FLCCAW    Store in CAW
