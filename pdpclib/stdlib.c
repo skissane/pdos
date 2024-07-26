@@ -80,6 +80,9 @@ int __mmgid = 0; /* memmgr id to use - normally 0 */
 #if defined(MULMEM)
 #define MAX_CHUNK 67100672
 #define REQ_CHUNK 67100672
+#elif defined(__ZPDOSGPB__)
+#define MAX_CHUNK 80 * 1024 * 1024
+#define REQ_CHUNK 80 * 1024 * 1024
 #elif defined(__gnu_linux__) && defined(__64BIT__)
 #define MAX_CHUNK 124000000 /* maximum size we will store in memmgr */
 #define REQ_CHUNK 124000000 /* size that we request from OS */
