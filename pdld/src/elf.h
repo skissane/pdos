@@ -117,6 +117,7 @@ typedef struct {
 #define EI_VERSION 6 /* Must be EV_CURRENT. */
 #define EI_OSABI 7
     #define ELFOSABI_NONE 0 /* No specific extensions. */
+    #define ELFOSABI_LINUX 3
     #define ELFOSABI_ARM 97
 #define EI_ABIVERSION 8 /* Should be set to 0. */
 #define EI_PAD 9 /* Start of pad bytes. Should be ignored. */

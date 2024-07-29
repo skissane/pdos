@@ -104,7 +104,11 @@ static size_t section_get_num_relocs (struct section *section)
                     || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
                     num_relocs++;
                 }
-            } 
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    num_relocs++;
+                }
+            }
         }
     }
 
@@ -161,6 +165,17 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
                     type = R_68K_32;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_PC32]) {
                     type = R_68K_PC32;
+                } else {
+                    ld_error ("%s cannot be converted to Elf32 relocation",
+                              part->relocation_array[i].howto->name);
+                    continue;
+                }
+            } else if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
+                /* Assume it is the same as for i386 for now. */
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    type = R_386_32;
                 } else {
                     ld_error ("%s cannot be converted to Elf32 relocation",
                               part->relocation_array[i].howto->name);
@@ -633,7 +648,8 @@ void elf_write (const char *filename)
     ehdr.e_ident[EI_MAG3] = ELFMAG3;
     ehdr.e_ident[EI_CLASS] = ELFCLASS32;
 
-    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K) {
+    if (ld_state->target_machine == LD_TARGET_MACHINE_M68K
+        || ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
         ehdr.e_ident[EI_DATA] = ELFDATA2MSB;
         endianess = BIG_ENDIAN;
     } else {
@@ -643,6 +659,8 @@ void elf_write (const char *filename)
     ehdr.e_ident[EI_VERSION] = EV_CURRENT;
     if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
         ehdr.e_ident[EI_OSABI] = ELFOSABI_ARM;
+    } else if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME) {
+        ehdr.e_ident[EI_OSABI] = ELFOSABI_LINUX;
     }
 
     ehdr.e_type = ET_EXEC;
@@ -650,6 +668,7 @@ void elf_write (const char *filename)
         case LD_TARGET_MACHINE_I386: ehdr.e_machine = EM_386; break;
         case LD_TARGET_MACHINE_ARM: ehdr.e_machine = EM_ARM; break;
         case LD_TARGET_MACHINE_M68K: ehdr.e_machine = EM_68K; break;
+        case LD_TARGET_MACHINE_MAINFRAME: ehdr.e_machine = EM_S370; break;
         default: ehdr.e_machine = EM_NONE; break;
     }
     ehdr.e_version = EV_CURRENT;
