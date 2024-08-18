@@ -7,14 +7,35 @@
 # without complying with any conditions
 # and by any means.
 
+
+# If you are cross-compiling, you will also need to uncomment
+# the copy of wingen.exe to gen.exe and have renamed gen.exe
+# to wingen.exe after building with makefile.std
+
+
+
+#CC=gccprm
+####CFLAGS=-O0
+#CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
+#AS=asprm
+#AR=arprm
+#COPTS=-S $(CFLAGS) -Wall -fno-common \
+#    -I. -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
+#    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore
+#EXTRA=../pdpclib/armsupa.o ../pdpclib/fpfuncsa.o
+
+
+
 CC=gccwin
 CFLAGS=-O2
-#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
-LD=pdld
-# The --stack ,30000 is needed to get around "__chkstk_ms" issue.
-LDFLAGS=--no-insert-timestamp -s --stack ,300000
+####CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+### The --stack ,30000 is needed to get around "__chkstk_ms" issue.
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+
+
+LD=pdld
+LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
 OBJS=crc32.obj deflate.obj huffman.obj hwzip.obj implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
 
@@ -23,7 +44,7 @@ TARGET=hwzip.exe
 all: clean generate $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib $(EXTRA)
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
@@ -36,7 +57,9 @@ clean: clean_generate
 OBJS_GENERATE=generate_tables.obj
 
 generate: clean_generate $(OBJS_GENERATE)
+# comment out this line if uncommenting the copy command
   $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/w32start.obj $(OBJS_GENERATE) ../pdpclib/msvcrt.lib
+#  copy wingen.exe gen.exe
   gen.exe > tables.c
 
 clean_generate:
