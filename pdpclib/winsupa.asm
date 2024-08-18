@@ -68,8 +68,30 @@ __longj proc
 __longj endp
 
 ; For compiling with GCC 4 we don't want to
-; have to link the GCC library in
+; have to link the GCC library in.
+; Original Public Domain code copied from
+; https://github.com/skeeto/w64devkit/blob/master/src/libchkstk.S
 __chkstk_ms proc
+        push eax
+        push ecx
+; FS refers to Thread Information Block which stores the stack limit
+; what can be used to avoid touching the stack unnecessarily.
+; For portability this optimization was disabled.
+;        mov  ecx, fs:[0x08]   ; ecx = stack low address
+        mov  ecx, esp
+        and  ecx, 0xfffff000
+        neg  eax              ; eax = frame low address
+        add  eax, esp
+        jb   check_stack      ; frame low address overflow?
+        xor  eax, eax         ; overflowed: frame low address = null
+extend_stack:
+        sub  ecx, 0x1000      ; extend stack into guard page
+        test [ecx], eax       ; commit page (two instruction bytes)
+check_stack:
+        cmp  ecx, eax
+        ja   extend_stack
+        pop  ecx
+        pop  eax
         ret
 __chkstk_ms endp
 
