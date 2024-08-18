@@ -12,6 +12,8 @@
 # the copy of wingen.exe to gen.exe and have renamed gen.exe
 # to wingen.exe after building with makefile.std
 
+# And you will need to use makefile.war instead of makefile.std
+# in that case too.
 
 
 #CC=gccprm
