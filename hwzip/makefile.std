@@ -1,0 +1,45 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+CC=gccwin
+CFLAGS=-O2
+#CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
+LD=pdld
+# The --stack ,30000 is needed to get around "__chkstk_ms" issue.
+LDFLAGS=--no-insert-timestamp -s --stack ,300000
+AS=pdas --oformat coff
+COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+
+OBJS=crc32.obj deflate.obj huffman.obj hwzip.obj implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
+
+TARGET=hwzip.exe
+
+all: clean generate $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $@ $*.s
+  rm -f $*.s
+
+clean: clean_generate
+  rm -f $(OBJS) $(TARGET)
+
+OBJS_GENERATE=generate_tables.obj
+
+generate: clean_generate $(OBJS_GENERATE)
+  $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/w32start.obj $(OBJS_GENERATE) ../pdpclib/msvcrt.lib
+  gen.exe > tables.c
+
+clean_generate:
+  rm -f $(OBJS_GENERATE) gen.exe tables.c
+
+
