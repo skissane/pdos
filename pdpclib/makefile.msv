@@ -8,6 +8,9 @@
 # file, change all spaces to tabs, and it will work, even
 # if the resultant file looks a bit silly.
 
+# You will need to have built kernel32.a with makek32.w32
+# prior to running this
+
 CC=gccwin
 AR=arwin
 AS=aswin
