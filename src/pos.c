@@ -11,6 +11,7 @@
 /*********************************************************************/
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "pos.h"
 #ifdef WATNATIVE
