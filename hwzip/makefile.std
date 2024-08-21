@@ -25,6 +25,21 @@
 #    -I. -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
 #    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore
 #EXTRA=../pdpclib/armsupa.o ../pdpclib/fpfuncsa.o
+#START=../pdpclib/w32start.obj
+#LDFLAGS=--no-insert-timestamp -s --stack ,300000
+
+
+#### Note that PDOS386 is an anomaly - should be renamed
+#CC=gcc370
+####CFLAGS=-O0
+#CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
+#AS=as370
+#AR=ar370
+#COPTS=-S $(CFLAGS) -Wall -fno-common -DPOS_EXTEND -U__MVS__ \
+#    -I. -I../pdpclib -D__MF32__ -D__NOBIVA__ -D__PDOSGEN__ \
+#    -I../generic -I../src
+#START=../pdpclib/pgastart.o
+#LDFLAGS=--no-insert-timestamp -s --stack ,300000 --oformat mainframe
 
 
 
@@ -34,19 +49,20 @@ CFLAGS=-O2
 ### The --stack ,30000 is needed to get around "__chkstk_ms" issue.
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+START=../pdpclib/w32start.obj
+LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
 
 LD=pdld
-LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
-OBJS=crc32.obj deflate.obj huffman.obj hwzip.obj implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
+OBJS=crc32.obj deflate.obj fasc.obj huffman.obj hwzip.obj implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
 
 TARGET=hwzip.exe
 
 all: clean generate $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib $(EXTRA)
+  $(LD) $(LDFLAGS) -o $(TARGET) $(START) $(OBJS) ../pdpclib/msvcrt.lib $(EXTRA)
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
@@ -60,7 +76,7 @@ OBJS_GENERATE=generate_tables.obj
 
 generate: clean_generate $(OBJS_GENERATE)
 # comment out this line if uncommenting the copy command
-  $(LD) $(LDFLAGS) -o gen.exe ../pdpclib/w32start.obj $(OBJS_GENERATE) ../pdpclib/msvcrt.lib
+  $(LD) $(LDFLAGS) -o gen.exe $(START) $(OBJS_GENERATE) ../pdpclib/msvcrt.lib
 #  copy wingen.exe gen.exe
   gen.exe > tables.c
 
