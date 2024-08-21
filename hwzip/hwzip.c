@@ -10,6 +10,10 @@
 #include "version.h"
 #include "zip.h"
 
+#ifdef POS_EXTEND
+#include <fasc.h>
+#endif
+
 #define PERROR_IF(cnd, msg) do { if (cnd) { perror(msg); exit(1); } } while (0)
 
 static void *xmalloc(size_t size)
@@ -128,6 +132,63 @@ static void extract_zip(const char *filename)
         for (it = z.members_begin; it != z.members_end; it = m.next) {
                 m = zip_member(&z, it);
 
+
+#ifdef POS_EXTEND
+/* this code is only designed to convert "standard" text files. And by that,
+   I mean the "internal file attributes" should have the low bit set to indicate
+   that it is a text file (this is not actually being checked, it is just assumed).
+   The filename or directory name should have '/', not '\' as the path separator.
+   Files should contain ASCII data, not EBCDIC. And nor should they contain
+   "extended ASCII". And line endings should be just LF, not CRLF - not sure if
+   this means that the "line record format" should be set to 3 (Unix) instead
+   of 0 (MSDOS). Files are all read and write and if the concept exists, executable
+   as well. There is no expectation that file timestamps or any other attribute
+   is preserved. Although all of this is required and expected, we do minimal
+   checking currently, for expediency. */
+
+                {
+                    int x;
+                    for (x = 0; x < m.name_len; x++)
+                    {
+                        m.name[x] = fasc(m.name[x]);
+                    }
+                }
+
+                if (m.is_dir) {
+                        char name[FILENAME_MAX];
+
+                        memcpy(name, m.name, m.name_len);
+                        name[m.name_len] = '\0';
+                        /* this function will ensure that all the sub-paths are
+                           created as required */
+                        PosMakeFullDir(name);
+                        continue;
+                }
+
+                /* don't allow backslash in filenames */
+                if (memchr(m.name, '\\', m.name_len) != NULL) {
+                        printf(" (Skipping file in dir: %.*s)\n",
+                               (int)m.name_len, m.name);
+                        continue;
+                }
+
+                if (memchr(m.name, '/', m.name_len) != NULL) {
+                        char name[FILENAME_MAX];
+                        char *p;
+
+                        memcpy(name, m.name, m.name_len);
+                        name[m.name_len] = '\0';
+                        p = strrchr(name, '/');
+                        if (p != NULL)
+                        {
+                            *p = '\0';
+                            /* this function will ensure that all the sub-paths are
+                               created as required */
+                            PosMakeFullDir(name);
+                        }
+                }
+#else
+
                 if (m.is_dir) {
                         printf(" (Skipping dir: %.*s)\n",
                                (int)m.name_len, m.name);
@@ -140,6 +201,7 @@ static void extract_zip(const char *filename)
                                (int)m.name_len, m.name);
                         continue;
                 }
+#endif
 
                 switch (m.method) {
                 case ZIP_STORE:   printf("  Extracting: "); break;
@@ -166,6 +228,15 @@ static void extract_zip(const char *filename)
                 }
 
                 tname = terminate_str((const char*)m.name, m.name_len);
+#ifdef POS_EXTEND
+                {
+                    uint32_t x;
+                    for (x = 0; x < m.uncomp_size; x++)
+                    {
+                        uncomp_data[x] = fasc(uncomp_data[x]);
+                    }
+                }
+#endif
                 write_file(tname, uncomp_data, m.uncomp_size);
                 printf("\n");
 
