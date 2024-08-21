@@ -29,7 +29,8 @@
 #LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
 
-#### Note that PDOS386 is an anomaly - should be renamed
+#### Note that you are expected to build msvcrt.lib with makefile.std
+#### in PDPCLIB, so that is why you won't get a link error
 #CC=gcc370
 ####CFLAGS=-O0
 #CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
