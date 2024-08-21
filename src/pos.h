@@ -543,7 +543,6 @@ typedef struct {
 #define PosFindNext __os->XPosFindNext
 #define PosChangeDir __os->XPosChangeDir
 #define PosMakeDir __os->XPosMakeDir
-#define PosMakeFullDir __os->XPosMakeFullDir
 #define PosRemoveDir __os->XPosRemoveDir
 #define PosExec __os->XPosExec
 #endif
