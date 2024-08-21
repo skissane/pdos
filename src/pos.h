@@ -206,6 +206,8 @@ void PosGetFreeSpace(int drive,
 
 int PosMakeDir(const char *dname); /* func 39 */
 
+int PosMakeFullDir(const char *dname);
+
 int PosRemoveDir(const char *dname); /* func 3a */
 
 int PosChangeDir(const char *to); /* func 3b */
@@ -541,6 +543,7 @@ typedef struct {
 #define PosFindNext __os->XPosFindNext
 #define PosChangeDir __os->XPosChangeDir
 #define PosMakeDir __os->XPosMakeDir
+#define PosMakeFullDir __os->XPosMakeFullDir
 #define PosRemoveDir __os->XPosRemoveDir
 #define PosExec __os->XPosExec
 #endif
