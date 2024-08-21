@@ -39,6 +39,7 @@
 #COPTS=-S $(CFLAGS) -Wall -fno-common -DPOS_EXTEND -U__MVS__ \
 #    -I. -I../pdpclib -D__MF32__ -D__NOBIVA__ -D__PDOSGEN__ \
 #    -I../generic -I../src
+#EXTRA2=../src/pos2.obj
 #START=../pdpclib/pgastart.o
 #LDFLAGS=--no-insert-timestamp -s --stack ,300000 --oformat mainframe
 
@@ -56,7 +57,8 @@ LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
 LD=pdld
 
-OBJS=crc32.obj deflate.obj fasc.obj huffman.obj hwzip.obj implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
+OBJS=$(EXTRA2) crc32.obj deflate.obj fasc.obj huffman.obj hwzip.obj \
+    implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
 
 TARGET=hwzip.exe
 
