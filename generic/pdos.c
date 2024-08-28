@@ -40,6 +40,8 @@ extern int __minstart;
 #define CHAR_ESC_STR "\x1b"
 #endif
 
+#define MAX_PATH 260 /* With trailing '\0' included. */
+
 #define BIOS_SEEK_SET SEEK_SET
 #define BIOS_IONBF _IONBF
 #define BIOS_IOLBF _IOLBF
@@ -47,6 +49,8 @@ extern int __minstart;
 
 extern OS *bios;
 extern __start(char *p);
+
+static unsigned int currentDrive = 2;
 
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
@@ -60,7 +64,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation,
   ctime, time,
-  0, 0, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
+  0, PosMakeDir, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
   remove,
   memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
   getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
@@ -510,6 +514,63 @@ int PosWriteFile(int fh,
             fatWriteFile(&fat, &handles[fh].ff, data, len, writtenbytes);
         }
     }
+    return (0);
+}
+
+static int dirCreat(const char *dnm, int attrib)
+{
+    const char *p;
+    int drive;
+    int rc;
+    char parentname[MAX_PATH];
+    char *end;
+    char *temp;
+
+    p = strchr(dnm, ':');
+    if (p == NULL)
+    {
+        p = dnm;
+        drive = currentDrive;
+    }
+    else
+    {
+        drive = *(p - 1);
+        drive = toupper(drive) - 'A';
+        p++;
+#if 0
+        if (drive < 2)
+        {
+            accessDisk(drive);
+        }
+#endif
+    }
+
+    if ((p[0] == '\\') || (p[0] == '/'))
+    {
+        p++;
+    }
+
+    memset(parentname,'\0',sizeof(parentname));
+    end = strrchr(p, '\\');
+    temp = strrchr(p, '/');
+
+    if(!end || (temp > end))
+    {
+        end = temp;
+    }
+    if(end)
+    {
+        strncpy(parentname,p,(end-p));
+    }
+    /* this only operates on the main FAT drive for now */
+    rc = fatCreatDir(&fat, p, parentname, attrib);
+    return (rc);
+}
+
+
+int PosMakeDir(const char *dirname)
+{
+    dirCreat(dirname, 0);
     return (0);
 }
 
