@@ -90,6 +90,15 @@ static void list_zip(const char *filename)
 
         for (it = z.members_begin; it != z.members_end; it = m.next) {
                 m = zip_member(&z, it);
+#ifdef POS_EXTEND
+                {
+                    int x;
+                    for (x = 0; x < m.name_len; x++)
+                    {
+                        m.name[x] = fasc(m.name[x]);
+                    }
+                }
+#endif
                 printf("%.*s\n", (int)m.name_len, m.name);
         }
 
