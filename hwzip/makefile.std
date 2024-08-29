@@ -30,7 +30,9 @@
 
 
 #### Note that you are expected to build msvcrt.lib with makefile.std
-#### in PDPCLIB, so that is why you won't get a link error
+#### in PDPCLIB, so that is why you won't get a link error on the
+#### msvcrt.lib which shouldn't really be there
+#### That's before you run makefile.zpg in PDPCLIB
 #CC=gcc370
 ####CFLAGS=-O0
 #CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
