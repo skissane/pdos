@@ -7725,6 +7725,22 @@ static void dblcvt(double num, int cnvtype, int nwidth,
 
     /* save original data & set sign */
 
+
+    /* we now have IEEE values flowing through the system,
+       but GCC is generating the wrong instructions to cope
+       with them. We need to switch GCC to using IEEE for
+       this MF32 situation. Until then, just make all floating
+       point values get printed as 0.0 */
+#ifdef __MF32__
+    memset(result, ' ', nwidth);
+    if (nprecision >= 3)
+    {
+        memcpy(result, "0.0", 3);
+    }
+    return;
+#endif
+
+
     if ( num < 0 )
     {
         /* When using cc64, this line caused a crash */
