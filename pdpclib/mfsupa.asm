@@ -1,6 +1,6 @@
-; mfsupa - mainframe support code in assembler
-; Written by Paul Edwards
-; Released to the public domain
+# mfsupa - mainframe support code in assembler
+# Written by Paul Edwards
+# Released to the public domain
 
          .text
          .balign 4
