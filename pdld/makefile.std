@@ -29,7 +29,7 @@ LDFLAGS=-s -nostdlib --no-insert-timestamp
 
 
 OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj \
-    bytearray.obj coff.obj coff_bytearray.obj elf.obj \
+    bytearray.obj cms.obj coff.obj coff_bytearray.obj elf.obj \
     elf_bytearray.obj error.obj febc.obj hashtab.obj hunk.obj \
     ld.obj libld.obj link.obj lx.obj lx_bytearray.obj \
     mainframe.obj map.obj read.obj sections.obj symbols.obj \
