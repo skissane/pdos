@@ -758,9 +758,16 @@ static int estimate (unsigned char *file,
         record_name[2] = febc (pos[3]);
 
         if (strcmp (record_name, "ESD") == 0) {
-            unsigned short num_bytes;
+            unsigned short num_bytes, esdid;
 
             bytearray_read_2_bytes (&num_bytes, pos + 10, BIG_ENDIAN);
+            bytearray_read_2_bytes (&esdid, pos + 14, BIG_ENDIAN);
+
+            /* The ESD IDs do not have to be contiguous
+             * and sometimes large ESD IDs (such as 16448) are used
+             * for unknown reason.
+             */
+            if (esdid > num_symbols) num_symbols = esdid;
             
             if (num_bytes > 72 - 16) {
                 ld_error ("%s: invalid number of bytes in ESD %u", filename, num_bytes);
@@ -943,11 +950,6 @@ static int read_mainframe_object (unsigned char *file,
                 return 1;
             }
 
-            if (esd_ident >= num_symbols) {
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "%s: ESD ID %u exceeds num_symbols",
-                                             filename, esd_ident);
-            }
             part = of->symbol_array[esd_ident].part;
             if (!part) {
                 ld_error ("%s: Text record has invalid ESD identifier",
@@ -969,6 +971,8 @@ static int read_mainframe_object (unsigned char *file,
             break;
         } else if (strcmp (record_name, "RLD") == 0) {
             unsigned short num_bytes;
+            unsigned short target_id, src_id;
+            int ids_same_as_previous = 0;
 
             bytearray_read_2_bytes (&num_bytes, pos + 10, BIG_ENDIAN);
 
@@ -978,15 +982,16 @@ static int read_mainframe_object (unsigned char *file,
             }
             
             for (pos += 16; pos + 8 <= record_pos + 16 + num_bytes; pos += 8) {
-                unsigned short target_id, src_id;
                 unsigned char flags;
                 unsigned long address;
 
                 struct section_part *part;
                 struct reloc_entry *reloc;
 
-                bytearray_read_2_bytes (&target_id, pos, BIG_ENDIAN);
-                bytearray_read_2_bytes (&src_id, pos + 2, BIG_ENDIAN);
+                if (!ids_same_as_previous) {
+                    bytearray_read_2_bytes (&target_id, pos, BIG_ENDIAN);
+                    bytearray_read_2_bytes (&src_id, pos + 2, BIG_ENDIAN);
+                }
                 flags = pos[4];
                 bytearray_read_3_bytes (&address, pos + 5, BIG_ENDIAN);
 
@@ -1012,11 +1017,29 @@ static int read_mainframe_object (unsigned char *file,
 
                 if ((flags & 0x30) == 0x10
                     && (flags & 0xC) == 0xC) {
+                    /* Adcon type V - absolute, 4 bytes. */
+                    reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+                } else if ((flags & 0x30) == 0x0
+                    && (flags & 0xC) == 0xC) {
+                    /* Adcon type A - absolute, 4 bytes.
+                     * The difference is that A does not allow external linkage
+                     * but that is ignored here.
+                     */
                     reloc->howto = &reloc_howtos[RELOC_TYPE_32];
                 } else {
                     ld_internal_error_at_source (__FILE__, __LINE__,
                                                  "%s: unsupported relocation flags %#x",
                                                  filename, flags);
+                }
+
+                if (flags & 0x1) {
+                    /* Relocation pointer and Position pointer (ESD IDs)
+                     * for the next item are omitted because they are the same.
+                     */
+                    ids_same_as_previous = 1;
+                    pos -= 4;
+                } else {
+                    ids_same_as_previous = 0;
                 }
             }
         } else {

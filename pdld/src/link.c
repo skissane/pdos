@@ -567,6 +567,10 @@ void link (void)
             case LD_OFORMAT_ATARI:
                 ld_state->base_address = atari_get_base_address ();
                 break;
+
+            case LD_OFORMAT_CMS:
+                ld_state->base_address = cms_get_base_address ();
+                break;
             
             case LD_OFORMAT_COFF:
                 ld_state->base_address = coff_get_base_address ();

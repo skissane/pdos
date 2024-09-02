@@ -63,6 +63,8 @@ int main (int argc, char **argv)
         aout_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_ATARI) {
         atari_write (ld_state->output_filename);
+    } else if (ld_state->oformat == LD_OFORMAT_CMS) {
+        cms_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_COFF) {
         coff_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_ELF) {

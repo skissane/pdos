@@ -36,6 +36,7 @@ enum ld_target_machine {
 enum ld_oformat {
     LD_OFORMAT_AOUT,
     LD_OFORMAT_ATARI,
+    LD_OFORMAT_CMS,
     LD_OFORMAT_COFF,
     LD_OFORMAT_ELF,
     LD_OFORMAT_LX,
@@ -255,6 +256,10 @@ int aout_read (unsigned char *file, size_t file_size, const char *filename);
 void atari_init ();
 address_type atari_get_base_address (void);
 void atari_write (const char *filename);
+
+/* cms.c */
+address_type cms_get_base_address (void);
+void cms_write (const char *filename);
 
 /* coff.c */
 void coff_get_stub_file (unsigned char **stub_file_p, size_t *stub_size_p);
