@@ -48,6 +48,7 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     
     { 8, 0, 0, 0, NULL, "RELOC_TYPE_64" },
     { 4, 0, 0, 0, NULL, "RELOC_TYPE_32" },
+    { 3, 0, 0, 0, NULL, "RELOC_TYPE_24" },
 
     { 4, 1, 0, 0, NULL, "RELOC_TYPE_PC32" },
 

@@ -763,11 +763,11 @@ static int estimate (unsigned char *file,
             bytearray_read_2_bytes (&num_bytes, pos + 10, BIG_ENDIAN);
             bytearray_read_2_bytes (&esdid, pos + 14, BIG_ENDIAN);
 
-            /* The ESD IDs do not have to be contiguous
-             * and sometimes large ESD IDs (such as 16448) are used
-             * for unknown reason.
+            /* The ESD IDs do not have to be contiguous.
+             * 0x4040 means two spaces in EBCDIC, blank,
+             * so it should be ignored.
              */
-            if (esdid > num_symbols) num_symbols = esdid;
+            if (esdid != 0x4040 && esdid > num_symbols) num_symbols = esdid;
             
             if (num_bytes > 72 - 16) {
                 ld_error ("%s: invalid number of bytes in ESD %u", filename, num_bytes);
@@ -804,6 +804,7 @@ static int read_mainframe_object (unsigned char *file,
     
     unsigned char *record_pos;
     struct object_file *of;
+    unsigned short esdid = 0;
 
     int ret = 1;
 
@@ -837,10 +838,12 @@ static int read_mainframe_object (unsigned char *file,
         record_name[2] = febc (pos[3]);
 
         if (strcmp (record_name, "ESD") == 0) {
-            unsigned short num_bytes, esdid;
+            unsigned short num_bytes, new_esdid;
 
             bytearray_read_2_bytes (&num_bytes, pos + 10, BIG_ENDIAN);
-            bytearray_read_2_bytes (&esdid, pos + 14, BIG_ENDIAN);
+            bytearray_read_2_bytes (&new_esdid, pos + 14, BIG_ENDIAN);
+
+            if (new_esdid != 0x4040) esdid = new_esdid;
 
             if (num_bytes > 72 - 16) {
                 ld_error ("%s: invalid number of bytes in ESD %u", filename, num_bytes);
@@ -1026,6 +1029,12 @@ static int read_mainframe_object (unsigned char *file,
                      * but that is ignored here.
                      */
                     reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+                } else if ((flags & 0x30) == 0x0
+                    && (flags & 0xC) == 0x8) {
+                    /* Adcon type A - absolute, 3 bytes.
+                     */
+                    ld_warn ("%s: AL3 address encountered at %#lx", filename, reloc->offset);
+                    reloc->howto = &reloc_howtos[RELOC_TYPE_24];
                 } else {
                     ld_internal_error_at_source (__FILE__, __LINE__,
                                                  "%s: unsupported relocation flags %#x",
