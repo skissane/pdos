@@ -146,8 +146,9 @@ USHORT APIENTRY DosWrite(USHORT hfile, void *ptr,
                          USHORT towrite, USHORT *tempWritten);
 USHORT APIENTRY DosDelete(char *name, USHORT junk);
 USHORT APIENTRY DosMove(char *a, char *b, USHORT junk);
+/* documentation that says dir is USHORT appears to be incorrect */
 USHORT APIENTRY DosChgFilePtr(USHORT hfile, LONG newpos,
-                              int dir, ULONG *retpos);
+                              ULONG dir, ULONG *retpos);
 USHORT APIENTRY DosClose(short handle);
 USHORT APIENTRY DosExecPgm(char *err_obj, USHORT sz, USHORT flags,
                            char *string, void *junk1, RESULTCODES *results,
