@@ -1,0 +1,35 @@
+# This builds PDPCLIB for CMS using binutils
+
+# Need to disable builtins because an ASCII/EBCDIC issue
+# means that it thinks there is no '%' and can use an fputs
+
+# cmsstart.o and cmssupa.o need to be provided separately
+# after building on CMS using pdpcms.bat
+# (and this will be F80 object code/text)
+
+CC=gcc370
+COPTS=-S -Os -fno-common -U__MVS__ -D__CMS__ \
+    -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
+    -fno-builtin
+
+all: clean pdpclib.a
+
+pdpclib.a: stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o pdptest.o
+        rm -f pdpclib.a
+        ar370 r pdpclib.a stdio.o string.o stdlib.o
+        ar370 r pdpclib.a start.o time.o errno.o assert.o signal.o
+        ar370 r pdpclib.a locale.o ctype.o setjmp.o math.o
+        pdld --oformat cms pdptest.o pdpclib.a cmsstart.obj cmssupa.obj
+
+.c.o:
+        $(CC) $(COPTS) -o $*.s $<
+        as370 -o $@ $*.s
+        rm -f $*.s
+
+.asm.o:
+        as370 -o $@ $<
+
+clean:
+        rm -f pdpclib.a
