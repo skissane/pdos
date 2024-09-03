@@ -223,7 +223,7 @@ static void *imalloc(size_t size)
     }
     BaseAddress = (void *)((unsigned long)sel << 16);
 #else
-    /* AracOS had VIRTUALADDRESSLIMIT in config.sys set to
+    /* ArcaOS had VIRTUALADDRESSLIMIT in config.sys set to
        1536 MiB. This can be increased to a maximum of 3072,
        but some hardware, e.g. video memory, doesn't like
        that interference with "PCI space". Whatever decimal
