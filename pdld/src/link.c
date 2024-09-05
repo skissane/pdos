@@ -431,7 +431,15 @@ static void relocate_part (struct section_part *part)
                                              "external symbol '%s' not found in hashtab",
                                              symbol->name);
             }
+            if ((ld_state->oformat == LD_OFORMAT_CMS
+                 || ld_state->oformat == LD_OFORMAT_MVS)
+                && symbol_is_undefined (symbol)) {
+                /* Mainframe-only output formats need less strict matching. */
+                symbol = mainframe_symbol_find (symbol->name);
+            }
             if (symbol_is_undefined (symbol)) {
+                
+                
                 ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
                           part->of->filename,
                           part->section->name,
@@ -440,7 +448,7 @@ static void relocate_part (struct section_part *part)
                 continue;
             }
         }
-
+        
         if (relocs[i].howto->special_function) {
             (*relocs[i].howto->special_function) (part, &relocs[i], symbol);
             continue;
@@ -581,8 +589,8 @@ void link (void)
                 ld_state->base_address = lx_get_base_address ();
                 break;
 
-            case LD_OFORMAT_MAINFRAME:
-                ld_state->base_address = mainframe_get_base_address ();
+            case LD_OFORMAT_MVS:
+                ld_state->base_address = mvs_get_base_address ();
                 break;
 
             default:

@@ -71,8 +71,8 @@ int main (int argc, char **argv)
         elf_write (ld_state->output_filename);
     } else if (ld_state->oformat == LD_OFORMAT_LX) {
         lx_write (ld_state->output_filename);
-    } else if (ld_state->oformat == LD_OFORMAT_MAINFRAME) {
-        mainframe_write (ld_state->output_filename);
+    } else if (ld_state->oformat == LD_OFORMAT_MVS) {
+        mvs_write (ld_state->output_filename);
     }
     
     if (ld_state->output_map_filename) map_write (ld_state->output_map_filename);

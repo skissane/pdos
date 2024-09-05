@@ -46,7 +46,7 @@
 #define SYMBOL_FLAG_INTERNAL1 (1U << 10)
 #define SYMBOL_FLAG_INTERNAL2 (1U << 11)
 
-address_type mainframe_get_base_address (void)
+address_type mvs_get_base_address (void)
 {    
     return 0;
 }
@@ -92,7 +92,7 @@ static unsigned char *write_member_data_record (unsigned char *pos,
     return pos;
 }
 
-void mainframe_write (const char *filename)
+void mvs_write (const char *filename)
 {
     FILE *outfile;
     unsigned char *file;
@@ -135,7 +135,7 @@ void mainframe_write (const char *filename)
 
                 if (!symbol->name && symbol->section_number != i) continue;
                 if (symbol_is_undefined (symbol)) {
-                    symbol = symbol_find (symbol->name);
+                    symbol = mainframe_symbol_find (symbol->name);
                 }
                 if (symbol->flags & SYMBOL_FLAG_INTERNAL1) continue;
 
@@ -375,7 +375,7 @@ void mainframe_write (const char *filename)
 
             if (!symbol->name && symbol->section_number != i) continue;
             if (symbol_is_undefined (symbol)) {
-                symbol = symbol_find (symbol->name);
+                symbol = mainframe_symbol_find (symbol->name);
             }
             if (symbol->flags & SYMBOL_FLAG_INTERNAL2) continue;
 
@@ -665,7 +665,7 @@ void mainframe_write (const char *filename)
                     reloc = part->relocation_array + i;
                     target_symbol = reloc->symbol;
                     if (symbol_is_undefined (target_symbol)) {
-                        target_symbol = symbol_find (target_symbol->name);
+                        target_symbol = mainframe_symbol_find (target_symbol->name);
                     }
                     /* CESD index for target symbol (obtained from repurposed symbol size field). */
                     if (target_symbol->part
@@ -1033,7 +1033,8 @@ static int read_mainframe_object (unsigned char *file,
                     && (flags & 0xC) == 0x8) {
                     /* Adcon type A - absolute, 3 bytes.
                      */
-                    ld_warn ("%s: AL3 address encountered at %#lx", filename, reloc->offset);
+                    ld_warn ("%s: AL3 address '%s' encountered",
+                             filename, reloc->symbol->name);
                     reloc->howto = &reloc_howtos[RELOC_TYPE_24];
                 } else {
                     ld_internal_error_at_source (__FILE__, __LINE__,
@@ -1091,4 +1092,48 @@ int mainframe_read (unsigned char *file, size_t file_size, const char *filename)
     }
 
     return INPUT_FILE_UNRECOGNIZED;
+}
+
+struct symbol *mainframe_symbol_find (const char *name)
+{
+    /* External references for MVS object code are at most 8 characters long,
+     * uppercase and use '@' instead of '_'.
+     * On the other hand, (mainframe) ELF cares about case
+     * and does not use '@' instead of '_'.
+     * To make those two input formats compatible,
+     * the code below converts MVS name
+     * to uppercase ELF name and lowercase ELF name
+     * and ELF name to uppercase MVS name and lowercase MVS name.
+     *
+     * Note that this method is not case insensitive.
+     * Mixed case names cannot be matched one way
+     * ("BIGOPEN" will not match "BigOpen" but "BigOpen" will match "BIGOPEN").
+     */
+    struct symbol *symbol;
+    size_t i;
+    char new_name[9] = {0};
+
+    symbol = symbol_find (name);
+    if (symbol && !symbol_is_undefined (symbol)) return symbol;
+    if (strlen (name) > 8) return symbol_find (name);
+
+    for (i = 0; i < 8 && name[i]; i++) {
+        new_name[i] = toupper (name[i]);
+        if (new_name[i] == '@') new_name[i] = '_';
+        else if (new_name[i] == '_') new_name[i] = '@';
+    }
+
+    symbol = symbol_find (new_name);
+    if (symbol && !symbol_is_undefined (symbol)) return symbol;
+
+    for (i = 0; i < 8 && name[i]; i++) {
+        new_name[i] = tolower (name[i]);
+        if (new_name[i] == '@') new_name[i] = '_';
+        else if (new_name[i] == '_') new_name[i] = '@';
+    }
+
+    symbol = symbol_find (new_name);
+    if (symbol && !symbol_is_undefined (symbol)) return symbol;
+
+    return symbol_find (name);
 }
