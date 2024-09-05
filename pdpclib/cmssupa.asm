@@ -681,6 +681,16 @@ SV202ER  EQU   *
 *
 *  ORDER IS POINTER TO EITHER FIFO OR LIFO
 *
+*
+*
+*  NOTE! Currently this routine needs to reside BTL. But the AL3
+*  that would enforce this has been replaced by A(), so nothing
+*  will prevent the linker from creating an RMODE ANY module.
+*  Which is fine because this routine is not normally used.
+*  If anyone attempts to use this routine, they are obliged to
+*  keep it RMODE 24. This is an internal routine so they
+*  shouldn't be using it anyway.
+*
 **********************************************************************
          ENTRY @@ATTN@@
 @@ATTN@@ DS    0H
@@ -714,8 +724,13 @@ ATTNPL   DS   0D
          DC   CL8'ATTN'
 ATTNOD   DC   CL4'XXXX'     WHERE ORDER MAY BE LIFO OR FIFO.
 *                            FIFO IS THE DEFAULT
-ATTNLN   DC   AL1(0)         LENGTH OF LINE TO BE STACKED
-ATTNAD   DC   AL3(ATTNAD)    ADDRESS OF LINE TO BE STACKED
+* See note above about why this is commented out.
+*ATTNLN   DC   AL1(0)         LENGTH OF LINE TO BE STACKED
+*ATTNAD   DC   AL3(ATTNAD)    ADDRESS OF LINE TO BE STACKED
+ATTNLN   DC   A(0)    LENGTH OF LINE TO BE STACKED (1 byte)
+*                     followed by address of line to stack
+*                     which must be BTL
+*                     and is provided by the caller.
 *
 *
 **********************************************************************
