@@ -21,7 +21,7 @@ pdpclib.a: stdio.o string.o stdlib.o \
         ar370 r pdpclib.a stdio.o string.o stdlib.o
         ar370 r pdpclib.a start.o time.o errno.o assert.o signal.o
         ar370 r pdpclib.a locale.o ctype.o setjmp.o math.o
-        pdld --oformat cms pdptest.o pdpclib.a cmsstart.obj cmssupa.obj
+        pdld --oformat cms -o pdptest.exe pdptest.o pdpclib.a cmsstart.obj cmssupa.obj
 
 .c.o:
         $(CC) $(COPTS) -o $*.s $<
