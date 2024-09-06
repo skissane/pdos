@@ -17,6 +17,8 @@
 #include "bytearray.h"
 #include "xmalloc.h"
 
+#define MAX_RECORD_SIZE 32752
+
 struct temp_sym {
     struct symbol *symbol;
     address_type address;
@@ -36,6 +38,16 @@ static int temp_sym_compar (const void *a, const void *b)
 address_type cms_get_base_address (void)
 {    
     return 0x20000;
+}
+
+static void write_ebcdic_symbol_name (unsigned char *pos, const char *name)
+{
+    int i;
+
+    memset (pos, tebc (' '), 8);
+    for (i = 0; i < 8 && name[i]; i++) {
+        pos[i] = tebc (name[i]);
+    }
 }
 
 void cms_write (const char *filename)
@@ -66,15 +78,12 @@ void cms_write (const char *filename)
         for (section = all_sections; section; section = section->next) {
             if (section->is_bss) continue;
             
+            file_size += (section->total_size / MAX_RECORD_SIZE
+                          + !!(section->total_size % MAX_RECORD_SIZE)) * 4;
             total_section_size_to_write += section->total_size;
         }
 
-        if (total_section_size_to_write > 65535) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "total_section_size_to_write > 65535");
-        }
-
-        file_size += 4 + total_section_size_to_write;
+        file_size += total_section_size_to_write;
 
         /* Loader table,
          * stores symbols with 8 byte name and 3 4 byte fields (so 20 bytes each),
@@ -96,7 +105,11 @@ void cms_write (const char *filename)
         }
         /* +2 symbols, SYSREF and NUCON. */
         file_size += (num_symbols + 2) * 20;
-        
+
+        if ((num_symbols + 2) * 20 > 65535) {
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "(num_symbols + 2) * 20 > 65535");
+        }
     }
 
     file = xcalloc (file_size, 1);
@@ -122,15 +135,31 @@ void cms_write (const char *filename)
             40);
     pos += 80;
 
-    /* Record containg content of sections. */
-    bytearray_write_2_bytes (pos, 4 + total_section_size_to_write, BIG_ENDIAN);
-    pos += 4;
-    
     for (section = all_sections; section; section = section->next) {
-        if (section->is_bss) continue;
+        unsigned char *tmp;
+        size_t section_size;
         
-        section_write (section, pos);
-        pos += section->total_size;
+        if (section->is_bss) continue;
+
+        tmp = xcalloc (section->total_size, 1);
+        section_write (section, tmp);
+
+        section_size = section->total_size;
+        while (section_size) {
+            size_t this_size = section_size > MAX_RECORD_SIZE ? MAX_RECORD_SIZE : section_size;
+
+            /* Record containg content of sections. */
+            bytearray_write_2_bytes (pos, 4 + this_size, BIG_ENDIAN);
+            pos += 4;
+
+            memcpy (pos,
+                    tmp + section->total_size - section_size,
+                    this_size);
+            section_size -= this_size;
+            pos += this_size;
+        }
+
+        free (tmp);
     }
 
     /* Loader table. */
@@ -169,14 +198,7 @@ void cms_write (const char *filename)
                 /* snprintf() would be better but C90 does not have it. */
                 sprintf (name, ".%06lu", section_symbol_index--);
                 /* 8 bytes long EBDIC symbol name. */
-                {
-                    int j;
-
-                    memset (pos, tebc (' '), 8);
-                    for (j = 0; j < 8 && name[j]; j++) {
-                        pos[j] = tebc (name[j]);
-                    }
-                }
+                write_ebcdic_symbol_name (pos, name);
 
                 /* Not sure what is the difference between those 3 fields.
                  * but the third one seems to be the absolute address of the entire section
@@ -187,14 +209,7 @@ void cms_write (const char *filename)
                 bytearray_write_4_bytes (pos + 16, symbol->part->section->rva + ld_state->base_address, BIG_ENDIAN);
             } else {
                 /* 8 bytes long EBDIC symbol name. */
-                {
-                    int j;
-
-                    memset (pos, tebc (' '), 8);
-                    for (j = 0; j < 8 && symbol->name[j]; j++) {
-                        pos[j] = tebc (symbol->name[j]);
-                    }
-                }
+                write_ebcdic_symbol_name (pos, symbol->name);
 
                 bytearray_write_4_bytes (pos + 8, 0, BIG_ENDIAN);
                 bytearray_write_4_bytes (pos + 12, symbol_get_value_with_base (symbol), BIG_ENDIAN);
@@ -206,14 +221,10 @@ void cms_write (const char *filename)
 
         /* SYSREF and NUCON symbols. */
         {
-            int j;
             const char *name;
 
             name = "SYSREF";
-            memset (pos, tebc (' '), 8);
-            for (j = 0; j < 8 && name[j]; j++) {
-                pos[j] = tebc (name[j]);
-            }
+            write_ebcdic_symbol_name (pos, name);
 
             bytearray_write_4_bytes (pos + 8, 0x600, BIG_ENDIAN);
             bytearray_write_4_bytes (pos + 12, 0x600, BIG_ENDIAN);
@@ -221,10 +232,7 @@ void cms_write (const char *filename)
             pos += 20;
 
             name = "NUCON";
-            memset (pos, tebc (' '), 8);
-            for (j = 0; j < 8 && name[j]; j++) {
-                pos[j] = tebc (name[j]);
-            }
+            write_ebcdic_symbol_name (pos, name);
 
             bytearray_write_4_bytes (pos + 8, 0, BIG_ENDIAN);
             bytearray_write_4_bytes (pos + 12, 0, BIG_ENDIAN);
