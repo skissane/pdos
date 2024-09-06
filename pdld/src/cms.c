@@ -18,6 +18,7 @@
 #include "xmalloc.h"
 
 #define MAX_RECORD_SIZE 32752
+#define MAX_RECORD_SYMS (MAX_RECORD_SIZE / 20)
 
 struct temp_sym {
     struct symbol *symbol;
@@ -88,9 +89,9 @@ void cms_write (const char *filename)
         /* Loader table,
          * stores symbols with 8 byte name and 3 4 byte fields (so 20 bytes each),
          * sorted in descdending order.
+         * It should be the last record in file but when too many symbols exist,
+         * it needs to be split into multiple records.
          */
-        file_size += 4;
-
         for (of = all_object_files; of; of = of->next) {
             size_t i;
 
@@ -105,11 +106,8 @@ void cms_write (const char *filename)
         }
         /* +2 symbols, SYSREF and NUCON. */
         file_size += (num_symbols + 2) * 20;
-
-        if ((num_symbols + 2) * 20 > 65535) {
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "(num_symbols + 2) * 20 > 65535");
-        }
+        file_size += ((num_symbols + 2) / MAX_RECORD_SYMS
+                      + !!((num_symbols + 2) % MAX_RECORD_SYMS)) * 4;
     }
 
     file = xcalloc (file_size, 1);
@@ -163,13 +161,11 @@ void cms_write (const char *filename)
     }
 
     /* Loader table. */
-    bytearray_write_2_bytes (pos, 4 + (num_symbols + 2) * 20, BIG_ENDIAN);
-    pos += 4;
-
     {
         unsigned long section_symbol_index = 284;
         size_t sym_i = 0;
         struct temp_sym *temp_syms = xmalloc (num_symbols * sizeof *temp_syms);
+        size_t table_syms = num_symbols + 2;
 
         for (of = all_object_files; of; of = of->next) {
             size_t i;
@@ -190,6 +186,13 @@ void cms_write (const char *filename)
 
         for (sym_i = 0; sym_i < num_symbols; sym_i++) {
             struct symbol *symbol = temp_syms[sym_i].symbol;
+
+            if (sym_i % MAX_RECORD_SYMS == 0) {
+                size_t this_syms = table_syms > MAX_RECORD_SYMS ? MAX_RECORD_SYMS : table_syms;
+                bytearray_write_2_bytes (pos, 4 + this_syms * 20, BIG_ENDIAN);
+                pos += 4;
+                table_syms -= this_syms;
+            }
             
             if (symbol->section_number == symbol - symbol->part->of->symbol_array) {
                 /* Section symbols have strange names like ".000284". */
@@ -223,6 +226,13 @@ void cms_write (const char *filename)
         {
             const char *name;
 
+            if (sym_i % MAX_RECORD_SYMS == 0) {
+                size_t this_syms = table_syms > MAX_RECORD_SYMS ? MAX_RECORD_SYMS : table_syms;
+                bytearray_write_2_bytes (pos, 4 + this_syms * 20, BIG_ENDIAN);
+                pos += 4;
+                table_syms -= this_syms;
+            }
+
             name = "SYSREF";
             write_ebcdic_symbol_name (pos, name);
 
@@ -230,6 +240,14 @@ void cms_write (const char *filename)
             bytearray_write_4_bytes (pos + 12, 0x600, BIG_ENDIAN);
             bytearray_write_4_bytes (pos + 16, 0, BIG_ENDIAN);
             pos += 20;
+            sym_i++;
+
+            if (sym_i % MAX_RECORD_SYMS == 0) {
+                size_t this_syms = table_syms > MAX_RECORD_SYMS ? MAX_RECORD_SYMS : table_syms;
+                bytearray_write_2_bytes (pos, 4 + this_syms * 20, BIG_ENDIAN);
+                pos += 4;
+                table_syms -= this_syms;
+            }
 
             name = "NUCON";
             write_ebcdic_symbol_name (pos, name);
