@@ -19,6 +19,7 @@
 
 #define MAX_RECORD_SIZE 32752
 #define MAX_RECORD_SYMS (MAX_RECORD_SIZE / 20)
+#define MAX_RECORD_RELOCS (MAX_RECORD_SIZE / 4)
 
 struct temp_sym {
     struct symbol *symbol;
@@ -51,6 +52,75 @@ static void write_ebcdic_symbol_name (unsigned char *pos, const char *name)
     }
 }
 
+static size_t get_num_relocs (void)
+{
+    struct section *section;
+    size_t num_relocs = 0;
+    
+    for (section = all_sections; section; section = section->next) {
+        struct section_part *part;
+        
+        for (part = section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_24]) {
+                    num_relocs++;
+                }
+            }
+        }
+    }
+
+    return num_relocs;
+}
+
+static unsigned char *write_relocs (unsigned char *pos, size_t num_relocs)
+{
+    struct section *section;
+    size_t rel_i = 0;
+    
+    for (section = all_sections; section; section = section->next) {
+        struct section_part *part;
+        
+        for (part = section->first_part; part; part = part->next) {
+            size_t i;
+            
+            for (i = 0; i < part->relocation_count; i++) {
+                unsigned char flags;
+                
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
+                    continue;
+                }
+
+                /* Not sure what meaning exactly does the flags field have, the values are guessed. */
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                    flags = 0x23;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_24]) {
+                    flags = 0x22;
+                } else continue;
+
+                if (rel_i % MAX_RECORD_RELOCS == 0) {
+                    size_t this_relocs = num_relocs > MAX_RECORD_RELOCS ? MAX_RECORD_RELOCS : num_relocs;
+
+                    bytearray_write_2_bytes (pos, 4 + this_relocs * 4, BIG_ENDIAN);
+                    pos += 4;
+                    num_relocs -= this_relocs;
+                }
+
+                pos[0] = flags;
+                bytearray_write_3_bytes (pos + 1,
+                                         ld_state->base_address + part->rva + part->relocation_array[i].offset,
+                                         BIG_ENDIAN);
+                pos += 4;
+                rel_i++;
+            }
+        }
+    }
+
+    return pos;
+}
+
 void cms_write (const char *filename)
 {
     FILE *outfile;
@@ -62,6 +132,7 @@ void cms_write (const char *filename)
     struct object_file *of;
     size_t total_section_size_to_write = 0;
     size_t num_symbols = 0;
+    size_t num_relocs = 0;
 
     if (!(outfile = fopen (filename, "wb"))) {
         ld_error ("cannot open '%s' for writing", filename);
@@ -108,6 +179,17 @@ void cms_write (const char *filename)
         file_size += (num_symbols + 2) * 20;
         file_size += ((num_symbols + 2) / MAX_RECORD_SYMS
                       + !!((num_symbols + 2) % MAX_RECORD_SYMS)) * 4;
+
+        /* Relocations have 4 bytes: 1 byte flags and 3 bytes address.
+         * They seem to be base relocations,
+         * so they do not need to reference the symbol table.
+         */
+        if (ld_state->emit_relocs) {
+            num_relocs = get_num_relocs ();
+            file_size += num_relocs * 4;
+            file_size += (num_relocs / MAX_RECORD_RELOCS
+                          + !!(num_relocs % MAX_RECORD_RELOCS)) * 4;
+        }
     }
 
     file = xcalloc (file_size, 1);
@@ -260,6 +342,8 @@ void cms_write (const char *filename)
 
         free (temp_syms);
     }
+
+    if (ld_state->emit_relocs) write_relocs (pos, num_relocs);
 
     if (fwrite (file, file_size, 1, outfile) != 1) {
         ld_error ("writing '%s' file failed", filename);
