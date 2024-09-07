@@ -213,6 +213,8 @@ void cms_write (const char *filename)
             "\x02\xC5\xE2\xC4\x00\x00\x00\x00\x00\x02\x84\x0C\x00\x00\x0B\x18"
             "\xE9\xF0\xF0\xF0\xF2\xF8\xF4\x40",
             40);
+    /* Top bit of pos[44] is AMODE31 flag. */
+    if (mainframe_get_amode () == 31) pos[44] |= 0x80;
     pos += 80;
 
     for (section = all_sections; section; section = section->next) {

@@ -20,6 +20,13 @@
 #include "mainframe.h"
 #include "xmalloc.h"
 
+static int amode = 24;
+
+int mainframe_get_amode (void)
+{
+    return amode;
+}
+
 #define DEFAULT_PART_ALIGNMENT 8
 
 /* The following fields are faked for now
@@ -1136,4 +1143,58 @@ struct symbol *mainframe_symbol_find (const char *name)
     if (symbol && !symbol_is_undefined (symbol)) return symbol;
 
     return symbol_find (name);
+}
+
+#include "options.h"
+
+enum option_index {
+
+    MAINFRAME_OPTION_IGNORED = 0,
+    MAINFRAME_OPTION_AMODE24,
+    MAINFRAME_OPTION_AMODE31
+
+};
+
+#define STR_AND_LEN(str) (str), (sizeof (str) - 1)
+static const struct long_option long_options[] = {
+    
+    { STR_AND_LEN("amode24"), MAINFRAME_OPTION_AMODE24, OPTION_NO_ARG},
+    { STR_AND_LEN("amode31"), MAINFRAME_OPTION_AMODE31, OPTION_NO_ARG},
+    { NULL, 0, 0}
+
+};
+#undef STR_AND_LEN
+
+void mainframe_print_help (void)
+{
+    printf ("mainframe:\n");
+    printf ("  --amode24, --amode31              Set AMODE24/AMODE31\n");
+}
+
+static void use_option (enum option_index option_index, char *arg)
+{
+    switch (option_index) {
+
+        case MAINFRAME_OPTION_IGNORED:
+            break;
+
+        case MAINFRAME_OPTION_AMODE24:
+            amode = 24;
+            break;
+
+        case MAINFRAME_OPTION_AMODE31:
+            amode = 31;
+            break;
+
+    }
+}
+
+void mainframe_use_option (int option_index, char *arg)
+{
+    use_option (option_index, arg);
+}
+
+const struct long_option *mainframe_get_long_options (void)
+{
+    return long_options;
 }

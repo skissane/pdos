@@ -90,6 +90,7 @@ static void print_help (void)
     
     coff_print_help ();
     lx_print_help ();
+    mainframe_print_help ();
     
     exit (EXIT_SUCCESS);
 }
@@ -205,7 +206,7 @@ char **ld_parse_args (int argc, char **argv, int start_index)
     char **input_filenames;
     int i_arg;
     int at_least_one_input_filename = 0;
-    struct options_with_use options_with_use[4];
+    struct options_with_use options_with_use[5];
 
     options_with_use[0].options = long_options;
     options_with_use[0].use = &use_option;
@@ -213,8 +214,10 @@ char **ld_parse_args (int argc, char **argv, int start_index)
     options_with_use[1].use = &coff_use_option;
     options_with_use[2].options = lx_get_long_options ();
     options_with_use[2].use = &lx_use_option;
-    options_with_use[3].options = NULL;
-    options_with_use[3].use = NULL;
+    options_with_use[3].options = mainframe_get_long_options ();
+    options_with_use[3].use = &mainframe_use_option;
+    options_with_use[4].options = NULL;
+    options_with_use[4].use = NULL;
 
     if (argc == start_index) return NULL;
 

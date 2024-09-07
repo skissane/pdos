@@ -304,10 +304,16 @@ void lx_use_option (int option_index, char *arg);
 const struct long_option *lx_get_long_options (void);
 
 /* mainframe.c */
+int mainframe_get_amode (void);
+
 address_type mvs_get_base_address (void);
 void mvs_write (const char *filename);
 int mainframe_read (unsigned char *file, size_t file_size, const char *filename);
 struct symbol *mainframe_symbol_find (const char *name);
+
+void mainframe_print_help (void);
+void mainframe_use_option (int option_index, char *arg);
+const struct long_option *mainframe_get_long_options (void);
 
 /* map.c */
 void map_write (const char *filename);
