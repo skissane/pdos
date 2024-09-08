@@ -40,7 +40,8 @@ enum ld_oformat {
     LD_OFORMAT_COFF,
     LD_OFORMAT_ELF,
     LD_OFORMAT_LX,
-    LD_OFORMAT_MVS
+    LD_OFORMAT_MVS,
+    LD_OFORMAT_VSE
 };
 
 typedef unsigned long address_type;
@@ -354,3 +355,7 @@ int symbol_is_undefined (const struct symbol *symbol);
 address_type symbol_get_value_with_base (const struct symbol *symbol);
 address_type symbol_get_value_no_base (const struct symbol *symbol);
 void symbols_for_each_global (void (*symbol_callback) (struct symbol *));
+
+/* vse.c */
+address_type vse_get_base_address (void);
+void vse_write (const char *filename);

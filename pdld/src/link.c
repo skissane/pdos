@@ -432,7 +432,8 @@ static void relocate_part (struct section_part *part)
                                              symbol->name);
             }
             if ((ld_state->oformat == LD_OFORMAT_CMS
-                 || ld_state->oformat == LD_OFORMAT_MVS)
+                 || ld_state->oformat == LD_OFORMAT_MVS
+                 || ld_state->oformat == LD_OFORMAT_VSE)
                 && symbol_is_undefined (symbol)) {
                 /* Mainframe-only output formats need less strict matching. */
                 symbol = mainframe_symbol_find (symbol->name);
@@ -591,6 +592,10 @@ void link (void)
 
             case LD_OFORMAT_MVS:
                 ld_state->base_address = mvs_get_base_address ();
+                break;
+
+            case LD_OFORMAT_VSE:
+                ld_state->base_address = vse_get_base_address ();
                 break;
 
             default:

@@ -8,6 +8,7 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+#define ESD_DATA_TYPE_SD 0x0
 #define ESD_DATA_TYPE_LD 0x1
 #define ESD_DATA_TYPE_ER 0x2
 #define ESD_DATA_TYPE_PC 0x4
