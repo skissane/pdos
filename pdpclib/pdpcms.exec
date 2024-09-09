@@ -2,7 +2,28 @@
 
 * Compile sample program
 
-FILEDEF INPUT TAP1 (LRECL 0 BLKSIZE 32760 RECFM U
+
+
+* I would like to switch the blksize from 32720 to 32760
+* (which is the maximum that MVS allows so a natural choice)
+
+* However:
+* 1. Supporting infrastructure like putcmsb.exec is still
+* requiring a multiple of 80
+* 2. I need to check if short records/blocks are being
+* padded with NULs or junk or not being padded, to see
+* if it is ok to have 32720 on the tape definition even
+* though I have 32760 here, and find root cause and
+* document any anomaly. Potentially fix in VM/370 if z/VM works
+* 3. On VM/370 at least, you can't make a disk RECFM=U, so
+* there is still a natural need for multiples of 80, meaning
+* a block size of 32720 on the tape definition would be good
+* for general purpose use, although odd for a RECFM=U tape
+* as defined here.
+
+* So that is why it being set to 32720 for now
+
+FILEDEF INPUT TAP1 (LRECL 0 BLKSIZE 32720 RECFM U
 MVSUNZIP DD:INPUT A
 FILEDEF INPUT CLEAR
 
