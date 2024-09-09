@@ -281,10 +281,18 @@ repeat:
 
         for (i = 0; i < NumberOfSymbols; i++) {
             int ret;
-            const struct symbol *symbol = symbol_find (offset_name_table[i].name);
 
-            if (symbol == NULL) continue;
-            if (!symbol_is_undefined (symbol)) continue;
+            if (ld_state->oformat == LD_OFORMAT_CMS
+                || ld_state->oformat == LD_OFORMAT_MVS
+                || ld_state->oformat == LD_OFORMAT_VSE) {
+                /* Mainframe-only output formats need less strict matching. */
+                if (!mainframe_symbol_check_undefined (offset_name_table[i].name)) continue;
+            } else {
+                const struct symbol *symbol = symbol_find (offset_name_table[i].name);
+
+                if (symbol == NULL) continue;
+                if (!symbol_is_undefined (symbol)) continue;
+            }
 
             if (offset_name_table[i].offset == start_header_object_offset
                 || offset_name_table[i].offset == end_header_object_offset) continue;

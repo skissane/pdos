@@ -1167,6 +1167,49 @@ struct symbol *mainframe_symbol_find (const char *name)
     return symbol_find (name);
 }
 
+int mainframe_symbol_check_undefined (const char *name)
+{
+    /* This is more complicated than the above code
+     * because it is used to check whether archive member
+     * should be imported.
+     * Any version of the symbol being defined returns 0
+     * and none of the versions being found returns 0 too.
+     * Only when all versions of the symbol are undefined or not found
+     * and at least one version is found should return 1.
+     */
+    const struct symbol *symbol;
+    size_t i;
+    char new_name[9] = {0};
+    int symbol_exists = 0;
+
+    symbol = symbol_find (name);
+    if (symbol && !symbol_is_undefined (symbol)) return 0;
+    if (strlen (name) > 8) return 0;
+    if (symbol) symbol_exists = 1;
+
+    for (i = 0; i < 8 && name[i]; i++) {
+        new_name[i] = toupper (name[i]);
+        if (new_name[i] == '@') new_name[i] = '_';
+        else if (new_name[i] == '_') new_name[i] = '@';
+    }
+
+    symbol = symbol_find (new_name);
+    if (symbol && !symbol_is_undefined (symbol)) return 0;
+    if (symbol) symbol_exists = 1;
+
+    for (i = 0; i < 8 && name[i]; i++) {
+        new_name[i] = tolower (name[i]);
+        if (new_name[i] == '@') new_name[i] = '_';
+        else if (new_name[i] == '_') new_name[i] = '@';
+    }
+
+    symbol = symbol_find (new_name);
+    if (symbol && !symbol_is_undefined (symbol)) return 0;
+    if (symbol) symbol_exists = 1;
+
+    return symbol_exists;
+}
+
 #include "options.h"
 
 enum option_index {

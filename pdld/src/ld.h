@@ -311,6 +311,7 @@ address_type mvs_get_base_address (void);
 void mvs_write (const char *filename);
 int mainframe_read (unsigned char *file, size_t file_size, const char *filename);
 struct symbol *mainframe_symbol_find (const char *name);
+int mainframe_symbol_check_undefined (const char *name);
 
 void mainframe_print_help (void);
 void mainframe_use_option (int option_index, char *arg);
