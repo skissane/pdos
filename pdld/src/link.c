@@ -541,6 +541,13 @@ static void calculate_entry_point (void)
             const struct symbol *symbol;
 
             symbol = symbol_find (ld_state->entry_symbol_name);
+            if ((ld_state->oformat == LD_OFORMAT_CMS
+                 || ld_state->oformat == LD_OFORMAT_MVS
+                 || ld_state->oformat == LD_OFORMAT_VSE)
+                && !symbol) {
+                /* Mainframe-only output formats need less strict matching. */
+                symbol = mainframe_symbol_find (ld_state->entry_symbol_name);
+            }
             if (symbol) {
                 ld_state->entry_point = symbol_get_value_no_base (symbol);
                 return;

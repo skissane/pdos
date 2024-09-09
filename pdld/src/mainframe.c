@@ -746,10 +746,12 @@ void mvs_write (const char *filename)
 static int estimate (unsigned char *file,
                      size_t file_size,
                      const char *filename,
-                     size_t *num_symbols_p)
+                     size_t *num_symbols_p,
+                     size_t *local_sym_i_p)
 {
     unsigned char *record_pos;
     size_t num_symbols = 0;
+    size_t num_local_symbols = 0;
 
     for (record_pos = file; record_pos + 80 <= file + file_size; record_pos += 80) {
         char record_name[4] = {0};
@@ -772,7 +774,8 @@ static int estimate (unsigned char *file,
 
             /* The ESD IDs do not have to be contiguous.
              * 0x4040 means two spaces in EBCDIC, blank,
-             * so it should be ignored.
+             * so it should be ignored because all symbols
+             * are LD type which does not use ESD IDs.
              */
             if (esdid != 0x4040 && esdid > num_symbols) num_symbols = esdid;
             
@@ -781,8 +784,10 @@ static int estimate (unsigned char *file,
                 return 1;
             }
             
-            for (pos += 16; pos + 16 <= record_pos + 16 + num_bytes; pos += 16) {                
-                num_symbols++;;
+            for (pos += 16; pos + 16 <= record_pos + 16 + num_bytes; pos += 16) {
+                /* Symbols with type LD do not have ESD ID and do not increment it. */
+                if (pos[8] == ESD_DATA_TYPE_LD) num_local_symbols++;
+                else num_symbols++;;
             }
         } else if (strcmp (record_name, "TXT") == 0) {
             /* Nothing needs to be done. */
@@ -797,7 +802,8 @@ static int estimate (unsigned char *file,
         }
     }
 
-    *num_symbols_p = num_symbols + 1;
+    *num_symbols_p = num_symbols + 1 + num_local_symbols;
+    *local_sym_i_p = num_symbols + 1;
 
     return 0;
 }
@@ -812,6 +818,7 @@ static int read_mainframe_object (unsigned char *file,
     unsigned char *record_pos;
     struct object_file *of;
     unsigned short esdid = 0;
+    size_t local_sym_i;
 
     int ret = 1;
 
@@ -819,7 +826,7 @@ static int read_mainframe_object (unsigned char *file,
      * are there without parsing all ESDs,
      * so the file is parsed twice.
      */
-    if (estimate (file, file_size, filename, &num_symbols)) return 1;
+    if (estimate (file, file_size, filename, &num_symbols, &local_sym_i)) return 1;
 
     if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME
         || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
@@ -857,7 +864,7 @@ static int read_mainframe_object (unsigned char *file,
                 return 1;
             }
 
-            for (pos += 16; pos + 16 <= record_pos + 16 + num_bytes; pos += 16, esdid++) {
+            for (pos += 16; pos + 16 <= record_pos + 16 + num_bytes; pos += 16) {
                 struct symbol *symbol;
                 unsigned char type;
                 char *name = NULL;
@@ -867,9 +874,21 @@ static int read_mainframe_object (unsigned char *file,
                                          "%s: ESD ID %u exceeds num_symbols",
                                          filename, esdid);
                 }
-                symbol = of->symbol_array + esdid;
-
+                
                 type = pos[8];
+                if (type == ESD_DATA_TYPE_LD) {
+                    /* LD type symbols do not use ESD IDs
+                     * and are never referenced by relocations in the same file
+                     * because LD symbols are only used to expose symbols
+                     * to other object files (they are defined external symbols).
+                     * To prevent them from interfering with ESD ID system used
+                     * for other symbols, they are stored in symbol array
+                     * after all other symbols using separate index.
+                     */
+                    symbol = of->symbol_array + local_sym_i;
+                } else {
+                    symbol = of->symbol_array + esdid;
+                }
                 if (type == ESD_DATA_TYPE_LD
                     || type == ESD_DATA_TYPE_ER) {
                     int i;
@@ -943,6 +962,9 @@ static int read_mainframe_object (unsigned char *file,
                     symbol->section_number = esdid;
                     symbol->part = part;
                 }
+
+                if (type == ESD_DATA_TYPE_LD) local_sym_i++;
+                else esdid++;
             }
         } else if (strcmp (record_name, "TXT") == 0) {
             struct section_part *part;
