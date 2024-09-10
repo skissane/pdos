@@ -24,3 +24,11 @@ int __wto(int len, int flags, char *msg)
     __svc(35, &regsin, &regsout);
     return (0);
 }
+
+
+/* return number 6 for testing purposes */
+
+int __ret6(void)
+{
+    return (6);
+}
