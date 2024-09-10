@@ -36,3 +36,17 @@ __svc:
 
          .ltorg
          .drop r15
+
+
+
+
+
+         .balign 2
+         .using .,r15
+         .globl __ret7
+__ret7:
+         L     r15,=F'7'
+         BR    r14
+
+         .ltorg
+         .drop r15
