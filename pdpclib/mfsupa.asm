@@ -15,7 +15,8 @@ __crt0:
          L     r4,=F'4'
          L     r5,=F'5'
          LA    r13,savea
-         ST    r13,76(,r13)
+         LA    r9,80(,r13)
+         ST    r9,76(,r13)
          L     r15,=V(__vserun)
 #         .long 0
 #         .long 0xcccccccc
