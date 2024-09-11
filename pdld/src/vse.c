@@ -22,6 +22,7 @@
 #define RECORD_SIZE 80
 #define MAX_TXT_IN_BYTES 56
 #define MAX_RLD_IN_BYTES 56
+/* 4 bytes are needed for the beginning ESD IDs in each record. */
 #define MAX_RLD_RELOCS ((MAX_RLD_IN_BYTES - 4) / 4)
 
 #define PHASE_STR " PHASE "
@@ -182,9 +183,8 @@ void vse_write (const char *filename)
         }
 
         num_relocs = get_num_relocs ();
-        /* 4 bytes are needed for the beginning ESD IDs in each record. */
-        file_size += (num_relocs / (MAX_RLD_IN_BYTES - 4)
-                      + !!(num_relocs % (MAX_RLD_IN_BYTES - 4))) * RECORD_SIZE;
+        file_size += (num_relocs / MAX_RLD_RELOCS
+                      + !!(num_relocs % MAX_RLD_RELOCS)) * RECORD_SIZE;
 
         /* END record. */
         file_size += RECORD_SIZE;
