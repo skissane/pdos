@@ -22,19 +22,24 @@ __crt0:
          .globl __pgparm
 __pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
 .skiphdr:
-#         L     r1,=V(__pgparm)
+         L     r1,=V(__pgparm)
          L     r1,0(,r1)
          LTR   r1,r1
-         BNZ   .Lnotpdos
-.Lnotpdos:
+         BZ    .Lnotpdos
+         STM   r14,r12,12(r13)
+         LA    r13,80(,r13)
          LR    r12,r15
          .drop r15
          .using __crt0, r12
+         B     bypass1
+.Lnotpdos:
+         LR    r12,r15
          LR    r7,r14
          L     r3,=F'3'
          L     r4,=F'4'
          L     r5,=F'5'
          LA    r13,savea
+bypass1:
          LA    r9,80(,r13)
          ST    r9,76(,r13)
          L     r15,=V(__vserun)
@@ -46,6 +51,15 @@ __pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
 #         B     .LABC
          L     r15,=F'3'
          LR    r14,r7
+#
+         L     r1,=V(__pgparm)
+         L     r1,0(,r1)
+         LTR   r1,r1
+         BZ    .Lnotpdos2
+         S     r13,=F'80'
+# Need r15 logic
+         LM    r14,r12,12(r13)
+.Lnotpdos2:
          BR    r14
          .balign 8
          .ltorg
