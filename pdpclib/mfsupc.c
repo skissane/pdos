@@ -8,7 +8,11 @@
 
 #include <string.h>
 
+#include <__os.h>
+
 #include "__mvs.h"
+
+extern OS *__pgparm;
 
 int __wto(int len, int flags, char *msg)
 {
@@ -109,4 +113,17 @@ int __vserun(void)
     }
 
     return (0);
+}
+
+
+int __svc(int svcnum, void *regsin, void *regsout)
+{
+    if (__pgparm == 0)
+    {
+        return (__svcreal(svcnum, regsin, regsout));
+    }
+    else
+    {
+        return (__pgparm->Xservice(svcnum, regsin, regsout));
+    }
 }
