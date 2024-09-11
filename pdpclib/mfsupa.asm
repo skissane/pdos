@@ -16,13 +16,13 @@ __crt0:
          L     r5,=F'5'
          LA    r13,savea
          ST    r13,76(,r13)
-         L     r15,=V(__ret6)
+         L     r15,=V(__vserun)
 #         .long 0
 #         .long 0xcccccccc
 #         .long 0xcccccccc
          BALR  r14,r15
-.LABC:
-         B     .LABC
+#.LABC:
+#         B     .LABC
          L     r15,=F'3'
          LR    r14,r7
          BR    r14
@@ -38,9 +38,11 @@ savea:
 
 
          .balign 2
-         .using .,r15
+         .using .,r3
          .globl __svc
 __svc:
+         STM   r14,r12,12(r13)
+         LR    R3,R15
          L     r7,0(,r1)
          L     r8,4(,r1)
          L     r0,0(,r8)
@@ -51,10 +53,11 @@ __svc:
 .LSVC1:
          SVC   0
 .LSVC2:
+         LM    r14,r12,12(r13)
          BR    r14
 
          .ltorg
-         .drop r15
+         .drop r3
 
 
 
