@@ -22,6 +22,11 @@ __crt0:
          .globl __pgparm
 __pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
 .skiphdr:
+#         L     r1,=V(__pgparm)
+         L     r1,0(,r1)
+         LTR   r1,r1
+         BNZ   .Lnotpdos
+.Lnotpdos:
          LR    r12,r15
          .drop r15
          .using __crt0, r12
@@ -55,8 +60,8 @@ savea:
 
          .balign 2
          .using .,r3
-         .globl __svc
-__svc:
+         .globl __svcreal
+__svcreal:
          STM   r14,r12,12(r13)
          LR    R3,R15
          L     r7,0(,r1)
