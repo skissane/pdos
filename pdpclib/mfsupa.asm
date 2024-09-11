@@ -2,14 +2,29 @@
 # Written by Paul Edwards
 # Released to the public domain
 
+
+# If running under z/PDOS-generic, there will be a
+# stack provided already. Otherwise we need to create
+# our own
+
          .text
          .balign 2
          .extern __ret6
-         .using .,r12
+         .using .,r15
 #        MVC   92(8,r13),=D'1.0E0'
          .globl __crt0
 __crt0:
+         B     .skiphdr
+#         .byte "PGCX"  # PDOS-generic (or compatible) extension
+# Needs to be in EBCDIC
+         .byte 0xd7, 0xc7, 0xc3, 0xe7
+         .long 4   # length of header data
+         .globl __pgparm
+__pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
+.skiphdr:
          LR    r12,r15
+         .drop r15
+         .using __crt0, r12
          LR    r7,r14
          L     r3,=F'3'
          L     r4,=F'4'
