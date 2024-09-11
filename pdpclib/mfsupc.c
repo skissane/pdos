@@ -75,7 +75,23 @@ int __vserun(void)
     ccb.actual.communication_bytes = 0;
     ccb.actual.csw_status_bytes = 0;
     ccb.actual.logical_unit_class = 0;
-    ccb.actual.logical_unit = 4; /* I guess this means SYSLOG */
+    /* logical units are:
+       0 = sysrdr
+       1 = sysipt
+       2 = syspch
+       3 = syslst
+       4 = syslog
+       5 = syslnk
+       6 = sysres
+       7 = sysslb
+       8 = sysrlb
+       9 = sysuse
+       10 = sysrec
+       11 = sysclb
+       12 = sysvis
+       13 = syscat
+       and also sys000 is 0, sys001 is 1 etc, I think */
+    ccb.actual.logical_unit = 4; /* SYSLOG */
     ccb.actual.ccw_address = &ccw;
     ccb.actual.status_and_csw_ccw = 0;
 
