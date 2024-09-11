@@ -852,6 +852,15 @@ void coff_before_link (void)
     struct subsection *subsection;
     struct section_part *part;
 
+    if (ld_state->base_address % 0x10000) {
+        /* Other output formats set their base address using --image-base too
+         * and have no restrictions on it, so to avoid printing unnecessary warning
+         * (when --image-base is used before --oformat),
+         * the warning was moved here.
+         */
+        ld_warn ("base address must be a multiple of 64 KiB (0x10000) according to the specification");
+    }
+
     if (export_all_symbols) export_all_generate_names ();
 
     exclude_symbols_free ();
@@ -2614,10 +2623,6 @@ static void use_option (enum option_index option_index, char *arg)
                     break;
                 }
                 ld_state->use_custom_base_address = 1;
-
-                if (ld_state->base_address % 0x10000) {
-                    ld_warn ("base address must be a multiple of 64 KiB (0x10000) according to the specification");
-                }
             }
             break;
 
