@@ -199,6 +199,7 @@ typedef struct {
     int (*Xputchar)(int c);
     int (*XPosExec)(char *prog_name, POSEXEC_PARMBLOCK *pb);
     void (*Xlongjmp)(jmp_buf env, int val);
+    int (*Xservice)(int svcnum, void *regsin, void *regsout);
 } OS;
 
 extern OS *__os;
