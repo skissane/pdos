@@ -139,6 +139,11 @@ static int processRLD(unsigned char *buf,
                       unsigned char *rld,
                       int len);
 #endif
+#if NEED_VSE
+static int exeloadLoadVSE(unsigned char **entry_point,
+                          FILE *fp,
+                          unsigned char **loadloc);
+#endif
 #if NEED_AMIGA
 static int exeloadLoadAmiga(unsigned char **entry_point,
                             FILE *fp,
@@ -175,6 +180,11 @@ int exeloadDoload(unsigned char **entry_point,
     if (ret == 1) ret = exeloadLoadMacho((unsigned char **)entry_point,
                                          fp,
                                          (unsigned char **)loadloc);
+#endif
+#if NEED_VSE
+    if (ret == 1) ret = exeloadLoadVSE((unsigned char **)entry_point,
+                                       fp,
+                                       (unsigned char **)loadloc);
 #endif
 #if NEED_MVS
     if (ret == 1) ret = exeloadLoadMVS((unsigned char **)entry_point,
@@ -5730,6 +5740,91 @@ static int processRLD(unsigned char *buf,
         *zaploc = newval;
         r += 3;
     }
+    return (0);
+}
+#endif
+
+
+
+#if NEED_VSE
+static int exeloadLoadVSE(unsigned char **entry_point,
+                          FILE *fp,
+                          unsigned char **loadloc)
+{
+    size_t readbytes;
+    unsigned char *entry;
+    int didalloc = 0;
+    char rec[80];
+    size_t newsize;
+    unsigned char *upto;
+
+    printf("in LoadVSE\n");
+    rewind(fp);
+    if (fread(rec, 1, 80, fp) != 80)
+    {
+        return (1);
+    }
+    if (memcmp(rec, " PHASE ", 7) != 0)
+    {
+        return (1);
+    }
+    fseek(fp, 0, SEEK_END);
+    newsize = ftell(fp);
+    /* we should be able to reduce this size by 30% */
+    *loadloc = malloc(newsize);
+    if (*loadloc == NULL)
+    {
+        printf("insufficient memory to get %u\n", newsize);
+        return (1);
+    }
+    rewind(fp);
+    upto = *loadloc;
+    while (fread(rec, 1, 80, fp) == 80)
+    {
+        /* we include the ESD so that it occupies the first x'38' bytes */
+        if ((memcmp(rec, "\x02" "TXT", 4) == 0)
+            || (memcmp(rec, "\x02" "ESD", 4) == 0))
+        {
+            memcpy(upto, rec + 16, 0x38);
+            upto += 0x38;
+        }
+        else if (memcmp(rec, "\x02" "RLD", 4) == 0)
+        {
+            break;
+        }
+    }
+    upto = *loadloc;
+    while (1)
+    {
+        if (memcmp(rec, "\x02" "RLD", 4) != 0)
+        {
+            unsigned char *miniup;
+            unsigned long zapaddr;
+            unsigned long zapaddr2;
+
+            miniup = rec + 20;
+            while ((*miniup == 0x0d)
+                   || (*miniup == 0x0c))
+            {
+                zapaddr = (miniup[1] << 16)
+                          | (miniup[2] << 8)
+                          | miniup[3];
+                zapaddr2 = zapaddr &= 0xfffff;
+                /* +++ need to change this address */
+                *(unsigned int *)(upto + zapaddr2) -= 0x700000;
+                *(unsigned int *)(upto + zapaddr2) += (unsigned int)upto;
+            }
+            break;
+        }
+        if (fread(rec, 1, 80, fp) != 80)
+        {
+            break;
+        }
+    }
+
+    /* *entry_point = entry; */
+    *entry_point = upto + 0x38;
+
     return (0);
 }
 #endif
