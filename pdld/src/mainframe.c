@@ -1184,8 +1184,8 @@ int mainframe_symbol_check_undefined (const char *name)
 
     symbol = symbol_find (name);
     if (symbol && !symbol_is_undefined (symbol)) return 0;
-    if (strlen (name) > 8) return 0;
     if (symbol) symbol_exists = 1;
+    if (strlen (name) > 8) return symbol_exists;
 
     for (i = 0; i < 8 && name[i]; i++) {
         new_name[i] = toupper (name[i]);
