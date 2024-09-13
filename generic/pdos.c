@@ -289,6 +289,16 @@ int main(int argc, char **argv)
 
 
 
+#ifdef NEED_VSE
+static int service_call(int svcnum, void *a, void *b)
+{
+    printf("got service call %d\n", svcnum);
+    return (0);
+}
+#endif
+
+
+
 /* mycmdline must have been populated first */
 
 static void runexe(char *prog_name)
@@ -334,6 +344,15 @@ static void runexe(char *prog_name)
 
 #ifdef NEED_FLUSH
     __cacheflush(mem_base, bios->mem_amt, 0);
+#endif
+
+
+#ifdef NEED_VSE
+    os.Xservice = service_call;
+    if (memcmp(entry_point + 4, "PGCX", 4) == 0)
+    {
+        *(void **)(entry_point + 12) = &os;
+    }
 #endif
 
 
