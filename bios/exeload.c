@@ -5768,8 +5768,13 @@ static int exeloadLoadVSE(unsigned char **entry_point,
     {
         return (1);
     }
+#if 0
     fseek(fp, 0, SEEK_END);
     newsize = ftell(fp);
+#else
+    /* we can't seek tapes at the moment */
+    newsize = 1000000;
+#endif
     /* we should be able to reduce this size by 30% */
     *loadloc = malloc(newsize);
     if (*loadloc == NULL)
