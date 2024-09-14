@@ -11,7 +11,7 @@ all: clean pdptest.exe
 
 pdptest.exe: pgastart.o pdptest.o zpgsupa.o
   rm -f pdptest.exe
-  pdld --oformat mainframe -e __crt0 -o pdptest.exe pgastart.o pdptest.o zpgsupa.o
+  pdld --oformat mvs -e __crt0 -o pdptest.exe pgastart.o pdptest.o zpgsupa.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
