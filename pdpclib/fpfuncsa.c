@@ -225,9 +225,10 @@ char *itoa(int num, char *dst, int base);
 
 /***************** Assembly **************/
 #ifndef WIN32
-typedef uint32 jmp_buf[20];
+/* not sure what this is, but it stopped makefile.aga from building */
+/* typedef uint32 jmp_buf[20];
 extern int setjmp(jmp_buf env);
-extern void longjmp(jmp_buf env, int val);
+extern void longjmp(jmp_buf env, int val); */
 #endif
 extern uint32 OS_AsmInterruptEnable(uint32 state);
 extern void OS_AsmInterruptInit(void);
