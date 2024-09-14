@@ -58,8 +58,9 @@ BYPASS1:
          LTR   r1,r1
          BZ    notpdos2
          S     r13,=F'80'
-# Need r15 logic
-         LM    r14,r12,12(r13)
+#
+         L     r14,12(r13)
+         LM    r0,r12,20(r13)
 notpdos2:
          BR    r14
          .balign 8
