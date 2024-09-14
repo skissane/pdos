@@ -5801,7 +5801,7 @@ static int exeloadLoadVSE(unsigned char **entry_point,
     upto = *loadloc;
     while (1)
     {
-        if (memcmp(rec, "\x02" "RLD", 4) != 0)
+        if (memcmp(rec, "\x02" "RLD", 4) == 0)
         {
             unsigned char *miniup;
             unsigned long zapaddr;
@@ -5818,6 +5818,7 @@ static int exeloadLoadVSE(unsigned char **entry_point,
                 /* +++ need to change this address */
                 *(unsigned int *)(upto + zapaddr2) -= 0x700000;
                 *(unsigned int *)(upto + zapaddr2) += (unsigned int)upto;
+                miniup += 4;
             }
             break;
         }
