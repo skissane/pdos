@@ -126,6 +126,9 @@ static unsigned char *write_relocs (unsigned char *file,
                 if (this_relocs == 0) {
                     pos = terminate_record (file, record_i_p);
                     if (!num_relocs) return pos;
+
+                    this_relocs = num_relocs > MAX_RLD_RELOCS ? MAX_RLD_RELOCS : num_relocs;
+                    num_relocs -= this_relocs;
                     
                     pos[0] = 0x2;
                     write_ebcdic_str_no_null (pos + 1, "RLD");
