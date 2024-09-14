@@ -5815,8 +5815,11 @@ static int exeloadLoadVSE(unsigned char **entry_point,
                           | (miniup[2] << 8)
                           | miniup[3];
                 zapaddr2 = zapaddr &= 0xfffff;
+                zapaddr2 -= 0x90; /* an address of 148 is assuming the module
+                                     starts at c8. but our module is starting
+                                     at 38. So subtract 90 */
                 /* +++ need to change this address */
-                *(unsigned int *)(upto + zapaddr2) -= 0x700000;
+                *(unsigned int *)(upto + zapaddr2) -= 0x700090;
                 *(unsigned int *)(upto + zapaddr2) += (unsigned int)upto;
                 miniup += 4;
             }
@@ -5827,6 +5830,17 @@ static int exeloadLoadVSE(unsigned char **entry_point,
             break;
         }
     }
+
+#if 0
+    /* we need a correction at address 0x70 + 0x38 too - unclear why we
+       haven't got one */
+    {
+        /* upto represents 7000C8 - 38 = 700090 */
+        unsigned long zapaddr2 = 0x70 + 0x38;
+        *(unsigned int *)(upto + zapaddr2) -= 0x700090;
+        *(unsigned int *)(upto + zapaddr2) += (unsigned int)upto;
+    }
+#endif
 
     /* *entry_point = entry; */
     *entry_point = upto + 0x38;
