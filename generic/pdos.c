@@ -290,9 +290,26 @@ int main(int argc, char **argv)
 
 
 #ifdef NEED_VSE
+
+#include <mfsup.h>
+
 static int service_call(int svcnum, void *a, void *b)
 {
     printf("got service call %d\n", svcnum);
+    if (svcnum == 0)
+    {
+        REGS *regs;
+        CCB *ccb;
+        CCW *ccw;
+        char *msg;
+
+        regs = a;
+        ccb = (CCB *)regs->r[1];
+        ccw = ccb->actual.ccw_address;
+        msg = (char *)(ccw->actual.addr & 0xffffff);
+        printf("len is %d\n", ccw->actual.len);
+        printf("msg is %.*s\n", ccw->actual.len, msg);
+    }
     return (0);
 }
 #endif
