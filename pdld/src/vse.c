@@ -118,11 +118,6 @@ static unsigned char *write_relocs (unsigned char *file,
                     flags = 0x8;
                 } else continue;
 
-                /* The last RLD data item should not have the flag
-                 * that next item has same ESD IDs set.
-                 */
-                if (this_relocs != 1) flags |= 0x1;
-
                 if (this_relocs == 0) {
                     pos = terminate_record (file, record_i_p);
                     if (!num_relocs) return pos;
@@ -138,6 +133,11 @@ static unsigned char *write_relocs (unsigned char *file,
                     bytearray_write_2_bytes (pos + 2, 1, BIG_ENDIAN);
                     pos += 4;
                 }
+
+                /* The last RLD data item should not have the flag
+                 * that next item has same ESD IDs set.
+                 */
+                if (this_relocs != 1) flags |= 0x1;
 
                 pos[0] = flags;
                 bytearray_write_3_bytes (pos + 1,
