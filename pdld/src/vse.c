@@ -132,7 +132,7 @@ static unsigned char *write_relocs (unsigned char *file,
                     bytearray_write_2_bytes (pos + 10, 4 + this_relocs * 4, BIG_ENDIAN);
                     pos += 16;
                     bytearray_write_2_bytes (pos, 1, BIG_ENDIAN);
-                    bytearray_write_2_bytes (pos + 1, 1, BIG_ENDIAN);
+                    bytearray_write_2_bytes (pos + 2, 1, BIG_ENDIAN);
                     pos += 4;
                 }
 
