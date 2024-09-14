@@ -5,9 +5,9 @@ COPTS=-msoft-float -S -O0 -fno-common -fno-builtin -mapcs-32 -DHAVE_DIR -D__UNOP
 
 all: clean pcomm.exe
 
-pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o ../pdpclib/string.o
   rm -f pcomm.exe
-  ldarm -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o
+  ldarm -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/armsupa.o ../pdpclib/string.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
