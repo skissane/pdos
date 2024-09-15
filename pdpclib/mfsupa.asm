@@ -23,6 +23,8 @@
 #        MVC   92(8,r13),=D'1.0E0'
          .globl __crt0
 __crt0:
+#         LA    R15,9(,0)
+#         BR    R14
          B     skiphdr
 #         .byte "PGCX"  # PDOS-generic (or compatible) extension
 # Needs to be in EBCDIC
@@ -34,6 +36,12 @@ __pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
 skiphdr:
 .if MVS
          STM   r14,r12,12(r13)
+         LR    R11,R1
+         LR    R6,R13
+         L     R1,=V(__pgparm)
+         L     R1,0(,R1)
+         LTR   R1,R1
+         BZ    notpdos
          LA    r13,80(,r13)
          LR    r12,r15
          .drop r15
@@ -51,9 +59,9 @@ skiphdr:
          .drop r15
          .using __crt0, r12
          B     BYPASS1
+.endif
 notpdos:
          LR    r12,r15
-.endif
          LR    r7,r14
          L     r3,=F'3'
          L     r4,=F'4'
@@ -75,7 +83,9 @@ BYPASS1:
          BALR  r14,r15
 #.LABC:
 #         B     .LABC
+.if VSE
          L     r15,=F'3'
+.endif
 #
 .if VSE
          LR    r14,r7
@@ -85,13 +95,27 @@ BYPASS1:
          LTR   r1,r1
          BZ    notpdos2
 .endif
+.if MVS
+         L     r1,=V(__pgparm)
+         L     r1,0(,r1)
+         LTR   r1,r1
+         BZ    notpdos2
+.endif
          S     r13,=F'80'
 #
          L     r14,12(r13)
          LM    r0,r12,20(r13)
+         BR    R14
 .if VSE
 notpdos2:
          BR    r14
+.endif
+.if MVS
+notpdos2:
+         LR    R13,R6
+         L     r14,12(r13)
+         LM    r0,r12,20(r13)
+         BR    R14
 .endif
          .balign 8
          .ltorg
