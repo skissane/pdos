@@ -117,6 +117,7 @@ void mvs_write (const char *filename)
     size_t num_relocs = 0;
     unsigned char current_sector = 0x16; /* Arbitrary? */
     unsigned char *saved_pos = NULL;
+    unsigned char *pds2ttrt_pos;
 
     if (!(outfile = fopen (filename, "wb"))) {
         ld_error ("cannot open '%s' for writing", filename);
@@ -140,14 +141,16 @@ void mvs_write (const char *filename)
             for (i = 1; i < of->symbol_count; i++) {
                 struct symbol *symbol = of->symbol_array + i;
 
-                if (!symbol->name && symbol->section_number != i) continue;
+                if (!symbol->name
+                    && (!(symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)
+                        || !symbol->part->content_size)) continue;
                 if (symbol_is_undefined (symbol)) {
                     symbol = mainframe_symbol_find (symbol->name);
                 }
                 if (symbol->flags & SYMBOL_FLAG_INTERNAL1) continue;
 
                 symbol->flags |= SYMBOL_FLAG_INTERNAL1;
-                if (symbol->section_number == i) {
+                if (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL) {
                     /* Symbols referencing section symbols
                      * need to know the CESD symbol index.
                      */
@@ -350,9 +353,11 @@ void mvs_write (const char *filename)
                            38 + 4 + 24 = 38 + 28 = 66 */
 
     /* PDS2TTRT - TTR OF FIRST BLOCK OF TEXT
+     * Sector number of first block of text,
+     * so the position is saved
+     * and it is written later when the sector number is known.
      */
-    /* 1c is for one instance - this is subject to change! +++ */
-    bytearray_write_3_bytes (pos + 38 + 4, 0x1c, BIG_ENDIAN);
+    pds2ttrt_pos = pos + 38 + 4;
 
     /* PDS2ZERO - ZERO */
     pos[38 + 7] = 0;
@@ -407,7 +412,9 @@ void mvs_write (const char *filename)
         for (i = 1; i < of->symbol_count; i++) {
             struct symbol *symbol = of->symbol_array + i;
 
-            if (!symbol->name && symbol->section_number != i) continue;
+            if (!symbol->name
+                && (!(symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)
+                    || !symbol->part->content_size)) continue;
             if (symbol_is_undefined (symbol)) {
                 symbol = mainframe_symbol_find (symbol->name);
             }
@@ -431,7 +438,7 @@ void mvs_write (const char *filename)
             }
 
             symbol->flags |= SYMBOL_FLAG_INTERNAL2;
-            if (symbol->section_number == i) {
+            if (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL) {
                 /* Adjusted original section part symbols (so one section can have multiple of them). */
                 memset (pos, tebc (' '), 8); /* Empty 8 bytes long name. */
                 pos[8] = 0x4; /* Type, Private Code. */
@@ -525,7 +532,7 @@ void mvs_write (const char *filename)
 
         for (i = 1; i < of->symbol_count; i++) {
             struct symbol *symbol = of->symbol_array + i;
-            if (symbol->section_number == i) {
+            if (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL) {
                 bytearray_write_2_bytes (pos, symbol->value, BIG_ENDIAN);
                 pos += 2;
             }
@@ -589,7 +596,7 @@ void mvs_write (const char *filename)
 
         for (i = 1; i < of->symbol_count; i++) {
             struct symbol *symbol = of->symbol_array + i;
-            if (symbol->section_number == i) {
+            if (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL) {
                 bytearray_write_2_bytes (pos, symbol->value, BIG_ENDIAN);
                 bytearray_write_2_bytes (pos + 2, ALIGN (symbol->size, DEFAULT_PART_ALIGNMENT), BIG_ENDIAN);
                 pos += 4;
@@ -597,6 +604,8 @@ void mvs_write (const char *filename)
         }
     }
 
+    /* PDS2TTRT is known at this moment. */
+    bytearray_write_3_bytes (pds2ttrt_pos, current_sector, BIG_ENDIAN);
     for (section = all_sections; section; section = section->next) {
         unsigned char *tmp;
         size_t section_size;
@@ -703,7 +712,7 @@ void mvs_write (const char *filename)
                     }
                     /* CESD index for target symbol (obtained from repurposed symbol size field). */
                     if (target_symbol->part
-                        && target_symbol->section_number == target_symbol - target_symbol->part->of->symbol_array) {
+                        && (target_symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)) {
                         /* Section symbols have their CESD index stored in value field. */
                         bytearray_write_2_bytes (pos, target_symbol->value, BIG_ENDIAN);
                     } else {
@@ -749,10 +758,10 @@ void mvs_write (const char *filename)
         for (i = 1; i < of->symbol_count; i++) {
             struct symbol *symbol = of->symbol_array + i;
 
-            if (!symbol->name && symbol->section_number != i) continue;
+            if (!symbol->name && !(symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)) continue;
             if (symbol_is_undefined (symbol)) continue;
             
-            if (symbol->section_number == i) {
+            if (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL) {
                 symbol->value = 0;
             } 
         }
@@ -981,6 +990,7 @@ static int read_mainframe_object (unsigned char *file,
                     section_append_section_part (section, part);
 
                     symbol->name = xstrdup (".text");
+                    symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
                     symbol->value = 0;
                     /* Even though section parts seem to require 8-byte alignment,
                      * the original part size needs to be preserved for output CESD.

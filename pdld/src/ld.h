@@ -85,6 +85,7 @@ struct symbol {
 };
 
 #define SYMBOL_FLAG_EXCLUDE_EXPORT (1U << 0)
+#define SYMBOL_FLAG_SECTION_SYMBOL (1U << 1)
 
 #define UNDEFINED_SECTION_NUMBER 0
 #define ABSOLUTE_SECTION_NUMBER (-1)

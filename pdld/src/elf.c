@@ -1322,6 +1322,10 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                                                  ELF32_ST_BIND (elf_symbol.st_info));
                     break;
             }
+
+            if (ELF32_ST_TYPE (elf_symbol.st_info) == STT_SECTION) {
+                symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
+            }
         }
     }
 
@@ -1703,6 +1707,10 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
                                                  "+++not yet supported symbol ELF64_ST_BIND: %u",
                                                  ELF64_ST_BIND (elf_symbol->st_info));
                     break;
+            }
+
+            if (ELF64_ST_TYPE (elf_symbol->st_info) == STT_SECTION) {
+                symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
             }
         }
     }
