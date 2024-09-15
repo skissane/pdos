@@ -150,7 +150,7 @@ int findFile(int ipldev, char *dsn, int *c, int *h, int *r)
    and the IEBCOPY component is documented here:
    Appendix B of OS/390 DFSMSdfp Utilities SC26-7343-00
    or Appendix B of the z/OS equivalent SC26-7414-05 available here at
-   http://publibz.boulder.ibm.com/epubs/pdf/dgt2u140.pdf
+   http://publib.boulder.ibm.com/epubs/pdf/dgt2u140.pdf
 */
 
 #define PE_DEBUG 0
