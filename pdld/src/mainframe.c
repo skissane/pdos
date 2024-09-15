@@ -246,11 +246,11 @@ void mvs_write (const char *filename)
     pos[12] = 0x2;
     pos[13] = 0;
     /* Block size, not sure how to determine. */
-    bytearray_write_2_bytes (pos + 14, 0x4800, BIG_ENDIAN);
+    bytearray_write_2_bytes (pos + 14, 0x1800, BIG_ENDIAN);
     /* Record format, not sure what it means. */
     pos[18] = 0x80 | 0x40;
     /* Block size of container set, not sure how to determine. */
-    bytearray_write_2_bytes (pos + 22, 0x4814, BIG_ENDIAN);
+    bytearray_write_2_bytes (pos + 22, 0x1814, BIG_ENDIAN);
     /* Information about the device.
      * Currently just copied from working executable
      * because DEVTYPE macro is not available.
@@ -327,14 +327,33 @@ void mvs_write (const char *filename)
     }
 
     /* PDS member entry. */
-    /* 4 unknown bytes. */
+
+
+    /* We started with a 3390 (which has 15 tracks and can fit 3 * 18452
+       blocks), but this has morphed into a theoretical device that can
+       fit much more data on a track than a 3390. We're also using a
+       universal blocksize of 6233 reduced to 6144 so that we have a 1K
+       multiple which is all load modules can use, I believe. We are
+       positing that this theoretical device has data starting on
+       cylinder 1. That would potentially be a relative track number of
+       15, if the 3390 characteristics stayed, but the TTR values appear
+       to be relative to location 0 */
+
+    /* PDS2TTRP - TTR of first block of named member */
     memcpy (pos + 38,
-            "\x00\x00\x16\x2C",
-            4);
+            "\x00\x00\x16",
+            3);
+    pos[38 + 3] = 0x2C; /* 2 = PDS2NTTR - there is 1 TTR,
+                           C = PDS2LUSR - there are 12 halfwords of data, ie 24 bytes,
+                           which now follows, and which takes us up to the next entry,
+                           which is FFFFFFFF - end of data. So that should start at
+                           38 + 4 + 24 = 38 + 28 = 66 */
+
     /* PDS2TTRT - TTR OF FIRST BLOCK OF TEXT
-     * (Unknown meaning.)
      */
-    bytearray_write_3_bytes (pos + 38 + 4, 0x1b, BIG_ENDIAN);
+    /* 1c is for one instance - this is subject to change! +++ */
+    bytearray_write_3_bytes (pos + 38 + 4, 0x1c, BIG_ENDIAN);
+
     /* PDS2ZERO - ZERO */
     pos[38 + 7] = 0;
     /* PDS2TTRN - TTR OF NOTE LIST OR SCATTER/TRANSLATION TABLE.
@@ -364,9 +383,17 @@ void mvs_write (const char *filename)
                              BIG_ENDIAN);
     /* PDS2EPA - 24 bit entry point. */
     bytearray_write_3_bytes (pos + 57, ld_state->entry_point, BIG_ENDIAN);
-    /* Unknown. */
+    /* High bit - 80 = PDSAOSLE - module has been processed by linkage editor */
+    /* Next bit - 08 - PDSAPFLG - information in pdsapf is valid */ 
     pos[60] = 0x88;
-    pos[63] = 0x01;
+    pos[61] = 0; /* PDS2FTB2 - unused */
+    pos[62] = 0; /* PDS2FTB3 - unused */
+    
+    /* next is for APF authorization */
+    pos[63] = 0x01; /* PDSAPFCT - length of program authorization code */
+    pos[64] = 0; /* PDSAPFAC - program authorization code */
+    
+    pos[65] = 0; /* filler - next field needs to be halfword-aligned */
     /* Again 8 bytes of 0xFF, unknown meaning. */
     memset (pos + 66, 0xFF, 8);
     
