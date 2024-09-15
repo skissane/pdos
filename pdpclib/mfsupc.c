@@ -14,6 +14,8 @@
 
 extern OS *__pgparm;
 
+
+#ifndef __MVS__
 int __wto(int len, int flags, char *msg)
 {
     char buf[84];
@@ -29,6 +31,7 @@ int __wto(int len, int flags, char *msg)
     __svc(35, &regsin, &regsout);
     return (0);
 }
+#endif
 
 
 /* return number 6 for testing purposes */
@@ -38,6 +41,20 @@ int __ret6(void)
     return (6);
 }
 
+
+#ifdef __MVS__
+
+/* C startup code for MVS */
+
+int __mvsrun(void)
+{
+    return (__ret6());
+}
+
+#endif
+
+
+#ifdef __VSE__
 
 /* C startup code for VSE */
 
@@ -115,7 +132,10 @@ int __vserun(void)
     return (0);
 }
 
+#endif
 
+
+#ifndef __MVS__
 int __svc(int svcnum, void *regsin, void *regsout)
 {
     if (__pgparm == 0)
@@ -127,3 +147,4 @@ int __svc(int svcnum, void *regsin, void *regsout)
         return (__pgparm->Xservice(svcnum, regsin, regsout));
     }
 }
+#endif
