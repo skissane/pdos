@@ -7,6 +7,15 @@
 # stack provided already. Otherwise we need to create
 # our own
 
+
+.ifndef MVS
+.set MVS,0
+.endif
+
+.ifndef VSE
+.set VSE,0
+.endif
+
          .text
          .balign 2
          .extern __ret6
@@ -23,6 +32,15 @@ __crt0:
          .globl __pgparm
 __pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
 skiphdr:
+.if MVS
+         STM   r14,r12,12(r13)
+         LA    r13,80(,r13)
+         LR    r12,r15
+         .drop r15
+         .using __crt0, r12
+         B     BYPASS1
+.endif
+.if VSE
          L     R1,=V(__pgparm)
          L     R1,0(,R1)
          LTR   R1,R1
@@ -35,6 +53,7 @@ skiphdr:
          B     BYPASS1
 notpdos:
          LR    r12,r15
+.endif
          LR    r7,r14
          L     r3,=F'3'
          L     r4,=F'4'
@@ -43,7 +62,13 @@ notpdos:
 BYPASS1:
          LA    r9,80(,r13)
          ST    r9,76(,r13)
+.if MVS
+         L     r15,=V(__mvsrun)
+.endif
+#
+.if VSE
          L     r15,=V(__vserun)
+.endif
 #         .long 0
 #         .long 0xcccccccc
 #         .long 0xcccccccc
@@ -51,18 +76,23 @@ BYPASS1:
 #.LABC:
 #         B     .LABC
          L     r15,=F'3'
+#
+.if VSE
          LR    r14,r7
 #
          L     r1,=V(__pgparm)
          L     r1,0(,r1)
          LTR   r1,r1
          BZ    notpdos2
+.endif
          S     r13,=F'80'
 #
          L     r14,12(r13)
          LM    r0,r12,20(r13)
+.if VSE
 notpdos2:
          BR    r14
+.endif
          .balign 8
          .ltorg
          .drop r12
