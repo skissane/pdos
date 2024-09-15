@@ -151,6 +151,9 @@ int findFile(int ipldev, char *dsn, int *c, int *h, int *r)
    Appendix B of OS/390 DFSMSdfp Utilities SC26-7343-00
    or Appendix B of the z/OS equivalent SC26-7414-05 available here at
    http://publib.boulder.ibm.com/epubs/pdf/dgt2u140.pdf
+   Also PDS directory blocks are documented in Chapter 26 of
+   z/OS DFSMS Using Data Sets here:
+   https://www.ibm.com/docs/en/SSLTBW_3.1.0/pdf/idad400_v3r1.pdf
 */
 
 #define PE_DEBUG 0
