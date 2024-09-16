@@ -5758,7 +5758,6 @@ static int exeloadLoadVSE(unsigned char **entry_point,
     size_t newsize;
     unsigned char *upto;
 
-    printf("in LoadVSE\n");
     rewind(fp);
     if (fread(rec, 1, 80, fp) != 80)
     {
