@@ -130,7 +130,6 @@ void mvs_write (const char *filename)
         file_size += SIZEOF_struct_COPYR1_file - 4;
         file_size += SIZEOF_struct_COPYR2_file - 4;
         file_size += 8 + 276 + 12 - 4; /* Directory Block Record. */
-        file_size += MEMBER_DATA_RECORD_HEADER_SIZE;
 
         /* Load module, the program itself. */
         /* CESD Records (symbol table). */
