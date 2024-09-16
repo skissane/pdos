@@ -289,14 +289,14 @@ int main(int argc, char **argv)
 
 
 
-#ifdef NEED_VSE
+#if defined(NEED_VSE) || defined(NEED_MVS)
 
 #include <mfsup.h>
 
 static int service_call(int svcnum, void *a, void *b)
 {
     printf("got service call %d\n", svcnum);
-    if (svcnum == 0)
+    if (svcnum == 0) /* VSE */
     {
         REGS *regs;
         CCB *ccb;
@@ -309,6 +309,19 @@ static int service_call(int svcnum, void *a, void *b)
         msg = (char *)(ccw->actual.addr & 0xffffff);
         printf("len is %d\n", ccw->actual.len);
         printf("msg is %.*s\n", ccw->actual.len, msg);
+    }
+    else if (svcnum == 35) /* MVS WTO */
+    {
+        REGS *regs;
+        int len;
+        char *buf;
+
+        regs = a;
+        buf = (char *)regs->r[1];
+        len = *(short *)buf;
+        len -= 4;
+        buf += 4;
+        printf("%.*s\n", len, buf);
     }
     return (0);
 }
@@ -364,7 +377,7 @@ static void runexe(char *prog_name)
 #endif
 
 
-#ifdef NEED_VSE
+#if defined(NEED_VSE) || defined(NEED_MVS)
     os.Xservice = service_call;
     if (memcmp(entry_point + 4, "PGCX", 4) == 0)
     {
