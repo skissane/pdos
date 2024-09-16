@@ -21,6 +21,7 @@
 #include "xmalloc.h"
 
 static int amode = 24;
+static int rmode = 24;
 
 int mainframe_get_amode (void)
 {
@@ -390,7 +391,22 @@ void mvs_write (const char *filename)
     /* High bit - 80 = PDSAOSLE - module has been processed by linkage editor */
     /* Next bit - 08 - PDSAPFLG - information in pdsapf is valid */ 
     pos[60] = 0x88;
-    pos[61] = 0; /* PDS2FTB2 - unused */
+    /* PDS2FTB2
+     * 0x80 - PDS2ALTP
+     * 0x10 - PDSLRMOD - RMODE ANY when set
+     * 0x0C - PDSAAMOD - alias entry point AMODE 24 (00), 31 (10), 64 (01), ANY (11)
+     * 0x03 - PDSMAMOD - main entry point AMODE 24 (00), 31 (10), 64 (01), ANY (11)
+     */
+    pos[61] = 0;
+    switch (amode) {
+        /* Main entry point is being used. */
+        case 24: pos[61] |= 0; break;
+        case 31: pos[61] |= 0x2; break;
+        case 64: pos[61] |= 0x1; break;
+        case 0: pos[61] |= 0x3; break;
+    }
+    if (rmode == 0) pos[61] |= 0x10;
+        
     pos[62] = 0; /* PDS2FTB3 - unused */
     
     /* next is for APF authorization */
@@ -1251,16 +1267,16 @@ int mainframe_symbol_check_undefined (const char *name)
 enum option_index {
 
     MAINFRAME_OPTION_IGNORED = 0,
-    MAINFRAME_OPTION_AMODE24,
-    MAINFRAME_OPTION_AMODE31
+    MAINFRAME_OPTION_AMODE,
+    MAINFRAME_OPTION_RMODE
 
 };
 
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
-    { STR_AND_LEN("amode24"), MAINFRAME_OPTION_AMODE24, OPTION_NO_ARG},
-    { STR_AND_LEN("amode31"), MAINFRAME_OPTION_AMODE31, OPTION_NO_ARG},
+    { STR_AND_LEN("amode"), MAINFRAME_OPTION_AMODE, OPTION_HAS_ARG},
+    { STR_AND_LEN("rmode"), MAINFRAME_OPTION_RMODE, OPTION_HAS_ARG},
     { NULL, 0, 0}
 
 };
@@ -1269,7 +1285,8 @@ static const struct long_option long_options[] = {
 void mainframe_print_help (void)
 {
     printf ("mainframe:\n");
-    printf ("  --amode24, --amode31              Set AMODE24/AMODE31\n");
+    printf ("  --amode <mode>                    Set AMODE 24/31/64/ANY\n");
+    printf ("  --rmode <mode>                    Set RMODE 24/ANY\n");
 }
 
 static void use_option (enum option_index option_index, char *arg)
@@ -1279,12 +1296,28 @@ static void use_option (enum option_index option_index, char *arg)
         case MAINFRAME_OPTION_IGNORED:
             break;
 
-        case MAINFRAME_OPTION_AMODE24:
-            amode = 24;
+        case MAINFRAME_OPTION_AMODE:
+            if (xstrcasecmp (arg, "ANY") == 0) {
+                amode = 0;
+            } else if (strcmp (arg, "24") == 0) {
+                amode = 24;
+            } else if (strcmp (arg, "31") == 0) {
+                amode = 31;
+            } else if (strcmp (arg, "64") == 0) {
+                amode = 64;
+            } else {
+                ld_error ("unsupported AMODE '%s' specified", arg);
+            }
             break;
 
-        case MAINFRAME_OPTION_AMODE31:
-            amode = 31;
+        case MAINFRAME_OPTION_RMODE:
+            if (xstrcasecmp (arg, "ANY") == 0) {
+                rmode = 0;
+            } else if (strcmp (arg, "24") == 0) {
+                rmode = 24;
+            } else {
+                ld_error ("unsupported RMODE '%s' specified", arg);
+            }
             break;
 
     }
