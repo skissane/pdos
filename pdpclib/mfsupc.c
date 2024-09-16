@@ -15,23 +15,26 @@
 extern OS *__pgparm;
 
 
-#ifndef __MVS__
 int __wto(int len, int flags, char *msg)
 {
-    char buf[84];
+    /* not sure what alignment is required - fullword should be enough */
+    union {
+        int dummy;
+        char buf[84];
+    } ubuf;
     regs regsin;
     regs regsout;
 
-    *(short *)buf = len;
-    *(short *)(buf + 2) = flags;
-    if (len > 84) len = 84;
-    if (len < 4) return (0);
-    /* memcpy(buf + 4, msg, len - 4); */
-    regsin.r[1] = (int)buf;
+    if (len < 0) return (0);
+    if (len > 80) len = 80;
+    len += 4;
+    *(short *)ubuf.buf = len;
+    *(short *)(ubuf.buf + 2) = flags;
+    memcpy(ubuf.buf + 4, msg, len - 4);
+    regsin.r[1] = (int)ubuf.buf;
     __svc(35, &regsin, &regsout);
     return (0);
 }
-#endif
 
 
 /* return number 6 for testing purposes */
@@ -48,6 +51,7 @@ int __ret6(void)
 
 int __mvsrun(void)
 {
+    __wto(11, 0, "ABC DEF GHI");
     return (__ret6());
 }
 
@@ -135,7 +139,6 @@ int __vserun(void)
 #endif
 
 
-#ifndef __MVS__
 int __svc(int svcnum, void *regsin, void *regsout)
 {
     if (__pgparm == 0)
@@ -147,4 +150,3 @@ int __svc(int svcnum, void *regsin, void *regsout)
         return (__pgparm->Xservice(svcnum, regsin, regsout));
     }
 }
-#endif
