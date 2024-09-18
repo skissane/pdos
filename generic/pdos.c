@@ -344,6 +344,7 @@ static void runexe(char *prog_name)
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load program\n");
+        return;
         for (;;) ;
         exit(EXIT_FAILURE);
     }
