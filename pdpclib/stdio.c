@@ -2044,8 +2044,10 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         tempRead = __consrd(/* __consdn, */ toread, ptr);
         if (tempRead >= 0)
         {
+#if 0
             *((char *)ptr + tempRead) = '\n';
             tempRead++;
+#endif
         }
         *actualRead = tempRead;
     }
@@ -2904,6 +2906,10 @@ static void freadSlowT(void *ptr,
         {
             finReading = 1;
         }
+        else if ((stream == __stdin) && (stream->bufTech == _IONBF))
+        {
+            finReading = 1;
+        }
     }
     return;
 }
@@ -3027,18 +3033,7 @@ static void iwrite(FILE *stream,
 #ifdef __ZPDOSGPB__
     if (stream->permfile)
     {
-        char *s;
-        s = memchr(ptr, '\r', towrite);
-        if (s != NULL)
-        {
-            towrite = s - (char *)ptr;
-            if (towrite == 0)
-            {
-                towrite = 1;
-                *(char *)ptr = ' ';
-            }
-        }
-        tempWritten = __conswr(/* __consdn, */ towrite, ptr, 1);
+        tempWritten = __conswr(/* __consdn, */ towrite, ptr, 0); /* was 1 */
     }
     else if (stream->devtype == 2)
     {
@@ -4560,7 +4555,7 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
         stream->ungetCh = -1;
     }
 
-#if (defined(__gnu_linux__) || defined(__ARM__)) \
+#if (defined(__gnu_linux__) || defined(__ARM__) || defined(__PDOS386__)) \
     && !defined(__EFIBIOS__)
 
     if (stream == __stdin)
