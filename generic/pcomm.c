@@ -204,6 +204,10 @@ int main(void)
                 *p = '\0';
             }
             pb.cmdtail = (unsigned char *)buf;
+            if (strchr(progname, ':') == NULL)
+            {
+                strcat(progname, ".exe");
+            }
             PosExec(progname, &pb);
             /* printf("unknown command\n"); */
         }
