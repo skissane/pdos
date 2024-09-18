@@ -153,6 +153,10 @@ int main(int argc, char **argv)
     os.Xstdout = stdout;
     os.Xstderr = stderr;
 
+    bios->Xsetvbuf(bios->Xstdin, NULL, _IONBF, 0);
+    handles[0].fptr = bios->Xstdin;
+    handles[1].fptr = bios->Xstdout;
+    handles[2].fptr = bios->Xstderr;
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)
     {
@@ -508,7 +512,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
 int PosReadFile(int fh, void *data, unsigned int bytes, unsigned int *readbytes)
 {
     /* printf("got request to read %lu bytes\n", (unsigned long)bytes); */
-    if (fh < 3)
+    if (0) /* (fh < 3) */
     {
         /* we need to use fgets, not fread, because we need a function
            that will terminate at a newline. If the caller is actually
@@ -662,6 +666,8 @@ int PosGetDeviceInformation(int handle, unsigned int *devinfo)
 
 int PosSetDeviceInformation(int handle, unsigned int devinfo)
 {
+/* stay in unbuffered mode */
+#if 0
     stdin_raw = ((devinfo & (1 << 5)) != 0);
     if (stdin_raw)
     {
@@ -671,6 +677,7 @@ int PosSetDeviceInformation(int handle, unsigned int devinfo)
     {
         bios->Xsetvbuf(bios->Xstdin, NULL, BIOS_IOLBF, BIOS_BUFSIZ);
     }
+#endif
     return (0);
 }
 
