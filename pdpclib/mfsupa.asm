@@ -1,165 +1,160 @@
-# mfsupa - mainframe support code in assembler
-# Written by Paul Edwards
-# Released to the public domain
-
-
-# If running under z/PDOS-generic, there will be a
-# stack provided already. Otherwise we need to create
-# our own
-
-
-.ifndef MVS
-.set MVS,0
-.endif
-
-.ifndef VSE
-.set VSE,0
-.endif
-
-         .text
-         .balign 2
-         .extern __ret6
-         .using .,r15
-#        MVC   92(8,r13),=D'1.0E0'
+* mfsupa - mainframe support code in assembler
+* Written by Paul Edwards
+* Released to the public domain
+*
+*
+* If running under z/PDOS-generic, there will be a
+* stack provided already. Otherwise we need to create
+* our own
+*
+*
+         CSECT
+         DS    0H
+         USING *,R15
+*        MVC   92(8,r13),=D'1.0E0'
+*         ENTRY @@CRT0
+*@@CRT0   DS    0H
          .globl __crt0
-__crt0:
-#         LA    R15,9(,0)
-#         BR    R14
-         B     skiphdr
-#         .byte "PGCX"  # PDOS-generic (or compatible) extension
-# Needs to be in EBCDIC
+__crt0   DS    0H
+*         LA    R15,9(,0)
+*         BR    R14
+         B     SKIPHDR
+*         .byte "PGCX"  # PDOS-generic (or compatible) extension
+* Needs to be in EBCDIC
          .byte 0xd7, 0xc7, 0xc3, 0xe7
-#         .long 4   # length of header data
-         .DC   F'4'
+*         DC    X'D7'
+*         DC    F'10'
+         DC    F'4'  # length of header data
          .globl __pgparm
-__pgparm: .long 0   # This will be zapped by z/PDOS-generic if running under it
-skiphdr:
-.if MVS
-         STM   r14,r12,12(r13)
+__pgparm DC F'0'   # This will be zapped by z/PDOS-generic if running under it
+*
+SKIPHDR  DS    0H
+#if MVS
+         STM   R14,R12,12(R13)
          LR    R11,R1
          LR    R6,R13
          L     R1,=V(__pgparm)
          L     R1,0(,R1)
          LTR   R1,R1
-         BZ    notpdos
-         LA    r13,80(,r13)
-         LR    r12,r15
-         .drop r15
-         .using __crt0, r12
+         BZ    NOTPDOS
+         LA    R13,80(,R13)
+         LR    R12,R15
+         DROP  R15
+         USING __crt0, R12
          B     BYPASS1
-.endif
-.if VSE
+#endif
+#if VSE
          L     R1,=V(__pgparm)
          L     R1,0(,R1)
          LTR   R1,R1
-         BZ    notpdos
-         STM   r14,r12,12(r13)
-         LA    r13,80(,r13)
-         LR    r12,r15
-         .drop r15
-         .using __crt0, r12
+         BZ    NOTPDOS
+         STM   R14,R12,12(R13)
+         LA    R13,80(,R13)
+         LR    R12,R15
+         DROP  R15
+         USING __crt0, R12
          B     BYPASS1
-.endif
-notpdos:
-         LR    r12,r15
-         LR    r7,r14
-         L     r3,=F'3'
-         L     r4,=F'4'
-         L     r5,=F'5'
-         LA    r13,savea
-BYPASS1:
-         LA    r9,80(,r13)
-         ST    r9,76(,r13)
-.if MVS
-         L     r15,=V(__mvsrun)
-.endif
+#endif
+*
+NOTPDOS  DS    0H
+         LR    R12,R15
+         LR    R7,R14
+         L     R3,=F'3'
+         L     R4,=F'4'
+         L     R5,=F'5'
+         LA    R13,SAVEA
+BYPASS1  DS    0H
+         LA    R9,80(,R13)
+         ST    R9,76(,R13)
+#if MVS
+         L     R15,=V(__mvsrun)
+#endif
 #
-.if VSE
-         L     r15,=V(__vserun)
-.endif
-#         .long 0
-#         .long 0xcccccccc
-#         .long 0xcccccccc
-         BALR  r14,r15
-#.LABC:
-#         B     .LABC
-.if VSE
-         L     r15,=F'3'
-.endif
+#if VSE
+         L     R15,=V(__vserun)
+#endif
+*         .long 0
+*         .long 0xcccccccc
+*         .long 0xcccccccc
+         BALR  R14,R15
+*.LABC:
+*         B     .LABC
+#if VSE
+         L     R15,=F'3'
+#endif
+*
+#if VSE
+         LR    R14,R7
 #
-.if VSE
-         LR    r14,r7
-#
-         L     r1,=V(__pgparm)
-         L     r1,0(,r1)
-         LTR   r1,r1
-         BZ    notpdos2
-.endif
-.if MVS
-         L     r1,=V(__pgparm)
-         L     r1,0(,r1)
-         LTR   r1,r1
-         BZ    notpdos2
-.endif
-         S     r13,=F'80'
-#
-         L     r14,12(r13)
-         LM    r0,r12,20(r13)
+         L     R1,=V(__pgparm)
+         L     R1,0(,R1)
+         LTR   R1,R1
+         BZ    NOTPDOS2
+#endif
+#if MVS
+         L     R1,=V(__pgparm)
+         L     R1,0(,R1)
+         LTR   R1,R1
+         BZ    NOTPDOS2
+#endif
+         S     R13,=F'80'
+*
+         L     R14,12(R13)
+         LM    R0,R12,20(R13)
          BR    R14
-.if VSE
-notpdos2:
-         BR    r14
-.endif
-.if MVS
-notpdos2:
+#if VSE
+NOTPDOS2 DS    0H
+         BR    R14
+#endif
+#if MVS
+NOTPDOS2 DS    0H
          LR    R13,R6
-         L     r14,12(r13)
-         LM    r0,r12,20(r13)
+         L     R14,12(R13)
+         LM    R0,R12,20(R13)
          BR    R14
-.endif
-         .balign 8
-         .ltorg
-         .drop r12
-         .balign 4
-savea:
-         .space 4000
-
-
-
-
-
-         .balign 2
-         .using .,r3
+#endif
+         DS    0D
+         LTORG
+         DROP  R12
+         DS    0F
+SAVEA    DS    4000C
+*
+*
+*
+*
+*
+         DS    0H
+         USING *,R3
          .globl __svcreal
 __svcreal:
-         STM   r14,r12,12(r13)
+         STM   R14,R12,12(R13)
          LR    R3,R15
-         L     r7,0(,r1)
-         L     r8,4(,r1)
-         L     r0,0(,r8)
-         L     r1,4(,r8)
-         L     r15,60(,r8)
-         EX    r7, SVC1
+         L     R7,0(,R1)
+         L     R8,4(,R1)
+         L     R0,0(,R8)
+         L     R1,4(,R8)
+         L     R15,60(,R8)
+         EX    R7, SVC1
          B     SVC2
-SVC1:
+SVC1     DS    0H
          SVC   0
-SVC2:
-         LM    r14,r12,12(r13)
-         BR    r14
-
-         .ltorg
-         .drop r3
-
-
-
-
-
-         .balign 2
-         .using .,r15
+SVC2     DS    0H
+         LM    R14,R12,12(R13)
+         BR    R14
+*
+         LTORG
+         DROP  R3
+*
+*
+*
+*
+*
+         DS    0H
+         USING *,R15
          .globl __ret7
 __ret7:
-         L     r15,=F'7'
-         BR    r14
-
-         .ltorg
-         .drop r15
+         L     R15,=F'7'
+         BR    R14
+*
+         LTORG
+         DROP  R15
