@@ -8,39 +8,78 @@
 * our own
 *
 *
+#if REALHLASM
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+#endif
+*
          CSECT
          DS    0H
          USING *,R15
 *        MVC   92(8,r13),=D'1.0E0'
-*         ENTRY @@CRT0
-*@@CRT0   DS    0H
+#if REALHLASM
+         ENTRY @@CRT0
+@@CRT0   DS    0H
+#else
          .globl __crt0
 __crt0   DS    0H
+#endif
 *         LA    R15,9(,0)
 *         BR    R14
          B     SKIPHDR
 *         .byte "PGCX"  # PDOS-generic (or compatible) extension
 * Needs to be in EBCDIC
+#if REALHLASM
+         DC X'D7C7C3E7'
+#else
          .byte 0xd7, 0xc7, 0xc3, 0xe7
+#endif
 *         DC    X'D7'
 *         DC    F'10'
          DC    F'4'  # length of header data
+#if REALHLASM
+         ENTRY @@PGPARM
+@@PGPARM DC    F'0'
+#else
          .globl __pgparm
 __pgparm DC F'0'   # This will be zapped by z/PDOS-generic if running under it
+#endif
 *
 SKIPHDR  DS    0H
 #if MVS
          STM   R14,R12,12(R13)
          LR    R11,R1
          LR    R6,R13
+#if REALHLASM
+         L     R1,=V(@@PGPARM)
+#else
          L     R1,=V(__pgparm)
+#endif
          L     R1,0(,R1)
          LTR   R1,R1
          BZ    NOTPDOS
          LA    R13,80(,R13)
          LR    R12,R15
          DROP  R15
-         USING __crt0, R12
+#if REALHLASM
+         USING @@CRT0,R12
+#else
+         USING __crt0,R12
+#endif
          B     BYPASS1
 #endif
 #if VSE
@@ -67,7 +106,11 @@ BYPASS1  DS    0H
          LA    R9,80(,R13)
          ST    R9,76(,R13)
 #if MVS
+#if REALHLASM
+         L     R15,=V(@@MVSRUN)
+#else
          L     R15,=V(__mvsrun)
+#endif
 #endif
 #
 #if VSE
@@ -92,7 +135,11 @@ BYPASS1  DS    0H
          BZ    NOTPDOS2
 #endif
 #if MVS
+#if REALHLASM
+         L     R1,=V(@@PGPARM)
+#else
          L     R1,=V(__pgparm)
+#endif
          L     R1,0(,R1)
          LTR   R1,R1
          BZ    NOTPDOS2
@@ -125,8 +172,13 @@ SAVEA    DS    4000C
 *
          DS    0H
          USING *,R3
-         .globl __svcreal
-__svcreal:
+#if REALHLASM
+         ENTRY @@SVCRL
+@@SVCRL  DS    0H
+#else
+         .globl __svcrl
+__svcrl:
+#endif
          STM   R14,R12,12(R13)
          LR    R3,R15
          L     R7,0(,R1)
@@ -134,7 +186,7 @@ __svcreal:
          L     R0,0(,R8)
          L     R1,4(,R8)
          L     R15,60(,R8)
-         EX    R7, SVC1
+         EX    R7,SVC1
          B     SVC2
 SVC1     DS    0H
          SVC   0
@@ -151,10 +203,17 @@ SVC2     DS    0H
 *
          DS    0H
          USING *,R15
+#if REALHLASM
+         ENTRY @@RET7
+@@RET7   DS    0H
+#else
          .globl __ret7
 __ret7:
+#endif
          L     R15,=F'7'
          BR    R14
 *
          LTORG
          DROP  R15
+*
+         END
