@@ -143,7 +143,7 @@ int __svc(int svcnum, void *regsin, void *regsout)
 {
     if (__pgparm == 0)
     {
-        return (__svcreal(svcnum, regsin, regsout));
+        return (__svcrl(svcnum, regsin, regsout));
     }
     else
     {
