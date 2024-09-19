@@ -31,11 +31,7 @@ R15      EQU   15
          DS    0H
          USING *,R15
 *        MVC   92(8,r13),=D'1.0E0'
-#if REALHLASM
          ENTRY @@CRT0
-#else
-         .globl __crt0
-#endif
 @@CRT0   DS    0H
 *         LA    R15,9(,0)
 *         BR    R14
@@ -44,11 +40,7 @@ R15      EQU   15
 * Needs to be in EBCDIC
          DC    X'D7C7C3E7'
          DC    F'4'  # length of header data
-#if REALHLASM
          ENTRY @@PGPARM
-#else
-         .globl __pgparm
-#endif
 * This will be zapped by z/PDOS-generic if running under it
 @@PGPARM DC    F'0'
 *
@@ -149,11 +141,7 @@ SAVEA    DS    4000C
 *
          DS    0H
          USING *,R3
-#if REALHLASM
          ENTRY @@SVCRL
-#else
-         .globl __svcrl
-#endif
 @@SVCRL  DS    0H
          STM   R14,R12,12(R13)
          LR    R3,R15
@@ -179,11 +167,7 @@ SVC2     DS    0H
 *
          DS    0H
          USING *,R15
-#if REALHLASM
          ENTRY @@RET7
-#else
-         .globl __ret7
-#endif
 @@RET7   DS    0H
          L     R15,=F'7'
          BR    R14
