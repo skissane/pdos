@@ -1,6 +1,7 @@
 rem Produces a VSE executable and then executes it
 
-as370 -a=list.txt --defsym VSE=1 -o mfsupa.obj mfsupa.asm
+pdcc -N -D VSE -o mfsupa.s mfsupa.asm
+as370 -mhlasm -a=list.txt -o mfsupa.obj mfsupa.s
 
 gcc370 -U__MVS__ -D__VSE__ -I. -I../generic -I../src -S -o mfsupc.s mfsupc.c
 as370 -a=list2.txt -o mfsupc.obj mfsupc.s
