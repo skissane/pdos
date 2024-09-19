@@ -57,6 +57,9 @@ extern int (*__genmain)(int argc, char **argv);
 
 char mycmdline[400];
 
+/* if current directory is root directory, this is empty */
+static char cwd[FILENAME_MAX] = "";
+
 static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
   strcmp, strncmp, strcpy, strlen, fgetc, fputc,
@@ -64,7 +67,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation,
   ctime, time,
-  0, PosMakeDir, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
+  PosChangeDir, PosMakeDir, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
   remove,
   memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
   getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
@@ -440,7 +443,22 @@ int PosOpenFile(const char *name, int mode, int *handle)
             return (1);
         }
     }
-    ret = fatOpenFile(&fat, name, &handles[x].ff);
+    {
+        char fullname[FILENAME_MAX];
+        
+        strcpy(fullname, "");
+        if (name[0] == '\\')
+        {
+            /* if they provide the full path, don't use cwd */
+        }
+        else if (cwd[0] != '\0')
+        {
+            strcat(fullname, cwd);
+            strcat(fullname, "\\");
+        }
+        strcat(fullname, name);
+        ret = fatOpenFile(&fat, fullname, &handles[x].ff);
+    }
     if (ret != 0) return (1);
     *handle = x;
     handles[x].inuse = 1;
@@ -629,6 +647,26 @@ int PosMakeDir(const char *dirname)
     return (0);
 }
 
+
+int PosChangeDir(const char *dirname)
+{
+    if (dirname[0] == '\\')
+    {
+        strcpy(cwd, dirname + 1);
+    }
+    else if (cwd[0] == '\0')
+    {
+        strcpy(cwd, dirname);
+    }
+    else
+    {
+        strcat(cwd, "\\");
+        strcat(cwd, dirname);
+    }
+    return (0);
+}
+
+
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
     if (handles[handle].fptr != NULL)
@@ -758,7 +796,11 @@ static int ff_search(void)
 
 int PosFindFirst(char *pat, int attrib)
 {
-    fatOpenFile(&fat, "\\", &fatfile);
+    char dirname[FILENAME_MAX];
+
+    strcpy(dirname, "\\");
+    strcat(dirname, cwd);
+    fatOpenFile(&fat, dirname, &fatfile);
     return (ff_search());
 }
 
