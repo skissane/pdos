@@ -214,6 +214,28 @@ void record_files(struct nameseq *filenames,
     free(depstr);
 }
 
+struct if_stack {
+    struct if_stack *prev;
+    
+    int ignoring;
+    int prev_ignoring;
+    int has_else;
+};
+
+static struct if_stack *cur_if_stack = NULL;
+
+static void add_if_stack (void)
+{
+    struct if_stack *if_stack = xmalloc (sizeof *if_stack);
+    
+    memset (if_stack, 0, sizeof *if_stack);
+    
+    if (cur_if_stack) if_stack->prev_ignoring = cur_if_stack->ignoring;
+
+    if_stack->prev = cur_if_stack;
+    cur_if_stack = if_stack;
+}
+
 static void read_lbuf(struct linebuf *lbuf, int set_default)
 {
     long lines_read;
@@ -240,6 +262,7 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
     {
         char *line = lbuf->start;
         char *p;
+        int after_else = 0;
 
         if (line[0] == '\0') continue;
 
@@ -295,6 +318,173 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
         /* Skip blank lines */
         while (isspace (*p)) p++;
         if (*p == '\0') continue;
+
+        if (strncmp (p, "else", 4) == 0 && (isspace (p[4]) || p[4] == '\0')) {
+            if (!cur_if_stack) {
+                fprintf (stderr, "*** extraneous 'else'. Stop.\n");
+                exit (EXIT_FAILURE);
+            }
+
+            p += 4;
+            for (; isspace (*p); p++) {}
+
+            if ((strncmp (p, "ifeq", 4) == 0 && (isspace (p[4]) || p[4] == '\0'))
+                || (strncmp (p, "ifneq", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))
+                || (strncmp (p, "ifdef", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))
+                || (strncmp (p, "ifndef", 6) == 0 && (isspace (p[6]) || p[6] == '\0'))) {
+                after_else = 1;
+            } else {
+                if (*p) fprintf (stderr, "Extraneous text after 'else' directive\n");
+                
+                if (cur_if_stack->has_else) {
+                    fprintf (stderr, "*** only one 'else' per conditional. Stop.\n");
+                    exit (EXIT_FAILURE);
+                }
+                
+                cur_if_stack->ignoring = cur_if_stack->prev_ignoring || !cur_if_stack->ignoring;
+                cur_if_stack->has_else = 1;
+                continue;
+            }
+        }
+
+        if ((strncmp (p, "ifeq", 4) == 0 && (isspace (p[4]) || p[4] == '\0'))
+            || (strncmp (p, "ifneq", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))) {
+            int ifneq;
+            char *q, *end;
+
+            if (strncmp (p, "ifeq", 4) == 0) {
+                p += 4;
+                ifneq = 0;
+            } else {
+                p += 5;
+                ifneq = 1;
+            }
+
+            for (; isspace (*p); p++) {}
+            if (*p == '(') {
+                char *comma;
+                
+                p++;
+                comma = strchr (p, ',');
+                end = strrchr (p, ')');
+
+                if (!comma || !end || end < comma) {
+                    goto ifeq_invalid_syntax;
+                }
+
+                *comma = *end = '\0';
+                end++;
+                for (q = comma; q > p && isspace (q[-1]); q--) {}
+                *q = '\0';
+
+                for (q = comma + 1; isspace (*q); q++) {}
+            } else if (*p == '"' || *p == '\'') {
+                p++;
+                q = strchr (p, p[-1]);
+                if (!q) goto ifeq_invalid_syntax;
+                *q = '\0';
+
+                for (q++; isspace (*q); q++) {}
+                if (*q != '"' && *q != '\'') goto ifeq_invalid_syntax;
+                
+                q++;
+                end = strchr (q, q[-1]);
+                if (!end) goto ifeq_invalid_syntax;
+                *end = '\0';
+                end++;
+            } else {
+ifeq_invalid_syntax:
+                fprintf (stderr, "*** invalid syntax in conditional. Stop.\n");
+                exit (EXIT_FAILURE);
+            }
+
+            for (; isspace (*end); end++) {}
+            if (*end) fprintf (stderr, "Extraneous text after '%s' directive\n", ifneq ? "ifneq" : "ifeq");
+
+            p = variable_expand_line (xstrdup (p));
+            q = variable_expand_line (xstrdup (q));
+
+            if (after_else) {
+                cur_if_stack->prev_ignoring |= !cur_if_stack->ignoring;
+            } else {
+                add_if_stack ();
+            }
+
+            if (cur_if_stack->prev_ignoring) {
+                cur_if_stack->ignoring = 1;
+            } else {
+                int is_equal = 0;
+
+                is_equal = strcmp (p, q) == 0;
+                cur_if_stack->ignoring = is_equal ^ (!ifneq);
+            }
+
+            free (p);
+            free (q);
+            continue;
+        }
+        
+        if ((strncmp (p, "ifdef", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))
+            || (strncmp (p, "ifndef", 6) == 0 && (isspace (p[6]) || p[6] == '\0'))) {
+            int ifndef;
+            char *q;
+            const variable *var;
+            
+            if (strncmp (p, "ifdef", 5) == 0) {
+                p += 5;
+                ifndef = 0;
+            } else {
+                p += 6;
+                ifndef = 1;
+            }
+
+            p = line = variable_expand_line (xstrdup (p));
+            for (; isspace (*p); p++) {}
+            for (q = p + strlen (p); q > p && isspace (q[-1]); q--) {}
+            *q = '\0';
+            var = variable_find (p);
+
+            if (after_else) {
+                cur_if_stack->prev_ignoring |= !cur_if_stack->ignoring;
+            } else {
+                add_if_stack ();
+            }
+
+            if (cur_if_stack->prev_ignoring) {
+                cur_if_stack->ignoring = 1;
+            } else {
+                int is_defined = 0;
+
+                if (var) is_defined = 1;
+
+                cur_if_stack->ignoring = is_defined ^ (!ifndef);
+            }
+
+            free (line);
+            continue;
+        }
+
+        if (strncmp (p, "endif", 5) == 0 && (isspace (p[5]) || p[5] == '\0')) {
+            p += 5;
+            
+            if (!cur_if_stack) {
+                fprintf (stderr, "*** extraneous 'endif'. Stop.\n");
+                exit (EXIT_FAILURE);
+            } else {
+                struct if_stack *prev;
+
+                prev = cur_if_stack->prev;
+                free (cur_if_stack);
+                cur_if_stack = prev;
+            }
+            
+            for (; isspace (*p); p++) {}
+            if (*p) fprintf (stderr, "Extraneous text after 'endif' directive\n");
+            
+            continue;
+        }
+
+        if (cur_if_stack && cur_if_stack->ignoring) continue;
 
         if (strncmp (p, "include", 7) == 0 && (isspace (p[7]) || p[7] == '\0')) {
 
@@ -422,6 +612,18 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
     free(clean);
     free(commands);
+
+    if (cur_if_stack) {
+        struct if_stack *prev;
+
+        for (; cur_if_stack; cur_if_stack = prev) {
+            prev = cur_if_stack->prev;
+            free (cur_if_stack);
+        }
+
+        fprintf (stderr, "*** missing 'endif'. Stop.\n");
+        exit (EXIT_FAILURE);
+    }
 }
 
 int read_makefile (const char *filename)
