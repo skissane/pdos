@@ -545,6 +545,7 @@ typedef struct {
 #define PosMakeDir __os->XPosMakeDir
 #define PosRemoveDir __os->XPosRemoveDir
 #define PosExec __os->XPosExec
+#define PosGetCommandLine __os->XPosGetCommandLine
 #endif
 
 
