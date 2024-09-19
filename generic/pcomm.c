@@ -17,16 +17,58 @@
 
 #include <pos.h>
 
-static char buf[200];
+static char buf[400];
 
 static void dofill(char *p);
 static void dofzap(char *p);
 
-int main(void)
+int main(int argc, char **argv)
 {
     char *p;
     char *q;
+    int ret = 0;
 
+    if ((argc > 2) && (strcmp(argv[1], "/c") == 0))
+    {
+        p = PosGetCommandLine();
+        q = strchr(p, ' ');
+        if (q != NULL)
+        {
+            p = q + 1;
+            q = strchr(p, ' ');
+            if (q != NULL)
+            {
+                p = q + 1;
+            }
+        }
+        strcpy(buf, p);
+        /* should have a single copy of the below */
+        /* ie split into a separate function with the other copy */
+        /* but adding support of .bat files will affect that process */
+        {
+            POSEXEC_PARMBLOCK pb = { 0 };
+            char progname[50];
+            char fullname[FILENAME_MAX];
+
+            strncpy(progname, buf, sizeof progname);
+            progname[49] = '\0';
+            p = strchr(progname, ' ');
+            if (p != NULL)
+            {
+                *p = '\0';
+            }
+            pb.cmdtail = (unsigned char *)buf;
+            if (strchr(progname, ':') == NULL)
+            {
+                strcat(progname, ".exe");
+            }
+            strcpy(fullname, "\\DOS\\");
+            strcat(fullname, progname);
+            ret = PosExec(fullname, &pb);
+            /* printf("unknown command\n"); */
+        }
+        return (ret);
+    }
     printf("welcome to pcomm\n");
     printf("type help for help\n");
     while (1)
@@ -211,11 +253,11 @@ int main(void)
             }
             strcpy(fullname, "\\DOS\\");
             strcat(fullname, progname);
-            PosExec(fullname, &pb);
+            ret = PosExec(fullname, &pb);
             /* printf("unknown command\n"); */
         }
     }
-    return (0);
+    return (ret);
 }
 
 static void dofill(char *p)
