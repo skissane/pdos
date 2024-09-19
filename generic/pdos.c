@@ -52,13 +52,18 @@ extern __start(char *p);
 
 static unsigned int currentDrive = 2;
 
+extern char *__envptr;
+
 extern int __genstart;
 extern int (*__genmain)(int argc, char **argv);
 
 char mycmdline[400];
+static char mycmdline2[400];
 
 /* if current directory is root directory, this is empty */
 static char cwd[FILENAME_MAX] = "";
+
+static char *PosGetCommandLine2(void);
 
 static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   fopen, fseek, fread, fclose, fwrite, fgets, strchr,
@@ -83,6 +88,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   strtok, atol, mktime, vprintf, ferror, putc, feof, getc,
   getchar, putchar, PosExec, longjmp,
   0, /* service call */
+  PosGetCommandLine2,
 };
 
 static int (*pgastart)(OS *os);
@@ -198,6 +204,7 @@ int main(int argc, char **argv)
         config = argv[2];
         argupto += 2;
     }
+    __envptr = "COMSPEC=\\COMMAND.EXE\0\0\0"; /* extra 3 NULs to signify no program name */
     if (argc > argupto)
     {
     printf("about to open\n");
@@ -521,7 +528,22 @@ int PosCreatFile(const char *name, int attrib, int *handle)
             return (1);
         }
     }
-    ret = fatCreatFile(&fat, name, &handles[x].ff, attrib);
+    {
+        char fullname[FILENAME_MAX];
+        
+        strcpy(fullname, "");
+        if (name[0] == '\\')
+        {
+            /* if they provide the full path, don't use cwd */
+        }
+        else if (cwd[0] != '\0')
+        {
+            strcat(fullname, cwd);
+            strcat(fullname, "\\");
+        }
+        strcat(fullname, name);
+        ret = fatCreatFile(&fat, fullname, &handles[x].ff, attrib);
+    }
     if (ret != 0) return (1);
     *handle = x;
     handles[x].inuse = 1;
@@ -787,6 +809,7 @@ int PosRenameFile(const char *old, const char *new)
 int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
     strcpy(mycmdline, parmblock->cmdtail);
+    strcpy(mycmdline2, parmblock->cmdtail);
     runexe(prog);
     return (0);
 }
@@ -806,9 +829,14 @@ char *PosGetCommandLine(void)
     return (mycmdline);
 }
 
+static char *PosGetCommandLine2(void)
+{
+    return (mycmdline2);
+}
+
 void *PosGetEnvBlock(void)
 {
-    return (void *)0;
+    return (void *)__envptr;
 }
 
 void *PosGetDTA(void)
