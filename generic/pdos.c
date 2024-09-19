@@ -67,7 +67,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   PosGetDTA, PosFindFirst, PosFindNext,
   PosGetDeviceInformation, PosSetDeviceInformation,
   ctime, time,
-  PosChangeDir, PosMakeDir, 0, /* PosChangeDir, PosMakeDir, PosRemoveDir */
+  PosChangeDir, PosMakeDir, PosRemoveDir,
   remove,
   memcpy, strncpy, strcat, 0 /* stderr */, free, abort, memset, fputs, fprintf,
   getenv, memmove, exit, memcmp, _errno, tmpnam, vfprintf, ungetc, vsprintf,
@@ -667,6 +667,31 @@ int PosChangeDir(const char *dirname)
 }
 
 
+
+/* We should check that the directory is empty before removing it,
+   but we are currently not doing so */
+   
+int PosRemoveDir(const char *name)
+{
+    int ret;
+    char fullname[FILENAME_MAX];
+
+    strcpy(fullname, "");
+    if (name[0] == '\\')
+    {
+        /* if they provide the full path, don't use cwd */
+    }
+    else if (cwd[0] != '\0')
+    {
+        strcat(fullname, cwd);
+        strcat(fullname, "\\");
+    }
+    strcat(fullname, name);
+    ret = fatDeleteFile(&fat, fullname);
+    return (ret);
+}
+
+
 int PosMoveFilePointer(int handle, long offset, int whence, long *newpos)
 {
     if (handles[handle].fptr != NULL)
@@ -736,7 +761,22 @@ void PosGetSystemTime(unsigned int *hour, unsigned int *minute,
 
 int PosDeleteFile(const char *name)
 {
-    return (0);
+    int ret;
+    char fullname[FILENAME_MAX];
+
+    strcpy(fullname, "");
+    if (name[0] == '\\')
+    {
+        /* if they provide the full path, don't use cwd */
+    }
+    else if (cwd[0] != '\0')
+    {
+        strcat(fullname, cwd);
+        strcat(fullname, "\\");
+    }
+    strcat(fullname, name);
+    ret = fatDeleteFile(&fat, fullname);
+    return (ret);
 }
 
 int PosRenameFile(const char *old, const char *new)
