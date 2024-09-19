@@ -24,12 +24,16 @@
 /*
   Some constants - at present these are only defined for IBM
 */
-#if defined(__MVS__) || defined (__CMS__) || defined(__VSE__) \
-  || defined(__MF32__)
+#if defined(__MVS__) || defined (__CMS__) || defined(__VSE__)
 /*
  This is about the nearest thing we can get to inf wthout
 */
 #define HUGE_VAL 9.999999999999999999999E72
+
+#elif defined(__MF32__)
+
+/* hack around assembler limitation for now */
+#define HUGE_VAL 9.999999999999999999999E37
 
 #else
 
