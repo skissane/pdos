@@ -195,6 +195,7 @@ int main(void)
         {
             POSEXEC_PARMBLOCK pb = { 0 };
             char progname[50];
+            char fullname[FILENAME_MAX];
 
             strncpy(progname, buf, sizeof progname);
             progname[49] = '\0';
@@ -208,7 +209,9 @@ int main(void)
             {
                 strcat(progname, ".exe");
             }
-            PosExec(progname, &pb);
+            strcpy(fullname, "\\DOS\\");
+            strcat(fullname, progname);
+            PosExec(fullname, &pb);
             /* printf("unknown command\n"); */
         }
     }
