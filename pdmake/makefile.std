@@ -4,17 +4,27 @@
 
 VPATH=./hashtab
 
-#CC=gccprm
-#CFLAGS=-O0
-#AS=asprm
-#AR=arprm
-#COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
-#    -D__WIN32__ -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
-#    -D__USEBIVA__ -DNOFLOAT
-#EXTRA=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
-#EXTRA2=../pdpclib/w32start.obj
+ifeq "$(targ)" "arm"
+CC=gccprm
+CFLAGS=-O0
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
+    -D__WIN32__ -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
+    -D__USEBIVA__ -DNOFLOAT
+EXTRA=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
+EXTRA2=../pdpclib/w32start.obj
 
+else ifeq "$(targ)" "zpg"
+# You need to have run makefile.zpg first
+CC=gcc370
+CFLAGS=-O2
+AS=as370
+AR=ar370
+COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -I../generic -I../src -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__
+EXTRA2=--oformat mvs -e __crt0 ../pdpclib/pgastart.o
 
+else
 CC=gccwin
 CFLAGS=-O2
 AS=pdas --oformat coff
@@ -23,14 +33,7 @@ COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -D__WIN32__
 EXTRA2=../pdpclib/w32start.obj
 EXTRA=../pdpclib/msvcrt.lib
 
-
-## You need to have run makefile.zpg first
-#CC=gcc370
-#CFLAGS=-O2
-#AS=as370
-#AR=ar370
-#COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib -I../generic -I../src -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__
-#EXTRA2=--oformat mvs -e __crt0 ../pdpclib/pgastart.o
+endif
 
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp -nostdlib
