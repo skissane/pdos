@@ -7,21 +7,47 @@
 # without complying with any conditions
 # and by any means.
 
-# Produces Windows executable.
-# Links with PDPCLIB created by makefile.msv.
 
+
+
+ifeq "$(targ)" "zpg"
+# Produces z/PDOS-generic executable.
+# Links with PDPCLIB created by makefile.zpg
+CC=gcc370
+CFLAGS=-Os
+AS=as370
+AR=ar370
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp
+COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \
+    -Icpplib/include -I. -I../pdpclib \
+    -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
+    -I../generic -I../src
+EXTRA1=--oformat mvs ../pdpclib/pgastart.o
+
+
+else
+# Produces Windows executable.
+# Links with PDPCLIB created by makefile.std
 CC=gccwin
 CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
 AS=pdas --oformat coff
 AR=xar
-COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \
+    -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
+endif
+
+
+
 
 all: clean pdcc.exe
 
 pdcc.exe: main.obj c_ppout.obj inc_path.obj cpplib.lib cclib.lib
-    $(LD) $(LDFLAGS) -o pdcc.exe ../pdpclib/w32start.obj main.obj c_ppout.obj inc_path.obj cpplib.lib cclib.lib ../pdpclib/msvcrt.lib
+    $(LD) $(LDFLAGS) -o pdcc.exe $(EXTRA1) main.obj c_ppout.obj inc_path.obj cpplib.lib cclib.lib $(EXTRA2)
 
 cpplib.lib: cpplib/core.obj cpplib/directs.obj cpplib/errors.obj \
           cpplib/expr.obj cpplib/files.obj cpplib/chars.obj \
