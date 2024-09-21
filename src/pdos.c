@@ -7098,9 +7098,14 @@ static void pdosWriteText(int ch)
         if (column > 0)
         {
             column--;
-            BosSetCursorPosition(currentPage,row,column);
             /* BosWriteCharAttrib(currentPage, ' ', currentAttrib, 1); */
         }
+        else
+        {
+            column = BosGetTextModeCols() - 1;
+            row--;
+        }
+        BosSetCursorPosition(currentPage,row,column);
     }
     else if (ch == 7 || ch == 0xA || ch == 0xD)
         BosWriteText(currentPage,ch,0);
