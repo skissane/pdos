@@ -19,7 +19,7 @@ pdptest.exe: pgastart.o pdptest.o zpgsupa.o
   rm -f $*.s
 
 .asm.o:
-  as370 -o $@ $<
+  as370 -mhlasm -o $@ $<
 
 clean:
   rm -f pdptest.exe
