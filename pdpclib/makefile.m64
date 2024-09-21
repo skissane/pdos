@@ -9,6 +9,9 @@
 # -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path`
 # -e ___pdpstart (add -arch arm64 to do cross-compile)
 
+# Not sure if this is needed:
+#    -D__USEBIVA__ -D__NOSPECBIVA__
+
 CC=clang
 COPTS=-c -O2 -D__ARM__ -fno-builtin -D__MACOS__ \
     -DXNEED_MPROTECT \
