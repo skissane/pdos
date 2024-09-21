@@ -245,7 +245,7 @@ int main(int argc, char **argv)
         {
             POSEXEC_PARMBLOCK pb = { 0 };
             char progname[50];
-            char fullname[FILENAME_MAX];
+            char fullname[FILENAME_MAX] = "";
 
             strncpy(progname, buf, sizeof progname);
             progname[49] = '\0';
@@ -258,8 +258,8 @@ int main(int argc, char **argv)
             if (strchr(progname, ':') == NULL)
             {
                 strcat(progname, ".exe");
+                strcpy(fullname, "\\DOS\\");
             }
-            strcpy(fullname, "\\DOS\\");
             strcat(fullname, progname);
             ret = PosExec(fullname, &pb);
             /* printf("unknown command\n"); */
