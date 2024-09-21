@@ -33,6 +33,54 @@ COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
+
+else ifeq "$(targ)" "macarm"
+# makefile.m64 needs to have been run in pdpclib first
+# untested
+CC=clang -S -O0 -D__ARM__ -fno-builtin -D__MACOS__ \
+    -D__64BIT__ -fno-stack-protector -D__USEBIVA__ \
+    -Wno-error=implicit-function-declaration \
+    -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -I../generic -I../src -I./src/ftebc
+AR=ar
+AS=as
+LD=clang -Wl,-e, -Wl,__start
+EXTRA2=../pdpclib/pdpmacos.a
+
+
+else ifeq "$(targ)" "gccarm64"
+# makefile.a64 needs to have been run in pdpclib first
+# untested
+CC=gcc -S -O2 -D__ARM__ -nostdinc -nostdlib -fno-builtin \
+    -D__64BIT__ -fno-stack-protector --no-pie -D__USEBIVA__ \
+    -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -I../generic -I../src -I./src/ftebc
+AR=ar
+AS=as
+LD=gcc -static -s -m64 -nostdlib
+EXTRA1=../pdpclib/linstart.o ../pdpclib/pdplinux.a
+EXTRA2=../pdpclib/pdplinux.a
+
+
+else ifeq "$(targ)" "gccamd64"
+# makefile.l64 needs to have been run in pdpclib first
+# untested
+CC=gcc -S -O0 -D__gnu_linux__ -nostdinc -nostdlib -fno-builtin \
+    -D__64BIT__ -fno-stack-protector --no-pie -D__USEBIVA__ \
+    -m64 -fno-common \
+    -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -I../generic -I../src -I./src/ftebc
+AR=ar
+AS=as
+LD=gcc -s -static -m64 -nostdlib
+EXTRA1=../pdpclib/linstart.o ../pdpclib/pdplinux.a
+EXTRA2=../pdpclib/pdplinux.a
+
+
+
 else
 CC=gccwin
 CFLAGS=-O2
