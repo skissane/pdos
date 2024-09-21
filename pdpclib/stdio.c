@@ -3431,7 +3431,7 @@ static void fwriteSlowT(const void *ptr,
             stream->upto = stream->fbuf;
             stream->bufStartR += tempWritten;
         }
-#if !defined(__gnu_linux__) && !defined(__ARM__)
+#if !defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)
         if (stream->textMode)
         {
             memcpy(stream->upto, "\r\n", 2);
@@ -4137,7 +4137,7 @@ __PDPCLIB_API__ int fputc(int c, FILE *stream)
             {
                 if (stream->bufTech == _IOFBF)
                 {
-#if !defined(__ARM__) && !defined(__gnu_linux__)
+#if !defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)
                     *stream->upto++ = '\r';
 #endif
                     *stream->upto++ = '\n';
