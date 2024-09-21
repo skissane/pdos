@@ -201,6 +201,7 @@ typedef struct {
     void (*Xlongjmp)(jmp_buf env, int val);
     int (*Xservice)(int svcnum, void *regsin, void *regsout);
     char *(*XPosGetCommandLine)(void);
+    int (*XPosGetReturnCode)(void);
 } OS;
 
 extern OS *__os;

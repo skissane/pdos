@@ -52,6 +52,8 @@ extern __start(char *p);
 
 static unsigned int currentDrive = 2;
 
+static int lastcc = 0;
+
 extern char *__envptr;
 
 extern int __genstart;
@@ -89,6 +91,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   getchar, putchar, PosExec, longjmp,
   0, /* service call */
   PosGetCommandLine2,
+  PosGetReturnCode,
 };
 
 static int (*pgastart)(OS *os);
@@ -404,6 +407,7 @@ static void runexe(char *prog_name)
     printf("about to call app at address %p\n", pgastart);
     ret = pgastart(&os);
     printf("return from app is hex %x\n", ret);
+    lastcc = ret;
     return;
 }
 
@@ -816,7 +820,7 @@ int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 
 int PosGetReturnCode(void)
 {
-    return (0);
+    return (lastcc);
 }
 
 void PosTerminate(int rc)

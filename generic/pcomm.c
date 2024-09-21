@@ -65,6 +65,14 @@ int main(int argc, char **argv)
             strcpy(fullname, "\\DOS\\");
             strcat(fullname, progname);
             ret = PosExec(fullname, &pb);
+            if (ret == 0)
+            {
+                ret = PosGetReturnCode();
+            }
+            else
+            {
+                ret = -1;
+            }
             /* printf("unknown command\n"); */
         }
         return (ret);
