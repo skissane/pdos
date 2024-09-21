@@ -1,27 +1,50 @@
 # Produce Windows executables
 # links with PDPCLIB created by makefile.std
-# Or makefile.war if using the ARM versions of the tools
 
 VPATH=src;src/bytearray;src/hashtab;src/ftebc
 
 
-#CC=gccprm
-#CFLAGS=-O0
-#AS=asprm
-#AR=arprm
-#COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
-#    -I./src/hashtab -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
-#    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
-#    -DNO_LONG_LONG -ansi -pedantic-errors
-#EXTRA=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj
+ifeq "$(targ)" "arm"
+# Use makefile.war with the ARM versions of the tools
+CC=gccprm
+CFLAGS=-O0
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
+    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
+    -DNO_LONG_LONG -ansi -pedantic-errors -I./src/ftebc
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
 
 
+else ifeq "$(targ)" "zpg"
+# Need to run makefile.zpg first
+# We are temporarily using NOFLOAT because hex float isn't currently working
+CC=gcc370
+CFLAGS=-Os
+AS=as370
+AR=ar370
+COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
+    -DNO_LONG_LONG -ansi -pedantic-errors \
+    -I../generic -I../src -I./src/ftebc -DNOFLOAT
+EXTRA1=--oformat mvs ../pdpclib/pgastart.o
+
+
+else
 CC=gccwin
 CFLAGS=-O2
 ####CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 AS=pdas --oformat coff
 AR=xar
-COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray -I./src/hashtab -I./src/ftebc -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
+    -I./src/hashtab -I./src/ftebc -I../pdpclib -D__WIN32__ -D__NOBIVA__
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
+endif
+
 
 
 LD=pdld
@@ -41,7 +64,7 @@ all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
   $(AR) s temp.lib
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj ld.obj $(EXTRA) temp.lib ../pdpclib/msvcrt.lib
+  $(LD) $(LDFLAGS) -o $(TARGET) $(EXTRA1) ld.obj temp.lib $(EXTRA2)
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<

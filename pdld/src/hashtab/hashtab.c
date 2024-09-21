@@ -98,7 +98,11 @@ static int rehash (struct hashtab *hashtab, size_t target_size)
     if (hashtab->size < target_size) goto failure;
     
     hashtab->probe_limit = max (internal_log2 (hashtab->size), MINIMAL_PROBE_LIMIT);
+#ifdef NOFLOAT
+    hashtab->max_number_of_elements = hashtab->size / 2 + hashtab->size % 2;
+#else
     hashtab->max_number_of_elements = ceil (hashtab->max_load_factor * hashtab->size);
+#endif
     
     /* Allocates size + probe_limit + 1 so no bounds checking needs to be done. */
     hashtab->entries = hashtab->malloc_func (sizeof (hashtab->entries[0]) * (hashtab->size + hashtab->probe_limit + 1));
