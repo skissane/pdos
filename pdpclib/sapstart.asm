@@ -28,6 +28,11 @@ SAPSTART TITLE 'S A P S T A R T  ***  STARTUP ROUTINE FOR C'
 *  Equates                                                            *
 *                                                                     *
 ***********************************************************************
+*
+* Note that S/370 and S/390 hardware has 512 bytes reserved in
+* low memory for hardware use, while z/Arch has 8192 bytes
+* reserved (I think).
+*
 STACKLOC EQU   X'080000'    The stack starts here (0.5 MiB)
 HEAPLOC  EQU   X'100000'    Where malloc etc come from (1 MiB)
 CHUNKSZ  EQU   18452        The executable is split into blocks
