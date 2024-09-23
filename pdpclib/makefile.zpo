@@ -27,7 +27,7 @@ pdosgeno.a: stdio.o string.o stdlib.o \
         rm -f $*.s
 
 .asm.o:
-        as370 -o $@ $<
+        as370 -mhlasm -o $@ $<
 
 clean:
         rm -f pdosgeno.a
