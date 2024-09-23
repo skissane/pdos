@@ -30,15 +30,10 @@ R15      EQU   15
          CSECT
          DS    0H
          USING *,R15
-*        MVC   92(8,r13),=D'1.0E0'
          ENTRY @@CRT0
 @@CRT0   DS    0H
-*         LA    R15,9(,0)
-*         BR    R14
          B     SKIPHDR
-*         DC    'PGCX'  # PDOS-generic (or compatible) extension
-* Needs to be in EBCDIC
-         DC    X'D7C7C3E7'
+         DC    C'PGCX'  # PDOS-generic (or compatible) extension
          DC    F'4'  # length of header data
          ENTRY @@PGPARM
 * This will be zapped by z/PDOS-generic if running under it
@@ -68,7 +63,7 @@ SKIPHDR  DS    0H
          LA    R13,80(,R13)
          LR    R12,R15
          DROP  R15
-         USING __crt0, R12
+         USING @@CRT0, R12
          B     BYPASS1
 #endif
 *

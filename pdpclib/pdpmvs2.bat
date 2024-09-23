@@ -1,7 +1,7 @@
 rem Produces an MVS PE executable and then executes it
 
 pdcc -N -D MVS -o mfsupa.s mfsupa.asm
-as370 -mhlasm -a=list.txt -o mfsupa.obj mfsupa.s
+as370 -mhlasm -mebcdic -a=list.txt -o mfsupa.obj mfsupa.s
 
 gcc370 -Os -I. -I../generic -I../src -S -o mfsupc.s mfsupc.c
 as370 -o mfsupc.obj mfsupc.s
