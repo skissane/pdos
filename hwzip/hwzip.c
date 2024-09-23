@@ -10,6 +10,12 @@
 #include "version.h"
 #include "zip.h"
 
+#ifdef HAVE_FOLDER
+#include "folder.h"
+#endif
+
+#define MAX_FILES 0xFFFF
+
 #ifdef POS_EXTEND
 #include <fasc.h>
 #endif
@@ -29,6 +35,19 @@ static void *xrealloc(void *ptr, size_t size)
         PERROR_IF(ptr == NULL, "realloc");
         return ptr;
 }
+
+
+#ifdef HAVE_FOLDER
+static char *xstrdup(const char *name)
+{
+    char *x;
+
+    x = xmalloc(strlen(name) + 1);
+    if (x == NULL) return (x);
+    strcpy(x, name);
+    return (x);
+}
+#endif
 
 static uint8_t *read_file(const char *filename, size_t *file_sz)
 {
@@ -115,6 +134,122 @@ static char *terminate_str(const char *str, size_t n)
         return p;
 }
 
+#ifdef HAVE_FOLDER
+static void expand_folders(const char *name, char **file_names, uint16_t *n)
+{
+	FOLDER *ffd;
+    	char *entry;
+    	int l, le;
+    	char fldr[FILENAME_MAX];
+
+    	ffd = openfldr(name);
+    	if (!ffd) {
+		if (*n < MAX_FILES) {
+			file_names[*n] = xstrdup(name);
+			(*n)++;
+		}
+		return;
+    	}
+    	if (strcmp(name, ".")) {
+	        l = strlen(name);
+	        if (l >= sizeof(fldr) -1) {
+		    return;
+	        }
+	        memcpy(fldr,  name, l);
+   		if(fldr[l-1] == '/') {
+			l--;
+    		}
+    	} else {
+		l = 0;
+		fldr[0] = '\0';
+    	}
+    	while ((entry = readfldr(ffd)) != NULL) {
+		fldr[l] = '\0';
+		le = strlen(entry);
+		if (le < 1 || le >= (sizeof(fldr) - l - 2)) {
+		        printf(" (Skipping file: %s/%s)\n", fldr, entry);
+		        continue;
+		}
+	    	if (l) {
+			fldr[l + 1] = '/';
+			memcpy(fldr + l + 1,  entry, le + 1);
+	    	} else {
+			memcpy(fldr + l,  entry, le + 1);
+	    	}
+		if (entry[le - 1] == '/') {
+	    		expand_folders(fldr, file_names, n);
+		} else {
+			if (*n < MAX_FILES) {
+				file_names[*n] = xstrdup(fldr);
+				(*n)++;
+			}
+		}
+
+    	}
+    	closefldr(ffd);
+}
+
+static void make_folder(char *tname)
+{
+	char *slash;
+	char c;
+	slash = strrchr(tname, '/');
+	if (!slash) {
+	    slash = strrchr(tname, '\\');
+	}
+	if (!slash) {
+		return;
+	}
+	c = *slash;
+	*slash = '\0';
+    	mkfldr(tname);
+	*slash = c;
+}
+#endif
+
+static int is_relative(const uint8_t *name, size_t len)
+{
+    size_t i;
+
+    if (len < 1) {
+	return 0;
+    }
+    if (name[0] == '/' || name[0] == '\\' || name[0] == '~') {
+	return 0;
+    }
+    i = 0;
+    while (i < len) {
+	switch (name[i]) {
+	case '<':
+	case '>':
+	case ':':
+	case '"':
+	case '|':
+	case '?':
+	case '*':
+#ifndef POS_EXTEND
+	case 0x7F:
+#endif
+	    return 0;
+	case '.':
+	    if (i + 1 < len && name[i+1] == '.') {
+		return 0;
+	    }
+	    break;
+        default:
+	    if (name[i] < ' ') {
+		return 0;
+	    }
+	}
+	i++;
+    }
+    i = len - 1;
+    if (name[i] == ' ' || name[i] == '.') {
+	return 0;
+    }
+    return 1;
+}
+
 static void extract_zip(const char *filename)
 {
         uint8_t *zip_data;
@@ -162,55 +297,34 @@ static void extract_zip(const char *filename)
                         m.name[x] = fasc(m.name[x]);
                     }
                 }
-
-                if (m.is_dir) {
-                        char name[FILENAME_MAX];
-
-                        memcpy(name, m.name, m.name_len);
-                        name[m.name_len] = '\0';
-                        /* this function will ensure that all the sub-paths are
-                           created as required */
-                        PosMakeFullDir(name);
-                        continue;
-                }
-
-                /* don't allow backslash in filenames */
-                if (memchr(m.name, '\\', m.name_len) != NULL) {
-                        printf(" (Skipping file in dir: %.*s)\n",
-                               (int)m.name_len, m.name);
-                        continue;
-                }
-
-                if (memchr(m.name, '/', m.name_len) != NULL) {
-                        char name[FILENAME_MAX];
-                        char *p;
-
-                        memcpy(name, m.name, m.name_len);
-                        name[m.name_len] = '\0';
-                        p = strrchr(name, '/');
-                        if (p != NULL)
-                        {
-                            *p = '\0';
-                            /* this function will ensure that all the sub-paths are
-                               created as required */
-                            PosMakeFullDir(name);
-                        }
-                }
-#else
-
-                if (m.is_dir) {
-                        printf(" (Skipping dir: %.*s)\n",
-                               (int)m.name_len, m.name);
-                        continue;
-                }
-
-                if (memchr(m.name, '/',  m.name_len) != NULL ||
-                    memchr(m.name, '\\', m.name_len) != NULL) {
-                        printf(" (Skipping file in dir: %.*s)\n",
-                               (int)m.name_len, m.name);
-                        continue;
-                }
 #endif
+
+                if (m.is_dir) {
+
+#ifndef HAVE_FOLDER
+                        if (1) {
+#else
+		        if (!is_relative(m.name, m.name_len)) {
+#endif
+			    printf(" (Skipping dir: %.*s)\n",
+				   (int)m.name_len, m.name);
+			} else {
+#ifdef HAVE_FOLDER
+			    printf(" Creating dir: %.*s\n",
+				   (int)m.name_len, m.name);
+			    tname = terminate_str((const char *) m.name, m.name_len);
+			    mkfldr(tname);
+			    free(tname);
+#endif
+		        }
+                        continue;
+                }
+
+                if (!is_relative(m.name, m.name_len)) {
+                        printf(" (Skipping file : %.*s)\n",
+                               (int)m.name_len, m.name);
+                        continue;
+                }
 
                 switch (m.method) {
                 case ZIP_STORE:   printf("  Extracting: "); break;
@@ -237,6 +351,9 @@ static void extract_zip(const char *filename)
                 }
 
                 tname = terminate_str((const char*)m.name, m.name_len);
+#ifdef HAVE_FOLDER
+		make_folder(tname);
+#endif
 #ifdef POS_EXTEND
                 {
                     uint32_t x;
@@ -292,6 +409,10 @@ static void create_zip(const char *zip_filename, const char *comment,
         time_t *mtimes;
         uint8_t **file_data;
         uint32_t *file_sizes;
+#ifdef HAVE_FOLDER
+	char **file_names;
+	uint16_t file_n;
+#endif
         size_t file_size, zip_size;
         uint8_t *zip_data;
         uint16_t i;
@@ -304,28 +425,65 @@ static void create_zip(const char *zip_filename, const char *comment,
 
         mtime = time(NULL);
 
-        file_data = xmalloc(sizeof(file_data[0]) * n);
-        file_sizes = xmalloc(sizeof(file_sizes[0]) * n);
-        mtimes = xmalloc(sizeof(mtimes[0]) * n);
+#ifndef HAVE_FOLDER
+         file_data = xmalloc(sizeof(file_data[0]) * n);
+         file_sizes = xmalloc(sizeof(file_sizes[0]) * n);
+         mtimes = xmalloc(sizeof(mtimes[0]) * n);
+#else
+	file_names = xmalloc(sizeof(file_names[0]) * MAX_FILES);
+	file_n = 0;
+	for (i = 0; i < n; i++) {
+		expand_folders(filenames[i], file_names, &file_n);
+	}
+	if (file_n >= MAX_FILES) {
+        	printf("too many files!\n");
+                exit(1);
+        }
 
+        file_data = xmalloc(sizeof(file_data[0]) * file_n);
+        file_sizes = xmalloc(sizeof(file_sizes[0]) * file_n);
+        mtimes = xmalloc(sizeof(mtimes[0]) * file_n);
+#endif
+
+#ifndef HAVE_FOLDER
         for (i = 0; i < n; i++) {
                 file_data[i] = read_file(filenames[i], &file_size);
+#else
+        for (i = 0; i < file_n; i++) {
+                file_data[i] = read_file(file_names[i], &file_size);
+#endif
+
                 if (file_size >= UINT32_MAX) {
+
+#ifndef HAVE_FOLDER
                         printf("%s is too large!\n", filenames[i]);
+#else
+                        printf("%s is too large!\n", file_names[i]);
+#endif
                         exit(1);
                 }
                 file_sizes[i] = (uint32_t)file_size;
                 mtimes[i] = mtime;
         }
 
+#ifndef HAVE_FOLDER
         zip_size = zip_max_size(n, filenames, file_sizes, comment);
+#else
+        zip_size = zip_max_size(file_n, (const char *const *)file_names, file_sizes, comment);
+#endif
+
         if (zip_size == 0) {
                 printf("zip writing not possible");
                 exit(1);
         }
 
         zip_data = xmalloc(zip_size);
+
+#ifndef HAVE_FOLDER
         zip_size = zip_write(zip_data, n, filenames,
+#else
+        zip_size = zip_write(zip_data, file_n, (const char *const *)file_names,
+#endif
                              (const uint8_t *const *)file_data,
                              file_sizes, mtimes, comment, method, zip_callback);
 
@@ -333,12 +491,25 @@ static void create_zip(const char *zip_filename, const char *comment,
         printf("\n");
 
         free(zip_data);
+
+#ifndef HAVE_FOLDER
         for (i = 0; i < n; i++) {
+#else
+        for (i = 0; i < file_n; i++) {
+#endif
                 free(file_data[i]);
+
+#ifdef HAVE_FOLDER
+		free(file_names[i]);
+#endif
+
         }
         free(mtimes);
         free(file_sizes);
         free(file_data);
+#ifdef HAVE_FOLDER
+	free(file_names);
+#endif
 }
 
 static void print_usage(const char *argv0)
