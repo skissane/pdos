@@ -16,51 +16,59 @@
 # in that case too.
 
 
+ifeq "$(targ)" "arm"
 #CC=gccprm
 ####CFLAGS=-O0
-#CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
-#AS=asprm
-#AR=arprm
-#COPTS=-S $(CFLAGS) -Wall -fno-common \
-#    -I. -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
-#    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore
-#EXTRA=../pdpclib/armsupa.o ../pdpclib/fpfuncsa.o
-#START=../pdpclib/w32start.obj
-#LDFLAGS=--no-insert-timestamp -s --stack ,300000
+CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -Wall -fno-common \
+    -I. -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
+    -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore
+EXTRA=../pdpclib/msvcrt.lib ../pdpclib/armsupa.o ../pdpclib/fpfuncsa.o
+START=../pdpclib/w32start.obj
+LDFLAGS=--no-insert-timestamp -s --stack ,300000
 
 
-#### Note that you are expected to build msvcrt.lib with makefile.std
-#### in PDPCLIB, so that is why you won't get a link error on the
-#### msvcrt.lib which shouldn't really be there
-#### That's before you run makefile.zpg in PDPCLIB
-#CC=gcc370
+else ifeq "$(targ)" "zpg"
+# Note that you need to build the Windows version first
+# to generate tables.c, then rename gen.exe to wingen.exe
+# and then edit this makefile (search for wingen) as per
+# instructions and build using makefile.zpg in PDPCLIB
+# and then you can do pdmake targ=zpg -f makefile.zpg here
+CC=gcc370
 ####CFLAGS=-O0
-#CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
-#AS=as370
-#AR=ar370
-#COPTS=-S $(CFLAGS) -Wall -fno-common -DPOS_EXTEND -U__MVS__ \
-#    -I. -I../pdpclib -D__MF32__ -D__NOBIVA__ -D__PDOSGEN__ \
-#    -I../generic -I../src
-#EXTRA2=../src/pos2.obj
-#START=../pdpclib/pgastart.o
-#LDFLAGS=--no-insert-timestamp -s --stack ,300000 --oformat mainframe
+CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
+AS=as370
+AR=ar370
+COPTS=-S $(CFLAGS) -Wall -fno-common -DPOS_EXTEND -U__MVS__ \
+    -I. -I../pdpclib -D__MF32__ -D__NOBIVA__ -D__PDOSGEN__ \
+    -I../generic -I../src
+EXTRA2=../src/pos2.obj
+START=../pdpclib/pgastart.o
+LDFLAGS=--no-insert-timestamp -s --stack ,300000 --oformat mvs
 
 
 
+else
 CC=gccwin
 CFLAGS=-O2
 ####CFLAGS=-O2 -DNO_LONG_LONG -ansi -pedantic-errors
 ### The --stack ,30000 is needed to get around "__chkstk_ms" issue.
 AS=pdas --oformat coff
-COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -Wall -fno-common -I. -I../pdpclib -D__WIN32__ \
+    -D__NOBIVA__ -DHAVE_FOLDER -D_MSC_VER -I../src
 START=../pdpclib/w32start.obj
 LDFLAGS=--no-insert-timestamp -s --stack ,300000
+EXTRA=../pdpclib/msvcrt.lib ../src/kernel32.lib
+endif
 
 
 LD=pdld
 
 OBJS=$(EXTRA2) crc32.obj deflate.obj fasc.obj huffman.obj hwzip.obj \
-    implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj
+    implode.obj lz77.obj reduce.obj shrink.obj tables.obj zip.obj \
+    folder.obj
 
 TARGET=hwzip.exe
 
