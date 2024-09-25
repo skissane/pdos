@@ -21,8 +21,8 @@ int main(int argc, char **argv)
     FILE *fq;
     long in1;
     long cnt;
-    long x;
-    long startpos;
+    unsigned long x;
+    unsigned long startpos;
     int c;
     
     if (argc <= 4)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     assert(fp2 != NULL);
     fq = fopen(*(argv + 3), "wb");
     assert(fq != NULL);
-    startpos = atol(*(argv + 4));
+    startpos = strtoul(*(argv + 4), NULL, 0);
     assert(startpos != 0);
 
     for (x = 0; x < startpos; x++)
