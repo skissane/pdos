@@ -681,6 +681,14 @@ void elf_write (const char *filename)
         ehdr.e_flags = 0x01000002;
     }
 
+    if (ld_state->target_machine == LD_TARGET_MACHINE_MAINFRAME
+        && (section = section_find (".text"))) {
+        /* Normal MVS has text and data mixed inside .text section,
+         * so .text section should always be writable.
+         */
+        section->flags &= ~SECTION_FLAG_READONLY;
+    }
+
     {
         /* Current layout of executable is:
          * Elf32_Ehdr
