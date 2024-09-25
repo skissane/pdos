@@ -98,10 +98,10 @@ DONEHLO  DS    0H
 * Do exit with RC=0
          LA    R1,1(0)
          LA    R5,0(0)
-         SVC   0
+*         SVC   0
 *
 * /* We shouldn't return, but if we do, loop */
-LOOP     B     LOOP
+*LOOP     B     LOOP
 *
 #endif
 *
@@ -112,9 +112,12 @@ BYPASS1  DS    0H
 #if MVS
          L     R15,=V(@@MVSRUN)
 #endif
-#
+*
 #if VSE
          L     R15,=V(@@VSERUN)
+#endif
+#if BIGFOOT
+         L     R15,=V(@@BIGRUN)
 #endif
 *         .long 0
 *         .long 0xcccccccc
@@ -167,17 +170,25 @@ SAVEA    DS    4000C
 *
 *
          DS    0H
-         USING *,R3
+         USING *,R11
          ENTRY @@SVCRL
 @@SVCRL  DS    0H
          STM   R14,R12,12(R13)
-         LR    R3,R15
-         L     R7,0(,R1)
-         L     R8,4(,R1)
-         L     R0,0(,R8)
-         L     R1,4(,R8)
-         L     R15,60(,R8)
-         EX    R7,SVC1
+         LR    R11,R15
+         L     R12,0(,R1)
+         L     R10,4(,R1)
+         L     R0,0(,R10)
+         L     R1,4(,R10)
+         L     R2,8(,R10)
+         L     R3,12(,R10)
+         L     R4,16(,R10)
+         L     R5,20(,R10)
+         L     R6,24(,R10)
+         L     R7,28(,R10)
+         L     R8,32(,R10)
+         L     R9,36(,R10)
+         L     R15,60(,R10)
+         EX    R12,SVC1
          B     SVC2
 SVC1     DS    0H
          SVC   0
@@ -186,7 +197,7 @@ SVC2     DS    0H
          BR    R14
 *
          LTORG
-         DROP  R3
+         DROP  R11
 *
 *
 *

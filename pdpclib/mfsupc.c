@@ -139,6 +139,29 @@ int __vserun(void)
 #endif
 
 
+#ifdef __BIGFOOT__
+
+/* C startup code for MVS */
+
+int __bigrun(void)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 4;
+    regsin.r[5] = 1;
+    regsin.r[6] = (int)"HI BIG\n";
+    regsin.r[7] = 7;
+    __svc(0, &regsin, &regsout);
+    regsin.r[1] = 1;
+    regsin.r[5] = 6;
+    __svc(0, &regsin, &regsout);
+    return (__ret6());
+}
+
+#endif
+
+
 int __svc(int svcnum, void *regsin, void *regsout)
 {
     if (__pgparm == 0)
