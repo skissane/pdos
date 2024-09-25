@@ -32,6 +32,10 @@ R15      EQU   15
          USING *,R15
          ENTRY @@CRT0
 @@CRT0   DS    0H
+#if BIGFOOT
+         BALR  R15,R0
+         USING *,R15
+#endif
          B     SKIPHDR
          DC    C'PGCX'  # PDOS-generic (or compatible) extension
          DC    F'4'  # length of header data
@@ -54,7 +58,7 @@ SKIPHDR  DS    0H
          USING @@CRT0,R12
          B     BYPASS1
 #endif
-#if VSE
+#if VSE || BIGFOOT
          L     R1,=V(@@PGPARM)
          L     R1,0(,R1)
          LTR   R1,R1
@@ -68,6 +72,11 @@ SKIPHDR  DS    0H
 #endif
 *
 NOTPDOS  DS    0H
+*
+#if BIGFOOT
+         BCTR  R15,0
+         BCTR  R15,0
+#endif
          LR    R12,R15
          LR    R7,R14
          L     R3,=F'3'
