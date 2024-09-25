@@ -34,7 +34,8 @@ R15      EQU   15
 @@CRT0   DS    0H
 #if BIGFOOT
          BALR  R15,R0
-         USING *,R15
+         BCTR  R15,0
+         BCTR  R15,0
 #endif
          B     SKIPHDR
          DC    C'PGCX'  # PDOS-generic (or compatible) extension
@@ -73,15 +74,37 @@ SKIPHDR  DS    0H
 *
 NOTPDOS  DS    0H
 *
-#if BIGFOOT
-         BCTR  R15,0
-         BCTR  R15,0
-#endif
          LR    R12,R15
          LR    R7,R14
          L     R3,=F'3'
          L     R4,=F'4'
          L     R5,=F'5'
+*
+#if BIGFOOT
+* For SVCs ...
+* R1 has function code
+* R5 and above have parameters
+         LA    R1,4(0)
+         LA    R5,1(0)
+         LA    R6,HELLO
+         LA    R7,6(0)
+         SVC   0
+         B     DONEHLO
+HELLO    DC    C'HELLO'
+         DC    X'0A'
+*         DC    X'00'
+DONEHLO  DS    0H
+*
+* Do exit with RC=0
+         LA    R1,1(0)
+         LA    R5,0(0)
+         SVC   0
+*
+* /* We shouldn't return, but if we do, loop */
+LOOP     B     LOOP
+*
+#endif
+*
          LA    R13,SAVEA
 BYPASS1  DS    0H
          LA    R9,80(,R13)
