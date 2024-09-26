@@ -14,6 +14,8 @@ COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib -D__WIN32__ -D__USEBIVA__ \
     -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
     -DNO_LONG_LONG -ansi -pedantic-errors -I./src/ftebc
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
 
@@ -30,6 +32,8 @@ COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -ansi -pedantic-errors \
     -I../generic -I../src -I./src/ftebc -DNOFLOAT
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
@@ -89,14 +93,14 @@ AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I./src/ftebc -I../pdpclib -D__WIN32__ -D__NOBIVA__
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib
 endif
 
 
 
-LD=pdld
-LDFLAGS=-s -nostdlib --no-insert-timestamp
 
 
 OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj \
