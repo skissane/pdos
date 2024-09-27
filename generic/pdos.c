@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 
 
 
-#if defined(NEED_VSE) || defined(NEED_MVS)
+#if defined(NEED_VSE) || defined(NEED_MVS) || defined(NEED_BIGFOOT)
 
 #include <mfsup.h>
 
@@ -395,12 +395,21 @@ static void runexe(char *prog_name)
 #endif
 
 
-#if defined(NEED_VSE) || defined(NEED_MVS)
+#if defined(NEED_VSE) || defined(NEED_MVS) || defined(NEED_BIGFOOT)
     os.Xservice = service_call;
+
+#if defined(NEED_BIGFOOT)
+    if (memcmp(entry_point + 12, "\x50\x47\x43\x58", 4) == 0)
+    {
+        *(void **)(entry_point + 20) = &os;
+    }
+#else
     if (memcmp(entry_point + 4, "PGCX", 4) == 0)
     {
         *(void **)(entry_point + 12) = &os;
     }
+#endif
+
 #endif
 
 
