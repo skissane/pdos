@@ -36,6 +36,7 @@ R15      EQU   15
          BALR  R15,R0
          BCTR  R15,0
          BCTR  R15,0
+         NOPR  0
 #endif
          B     SKIPHDR
          DC    C'PGCX'  # PDOS-generic (or compatible) extension
