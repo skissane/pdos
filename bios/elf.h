@@ -96,6 +96,7 @@ typedef struct {
 #define EI_VERSION 6
 #define EI_OSABI 7
     #define ELFOSABI_NONE 0 /* No specific extensions. */
+    #define ELFOSABI_LINUX 3
     #define ELFOSABI_ARM 97
 #define EI_ABIVERSION 8
 #define EI_PAD 9 /* Start of pad bytes. Should be ignored. */
@@ -110,6 +111,7 @@ typedef struct {
 /* e_machine value macros. */
 #define EM_386 3 /* Intel 80386. */
 #define EM_68K 4 /* Motorola 68000 */
+#define EM_S370 9 /* Amdahl S/370 */
 #define EM_ARM 40
 #define EM_X86_64 62 /* x86-64. */
 #define EM_AARCH64 183 /* ARM64 */
