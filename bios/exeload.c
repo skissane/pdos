@@ -1785,6 +1785,20 @@ static int exeloadLoadELF(unsigned char **entry_point,
                             default:
                                 printf("Unknown relocation type in ELF file\n");
                         }
+                    } else if (elfHdr->e_machine == EM_S370) {
+                        switch (ELF32_R_TYPE(currel->r_info))
+                        {
+                            case R_386_NONE:
+                                break;
+                            case R_386_32:
+                                FIX_ENDIAN4(*target);
+                                *target -= lowest_p_vaddr;
+                                *target += (unsigned long)exeStart;
+                                FIX_ENDIAN4(*target);
+                                break;
+                            default:
+                                printf("Unknown relocation type in ELF file\n");
+                        }
                     }
                 }
             }
