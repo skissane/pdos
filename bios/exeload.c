@@ -955,11 +955,21 @@ static int exeloadLoadELF(unsigned char **entry_point,
     int big_endian = 0;
 
     if ((fseek(fp, 0, SEEK_SET) != 0)
-        || (fread(&firstbit, sizeof firstbit, 1, fp) != 1)
-        || (memcmp(&firstbit, "\x7f" "ELF", 4) != 0))
+        || (fread(&firstbit, sizeof firstbit, 1, fp) != 1))
     {
         return (1);
     }
+
+    if ((memcmp(&firstbit, "\x7f" "ELF", 4) != 0)
+/* on an EBCDIC system, we accept loading an ASCII module */
+#ifdef EBCDIC
+        && (memcmp(&firstbit, "\x7f" "\x45\x4c\x46", 4) != 0)
+#endif
+       )
+    {
+        return (1);
+    }
+
     {
         int elf_invalid = 0;
 
@@ -1003,7 +1013,8 @@ static int exeloadLoadELF(unsigned char **entry_point,
         if (elfHdr->e_ident[EI_DATA] == ELFDATA2MSB)
         {
             /* printf("Big-endian ELF encoding is not supported\n"); */
-#ifndef NOBIG
+/* the EBCDIC targets don't need endian conversion */
+#if !defined(NOBIG) && !defined(EBCDIC)
             big_endian = 1;
 #endif
         }
@@ -1022,9 +1033,11 @@ static int exeloadLoadELF(unsigned char **entry_point,
         }
 
         if (elfHdr->e_ident[EI_OSABI] != ELFOSABI_NONE
+            && elfHdr->e_ident[EI_OSABI] != ELFOSABI_LINUX
             && elfHdr->e_ident[EI_OSABI] != ELFOSABI_ARM)
         {
-            printf("Unsupported OS or ABI specific extensions for ELF\n");
+            printf("Unsupported OS or ABI specific extensions for ELF %x\n",
+                   elfHdr->e_ident[EI_OSABI]);
             elf_invalid = 1;
         }
 
@@ -1048,7 +1061,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
         {
             printf("Only ELF relocatable "
                    "and executable "
-                   "files are supported\n");
+                   "files are supported %x\n", elfHdr->e_type);
             elf_invalid = 1;
         }
 
@@ -1056,6 +1069,7 @@ static int exeloadLoadELF(unsigned char **entry_point,
         if (elfHdr->e_machine != EM_386
             && elfHdr->e_machine != EM_ARM
             && elfHdr->e_machine != EM_68K
+            && elfHdr->e_machine != EM_S370
             && elfHdr->e_machine != EM_AARCH64
             && elfHdr->e_machine != EM_X86_64)
         {
