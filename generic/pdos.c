@@ -32,6 +32,10 @@
 
 #include <fat.h>
 
+#ifdef NEED_BIGFOOT
+#include <fasc.h>
+#endif
+
 extern int __minstart;
 
 #ifdef EBCDIC
@@ -53,6 +57,9 @@ extern __start(char *p);
 static unsigned int currentDrive = 2;
 
 static int lastcc = 0;
+
+/* do we want auto-translation of text files from ASCII to EBCDIC? */
+static int ascii_flag;
 
 extern char *__envptr;
 
@@ -313,7 +320,40 @@ int main(int argc, char **argv)
 static int service_call(int svcnum, void *a, void *b)
 {
     printf("got service call %d\n", svcnum);
-    if (svcnum == 0) /* VSE */
+    if ((svcnum == 0) && ascii_flag) /* Linux Bigfoot */
+    {
+        REGS *regs;
+        int func_code;
+        int len;
+        int x;
+        int c;
+        char *buf;
+
+        regs = a;
+        func_code = regs->r[1];
+        if (func_code == 1)
+        {
+            printf("can't exit (%d) currently\n", regs->r[5]);
+        }
+        else if (func_code == 5) /* open */
+        {
+            printf("open isn't doing anything currently\n");
+        }
+        else if (func_code == 4) /* write */
+        {
+            /* r[5] has handle - assume stdout for now */
+            buf = (char *)regs->r[6];
+            len = regs->r[7];
+            printf("have len %d to write, first byte %x\n", len, buf[0]);
+            printf("will convert to EBCDIC\n");
+            for (x = 0; x < len; x++)
+            {
+                c = fasc(buf[x]);
+                putc(c, stdout);
+            }
+        }
+    }
+    else if (svcnum == 0) /* VSE */
     {
         REGS *regs;
         CCB *ccb;
@@ -353,6 +393,7 @@ static void runexe(char *prog_name)
     unsigned char *entry_point;
     unsigned char *p = NULL;
     int ret;
+    int old_ascii;
 
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
@@ -363,6 +404,8 @@ static void runexe(char *prog_name)
     }
     pgastart = (void *)entry_point;
 
+    old_ascii = ascii_flag;
+    ascii_flag = 0;
 #ifdef NEED_DELAY
 
 #ifdef __ARMGEN__
@@ -402,6 +445,7 @@ static void runexe(char *prog_name)
     if (memcmp(entry_point + 12, "\x50\x47\x43\x58", 4) == 0)
     {
         *(void **)(entry_point + 20) = &os;
+        ascii_flag = 1;
     }
 #else
     if (memcmp(entry_point + 4, "PGCX", 4) == 0)
@@ -417,6 +461,7 @@ static void runexe(char *prog_name)
     ret = pgastart(&os);
     printf("return from app is hex %x\n", ret);
     lastcc = ret;
+    ascii_flag = old_ascii;
     return;
 }
 
