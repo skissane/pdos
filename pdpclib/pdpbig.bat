@@ -11,7 +11,7 @@ gcc370a -U__MVS__ -D__MF32__ -D__BIGFOOT__ -Os -S -I . -o string.s string.c
 as370 -o string.obj string.s
 rm -f string.s
 
-pdld -e __crt0 --oformat elf -o pdptest.exe mfsupa.obj mfsupc.obj string.obj
+pdld --emit-relocs -e __crt0 --oformat elf -o pdptest.exe mfsupa.obj mfsupc.obj string.obj
 
 sleep 2
 
