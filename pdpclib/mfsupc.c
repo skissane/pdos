@@ -147,13 +147,23 @@ int __bigrun(void)
 {
     regs regsin;
     regs regsout;
+    int fh;
 
-    regsin.r[1] = 4;
-    regsin.r[5] = 1;
+    /* standard handles are not available for some reason */
+    /* we need to open the TTY instead */
+    regsin.r[1] = 5; /* open syscall */
+    regsin.r[5] = (int)"/dev/tty0";
+    regsin.r[6] = 2; /* O_WRONLY */
+    regsin.r[7] = 0; /* not sure if this is required */
+    fh = __svc(0, &regsin, &regsout);
+
+    regsin.r[1] = 4; /* write syscall */
+    regsin.r[5] = fh; /* 1; */
     regsin.r[6] = (int)"HI BIG\n";
     regsin.r[7] = 7;
-    __svc(0, &regsin, &regsout);
-    regsin.r[1] = 1;
+    __svc(fh, &regsin, &regsout);
+
+    regsin.r[1] = 1; /* exit syscall */
     regsin.r[5] = 6;
     __svc(0, &regsin, &regsout);
     return (__ret6());

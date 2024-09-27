@@ -80,35 +80,11 @@ NOTPDOS  DS    0H
          L     R4,=F'4'
          L     R5,=F'5'
 *
-#if BIGFOOT
-* For SVCs ...
-* R1 has function code
-* R5 and above have parameters
-         LA    R1,4(0)
-         LA    R5,1(0)
-         LA    R6,HELLO
-         LA    R7,6(0)
-         SVC   0
-         B     DONEHLO
-HELLO    DC    C'HELLO'
-         DC    X'0A'
-*         DC    X'00'
-DONEHLO  DS    0H
-*
-* Do exit with RC=0
-         LA    R1,1(0)
-         LA    R5,0(0)
-*         SVC   0
-*
-* /* We shouldn't return, but if we do, loop */
-*LOOP     B     LOOP
-*
-#endif
-*
          LA    R13,SAVEA
 BYPASS1  DS    0H
          LA    R9,80(,R13)
          ST    R9,76(,R13)
+*
 #if MVS
          L     R15,=V(@@MVSRUN)
 #endif
@@ -116,15 +92,13 @@ BYPASS1  DS    0H
 #if VSE
          L     R15,=V(@@VSERUN)
 #endif
+*
 #if BIGFOOT
          L     R15,=V(@@BIGRUN)
 #endif
-*         .long 0
-*         .long 0xcccccccc
-*         .long 0xcccccccc
+*
          BALR  R14,R15
-*.LABC:
-*         B     .LABC
+*
 #if VSE
          L     R15,=F'3'
 #endif
@@ -193,7 +167,8 @@ SAVEA    DS    4000C
 SVC1     DS    0H
          SVC   0
 SVC2     DS    0H
-         LM    R14,R12,12(R13)
+         L     R14,12(R13)
+         LM    R0,R12,20(R13)
          BR    R14
 *
          LTORG
