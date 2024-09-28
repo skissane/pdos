@@ -149,23 +149,22 @@ int __bigrun(void)
     regs regsout;
     int fh;
 
-    /* standard handles are not available for some reason */
+#ifdef LOGSHELL
+    /* standard handles are not available when a login shell */
     /* we need to open the TTY instead */
-    regsin.r[1] = 5; /* open syscall */
-    regsin.r[5] = (int)"/dev/tty0";
-    regsin.r[6] = 2; /* O_WRONLY */
-    regsin.r[7] = 0; /* not sure if this is required */
-    fh = __svc(0, &regsin, &regsout);
 
-    regsin.r[1] = 4; /* write syscall */
-    regsin.r[5] = fh; /* 1; */
-    regsin.r[6] = (int)"HI BIG\n";
-    regsin.r[7] = 7;
-    __svc(fh, &regsin, &regsout);
+    /* 2 = O_WRONLY */
+    fh = __open("/dev/tty0", 2);
 
-    regsin.r[1] = 1; /* exit syscall */
-    regsin.r[5] = 6;
-    __svc(0, &regsin, &regsout);
+    /* duplicate the return handle into handle 1 to make stdout valid */
+    __dup2(fh, 1);
+#endif
+
+    /* 1 = stdout */
+    __write(1, "Hi There\n", 9);
+
+    __exita(5);
+
     return (__ret6());
 }
 
@@ -183,3 +182,180 @@ int __svc(int svcnum, void *regsin, void *regsout)
         return (__pgparm->Xservice(svcnum, regsin, regsout));
     }
 }
+
+#ifdef __BIGFOOT__
+
+int __write(int fd, void *buf, int len)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 4; /* write syscall */
+    regsin.r[5] = fd; /* e.g. 1 */
+    regsin.r[6] = (int)buf;
+    regsin.r[7] = len;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __close(int fd)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 57; /* close syscall */
+    regsin.r[5] = fd;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __rename(char *old, char *new)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 38; /* rename syscall */
+    regsin.r[5] = (int)old;
+    regsin.r[6] = (int)new;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __dup2(int old, int new)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 63; /* dup2 syscall */
+    regsin.r[5] = old;
+    regsin.r[6] = new;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __seek(int fd, int pos, int how)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 62; /* lseek syscall */
+    regsin.r[5] = fd;
+    regsin.r[6] = pos;
+    regsin.r[7] = how;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __remove(char *path)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 10; /* unlinnk syscall */
+    regsin.r[5] = (int)path;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __open(char *path, int flags)
+{
+    int fh;
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 5; /* open syscall */
+    regsin.r[5] = (int)path;
+    regsin.r[6] = flags; /* O_WRONLY etc */
+    regsin.r[7] = 0x1A4; /* 0644 - permissions in case create */
+    fh = __svc(0, &regsin, &regsout);
+    return (fh);
+}
+
+int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 29; /* ioctl syscall */
+    regsin.r[5] = fd;
+    regsin.r[6] = cmd;
+    regsin.r[7] = arg;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __getpid(void)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 172; /* getpid syscall */
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __read(int fd, void *buf, int len)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 63; /* read syscall */
+    regsin.r[5] = fd;
+    regsin.r[6] = (int)buf;
+    regsin.r[7] = len;
+    return (__svc(0, &regsin, &regsout));
+}
+
+void __exita(int rc)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 1; /* exit syscall */
+    regsin.r[5] = rc;
+    __svc(0, &regsin, &regsout);
+    return;
+}
+
+/* +++ this is wrong */
+int __mmap(int fd)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 222; /* mmap syscall */
+    regsin.r[5] = fd;
+    return (__svc(0, &regsin, &regsout));
+}
+
+/* +++ check this */
+int __munmap(int fd)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 215; /* munmap syscall */
+    regsin.r[5] = fd;
+    return (__svc(0, &regsin, &regsout));
+}
+
+
+/* not yet implemented */
+int __clone(void)
+{
+    return (0);
+}
+
+/* not yet implemented */
+int __waitid(void)
+{
+    return (0);
+}
+
+/* not yet implemented */
+int __execve(void)
+{
+    return (0);
+}
+
+#if 0
+int __time(void);
+int __chdir(const char *filename);
+int __mkdir(const char *filename, int mode);
+int __rmdir(const char *filename);
+int __getdents64(unsigned int fd, struct linux_dirent64 *dirent, int count);
+#endif
+
+#endif
