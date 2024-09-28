@@ -541,11 +541,13 @@ __PDPCLIB_API__ int CTYP __start(char *p)
        processor (which needs echo off) launches another
        application, we don't need to put it back to the
        echo state before doing so. */
+#ifndef LOGSHELL /* we don't have a handle 0 yet */
     __ioctl(0, TCGETS, (unsigned long)&tios_save);
     tios_new = tios_save;
     tios_new.c_iflag &= ~IXON;
     tios_new.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
     __ioctl(0, TCSETS, (unsigned long)&tios_new);
+#endif
     }
 #endif
 
@@ -1139,6 +1141,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         int pf;
         int tot;
 
+#ifdef LOGSHELL
+        /* we can't do a pid for some reason */
+        argc = 1;
+        argv[0] = "";
+#else
         sprintf(fnm, "/proc/%d/cmdline", __getpid());
         pf = __open(fnm, 0, 0);
         /* note that the open syscall can return numbers other than
@@ -1149,11 +1156,12 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             /* could be early Linux userspace or chroot() jail - let's
                take our chances with the stack */
+#if !defined(LOGSHELL)
             argc = *(int *)p;
             p += sizeof(char *); /* I think next parm will be on pointer
                                     boundary - especially 64-bit */
             argv = (char **)p;
-#if 0
+#else
             argc = 1;
             argv[0] = "";
 #endif
@@ -1174,6 +1182,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
                 argc++;
             }
         }
+#endif /* LOGSHELL */
     }
     else
     {
@@ -1385,6 +1394,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if !defined(__MACOS__)
 
 #if defined(__gnu_linux__) || defined(__EFI__)
+
     if (__runnum > 1)
     {
 #endif
@@ -1468,6 +1478,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
             rc = main(argc, argv);
+#ifdef LOGSHELL /* not yet ready to terminate cleanly */
+            return (0);
+#endif
             exit(rc); /* this will return to the above setjmp */
         }
     }
