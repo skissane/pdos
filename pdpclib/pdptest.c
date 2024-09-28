@@ -46,10 +46,15 @@ int main(int argc, char **argv)
 #endif
 
 #endif
-#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+#if defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
+    || defined(__BIGFOOT__)
     z = (char *)main;
     printf("first byte of main is %x\n", *z);
     printf("running as amode %d\n", __getam());
+#endif
+
+#ifdef LOGSHELL
+    return (0);
 #endif
 
 #if 1
