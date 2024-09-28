@@ -14,6 +14,9 @@
 
 extern OS *__pgparm;
 
+#ifdef __BIGFOOT__
+void __exita(int rc);
+#endif
 
 int __wto(int len, int flags, char *msg)
 {
@@ -162,6 +165,8 @@ int __bigrun(void)
 
     /* 1 = stdout */
     __write(1, "Hi There\n", 9);
+
+    __start(0);
 
     __exita(5);
 
