@@ -53,10 +53,6 @@ int main(int argc, char **argv)
     printf("running as amode %d\n", __getam());
 #endif
 
-#ifdef LOGSHELL
-    return (0);
-#endif
-
 #if 1
     printf("allocating 10 bytes\n");
     m1 = malloc(10);
