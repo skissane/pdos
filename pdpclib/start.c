@@ -541,13 +541,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
        processor (which needs echo off) launches another
        application, we don't need to put it back to the
        echo state before doing so. */
-#ifndef LOGSHELL /* we don't have a handle 0 yet */
     __ioctl(0, TCGETS, (unsigned long)&tios_save);
     tios_new = tios_save;
     tios_new.c_iflag &= ~IXON;
     tios_new.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
     __ioctl(0, TCSETS, (unsigned long)&tios_new);
-#endif
     }
 #endif
 
@@ -1707,7 +1705,7 @@ __PDPCLIB_API__ void _c_exit(void)
     __devsinfo(0, stdin_dw);
 #endif
 
-#if defined(__gnu_linux__) && !defined(LOGSHELL)
+#if defined(__gnu_linux__)
     if (__runnum == 1)
     {
     __ioctl(0, TCSETS, (unsigned long)&tios_save);
