@@ -145,24 +145,26 @@ SAVEA    DS    4000C
 *
 *
          DS    0H
-         USING *,R11
+         USING *,R14
          ENTRY @@SVCRL
 @@SVCRL  DS    0H
          STM   R14,R12,12(R13)
-         LR    R11,R15
+         LR    R14,R15
          L     R12,0(,R1)
-         L     R10,4(,R1)
-         L     R0,0(,R10)
-         L     R1,4(,R10)
-         L     R2,8(,R10)
-         L     R3,12(,R10)
-         L     R4,16(,R10)
-         L     R5,20(,R10)
-         L     R6,24(,R10)
-         L     R7,28(,R10)
-         L     R8,32(,R10)
-         L     R9,36(,R10)
-         L     R15,60(,R10)
+         L     R11,4(,R1)
+         L     R0,0(,R11)
+         L     R1,4(,R11)
+         L     R2,8(,R11)
+         L     R3,12(,R11)
+         L     R4,16(,R11)
+         L     R5,20(,R11)
+         L     R6,24(,R11)
+         L     R7,28(,R11)
+         L     R8,32(,R11)
+         L     R9,36(,R11)
+         L     R10,40(,R11)
+         L     R15,60(,R11)
+         L     R11,44(,R11)
          EX    R12,SVC1
          B     SVC2
 SVC1     DS    0H
@@ -173,7 +175,7 @@ SVC2     DS    0H
          BR    R14
 *
          LTORG
-         DROP  R11
+         DROP  R14
 *
 *
 *
