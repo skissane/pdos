@@ -163,8 +163,10 @@ int __bigrun(void)
     __dup2(fh, 1);
 #endif
 
+#if 0
     /* 1 = stdout */
     __write(1, "Hi There\n", 9);
+#endif
 
     __start(0);
 
@@ -176,11 +178,20 @@ int __bigrun(void)
 #endif
 
 
-int __svc(int svcnum, void *regsin, void *regsout)
+int __svc(int svcnum, regs *regsin, regs *regsout)
 {
+    int ret;
+
     if (__pgparm == 0)
     {
-        return (__svcrl(svcnum, regsin, regsout));
+        ret = __svcrl(svcnum, regsin, regsout);
+#if 0
+        if (regsin->r[7] == 0x14)
+        {
+            for (;;) ;
+        }
+#endif
+        return (ret);
     }
     else
     {
@@ -287,7 +298,7 @@ int __getpid(void)
     regs regsin;
     regs regsout;
 
-    regsin.r[1] = 172; /* getpid syscall */
+    regsin.r[1] = 20; /* getpid syscall */
     return (__svc(0, &regsin, &regsout));
 }
 
@@ -314,25 +325,31 @@ void __exita(int rc)
     return;
 }
 
-/* +++ this is wrong */
-int __mmap(int fd)
+void *__mmap(void *a, int b, int prot, int flags, int fd,
+             long offset, long offset2)
 {
     regs regsin;
     regs regsout;
 
-    regsin.r[1] = 222; /* mmap syscall */
-    regsin.r[5] = fd;
-    return (__svc(0, &regsin, &regsout));
+    regsin.r[1] = 90; /* mmap syscall */
+    regsin.r[5] = (int)a;
+    regsin.r[6] = b;
+    regsin.r[7] = prot;
+    regsin.r[8] = flags;
+    regsin.r[9] = fd;
+    regsin.r[10] = offset;
+    regsin.r[11] = offset2;
+    return ((void *)__svc(0, &regsin, &regsout));
 }
 
-/* +++ check this */
-int __munmap(int fd)
+int __munmap(void *a, size_t b)
 {
     regs regsin;
     regs regsout;
 
-    regsin.r[1] = 215; /* munmap syscall */
-    regsin.r[5] = fd;
+    regsin.r[1] = 91; /* munmap syscall */
+    regsin.r[5] = (int)a;
+    regsin.r[6] = b;
     return (__svc(0, &regsin, &regsout));
 }
 
