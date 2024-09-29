@@ -126,7 +126,7 @@ typedef struct {
     long offset2;
 } mmstruc;
 
-#if defined(__ARM__) || defined(__64BIT__)
+#if defined(__ARM__) || defined(__64BIT__) || defined(__BIGFOOT__)
 void *__mmap(void *a, int b, int prot, int flags, int fd,
              long offset, long offset2);
 #else
@@ -152,7 +152,7 @@ void __exita(int a);
 
 #define MAP_PRIVATE 0x2
 
-#ifdef __MACOS__
+#if defined(__MACOS__) || !defined(__64BIT__)
 /* It seems MacOS on the ARM is not willing to return 32-bit memory,
    so we need to switch it off. We only need it to overcome a
    restriction in the gcc 3.2.3 x64 code generation that produces
@@ -562,7 +562,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.fd = -1;
         mms.offset = 0;
         mms.offset2 = 0;
-#if defined(__ARM__) || defined(__64BIT__)
+#if defined(__ARM__) || defined(__64BIT__) || defined(__BIGFOOT__)
         ptr = __mmap(mms.addr, mms.length, mms.prot,
                      mms.flags, mms.fd, mms.offset, mms.offset2);
 #else
