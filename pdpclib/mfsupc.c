@@ -286,7 +286,7 @@ int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
     regs regsin;
     regs regsout;
 
-    regsin.r[1] = 29; /* ioctl syscall */
+    regsin.r[1] = 54; /* ioctl syscall */
     regsin.r[5] = fd;
     regsin.r[6] = cmd;
     regsin.r[7] = arg;
