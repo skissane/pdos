@@ -1141,11 +1141,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         int pf;
         int tot;
 
-#ifdef LOGSHELL
-        /* we can't do a pid for some reason */
-        argc = 1;
-        argv[0] = "";
-#else
         sprintf(fnm, "/proc/%d/cmdline", __getpid());
         pf = __open(fnm, 0, 0);
         /* note that the open syscall can return numbers other than
@@ -1156,7 +1151,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             /* could be early Linux userspace or chroot() jail - let's
                take our chances with the stack */
-#if !defined(LOGSHELL)
+#if !defined(LOGSHELL) /* we don't have parameters yet */
             argc = *(int *)p;
             p += sizeof(char *); /* I think next parm will be on pointer
                                     boundary - especially 64-bit */
@@ -1182,7 +1177,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
                 argc++;
             }
         }
-#endif /* LOGSHELL */
     }
     else
     {
@@ -1478,9 +1472,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
             rc = main(argc, argv);
-#ifdef LOGSHELL /* not yet ready to terminate cleanly */
-            return (0);
-#endif
             exit(rc); /* this will return to the above setjmp */
         }
     }
@@ -1716,7 +1707,7 @@ __PDPCLIB_API__ void _c_exit(void)
     __devsinfo(0, stdin_dw);
 #endif
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__) && !defined(LOGSHELL)
     if (__runnum == 1)
     {
     __ioctl(0, TCSETS, (unsigned long)&tios_save);
