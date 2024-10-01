@@ -23,7 +23,7 @@
 
 #define CHECK_READ(memory_position, size_to_read) \
     do { if (((memory_position) - file + (size_to_read) > file_size) \
-             || (memory_position) < file) ld_fatal_error ("corrupted input file"); } while (0)
+             || (memory_position) < file) ld_fatal_error ("%s: corrupted input file", archive_name); } while (0)
 
 static int read_file (unsigned char *file, size_t file_size, const char *filename);
 
@@ -98,7 +98,10 @@ static int read_archive_member_header (const unsigned char *pos,
     return 0;
 }
 
-static struct lm_offset_name_entry *read_linker_member (unsigned char *file, size_t file_size, unsigned long *NumberOfSymbols_p)
+static struct lm_offset_name_entry *read_linker_member (unsigned char *file,
+                                                        size_t file_size,
+                                                        const char *archive_name,
+                                                        unsigned long *NumberOfSymbols_p)
 {
     unsigned long NumberOfSymbols;
     struct lm_offset_name_entry *offset_name_table;
@@ -201,15 +204,20 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
     unsigned long end_header_object_offset = 0;
 
     pos = file + strlen (IMAGE_ARCHIVE_START);
+    /* Empty archive is also allowed to not contain any members at all,
+     * so error should not be reported
+     * if the file ends exactly after IMAGE_ARCHIVE_START.
+     */
+    if (pos == file + file_size) return;
     CHECK_READ (pos, SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file);
     if (read_archive_member_header (pos, &hdr, &longnames)) return;
     pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
 
     if (strcmp (hdr.name, IMAGE_ARCHIVE_LINKER_MEMBER_Name) == 0) {
-        offset_name_table = read_linker_member (pos, MIN (hdr.size, file_size - (pos - file)), &NumberOfSymbols);
+        offset_name_table = read_linker_member (pos, MIN (hdr.size, file_size - (pos - file)), archive_name, &NumberOfSymbols);
     } else {
         offset_name_table = NULL;
-        ld_error ("IMAGE_ARCHIVE_LINKER_MEMBER missing from archive");
+        ld_error ("%s: IMAGE_ARCHIVE_LINKER_MEMBER missing from archive", archive_name);
     }
 
     free (hdr.name);
@@ -315,6 +323,11 @@ repeat:
 
     free (offset_name_table);
 }
+
+#undef CHECK_READ
+#define CHECK_READ(memory_position, size_to_read) \
+    do { if (((memory_position) - file + (size_to_read) > file_size) \
+             || (memory_position) < file) ld_fatal_error ("%s: corrupted input file", filename); } while (0)
 
 static int read_file (unsigned char *file, size_t file_size, const char *filename)
 {
