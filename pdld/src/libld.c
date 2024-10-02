@@ -22,6 +22,7 @@ enum option_index {
     LD_OPTION_EMIT_RELOCS,
     LD_OPTION_ENTRY,
     LD_OPTION_HELP,
+    LD_OPTION_IMAGE_BASE,
     LD_OPTION_MAP,
     LD_OPTION_MAP_FILE,
     LD_OPTION_OUTPUT,
@@ -52,6 +53,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("Bshareable"), LD_OPTION_SHARED_LIBRARY, OPTION_NO_ARG},
     { STR_AND_LEN("entry"), LD_OPTION_ENTRY, OPTION_HAS_ARG},
     { STR_AND_LEN("help"), LD_OPTION_HELP, OPTION_NO_ARG},
+    { STR_AND_LEN("image-base"), LD_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
     { STR_AND_LEN("print-map"), LD_OPTION_MAP, OPTION_NO_ARG},
     { STR_AND_LEN("Map"), LD_OPTION_MAP_FILE, OPTION_HAS_ARG},
     { STR_AND_LEN("omagic"), LD_OPTION_IGNORED, OPTION_NO_ARG},
@@ -74,6 +76,7 @@ static void print_help (void)
     printf ("Options:\n");
     printf ("  -e ADDRESS, --entry ADDRESS Set start address\n");
     printf ("  --help                      Print option help\n");
+    printf ("  --image-base <address>      Set base address of the executable\n");
     printf ("  -M, --print-map             Print map file on standard output\n");
     printf ("  -Map FILE                   Write a linker map to FILE\n");
     printf ("  -N, --omagic                Ignored\n");
@@ -122,6 +125,22 @@ static void use_option (int option_index, char *arg)
 
         case LD_OPTION_HELP:
             print_help ();
+            break;
+
+        case LD_OPTION_IMAGE_BASE:
+            /* Originally PE/COFF option but the same system
+             * is now used for other formats as well.
+             */
+            {
+                char *p;
+                
+                ld_state->base_address = strtoul (arg, &p, 0);
+                if (*p != '\0') {
+                    ld_error ("invalid start address number '%s'", arg);
+                    break;
+                }
+                ld_state->use_custom_base_address = 1;
+            }
             break;
 
         case LD_OPTION_MAP:

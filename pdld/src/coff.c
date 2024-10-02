@@ -2528,7 +2528,6 @@ enum option_index {
 
     COFF_OPTION_IGNORED = 0,
     COFF_OPTION_FILE_ALIGNMENT,
-    COFF_OPTION_IMAGE_BASE,
     COFF_OPTION_SECTION_ALIGNMENT,
     COFF_OPTION_STACK,
     COFF_OPTION_STUB,
@@ -2549,7 +2548,6 @@ enum option_index {
 static const struct long_option long_options[] = {
     
     { STR_AND_LEN("file-alignment"), COFF_OPTION_FILE_ALIGNMENT, OPTION_HAS_ARG},
-    { STR_AND_LEN("image-base"), COFF_OPTION_IMAGE_BASE, OPTION_HAS_ARG},
     { STR_AND_LEN("section-alignment"), COFF_OPTION_SECTION_ALIGNMENT, OPTION_HAS_ARG},
     { STR_AND_LEN("stack"), COFF_OPTION_STACK, OPTION_HAS_ARG},
     { STR_AND_LEN("stub"), COFF_OPTION_STUB, OPTION_HAS_ARG},
@@ -2572,7 +2570,6 @@ void coff_print_help (void)
 {
     printf ("i386pe:\n");
     printf ("  --file-alignment <size>            Set file alignment\n");
-    printf ("  --image-base <address>             Set base address of the executable\n");
     printf ("  --section-alignment <size>         Set section alignment\n");
     printf ("  --stack <reserve size>[,<commit size>]\n"
             "                                     Set size of the initial stack\n");
@@ -2610,19 +2607,6 @@ static void use_option (enum option_index option_index, char *arg)
                 if (FileAlignment < 512 || FileAlignment > 0x10000 || (FileAlignment & (FileAlignment - 1))) {
                     ld_warn ("file alignment should be a power of two between 512 and 64 KiB (0x10000) inclusive according to the specification");
                 }
-            }
-            break;
-
-        case COFF_OPTION_IMAGE_BASE:
-            {
-                char *p;
-                
-                ld_state->base_address = strtoul (arg, &p, 0);
-                if (*p != '\0') {
-                    ld_error ("invalid start address number '%s'", arg);
-                    break;
-                }
-                ld_state->use_custom_base_address = 1;
             }
             break;
 
