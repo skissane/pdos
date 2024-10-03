@@ -585,6 +585,10 @@ void link (void)
                 ld_state->base_address = atari_get_base_address ();
                 break;
 
+            case LD_OFORMAT_BINARY:
+                ld_state->base_address = binary_get_base_address ();
+                break;
+
             case LD_OFORMAT_CMS:
                 ld_state->base_address = cms_get_base_address ();
                 break;

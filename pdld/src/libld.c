@@ -84,7 +84,7 @@ static void print_help (void)
     printf ("  -o FILE, --output FILE      Set output file name\n");
     printf ("  --oformat FORMAT            Create an output file in format FORMAT (default %s)\n",
             "coff");
-    printf ("                                Supported formats are: a.out, atari, cms, coff, elf, lx, mvs, vse\n");
+    printf ("                                Supported formats are: a.out, atari, binary, cms, coff, elf, lx, mvs, vse\n");
     printf ("  --out-implib FILE           Generate import library\n");
     printf ("  -q, --emit-relocs           Generate relocations in final output\n");
     printf ("  -shared, -Bshareable        Create a shared library\n");
@@ -160,6 +160,8 @@ static void use_option (int option_index, char *arg)
                 ld_state->oformat = LD_OFORMAT_AOUT;
             } else if (strcmp (arg, "atari") == 0) {
                 ld_state->oformat = LD_OFORMAT_ATARI;
+            } else if (strcmp (arg, "binary") == 0) {
+                ld_state->oformat = LD_OFORMAT_BINARY;
             } else if (strcmp (arg, "cms") == 0) {
                 ld_state->oformat = LD_OFORMAT_CMS;
             } else if (strcmp (arg, "coff") == 0) {
