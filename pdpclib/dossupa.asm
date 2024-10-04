@@ -451,7 +451,7 @@ endif
         mov [bx + 8], si
 
         pop ax
-        mov [bx + 10], bx    ; sp
+        mov [bx + 10], ax    ; sp
         mov ax, [bp + 0]     ; bp
         mov [bx + 12], ax    ; bp
 
