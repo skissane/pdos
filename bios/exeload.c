@@ -5089,6 +5089,11 @@ static int exeloadLoadLX(unsigned char **entry_point,
 extern int __shift;
 extern int __incr;
 
+/* Documentation on this format can be found here:
+https://en.wikipedia.org/wiki/New_Executable
+in the references
+*/
+
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
