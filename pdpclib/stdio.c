@@ -4916,10 +4916,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 #else
         rc = DosSetFilePtr(stream->hfile, newpos, FILE_BEGIN, &retpos);
 #endif
-        /* retpos doesn't seem to get updated in normal operation. It's
-           probably only set if you seek to the end and need to know
-           the new position */
-        if (rc != 0) /* || (retpos != newpos)) */
+        if ((rc != 0) || (retpos != newpos))
         {
             errno = rc;
             return (-1);
