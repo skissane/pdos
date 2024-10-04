@@ -1,5 +1,9 @@
 ; pgapre.asm - prefix code for PDOS-generic 16-bit programs
 ;
+; I think the purpose of this is to allow some bytes to be
+; removed from the start of the code and data section to
+; compensate for the malloc overhead.
+;
 ; This program written by Paul Edwards
 ; Released to the public domain
 
