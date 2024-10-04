@@ -202,7 +202,8 @@ static jmp_buf jb;
 int MAINTYP main(int argc, char **argv);
 
 int __genstart = 0;
-int MAINTYP (*__genmain)(int argc, char **argv) = main;
+/* generic main as defined in pgastart does not use watcall */
+int /* MAINTYP */ (*__genmain)(int argc, char **argv); /* = main; */
 
 #endif
 
@@ -1469,6 +1470,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         {
             /* I'm not sure if we can eliminate this call to main
                and always use genmain instead */
+            /* We can't under current design where genmain is not
+               being initialized so that it can work with Watcom
+               where we have a dummy main as cdecl in pgastart.c */
             rc = main(argc, argv);
             exit(rc); /* this will return to the above setjmp */
         }
