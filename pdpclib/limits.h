@@ -31,7 +31,7 @@
 #define USHRT_MAX ((unsigned short)0xffffffffffffffffUL)
 #else
 #define SHRT_MAX 32767
-#define USHRT_MAX ((unsigned short)65535U)
+#define USHRT_MAX 65535U
 #endif
 
 #if (defined(__OS2__) || defined(__32BIT__) || defined(__MVS__) \
