@@ -85,6 +85,23 @@ EXTRA2=../pdpclib/pdplinux.a
 
 
 
+else ifeq "$(targ)" "gccia32"
+# makefile.lnx needs to have been run in pdpclib first
+# untested
+CC=gcc -S -O2 -D__gnu_linux__ -nostdinc -nostdlib -fno-builtin \
+    -fno-stack-protector --no-pie -D__USEBIVA__ \
+    -m32 -fno-common \
+    -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -I../generic -I../src -I./src/ftebc
+AR=ar
+AS=as -32
+LD=gcc -s -static -m32 -nostdlib
+EXTRA1=../pdpclib/linstart.o ../pdpclib/pdplinux.a
+EXTRA2=../pdpclib/pdplinux.a
+
+
+
 else
 CC=gccwin
 CFLAGS=-O2
