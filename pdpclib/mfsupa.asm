@@ -283,11 +283,9 @@ SVC2     DS    0H
 *
          L     R2,=X'C1800000'
          LA    R2,0(,R2)
-*         CLM   R2,B'1100',=X'0080'
-         CLM   R2,12,NUM80
+         CLM   R2,B'1100',=X'0080'
          BE    GAIS24
-*         CLM   R2,B'1000',=X'41'
-         CLM   R2,8,=X'41'
+         CLM   R2,B'1000',=X'41'
          BE    GAIS31
          LA    R15,64(0)
          B     RETURNGA
