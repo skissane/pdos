@@ -81,7 +81,14 @@ NOTPDOS  DS    0H
          L     R4,=F'4'
          L     R5,=F'5'
 *
+#if BIGFOOT
+* Linux Bigfoot provides a stack in R11, but we need to move
+* onto the next page I think
+         LR    R13,R11
+         A     R13,=F(4096)
+#else
          LA    R13,SAVEA
+#endif
 BYPASS1  DS    0H
          LA    R9,80(,R13)
          ST    R9,76(,R13)
