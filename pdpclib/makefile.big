@@ -5,8 +5,9 @@
 
 .SUFFIXES: .asm
 
-CC=gcc370a
-COPTS=-S -Os -fno-common -U__MVS__ -D__BIGFOOT__ -D__MF32__ \
+CC=gcc370a -fno-common
+#CC=lingcc
+COPTS=-S -Os -U__MVS__ -D__BIGFOOT__ -D__MF32__ \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
     -fno-builtin -D__gnu_linux__ -I../generic -DLOGSHELL
 AS=as370
