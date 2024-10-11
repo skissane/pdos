@@ -156,11 +156,13 @@ int __bigrun(void)
     /* standard handles are not available when a login shell */
     /* we need to open the TTY instead */
 
-    /* 2 = O_WRONLY */
-    fh = __open("/dev/tty0", 2);
+    /* 2 = O_RDWR */
+    fh = __open("/dev/console", 2);
 
-    /* duplicate the return handle into handle 1 to make stdout valid */
+    /* duplicate the returned handle into the standard handles */
+    __dup2(fh, 0);
     __dup2(fh, 1);
+    __dup2(fh, 2);
 #endif
 
 #if 0
@@ -200,6 +202,10 @@ int __svc(int svcnum, regs *regsin, regs *regsout)
 }
 
 #ifdef __BIGFOOT__
+
+/* syscall numbers can be found here:
+https://github.com/linas/i370-linux-2.2.1/blob/master/include/asm-i370/unistd.h
+*/
 
 int __write(int fd, void *buf, int len)
 {
@@ -307,7 +313,7 @@ int __read(int fd, void *buf, int len)
     regs regsin;
     regs regsout;
 
-    regsin.r[1] = 63; /* read syscall */
+    regsin.r[1] = 3; /* read syscall */
     regsin.r[5] = fd;
     regsin.r[6] = (int)buf;
     regsin.r[7] = len;
