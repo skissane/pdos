@@ -2581,7 +2581,31 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
     }
 #endif
 
+#ifdef __BIGFOOT__
+    /* Bigfoot is often returning -11 when reading from the 3215,
+       which according to:
+       https://github.com/linas/i370-linux-2.2.1/blob/master/include/asm-i370/errno.h
+       is EAGAIN (try again) and indeed, it does eventually work - but you can't
+       do any printfs while retrying */
+    tempRead = -11;
+    while (tempRead == -11)
+    {
+        tempRead = __read(stream->hfile, ptr, (unsigned int)toread, &errind);
+    }
+    /* and bigfoot returns a NUL character at the end of the buffer, which
+       represents a newline, so we put that in */
+#ifdef __LOG3215__
+    strcat(ptr, "\n");
+#else
+    /* an EBCDIC ANSI terminal will have a \n in the data itself */
+    if (tempRead > 0)
+    {
+        tempRead--;
+    }
+#endif
+#else
     tempRead = __read(stream->hfile, ptr, (unsigned int)toread, &errind);
+#endif
     if (errind)
     {
         errno = tempRead;
@@ -3431,8 +3455,13 @@ static void fwriteSlowT(const void *ptr,
             stream->upto = stream->fbuf;
             stream->bufStartR += tempWritten;
         }
-#if !defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)
+#if (!defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)) \
+    || defined(__BIGFOOT__)
+#ifdef __BIGFOOT_
+        if (stream->textMode && stream->permfile)
+#else
         if (stream->textMode)
+#endif
         {
             memcpy(stream->upto, "\r\n", 2);
             stream->upto += 2;
