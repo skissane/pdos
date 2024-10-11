@@ -151,6 +151,7 @@ int __bigrun(void)
     regs regsin;
     regs regsout;
     int fh;
+    int rc;
 
 #ifdef LOGSHELL
     /* standard handles are not available when a login shell */
@@ -160,9 +161,12 @@ int __bigrun(void)
     fh = __open("/dev/console", 2);
 
     /* duplicate the returned handle into the standard handles */
-    __dup2(fh, 0);
-    __dup2(fh, 1);
-    __dup2(fh, 2);
+    rc = __dup2(fh, 0);
+    if (rc == -1) __write(fh, "fail0\n", 6);
+    rc = __dup2(fh, 1);
+    if (rc == -1) __write(fh, "fail1\n", 6);
+    rc = __dup2(fh, 2);
+    if (rc == -1) __write(fh, "fail2\n", 6);
 #endif
 
 #if 0
