@@ -870,6 +870,7 @@ static int read_mainframe_object (unsigned char *file,
     struct object_file *of;
     unsigned short esdid = 0;
     size_t local_sym_i;
+    struct section_part *text_part = NULL;
 
     int ret = 1;
 
@@ -940,7 +941,8 @@ static int read_mainframe_object (unsigned char *file,
                 } else {
                     symbol = of->symbol_array + esdid;
                 }
-                if (type == ESD_DATA_TYPE_LD
+                if (type == ESD_DATA_TYPE_SD
+                    || type == ESD_DATA_TYPE_LD
                     || type == ESD_DATA_TYPE_ER) {
                     int i;
 
@@ -985,7 +987,8 @@ static int read_mainframe_object (unsigned char *file,
                     symbol->section_number = UNDEFINED_SECTION_NUMBER;
                     symbol->part = NULL;
                     symbol_record_external_symbol (symbol);
-                } else if (type == ESD_DATA_TYPE_PC) {
+                } else if (type == ESD_DATA_TYPE_SD
+                           || type == ESD_DATA_TYPE_PC) {
                     struct section *section;
                     struct section_part *part;
                     unsigned long address;
@@ -994,25 +997,47 @@ static int read_mainframe_object (unsigned char *file,
                     bytearray_read_3_bytes (&address, pos + 9, BIG_ENDIAN);
                     bytearray_read_3_bytes (&len, pos + 13, BIG_ENDIAN);
 
-                    section = section_find_or_make (".text");
-                    section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_READONLY | SECTION_FLAG_CODE;
-                    part = section_part_new (section, of);
+                    if (!text_part) {
+                        section = section_find_or_make (".text");
+                        section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_READONLY | SECTION_FLAG_CODE;
+                        part = section_part_new (section, of);
 
-                    part->alignment = DEFAULT_PART_ALIGNMENT;
-                    part->content_size = len;
-                    part->content = xcalloc (part->content_size, 1);
+                        part->alignment = DEFAULT_PART_ALIGNMENT;
+                        part->content_size = address + len;
+                        part->content = xcalloc (part->content_size, 1);
 
-                    section_append_section_part (section, part);
+                        section_append_section_part (section, part);
+                        text_part = part;
+                    } else {
+                        part = text_part;
+                        if (address + len > part->content_size) {
+                            part->content_size = address + len;
+                            part->content = xrealloc (part->content, part->content_size);
+                        }
+                    }
 
-                    symbol->name = xstrdup (".text");
-                    symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
-                    symbol->value = 0;
-                    /* Even though section parts seem to require 8-byte alignment,
-                     * the original part size needs to be preserved for output CESD.
-                     */
-                    symbol->size = len;
-                    symbol->section_number = esdid;
-                    symbol->part = part;
+                    if (type == ESD_DATA_TYPE_SD) {
+                        /* SD (section definition) is combination of LD and PC
+                         * which is used for creating functions,
+                         * so the section it describes should be merged into regular .text
+                         * and then the SD symbol can be converted into regular LD symbol.
+                         */
+                        symbol->value = address;
+                        symbol->size = 0;
+                        symbol->section_number = esdid;
+                        symbol->part = part;
+                        symbol_record_external_symbol (symbol);
+                    } else {
+                        symbol->name = xstrdup (".text");
+                        symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
+                        symbol->value = 0;
+                        /* Even though section parts seem to require 8-byte alignment,
+                         * the original part size needs to be preserved for output CESD.
+                         */
+                        symbol->size = len;
+                        symbol->section_number = esdid;
+                        symbol->part = part;
+                    }
                 }
 
                 if (type == ESD_DATA_TYPE_LD) local_sym_i++;
