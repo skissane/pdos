@@ -70,7 +70,7 @@ extern int __mmgid;
 #include <efi.h>
 static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
 static EFI_STATUS directory_test (void);
-
+static EFI_STATUS check_path(unsigned char *);
 static int globrc = 0;
 #endif
 
@@ -637,23 +637,7 @@ int main(int argc, char **argv)
 #ifdef LINDIR
         PosChangeDir((char *)p);
 #else
-        if (p[0] == '\\')
-        {
-            strcpy(__cwd, (char *)p + 1);
-        }
-        else
-        {
-            if (__cwd[0] == '\0')
-            {
-                strcpy(__cwd, (char *)p);
-            }
-            else
-            {
-                /* +++ check overflow here */
-                strcat(__cwd, "\\");
-                strcat(__cwd, (char *)p);
-            }
-        }
+        check_path(p);
 #endif
         undo_redirection ();
         printf(EXITMSG);
@@ -1338,15 +1322,104 @@ static EFI_STATUS directory_test (void)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
-    
+
     EFI_FILE_PROTOCOL *EfiRoot;
+    static CHAR16 path[FILENAME_MAX];
+    size_t len = strlen(__cwd);
+    
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 Attributes = {0, 0};
 
     return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
     return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
     return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
 
-    return_Status_if_fail (dir_list (EfiRoot));
+    if (len != 0) 
+    {
+        EFI_FILE_PROTOCOL *dir;
+        int i = 0;
+        for (i = 0; i < len; ++i)
+        {
+            path[i] = __cwd[i];
+        }
+        path[i] = '\0';
+
+        Status = EfiRoot->Open (EfiRoot, &dir, path, OpenModeDirReadWrite, Attributes);
+        if (Status) return Status;
+
+        return_Status_if_fail (dir_list (dir));
+        dir->Close (dir);
+    } else 
+    {
+        return_Status_if_fail (dir_list (EfiRoot));
+    }
+ 
+    EfiRoot->Close (EfiRoot);
+    return Status;
+}
+
+static EFI_STATUS check_path(unsigned char *path)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID li_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
+    EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+
+    static CHAR16 path_check[FILENAME_MAX];
+    static char cur_path[FILENAME_MAX];
+    strcpy(cur_path, __cwd);
+
+    if (path[0] == '\\')
+    {
+        strcpy(cur_path, (char *)path + 1);
+    }
+    else
+    { 
+        if (cur_path[0] == '\0')
+        {
+            strcpy(cur_path, (char *)path);
+        }
+        else
+        {
+            /* +++ check overflow here */
+            strcat(cur_path, "\\");
+            strcat(cur_path, (char *)path);
+        }
+    }
     
+    size_t len = strlen(cur_path);
+    if (len == 0) {
+        path_check[0] = '\\';
+        path_check[1] = '\0';
+    } else 
+    {
+        int i = 0;
+        for (i = 0; i < len; ++i)
+        {
+            path_check[i] = cur_path[i];
+        }
+        path_check[i] = '\0';
+    }
+    
+    EFI_FILE_PROTOCOL *EfiRoot, *dir;
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 Attributes = {0, 0};
+
+    return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
+    return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
+    return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
+
+    Status = EfiRoot->Open (EfiRoot, &dir, path_check, OpenModeDirReadWrite, Attributes);
+    if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
+        return_Status_if_fail (printf("%s does not exist\n", cur_path));
+    }
+    if (Status) return Status;
+
+    /*update __cwd*/
+    strcpy(__cwd, cur_path);
+    
+    dir->Close (dir);
     EfiRoot->Close (EfiRoot);
 
     return Status;
