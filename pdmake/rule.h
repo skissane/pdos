@@ -28,10 +28,10 @@ extern struct suffix_rule *suffix_rules;
 void rules_init (void);
 void rules_destroy (void);
 
-void rule_add (char *name, struct dep *deps, struct commands *cmds);
+void rule_add (const char *name, struct dep *deps, const struct commands *cmds);
 struct rule *rule_find (const char *name);
 
 void rule_search_and_build (char *name);
 
 #define rule_add_suffix _Prasu
-void rule_add_suffix (char *name, struct commands *cmds);
+void rule_add_suffix (char *name, const struct commands *cmds);

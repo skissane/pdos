@@ -88,15 +88,55 @@ void rules_destroy (void)
     }
 }
 
-void rule_add (char *name, struct dep *deps, struct commands *cmds)
+void rule_add (const char *name, struct dep *deps, const struct commands *cmds)
 {
-    struct rule *r = xmalloc (sizeof(*r));
+    struct rule *r;
 
-    r->name = xstrdup (name);
-    r->deps = deps;
-    r->cmds = cmds;
+    if (!(r = rule_find (name))) {
+        r = xmalloc (sizeof *r);
+        r->name = xstrdup (name);
+        r->deps = NULL;
+        r->cmds = NULL;
+        hashtab_insert (rules_hashtab, r);
+    }
 
-    hashtab_insert (rules_hashtab, r);
+    if (cmds) {
+        if (r->cmds) {
+            fprintf (stderr, "warning: overriding commands for target '%s'\n", name);
+            free (r->cmds->text);
+            free (r->cmds);
+        }
+
+        r->cmds = xmalloc (sizeof *r->cmds);
+        r->cmds->text = xstrdup (cmds->text);
+        r->cmds->len = cmds->len;
+    }
+        
+    if (deps) {
+        struct dep *new_dep;
+
+        for (new_dep = deps; new_dep; new_dep = new_dep->next) {
+            struct dep *old_dep;
+
+            if (!r->deps) {
+                r->deps = xmalloc (sizeof *r->deps);
+                r->deps->name = xstrdup (new_dep->name);
+                r->deps->next = NULL;
+                continue;
+            }
+            
+            for (old_dep = r->deps; 1; old_dep = old_dep->next) {
+                if (strcmp (new_dep->name, old_dep->name) == 0) break;
+
+                if (!old_dep->next) {
+                    old_dep->next = xmalloc (sizeof *old_dep->next);
+                    old_dep->next->name = xstrdup (new_dep->name);
+                    old_dep->next->next = NULL;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 struct rule *rule_find (const char *name)
@@ -108,23 +148,49 @@ struct rule *rule_find (const char *name)
     return (struct rule *) hashtab_find (rules_hashtab, &fake);
 }
 
-void rule_add_suffix (char *name, struct commands *cmds)
+void rule_add_suffix (char *name, const struct commands *cmds)
 {
-    struct suffix_rule *s = xmalloc (sizeof(*s));
+    struct suffix_rule *s;
+    char *first, *second;
     char *p = strchr (name + 1, '.');
 
     if (p) {
         *p = '\0';
-        s->first = xstrdup (name);
+        first = xstrdup (name);
         *p = '.';
-        s->second = xstrdup (p);
+        second = xstrdup (p);
     } else {
-        s->first = xstrdup (name);
-        s->second = NULL;
+        first = xstrdup (name);
+        second = NULL;
     }
 
-    s->cmds = cmds;
+    for (s = suffix_rules; s; s = s->next) {
+        if (((second && s->second && strcmp (second, s->second) == 0)
+             || (!second && !s->second))
+            && strcmp (first, s->first) == 0) break;
+    }
 
-    s->next = suffix_rules;
-    suffix_rules = s;
+    if (!s) {
+        s = xmalloc (sizeof *s);
+        s->first = first;
+        s->second = second;
+        s->cmds = NULL;
+        s->next = suffix_rules;
+        suffix_rules = s;
+    } else {
+        free (first);
+        free (second);
+    }
+
+    if (cmds) {
+        if (s->cmds) {
+            fprintf (stderr, "warning: overriding commands for target '%s'\n", name);
+            free (s->cmds->text);
+            free (s->cmds);
+        }
+
+        s->cmds = xmalloc (sizeof *s->cmds);
+        s->cmds->text = xstrdup (cmds->text);
+        s->cmds->len = cmds->len;
+    }
 }

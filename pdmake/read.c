@@ -173,9 +173,9 @@ void *parse_nameseq(char *line, size_t size)
     return (start);
 }
 
-void record_files(struct nameseq *filenames,
-                  char *commands, size_t commands_index,
-                  char *depstr)
+void record_files (struct nameseq *filenames,
+                   const char *commands, size_t commands_index,
+                   char *depstr)
 {
     struct commands *cmds;
     struct dep *deps;
@@ -208,6 +208,21 @@ void record_files(struct nameseq *filenames,
         else
         {
             rule_add(ns->name, deps, cmds);
+        }
+    }
+
+    if (cmds) {
+        free (cmds->text);
+        free (cmds);
+    }
+
+    {
+        struct dep *dep, *next_dep;
+
+        for (dep = deps; dep; dep = next_dep) {
+            next_dep = dep->next;
+            free (dep->name);
+            free (dep);
         }
     }
 
