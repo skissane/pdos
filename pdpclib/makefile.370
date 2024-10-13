@@ -33,7 +33,7 @@ COPTS=-S -Os -fno-common $(CFLAGS) \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
     -fno-builtin
 AR=ar370
-LD=pdld --emit-relocs --entry __crt0
+LD=pdld --emit-relocs --entry __CRT0
 
 
 all: clean pdpclib.a
