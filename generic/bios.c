@@ -1327,9 +1327,14 @@ static EFI_STATUS directory_test (void)
     EFI_FILE_PROTOCOL *EfiRoot;
     static CHAR16 path[FILENAME_MAX];
     size_t len = strlen(__cwd);
-    
+
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static UINT64 OpenModeDirReadWrite = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
+    static UINT64 Attributes = 0;
+#else
     static UINT64 OpenModeDirReadWrite = {0x3, 0};
     static UINT64 Attributes = {0, 0};
+#endif
 
     return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
     return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
@@ -1345,7 +1350,11 @@ static EFI_STATUS directory_test (void)
         }
         path[i] = '\0';
 
+#ifdef ARMHACK
+        Status = EfiRoot->Open (EfiRoot, &dir, path, 0, OpenModeDirReadWrite, Attributes);
+#else
         Status = EfiRoot->Open (EfiRoot, &dir, path, OpenModeDirReadWrite, Attributes);
+#endif
         if (Status) return Status;
 
         return_Status_if_fail (dir_list (dir));
@@ -1366,6 +1375,15 @@ static EFI_STATUS check_path(unsigned char *path)
     EFI_LOADED_IMAGE_PROTOCOL *li_protocol;
     EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
+    EFI_FILE_PROTOCOL *EfiRoot, *dir;
+
+#ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
+    static UINT64 OpenModeDirReadWrite = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
+    static UINT64 Attributes = 0;
+#else
+    static UINT64 OpenModeDirReadWrite = {0x3, 0};
+    static UINT64 Attributes = {0, 0};
+#endif
 
     static CHAR16 path_check[FILENAME_MAX];
     static char cur_path[FILENAME_MAX];
@@ -1403,15 +1421,15 @@ static EFI_STATUS check_path(unsigned char *path)
         path_check[i] = '\0';
     }
     
-    EFI_FILE_PROTOCOL *EfiRoot, *dir;
-    static UINT64 OpenModeDirReadWrite = {0x3, 0};
-    static UINT64 Attributes = {0, 0};
-
     return_Status_if_fail (__gBS->HandleProtocol (__gIH, &li_guid, (void **)&li_protocol));
     return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
     return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
 
+#ifdef ARMHACK
+    Status = EfiRoot->Open (EfiRoot, &dir, path_check, 0, OpenModeDirReadWrite, Attributes);
+#else
     Status = EfiRoot->Open (EfiRoot, &dir, path_check, OpenModeDirReadWrite, Attributes);
+#endif
     if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
         return_Status_if_fail (printf("%s does not exist\n", cur_path));
     }
