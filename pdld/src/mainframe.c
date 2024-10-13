@@ -199,6 +199,7 @@ void mvs_write (const char *filename)
             file_size += (((ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) / CHUNK_SIZE
                            + !!(ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) % CHUNK_SIZE)) - 1)
                           * (SIZEOF_struct_member_data_header_file
+                             + MEMBER_DATA_RECORD_HEADER_SIZE
                              + 20 /* Dictionary Record. */));
             file_size += ((ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) / CHUNK_SIZE
                            + !!(ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) % CHUNK_SIZE))
@@ -634,9 +635,7 @@ void mvs_write (const char *filename)
         while (section_size) {
             size_t this_size = section_size > CHUNK_SIZE ? CHUNK_SIZE : section_size;
 
-            if (section_size == ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT)) {
-                pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
-            } else {
+            if (section_size != ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT)) {
                 pos = write_member_data_record (pos, 20, &current_sector, &saved_pos);
 
                 /* Dictionary Record.
@@ -673,14 +672,9 @@ void mvs_write (const char *filename)
                 bytearray_write_2_bytes (pos, section->target_index, BIG_ENDIAN); /* CESD index of the section. */
                 bytearray_write_2_bytes (pos + 2, this_size, BIG_ENDIAN); /* Length of the following text record. */
                 pos += 4;
-
-                /* Member Data. */
-                pos[0] = 0x00;
-                bytearray_write_2_bytes (pos + 4, 1, BIG_ENDIAN);
-                pos[4 + 4] = current_sector++;
-                bytearray_write_2_bytes (pos + 4 + 6, this_size, BIG_ENDIAN);
-                pos += 12;
             }
+
+            pos = write_member_data_record (pos, this_size, &current_sector, &saved_pos);
 
             memcpy (pos,
                     tmp + ALIGN (section->total_size, DEFAULT_PART_ALIGNMENT) - section_size,
