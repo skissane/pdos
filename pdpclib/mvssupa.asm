@@ -3871,7 +3871,7 @@ GETESTRT ST    R1,8(,R13)          PUT THE ADDRESS OF THE NEW SAVE
          BNZ   DONEGEI
 * First we just put the routine in, which is all we need if
 * the module happens to reside BTL
-         L     R2,=A(PCLSTART)
+         L     R2,=A(@@PCLST)
          LA    R14,DSNCHK
          STCM  R14,B'0111',13(R2)
 *
@@ -3938,7 +3938,7 @@ GETEOFFK ST    R2,WKDSN            SAVE THE POINTER TO THE DSNAME
          ST    R1,PPLANS           STORE IT IN THE PPL
          LA    R1,WKECB            GET THE ADDRESS OF THE ECB AND
          ST    R1,PPLECB           PUT IT IN THE PPL
-         MVC   PPLPCL,=A(PCLSTART) PUT THE PCL IN THE PPL FOR PARSE
+         MVC   PPLPCL,=A(@@PCLST)  PUT THE PCL IN THE PPL FOR PARSE
          GAMOS ,                   SET AM24 ON S380
          CALLTSSR EP=IKJPARS,MF=(E,PPL) INVOKE PARSE
          GAMAPP ,                  SET AM31 ON S380
@@ -4044,7 +4044,7 @@ DSNOK    L     R13,4(,R13)         CHAIN TO PREVIOUS SAVE AREA
 ***********************************************************************
 * Can't use VALIDCK=DSNCHK because it generates an AL3, preventing
 * relocation when RMODE ANY.
-PCLSTART IKJPARM DSECT=PDL         START DEFINITION
+@@PCLST  IKJPARM DSECT=PDL         START DEFINITION
 PCLDSN   IKJPOSIT DSNAME,USID,     PARSE DSN AND APPEND TO PREFIX      X
                VALIDCK=0     * DSNCHK      VALIDITY CHECK ROUTINE
          IKJENDP ,                 END DEFINITION
