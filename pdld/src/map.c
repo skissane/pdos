@@ -101,6 +101,20 @@ void map_write (const char *filename)
         fprintf (outfile, "\n");
     }
 
+    fprintf (outfile, "\n");
+    {
+        const struct section *last_section = NULL;
+
+        for (section = all_sections; section; section = section->next) {
+            last_section = section;
+        }
+        
+        fprintf (outfile, "Size of Module: %#08lx\n",
+                 last_section ? (last_section->rva + last_section->total_size) : 0);
+    }
+        
+    fprintf (outfile, "Entry Point: %#08lx\n", ld_state->entry_point + ld_state->base_address);
+
     if (strcmp (filename, "") != 0) fclose (outfile);
     return;
 }
