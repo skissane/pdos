@@ -117,7 +117,8 @@ extern int __start(char *p);
 extern long long __ncallbacks;
 #endif
 
-#if defined(W64HACK) || defined(W32EMUL) || defined(GENSHELL)
+#if defined(__EFI__) || defined(W64HACK) || defined(W32EMUL) \
+    || defined(GENSHELL)
 extern char __cwd[FILENAME_MAX];
 #endif
 
