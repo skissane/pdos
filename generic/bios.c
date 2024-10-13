@@ -637,7 +637,7 @@ int main(int argc, char **argv)
         p++;
 #ifdef LINDIR
         PosChangeDir((char *)p);
-#else
+#elif defined(__EFI__)
         check_path(p);
 #endif
         undo_redirection ();
