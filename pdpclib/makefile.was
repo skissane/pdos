@@ -1,6 +1,8 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
 # with static linking
 
+# You should build makek32.war first
+
 CC=gccprm
 AR=arprm
 LD=pdld --no-insert-timestamp
