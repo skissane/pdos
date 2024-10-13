@@ -11,9 +11,9 @@ COPTS=-fno-builtin -fno-common -S -O2 -U__WIN32__ -DHAVE_DIR -D__PDOS386__ -D__P
 
 all: clean pcomm.exe
 
-pcomm.exe: ../pdpclib/pgastart.o pcomm.o
+pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o
   rm -f pcomm.exe
-  ld386 -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o
+  ld386 -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
