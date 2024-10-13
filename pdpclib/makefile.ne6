@@ -9,13 +9,13 @@
 CC=cc64
 AR=xar
 LD=pdld --no-insert-timestamp
-AS=pdas --64 --oformat coff
+AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. \
     -D__CC64__ -D__CC64OS__ -D__NO_LONG_LONG__
 
 TARGET=pdptest.efi
 OBJS=efistart.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
-    assert.obj signal.obj locale.obj ctype.obj setjmp.obj math.obj x64supb.obj
+    assert.obj signal.obj locale.obj ctype.obj setjmp.obj math.obj x64supa.obj
 
 $(TARGET): clean pdptest.obj $(OBJS)
   rm -f pdpefi.lib
