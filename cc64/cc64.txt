@@ -779,4 +779,33 @@ BFN. Paul.
 
 
 
+The Intel register name is the one after the ! character:
 
+("d0", 8, r0), !rax d0..d9 are for general use
+("d1", 8, r1), !r10 d0..d2 are volatile in ABI
+("d2", 8, r2), !r11
+
+("d3", 8, r3), !rdi d3..d9 are preserved across funcs in ABI
+("d4", 8, r4), !rbx
+("d5", 8, r5), !rsi
+("d6", 8, r6), !r12
+("d7", 8, r7), !r13
+("d8", 8, r8), !r14
+("d9", 8, r9), !r15
+
+("d10", 8, r10), !rcx d10..d13 are win64 ABI register passing regs
+("d11", 8, r11), !rdx ..
+("d12", 8, r12), !r8 ..
+("d13", 8, r13), !r9 ..
+
+("d14", 8, r14), !rbp frame pointer
+("d15", 8,  r15), !rsp stack pointer
+
+dstack is an alias for D15/rsp.
+dframe is an alias for D14/rbp.
+
+A0..A15 are 32-bit registers.
+W0..W15 are 16-bit registers
+B0..B15 are 8-bit registers.
+
+So D0 is just rax.
