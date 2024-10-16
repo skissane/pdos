@@ -5,12 +5,12 @@ CFLAGS=-O2
 LD=pdld
 LDFLAGS=-s
 AS=as86 -f coff
-COPTS=-S -fno-common -DBLDGENERIC -D__WIN32__ -D__CC64__ -I . -I ../pdpclib
+COPTS=$(CFLAGS) -S -fno-common -DBLDGENERIC -D__WIN32__ -I . -I ../pdpclib
 
 all: cc64.exe
 
 cc64.exe: cc32n.obj ../pdpclib/winsupa.obj
-  $(LD) -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o $@ ../pdpclib/w32start.obj cc32n.obj ../pdpclib/msvcrt.lib ../pdpclib/winsupa.obj
+  $(LD) --stack 0,0x5f000 -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o $@ ../pdpclib/w32start.obj cc32n.obj ../pdpclib/msvcrt.lib ../pdpclib/winsupa.obj
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
