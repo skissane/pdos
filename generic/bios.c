@@ -1145,13 +1145,21 @@ static int ff_search(void)
         }
     }
     strncpy((char *)origdta.file_name,
+#ifdef __CC64__
+            (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 4
+#else
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
+#endif
                     + sizeof(short) + EXTRAPAD,
             sizeof origdta.file_name);
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
 
     strncpy((char *)origdta.lfn,
+#ifdef __CC64__
+            (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 4
+#else
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
+#endif
                     + sizeof(short) + EXTRAPAD,
             sizeof origdta.lfn);
     origdta.lfn[sizeof origdta.lfn - 1] = '\0';
@@ -1165,7 +1173,11 @@ static int ff_search(void)
     if (*(curdirsave->buf + curdirsave->upto
           + *(unsigned short *)(curdirsave->buf
                                 + curdirsave->upto
+#ifdef __CC64__
+                                + sizeof(long) * 4)
+#else
                                 + sizeof(long) * 2)
+#endif
           -1
          )
         == 4)
@@ -1181,7 +1193,11 @@ static int ff_search(void)
 
     curdirsave->upto += *(short *)(curdirsave->buf
                                    + curdirsave->upto
+#ifdef __CC64__
+                                   + sizeof(long) * 4);
+#else
                                    + sizeof(long) * 2);
+#endif
 
     if (curdirsave->upto >= curdirsave->avail)
     {
