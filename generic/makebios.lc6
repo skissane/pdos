@@ -1,6 +1,6 @@
 # Produces Linux x64 executable capable of running
 # certain Win64 executables
-# You should have build pdpclib with makefile.lc6 first
+# You should have built pdpclib with makefile.lc6 first
 
 CC=cc64
 CFLAGS=
@@ -9,7 +9,7 @@ COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ \
     -DNEED_MZ -DNOUNDMAIN -DXUSE_MEMMGR \
     -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
     -D__64BIT__ -DHAVE_DIR -DLINDIR -DTARGET_64BIT \
-    -DXW64HACK -DW64DLL
+    -DXW64HACK -DW64DLL -Dconst=
 
 AR=xar
 AS=pdas --oformat coff --64
