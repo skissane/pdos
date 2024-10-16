@@ -237,10 +237,18 @@ __PDPCLIB_API__ time_t mktime(struct tm *timeptr)
 
 __PDPCLIB_API__ char *asctime(const struct tm *timeptr)
 {
+#ifdef __CC64__
+    static const char *wday_name[7] = {
+#else
     static const char wday_name[7][3] = {
+#endif
           "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
     };
+#ifdef __CC64__
+    static const char *mon_name[12] = {
+#else
     static const char mon_name[12][3] = {
+#endif
           "Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
