@@ -20,7 +20,7 @@
 
 #include "aout_bytearray.h"
 
-void aout_init ()
+void aout_init (void)
 {
     /* Force the order of sections because the output requires it.
      * This also ensures that .text is at RVA 0.

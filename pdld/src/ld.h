@@ -251,13 +251,13 @@ int read_file_into_memory (const char *filename, unsigned char **memory_p, size_
 void link (void);
 
 /* aout.c */
-void aout_init ();
+void aout_init (void);
 address_type aout_get_base_address (void);
 void aout_write (const char *filename);
 int aout_read (unsigned char *file, size_t file_size, const char *filename);
 
 /* atari.c */
-void atari_init ();
+void atari_init (void);
 address_type atari_get_base_address (void);
 void atari_write (const char *filename);
 
