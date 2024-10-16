@@ -809,3 +809,12 @@ W0..W15 are 16-bit registers
 B0..B15 are 8-bit registers.
 
 So D0 is just rax.
+
+
+
+
+There are a variety of bugs in cc64. You can see workarounds
+for them by looking for CC64 in the source code. And one bug
+is worked around by defining const= in pdcc
+There is some discussion about the bugs in comp.lang.c
+in google groups etc
