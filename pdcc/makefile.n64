@@ -1,3 +1,12 @@
+# You need to have run makefile.n64 in pdpclib first
+
+# Note that we need to link with x64supa.obj because we
+# need the routines to support cc64-compiled programs,
+# and that is not in the library itself. But you will
+# get an error at run-time, not link time, if you don't
+# include it, due to cc64 limitations.
+
+
 CPP=pdcc
 CC=cc64
 CFLAGS=
@@ -15,14 +24,14 @@ OBJS=main.obj c_ppout.obj inc_path.obj \
           cpplib/idents.obj cpplib/init.obj cpplib/lex.obj \
           cpplib/macro.obj cpplib/support.obj cpplib/symtab.obj \
           cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
-          xmalloc.obj ../pdpclib/x64supb.obj
+          xmalloc.obj
 
 TARGET=pdcc.exe
 
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/x64supa.obj ../pdpclib/msvcrt.lib
 #  pdcc -E abc.c
 
 .c.obj:
