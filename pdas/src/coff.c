@@ -482,6 +482,8 @@ void write_coff_file (void) {
             
             if (symbol->section == undefined_section) {
                 sym_tbl_ent.SectionNumber = IMAGE_SYM_UNDEFINED;
+            } else if (symbol->section == absolute_section) {
+                sym_tbl_ent.SectionNumber = IMAGE_SYM_ABSOLUTE;
             } else {
                 sym_tbl_ent.SectionNumber = section_get_number (symbol->section);
             }
@@ -510,6 +512,8 @@ void write_coff_file (void) {
 
                 if (symbol->section == undefined_section) {
                     sym_tbl_ent.SectionNumber = IMAGE_SYM_UNDEFINED;
+                } else if (symbol->section == absolute_section) {
+                    sym_tbl_ent.SectionNumber = IMAGE_SYM_ABSOLUTE;
                 } else {
                     sym_tbl_ent.SectionNumber = section_get_number (symbol->section);
                 }
