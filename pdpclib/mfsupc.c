@@ -364,30 +364,96 @@ int __munmap(void *a, size_t b)
 }
 
 
-/* not yet implemented */
-int __clone(void)
+int __clone(int x, char *y, char *z, char *a, char *b)
 {
-    return (0);
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 120; /* clone syscall */
+    regsin.r[5] = x;
+    regsin.r[6] = (int)y;
+    regsin.r[7] = (int)z;
+    regsin.r[8] = (int)a;
+    regsin.r[9] = (int)b;
+    return (__svc(0, &regsin, &regsout));
 }
 
-/* not yet implemented */
-int __waitid(void)
+/* we don't have waitid available, only waitpid */
+/* should probably change this */
+int __waitid(int a, long pid, void *c, int d, void *e)
 {
-    return (0);
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 7; /* waitpid syscall */
+    regsin.r[5] = (int)pid;
+    regsin.r[6] = NULL;
+    regsin.r[7] = (int)d;
+    return (__svc(0, &regsin, &regsout));
 }
 
-/* not yet implemented */
-int __execve(void)
+/* this has not been done properly */
+int __execve(char *a, char **oldargv, void *c)
 {
-    return (0);
+    regs regsin;
+    regs regsout;
+    static char *argv[2];
+
+    argv[0] = "prog";
+    argv[1] = NULL;
+
+    regsin.r[1] = 11; /* execve syscall */
+    regsin.r[5] = (int)oldargv[2];
+    regsin.r[6] = (int)argv;
+    regsin.r[7] = (int)c;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __getdents(unsigned int fd, void *dirent, int count)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 141; /* getdents syscall */
+    regsin.r[5] = fd;
+    regsin.r[6] = (int)dirent;
+    regsin.r[7] = count;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __chdir(const char *filename)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 12; /* chdir syscall */
+    regsin.r[5] = (int)filename;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __mkdir(const char *filename, int mode)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 39; /* mkdir syscall */
+    regsin.r[5] = (int)filename;
+    regsin.r[6] = mode;
+    return (__svc(0, &regsin, &regsout));
+}
+
+int __rmdir(const char *filename)
+{
+    regs regsin;
+    regs regsout;
+
+    regsin.r[1] = 40; /* rmdir syscall */
+    regsin.r[5] = (int)filename;
+    return (__svc(0, &regsin, &regsout));
 }
 
 #if 0
 int __time(void);
-int __chdir(const char *filename);
-int __mkdir(const char *filename, int mode);
-int __rmdir(const char *filename);
-int __getdents64(unsigned int fd, struct linux_dirent64 *dirent, int count);
 #endif
 
 #endif
