@@ -1,0 +1,30 @@
+# This builds a Linux Bigfoot shell
+
+# makefile.big in PDPCLIB must have been run first
+# But we need to change that to stop being a login shell
+# if this is to be the generic shell - maybe
+
+# After building, try:
+# runbig pcomm.exe output.txt
+
+CC=gcc370a -fno-common
+COPTS=-S -Os -U__MVS__ -D__BIGFOOT__ -D__MF32__ \
+    -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
+    -fno-builtin -D__gnu_linux__ -I../generic -DHAVE_DIR
+LD=pdld --emit-relocs --entry __crt0 --oformat elf
+
+all: clean pcomm.exe
+
+pcomm.exe: pcomm.o linpos.o
+  $(LD) -o pcomm.exe ../pdpclib/mfsupa.o pcomm.o linpos.o ../pdpclib/pdpclib.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  as370 -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  as370 -o $@ $<
+
+clean:
+  rm -f pcomm.exe
