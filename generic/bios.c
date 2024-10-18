@@ -1285,6 +1285,12 @@ char *PosGetCommandLine(void)
     return (cmd);
 }
 
+void PosTerminate(int rc)
+{
+    exit(rc);
+    return;
+}
+
 #if defined(W64HACK) || defined(__EFI__)
 
 #define STATUS_IS_ERROR(a) (!!((a) >> (sizeof (a) * 8 - 1)))
