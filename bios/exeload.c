@@ -31,6 +31,9 @@
    own free will? */
 int salone = 0;
 
+int use_arbitrary; /* the arbitrary_base location has been set by caller */
+unsigned long arbitrary_base; /* arbitrary base location to be used by routines */
+
 /* moved these defines here to reduce pressure on
    the size of command line */
 #if defined(__MSC__) && defined(__OS2__) && defined(__16BIT__)
@@ -127,6 +130,16 @@ static int exeloadLoadMacho(unsigned char **entry_point,
 #endif
 
 #if NEED_MVS
+#define getfullword(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
+#define putfullword(p, val) (p[0] = (unsigned char)((val >> 24) & 0xff), \
+                         p[1] = (unsigned char)((val >> 16) & 0xff), \
+                         p[2] = (unsigned char)((val >> 8) & 0xff), \
+                         p[3] = (unsigned char)(val & 0xff))
+
+#define gethalfword(p) (((p)[0] << 8) | (p)[1])
+#define puthalfword(p, val) (p[0] = (unsigned char)((val >> 8) & 0xff), \
+                         p[1] = (unsigned char)(val & 0xff))
+
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc);
@@ -399,7 +412,11 @@ static int exeloadLoadMVS(unsigned char **entry_point,
        calculations to later store the executable in ROM or something
        like that. */
 
-    if (fixPE(*loadloc, &readbytes, &entry, (unsigned long)*loadloc) != 0)
+    if (!use_arbitrary)
+    {
+        arbitrary_base = getfullword(*loadloc);
+    }
+    if (fixPE(*loadloc, &readbytes, &entry, arbitrary_base) != 0)
     {
         if (didalloc)
         {
@@ -5462,7 +5479,8 @@ static int fixPE(unsigned char *buf,
     int lastt = -1;
     unsigned char *upto = buf;
     
-    if ((*len <= 8) || (*((int *)buf + 1) != 0xca6d0f))
+    /* if ((*len <= 8) || (*((int *)buf + 1) != 0xca6d0f)) */
+    if ((*len <= 8) || (memcmp(buf + 4, "\x00\xca\x6d\x0f", 4) != 0))
     {
         /* printf("Not an MVS PE executable\n"); */
         return (-1);
@@ -5474,7 +5492,7 @@ static int fixPE(unsigned char *buf,
     while (1)
     {
         rec++;
-        l = *(short *)p;
+        l = gethalfword(p);
         /* keep track of remaining bytes, and ensure they really exist */
         if (l > rem)
         {
@@ -5503,7 +5521,7 @@ static int fixPE(unsigned char *buf,
                 break;
             }
             q = p + 24;
-            l2 = *(short *)q;
+            l2 = gethalfword(q);
             if (l2 < 32) break;
             ihapds = (IHAPDS *)(q + 2);
             rmode = ihapds->pds2ftb2 & 0x10;
@@ -5556,7 +5574,7 @@ static int fixPE(unsigned char *buf,
             r2 = l - 4 - 10;
             while (1)
             {
-                l2 = *(short *)q;
+                l2 = gethalfword(q);
                 r2 -= sizeof(short);
                 if (l2 > r2)
                 {
@@ -5615,7 +5633,7 @@ static int fixPE(unsigned char *buf,
                     int l3;
                     
                     /* printf("rectype: Dicionary = Control + RLD\n"); */
-                    l3 = *(short *)(q + 6) + 16;
+                    l3 = gethalfword(q + 6) + 16;
 #if 0
                     printf("l3 is %d\n", l3);
 #endif
@@ -5713,7 +5731,7 @@ static int processRLD(unsigned char *buf,
     int ll;
     int a;
     long newval;
-    unsigned int *zaploc;
+    unsigned char *zaploc;
     
     r = (unsigned char *)rld + 16;
     fin = rld + len;
@@ -5760,17 +5778,22 @@ static int processRLD(unsigned char *buf,
             | ((unsigned long)r[1] << 8)
             | r[2];
         /* +++ need bounds checking on this OS code */
-        /* printf("need to zap %d bytes at offset %6x\n", ll, a); */
-        zaploc = (unsigned int *)(buf + a);
+#if PE_DEBUG
+        printf("need to zap %d bytes at offset %6x\n", ll, a);
+#endif
+        zaploc = buf + a;
+#if PE_DEBUG
+        printf("zaploc is %p\n", zaploc);
+#endif
 
         /* This old code doesn't look right. The integer is misaligned */
         /* zaploc = (unsigned int *)(buf + a - ((ll == 3) ? 1 : 0)); */
 
-        newval = *zaploc;
+        newval = getfullword(zaploc);
         /* printf("which means that %8x ", newval); */
         newval += rlad;
         /* printf("becomes %8x\n", newval); */
-        *zaploc = newval;
+        putfullword(zaploc, newval);
         r += 3;
     }
     return (0);
