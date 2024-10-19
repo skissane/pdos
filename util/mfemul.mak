@@ -7,14 +7,17 @@
 # without complying with any conditions
 # and by any means.
 
+# define COMEMUL for a COM file, or PBEMUL for a pseudo-bios
+
 CC=gccwin
-CFLAGS=-O2
+CFLAGS=-O2 -DPBEMUL
 LD=pdld
 LDFLAGS=-s
 AS=pdas --oformat coff
-COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__
+COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__ \
+    -DNEED_MVS
 
-OBJS=mfemul.obj
+OBJS=mfemul.obj ../bios/exeload.obj
 
 TARGET=mfemul.exe
 
