@@ -12,8 +12,33 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+
+#define DUMPREGS 1
+
+#if COMEMUL
 #define MAXPRGSZ (10 * 0x10000)
+#endif
+
+#if PBEMUL
+static size_t memsize = 64*1024*1024L;
+#endif
+
+typedef unsigned int U32;
+
+#define getfullword(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
+#define putfullword(p, val) ((p)[0] = (unsigned char)(((val) >> 24) & 0xff), \
+                         (p)[1] = (unsigned char)(((val) >> 16) & 0xff), \
+                         (p)[2] = (unsigned char)(((val) >> 8) & 0xff), \
+                         (p)[3] = (unsigned char)((val) & 0xff))
+
+#define gethalfword(p) (((p)[0] << 8) | (p)[1])
+#define puthalfword(p, val) ((p)[0] = (unsigned char)(((val) >> 8) & 0xff), \
+                         (p)[1] = (unsigned char)((val) & 0xff))
+
+extern int use_arbitrary;
+extern unsigned long arbitrary_base;
 
 static unsigned char *base;
 static unsigned char *p;
@@ -27,6 +52,11 @@ static int t;
 static int i;
 static int b;
 static int d;
+static int b1;
+static int d1;
+static int b2;
+static int d2;
+static int l;
 
 static int lt;
 static int gt;
@@ -37,6 +67,7 @@ static void doemul(void);
 static void splitrx(void);
 static void splitrs(void);
 static void splitrr(void);
+static void splitssl(void);
 static void writereg(unsigned char *z, int x);
 static void updatereg(int *x, unsigned char *z);
 static int febc(int ebc);
@@ -44,6 +75,8 @@ static int febc(int ebc);
 int main(int argc, char **argv)
 {
     FILE *fp;
+    unsigned char *entry_point;
+    char *exe;
 
     if (argc <= 1)
     {
@@ -51,39 +84,149 @@ int main(int argc, char **argv)
         printf("executes a mainframe .com file\n");
         return (EXIT_FAILURE);
     }
-    
+
+#if COMEMUL
     fp = fopen(argv[1], "rb");
     if (fp == NULL)
     {
         printf("cannot open %s for reading\n", argv[1]);
         return (EXIT_FAILURE);
     }
+#endif
+
+#if COMEMUL
     p = calloc(1, MAXPRGSZ + 0x10000);
+#endif
+
+#if PBEMUL
+    p = calloc(1, memsize);
+    printf("memory starts at %p\n", p);
+#endif
+
     if (p == NULL)
     {
         printf("insufficient memory\n");
         return (EXIT_FAILURE);
     }
+
+#if COMEMUL
     fread(p + 0x10000, 1, MAXPRGSZ, fp);
     fclose(fp);
     base = p;
     p += 0x10000;
+#endif
+
+#if PBEMUL
+    exe = argv[1];
+    base = p;
+    p = base + 1024 * 1024L;
+    {
+        int x;
+    
+        for (x = 1; x < 300; x++)
+        {
+            putfullword(p, x);
+            p += sizeof(U32);
+        }
+    }
+
+    arbitrary_base = 2 * 1024 * 1024L;
+    use_arbitrary = 1;
+    p = base + arbitrary_base;
+    if (exeloadDoload(&entry_point, exe, &p) != 0)
+    {
+        printf("failed to load %s\n", exe);
+        exit(EXIT_FAILURE);
+    }
+    regs[15] = (int)(entry_point - p + arbitrary_base);
+    putfullword(base + 0x80, 1 * 1024 * 1024L);
+    regs[1] = 0x80;
+    p = entry_point;
+#endif
+
     doemul();
+#if PBEMUL
+    printf("program returned with hex %x\n", regs[15]);
+#endif
     return (EXIT_SUCCESS);
+}
+
+static void spec_call(int val)
+{
+    unsigned long parms;
+
+    printf("got a special call %d\n", val);
+    parms = regs[1];
+    printf("parms are %08lX\n", parms);
+
+    if (val == 14) /* fwrite */
+    {
+        unsigned char *buf;
+        size_t sz;
+        size_t num;
+        FILE *fq;
+        
+        buf = base + getfullword(base + parms);
+        printf("buf is %p\n", buf);
+
+        sz = (size_t)getfullword(base + parms + sizeof(U32));
+        printf("sz is %x\n", (int)sz);
+        num = (size_t)getfullword(base + parms + sizeof(U32)*2);
+        printf("num is %x\n", (int)num);
+        fq = (FILE *)getfullword(base + parms + sizeof(U32)*3);
+        printf("fq is %p\n", (int)fq);
+        /* This should instead be a table of handles, where stdout
+           should have been set to 1 in the POS structure */
+        if (fq == (void *)9)
+        {
+            fq = stdout;
+            {
+                size_t tot;
+                size_t x;
+
+                tot = sz * num;
+                for (x = 0; x < tot; x++)
+                {
+                    fputc(febc(buf[x]), fq);
+                }
+            }
+            /* fwrite(buf, sz, num, fq); */
+        }
+    }
+
+    return;
+
 }
 
 static void doemul(void)
 {
     unsigned char *watching = base + 0x10086 + 3; /*0x1007a; */
     
+#if COMEMUL
     regs[13] = 0x100; /* save area */
     regs[15] = 0x10000; /* entry point */
+#endif
+#if PBEMUL
+    regs[13] = 0x100; /* save area */
+    putfullword(base + 0x100 + 76, 0x100 + 80);
+#endif
     regs[14] = 0; /* branch to zero will terminate */
 
     while (1)
     {
         instr = *p;
+#if COMEMUL
         printf("instr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base - 0x10000, *watching, regs[14]);
+#endif
+#if PBEMUL
+        printf("\ninstr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base, *watching, regs[14]);
+#endif
+#if DUMPREGS
+        printf("R0: %08X, R1: %08X, R2: %08X, R3: %08X\n", regs[0], regs[1], regs[2], regs[3]);
+        printf("R4: %08X, R5: %08X, R6: %08X, R7: %08X\n", regs[4], regs[5], regs[6], regs[7]);
+        printf("R8: %08X, R9: %08X, R10: %08X, R11: %08X\n", regs[8], regs[9], regs[10], regs[11]);
+        printf("R12: %08X, R13: %08X, R14: %08X, R15: %08X\n", regs[12], regs[13], regs[14], regs[15]);
+#endif
         if (instr == 0x07) /* bcr */
         {
             splitrr();
@@ -101,6 +244,9 @@ static void doemul(void)
                 if ((p - base) < 0x10000)
                 {
                     printf("branched below - terminating\n");
+#if PBEMUL
+                    return;
+#endif
                     exit(EXIT_SUCCESS);
                 }
                 continue;
@@ -122,8 +268,18 @@ static void doemul(void)
             if (x2 != 0)
             {
                 printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
+#if PBEMUL
+                if (regs[x2] < 300)
+                {
+                    printf("special call\n");
+                    spec_call(regs[x2]);
+                }
+                p += 2;
+#endif
+#if COMEMUL
                 p = base + regs[x2];
                 printf("new address is %08X\n", regs[x2] - 0x10000);
+#endif
                 continue;
             }
             p += 2;
@@ -230,6 +386,26 @@ static void doemul(void)
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
+        else if (instr == 0x5a) /* a */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] += (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
         else if (instr == 0x1a) /* ar */
         {
             splitrr();
@@ -287,6 +463,27 @@ static void doemul(void)
             v[2] = (regs[t] >> 8) & 0xff;
             v[3] = regs[t] & 0xff;
             p += 4;
+        }
+        else if (instr == 0xd2) /* mvc */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitssl();
+            if (b1 != 0)
+            {
+                one = regs[b1];
+            }
+            one += d1;
+            if (b2 != 0)
+            {
+                two = regs[b2];
+            }
+            two += d2;
+            memcpy(base + one, base + two, l + 1);
+            printf("writing to address %x %p\n", one, base + one);
+            p += 6;
         }
         else if (instr == 0x19) /* cr */
         {
@@ -416,8 +613,14 @@ static void doemul(void)
         }
         else
         {
+#if COMEMUL
             printf("unknown instruction %02X at %08X\n", p[0],
                    p - base - 0x10000);
+#endif
+#if PBEMUL
+            printf("unknown instruction %02X at %08X\n", p[0],
+                   p - base);
+#endif
             exit(EXIT_FAILURE);
         }
     }
@@ -446,6 +649,16 @@ static void splitrr(void)
 {
     x1 = (p[1] >> 4) & 0x0f;
     x2 = p[1] & 0x0f;
+    return;
+}
+
+static void splitssl(void)
+{
+    l = p[1];
+    b1 = (p[2] >> 4) & 0x0f;
+    d1 = (p[2] & 0xf) << 8 | p[3];
+    b2 = (p[4] >> 4) & 0x0f;
+    d2 = (p[4] & 0xf) << 8 | p[5];
     return;
 }
 
