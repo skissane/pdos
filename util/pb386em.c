@@ -2730,8 +2730,9 @@ static void doemul(void)
             
             if (val < 1000)
             {
-                esp -= sizeof(DWORD); /* +++ do this properly */
+                esp -= sizeof(DWORD);
                 spec_call(val);
+                esp += sizeof(DWORD);
             }
             else
             {
