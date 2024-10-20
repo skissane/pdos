@@ -534,7 +534,7 @@ static void doemul(void)
             else
             {
                 regs[x1+1] >>= amt;
-                regs[x1+1] |= regs[x1] << amt;
+                regs[x1+1] |= (regs[x1] << (32-amt));
                 regs[x1] >>= amt;
             }
             p += 4;
