@@ -179,7 +179,7 @@ int main(int argc, char **argv)
     mem_base = bios->malloc(bios->mem_amt);
     if (mem_base == NULL)
     {
-        bios->Xprintf("failed to do promised malloc\n");
+        bios->Xfwrite("failed to do promised malloc\n", 29, 1, bios->Xstdout);
         return (EXIT_FAILURE);
     }
 
