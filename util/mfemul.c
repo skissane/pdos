@@ -25,6 +25,8 @@
 static size_t memsize = 64*1024*1024L;
 #endif
 
+/* we shouldn't be relying on exact types */
+typedef int I32;
 typedef unsigned int U32;
 
 #define getfullword(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
@@ -44,12 +46,13 @@ static unsigned char *base;
 static unsigned char *p;
 static int instr;
 
-static int regs[16];
+static U32 regs[16];
 
 static int x1;
 static int x2;
 static int t;
 static int i;
+static int imm;
 static int b;
 static int d;
 static int b1;
@@ -63,13 +66,16 @@ static int gt;
 static int eq;
 static int zero;
 
+static FILE *handles[FOPEN_MAX];
+
 static void doemul(void);
 static void splitrx(void);
+static void splitsi(void);
 static void splitrs(void);
 static void splitrr(void);
 static void splitssl(void);
 static void writereg(unsigned char *z, int x);
-static void updatereg(int *x, unsigned char *z);
+static void updatereg(U32 *x, unsigned char *z);
 static int febc(int ebc);
 
 int main(int argc, char **argv)
@@ -129,6 +135,18 @@ int main(int argc, char **argv)
             p += sizeof(U32);
         }
     }
+    
+    handles[0] = stdin;
+    handles[1] = stdout;
+    handles[2] = stderr;
+    
+    p = base + 1024 * 1024L;
+    putfullword(p + 7 * sizeof(U32), 0); /* stdin handle */
+    putfullword(p + 8 * sizeof(U32), 1); /* stdout handle */
+    putfullword(p + 38 * sizeof(U32), 2); /* stderr handle */
+
+    /* where to store address of main() */
+    putfullword(p + 5 * sizeof(U32), 0x7C);
 
     arbitrary_base = 2 * 1024 * 1024L;
     use_arbitrary = 1;
@@ -141,6 +159,9 @@ int main(int argc, char **argv)
     regs[15] = (int)(entry_point - p + arbitrary_base);
     putfullword(base + 0x80, 1 * 1024 * 1024L);
     regs[1] = 0x80;
+    regs[14] = 0; /* branch to zero will terminate */
+    regs[13] = 0x100; /* save area */
+    putfullword(base + 0x100 + 76, 0x100 + 80);
     p = entry_point;
 #endif
 
@@ -164,7 +185,7 @@ static void spec_call(int val)
         unsigned char *buf;
         size_t sz;
         size_t num;
-        FILE *fq;
+        int fq;
         
         buf = base + getfullword(base + parms);
         printf("buf is %p\n", buf);
@@ -173,25 +194,46 @@ static void spec_call(int val)
         printf("sz is %x\n", (int)sz);
         num = (size_t)getfullword(base + parms + sizeof(U32)*2);
         printf("num is %x\n", (int)num);
-        fq = (FILE *)getfullword(base + parms + sizeof(U32)*3);
-        printf("fq is %p\n", (int)fq);
-        /* This should instead be a table of handles, where stdout
-           should have been set to 1 in the POS structure */
-        if (fq == (void *)9)
+        fq = getfullword(base + parms + sizeof(U32)*3);
+        printf("fq is %d\n", fq);
+        if ((handles[fq] == stdout) || (handles[fq] == stderr))
         {
-            fq = stdout;
-            {
-                size_t tot;
-                size_t x;
+            size_t tot;
+            size_t x;
 
-                tot = sz * num;
-                for (x = 0; x < tot; x++)
-                {
-                    fputc(febc(buf[x]), fq);
-                }
+            tot = sz * num;
+            for (x = 0; x < tot; x++)
+            {
+                fputc(febc(buf[x]), handles[fq]);
             }
-            /* fwrite(buf, sz, num, fq); */
         }
+        else
+        {
+            fwrite(buf, sz, num, handles[fq]);
+        }
+    }
+    else if (val == 1) /* start */
+    {
+        U32 oldr14;
+        /* we don't have a C library to call in this environment,
+           so just immediately call their main program */
+        putfullword(base + 0x80, 0); /* argc = 0 */
+        regs[1] = 0x80;
+        regs[14] = 0;
+        /* regs[15] = *(U32 *)(base + 1 * 1024 * 1024L + 5 * sizeof(U32)); */
+
+        /* called OS should have stored address here */
+        regs[15] = getfullword(base + 0x7C);
+        printf("r15 is %08x\n", regs[15]);
+        p = base + regs[15];
+        /*exit(0);*/
+        doemul();
+        regs[14] = oldr14;
+    }
+    else
+    {
+        printf("unknown callback %d\n", val);
+        exit(EXIT_FAILURE);
     }
 
     return;
@@ -200,17 +242,13 @@ static void spec_call(int val)
 
 static void doemul(void)
 {
-    unsigned char *watching = base + 0x10086 + 3; /*0x1007a; */
+    unsigned char *watching = base + 0x21943C;
     
 #if COMEMUL
     regs[13] = 0x100; /* save area */
     regs[15] = 0x10000; /* entry point */
-#endif
-#if PBEMUL
-    regs[13] = 0x100; /* save area */
-    putfullword(base + 0x100 + 76, 0x100 + 80);
-#endif
     regs[14] = 0; /* branch to zero will terminate */
+#endif
 
     while (1)
     {
@@ -273,8 +311,13 @@ static void doemul(void)
                 {
                     printf("special call\n");
                     spec_call(regs[x2]);
+                    p += 2;
                 }
-                p += 2;
+                else
+                {
+                    p = base + regs[x2];
+                    printf("new address is %08X\n", regs[x2]);
+                }
 #endif
 #if COMEMUL
                 p = base + regs[x2];
@@ -324,6 +367,141 @@ static void doemul(void)
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
+        else if (instr == 0x43) /* ic */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned int val;
+
+            splitrx();            
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            val = base[one + two + d];
+            regs[t] &= 0xffffff00UL;
+            regs[t] |= val;
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x4c) /* mh */
+        {
+            int one = 0;
+            int two = 0;
+            int val;
+
+            splitrx();            
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            val = (short)gethalfword(&base[one + two + d]);
+            regs[t] *= val;
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0xbd) /* clm */
+        {
+            int x;
+            unsigned char *target;
+            int one = 0;
+            int mask;
+            int val;
+            
+            splitrs();
+            mask = x2;
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            target = base + one + d;
+            printf("comparing at offset %x\n", (target - base));
+            printf("base %x, displacement %x\n", one, d);
+            p += 4;
+            x = 0;
+            lt = 0;
+            gt = 0;
+            eq = 0;
+            if ((mask & 0x8) != 0)
+            {
+                val = (regs[x1] >> 24) & 0xff;
+                if (val > target[x])
+                {
+                    gt = 1;
+                    continue;
+                }
+                else if (val < target[x])
+                {
+                    lt = 1;
+                    continue;
+                }
+                x++;
+            }
+            if ((mask & 0x4) != 0)
+            {
+                val = (regs[x1] >> 16) & 0xff;
+                if (val > target[x])
+                {
+                    gt = 1;
+                    continue;
+                }
+                else if (val < target[x])
+                {
+                    lt = 1;
+                    continue;
+                }
+                x++;
+            }
+            if ((mask & 0x2) != 0)
+            {
+                val = (regs[x1] >> 8) & 0xff;
+                if (val > target[x])
+                {
+                    gt = 1;
+                    continue;
+                }
+                else if (val < target[x])
+                {
+                    lt = 1;
+                    continue;
+                }
+                x++;
+            }
+            if ((mask & 0x1) != 0)
+            {
+                val = regs[x1] & 0xff;
+                if (val > target[x])
+                {
+                    gt = 1;
+                    continue;
+                }
+                else if (val < target[x])
+                {
+                    lt = 1;
+                    continue;
+                }
+                x++;
+            }
+            eq = 1;
+        }
+        else if (instr == 0x89) /* sll */
+        {
+            int x;
+            int amt;
+            
+            splitrs();
+            amt = p[3];
+            regs[x1] <<= amt;
+            p += 4;
+        }
         else if (instr == 0x90) /* stm */
         {
             int start;
@@ -366,6 +544,12 @@ static void doemul(void)
             regs[x1] = regs[x2];
             p += 2;
         }
+        else if (instr == 0x13) /* lcr */
+        {
+            splitrr();
+            regs[x1] = -regs[x2];
+            p += 2;
+        }
         else if (instr == 0x58) /* l */
         {
             int one = 0;
@@ -406,6 +590,61 @@ static void doemul(void)
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
+        else if (instr == 0x54) /* n */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] &= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x92) /* mvi */
+        {
+            unsigned long one = 0;
+            unsigned char *v;
+
+            splitsi();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            one += d;
+            v = base + one;
+            *v = imm;
+            printf("moved %x to %08X\n", imm, one);
+            p += 4;
+        }
+        else if (instr == 0x95) /* cli */
+        {
+            unsigned long one = 0;
+            unsigned char *v;
+            int val;
+
+            splitsi();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            one += d;
+            v = base + one;
+            val = *v;
+            lt = val < imm;
+            gt = val > imm;
+            eq = (val == imm);
+            p += 4;
+        }
         else if (instr == 0x1a) /* ar */
         {
             splitrr();
@@ -413,6 +652,12 @@ static void doemul(void)
             p += 2;
         }
         else if (instr == 0x1b) /* sr */
+        {
+            splitrr();
+            regs[x1] -= regs[x2];
+            p += 2;
+        }
+        else if (instr == 0x1f) /* slr */
         {
             splitrr();
             regs[x1] -= regs[x2];
@@ -488,6 +733,14 @@ static void doemul(void)
         else if (instr == 0x19) /* cr */
         {
             splitrr();
+            lt = ((I32)regs[x1] < (I32)regs[x2]);
+            gt = ((I32)regs[x1] > (I32)regs[x2]);
+            eq = ((I32)regs[x1] == (I32)regs[x2]);
+            p += 2;
+        }
+        else if (instr == 0x15) /* clr */
+        {
+            splitrr();
             lt = (regs[x1] < regs[x2]);
             gt = (regs[x1] > regs[x2]);
             eq = (regs[x1] == regs[x2]);
@@ -529,6 +782,33 @@ static void doemul(void)
             {
                 p = base + one + d;
                 continue;
+            }
+            /* bnh */
+            else if (cond == 0xd0)
+            {
+                if (lt || eq)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bnl */
+            else if (cond == 0xb0)
+            {
+                if (gt || eq)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* be */
+            else if (cond == 0x80)
+            {
+                if (eq)
+                {
+                    p = base + one + d;
+                    continue;
+                }
             }
             else
             {
@@ -586,7 +866,7 @@ static void doemul(void)
         {
             int one = 0;
             int two = 0;
-            int dest;
+            unsigned long dest;
 
             splitrx();            
             if (b != 0)
@@ -636,6 +916,14 @@ static void splitrx(void)
     return;
 }
 
+static void splitsi(void)
+{
+    imm = p[1];
+    b = (p[2] >> 4) & 0x0f;
+    d = (p[2] & 0xf) << 8 | p[3];
+    return;
+}
+
 static void splitrs(void)
 {
     x1 = (p[1] >> 4) & 0x0f;
@@ -671,7 +959,7 @@ static void writereg(unsigned char *z, int x)
     return;
 }
 
-static void updatereg(int *x, unsigned char *z)
+static void updatereg(U32 *x, unsigned char *z)
 {
     *x = (z[0] << 24) | (z[1] << 16) | (z[2] << 8) | z[3];
     return;
