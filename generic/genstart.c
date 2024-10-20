@@ -12,6 +12,8 @@
 
 #include "__os.h"
 
+#include <string.h>
+
 OS *bios;
 
 extern char mycmdline[400];
@@ -33,7 +35,7 @@ int __crt0(OS *bios_parm)
        that, so the command line needs to be preserved since it is
        PDOS-generic that has the unusual situation of needing the
        command line preserved */
-    bios->strncpy(mycmdline, bios->cmd_line, sizeof mycmdline);
+    strncpy(mycmdline, bios->cmd_line, sizeof mycmdline);
     mycmdline[sizeof mycmdline - 1] = '\0';
 
     return (bios->__start(NULL));
