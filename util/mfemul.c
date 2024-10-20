@@ -64,7 +64,7 @@ static int l;
 static int lt;
 static int gt;
 static int eq;
-static int zero;
+/* static int zero; */ /* i don't think this is a separate flag - just use eq */
 
 static FILE *handles[FOPEN_MAX];
 
@@ -148,6 +148,9 @@ int main(int argc, char **argv)
     /* where to store address of main() */
     putfullword(p + 5 * sizeof(U32), 0x7C);
 
+    /* memory size */
+    putfullword(p + 1 * sizeof(U32), memsize - 3 * 1024 * 1024L);
+
     arbitrary_base = 2 * 1024 * 1024L;
     use_arbitrary = 1;
     p = base + arbitrary_base;
@@ -211,6 +214,16 @@ static void spec_call(int val)
         {
             fwrite(buf, sz, num, handles[fq]);
         }
+    }
+    else if (val == 24) /* setvbuf */
+    {
+        /* ignore for now */
+    }
+    else if (val == 7) /* malloc */
+    {
+        /* they will be doing a single alloc - point them to
+           the 3 MiB location */
+        regs[15] = 3 * 1024 * 1024L;
     }
     else if (val == 1) /* start */
     {
@@ -425,6 +438,7 @@ static void doemul(void)
             target = base + one + d;
             printf("comparing at offset %x\n", (target - base));
             printf("base %x, displacement %x\n", one, d);
+            printf("mask %x\n", mask);
             p += 4;
             x = 0;
             lt = 0;
@@ -478,9 +492,11 @@ static void doemul(void)
             if ((mask & 0x1) != 0)
             {
                 val = regs[x1] & 0xff;
+                printf("val is %x, target is %x\n", val, target[x]);
                 if (val > target[x])
                 {
                     gt = 1;
+                    printf("gt detected\n");
                     continue;
                 }
                 else if (val < target[x])
@@ -538,9 +554,26 @@ static void doemul(void)
             }
             p += 4;
         }
+        else if (instr == 0x0e) /* mvcl */
+        {
+            splitrr();
+            /* +++ I think the x1+1 and x2+2 can be different lengths
+               and padding should be done - not sure if a pad byte is
+               included - I think it is - which is why the length is
+               restricted to 16 MiB */
+            memcpy(base + regs[x1], base + regs[x2], regs[x1+1]);
+            /* and the length registers may count down to 0 */
+            /* I think the main registers count up */
+            /* not sure what overlapping addresses do either, so not */
+            /* sure whether to use memmove */
+            regs[x1] += regs[x1+1];
+            regs[x2] += regs[x2+1];
+            p += 2;
+        }
         else if (instr == 0x18) /* lr */
         {
             splitrr();
+            
             regs[x1] = regs[x2];
             p += 2;
         }
@@ -588,6 +621,29 @@ static void doemul(void)
             v = base + one + two + d;
             regs[t] += (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
             printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x55) /* cl */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            unsigned long val;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            val = getfullword(v);
+            lt = regs[t] < val;
+            gt = regs[t] > val;
+            eq = (regs[t] == val);
             p += 4;
         }
         else if (instr == 0x54) /* n */
@@ -768,10 +824,10 @@ static void doemul(void)
                     continue;
                 }
             }
-            /* bnz */
+            /* bnz or bne */
             else if (cond == 0x70)
             {
-                if (!zero)
+                if (!eq)
                 {
                     p = base + one + d;
                     continue;
@@ -821,7 +877,7 @@ static void doemul(void)
         {
             splitrr();
             regs[x1] = regs[x2];
-            zero = (regs[x1] == 0);
+            eq = (regs[x1] == 0);
             p += 2;
         }
         else if (instr == 0x98) /* lm */
