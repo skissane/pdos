@@ -518,6 +518,27 @@ static void doemul(void)
             regs[x1] <<= amt;
             p += 4;
         }
+        else if (instr == 0x8c) /* srdl */
+        {
+            int x;
+            int amt;
+            
+            splitrs();
+            amt = p[3];
+            if (amt >= 32)
+            {
+                regs[x1+1] = regs[x1];
+                regs[x1] = 0;
+                regs[x1+1] >>= (amt-32);
+            }
+            else
+            {
+                regs[x1+1] >>= amt;
+                regs[x1+1] |= regs[x1] << amt;
+                regs[x1] >>= amt;
+            }
+            p += 4;
+        }
         else if (instr == 0x90) /* stm */
         {
             int start;
@@ -570,6 +591,20 @@ static void doemul(void)
             regs[x2] += regs[x2+1];
             p += 2;
         }
+        else if (instr == 0x1d) /* dr */
+        {
+            U32 value;
+            U32 remainder;
+
+            splitrr();
+            /* +++ I believe the x1 and x1+1 are a pair, but I don't
+               know how to do that, so I'll just ignore x1 */
+            value = regs[x1+1] / regs[x2];
+            remainder = regs[x1+1] % regs[x2];
+            regs[x1] = remainder;
+            regs[x1+1] = value;
+            p += 2;
+        }
         else if (instr == 0x18) /* lr */
         {
             splitrr();
@@ -581,6 +616,20 @@ static void doemul(void)
         {
             splitrr();
             regs[x1] = -regs[x2];
+            p += 2;
+        }
+        else if (instr == 0x10) /* lpr */
+        {
+            splitrr();
+            /* +++ just guessing */
+            if ((I32)regs[x2] < 0)
+            {
+                regs[x1] = -regs[x2];
+            }
+            else
+            {
+                regs[x1] = regs[x2];
+            }
             p += 2;
         }
         else if (instr == 0x58) /* l */
@@ -620,6 +669,26 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] += (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x5b) /* s */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] -= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
@@ -861,6 +930,15 @@ static void doemul(void)
             else if (cond == 0x80)
             {
                 if (eq)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bh */
+            else if (cond == 0x20)
+            {
+                if (gt)
                 {
                     p = base + one + d;
                     continue;
