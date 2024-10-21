@@ -317,6 +317,44 @@ static void doemul(void)
                 }
                 continue;
             }
+            /* BHR */
+            else if (x1 == 0x2)
+            {
+                if (gt)
+                {
+                    p = base + regs[x2];
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
+            /* BLR */
+            else if (x1 == 0x4)
+            {
+                if (lt)
+                {
+                    p = base + regs[x2];
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
             /* BNHR */
             else if (x1 == 0xd)
             {
@@ -340,6 +378,25 @@ static void doemul(void)
             else if (x1 == 0x7)
             {
                 if (!eq)
+                {
+                    p = base + regs[x2];
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
+            /* BER */
+            else if (x1 == 0x8)
+            {
+                if (eq)
                 {
                     p = base + regs[x2];
                     printf("updating with %x %x\n", x2, regs[x2]);
@@ -713,6 +770,72 @@ static void doemul(void)
             v = base + one + two + d;
             regs[t] = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
             printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x48) /* lh */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] = (v[2] << 8) | v[3];
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x49) /* ch */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            int val;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            val = (short)gethalfword(v);
+            lt = regs[t] < val;
+            gt = regs[t] > val;
+            eq = (regs[t] == val);
+            p += 4;
+        }
+        else if (instr == 0x59) /* c */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            I32 val;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            val = getfullword(v);
+            lt = (I32)regs[t] < val;
+            gt = (I32)regs[t] > val;
+            eq = (regs[t] == val);
             p += 4;
         }
         else if (instr == 0x5a) /* a */
