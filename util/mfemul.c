@@ -13,7 +13,8 @@
 /*
 You need to do:
 D:\zpg>dasdcopy cfba1b1.vhd fba1b1.vhd
-copy (or build) pcomm.exe from tapes to this local directory, then:
+copy (or build with makecomm.zpg) pcomm.exe from tapes to this
+  local directory, then:
 mfemul ..\generic\pdos.exe \zpg\fba1b1.vhd
 */
 
@@ -427,6 +428,9 @@ static void doemul(void)
         {
             splitrr();
             /* x1 is condition, x2 is register to branch to */
+#if DEBUG
+            printf("cond %02x, eq %d, lt %d, gt %d\n", x1, eq, lt, gt);
+#endif
             if ((x1 == 0) || (x2 == 0))
             {
 #if DEBUG
@@ -1331,6 +1335,9 @@ static void doemul(void)
                 one = regs[b];
             }
             cond = (t << 4) | i;
+#if DEBUG
+            printf("cond %02x, eq %d, lt %d, gt %d\n", cond, eq, lt, gt);
+#endif
             /* bl */
             if (cond == 0x40)
             {
@@ -1391,7 +1398,7 @@ static void doemul(void)
                     continue;
                 }
             }
-            /* bh +++ one of two BH - see below */
+            /* bh +++ this sometimes shows as BL - presumed binutils bug */
             else if (cond == 0x20)
             {
                 if (gt)
