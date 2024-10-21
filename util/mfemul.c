@@ -46,6 +46,8 @@ static unsigned char *base;
 static unsigned char *p;
 static int instr;
 
+static char *boot_name;
+
 static U32 regs[16];
 
 static int x1;
@@ -68,6 +70,8 @@ static int eq;
 
 static FILE *handles[FOPEN_MAX];
 
+static char cmd_line[400] = "prog !BOOT";
+
 static void doemul(void);
 static void splitrx(void);
 static void splitsi(void);
@@ -77,6 +81,7 @@ static void splitssl(void);
 static void writereg(unsigned char *z, int x);
 static void updatereg(U32 *x, unsigned char *z);
 static int febc(int ebc);
+static int tebc(int local);
 
 int main(int argc, char **argv)
 {
@@ -84,12 +89,23 @@ int main(int argc, char **argv)
     unsigned char *entry_point;
     char *exe;
 
+#if COMEMUL
     if (argc <= 1)
     {
         printf("usage: mfemul <COM>\n");
         printf("executes a mainframe .com file\n");
         return (EXIT_FAILURE);
     }
+#endif
+
+#if PBEMUL
+    if (argc <= 2)
+    {
+        printf("usage: mfemul <OS> <disk>\n");
+        printf("executes a mainframe OS that relies on a pseudo-bios\n");
+        return (EXIT_FAILURE);
+    }
+#endif
 
 #if COMEMUL
     fp = fopen(argv[1], "rb");
@@ -105,6 +121,15 @@ int main(int argc, char **argv)
 #endif
 
 #if PBEMUL
+    {
+        int x = 0;
+
+        while (cmd_line[x] != '\0')
+        {
+            cmd_line[x] = tebc(cmd_line[x]);
+            x++;
+        }
+    }
     p = calloc(1, memsize);
     printf("memory starts at %p\n", p);
 #endif
@@ -124,6 +149,7 @@ int main(int argc, char **argv)
 
 #if PBEMUL
     exe = argv[1];
+    boot_name = argv[2];
     base = p;
     p = base + 1024 * 1024L;
     {
@@ -147,6 +173,11 @@ int main(int argc, char **argv)
 
     /* where to store address of main() */
     putfullword(p + 5 * sizeof(U32), 0x7C);
+
+    /* copy in command line */
+    strncpy((char *)base + 0x40, cmd_line, 0x3c - 1);
+    /* should probably do the conversion to EBCDIC here */
+    putfullword(p + 3 * sizeof(U32), 0x40);
 
     /* memory size */
     putfullword(p + 1 * sizeof(U32), memsize - 3 * 1024 * 1024L);
@@ -876,6 +907,10 @@ static void doemul(void)
             v = base + one + two + d;
             regs[t] -= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
             printf("new value of %x is %08X\n", t, regs[t]);
+
+            /* we need to set the eq flag at least */
+            /* for when the result is 0 */
+            eq =  (regs[t] == 0);
             p += 4;
         }
         else if (instr == 0x55) /* cl */
@@ -1422,5 +1457,124 @@ static int febc(int ebc)
     case 0xa1 : return('~');
     case 0x27 : return(0x1b); /* ESC character */
     default   : return(0);
+  }
+}
+
+/*********************************************************************/
+/*                                                                   */
+/*  This Program Written By Paul Edwards.                            */
+/*  Released to the public domain.                                   */
+/*                                                                   */
+/*********************************************************************/
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a character in the local character set.  It will be  */
+/*  converted into the EBCDIC equivalent.                            */
+/*                                                                   */
+/*********************************************************************/
+
+static int tebc(int local)
+{
+  switch (local)
+  {
+    case '\n' : return (0x15);
+    case '\f' : return (0x0c);
+    case ' '  : return (0x40);
+    case '!'  : return (0x5A);
+    case '\"' : return (0x7f);
+    case '#'  : return (0x7b);
+    case '$'  : return (0x5b);
+    case '%'  : return (0x6c);
+    case '&'  : return (0x50);
+    case '\'' : return (0x7d);
+    case '('  : return (0x4d);
+    case ')'  : return (0x5d);
+    case '*'  : return (0x5c);
+    case '+'  : return (0x4e);
+    case ','  : return (0x6b);
+    case '-'  : return (0x60);
+    case '.'  : return (0x4b);
+    case '/'  : return (0x61);
+    case '0'  : return (0xf0);
+    case '1'  : return (0xf1);
+    case '2'  : return (0xf2);
+    case '3'  : return (0xf3);
+    case '4'  : return (0xf4);
+    case '5'  : return (0xf5);
+    case '6'  : return (0xf6);
+    case '7'  : return (0xf7);
+    case '8'  : return (0xf8);
+    case '9'  : return (0xf9);
+    case ':'  : return (0x7a);
+    case ';'  : return (0x5e);
+    case '<'  : return (0x4c);
+    case '='  : return (0x7e);
+    case '>'  : return (0x6e);
+    case '?'  : return (0x6f);
+    case '@'  : return (0x7c);
+    case 'A'  : return (0xc1);
+    case 'B'  : return (0xc2);
+    case 'C'  : return (0xc3);
+    case 'D'  : return (0xc4);
+    case 'E'  : return (0xc5);
+    case 'F'  : return (0xc6);
+    case 'G'  : return (0xc7);
+    case 'H'  : return (0xc8);
+    case 'I'  : return (0xc9);
+    case 'J'  : return (0xd1);
+    case 'K'  : return (0xd2);
+    case 'L'  : return (0xd3);
+    case 'M'  : return (0xd4);
+    case 'N'  : return (0xd5);
+    case 'O'  : return (0xd6);
+    case 'P'  : return (0xd7);
+    case 'Q'  : return (0xd8);
+    case 'R'  : return (0xd9);
+    case 'S'  : return (0xe2);
+    case 'T'  : return (0xe3);
+    case 'U'  : return (0xe4);
+    case 'V'  : return (0xe5);
+    case 'W'  : return (0xe6);
+    case 'X'  : return (0xe7);
+    case 'Y'  : return (0xe8);
+    case 'Z'  : return (0xe9);
+    case '['  : return (0xad);
+    case '\\' : return (0xe0);
+    case ']'  : return (0xbd);
+    case '^'  : return (0x5f);
+    case '_'  : return (0x6d);
+    case '`'  : return (0x79);
+    case 'a'  : return (0x81);
+    case 'b'  : return (0x82);
+    case 'c'  : return (0x83);
+    case 'd'  : return (0x84);
+    case 'e'  : return (0x85);
+    case 'f'  : return (0x86);
+    case 'g'  : return (0x87);
+    case 'h'  : return (0x88);
+    case 'i'  : return (0x89);
+    case 'j'  : return (0x91);
+    case 'k'  : return (0x92);
+    case 'l'  : return (0x93);
+    case 'm'  : return (0x94);
+    case 'n'  : return (0x95);
+    case 'o'  : return (0x96);
+    case 'p'  : return (0x97);
+    case 'q'  : return (0x98);
+    case 'r'  : return (0x99);
+    case 's'  : return (0xa2);
+    case 't'  : return (0xa3);
+    case 'u'  : return (0xa4);
+    case 'v'  : return (0xa5);
+    case 'w'  : return (0xa6);
+    case 'x'  : return (0xa7);
+    case 'y'  : return (0xa8);
+    case 'z'  : return (0xa9);
+    case '{'  : return (0xc0);
+    case '|'  : return (0x4f);
+    case '}'  : return (0xd0);
+    case '~'  : return (0xa1);
+    default   : return (0);
   }
 }
