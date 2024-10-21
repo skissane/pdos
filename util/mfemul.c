@@ -215,9 +215,18 @@ static void spec_call(int val)
             fwrite(buf, sz, num, handles[fq]);
         }
     }
+    else if (val == 23) /* fflush */
+    {
+        /* ignore for now */
+    }
     else if (val == 24) /* setvbuf */
     {
         /* ignore for now */
+    }
+    else if (val == 40) /* free */
+    {
+        /* ignore for now */
+        /* they will be freeing their memory block */
     }
     else if (val == 7) /* malloc */
     {
@@ -227,7 +236,11 @@ static void spec_call(int val)
     }
     else if (val == 1) /* start */
     {
-        U32 oldr14;
+        U32 oldrx1;
+        int oldx1;
+
+        oldx1 = x1;
+        oldrx1 = regs[x1];
         /* we don't have a C library to call in this environment,
            so just immediately call their main program */
         putfullword(base + 0x80, 0); /* argc = 0 */
@@ -241,7 +254,9 @@ static void spec_call(int val)
         p = base + regs[15];
         /*exit(0);*/
         doemul();
-        regs[14] = oldr14;
+        printf("returning from emulation\n");
+        x1 = oldx1;
+        regs[x1] = oldrx1;
     }
     else
     {
@@ -302,6 +317,44 @@ static void doemul(void)
                 }
                 continue;
             }
+            /* BNHR */
+            else if (x1 == 0xd)
+            {
+                if (!gt)
+                {
+                    p = base + regs[x2];
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
+            /* BNER */
+            else if (x1 == 0x7)
+            {
+                if (!eq)
+                {
+                    p = base + regs[x2];
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
             else
             {
                 printf("unknown instruction %02X %02X\n", p[0], p[1]);
@@ -324,7 +377,7 @@ static void doemul(void)
                 {
                     printf("special call\n");
                     spec_call(regs[x2]);
-                    p += 2;
+                    p = base + regs[x1];
                 }
                 else
                 {
@@ -507,6 +560,16 @@ static void doemul(void)
                 x++;
             }
             eq = 1;
+        }
+        else if (instr == 0x88) /* srl */
+        {
+            int x;
+            int amt;
+            
+            splitrs();
+            amt = p[3];
+            regs[x1] >>= amt;
+            p += 4;
         }
         else if (instr == 0x89) /* sll */
         {
@@ -732,6 +795,26 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] &= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+            printf("new value of %x is %08X\n", t, regs[t]);
+            p += 4;
+        }
+        else if (instr == 0x57) /* x */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] ^= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
             printf("new value of %x is %08X\n", t, regs[t]);
             p += 4;
         }
