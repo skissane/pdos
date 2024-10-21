@@ -10,12 +10,20 @@
 /*                                                                   */
 /*********************************************************************/
 
+/*
+You need to do:
+D:\zpg>dasdcopy cfba1b1.vhd fba1b1.vhd
+copy (or build) pcomm.exe from tapes to this local directory, then:
+mfemul ..\generic\pdos.exe \zpg\fba1b1.vhd
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-#define DUMPREGS 1
+/* #define DEBUG 1 */
+/* #define DUMPREGS 1 */
 
 #if COMEMUL
 #define MAXPRGSZ (10 * 0x10000)
@@ -210,9 +218,13 @@ static void spec_call(int val)
 {
     unsigned long parms;
 
+#if DEBUG
     printf("got a special call %d\n", val);
+#endif
     parms = regs[1];
+#if DEBUG
     printf("parms are %08lX\n", parms);
+#endif
 
     if (val == 14) /* fwrite */
     {
@@ -222,14 +234,22 @@ static void spec_call(int val)
         int fq;
         
         buf = base + getfullword(base + parms);
+#if DEBUG
         printf("buf is %p\n", buf);
+#endif
 
         sz = (size_t)getfullword(base + parms + sizeof(U32));
+#if DEBUG
         printf("sz is %x\n", (int)sz);
+#endif
         num = (size_t)getfullword(base + parms + sizeof(U32)*2);
+#if DEBUG
         printf("num is %x\n", (int)num);
+#endif
         fq = getfullword(base + parms + sizeof(U32)*3);
+#if DEBUG
         printf("fq is %d\n", fq);
+#endif
         if ((handles[fq] == stdout) || (handles[fq] == stderr))
         {
             size_t tot;
@@ -245,6 +265,77 @@ static void spec_call(int val)
         {
             fwrite(buf, sz, num, handles[fq]);
         }
+    }
+    else if (val == 10) /* fopen */
+    {
+        static int cnt = 0;
+
+        if (cnt == 0)
+        {        
+            /* assume main disk */
+            handles[3] = fopen(boot_name, "r+b");
+#if DEBUG
+            printf("fopen got %p\n", handles[3]);
+#endif
+            regs[15] = 3;
+        }
+        else if (cnt == 1)
+        {
+            /* assume pcomm.exe */
+            handles[4] = fopen("pcomm.exe", "r+b");
+#if DEBUG
+            printf("fopen got %p\n", handles[4]);
+#endif
+            regs[15] = 4;
+        }
+        cnt++;
+    }
+    else if (val == 13) /* fclose */
+    {
+        static int cnt = 0;
+
+        if (cnt == 0)
+        {
+            /* assume pcomm.exe */
+            fclose(handles[4]);
+            handles[4] = NULL;
+            regs[15] = 0;
+        }
+        else if (cnt == 1)
+        {        
+            /* assume main disk */
+            fclose(handles[3]);
+            handles[3] = NULL;
+            regs[15] = 0;
+        }
+        cnt++;
+    }
+    else if (val == 11) /* fseek */
+    {
+        long offset;
+        int whence;
+        int fq;
+        
+        fq = getfullword(base + parms + sizeof(U32)*0);
+#if DEBUG
+        printf("fq is %d\n", fq);
+#endif
+        offset = getfullword(base + parms + sizeof(U32)*1);
+#if DEBUG
+        printf("offset is %d\n", offset);
+#endif
+        whence = getfullword(base + parms + sizeof(U32)*2);
+#if DEBUG
+        printf("whence is %d\n", whence);
+#endif
+        regs[15] = fseek(handles[fq], offset, whence);
+    }
+    else if (val == 12) /* fread */
+    {
+        regs[15] = fread(base + getfullword(base + parms + sizeof(U32)*0),
+                         getfullword(base + parms + sizeof(U32)*1),
+                         getfullword(base + parms + sizeof(U32)*2),
+                         handles[getfullword(base + parms + sizeof(U32)*3)]);
     }
     else if (val == 23) /* fflush */
     {
@@ -281,11 +372,15 @@ static void spec_call(int val)
 
         /* called OS should have stored address here */
         regs[15] = getfullword(base + 0x7C);
+#if DEBUG
         printf("r15 is %08x\n", regs[15]);
+#endif
         p = base + regs[15];
         /*exit(0);*/
         doemul();
+#if DEBUG
         printf("returning from emulation\n");
+#endif
         x1 = oldx1;
         regs[x1] = oldrx1;
     }
@@ -316,7 +411,9 @@ static void doemul(void)
         printf("instr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base - 0x10000, *watching, regs[14]);
 #endif
 #if PBEMUL
+#if DEBUG
         printf("\ninstr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base, *watching, regs[14]);
+#endif
 #endif
 #if DUMPREGS
         printf("R0: %08X, R1: %08X, R2: %08X, R3: %08X\n", regs[0], regs[1], regs[2], regs[3]);
@@ -330,14 +427,18 @@ static void doemul(void)
             /* x1 is condition, x2 is register to branch to */
             if ((x1 == 0) || (x2 == 0))
             {
+#if DEBUG
                 printf("noop\n");
+#endif
             }
             /* unconditional branch */
             else if (x1 == 0xf)
             {
                 p = base + regs[x2];
+#if DEBUG
                 printf("updating with %x %x\n", x2, regs[x2]);
                 printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                 if ((p - base) < 0x10000)
                 {
                     printf("branched below - terminating\n");
@@ -354,8 +455,10 @@ static void doemul(void)
                 if (gt)
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("updating with %x %x\n", x2, regs[x2]);
                     printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -373,8 +476,10 @@ static void doemul(void)
                 if (lt)
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("updating with %x %x\n", x2, regs[x2]);
                     printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -392,8 +497,10 @@ static void doemul(void)
                 if (!gt)
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("updating with %x %x\n", x2, regs[x2]);
                     printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -411,8 +518,10 @@ static void doemul(void)
                 if (!eq)
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("updating with %x %x\n", x2, regs[x2]);
                     printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -430,8 +539,10 @@ static void doemul(void)
                 if (eq)
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("updating with %x %x\n", x2, regs[x2]);
                     printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -459,18 +570,24 @@ static void doemul(void)
             }
             if (x2 != 0)
             {
+#if DEBUG
                 printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
+#endif
 #if PBEMUL
                 if (regs[x2] < 300)
                 {
+#if DEBUG
                     printf("special call\n");
+#endif
                     spec_call(regs[x2]);
                     p = base + regs[x1];
                 }
                 else
                 {
                     p = base + regs[x2];
+#if DEBUG
                     printf("new address is %08X\n", regs[x2]);
+#endif
                 }
 #endif
 #if COMEMUL
@@ -487,7 +604,9 @@ static void doemul(void)
         {
             splitrr();
             regs[x1]--;
+#if DEBUG
             printf("new value of %x is %08X\n", x1, regs[x1]);
+#endif
             if (regs[x1] != 0)
             {
                 if (x2 != 0)
@@ -518,7 +637,9 @@ static void doemul(void)
                 two = regs[i];
             }
             regs[t] = one + two + d;
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x43) /* ic */
@@ -539,7 +660,9 @@ static void doemul(void)
             val = base[one + two + d];
             regs[t] &= 0xffffff00UL;
             regs[t] |= val;
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x4c) /* mh */
@@ -559,7 +682,9 @@ static void doemul(void)
             }
             val = (short)gethalfword(&base[one + two + d]);
             regs[t] *= val;
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0xbd) /* clm */
@@ -577,9 +702,11 @@ static void doemul(void)
                 one = regs[b];
             }
             target = base + one + d;
+#if DEBUG
             printf("comparing at offset %x\n", (target - base));
             printf("base %x, displacement %x\n", one, d);
             printf("mask %x\n", mask);
+#endif
             p += 4;
             x = 0;
             lt = 0;
@@ -633,11 +760,15 @@ static void doemul(void)
             if ((mask & 0x1) != 0)
             {
                 val = regs[x1] & 0xff;
+#if DEBUG
                 printf("val is %x, target is %x\n", val, target[x]);
+#endif
                 if (val > target[x])
                 {
                     gt = 1;
+#if DEBUG
                     printf("gt detected\n");
+#endif
                     continue;
                 }
                 else if (val < target[x])
@@ -657,6 +788,17 @@ static void doemul(void)
             splitrs();
             amt = p[3];
             regs[x1] >>= amt;
+            p += 4;
+        }
+        else if (instr == 0x8a) /* sra */
+        {
+            int x;
+            int amt;
+            
+            /* +++ guessing */
+            splitrs();
+            amt = p[3];
+            regs[x1] = (((I32)regs[x1]) >> amt);
             p += 4;
         }
         else if (instr == 0x89) /* sll */
@@ -706,8 +848,10 @@ static void doemul(void)
                 one = regs[b];
             }
             target = base + one + d;
+#if DEBUG
             printf("storing to offset %x\n", (target - base));
             printf("base %x, displacement %x\n", one, d);
+#endif
             if (x2 < x1)
             {
                 end = 15;
@@ -783,6 +927,20 @@ static void doemul(void)
             }
             p += 2;
         }
+        else if (instr == 0x11) /* lnr */
+        {
+            splitrr();
+            /* +++ just guessing */
+            if ((I32)regs[x2] > 0)
+            {
+                regs[x1] = -regs[x2];
+            }
+            else
+            {
+                regs[x1] = regs[x2];
+            }
+            p += 2;
+        }
         else if (instr == 0x58) /* l */
         {
             int one = 0;
@@ -800,7 +958,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x48) /* lh */
@@ -820,7 +980,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] = (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x49) /* ch */
@@ -886,7 +1048,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] += (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x5b) /* s */
@@ -906,7 +1070,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] -= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
 
             /* we need to set the eq flag at least */
             /* for when the result is 0 */
@@ -953,7 +1119,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] &= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x57) /* x */
@@ -973,7 +1141,9 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] ^= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
             p += 4;
         }
         else if (instr == 0x92) /* mvi */
@@ -989,7 +1159,9 @@ static void doemul(void)
             one += d;
             v = base + one;
             *v = imm;
+#if DEBUG
             printf("moved %x to %08X\n", imm, one);
+#endif
             p += 4;
         }
         else if (instr == 0x95) /* cli */
@@ -1023,6 +1195,12 @@ static void doemul(void)
             regs[x1] -= regs[x2];
             p += 2;
         }
+        else if (instr == 0x16) /* or */
+        {
+            splitrr();
+            regs[x1] |= regs[x2];
+            p += 2;
+        }
         else if (instr == 0x1f) /* slr */
         {
             splitrr();
@@ -1050,7 +1228,9 @@ static void doemul(void)
                 regs[t] = p + 4 - base;
                 printf("new value of %x is %08X\n", t, regs[t]);
             }
+#if DEBUG
             printf("new dest is %08X\n", dest - 0x10000);
+#endif
             p = base + dest;
         }
         else if (instr == 0x50) /* st */
@@ -1079,7 +1259,6 @@ static void doemul(void)
         {
             int one = 0;
             int two = 0;
-            unsigned char *v;
 
             splitssl();
             if (b1 != 0)
@@ -1093,7 +1272,32 @@ static void doemul(void)
             }
             two += d2;
             memcpy(base + one, base + two, l + 1);
+#if DEBUG
             printf("writing to address %x %p\n", one, base + one);
+#endif
+            p += 6;
+        }
+        else if (instr == 0xd5) /* clc */
+        {
+            int one = 0;
+            int two = 0;
+            int ret;
+
+            splitssl();
+            if (b1 != 0)
+            {
+                one = regs[b1];
+            }
+            one += d1;
+            if (b2 != 0)
+            {
+                two = regs[b2];
+            }
+            two += d2;
+            ret = memcmp(base + one, base + two, l + 1);
+            lt = ret < 0;
+            gt = ret > 0;
+            eq = (ret == 0);
             p += 6;
         }
         else if (instr == 0x19) /* cr */
@@ -1176,8 +1380,26 @@ static void doemul(void)
                     continue;
                 }
             }
-            /* bh */
+            /* bh +++ one of two BH - see below */
             else if (cond == 0x20)
+            {
+                if (gt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bh +++ - two different conditions are BH? */
+            else if (cond == 0x60)
+            {
+                if (gt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bh +++ - three different conditions are BH? */
+            else if (cond == 0x00)
             {
                 if (gt)
                 {
@@ -1215,16 +1437,22 @@ static void doemul(void)
                 one = regs[b];
             }
             target = base + one + d;
+#if DEBUG
             printf("loading from offset %x\n", (target - base));
             printf("displacement %x\n", d);
+#endif
             if (x2 < x1)
             {
                 end = 15;
                 for (x = start; x <= end; x++)
                 {
+#if DEBUG
                    printf("updating reg %x currently %x\n", x, regs[x]);
+#endif
                    updatereg(&regs[x], target);
+#if DEBUG
                    printf("new value %x\n", regs[x]);
+#endif
                    target += 4;
                 }
                 start = 0;
