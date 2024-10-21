@@ -22,8 +22,10 @@ mfemul ..\generic\pdos.exe \zpg\fba1b1.vhd
 #include <string.h>
 
 
-/* #define DEBUG 1 */
-/* #define DUMPREGS 1 */
+#if 0
+#define DEBUG 1
+#define DUMPREGS 1
+#endif
 
 #if COMEMUL
 #define MAXPRGSZ (10 * 0x10000)
@@ -1380,6 +1382,15 @@ static void doemul(void)
                     continue;
                 }
             }
+            /* bl */
+            else if (cond == 0xc0)
+            {
+                if (lt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
             /* bh +++ one of two BH - see below */
             else if (cond == 0x20)
             {
@@ -1407,9 +1418,27 @@ static void doemul(void)
                     continue;
                 }
             }
+            /* bh +++ - four different conditions are BH? */
+            else if (cond == 0xa0)
+            {
+                if (gt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
+            /* bh +++ - five different conditions are BH? */
+            else if (cond == 0xe0)
+            {
+                if (gt)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+            }
             else
             {
-                printf("unknown condition %x\n", cond);
+                printf("unknown condition %x at %08X\n", cond, p - base);
                 exit(EXIT_FAILURE);
             }
             p += 4;
@@ -1419,6 +1448,9 @@ static void doemul(void)
             splitrr();
             regs[x1] = regs[x2];
             eq = (regs[x1] == 0);
+            /* +++ guessing */
+            gt = ((I32)regs[x1] > 0);
+            lt = ((I32)regs[x1] < 0);
             p += 2;
         }
         else if (instr == 0x98) /* lm */
