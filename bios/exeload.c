@@ -31,8 +31,9 @@
    own free will? */
 int salone = 0;
 
-int use_arbitrary; /* the arbitrary_base location has been set by caller */
-unsigned long arbitrary_base; /* arbitrary base location to be used by routines */
+int use_arbitrary = 0; /* the arbitrary_base location has been set by caller */
+/* arbitrary base location to be used by routines */
+unsigned long arbitrary_base= 0;
 
 /* moved these defines here to reduce pressure on
    the size of command line */
@@ -130,15 +131,17 @@ static int exeloadLoadMacho(unsigned char **entry_point,
 #endif
 
 #if NEED_MVS
-#define getfullword(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
-#define putfullword(p, val) (p[0] = (unsigned char)((val >> 24) & 0xff), \
-                         p[1] = (unsigned char)((val >> 16) & 0xff), \
-                         p[2] = (unsigned char)((val >> 8) & 0xff), \
-                         p[3] = (unsigned char)(val & 0xff))
+#define getfullword(p) ((((unsigned int)((p)[0])) << 24) \
+    | (((unsigned int)((p)[1])) << 16) \
+    | (((unsigned int)((p)[2])) << 8) | (p)[3])
+#define putfullword(p, val) ((p)[0] = (unsigned char)(((val) >> 24) & 0xff), \
+                         (p)[1] = (unsigned char)(((val) >> 16) & 0xff), \
+                         (p)[2] = (unsigned char)(((val) >> 8) & 0xff), \
+                         (p)[3] = (unsigned char)((val) & 0xff))
 
-#define gethalfword(p) (((p)[0] << 8) | (p)[1])
-#define puthalfword(p, val) (p[0] = (unsigned char)((val >> 8) & 0xff), \
-                         p[1] = (unsigned char)(val & 0xff))
+#define gethalfword(p) ((((unsigned int)((p)[0])) << 8) | (p)[1])
+#define puthalfword(p, val) ((p)[0] = (unsigned char)(((val) >> 8) & 0xff), \
+                         (p)[1] = (unsigned char)((val) & 0xff))
 
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
@@ -368,7 +371,12 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
 }
 #endif
 
+
+
 #if NEED_MVS
+
+#define PE_DEBUG 0
+
 static int exeloadLoadMVS(unsigned char **entry_point,
                           FILE *fp,
                           unsigned char **loadloc)
@@ -377,18 +385,29 @@ static int exeloadLoadMVS(unsigned char **entry_point,
     unsigned char *entry;
     int didalloc = 0;
 
-    /* printf("in LoadMVS\n"); */
+#if PE_DEBUG
+    printf("in LoadMVS\n");
+#endif
     if (*loadloc == NULL)
     {
         *loadloc = malloc(1000000);
+#if PE_DEBUG
+        printf("own malloc gave %p\n", *loadloc);
+#endif
         if (*loadloc == NULL)
         {
             return (1);
         }
         didalloc = 1;
     }
+#if PE_DEBUG
+    printf("loadloc is %p\n", *loadloc);
+#endif
     rewind(fp);
     readbytes = fread(*loadloc, 1, 1000000, fp);
+#if PE_DEBUG
+    printf("readbytes is %ld\n", readbytes);
+#endif
     if ((readbytes == 1000000) && didalloc)
     {
         size_t newsize;
@@ -414,8 +433,17 @@ static int exeloadLoadMVS(unsigned char **entry_point,
 
     if (!use_arbitrary)
     {
+#if PE_DEBUG
+        printf("no arbitrary so getting %p\n", *loadloc);
+#endif
         arbitrary_base = getfullword(*loadloc);
+#if PE_DEBUG
+        printf("arbitrary now %p\n", (void *)arbitrary_base);
+#endif
     }
+#if PE_DEBUG
+    printf("arbitrary_base is %08lx\n", arbitrary_base);
+#endif
     if (fixPE(*loadloc, &readbytes, &entry, arbitrary_base) != 0)
     {
         if (didalloc)
@@ -5449,8 +5477,6 @@ static int exeloadLoadNE(unsigned char **entry_point,
    http://publibz.boulder.ibm.com/epubs/pdf/dgt2u140.pdf
 */
 
-#define PE_DEBUG 0
-
 static int fixPE(unsigned char *buf,
                  size_t *len,
                  unsigned char **entry,
@@ -5487,6 +5513,7 @@ static int fixPE(unsigned char *buf,
     }
 #if PE_DEBUG
     printf("MVS PE total length is %lu\n", (unsigned long)*len);
+    printf("rlad is %08lx\n", rlad);
 #endif
     p = buf;
     while (1)
@@ -5790,9 +5817,13 @@ static int processRLD(unsigned char *buf,
         /* zaploc = (unsigned int *)(buf + a - ((ll == 3) ? 1 : 0)); */
 
         newval = getfullword(zaploc);
-        /* printf("which means that %8x ", newval); */
+#if PE_DEBUG
+        printf("which means that %8x ", newval);
+#endif
         newval += rlad;
-        /* printf("becomes %8x\n", newval); */
+#if PE_DEBUG
+        printf("becomes %8x\n", newval);
+#endif
         putfullword(zaploc, newval);
         r += 3;
     }
