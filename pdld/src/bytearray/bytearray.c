@@ -9,6 +9,7 @@
  * complying with any conditions and by any means.
  *****************************************************************************/
 #include <limits.h>
+#include <stdint.h>
 
 void bytearray_read_1_bytes (unsigned char *value_p, const unsigned char *src, int little_endian)
 {
@@ -72,6 +73,25 @@ void bytearray_read_4_bytes (unsigned long *value_p, const unsigned char *src, i
     }
 }
 
+void bytearray_read_8_bytes (uint_fast64_t *value_p, const unsigned char *src, int little_endian)
+{
+    *value_p = 0;
+
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 8; i++) {
+            *value_p |= (uint_fast64_t)src[i] << (CHAR_BIT * i);
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 8; i++) {
+            *value_p |= (uint_fast64_t)src[8 - 1 - i] << (CHAR_BIT * i);
+        }
+    }
+}
+
 void bytearray_write_1_bytes (unsigned char *dest, unsigned char value, int little_endian)
 {
     dest[0] = value;
@@ -124,6 +144,23 @@ void bytearray_write_4_bytes (unsigned char *dest, unsigned long value, int litt
 
         for (i = 0; i < 4; i++) {
             dest[4 - 1 - i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    }
+}
+
+void bytearray_write_8_bytes (unsigned char *dest, uint_fast64_t value, int little_endian)
+{
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 8; i++) {
+            dest[i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 8; i++) {
+            dest[8 - 1 - i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
         }
     }
 }

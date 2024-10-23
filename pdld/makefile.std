@@ -124,6 +124,7 @@ OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj \
     binary.obj bytearray.obj cms.obj coff.obj coff_bytearray.obj elf.obj \
     elf_bytearray.obj error.obj febc.obj hashtab.obj hunk.obj \
     ld.obj libld.obj link.obj lx.obj lx_bytearray.obj \
+    macho.obj macho_bytearray.obj \
     mainframe.obj map.obj read.obj sections.obj symbols.obj \
     tebc.obj vse.obj xmalloc.obj int64sup.obj
 

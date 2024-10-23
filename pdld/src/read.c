@@ -344,6 +344,7 @@ static int read_file (unsigned char *file, size_t file_size, const char *filenam
     if ((ret = coff_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = elf_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = hunk_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
+    if ((ret = macho_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
     if ((ret = mainframe_read (file, file_size, filename)) != INPUT_FILE_UNRECOGNIZED) return ret;
 
     return INPUT_FILE_UNRECOGNIZED;

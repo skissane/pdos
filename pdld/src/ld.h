@@ -310,6 +310,9 @@ void lx_print_help (void);
 void lx_use_option (int option_index, char *arg);
 const struct long_option *lx_get_long_options (void);
 
+/* macho.c */
+int macho_read (unsigned char *file, size_t file_size, const char *filename);
+
 /* mainframe.c */
 int mainframe_get_amode (void);
 
