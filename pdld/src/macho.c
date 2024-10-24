@@ -29,6 +29,8 @@ static void translate_relocation (struct reloc_entry *reloc,
                                   const struct relocation_info_internal *input_reloc,
                                   struct section_part *part)
 {
+    unsigned int size, pcrel, type;
+    
     if ((input_reloc->r_symbolnum >> 27) & 1) {
         reloc->symbol = part->of->symbol_array + (input_reloc->r_symbolnum & 0xffffff);
     } else {
@@ -40,13 +42,80 @@ static void translate_relocation (struct reloc_entry *reloc,
         reloc->symbol = part->of->symbol_array + part->of->symbol_count - (input_reloc->r_symbolnum & 0xffffff);
     }
 
-    reloc->offset = input_reloc->r_address;            
+    reloc->offset = input_reloc->r_address;
 
-    ld_warn ("%s: ignoring not yet supported relocation with size %u, pcrel %u and type %#x",
-             part->of->filename,
-             1U << ((input_reloc->r_symbolnum >> 25) & 3),
-             (input_reloc->r_symbolnum >> 24) & 1,
-             input_reloc->r_symbolnum >> 28);        
+    size = 1U << ((input_reloc->r_symbolnum >> 25) & 3);
+    pcrel = (input_reloc->r_symbolnum >> 24) & 1;
+    type = input_reloc->r_symbolnum >> 28;
+
+    if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
+        switch (size) {
+            case 8:
+                if (!pcrel && type == ARM64_RELOC_UNSIGNED) {
+                    reloc->howto = &reloc_howtos[RELOC_TYPE_64];
+                } else goto unsupported;
+                break;
+            
+            case 4:
+                if (pcrel) {
+                    if (type == X86_64_RELOC_SIGNED) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                    } else if (type == X86_64_RELOC_BRANCH) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                    } else goto unsupported;
+                } else goto unsupported;
+                break;
+
+            default: goto unsupported;
+        }
+    } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+        switch (size) {
+            case 8:
+                if (!pcrel && type == ARM64_RELOC_UNSIGNED) {
+                    reloc->howto = &reloc_howtos[RELOC_TYPE_64];
+                } else goto unsupported;
+                break;
+            
+            case 4:
+                if (pcrel) {
+                    if (type == ARM64_RELOC_BRANCH26) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_CALL26];
+                    } else if (type == ARM64_RELOC_PAGE21) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21];
+                    } else if (type == ARM64_RELOC_GOT_LOAD_PAGE21) {
+                        ld_warn ("%s: Position Independent Executables are not supported, ignoring relocation type %u",
+                                 part->of->filename, type);
+                        goto bad;
+                    } else goto unsupported;
+                } else {
+                    if (type == ARM64_RELOC_PAGEOFF12) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC];
+                    } else if (type == ARM64_RELOC_GOT_LOAD_PAGEOFF12) {
+                        ld_warn ("%s: Position Independent Executables are not supported, ignoring relocation type %u",
+                                 part->of->filename, type);
+                        goto bad;
+                    } else goto unsupported;
+                }
+                break;
+
+            default: goto unsupported;
+        }
+    } else {
+unsupported:
+        ld_warn ("%s: ignoring not yet supported relocation with size %u, pcrel %u and type %#x",
+                 part->of->filename,
+                 size,
+                 pcrel,
+                 type);        
+        reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
+    }
+
+    return;
+
+bad:
+    reloc->symbol = NULL;
+    reloc->offset = 0;
+    reloc->addend = 0;
     reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED];
 }
 

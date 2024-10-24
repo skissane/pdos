@@ -116,6 +116,8 @@ struct section_64_file {
     unsigned char reserved3[4];
 };
 
+#define S_ZEROFILL 0x1
+
 /* Relocation info is the same as for a.out, only the bitfield is different.
  * Originally r_address is not unsigned
  * but supporting negative values for it does not make sense,
@@ -139,7 +141,60 @@ struct relocation_info_file {
     unsigned char r_symbolnum[4];
 };
 
-#define S_ZEROFILL 0x1
+#define GENERIC_RELOC_INVALID 255
+#define GENERIC_RELOC_VANILLA 0
+#define GENERIC_RELOC_PAIR 1
+#define GENERIC_RELOC_SECTDIFF 2
+#define GENERIC_RELOC_PB_LA_PTR 3
+#define GENERIC_RELOC_LOCAL_SECTDIFF 4
+#define GENERIC_RELOC_TLV 5
+#define PPC_RELOC_VANILLA 0
+#define PPC_RELOC_PAIR 1
+#define PPC_RELOC_BR14 2
+#define PPC_RELOC_BR24 3
+#define PPC_RELOC_HI16 4
+#define PPC_RELOC_LO16 5
+#define PPC_RELOC_HA16 6
+#define PPC_RELOC_LO14 7
+#define PPC_RELOC_SECTDIFF 8
+#define PPC_RELOC_PB_LA_PTR 9
+#define PPC_RELOC_HI16_SECTDIFF 10
+#define PPC_RELOC_LO16_SECTDIFF 11
+#define PPC_RELOC_HA16_SECTDIFF 12
+#define PPC_RELOC_JBSR 13
+#define PPC_RELOC_LO14_SECTDIFF 14
+#define PPC_RELOC_LOCAL_SECTDIFF 15
+#define ARM_RELOC_VANILLA 0
+#define ARM_RELOC_PAIR 1
+#define ARM_RELOC_SECTDIFF 2
+#define ARM_RELOC_LOCAL_SECTDIFF 3
+#define ARM_RELOC_PB_LA_PTR 4
+#define ARM_RELOC_BR24 5
+#define ARM_THUMB_RELOC_BR22 6
+#define ARM_THUMB_32BIT_BRANCH 7
+#define ARM_RELOC_HALF 8
+#define ARM_RELOC_HALF_SECTDIFF 9
+#define ARM64_RELOC_UNSIGNED 0
+#define ARM64_RELOC_SUBTRACTOR 1
+#define ARM64_RELOC_BRANCH26 2
+#define ARM64_RELOC_PAGE21 3
+#define ARM64_RELOC_PAGEOFF12 4
+#define ARM64_RELOC_GOT_LOAD_PAGE21 5
+#define ARM64_RELOC_GOT_LOAD_PAGEOFF12 6
+#define ARM64_RELOC_POINTER_TO_GOT 7
+#define ARM64_RELOC_TLVP_LOAD_PAGE21 8
+#define ARM64_RELOC_TLVP_LOAD_PAGEOFF12 9
+#define ARM64_RELOC_ADDEND 10
+#define X86_64_RELOC_UNSIGNED 0
+#define X86_64_RELOC_SIGNED 1
+#define X86_64_RELOC_BRANCH 2
+#define X86_64_RELOC_GOT_LOAD 3
+#define X86_64_RELOC_GOT 4
+#define X86_64_RELOC_SUBTRACTOR 5
+#define X86_64_RELOC_SIGNED_1 6
+#define X86_64_RELOC_SIGNED_2 7
+#define X86_64_RELOC_SIGNED_4 8
+#define X86_64_RELOC_TLV 9
 
 struct symtab_command_internal {
     unsigned long cmd;
