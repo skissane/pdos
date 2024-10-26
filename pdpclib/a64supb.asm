@@ -75,12 +75,11 @@ longjmp proc
         mov     x2,x0
         mov     x0,x1
 
-;;;; +++ need to put this line back!
-;        cbnz    x0,__notzero
+        cbnz    x0,notzero
         cmp     x0,0
 ;        moveq   x0,;1
         mov     x0,1
-__notzero:
+notzero
 
         mov     x1,x2
 
