@@ -2,7 +2,7 @@
 # the Visual Studio C compiler and pdld.
 
 CC=cl
-COPTS=-O2 -Oi- -Zl -D__EFI__ -D__EFIBIOS__ -c -D__ARM__ -D__64BIT__ -I .
+COPTS=-O2 -Oi- -Zl -D__EFI__ -D__EFIBIOS__ -c -D__ARM__ -D__64BIT__ -I . -D__MSC__
 
 pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
