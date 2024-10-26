@@ -60,7 +60,15 @@ typedef char * va_list;
 #define va_start(ap, parmN) ap = (char far *)&parmN + sizeof(parmN)
 #define va_arg(ap, type) *(type far *)(ap += sizeof(type), ap - sizeof(type))
 #else
+#if (defined(__MSC__) && defined(__ARM__) && defined(__64BIT__))
+/* Visual C has a builtin that is required */
+void __va_start(va_list *x, ...);
+#define va_start(ap, parmN) \
+    __va_start(&ap, &parmN, 8 /* size */, 8 /* alignment */, &parmN);
+#else
 #define va_start(ap, parmN) ap = (char *)&parmN + sizeof(parmN)
+#endif
+
 #ifdef __64BIT__
 #define va_arg(ap, type) *(type *)(ap += (sizeof(type) < 8) ? 8 : sizeof(type),\
     ap - ((sizeof(type) < 8) ? 8 : sizeof(type)))
