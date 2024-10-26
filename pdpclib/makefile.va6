@@ -11,7 +11,9 @@ pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
     lib -nologo -out:pdpefi.lib efistart.obj a64supb.obj stdio.obj string.obj stdlib.obj
     lib -nologo -out:pdpefi.lib pdpefi.lib start.obj time.obj errno.obj assert.obj signal.obj
     lib -nologo -out:pdpefi.lib pdpefi.lib locale.obj ctype.obj math.obj __memmgr.obj fpfuncsm.obj
-    link -nologo -out:pdptest.efi -entry:efimain efistart.obj pdptest.obj pdpefi.lib
+    link -nologo -base:0x100400000 -out:pdptest.efi -entry:efimain efistart.obj pdptest.obj pdpefi.lib
+    zap pdptest.efi 0xfc 0
+    zap pdptest.efi 0x124 10
 #    pdld --no-insert-timestamp -o pdptest.efi -e efimain --oformat coff --subsystem 10 efistart.obj pdptest.obj pdpefi.lib
 
 .c.obj:
