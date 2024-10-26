@@ -361,7 +361,7 @@ void read_input_file (const char *filename)
     }
 
     if (read_file (file, file_size, filename) == INPUT_FILE_UNRECOGNIZED) {
-        ld_error ("unrecognized file format");
+        ld_error ("%s: unrecognized file format", filename);
     }
 
     free (file);

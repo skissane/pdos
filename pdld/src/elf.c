@@ -1005,14 +1005,6 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
         return read_elf64_object (file, file_size, filename);
     }
 
-    if (ld_state->bits == 64) {
-        ld_error ("%s: 32-bit object when other objects are %i-bit",
-                  filename, ld_state->bits);
-        return 1;
-    }
-
-    ld_state->bits = 32;
-
     if (ehdr.e_ident[EI_CLASS] != ELFCLASS32) {
         ld_error ("%s: Unsupported ELF file class", filename);
         return 1;
@@ -1420,8 +1412,6 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
     pos = file;
     CHECK_READ (pos, sizeof (ehdr));
     ehdr = *(Elf64_Ehdr *)pos;
-
-    ld_state->bits = 64;
 
     if (ehdr.e_ident[EI_DATA] != ELFDATA2LSB) {
         ld_error ("%s: Unsupported ELF data encoding", filename);

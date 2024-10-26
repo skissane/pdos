@@ -118,7 +118,6 @@ static int check_Machine (unsigned short Machine, const char *filename)
                 ld_error ("%s: Machine field mismatch between objects", filename);
                 return 1;
             }
-            ld_state->bits = 64;
             break;
         
         case IMAGE_FILE_MACHINE_I386:
@@ -130,7 +129,6 @@ static int check_Machine (unsigned short Machine, const char *filename)
                 return 1;
             }
             leading_underscore = 1;
-            ld_state->bits = 32;
             break;
 
         case IMAGE_FILE_MACHINE_ARM:
@@ -143,7 +141,16 @@ static int check_Machine (unsigned short Machine, const char *filename)
                 ld_error ("%s: Machine field mismatch between objects", filename);
                 return 1;
             }
-            ld_state->bits = 32;
+            break;
+
+        case IMAGE_FILE_MACHINE_ARM64:
+            if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64
+                || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+                ld_state->target_machine = LD_TARGET_MACHINE_AARCH64;
+            } else {
+                ld_error ("%s: Machine field mismatch between objects", filename);
+                return 1;
+            }
             break;
 
         default:
@@ -1015,6 +1022,50 @@ static void translate_relocation_arm (struct reloc_entry *reloc,
     }
 }
 
+static void translate_relocation_arm64 (struct reloc_entry *reloc,
+                                        struct relocation_entry_internal *input_reloc,
+                                        struct section_part *part)
+{
+    reloc->symbol = part->of->symbol_array + input_reloc->SymbolTableIndex;
+    reloc->offset = input_reloc->VirtualAddress;
+
+    switch (input_reloc->Type) {
+        case IMAGE_REL_ARM64_ABSOLUTE: reloc->howto = &reloc_howtos[RELOC_TYPE_IGNORED]; break;
+
+        case IMAGE_REL_ARM64_ADDR32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+
+        case IMAGE_REL_ARM64_ADDR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
+
+        case IMAGE_REL_ARM64_BRANCH26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_CALL26]; break;
+
+        case IMAGE_REL_ARM64_PAGEBASE_REL21: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21]; break;
+
+        case IMAGE_REL_ARM64_PAGEOFFSET_12A: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC]; break;
+
+        case IMAGE_REL_ARM64_PAGEOFFSET_12L: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC]; break;
+
+        case IMAGE_REL_ARM64_ADDR64: reloc->howto = &reloc_howtos[RELOC_TYPE_64]; break;
+
+        case IMAGE_REL_ARM64_REL21:
+        case IMAGE_REL_ARM64_SECREL:
+        case IMAGE_REL_ARM64_SECREL_LOW12A:
+        case IMAGE_REL_ARM64_SECREL_HIGH12A:
+        case IMAGE_REL_ARM64_SECREL_LOW12L:
+        case IMAGE_REL_ARM64_TOKEN:
+        case IMAGE_REL_ARM64_SECTION:
+        case IMAGE_REL_ARM64_BRANCH19:
+        case IMAGE_REL_ARM64_BRANCH14:
+            ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
+            break;
+
+        default:
+            /* There is no point in continuing, the object is broken. */
+            ld_fatal_error ("invalid relocation type 0x%04hx (origin object '%s')", input_reloc->Type, part->of->filename);
+            break;
+        
+    }
+}
+
 static void translate_relocation (struct reloc_entry *reloc,
                                   struct relocation_entry_internal *input_reloc,
                                   struct section_part *part)
@@ -1028,6 +1079,10 @@ static void translate_relocation (struct reloc_entry *reloc,
         
         case LD_TARGET_MACHINE_ARM:
             translate_relocation_arm (reloc, input_reloc, part);
+            return;
+
+        case LD_TARGET_MACHINE_AARCH64:
+            translate_relocation_arm64 (reloc, input_reloc, part);
             return;
 
         default:
@@ -2487,6 +2542,7 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
 
     if (Machine == IMAGE_FILE_MACHINE_AMD64
         || Machine == IMAGE_FILE_MACHINE_ARM
+        || Machine == IMAGE_FILE_MACHINE_ARM64
         || Machine == IMAGE_FILE_MACHINE_ARMNT
         || Machine == IMAGE_FILE_MACHINE_I386
         || Machine == IMAGE_FILE_MACHINE_THUMB) {

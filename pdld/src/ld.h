@@ -65,8 +65,6 @@ struct ld_state {
     address_type entry_point;
 
     int use_custom_base_address;
-
-    int bits;
 };
 
 extern struct ld_state *ld_state;
