@@ -143,19 +143,10 @@ notzero
 
 ; int ___write(int fd, void *buf, int len);
 
-        .globl  __write
-        .globl  ___write
-        .type  __write, %function
-        .align  2
-__write:
-___write:
+        export  __write
+__write proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x2,[sp,#40]     @ len
-        ldr     x1,[sp,#32]      @ buf
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#64
 ;           @ SYS_write
 
@@ -164,6 +155,7 @@ ___write:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
@@ -171,21 +163,13 @@ ___write:
 
 ; int ___rename(char *old, char *new);
 
-        .globl  __rename
-        .globl  ___rename
-        .type  __rename, %function
-        .align  2
-__rename:
-___rename:
+        export  __rename
+__rename proc
         sub     sp,sp,#32
         str     x8, [sp, #0]
         str     x1, [sp, #8]
         str     x2, [sp, #16]
         str     x3, [sp, #24]
-.if STACKPARM
-        ldr     x1,[sp,#48]      @ new
-        ldr     x0,[sp,#40]      @ old
-.endif
         mov     x3, x1
         mov     x2, #-100
 ; AT_FDCWD
@@ -203,22 +187,16 @@ ___rename:
         ldr     x8, [sp, #0]
         add     sp,sp,#32
         ret
+        endp
 
 
 
 ; int _close(int fd);
 
-        .globl  __close
-        .globl  ___close
-        .type  __close, %function
-        .align  2
-__close:
-___close:
+        export  __close
+__close proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#57
 ;           @ SYS_close
 
@@ -227,24 +205,16 @@ ___close:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 ; int ___seek(int fd, int pos, int how);
 
-        .globl  __seek
-        .globl  ___seek
-        .type  __seek, %function
-        .align  2
-__seek:
-___seek:
+        export  __seek
+__seek  proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x2,[sp,#40]     @ how
-        ldr     x1,[sp,#32]      @ pos
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#62
 ;           @ SYS_lseek
 
@@ -253,6 +223,7 @@ ___seek:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
@@ -260,19 +231,12 @@ ___seek:
 
 ; int ___remove(char *path);
 
-        .globl  __remove
-        .globl  ___remove
-        .type  __remove, %function
-        .align  2
-__remove:
-___remove:
+        export  __remove
+__remove proc
         sub     sp,sp,#32
         str     x8, [sp, #0]
         str     x1, [sp, #8]
         str     x2, [sp, #16]
-.if STACKPARM
-        ldr     x0,[sp,#40]      @ path
-.endif
         mov     x2,#0
 ; flags (not defining AT_REMOVEDIR)
         mov     x1, x0
@@ -288,6 +252,7 @@ ___remove:
         ldr     x8, [sp, #0]
         add     sp,sp,#32
         ret
+        endp
 
 
 
@@ -296,21 +261,13 @@ ___remove:
 
 ; int _open(char *path, int flags);
 
-        .globl  __open
-        .globl  ___open
-        .type  __open, %function
-        .align  2
-__open:
-___open:
+        export  __open
+__open  proc
         sub     sp,sp,#32
         str     x8, [sp, #0]
         str     x1, [sp, #8]
         str     x2, [sp, #16]
         str     x3, [sp, #24]
-.if STACKPARM
-        ldr     x1,[sp,#48]      @ flags
-        ldr     x0,[sp,#40]      @ path
-.endif
         mov     x3,#0x1A4
 ;        @ 0644
         mov     x2, x1
@@ -328,24 +285,16 @@ ___open:
         ldr     x8, [sp, #0]
         add     sp,sp,#32
         ret
+        endp
 
 
 
 ; int ___ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
 
-        .globl  __ioctl
-        .globl  ___ioctl
-        .type  __ioctl, %function
-        .align  2
-__ioctl:
-___ioctl:
+        export  __ioctl
+__ioctl proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x2,[sp,#40]      @ arg
-        ldr     x1,[sp,#32]      @ cmd
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#29
 ;           @ SYS_ioctl
 
@@ -354,17 +303,14 @@ ___ioctl:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 ; int ___getpid(void);
 
-        .globl  __getpid
-        .globl  ___getpid
-        .type  __getpid, %function
-        .align  2
-__getpid:
-___getpid:
+        export  __getpid
+__getpid proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#172
@@ -375,24 +321,16 @@ ___getpid:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 ; int ___read(int fd, void *buf, int len);
 
-        .globl  __read
-        .globl  ___read
-        .type  __read, %function
-        .align  2
-__read:
-___read:
+        export  __read
+__read  proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x2,[sp,#40]      @ len
-        ldr     x1,[sp,#32]      @ buf
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#63
 ;           @ SYS_read
 
@@ -401,6 +339,7 @@ ___read:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
@@ -408,19 +347,10 @@ ___read:
 
 ; void _exita(int rc);
 
-        .globl  __exita
-        .globl  ___exita
-.if ELF
-        .type  __exita, %function
-.endif
-        .align  2
-__exita:
-___exita:
+        export  __exita
+__exita proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x0,[sp,#8]      @ rc
-.endif
         mov     x8,#93
 ;           @ SYS_exit
 
@@ -428,20 +358,15 @@ ___exita:
         ldr     x8,[sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 
 ; int __time(void);
 
-        .globl  __time
-        .globl  ___time
-.if ELF
-        .type  __time, %function
-.endif
-        .align  2
-__time:
-___time:
+        export  __time
+__time  proc
 ; Unusual amount of storage used
         sub     sp,sp,#32
 ; Note that this store is unusual
@@ -464,18 +389,15 @@ ___time:
 ; Unusual stack correction
         add     sp,sp,#32
         ret
+        endp
 
 
 
 
 ; int ___clone(...);
 
-        .globl  __clone
-        .globl  ___clone
-        .type  __clone, %function
-        .align  2
-__clone:
-___clone:
+        export  __clone
+__clone proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#220
@@ -486,18 +408,15 @@ ___clone:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 
 ; int ___waitid(...);
 
-        .globl  __waitid
-        .globl  ___waitid
-        .type  __waitid, %function
-        .align  2
-__waitid:
-___waitid:
+        export  __waitid
+__waitid proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#95
@@ -508,18 +427,15 @@ ___waitid:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 
 ; int ___execve(...);
 
-        .globl  __execve
-        .globl  ___execve
-        .type  __execve, %function
-        .align  2
-__execve:
-___execve:
+        export  __execve
+__execve proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#221
@@ -530,18 +446,15 @@ ___execve:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 
 ; int ___mmap(...);
 
-        .globl  __mmap
-        .globl  ___mmap
-        .type  __mmap, %function
-        .align  2
-__mmap:
-___mmap:
+        export  __mmap
+__mmap  proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#222
@@ -552,17 +465,14 @@ ___mmap:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
 ; int ___munmap(...);
 
-        .globl  __munmap
-        .globl  ___munmap
-        .type  __munmap, %function
-        .align  2
-__munmap:
-___munmap:
+        export  __munmap
+__munmap proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
         mov     x8,#215
@@ -573,25 +483,19 @@ ___munmap:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
+
+
 
 ; mremap is 216
 
 
 ; int ___chdir(const char *filename);
 
-        .globl  __chdir
-        .globl  ___chdir
-.if ELF
-        .type  __chdir, %function
-.endif
-        .align  2
-__chdir:
-___chdir:
+        export  __chdir
+__chdir proc
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x0,[sp,#8]      @ filename
-.endif
         mov     x8,#49
 ;           @ SYS_chdir
 
@@ -599,6 +503,7 @@ ___chdir:
         ldr     x8,[sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
@@ -607,22 +512,12 @@ ___chdir:
 
 ; int ___mkdir(const char *filename, int mode);
 
-        .globl  __mkdir
-        .globl  ___mkdir
-.if ELF
-        .type  __mkdir, %function
-.endif
-        .align  2
-__mkdir:
-___mkdir:
+        export  __mkdir
+__mkdir proc
         sub     sp,sp,#32
         str     x8, [sp, #0]
         str     x1, [sp, #8]
         str     x2, [sp, #16]
-.if STACKPARM
-        ldr     x1,[sp,#48]      @ mode
-        ldr     x0,[sp,#40]      @ filename
-.endif
         mov     x2, x1
         mov     x1, x0
         mov     x0, #-100
@@ -637,6 +532,7 @@ ___mkdir:
         ldr     x8, [sp, #0]
         add     sp,sp,#32
         ret
+        endp
 
 
 
@@ -645,21 +541,12 @@ ___mkdir:
 
 ; int ___rmdir(const char *filename);
 
-        .globl  __rmdir
-        .globl  ___rmdir
-.if ELF
-        .type  __rmdir, %function
-.endif
-        .align  2
-__rmdir:
-___rmdir:
+        export  __rmdir
+__rmdir proc
         sub     sp,sp,#32
         str     x8, [sp, #0]
         str     x1, [sp, #8]
         str     x2, [sp, #16]
-.if STACKPARM
-        ldr     x0,[sp,#40]      @ path
-.endif
         mov     x2,#0x200
 ; flags (setting AT_REMOVEDIR)
         mov     x1, x0
@@ -675,6 +562,7 @@ ___rmdir:
         ldr     x8, [sp, #0]
         add     sp,sp,#32
         ret
+        endp
 
 
 
@@ -683,22 +571,11 @@ ___rmdir:
 
 ; int ___getdents64(unsigned int fd, struct linux_dirent64 *dirent, int count);
 
-        .globl  _getdents64
-        .globl  __getdents64
-.if ELF
-        .type  _getdents64, %function
-.endif
-        .align  2
-_getdents64:
-__getdents64:
+        export  __getdents64
+__getdents64 proc
 
         sub     sp,sp,#16
         str     x8, [sp, #0]
-.if STACKPARM
-        ldr     x2,[sp,#40]      @ count
-        ldr     x1,[sp,#32]      @ dirent
-        ldr     x0,[sp,#24]      @ fd
-.endif
         mov     x8,#61
 ;           @ SYS_getdents64
 
@@ -707,6 +584,7 @@ __getdents64:
         ldr     x8, [sp, #0]
         add     sp,sp,#16
         ret
+        endp
 
 
 
