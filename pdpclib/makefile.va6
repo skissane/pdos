@@ -15,7 +15,7 @@ pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 # I normally use the below when using the Visual C linker
 # Note that unlike pdld, it doesn't allow me to use an address below 4 GiB
 #    link -nologo -fixed:no -subsystem:efi_application -base:0x100400000 -out:pdptest.efi -entry:efimain efistart.obj pdptest.obj pdpefi.lib
-    pdld --no-insert-timestamp --image-base 0x400000 -o pdptest.efi -e efimain --oformat coff --subsystem 10 efistart.obj pdptest.obj pdpefi.lib
+    pdld --no-insert-timestamp --emit-relocs --image-base 0x400000 -o pdptest.efi -e efimain --oformat coff --subsystem 10 efistart.obj pdptest.obj pdpefi.lib
 
 .c.obj:
     $(CC) $(COPTS) $<
