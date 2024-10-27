@@ -2124,7 +2124,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         if (tempRead < bio_protocol->Media->BlockSize)
         {
             printf("sector size mismatch - freezing\n");
-            printf("attempting to read %d\n", tempRead);
+            printf("attempting to read %d\n", (int)tempRead);
             printf("but sector is %d\n", (int)bio_protocol->Media->BlockSize);
             for (;;) ;
         }
