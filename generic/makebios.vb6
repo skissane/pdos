@@ -1,4 +1,4 @@
-# Produces EFI executable.
+# Produces x64 EFI executable.
 # We link with the library produced by makefile.vb6
 # And we use makefile.w64 and makecomm.w64
 # which are PE
