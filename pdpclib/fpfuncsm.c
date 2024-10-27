@@ -12,23 +12,3 @@
 /*********************************************************************/
 
 int _fltused = 0;
-
-void __GSHandlerCheck(void)
-{
-    return;
-}
-
-void __security_pop_cookie(void)
-{
-    return;
-}
-
-void __security_push_cookie(void)
-{
-    return;
-}
-
-void __report_rangecheckfailure(void)
-{
-    return;
-}
