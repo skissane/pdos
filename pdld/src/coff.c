@@ -1042,7 +1042,32 @@ static void translate_relocation_arm64 (struct reloc_entry *reloc,
 
         case IMAGE_REL_ARM64_PAGEOFFSET_12A: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC]; break;
 
-        case IMAGE_REL_ARM64_PAGEOFFSET_12L: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC]; break;
+        case IMAGE_REL_ARM64_PAGEOFFSET_12L:
+            /* COFF, unlike ELF, has only one relocation type for "str"-like instructions,
+             * what means the linker must decide how to relocate the field on its own
+             * by reading the field and identifying the instruction.
+             */
+            if (part->content[reloc->offset + 3] == 0x39) {
+                /* strb w... */
+                reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST8_ABS_LO12_NC];
+            } else if (part->content[reloc->offset + 3] == 0x79) {
+                /* strh w... */
+                reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST16_ABS_LO12_NC]; /*strh*/
+            } else if (part->content[reloc->offset + 3] == 0xB9) {
+                /* str w... */
+                reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST32_ABS_LO12_NC];
+            } else if (part->content[reloc->offset + 3] == 0xF9) {
+                /* str x... */
+                reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC];
+            } else {
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "unknown instruction '%02x %02x %02x %02x' used with IMAGE_REL_ARM64_PAGEOFFSET_12L",
+                                             part->content[reloc->offset],
+                                             part->content[reloc->offset + 1],
+                                             part->content[reloc->offset + 2],
+                                             part->content[reloc->offset + 3]);
+            }
+            break;
 
         case IMAGE_REL_ARM64_ADDR64: reloc->howto = &reloc_howtos[RELOC_TYPE_64]; break;
 
@@ -2144,6 +2169,19 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     section_append_section_part (bss_section, bss_part);
 
                     bss_part->content_size = symbol->size = symbol->value;
+                    /* ARM64 cannot access unaligned memory
+                     * but there is no way to specify common symbol alignment in COFF,
+                     * so simple solution is to set the same alignment as is the size
+                     * of the field what deals with "str"-like instructions.
+                     * (But there should be nothing needing to exceed SectionAlignment,
+                     *  so no need to waste memory aligning large symbols.)
+                     */  
+                    if (bss_part->content_size > SectionAlignment) {
+                        bss_part->alignment = SectionAlignment;
+                    } else {
+                        bss_part->alignment = bss_part->content_size;
+                    }
+                    
                     symbol->part = bss_part;
                     symbol->value = 0;
                     symbol->section_number = bss_section_number;
