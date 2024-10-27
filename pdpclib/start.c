@@ -1610,6 +1610,15 @@ void __exit(int status)
        code) that assumes that longjmp will not be returned from - so if
        you haven't implemented longjmp yet, it's probably better to make
        it go into an infinite loop as a failsafe */
+    /* ok, mystery solved I think. When running an MSVCRT-based executable,
+       it doesn't go through the start() logic, so runnum is not increased.
+       In that situation, exita needs to actually work - at least
+       using current design. May be possible to change w32start.c to have
+       a setjmp buffer, and do something in getmainargs. Or maybe
+       get the pseudo-bios to force it through another start. I found
+       that my setjmp in bios.c wasn't being executed because of
+       insufficient defines, and that was causing a crash on exit. bios.c
+       was fixed. */
 #if 1 /* (defined(__64BIT__) && !defined(__WIN32__)) \
     || defined(__PDOS386__) */
     longjmp(jb, status);
