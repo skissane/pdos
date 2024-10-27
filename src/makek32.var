@@ -1,0 +1,47 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This is for Windows 64-bit ARM using Visual C
+
+# Note that we don't expect to actually use the result of
+# this, so we don't have Pos calls implemented.
+
+VPATH=../pdpclib
+
+CC=cl
+COPTS=-c -I../pdpclib -D__ARM__ -I. -D__WIN32__ \
+    -DNOLIBALLOC -D__MSC__ -nologo -GS- -Zl -O2 -Oi- \
+    -D__64BIT__
+
+#LD=pdld --no-insert-timestamp
+LD=link
+
+
+EXPORT_OBJS=dllcrt.obj kernel32.obj
+OBJS=pdossupc.obj pos.obj string.obj
+
+all: clean kernel32.dll
+
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+#  $(LD) -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
+  $(LD) -nologo -fixed:no -dll -out:kernel32.dll $(EXPORT_OBJS) $(OBJS)
+
+dllcrt.obj: ../pdpclib/dllcrt.c
+  $(CC) $(COPTS) -D__EXPORT__ $<
+
+kernel32.obj: kernel32.c
+  $(CC) $(COPTS) -D__EXPORT__ $<
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f *.obj
+  rm -f kernel32.dll
+  rm -f kernel32.lib
