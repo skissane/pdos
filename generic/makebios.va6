@@ -22,5 +22,5 @@ $(TARGET): clean bios.obj $(OBJS)
   $(CC) $(COPTS) -Fo$*.obj $<
 
 clean:
-  rm -f *.o
+  rm -f *.obj
   rm -f $(TARGET)
