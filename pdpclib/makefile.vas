@@ -1,0 +1,35 @@
+# This builds 64-bit Windows ARM64 (PE/coff) executables
+# with static linking using Microsoft's Visual C compiler
+
+# makek32.var needs to be run in src first
+
+CC=cl
+
+COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__STATIC__ \
+    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi- \
+    -D__64BIT__
+
+AR=lib
+#LD=pdld --no-insert-timestamp -e mainCRTStartup
+LD=link
+AS=armasm64
+
+TARGET=pdptest.exe
+OBJS=p32start.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
+    assert.obj signal.obj locale.obj ctype.obj math.obj fpfuncsa.obj
+
+$(TARGET): clean pdptest.obj $(OBJS) a64supb.obj
+  rm -f pdpwin32.lib
+  $(AR) -nologo -out:pdpwin32.lib $(OBJS)
+#  $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe p32start.obj pdptest.obj a64supb.obj pdpwin32.lib ../src/kernel32.lib
+  $(LD) -nologo -out:pdptest.exe -fixed:no p32start.obj pdptest.obj a64supb.obj pdpwin32.lib ../src/kernel32.lib
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  $(AS) -nologo -o $@ $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
