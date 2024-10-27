@@ -888,7 +888,7 @@ int main(int argc, char **argv)
 
 
 #if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
-    || defined(GENSHELL)
+    || defined(GENSHELL) || defined(W64DLL)
 #ifdef __CC64OS__
     __ncallbacks = 0;
 #endif
@@ -937,7 +937,7 @@ int main(int argc, char **argv)
     undo_redirection ();
     
 #if defined(W64HACK) || defined(W32HACK) || defined(W32EMUL) \
-    || defined(GENSHELL)
+    || defined(GENSHELL) || defined(W64DLL)
     }
 #endif
 
