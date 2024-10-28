@@ -1038,7 +1038,20 @@ static void translate_relocation_arm64 (struct reloc_entry *reloc,
 
         case IMAGE_REL_ARM64_BRANCH26: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_CALL26]; break;
 
-        case IMAGE_REL_ARM64_PAGEBASE_REL21: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21]; break;
+        case IMAGE_REL_ARM64_PAGEBASE_REL21:
+            reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21];
+            /* The addend for this COFF relocation
+             * that is already present should not be used,
+             * so it must be cleared before doing the relocation.
+             */
+            {
+                unsigned long field;
+
+                bytearray_read_4_bytes (&field, part->content + reloc->offset, LITTLE_ENDIAN);
+                field &= ~(address_type)reloc->howto->dst_mask;
+                bytearray_write_4_bytes (part->content + reloc->offset, field, LITTLE_ENDIAN);
+            }
+            break;
 
         case IMAGE_REL_ARM64_PAGEOFFSET_12A: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADD_ABS_LO12_NC]; break;
 
