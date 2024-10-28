@@ -1,5 +1,5 @@
 ;# Written by Paul Edwards
-;# Release to the public domain
+;# Released to the public domain
 ;# Note that although we don't really need to save r0, I am
 ;# saving it anyway as a means to keep the stack 8-byte aligned
 ;# as otherwise when we go to call msvcrt.dll we can't print
