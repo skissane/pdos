@@ -2353,7 +2353,8 @@ static void import_generate_import (const char *import_name,
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                          || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     
@@ -2367,7 +2368,8 @@ static void import_generate_import (const char *import_name,
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                          || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
@@ -2457,6 +2459,15 @@ static void import_generate_import (const char *import_name,
                         "\x00\xF0\x9C\xE5" /* ldr pc,[r12] */,
                         12);
             }
+        } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+            part->content_size = 12;
+            part->content = xmalloc (part->content_size);
+
+            memcpy (part->content,
+                    "\x10\x00\x00\x90" /* adrp x16, #0x0 */
+                    "\x10\x02\x40\xF9" /* ldr x16, [x16, #0x0] */
+                    "\x00\x02\x1F\xD6" /* br x16 */,
+                    12);
         } else {
             part->content_size = 8;
             part->content = xmalloc (part->content_size);
@@ -2470,7 +2481,7 @@ static void import_generate_import (const char *import_name,
         symbol_record_external_symbol (symbol);
         symbol++;
 
-        part->relocation_count = 1;
+        part->relocation_count = (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) ? 2 : 1;
         part->relocation_array = xcalloc (part->relocation_count, sizeof *part->relocation_array);
         relocs = part->relocation_array;
         relocs[0].symbol = &of->symbol_array[0];
@@ -2481,6 +2492,12 @@ static void import_generate_import (const char *import_name,
                 relocs[0].howto = &reloc_howtos[RELOC_TYPE_ARM_MOV32];
             }
             relocs[0].offset = 0;
+        } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
+            relocs[0].howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21];
+            relocs[0].offset = 0;
+            relocs[1].symbol = &of->symbol_array[0];
+            relocs[1].howto = &reloc_howtos[RELOC_TYPE_AARCH64_LDST64_ABS_LO12_NC];
+            relocs[1].offset = 4;
         } else if (ld_state->target_machine == LD_TARGET_MACHINE_X64) {
             relocs[0].howto = &reloc_howtos[RELOC_TYPE_PC32];
             relocs[0].offset = 2;
@@ -2513,14 +2530,16 @@ static void import_generate_end (void)
     subsection = subsection_find_or_make (section, "4");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                          || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 
     subsection = subsection_find_or_make (section, "5");
     part = section_part_new (section, of);
     subsection_append_section_part (subsection, part);
-    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64) ? 8 : 4;
+    part->content_size = (ld_state->target_machine == LD_TARGET_MACHINE_X64
+                          || ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) ? 8 : 4;
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
 }
