@@ -439,8 +439,6 @@ static void relocate_part (struct section_part *part)
                 symbol = mainframe_symbol_find (symbol->name);
             }
             if (symbol_is_undefined (symbol)) {
-                
-                
                 ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
                           part->of->filename,
                           part->section->name,
@@ -569,8 +567,58 @@ static void calculate_entry_point (void)
     }
 }
 
+static void check_unresolved (void)
+{
+    struct object_file *of;
+    unsigned long unresolved = 0;
+
+    for (of = all_object_files; of; of = of->next) {
+        size_t i;
+
+        for (i = 1; i < of->symbol_count; i++) {
+            struct symbol *symbol = of->symbol_array + i;
+
+            /* Undefined section symbols (created by discarding COMDAT)
+             * should not be reported here.
+             */
+            if (symbol->auxiliary
+                || !symbol_is_undefined (symbol)
+                || (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)) continue;
+
+            if ((symbol = symbol_find (symbol->name)) == NULL) {
+                symbol = of->symbol_array + i;
+                ld_internal_error_at_source (__FILE__, __LINE__,
+                                             "external symbol '%s' not found in hashtab",
+                                             symbol->name);
+            }
+            if ((ld_state->oformat == LD_OFORMAT_CMS
+                 || ld_state->oformat == LD_OFORMAT_MVS
+                 || ld_state->oformat == LD_OFORMAT_VSE)
+                && symbol_is_undefined (symbol)) {
+                /* Mainframe-only output formats need less strict matching. */
+                symbol = mainframe_symbol_find (symbol->name);
+            }
+            if (symbol_is_undefined (symbol)) {
+                ld_error ("%s: unresolved external symbol '%s'",
+                          of->filename,
+                          symbol->name);
+                unresolved++;
+            }
+        }
+    }
+
+    if (unresolved) {
+        ld_fatal_error ("%lu unresolved external%s",
+                        unresolved,
+                        unresolved != 1 ? "s" : "");
+    }
+}
+
 void link (void)
 {
+    /* In the future this might be controlled by command line option. */
+    check_unresolved ();
+    
     collapse_subsections ();
 
     calculate_section_sizes_and_rvas ();

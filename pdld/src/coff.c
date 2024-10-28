@@ -2135,6 +2135,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             
         } else symbol->name = xstrndup (coff_symbol->Name, 8);
 
+        if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_STATIC
+            && coff_symbol->Value == 0) {
+            symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
+        }
+
         if (coff_symbol->SectionNumber > 0
             && coff_symbol->SectionNumber <= coff_hdr.NumberOfSections
             && part_p_array[coff_symbol->SectionNumber] == &dummy_comdat_part_s) {
