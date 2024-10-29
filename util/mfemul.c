@@ -677,7 +677,7 @@ static void doemul(void)
             int two = 0;
             int val;
 
-            splitrx();            
+            splitrx();
             if (b != 0)
             {
                 one = regs[b];
@@ -690,6 +690,31 @@ static void doemul(void)
             regs[t] *= val;
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+            p += 4;
+        }
+        else if (instr == 0x5c) /* m */
+        {
+            int one = 0;
+            int two = 0;
+            int val;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            val = getfullword(&base[one + two + d]);
+            /* +++ this takes and returns a result in a register pair, but
+               I don't know how to do that, so I am just ignoring the
+               first register, ie regs[t] */
+            regs[t + 1] = (I32)regs[t + 1] * val;
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t+1]);
 #endif
             p += 4;
         }
@@ -904,6 +929,15 @@ static void doemul(void)
             remainder = regs[x1+1] % regs[x2];
             regs[x1] = remainder;
             regs[x1+1] = value;
+            p += 2;
+        }
+        else if (instr == 0x1c) /* mr */
+        {
+            splitrr();
+            /* +++ This takes and stores result in a register pair,
+               but I don't know how to do that, so we ignore the
+               first register, ie regs[x1] */
+            regs[x1 + 1] = (I32)regs[x1 +  1] * (I32)regs[x2];
             p += 2;
         }
         else if (instr == 0x18) /* lr */
@@ -1389,53 +1423,8 @@ static void doemul(void)
                     continue;
                 }
             }
-            /* bl */
-            else if (cond == 0xc0)
-            {
-                if (lt)
-                {
-                    p = base + one + d;
-                    continue;
-                }
-            }
-            /* bh +++ this sometimes shows as BL - presumed binutils bug */
+            /* bh */
             else if (cond == 0x20)
-            {
-                if (gt)
-                {
-                    p = base + one + d;
-                    continue;
-                }
-            }
-            /* bh +++ - two different conditions are BH? */
-            else if (cond == 0x60)
-            {
-                if (gt)
-                {
-                    p = base + one + d;
-                    continue;
-                }
-            }
-            /* bh +++ - three different conditions are BH? */
-            else if (cond == 0x00)
-            {
-                if (gt)
-                {
-                    p = base + one + d;
-                    continue;
-                }
-            }
-            /* bh +++ - four different conditions are BH? */
-            else if (cond == 0xa0)
-            {
-                if (gt)
-                {
-                    p = base + one + d;
-                    continue;
-                }
-            }
-            /* bh +++ - five different conditions are BH? */
-            else if (cond == 0xe0)
             {
                 if (gt)
                 {
