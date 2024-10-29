@@ -436,7 +436,7 @@ static int exeloadLoadMVS(unsigned char **entry_point,
 #if PE_DEBUG
         printf("no arbitrary so getting %p\n", *loadloc);
 #endif
-        arbitrary_base = getfullword(*loadloc);
+        arbitrary_base = getfullword((unsigned char *)loadloc);
 #if PE_DEBUG
         printf("arbitrary now %p\n", (void *)arbitrary_base);
 #endif
