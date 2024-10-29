@@ -5757,7 +5757,7 @@ static int processRLD(unsigned char *buf,
     int negative;
     int ll;
     int a;
-    long newval;
+    unsigned long newval;
     unsigned char *zaploc;
     
     r = (unsigned char *)rld + 16;
