@@ -114,7 +114,7 @@ int CTYP __exec(char *cmd, void *env);
 int CTYP __getrc(void);
 #endif
 
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
 void *__allocmem(size_t size);
 typedef struct {
     void *addr;
@@ -126,7 +126,8 @@ typedef struct {
     long offset2;
 } mmstruc;
 
-#if defined(__ARM__) || defined(__64BIT__) || defined(__BIGFOOT__)
+#if (defined(__ARM__) && !defined(__WIN32__)) || defined(__64BIT__) \
+    || defined(__BIGFOOT__)
 void *__mmap(void *a, int b, int prot, int flags, int fd,
              long offset, long offset2);
 #else
@@ -400,7 +401,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
     if (size > MAX_CHUNK)
     {
 #if defined(__MVS__) || defined(__CMS__) || defined(__gnu_linux__) \
-    || defined(__ARM__)
+    || (defined(__ARM__) && !defined(__WIN32__))
 #if defined(MULMEM)
         /* If we support multiple memory requests */
         ptr = __getm(size);
@@ -423,7 +424,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
             *(size_t *)ptr = size;
             ptr = (char *)ptr + sizeof(size_t);
         }
-#elif defined(__gnu_linux__) || defined(__ARM__)
+#elif defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
         ptr = __allocmem(size + sizeof(size_t));
         if (ptr != NULL)
         {
@@ -470,7 +471,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
                 *(size_t *)ptr2 = size;
                 ptr2 = (char *)ptr2 + sizeof(size_t);
             }
-#elif defined(__gnu_linux__) || defined(__ARM__)
+#elif defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
             if (__memmgr.start == NULL)
             {
                 ptr2 = __allocmem(REQ_CHUNK);
@@ -528,7 +529,7 @@ __PDPCLIB_API__ void *malloc(size_t size)
     }
     return (ptr);
 
-#elif defined(__gnu_linux__) || defined(__ARM__)
+#elif defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
     void *ptr;
 
 #if 0
@@ -562,7 +563,8 @@ __PDPCLIB_API__ void *malloc(size_t size)
         mms.fd = -1;
         mms.offset = 0;
         mms.offset2 = 0;
-#if defined(__ARM__) || defined(__64BIT__) || defined(__BIGFOOT__)
+#if (defined(__ARM__) && !defined(__WIN32__)) || defined(__64BIT__) \
+    || defined(__BIGFOOT__)
         ptr = __mmap(mms.addr, mms.length, mms.prot,
                      mms.flags, mms.fd, mms.offset, mms.offset2);
 #else
@@ -787,7 +789,7 @@ __PDPCLIB_API__ void abort(void)
 }
 
 #if !defined(__EMX__) && !defined(__GNUC__) && !defined(__gnu_linux__) \
-    && !defined(__ARM__) \
+    && !(defined(__ARM__) && !defined(__WIN32__)) \
     || defined(WATLIN) \
     || (defined(__ARM__) && defined(__64BIT__)) \
     || defined(__MSC__)

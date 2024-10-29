@@ -1204,7 +1204,7 @@ static void osfopen(void)
             if ((modeType == 3) || (modeType == 6)
                 || (modeType == 9) || (modeType == 12))
             {
-#if defined(__gnu_linux__) || defined(__ARM__)
+#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__))
                 myfile->hfile = __open(fnm, 1, &errind);
 #else
                 myfile->hfile = __creat(fnm, 0, &errind);
@@ -2031,7 +2031,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 #ifdef __MSDOS__
     int errind;
     size_t tempRead;
-#if !defined(__gnu_linux__) && !defined(__ARM__)
+#if !defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__))
     static int numpending = 0;
     static char pending[20];
     static int genuine = -1;
@@ -2568,7 +2568,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
 
 #ifdef __MSDOS__
 
-#if !defined(__gnu_linux__) && !defined(__ARM__)
+#if !defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__))
     if ((stream == __stdin)
         && (toread == 1)
         && (numpending > 0))
@@ -2620,7 +2620,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
             char *p;
 
             p = ptr;
-#if !defined(__gnu_linux__) && !defined(__ARM__)
+#if !defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__))
             if ((toread == 1) && (*actualRead == 1))
             {
                 /* user pressing ESC will always be 1 character on MSDOS,
@@ -3455,8 +3455,8 @@ static void fwriteSlowT(const void *ptr,
             stream->upto = stream->fbuf;
             stream->bufStartR += tempWritten;
         }
-#if (!defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)) \
-    || defined(__BIGFOOT__)
+#if (!defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__)) \
+    && !defined(__MF32__)) || defined(__BIGFOOT__)
 #ifdef __BIGFOOT_
         if (stream->textMode && stream->permfile)
 #else
@@ -4166,7 +4166,8 @@ __PDPCLIB_API__ int fputc(int c, FILE *stream)
             {
                 if (stream->bufTech == _IOFBF)
                 {
-#if !defined(__gnu_linux__) && !defined(__ARM__) && !defined(__MF32__)
+#if !defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__)) \
+    && !defined(__MF32__)
                     *stream->upto++ = '\r';
 #endif
                     *stream->upto++ = '\n';
@@ -4584,7 +4585,8 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
         stream->ungetCh = -1;
     }
 
-#if (defined(__gnu_linux__) || defined(__ARM__) || defined(__PDOS386__)) \
+#if (defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__)) \
+    || defined(__PDOS386__)) \
     && !defined(__EFIBIOS__)
 
     if (stream == __stdin)
@@ -4710,7 +4712,7 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
                 }
                 else
                 {
-#if defined(__ARM__) && !defined(__UNOPT__)
+#if defined(__ARM__) && !defined(__64BIT__) && !defined(__UNOPT__)
 /* there is a bug where it seems to reach here, but I can't use
    printf to debug it, because adding a printf makes the problem
    disappear. So we'll just live with this for now */
@@ -4983,7 +4985,8 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
 #endif
 #ifdef __MSDOS__
         ret = __seek(stream->hfile, newpos, SEEK_SET);
-#if defined(__gnu_linux__) || defined(__ARM__) || defined(__PDOS386__)
+#if defined(__gnu_linux__) || (defined(__ARM__) && !defined(__WIN32__)) \
+    || defined(__PDOS386__)
         if (ret == -1) return (ret);
 #else
         if (ret) return (ret);
