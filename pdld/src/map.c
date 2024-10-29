@@ -64,7 +64,7 @@ void map_write (const char *filename)
             fprintf (outfile, "\n%-16s", "");
         }
 
-        fprintf (outfile, "%#08lx %#10lx\n",
+        fprintf (outfile, "%#08"PRIxADDRESS" %#10"PRIxADDRESS"\n",
                  ld_state->base_address + section->rva,
                  section->total_size);
         
@@ -77,7 +77,7 @@ void map_write (const char *filename)
                 fprintf (outfile, "\n%-16s", "");
             }
 
-            fprintf (outfile, "%#08lx %#10lx %s\n",
+            fprintf (outfile, "%#08"PRIxADDRESS" %#10"PRIxADDRESS" %s\n",
                      ld_state->base_address + part->rva,
                      part->content_size,
                      part->of->filename);
@@ -90,7 +90,7 @@ void map_write (const char *filename)
                 if (symbol->value == 0
                     && strncmp (section->name, symbol->name, strlen (section->name)) == 0) continue;
 
-                fprintf (outfile, "%-16s%#08lx %10s %s\n",
+                fprintf (outfile, "%-16s%#08"PRIxADDRESS" %10s %s\n",
                          "",
                          symbol_get_value_with_base (symbol),
                          "",
@@ -109,11 +109,11 @@ void map_write (const char *filename)
             last_section = section;
         }
         
-        fprintf (outfile, "Size of Module: %#08lx\n",
+        fprintf (outfile, "Size of Module: %#08"PRIxADDRESS"\n",
                  last_section ? (last_section->rva + last_section->total_size) : 0);
     }
         
-    fprintf (outfile, "Entry Point: %#08lx\n", ld_state->entry_point + ld_state->base_address);
+    fprintf (outfile, "Entry Point: %#08"PRIxADDRESS"\n", ld_state->entry_point + ld_state->base_address);
 
     if (strcmp (filename, "") != 0) fclose (outfile);
     return;

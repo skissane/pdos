@@ -77,8 +77,10 @@ static void reloc_arm_26_pcrel (struct section_part *part,
                                 struct symbol *symbol)
 {
     address_type result;
+    unsigned long field;
     
-    bytearray_read_3_bytes (&result, part->content + rel->offset, LITTLE_ENDIAN);
+    bytearray_read_3_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
+    result = field;
     result <<= 2;
     /* The field is signed, so sign extend it. */
     result = (result ^ 0x2000000) - 0x2000000;
@@ -281,11 +283,10 @@ static void reloc_aarch64_generic (struct section_part *part,
 
     switch (rel->howto->size) {
         case 8:
-            /* It should be actually 8 bytes but 64-bit int is not yet available. */
             {
-                unsigned long field4;
-                bytearray_read_4_bytes (&field4, part->content + rel->offset, LITTLE_ENDIAN);
-                field = field4;
+                uint_fast64_t field8;
+                bytearray_read_8_bytes (&field8, part->content + rel->offset, LITTLE_ENDIAN);
+                field = field8;
             }
             break;
 
@@ -315,8 +316,7 @@ static void reloc_aarch64_generic (struct section_part *part,
 
     switch (rel->howto->size) {
         case 8:
-            /* It should be actually 8 bytes but 64-bit int is not yet available. */
-            bytearray_write_4_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
+            bytearray_write_8_bytes (part->content + rel->offset, field, LITTLE_ENDIAN);
             break;
 
         case 4:
@@ -356,16 +356,35 @@ static void reloc_generic (struct section_part *part,
     } else {
         switch (rel->howto->size) {
             case 8:
-                /* It should be actually 8 bytes but 64-bit int is not yet available. */
-                bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
+                {
+                    uint_fast64_t field8;
+                    bytearray_read_8_bytes (&field8, part->content + rel->offset, LITTLE_ENDIAN);
+                    result = field8;
+                }
                 break;
 
             case 4:
-                bytearray_read_4_bytes (&result, part->content + rel->offset, endianess);
+                {
+                    unsigned long field4;
+                    bytearray_read_4_bytes (&field4, part->content + rel->offset, LITTLE_ENDIAN);
+                    result = field4;
+                }
                 break;
 
             case 3:
-                bytearray_read_3_bytes (&result, part->content + rel->offset, endianess);
+                {
+                    unsigned long field3;
+                    bytearray_read_3_bytes (&field3, part->content + rel->offset, LITTLE_ENDIAN);
+                    result = field3;
+                }
+                break;
+
+            case 2:
+                {
+                    unsigned short field2;
+                    bytearray_read_2_bytes (&field2, part->content + rel->offset, LITTLE_ENDIAN);
+                    result = field2;
+                }
                 break;
 
             default:
@@ -394,8 +413,7 @@ static void reloc_generic (struct section_part *part,
     
     switch (rel->howto->size) {
         case 8:
-            /* It should be actually 8 bytes but 64-bit int is not yet available. */
-            bytearray_write_4_bytes (part->content + rel->offset, result, endianess);
+            bytearray_write_8_bytes (part->content + rel->offset, result, endianess);
             break;
 
         case 4:
@@ -439,7 +457,7 @@ static void relocate_part (struct section_part *part)
                 symbol = mainframe_symbol_find (symbol->name);
             }
             if (symbol_is_undefined (symbol)) {
-                ld_error ("%s:(%s+0x%lx): undefined reference to '%s'",
+                ld_error ("%s:(%s+%#"PRIxADDRESS"): undefined reference to '%s'",
                           part->of->filename,
                           part->section->name,
                           relocs[i].offset,
@@ -561,7 +579,7 @@ static void calculate_entry_point (void)
     if (section) ld_state->entry_point = section->rva;
 
     if (ld_state->entry_symbol_name) {
-        ld_warn ("cannot find entry symbol '%s'; defaulting to 0x%08lx",
+        ld_warn ("cannot find entry symbol '%s'; defaulting to 0x%08"PRIxADDRESS,
                  ld_state->entry_symbol_name,
                  ld_state->base_address + ld_state->entry_point);
     }

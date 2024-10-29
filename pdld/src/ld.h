@@ -10,6 +10,7 @@
  *****************************************************************************/
 #include <stddef.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #if defined (_WIN32)
 # define NORETURN __declspec (noreturn)
@@ -45,7 +46,12 @@ enum ld_oformat {
     LD_OFORMAT_VSE
 };
 
-typedef unsigned long address_type;
+typedef uint_fast64_t address_type;
+
+#define PRIuADDRESS PRIuFAST64
+#define PRIxADDRESS PRIxFAST64
+#define PRIXADDRESS PRIXFAST64
+
 typedef unsigned long flag_int;
 
 extern const char *program_name;

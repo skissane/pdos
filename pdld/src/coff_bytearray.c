@@ -109,8 +109,7 @@ void read_struct_optional_header_plus (struct optional_header_plus_internal *opt
     COPY(optional_header_plus, AddressOfEntryPoint, 4);
     COPY(optional_header_plus, BaseOfCode, 4);
 
-    COPY(optional_header_plus, ImageBase, 4);
-    COPY(optional_header_plus, ImageBase_hi, 4);
+    COPY(optional_header_plus, ImageBase, 8);
     
     COPY(optional_header_plus, SectionAlignment, 4);
     COPY(optional_header_plus, FileAlignment, 4);
@@ -127,14 +126,10 @@ void read_struct_optional_header_plus (struct optional_header_plus_internal *opt
     COPY(optional_header_plus, Subsystem, 2);
     COPY(optional_header_plus, DllCharacteristics, 2);
     
-    COPY(optional_header_plus, SizeOfStackReserve, 4);
-    COPY(optional_header_plus, SizeOfStackReserve_hi, 4);
-    COPY(optional_header_plus, SizeOfStackCommit, 4);
-    COPY(optional_header_plus, SizeOfStackCommit_hi, 4);
-    COPY(optional_header_plus, SizeOfHeapReserve, 4);
-    COPY(optional_header_plus, SizeOfHeapReserve_hi, 4);
-    COPY(optional_header_plus, SizeOfHeapCommit, 4);
-    COPY(optional_header_plus, SizeOfHeapCommit_hi, 4);
+    COPY(optional_header_plus, SizeOfStackReserve, 8);
+    COPY(optional_header_plus, SizeOfStackCommit, 8);
+    COPY(optional_header_plus, SizeOfHeapReserve, 8);
+    COPY(optional_header_plus, SizeOfHeapCommit, 8);
     
     COPY(optional_header_plus, LoaderFlags, 4);
     COPY(optional_header_plus, NumberOfRvaAndSizes, 4);
@@ -353,8 +348,7 @@ void write_struct_optional_header_plus (void *memory, const struct optional_head
     COPY(optional_header_plus, AddressOfEntryPoint, 4);
     COPY(optional_header_plus, BaseOfCode, 4);
 
-    COPY(optional_header_plus, ImageBase, 4);
-    COPY(optional_header_plus, ImageBase_hi, 4);
+    COPY(optional_header_plus, ImageBase, 8);
     
     COPY(optional_header_plus, SectionAlignment, 4);
     COPY(optional_header_plus, FileAlignment, 4);
@@ -371,14 +365,10 @@ void write_struct_optional_header_plus (void *memory, const struct optional_head
     COPY(optional_header_plus, Subsystem, 2);
     COPY(optional_header_plus, DllCharacteristics, 2);
     
-    COPY(optional_header_plus, SizeOfStackReserve, 4);
-    COPY(optional_header_plus, SizeOfStackReserve_hi, 4);
-    COPY(optional_header_plus, SizeOfStackCommit, 4);
-    COPY(optional_header_plus, SizeOfStackCommit_hi, 4);
-    COPY(optional_header_plus, SizeOfHeapReserve, 4);
-    COPY(optional_header_plus, SizeOfHeapReserve_hi, 4);
-    COPY(optional_header_plus, SizeOfHeapCommit, 4);
-    COPY(optional_header_plus, SizeOfHeapCommit_hi, 4);
+    COPY(optional_header_plus, SizeOfStackReserve, 8);
+    COPY(optional_header_plus, SizeOfStackCommit, 8);
+    COPY(optional_header_plus, SizeOfHeapReserve, 8);
+    COPY(optional_header_plus, SizeOfHeapCommit, 8);
     
     COPY(optional_header_plus, LoaderFlags, 4);
     COPY(optional_header_plus, NumberOfRvaAndSizes, 4);

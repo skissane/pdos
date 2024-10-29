@@ -113,6 +113,7 @@ struct optional_header_internal {
 
 #define DEFAULT_EXE_IMAGE_BASE 0x00400000
 #define DEFAULT_DLL_IMAGE_BASE 0x10000000
+#define DEFAULT_ARM64_IMAGE_BASE 0x140000000
     unsigned long ImageBase;
 #define DEFAULT_SECTION_ALIGNMENT 0x1000
     unsigned long SectionAlignment;
@@ -187,9 +188,7 @@ struct optional_header_plus_internal {
     unsigned long AddressOfEntryPoint;
     unsigned long BaseOfCode;
 
-    /* Split into 2 fields so 64-bit int is not needed. */
-    unsigned long ImageBase;
-    unsigned long ImageBase_hi;
+    uint_fast64_t ImageBase;
     
     unsigned long SectionAlignment;
     unsigned long FileAlignment;
@@ -206,14 +205,10 @@ struct optional_header_plus_internal {
     unsigned short Subsystem;
     unsigned short DllCharacteristics;
     
-    unsigned long SizeOfStackReserve;
-    unsigned long SizeOfStackReserve_hi;
-    unsigned long SizeOfStackCommit;
-    unsigned long SizeOfStackCommit_hi;
-    unsigned long SizeOfHeapReserve;
-    unsigned long SizeOfHeapReserve_hi;
-    unsigned long SizeOfHeapCommit;
-    unsigned long SizeOfHeapCommit_hi;
+    uint_fast64_t SizeOfStackReserve;
+    uint_fast64_t SizeOfStackCommit;
+    uint_fast64_t SizeOfHeapReserve;
+    uint_fast64_t SizeOfHeapCommit;
     
     unsigned long LoaderFlags; /* Reserved, must be 0. */
     unsigned long NumberOfRvaAndSizes;
@@ -232,8 +227,7 @@ struct optional_header_plus_file {
     unsigned char AddressOfEntryPoint[4];
     unsigned char BaseOfCode[4];
 
-    unsigned char ImageBase[4];
-    unsigned char ImageBase_hi[4];
+    unsigned char ImageBase[8];
     
     unsigned char SectionAlignment[4];
     unsigned char FileAlignment[4];
@@ -250,14 +244,10 @@ struct optional_header_plus_file {
     unsigned char Subsystem[2];
     unsigned char DllCharacteristics[2];
     
-    unsigned char SizeOfStackReserve[4];
-    unsigned char SizeOfStackReserve_hi[4];
-    unsigned char SizeOfStackCommit[4];
-    unsigned char SizeOfStackCommit_hi[4];
-    unsigned char SizeOfHeapReserve[4];
-    unsigned char SizeOfHeapReserve_hi[4];
-    unsigned char SizeOfHeapCommit[4];
-    unsigned char SizeOfHeapCommit_hi[4];
+    unsigned char SizeOfStackReserve[8];
+    unsigned char SizeOfStackCommit[8];
+    unsigned char SizeOfHeapReserve[8];
+    unsigned char SizeOfHeapCommit[8];
     
     unsigned char LoaderFlags[4];
     unsigned char NumberOfRvaAndSizes[4];

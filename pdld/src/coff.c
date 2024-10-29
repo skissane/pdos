@@ -338,6 +338,7 @@ static void write_sections (unsigned char *file)
 
 address_type coff_get_base_address (void)
 {    
+    if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) return DEFAULT_ARM64_IMAGE_BASE;
     if (ld_state->create_shared_library) return DEFAULT_DLL_IMAGE_BASE;
     return DEFAULT_EXE_IMAGE_BASE;
 }

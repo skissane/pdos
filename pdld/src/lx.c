@@ -86,6 +86,7 @@ static size_t calculate_fixup_record_table_size (void)
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
                     const struct section *source_section;
                     address_type value;
+                    unsigned long field;
                     
                     if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
                         if (symbol_is_undefined ((symbol = symbol_find (symbol->name)))) continue;
@@ -93,7 +94,8 @@ static size_t calculate_fixup_record_table_size (void)
                     if (!symbol->part) continue; /* Absolute symbol. */
 
                     source_section = symbol->part->section;
-                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    bytearray_read_4_bytes (&field, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    value = field;
                     value -= ld_state->base_address + source_section->rva;
                     
                     if (value > 0xffff) frt_size += 2;
@@ -153,6 +155,7 @@ static void write_relocations (unsigned char *file,
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
                     const struct section *source_section;
                     address_type value;
+                    unsigned long field;
                     unsigned char flags;
                     
                     if (symbol_is_undefined ((symbol = part->relocation_array[i].symbol))) {
@@ -164,7 +167,8 @@ static void write_relocations (unsigned char *file,
                     /* The source offset is just the field value
                      * made source-section-relative.
                      */
-                    bytearray_read_4_bytes (&value, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    bytearray_read_4_bytes (&field, part->content + part->relocation_array[i].offset, LITTLE_ENDIAN);
+                    value = field;
                     value -= ld_state->base_address + source_section->rva;
 
                     flags = FIXUP_TARGET_FLAGS_INTERNAL_REFERENCE;

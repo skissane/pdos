@@ -84,13 +84,13 @@ void symbol_record_external_symbol (struct symbol *symbol)
 
     if (symbol_is_undefined (symbol)) return;
 
-    ld_error ("%s:(%s%s0x%lx): multiple definition of '%s'",
+    ld_error ("%s:(%s%s0x%"PRIxADDRESS"): multiple definition of '%s'",
               symbol->part->of->filename,
               symbol->part ? symbol->part->section->name : "",
               symbol->part ? "+" : "",
               symbol->value,
               symbol->name);
-    ld_note ("%s:(%s%s0x%lx): first defined here",
+    ld_note ("%s:(%s%s0x%"PRIxADDRESS"): first defined here",
              old_symbol->part->of->filename,
              old_symbol->part ? old_symbol->part->section->name : "",
              old_symbol->part ? "+" : "",
