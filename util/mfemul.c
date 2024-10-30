@@ -178,7 +178,9 @@ int main(int argc, char **argv)
     handles[2] = stderr;
     
     p = base + 1024 * 1024L;
-    putfullword(p + 7 * sizeof(U32), 0); /* stdin handle */
+    /* exception code so that we don't have a NULL pointer */
+    /* putfullword(p + 7 * sizeof(U32), 0); */ /* stdin handle */
+    putfullword(p + 7 * sizeof(U32), FOPEN_MAX); /* stdin handle */
     putfullword(p + 8 * sizeof(U32), 1); /* stdout handle */
     putfullword(p + 38 * sizeof(U32), 2); /* stderr handle */
 
@@ -335,10 +337,31 @@ static void spec_call(int val)
     }
     else if (val == 12) /* fread */
     {
-        regs[15] = fread(base + getfullword(base + parms + sizeof(U32)*0),
-                         getfullword(base + parms + sizeof(U32)*1),
-                         getfullword(base + parms + sizeof(U32)*2),
-                         handles[getfullword(base + parms + sizeof(U32)*3)]);
+        int handle;
+        size_t sz;
+        size_t nr;
+        unsigned char *ptr;
+
+        ptr = base + getfullword(base + parms + sizeof(U32)*0);
+        sz = getfullword(base + parms + sizeof(U32)*1);
+        nr = getfullword(base + parms + sizeof(U32)*2);
+        handle = getfullword(base + parms + sizeof(U32)*3);
+        /* exception code so that we don't have a NULL pointer */
+        if (handle == FOPEN_MAX)
+        {
+            handle = 0;
+            /* exception code for dealing with unbuffered input */
+            sz = 1;
+            nr = 1;
+        }
+        regs[15] = fread((char *)ptr,
+                         sz,
+                         nr,
+                         handles[handle]);
+        if (handle == 0)
+        {
+            *ptr = tebc(*ptr);
+        }
     }
     else if (val == 23) /* fflush */
     {
