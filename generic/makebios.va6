@@ -4,8 +4,8 @@
 # which are PE
 
 CC=cl
-LD=link
-#LD=pdld --no-insert-timestamp --emit-relocs -s
+#LD=link
+LD=pdld --no-insert-timestamp --emit-relocs -s
 COPTS=-c -nologo -GS- -Za -Zl -u -X -D__MSC__ -D__64BIT__ -D__EFI__ \
     -D__EFIBIOS__ -U__WIN32__ -I../pdpclib -I../bios -I../src -DTARGET_64BIT \
     -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY -D__ARM__ \
@@ -15,8 +15,8 @@ TARGET=bios.exe
 OBJS=../bios/exeload.obj
 
 $(TARGET): clean bios.obj $(OBJS)
-  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.obj $(OBJS) ../pdpclib/pdpefi.lib
-#  $(LD) --oformat coff -subsystem 10 --image-base 0x400000 -e efimain -o $(TARGET) bios.obj $(OBJS) ../pdpclib/pdpefi.lib
+#  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.obj $(OBJS) ../pdpclib/pdpefi.lib
+  $(LD) --oformat coff -subsystem 10 --image-base 0x400000 -e efimain -o $(TARGET) bios.obj $(OBJS) ../pdpclib/pdpefi.lib
 
 .c.obj:
   $(CC) $(COPTS) -Fo$*.obj $<
