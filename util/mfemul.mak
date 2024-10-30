@@ -9,13 +9,35 @@
 
 # define COMEMUL for a COM file, or PBEMUL for a pseudo-bios
 
+
+ifeq "$(targ)" "arm"
+
+CC=gccprm
+CFLAGS=-O0 -DPBEMUL
+AS=asprm
+AR=arprm
+COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__ \
+    -DNEED_MVS \
+    -D__WIN32__ -D__ARM__ -msoft-float -mapcs-32 -fno-leading-underscore \
+    -D__USEBIVA__
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
+
+else
+
 CC=gccwin
 CFLAGS=-O2 -DPBEMUL
-LD=pdld
-LDFLAGS=-s
 AS=pdas --oformat coff
 COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__ \
     -DNEED_MVS
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
+
+endif
+
+
+LD=pdld
+LDFLAGS=-s
 
 OBJS=mfemul.obj ../bios/exeload.obj
 
@@ -24,7 +46,7 @@ TARGET=mfemul.exe
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
-  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) ../pdpclib/msvcrt.lib
+  $(LD) $(LDFLAGS) -o $(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
 
 .c.obj:
   $(CC) $(COPTS) -o $*.s $<
