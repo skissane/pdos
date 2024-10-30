@@ -258,6 +258,10 @@ static void reloc_aarch64_hi21_page_pcrel (struct section_part *part,
         bottom_2_bits >>= 12;
     }
     result >>= 9;
+    /* If the result is negative, those 2 bits are already set,
+     * so they must be cleared before putting the real bottom 2 bits there.
+     */
+    result &= ~(((address_type)0x3) << 29);
     result |= bottom_2_bits << 29;
 
     bytearray_read_4_bytes (&field, part->content + rel->offset, LITTLE_ENDIAN);
