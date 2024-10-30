@@ -2886,8 +2886,13 @@ static int exeloadLoadPE(unsigned char **entry_point,
         return (2);
     }
 
+#if __64BIT__
+    exeStart = (void *)((((unsigned long long)orig_exeStart + 0x1000)
+                       / 0x1000) * 0x1000);
+#else
     exeStart = (void *)((((unsigned long)orig_exeStart + 0x1000)
                        / 0x1000) * 0x1000);
+#endif
 
     /* Loads all sections at their addresses. */
     for (section = section_table;
