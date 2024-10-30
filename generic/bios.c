@@ -66,17 +66,13 @@ static int callami(char *buf);
 extern int __mmgid;
 #endif
 
+static int globrc = 0;
+
 #if defined(W64HACK) || defined(__EFI__) || defined(W64DLL)
 #include <efi.h>
 static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir);
 static EFI_STATUS directory_test (void);
 static EFI_STATUS check_path(unsigned char *);
-static int globrc = 0;
-#endif
-
-#if (defined(W32EMUL) || defined(GENSHELL)) \
-    && !defined(__EFI__)
-static int globrc = 0;
 #endif
 
 #include "__os.h"
