@@ -45,7 +45,7 @@ pdpclib.a: stdio.o string.o stdlib.o \
         $(AR) r pdpclib.a stdio.o string.o stdlib.o
         $(AR) r pdpclib.a start.o time.o errno.o assert.o signal.o
         $(AR) r pdpclib.a locale.o ctype.o setjmp.o math.o
-        $(LD) $(EXTRA1) -o pdptest.exe pdptest.o pdpclib.a $(EXTRA2)
+        $(LD) $(EXTRA1) -o pdptest.exe $(EXTRA2) pdptest.o pdpclib.a
 
 .c.o:
         $(CC) $(COPTS) -o $*.s $<
