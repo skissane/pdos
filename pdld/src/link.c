@@ -362,7 +362,7 @@ static void reloc_generic (struct section_part *part,
             case 8:
                 {
                     uint_fast64_t field8;
-                    bytearray_read_8_bytes (&field8, part->content + rel->offset, LITTLE_ENDIAN);
+                    bytearray_read_8_bytes (&field8, part->content + rel->offset, endianess);
                     result = field8;
                 }
                 break;
@@ -370,7 +370,7 @@ static void reloc_generic (struct section_part *part,
             case 4:
                 {
                     unsigned long field4;
-                    bytearray_read_4_bytes (&field4, part->content + rel->offset, LITTLE_ENDIAN);
+                    bytearray_read_4_bytes (&field4, part->content + rel->offset, endianess);
                     result = field4;
                 }
                 break;
@@ -378,7 +378,7 @@ static void reloc_generic (struct section_part *part,
             case 3:
                 {
                     unsigned long field3;
-                    bytearray_read_3_bytes (&field3, part->content + rel->offset, LITTLE_ENDIAN);
+                    bytearray_read_3_bytes (&field3, part->content + rel->offset, endianess);
                     result = field3;
                 }
                 break;
@@ -386,7 +386,7 @@ static void reloc_generic (struct section_part *part,
             case 2:
                 {
                     unsigned short field2;
-                    bytearray_read_2_bytes (&field2, part->content + rel->offset, LITTLE_ENDIAN);
+                    bytearray_read_2_bytes (&field2, part->content + rel->offset, endianess);
                     result = field2;
                 }
                 break;
@@ -426,6 +426,10 @@ static void reloc_generic (struct section_part *part,
 
         case 3:
             bytearray_write_3_bytes (part->content + rel->offset, result, endianess);
+            break;
+
+        case 2:
+            bytearray_write_2_bytes (part->content + rel->offset, result, endianess);
             break;
 
         default:
