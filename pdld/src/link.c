@@ -597,15 +597,17 @@ static void check_unresolved (void)
     for (of = all_object_files; of; of = of->next) {
         size_t i;
 
-        for (i = 1; i < of->symbol_count; i++) {
+        for (i = 0; i < of->symbol_count; i++) {
             struct symbol *symbol = of->symbol_array + i;
 
             /* Undefined section symbols (created by discarding COMDAT)
+             * and undefined nameless ELF/MVS auxiliary symbols
              * should not be reported here.
              */
             if (symbol->auxiliary
                 || !symbol_is_undefined (symbol)
-                || (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)) continue;
+                || (symbol->flags & SYMBOL_FLAG_SECTION_SYMBOL)
+                || !symbol->name) continue;
 
             if ((symbol = symbol_find (symbol->name)) == NULL) {
                 symbol = of->symbol_array + i;
