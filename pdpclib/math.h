@@ -21,28 +21,19 @@
 #define __PDPCLIB_HEADFUNC
 #endif
 
-#if defined(__FPHACK1__)
-
-/* hack around assembler limitation for now */
-#define HUGE_VAL 9.999999999999999999999E37
-
 /*
   Some constants - at present these are only defined for IBM
 */
-#elif defined(__MVS__) || defined (__CMS__) || defined(__VSE__)
+#if defined(__MVS__) || defined (__CMS__) || defined(__VSE__) \
+  || defined(__MF32__)
 /*
  This is about the nearest thing we can get to inf wthout
 */
 #define HUGE_VAL 9.999999999999999999999E72
 
-#elif defined(__MF32__)
-
-/* hack around assembler limitation for now */
-#define HUGE_VAL 9.999999999999999999999E37
-
 #else
 
-#define HUGE_VAL 9.999999999999999999999E72
+#define HUGE_VAL 9.999999999999999999999E37
 
 #endif
 

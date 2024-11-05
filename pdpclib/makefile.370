@@ -24,8 +24,8 @@ EXTRA2= mvsstart.obj mvssupa.obj
 endif
 
 
-#CC=gcc370 -D__FPHACK1__
-CC=gccmvs -D__FPHACK1__
+#CC=gcc370
+CC=gccmvs
 #AS=as370 -mebcdic
 AS=as370 -mhlasm -mebcdic
 
