@@ -11,6 +11,16 @@
 #include <limits.h>
 #include <stdint.h>
 
+/* It is necessary to avoid undefined behavior
+ * that would be caused by the right operand of shift
+ * being greater than or equal to the width in bits of the promoted left operand.
+ * Also, some preprocessors cannot handle too large integer constants,
+ * so that needs to be avoided by the first comparison.
+ */
+#if defined (NO_LONG_LONG) && (ULONG_MAX == 0xffffffff || ULONG_MAX < 0xffffffffffffffff)
+#define NO_64_BIT_INT
+#endif
+
 void bytearray_read_1_bytes (unsigned char *value_p, const unsigned char *src, int little_endian)
 {
     *value_p = src[0];
@@ -73,6 +83,7 @@ void bytearray_read_4_bytes (unsigned long *value_p, const unsigned char *src, i
     }
 }
 
+#ifndef NO_64_BIT_INT
 void bytearray_read_8_bytes (uint_fast64_t *value_p, const unsigned char *src, int little_endian)
 {
     *value_p = 0;
@@ -91,6 +102,26 @@ void bytearray_read_8_bytes (uint_fast64_t *value_p, const unsigned char *src, i
         }
     }
 }
+#else
+void bytearray_read_8_bytes (uint_fast64_t *value_p, const unsigned char *src, int little_endian)
+{
+    *value_p = 0;
+
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 4; i++) {
+            *value_p |= (uint_fast64_t)src[i] << (CHAR_BIT * i);
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 4; i++) {
+            *value_p |= (uint_fast64_t)src[8 - 1 - i] << (CHAR_BIT * i);
+        }
+    }
+}
+#endif
 
 void bytearray_write_1_bytes (unsigned char *dest, unsigned char value, int little_endian)
 {
@@ -148,6 +179,7 @@ void bytearray_write_4_bytes (unsigned char *dest, unsigned long value, int litt
     }
 }
 
+#ifndef NO_64_BIT_INT
 void bytearray_write_8_bytes (unsigned char *dest, uint_fast64_t value, int little_endian)
 {
     if (little_endian) {
@@ -164,3 +196,21 @@ void bytearray_write_8_bytes (unsigned char *dest, uint_fast64_t value, int litt
         }
     }
 }
+#else
+void bytearray_write_8_bytes (unsigned char *dest, uint_fast64_t value, int little_endian)
+{
+    if (little_endian) {
+        int i;
+
+        for (i = 0; i < 4; i++) {
+            dest[i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    } else {
+        int i;
+
+        for (i = 0; i < 4; i++) {
+            dest[8 - 1 - i] = (value >> (CHAR_BIT * i)) & UCHAR_MAX;
+        }
+    }
+}
+#endif
