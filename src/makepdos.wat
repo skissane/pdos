@@ -33,7 +33,7 @@ $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
   zap pdos.exe 2 0x0f
   zap pdos.exe 3 0x00
   zap pdos.exe 4 0x00
-#  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
+#  $(LD) --oformat binary -Map map.txt --image-base 0x20000 -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
 #  link -map -nologo -fixed -nodefaultlib -entry:start -out:$@ $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
   rm -f $(TEMP_ARCHIVE)
 

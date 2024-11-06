@@ -35,7 +35,7 @@ all: clean $(TARGET)
 
 $(TARGET): $(OBJS) $(TEMP_ARCHIVE)
   $(AR) s $(TEMP_ARCHIVE)
-  $(LD) -Map map.txt --no-insert-timestamp --image-base 0x20000 --file-alignment 4096 --convert-to-flat --disable-reloc-section -s -e _start -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
+  $(LD) --oformat binary -Map map.txt --image-base 0x20000 -o $(TARGET) $(OBJS) $(TEMP_ARCHIVE) ../pdpclib/pdos.lib
   rm -f $(TEMP_ARCHIVE)
 
 $(TEMP_ARCHIVE): $(ARCHIVE_OBJS)
