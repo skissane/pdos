@@ -72,10 +72,12 @@ void __va_start(va_list *x, ...);
 #ifdef __64BIT__
 #define va_arg(ap, type) *(type *)(ap += (sizeof(type) < 8) ? 8 : sizeof(type),\
     ap - ((sizeof(type) < 8) ? 8 : sizeof(type)))
-#elif defined(__MSC__) && defined(__ARM__)
-/* this is not perfectly accurate - doubles need to be shifted 4 bytes up,
-   only if they are misaligned */
-#define va_arg(ap, type) *(type *)(ap += (sizeof(type) < 8) ? 4 : (4 + sizeof(type)),\
+#elif defined(__ARM__)
+/* doubles should be on an 8-byte boundary */
+#define va_arg(ap, type) *(type *)(ap += (sizeof(type) < 8) ? \
+    4 : ( \
+          ((((size_t)ap % 8) == 0) ? 0 : 4) \
+         + sizeof(type)), \
     ap - ((sizeof(type) < 8) ? 4 : sizeof(type)))
 #else
 #define va_arg(ap, type) *(type *)(ap += sizeof(type), ap - sizeof(type))
