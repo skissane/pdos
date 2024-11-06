@@ -10,10 +10,14 @@
 # stack is not 8-byte aligned, so we are adjusting it here.
 # We should really check to see if it is already properly aligned
 
+# Actually, it seems that it is aligned properly after all
+# So the adjustment is being changed from 4 to 8 until there
+# is evidence of it being misaligned
+
 .globl __pdpent
 __pdpent:
         stmfd   sp!,{r0,lr}
-        sub     sp, sp, #4
+        sub     sp, sp, #8
 #        ldr     r0,=mainCRTStartup
 # Activate Thumb mode by adding 1 (should probaby use OR instead,
 # in case the above ldr has already compensated for that)
@@ -21,5 +25,5 @@ __pdpent:
 # mainCRTStartup returns by moving lr into pc, and will restore
 # our original ARM mode (not Thumb) due to that, I think
         bl      mainCRTStartup
-        add     sp, sp, #4
+        add     sp, sp, #8
         ldmia   sp!,{r0,pc}
