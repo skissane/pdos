@@ -1,0 +1,33 @@
+# This builds EFI (PE) executables for the ARM
+# using Visual C
+
+CC=cl
+AR=lib
+#LD=pdld -subsystem 10 --no-insert-timestamp
+LD=link -subsystem:efi_application
+AS=asprm
+
+COPTS=-c -I../src -D__ARM__ -I. -D__EFI__ -D__EFIBIOS__ \
+    -DNOUNDMAIN -D__GENSHELL__ -D__MSC__ -nologo -GS- -Zl -O2 -Oi-
+
+TARGET=pdptest.efi
+OBJS=efistart.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
+    assert.obj signal.obj locale.obj ctype.obj math.obj armsupb.obj \
+    fpfuncsa.obj fpfuncsm.obj
+
+$(TARGET): clean pdptest.obj $(OBJS)
+  rm -f pdpefi.lib
+  $(AR) -nologo -out:pdpefi.lib $(OBJS)
+#  $(LD) -s -e efimain -nostdlib -o $(TARGET) pdptest.obj pdpefi.lib
+  $(LD) -nologo -entry:efimain -out:pdptest.efi -fixed:no efistart.obj pdptest.obj armsupb.obj pdpefi.lib
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+armsupb.obj: armsupb.asm
+# we don't need an explicit -16
+  armasm -nologo -o armsupb.obj armsupb.asm
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
