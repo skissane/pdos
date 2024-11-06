@@ -100,8 +100,8 @@ __enabfp proc
 
 ; not sure if this syntax is correct, but we're not
 ; getting that far
-;        orr     r3,r2
-;        str     r3,[r1]
+        orr     r3,r2
+        str     r3,[r1]
 
 ; these instructions work, so I presumably have privilege
         dsb
