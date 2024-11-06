@@ -10,9 +10,8 @@ AS=asprm
 
 COPTS=-S -O0 -msoft-float -fno-common -mapcs-32 \
     -I../src -fno-leading-underscore \
-    -D__ARM__ -D__USEBIVA__ -I. -D__WIN32__ \
-    -D__STATIC__ -DNOUNDMAIN -D__GENSHELL__ \
-    -D__NOSPECBIVA__
+    -D__ARM__ -I. -D__WIN32__ \
+    -D__STATIC__ -DNOUNDMAIN -D__GENSHELL__
 
 TARGET=pdptest.exe
 OBJS=p32start.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
