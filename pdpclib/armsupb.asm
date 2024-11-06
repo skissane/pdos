@@ -79,6 +79,44 @@ longjmp proc
         endp
 
 
+; Enable floating point in a privileged environment
+; by setting bits 20-23 of the CPACR to 1
+
+; This code is not working under a qemu EFI shell
+; No idea why
+; So currently I don't have floating point working,
+; even when compiled with Visual C
+; Even just the read from the CPACR address fails
+
+; void __enabfp(void);
+
+        export  __enabfp
+__enabfp proc
+        ldr     r1,one
+        ldr     r2,two
+
+; this instruction is failing
+        ldr     r3,[r1]
+
+; not sure if this syntax is correct, but we're not
+; getting that far
+;        orr     r3,r2
+;        str     r3,[r1]
+
+; these instructions work, so I presumably have privilege
+        dsb
+        isb
+        mov     pc,lr
+
+one
+        dcd     0xE000ED88
+two
+        dcd     0xF00000
+
+        endp
+
+
+
 ;# unsigned integer divide
 ;# inner loop code taken from http://me.henri.net/fp-div.html
 ;# in:  r0 = num,  r1 = den
