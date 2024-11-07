@@ -51,6 +51,8 @@ int main (int argc, char **argv)
 
     if (ld_state->oformat == LD_OFORMAT_COFF) {
         coff_before_link ();
+    } else if (ld_state->oformat == LD_OFORMAT_ELF) {
+        elf_before_link ();
     } else if (ld_state->oformat == LD_OFORMAT_LX) {
         lx_before_link ();
     }

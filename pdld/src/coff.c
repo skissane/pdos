@@ -693,7 +693,6 @@ static void generate_edata (void)
 
     of = object_file_make (1 + num_names, FAKE_LD_FILENAME);
     section = section_find_or_make (".edata");
-    section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
     part = section_part_new (section, of);
 
@@ -887,8 +886,13 @@ void coff_before_link (void)
     if (generate_reloc_section) {
         can_be_relocated = 1;
         section = section_find_or_make (".reloc");
-        section->section_alignment = SectionAlignment;
         section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
+    }
+
+    for (section = all_sections; section; section = section->next) {
+        if (section->section_alignment < SectionAlignment) {
+            section->section_alignment = SectionAlignment;
+        }
     }
 
     if (stub_file) {
@@ -2048,8 +2052,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                 }
 
                 section = section_find_or_make (section_name);
-
-                section->section_alignment = SectionAlignment;
                 section->flags = translate_Characteristics_to_section_flags (section_hdr.Characteristics);
                 
                 /* Some object files define section without any data to get symbol
@@ -2161,8 +2163,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     
                     if (bss_section == NULL) {
                         bss_section = section_find_or_make (".bss");
-
-                        bss_section->section_alignment = SectionAlignment;
                         bss_section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
                         bss_section->is_bss = 1;
                         bss_section_number = coff_hdr.NumberOfSections ? coff_hdr.NumberOfSections : 1;
@@ -2258,7 +2258,6 @@ static void import_generate_head (const char *dll_name, const char *filename)
 
     of = object_file_make (3, filename);
     section = section_find_or_make (".idata");
-    section->section_alignment = SectionAlignment;
     section->flags = translate_Characteristics_to_section_flags (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE);
 
     subsection = subsection_find_or_make (section, "2");

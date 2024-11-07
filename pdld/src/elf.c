@@ -453,6 +453,18 @@ address_type elf_get_first_section_rva (void)
     return ALIGN (size_of_headers, all_sections->section_alignment);
 }
 
+void elf_before_link (void)
+{
+    struct section *section;
+
+    for (section = all_sections; section; section = section->next) {
+        /* Same alignment as COFF default SectionAlignment. */
+        if (section->section_alignment < 0x1000) {
+            section->section_alignment = 0x1000;
+        }
+    }
+}
+
 static void translate_relocation (struct reloc_entry *reloc,
                                   struct Elf32_Rel_internal *input_reloc,
                                   struct section_part *part)
@@ -1145,11 +1157,7 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                 }
 
                 section = section_find_or_make (section_name);
-
-                if (shdr.sh_addralign < 0x1000) {
-                    /* Same alignment as for COFF input. */
-                    section->section_alignment = 0x1000;
-                }
+                
                 if (shdr.sh_addralign > section->section_alignment) {
                     section->section_alignment = shdr.sh_addralign;
                 }
@@ -1265,7 +1273,9 @@ static int read_elf_object (unsigned char *file, size_t file_size, const char *f
                         if (bss_section == NULL) {
                             bss_section = section_find_or_make (".bss");
 
-                            bss_section->section_alignment = 4;
+                            if (bss_section->section_alignment < 4) {
+                                bss_section->section_alignment = 4;
+                            }
                             bss_section->flags = translate_sh_flags_to_section_flags (SHF_WRITE | SHF_ALLOC);
                             bss_section->is_bss = 1;
                             bss_section_number = ehdr.e_shnum ? ehdr.e_shnum : 1;
@@ -1532,10 +1542,6 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
 
                 section = section_find_or_make (section_name);
 
-                if (shdr_p->sh_addralign < 0x1000) {
-                    /* Same alignment as for COFF input. */
-                    section->section_alignment = 0x1000;
-                }
                 if (shdr_p->sh_addralign > section->section_alignment) {
                     section->section_alignment = shdr_p->sh_addralign;
                 }
@@ -1649,7 +1655,9 @@ static int read_elf64_object (unsigned char *file, size_t file_size, const char 
                         if (bss_section == NULL) {
                             bss_section = section_find_or_make (".bss");
 
-                            bss_section->section_alignment = 4;
+                            if (bss_section->section_alignment < 4) {
+                                bss_section->section_alignment = 4;
+                            }
                             bss_section->flags = translate_sh_flags_to_section_flags (SHF_WRITE | SHF_ALLOC);
                             bss_section->is_bss = 1;
                             bss_section_number = ehdr.e_shnum ? ehdr.e_shnum : 1;
