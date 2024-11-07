@@ -1279,8 +1279,8 @@ float __truncdfsf2(double x)
     unsigned long y2;
     unsigned long res;
 
-    y1 = *((unsigned int *)&x + 0);
-    y2 = *((unsigned int *)&x + 1);
+    y1 = *((unsigned int *)&x + 1);
+    y2 = *((unsigned int *)&x + 0);
     res = (y1 & 0xc0000000UL) | ((y1 & 0x07ffffffUL) << 3) | ((y2 & 0xE000000UL) >> 29);
     return (*(float *)&res);
 }
@@ -1296,7 +1296,7 @@ double __extendsfdf2(float x)
     y = *(unsigned int *)&x;
     res1 = (y & 0xc0000000UL) | ((y & 0x3fffffffUL) >> 3);
     res2 = (y & 7) << 29;
-    *(unsigned int *)&res = res1;
-    *((unsigned int *)&res + 1) = res2;
+    *(unsigned int *)&res = res2;
+    *((unsigned int *)&res + 1) = res1;
     return res;
 }
