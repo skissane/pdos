@@ -339,7 +339,7 @@ static int output_relocation (FILE *outfile, struct fixup *fixup)
 
 static void sort_symbols (void)
 {
-    /* According to the specification,
+    /* According to PE/COFF specification,
      * COMDAT section symbol must be the first symbol
      * with the SectionNumber of the COMDAT section.
      * This simple sorting complies with the requirement
