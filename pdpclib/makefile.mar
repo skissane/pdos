@@ -1,5 +1,5 @@
 # This builds 32-bit Windows ARM (PE/coff) executables
-# using Visual C
+# using Visual C and targeting msvcrt.dll
 
 # run makek32.mar first
 
