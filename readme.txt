@@ -436,7 +436,8 @@ nmake -f makefile.vsc
 copy pdmake.exe \winpath
 
 cd \devel\gcc\gcc
-pdmake -f makefile.vsc
+pdmake -f windowsm.mak
+(after modifying as per comments, I think)
 copy gcc-new.exe \winpath\gccwin.exe
 
 cd \devel\pdos\pdas
