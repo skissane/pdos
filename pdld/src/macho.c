@@ -323,7 +323,7 @@ static int read_macho_object (unsigned char *file, size_t file_size, const char 
                 continue;
             }
             
-            string_table = file + symtab_cmd.stroff;
+            string_table = (char *)file + symtab_cmd.stroff;
             CHECK_READ (file + symtab_cmd.stroff, symtab_cmd.strsize);
 
             sym_pos = file + symtab_cmd.symoff;
