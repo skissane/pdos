@@ -21,7 +21,7 @@ COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__STATIC__ \
 
 #AR=arprm
 AR=lib
-LD=pdld --no-insert-timestamp -e __pdpent
+LD=pdld --no-insert-timestamp
 #LD=link
 AS=armasm
 
@@ -29,13 +29,13 @@ TARGET=pdptest.exe
 OBJS=p32start.obj stdio.obj string.obj stdlib.obj start.obj time.obj errno.obj \
     assert.obj signal.obj locale.obj ctype.obj math.obj fpfuncsa.obj
 
-$(TARGET): clean pdptest.obj $(OBJS) armsupc.obj armsupb.obj
+$(TARGET): clean pdptest.obj $(OBJS) armsupb.obj
   rm -f pdpwin32.lib
 #  $(AR) r pdpwin32.lib $(OBJS)
 #  $(AR) s pdpwin32.lib
   $(AR) -nologo -out:pdpwin32.lib $(OBJS)
-  $(LD) -s -nostdlib --no-insert-timestamp -o pdptest.exe p32start.obj pdptest.obj armsupc.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
-#  $(LD) -nologo -out:pdptest.exe -fixed:no p32start.obj pdptest.obj armsupc.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
+  $(LD) -s -nostdlib -e mainCRTStartup -o pdptest.exe p32start.obj pdptest.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
+#  $(LD) -nologo -out:pdptest.exe -fixed:no p32start.obj pdptest.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
 #  $(CC) $(COPTS) -o $*.s $<
