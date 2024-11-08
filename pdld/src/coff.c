@@ -1170,7 +1170,7 @@ address_type coff_calculate_entry_point (void)
 {
     const struct symbol *symbol;
 
-    symbol = symbol_find ("_mainCRTStartup");
+    symbol = symbol_find (leading_underscore ? "_mainCRTStartup" : "mainCRTStartup");
     if (symbol) return symbol_get_value_no_base (symbol);
 
     return 0;
