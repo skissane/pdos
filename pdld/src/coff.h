@@ -113,7 +113,11 @@ struct optional_header_internal {
 
 #define DEFAULT_EXE_IMAGE_BASE 0x00400000
 #define DEFAULT_DLL_IMAGE_BASE 0x10000000
+#if !(defined (NO_LONG_LONG) && ((ULONG_MAX >> 16) >> 16) < 0xffffffff)
 #define DEFAULT_ARM64_IMAGE_BASE 0x140000000
+#else
+#define DEFAULT_ARM64_IMAGE_BASE 0
+#endif
     unsigned long ImageBase;
 #define DEFAULT_SECTION_ALIGNMENT 0x1000
     unsigned long SectionAlignment;
