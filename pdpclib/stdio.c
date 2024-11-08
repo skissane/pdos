@@ -1003,30 +1003,18 @@ static void osfopen(void)
             /* if the file exists, we want to overwrite it, so we need to
                delete it. An error from Open is not actually an error, so
                it is simply ignored */
-#ifdef ARMHACK
-            Status = __EfiRoot->Open (__EfiRoot, &new_file, file_name, 0, OpenModeRead, Attributes);
-#else
             Status = __EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes);
-#endif
             if ((Status == EFI_SUCCESS) && (new_file != NULL))
             {
                 return_Status_if_fail (new_file->Delete (new_file));
                 /* I believe it is not necessary to do a close after delete */
             }
         }
-#ifdef ARMHACK
-        return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, 0, OpenModeWrite, Attributes));
-#else
         return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeWrite, Attributes));
-#endif
     }
     else
     {
-#ifdef ARMHACK
-        return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, 0, OpenModeRead, Attributes));
-#else
         return_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes));
-#endif
     }
     if (new_file == NULL)
     {
@@ -4349,11 +4337,7 @@ __PDPCLIB_API__ int remove(const char *filename)
         x++;
     } while (*fnm++ != '\0');
 
-#ifdef ARMHACK
-    return1_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, 0, OpenModeRead, Attributes));
-#else
     return1_Status_if_fail (__EfiRoot->Open (__EfiRoot, &new_file, file_name, OpenModeRead, Attributes));
-#endif
     }
 
     if (new_file != NULL)
@@ -4915,11 +4899,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         Position.b = 0;
 #endif
 
-#ifdef ARMHACK
-        Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, 0, Position);
-#else
         Status = ((EFI_FILE_PROTOCOL *)(stream->hfile))->SetPosition(stream->hfile, Position);
-#endif
         if (Status != EFI_SUCCESS)
         {
             return (-1);

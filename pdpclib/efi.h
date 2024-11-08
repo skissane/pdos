@@ -287,9 +287,6 @@ typedef EFI_STATUS (EFIAPI *EFI_GET_MEMORY_MAP) (IN OUT UINTN *MemoryMapSize,
                                                  OUT UINTN *DescriptorSize,
                                                  OUT UINT32 *DescriptorVersion);
 typedef EFI_STATUS (EFIAPI *EFI_ALLOCATE_POOL) (IN EFI_MEMORY_TYPE PoolType,
-#ifdef ARMHACK
-                                                int dummy_align,
-#endif
                                                 IN UINTN Size,
                                                 OUT void **Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FREE_POOL) (IN void *Buffer);
@@ -515,11 +512,6 @@ struct _EFI_FILE_PROTOCOL;
 typedef EFI_STATUS (EFIAPI *EFI_FILE_OPEN) (IN struct _EFI_FILE_PROTOCOL *This,
                                             OUT struct _EFI_FILE_PROTOCOL **NewHandle,
                                             IN CHAR16 *FileName,
-#ifdef ARMHACK
-/* 64-bit parameters need to skip registers if required to align,
-   and gcc 3.2.3 is not currently doing that */
-                                            int dummy_align,
-#endif
                                             IN UINT64 OpenMode,
                                             IN UINT64 Attributes);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_CLOSE) (IN struct _EFI_FILE_PROTOCOL *This);
@@ -531,14 +523,8 @@ typedef EFI_STATUS (EFIAPI *EFI_FILE_WRITE) (IN struct _EFI_FILE_PROTOCOL *This,
                                              IN OUT UINTN *BufferSize,
                                              IN const void *Buffer);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
-#ifdef ARMHACK
-                                                    int dummy_align,
-#endif
                                                     OUT UINT64 *Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_SET_POSITION) (IN struct _EFI_FILE_PROTOCOL *This,
-#ifdef ARMHACK
-                                                    int dummy_align,
-#endif
                                                     IN UINT64 Position);
 typedef EFI_STATUS (EFIAPI *EFI_FILE_GET_INFO) (IN struct _EFI_FILE_PROTOCOL *This,
                                                 IN EFI_GUID *InformationType,

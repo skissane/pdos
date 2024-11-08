@@ -1302,11 +1302,7 @@ static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
 
     buf_size = sizeof (*Buffer) + 8 /* Just enough space for 5 CHAR16 FileName for demonstration. */;
 
-#ifdef ARMHACK
-    return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, 0, buf_size, (void **)&Buffer));
-#else
     return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
-#endif
 
     while (1) {
         Read = buf_size;
@@ -1315,11 +1311,7 @@ static EFI_STATUS dir_list (EFI_FILE_PROTOCOL *dir)
             __gBS->FreePool (Buffer);
             buf_size = Read;
             /* printf("HAD to increase size of buffer\n"); */
-#ifdef ARMHACK
-            return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, 0, buf_size, (void **)&Buffer));
-#else
             return_Status_if_fail (__gBS->AllocatePool (EfiLoaderData, buf_size, (void **)&Buffer));
-#endif
             return_Status_if_fail (dir->Read (dir, &buf_size, Buffer));
         }
 
@@ -1368,11 +1360,7 @@ static EFI_STATUS directory_test (void)
         }
         path[i] = '\0';
 
-#ifdef ARMHACK
-        Status = EfiRoot->Open (EfiRoot, &dir, path, 0, OpenModeDirReadWrite, Attributes);
-#else
         Status = EfiRoot->Open (EfiRoot, &dir, path, OpenModeDirReadWrite, Attributes);
-#endif
         if (Status) return Status;
 
         return_Status_if_fail (dir_list (dir));
@@ -1443,11 +1431,7 @@ static EFI_STATUS check_path(unsigned char *path)
     return_Status_if_fail (__gBS->HandleProtocol (li_protocol->DeviceHandle, &sfs_protocol_guid, (void **)&sfs_protocol));
     return_Status_if_fail (sfs_protocol->OpenVolume (sfs_protocol, &EfiRoot));
 
-#ifdef ARMHACK
-    Status = EfiRoot->Open (EfiRoot, &dir, path_check, 0, OpenModeDirReadWrite, Attributes);
-#else
     Status = EfiRoot->Open (EfiRoot, &dir, path_check, OpenModeDirReadWrite, Attributes);
-#endif
     if (STATUS_IS_ERROR (Status) && STATUS_GET_CODE (Status) == EFI_NOT_FOUND) {
         return_Status_if_fail (printf("%s does not exist\n", cur_path));
     }
