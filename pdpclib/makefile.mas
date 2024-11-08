@@ -34,7 +34,7 @@ $(TARGET): clean pdptest.obj $(OBJS) armsupb.obj
 #  $(AR) r pdpwin32.lib $(OBJS)
 #  $(AR) s pdpwin32.lib
   $(AR) -nologo -out:pdpwin32.lib $(OBJS)
-  $(LD) -s -nostdlib -e mainCRTStartup -o pdptest.exe p32start.obj pdptest.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
+  $(LD) -s -nostdlib -o pdptest.exe p32start.obj pdptest.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
 #  $(LD) -nologo -out:pdptest.exe -fixed:no p32start.obj pdptest.obj armsupb.obj pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
