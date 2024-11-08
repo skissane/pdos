@@ -15,9 +15,10 @@
  * that would be caused by the right operand of shift
  * being greater than or equal to the width in bits of the promoted left operand.
  * Also, some preprocessors cannot handle too large integer constants,
- * so that needs to be avoided by the first comparison.
+ * so smaller constant and two right shifts need to be used
+ * (two to avoid the undefined behavior).
  */
-#if defined (NO_LONG_LONG) && (ULONG_MAX == 0xffffffff || ULONG_MAX < 0xffffffffffffffff)
+#if defined (NO_LONG_LONG) && ((ULONG_MAX >> 16) >> 16) < 0xffffffff
 #define NO_64_BIT_INT
 #endif
 
