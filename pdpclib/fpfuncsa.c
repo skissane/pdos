@@ -1242,14 +1242,20 @@ int __gedf2(double a, double b)
    return FP_Cmp(a, b);
 }
 
-int __eqdf2(double a, double b)
+int __eqdf2(double a_fp, double b_fp)
 {
+   float a = a_fp;
+   float b = b_fp;
+   /* we do != here, because the caller is expecting
+      0 for equality */
    return FtoL(a) != FtoL(b);
 }
 
-int __nedf2(double a, double b)
+int __nedf2(double a_fp, double b_fp)
 {
-   return FtoL(a) == FtoL(b);
+   float a = a_fp;
+   float b = b_fp;
+   return FtoL(a) != FtoL(b);
 }
 
 /* convert long to double */
