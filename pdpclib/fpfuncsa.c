@@ -1249,7 +1249,7 @@ int __eqdf2(double a, double b)
 
 int __nedf2(double a, double b)
 {
-   return FtoL(a) != FtoL(b);
+   return FtoL(a) == FtoL(b);
 }
 
 /* convert long to double */
