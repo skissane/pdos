@@ -79,13 +79,13 @@ __chkstk_ms proc
 ; For portability this optimization was disabled.
 ;        mov  ecx, fs:[0x08]   ; ecx = stack low address
         mov  ecx, esp
-        and  ecx, 0xfffff000
+        and  ecx, 0fffff000h
         neg  eax              ; eax = frame low address
         add  eax, esp
         jb   check_stack      ; frame low address overflow?
         xor  eax, eax         ; overflowed: frame low address = null
 extend_stack:
-        sub  ecx, 0x1000      ; extend stack into guard page
+        sub  ecx, 01000h      ; extend stack into guard page
         test [ecx], eax       ; commit page (two instruction bytes)
 check_stack:
         cmp  ecx, eax
