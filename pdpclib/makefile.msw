@@ -1,25 +1,29 @@
 # This is the makefile for Win32 to build pdpclib using
 # Microsoft Visual Studio and MASM
-# Note that floating point won't work though, presumably
-# because some libraries have been dummied instead of
-# being properly implemented as the compiler expects
+
+# Note that Visual C 2005 reports QIfist as deprecated,
+# and later versions say that it is an unknown option,
+# but with Visual C 2005 it is still required, as without
+# it, a call will be generated to _ftol2_sse(), which we
+# have not properly implemented.
 
 CC=cl
 CFLAGS=-O2
-COPTS=-c $(CFLAGS) -D__WIN32__ -D__STATIC__ -D__MSC__ -I . -Oi- -Zl -GS- -nologo -I../src
+COPTS=-c $(CFLAGS) -D__WIN32__ -D__STATIC__ -D__MSC__ -I . \
+    -Oi- -Zl -GS- -nologo -I../src -X -QIfist
 
 all: clean pdptest.exe
 
 pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
-       ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsv.obj winsupa.obj
+       ctype.obj setjmp.obj math.obj __memmgr.obj winsupa.obj
   rm -f pdpwin32.lib
   lib -nologo -out:temp1.lib p32start.obj stdio.obj string.obj stdlib.obj winsupa.obj
   lib -nologo -out:temp2.lib start.obj time.obj errno.obj assert.obj signal.obj
-  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsv.obj
+  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   lib -nologo -out:pdpwin32.lib temp1.lib temp2.lib temp3.lib
   del temp*.lib
-  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe p32start.obj pdptest.obj pdpwin32.lib ../src/kernel32.lib
+  link -map -nologo -fixed:no -nodefaultlib -out:pdptest.exe p32start.obj pdptest.obj pdpwin32.lib ../src/kernel32.lib
 
 .c.obj:
   $(CC) $(COPTS) $<

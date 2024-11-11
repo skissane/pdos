@@ -1,23 +1,26 @@
 # This is the makefile for Win32 to build pdpclib using
 # Microsoft Visual Studio and MASM and targeting msvcrt.dll
-# Note that the msvcrt.dll produced is not capable of doing
-# floating point presumably due to some library functions
-# being dummied instead of properly implemented. The
-# executables appear to be fine though.
+
+# Note that Visual C 2005 reports QIfist as deprecated,
+# and later versions say that it is an unknown option,
+# but with Visual C 2005 it is still required, as without
+# it, a call will be generated to _ftol2_sse(), which we
+# have not properly implemented.
 
 CC=cl
 CFLAGS=-O2
-COPTS=-c $(CFLAGS) -D__WIN32__ -D__PDPCLIB_DLL -D__MSC__ -I . -Oi- -Zl -GS- -nologo -I../src
+COPTS=-c $(CFLAGS) -D__WIN32__ -D__PDPCLIB_DLL -D__MSC__ -I . \
+    -Oi- -Zl -GS- -nologo -I../src -X -QIfist
 
 all: clean pdptest.exe
 
 pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj dllcrt.obj \
-       ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsv.obj winsupa.obj
+       ctype.obj setjmp.obj math.obj __memmgr.obj winsupa.obj
   rm -f msvcrt.lib
   lib -nologo -out:temp1.lib stdio.obj string.obj stdlib.obj winsupa.obj
   lib -nologo -out:temp2.lib start.obj time.obj errno.obj assert.obj signal.obj
-  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj fpfuncsv.obj
+  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   link -nologo -dll -fixed:no -nodefaultlib -out:msvcrt.dll dllcrt.obj temp1.lib temp2.lib temp3.lib ../src/kernel32.lib
   del temp*.lib
   link -nologo -fixed:no -nodefaultlib -out:pdptest.exe w32start.obj pdptest.obj msvcrt.lib

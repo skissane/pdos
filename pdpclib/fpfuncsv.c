@@ -15,7 +15,8 @@
 
 int _fltused;
 
-int _ftol2_sse;
+/* Use QIfist option if necessary so that this function is not required */
+/* int _ftol2_sse(void) { return 0; } */
 
 
 /* I don't know what these are */
