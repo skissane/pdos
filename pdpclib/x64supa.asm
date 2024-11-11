@@ -97,6 +97,9 @@ endif
 
 
 
+; suppressing main is needed if it is in p32start.c
+ifndef NOUNDMAIN
+
 ifndef PDAS
 public __main
 __main proc
@@ -111,6 +114,7 @@ ifndef PDAS
 __main endp
 endif
 
+endif
 
 
 
