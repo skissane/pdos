@@ -1,6 +1,8 @@
 # This is the makefile for Win32 to build pdpclib using
 # Microsoft Visual Studio and MASM
 
+# You need to have built kernel32 with makek32.vsc first
+
 # Note that Visual C 2005 reports QIfist as deprecated,
 # and later versions say that it is an unknown option,
 # but with Visual C 2005 it is still required, as without
