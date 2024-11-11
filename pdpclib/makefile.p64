@@ -2,7 +2,12 @@
 # the x64 version of gcc and static linking. Use pdmake etc
 # And using the new standard tools
 
-CC=gccw64_l64
+# Use the l64 version if you want a 64-bit long
+
+# You need to have built kernel32 with makek32.s64 first
+
+#CC=gccw64_l64
+CC=gccw64
 CFLAGS=-O2 -D__LONG64__ -D__USEBIVA__ -D__W64SHELL__
 
 # Use these if you want to use mingw64 instead
