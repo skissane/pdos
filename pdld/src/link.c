@@ -593,6 +593,23 @@ static void calculate_entry_point (void)
     }
 }
 
+static void add_automatic_symbols (void)
+{
+    struct object_file *of;
+    struct symbol *symbol;
+
+    if (!symbol_is_undefined (symbol_find ("__ImageBase"))) return;
+
+    of = object_file_make (1, FAKE_LD_FILENAME);
+
+    symbol = of->symbol_array;
+    symbol->name = xstrdup ("__ImageBase");
+    symbol->value = ld_state->base_address;
+    symbol->part = NULL;
+    symbol->section_number = ABSOLUTE_SECTION_NUMBER;
+    symbol_record_external_symbol (symbol);
+}
+
 static void check_unresolved (void)
 {
     struct object_file *of;
@@ -644,6 +661,8 @@ static void check_unresolved (void)
 
 void link (void)
 {
+    add_automatic_symbols ();
+    
     /* In the future this might be controlled by command line option. */
     check_unresolved ();
     
