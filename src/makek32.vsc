@@ -7,7 +7,7 @@
 # without complying with any conditions
 # and by any means.
 
-# This makefile builds kernel32.dll and kernel32.a on Windows.
+# This makefile builds kernel32.dll and kernel32.lib on Windows.
 
 VPATH=../pdpclib
 
