@@ -67,6 +67,8 @@ __longj proc
         ret
 __longj endp
 
+
+
 ; For compiling with GCC 4 we don't want to
 ; have to link the GCC library in.
 ; Original Public Domain code copied from
@@ -345,5 +347,14 @@ __divdi3:
 
     pop     ebp
     ret
-    
+
+
+
+
+.data
+
+public _fltused
+_fltused dd ?
+
+
 end
