@@ -1,0 +1,32 @@
+# This is the makefile for Win64 to build pdpclib using
+# Microsoft Visual Studio and MASM
+
+# You need to have built kernel32 with makek32.vs6 first
+
+CC=cl
+CFLAGS=-O2
+COPTS=-c $(CFLAGS) -D__WIN32__ -D__STATIC__ -D__MSC__ -I . \
+    -Oi- -Zl -GS- -nologo -I../src -X -D__64BIT__
+
+all: clean pdptest.exe
+
+pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj x64supa.obj
+  rm -f pdpwin64.lib
+  lib -nologo -out:temp1.lib p32start.obj stdio.obj string.obj stdlib.obj x64supa.obj
+  lib -nologo -out:temp2.lib start.obj time.obj errno.obj assert.obj signal.obj
+  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
+  lib -nologo -out:pdpwin64.lib temp1.lib temp2.lib temp3.lib
+  del temp*.lib
+  link -map -nologo -fixed:no -nodefaultlib -out:pdptest.exe p32start.obj pdptest.obj pdpwin64.lib ../src/kernel32.lib
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  ml64 -nologo -DNOUNDMAIN -c $<
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
