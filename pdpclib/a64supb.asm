@@ -593,4 +593,11 @@ __getdents64 proc
 
 
 
+        export  __chkstk
+__chkstk proc
+        ret
+        endp
+
+
+
         end
