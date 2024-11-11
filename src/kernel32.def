@@ -9,7 +9,7 @@ EXPORTS GetFileAttributesA
 EXPORTS CreateProcessA
 EXPORTS DeleteFileA
 EXPORTS GetCommandLineA
-EXPORTS GetEnvironmentStrings
+EXPORTS GetEnvironmentStringsA
 EXPORTS GetExitCodeProcess
 EXPORTS GetVersion
 EXPORTS GetLastError
