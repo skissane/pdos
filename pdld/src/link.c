@@ -598,7 +598,8 @@ static void add_automatic_symbols (void)
     struct object_file *of;
     struct symbol *symbol;
 
-    if (!symbol_is_undefined (symbol_find ("__ImageBase"))) return;
+    if ((symbol = symbol_find ("__ImageBase"))
+        && !symbol_is_undefined (symbol)) return;
 
     of = object_file_make (1, FAKE_LD_FILENAME);
 
