@@ -211,6 +211,24 @@ endif
 
 
 
+.data
+
+ifndef PDAS
+public _fltused
+_fltused dd ?
+else
+.globl _fltused
+.p2align 2
+_fltused:
+.space 4
+endif
+
+
+
+
+
+
+
 ifdef CC64
 
 .section rdata
