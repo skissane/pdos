@@ -1,0 +1,38 @@
+# This is the makefile for Win64 x64 to build pdpclib using
+# Microsoft Visual Studio and MASM and targeting msvcrt.dll
+
+# You need to have built kernel32 with makek32.vs6 first
+
+CC=cl
+CFLAGS=-O2
+COPTS=-c $(CFLAGS) -D__WIN32__ -D__PDPCLIB_DLL -D__MSC__ -I . \
+    -Oi- -Zl -GS- -nologo -I../src -X -D__64BIT__
+
+all: clean pdptest.exe
+
+pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj dllcrt.obj \
+       ctype.obj setjmp.obj math.obj __memmgr.obj x64supa.obj
+  rm -f msvcrt.lib
+  lib -nologo -out:temp1.lib stdio.obj string.obj stdlib.obj x64supa.obj
+  lib -nologo -out:temp2.lib start.obj time.obj errno.obj assert.obj signal.obj
+  lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
+  link -nologo -dll -fixed:no -nodefaultlib -out:msvcrt.dll dllcrt.obj temp1.lib temp2.lib temp3.lib ../src/kernel32.lib
+  del temp*.lib
+  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe w32start.obj pdptest.obj msvcrt.lib
+
+pdptest.obj: pdptest.c
+  $(CC) -c $(CFLAGS) -D__WIN32__ -X -D__64BIT__ -D__MSC__ -I . -Oi- -Zl -GS- -nologo -I../src $*.c
+
+dllcrt.obj: dllcrt.c
+  $(CC) -c $(COPTS) -D__EXPORT__ -DNEED_START -X -D__64BIT__ $*.c
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+.asm.obj:
+  ml64 -nologo -DNOUNDMAIN -c $<
+
+clean:
+  rm -f *.obj
+  rm -f pdptest.exe
