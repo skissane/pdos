@@ -961,6 +961,19 @@ static void translate_relocation_64 (struct reloc_entry *reloc,
         case IMAGE_REL_AMD64_REL32_3:
         case IMAGE_REL_AMD64_REL32_4:
         case IMAGE_REL_AMD64_REL32_5:
+            reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+            /* It seems that the "_N" part should be subtracted from the field
+             * but it is not clear why that could not be done by the assembler instead.
+             */
+            {
+                unsigned long field;
+                
+                bytearray_read_4_bytes (&field, part->content + reloc->offset, LITTLE_ENDIAN);
+                field -= input_reloc->Type - IMAGE_REL_AMD64_REL32;
+                bytearray_write_4_bytes (part->content + reloc->offset, field, LITTLE_ENDIAN);
+            }
+            break;
+        
         case IMAGE_REL_AMD64_SECTION:
         case IMAGE_REL_AMD64_SECREL:
         case IMAGE_REL_AMD64_SECREL7:
