@@ -1209,6 +1209,28 @@ static void doemul(void)
 #endif
             p += 4;
         }
+        else if (instr == 0x56) /* o */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            regs[t] |= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+            p += 4;
+        }
         else if (instr == 0x92) /* mvi */
         {
             unsigned long one = 0;
@@ -1244,6 +1266,21 @@ static void doemul(void)
             lt = val < imm;
             gt = val > imm;
             eq = (val == imm);
+            p += 4;
+        }
+        else if (instr == 0x96) /* oi */
+        {
+            unsigned long one = 0;
+            unsigned char *v;
+
+            splitsi();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            one += d;
+            v = base + one;
+            *v |= imm;
             p += 4;
         }
         else if (instr == 0x1a) /* ar */
