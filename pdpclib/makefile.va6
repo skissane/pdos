@@ -2,7 +2,7 @@
 # the Visual C compiler and pdld.
 
 CC=cl
-COPTS=-O2 -Oi- -Zl -u -X -GS- -D__EFI__ -D__EFIBIOS__ -c -D__ARM__ -D__64BIT__ -I . -D__MSC__ \
+COPTS=-nologo -O2 -Oi- -Zl -u -X -GS- -D__EFI__ -D__EFIBIOS__ -c -D__ARM__ -D__64BIT__ -I . -D__MSC__ \
     -D__W64SHELL__
 
 pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
@@ -22,5 +22,5 @@ pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
     $(CC) $(COPTS) $<
 
 a64supb.obj: a64supb.asm
-    armasm64 -o $@ $*.asm
+    armasm64 -nologo -o $@ $*.asm
 #    ml64 -o $@ $*.asm
