@@ -96,8 +96,10 @@ endif
 
 
 
-
+ifndef PDAS
 ; suppressing main is needed if it is in p32start.c
+endif
+
 ifndef NOUNDMAIN
 
 ifndef PDAS
@@ -204,24 +206,6 @@ m$popcallback:
 	ret
 
 endif
-
-
-
-
-
-.data
-
-ifndef PDAS
-public _fltused
-_fltused dd ?
-else
-.globl _fltused
-.p2align 2
-_fltused:
-.space 4
-endif
-
-
 
 
 
