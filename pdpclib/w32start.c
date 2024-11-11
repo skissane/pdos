@@ -117,11 +117,3 @@ void __main(void)
     return;
 }
 #endif
-
-/* we may be compiling this with cc64, but compiling some
-   other application with Visual C, so we need this to exist */
-#if 1 /* defined(__MSC__) */
-int _fltused;
-/* Use QIfist option if necessary so that this function is not required */
-/* int _ftol2_sse(void) { return 0; } */
-#endif
