@@ -1,0 +1,46 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This makefile builds kernel32.dll and kernel32.lib for Win64.
+
+VPATH=../pdpclib
+
+CC=cl
+CFLAGS=-O2
+COPTS=-c $(CFLAGS) -DNOLIBALLOC -D__64BIT__ -D__WIN32__ \
+    -D__STATIC__ -D__MSC__ -I . -O2 -Oi- -Zl -GS- -nologo -I../pdpclib
+AS=ml
+LD=link
+
+EXPORT_OBJS=dllcrt.obj kernel32.obj
+OBJS=supportd.obj pdossupc.obj pos.obj string.obj
+
+all: clean kernel32.dll
+
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+  link -map -nologo -dll -fixed:no -nodefaultlib -out:kernel32.dll -def:kernel32.def $(EXPORT_OBJS) $(OBJS)
+
+dllcrt.obj: ..\pdpclib\dllcrt.c
+  $(CC) -c $(COPTS) -D__EXPORT__ ..\pdpclib\dllcrt.c
+
+kernel32.obj: kernel32.c
+  $(CC) -c $(COPTS) -D__EXPORT__ kernel32.c
+
+.asm.obj:
+#  jwasm -q -coff $<
+#  as86 -o $@ -f coff $<
+  ml64 -nologo -c -coff $<
+
+.c.obj:
+  $(CC) $(COPTS) $<
+
+clean:
+  rm -f *.obj
+  rm -f kernel32.dll
+  rm -f kernel32.lib
