@@ -23,6 +23,16 @@ COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBI
 EXTRA=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
 
+else ifeq "$(targ)" "x64"
+
+CC=gccw64
+CFLAGS=-O2 -DPBEMUL
+AS=pdas --oformat coff --64
+COPTS=-S $(CFLAGS) -fno-builtin -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__ \
+    -DNEED_MVS -D__64BIT__
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
+
 else
 
 CC=gccwin
