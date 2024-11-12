@@ -1,0 +1,39 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# define COMEMUL for a COM file, or PBEMUL for a pseudo-bios
+
+# This builds a Win64 ARM64 executable using Visual Studio
+# You need to have run makefile.var in PDPCLIB first
+
+CFLAGS=-O2 -Oi -DPBEMUL
+CC=cl
+AR=lib
+#LD=link
+LD=pdld --emit-relocs -s -nostdlib --no-insert-timestamp
+COPTS=$(CFLAGS) -c -nologo -GS- -Za -Zl -u -X -D__MSC__ -D__64BIT__ \
+    -D__WIN32__ -I. -I../pdpclib -D__ARM__ -DNEED_MVS
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/a64supb.obj
+
+OBJS=mfemul.obj ../bios/exeload.obj
+
+TARGET=mfemul.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+#  $(LD) -nologo -fixed:no -nodefaultlib -out:$(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
+  $(LD) -o $(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
+
+.c.obj:
+  $(CC) $(COPTS) -Fo$*.obj $<
+
+clean:
+  rm -f $(OBJS) $(TARGET)
