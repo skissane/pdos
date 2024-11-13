@@ -20,7 +20,17 @@
 #include "mainframe.h"
 #include "xmalloc.h"
 
+/* Refreshable implies reenterable, reenterable implies serial(ly reusable). */
+enum reusability {
+    REUSABILITY_NONE,
+    REUSABILITY_SERIAL,
+    REUSABILITY_REENTERABLE,
+    REUSABILITY_REFRESHABLE
+};
+
+static unsigned int authorization_code = 0;
 static int amode = 24;
+static enum reusability reusability = REUSABILITY_NONE;
 static int rmode = 24;
 
 int mainframe_get_amode (void)
@@ -374,6 +384,9 @@ void mvs_write (const char *filename)
 
     /* PDS2ATR1 */
     pos[38 + 12] = PDS2EXEC;
+    if (reusability == REUSABILITY_REENTERABLE
+        || reusability == REUSABILITY_REFRESHABLE) pos[38 + 12] |= PDS2RENT;
+    if (reusability != REUSABILITY_NONE) pos[38 + 12] |= PDS2REUS;
     if (!num_relocs) pos[38 + 12] |= PDS21BLK;
 
     /* PDS2ATR2 */
@@ -412,7 +425,7 @@ void mvs_write (const char *filename)
     
     /* next is for APF authorization */
     pos[63] = 0x01; /* PDSAPFCT - length of program authorization code */
-    pos[64] = 0; /* PDSAPFAC - program authorization code */
+    pos[64] = authorization_code; /* PDSAPFAC - program authorization code */
     
     pos[65] = 0; /* filler - next field needs to be halfword-aligned */
     /* Again 8 bytes of 0xFF, unknown meaning. */
@@ -1286,7 +1299,9 @@ int mainframe_symbol_check_undefined (const char *name)
 enum option_index {
 
     MAINFRAME_OPTION_IGNORED = 0,
+    MAINFRAME_OPTION_AC,
     MAINFRAME_OPTION_AMODE,
+    MAINFRAME_OPTION_REUS,
     MAINFRAME_OPTION_RMODE
 
 };
@@ -1294,7 +1309,9 @@ enum option_index {
 #define STR_AND_LEN(str) (str), (sizeof (str) - 1)
 static const struct long_option long_options[] = {
     
+    { STR_AND_LEN("ac"), MAINFRAME_OPTION_AC, OPTION_HAS_ARG},
     { STR_AND_LEN("amode"), MAINFRAME_OPTION_AMODE, OPTION_HAS_ARG},
+    { STR_AND_LEN("reus"), MAINFRAME_OPTION_REUS, OPTION_HAS_ARG},
     { STR_AND_LEN("rmode"), MAINFRAME_OPTION_RMODE, OPTION_HAS_ARG},
     { NULL, 0, 0}
 
@@ -1304,7 +1321,10 @@ static const struct long_option long_options[] = {
 void mainframe_print_help (void)
 {
     printf ("mainframe:\n");
+    printf ("  --ac <code>                       Set the APF authorization code (default 0)\n");
     printf ("  --amode <mode>                    Set AMODE 24/31/64/ANY\n");
+    printf ("  --reus <mode>                     Specify the reusability characteristics\n");
+    printf ("                                      NONE/SERIAL/RENT/REF\n");
     printf ("  --rmode <mode>                    Set RMODE 24/ANY\n");
 }
 
@@ -1313,6 +1333,19 @@ static void use_option (enum option_index option_index, char *arg)
     switch (option_index) {
 
         case MAINFRAME_OPTION_IGNORED:
+            break;
+
+        case MAINFRAME_OPTION_AC:
+            {
+                char *p;
+
+                authorization_code = strtoul (arg, &p, 0);
+                if (*p != '\0') ld_error ("invalid authorization code '%s'", arg);
+
+                if (authorization_code > 255) {
+                    ld_error ("authorization code must have value 0 - 255 (inclusive)");
+                }
+            }
             break;
 
         case MAINFRAME_OPTION_AMODE:
@@ -1326,6 +1359,20 @@ static void use_option (enum option_index option_index, char *arg)
                 amode = 64;
             } else {
                 ld_error ("unsupported AMODE '%s' specified", arg);
+            }
+            break;
+
+        case MAINFRAME_OPTION_REUS:
+            if (xstrcasecmp (arg, "NONE") == 0) {
+                reusability = REUSABILITY_NONE;
+            } else if (xstrcasecmp (arg, "SERIAL") == 0) {
+                reusability = REUSABILITY_SERIAL;
+            } else if (xstrcasecmp (arg, "RENT") == 0) {
+                reusability = REUSABILITY_REENTERABLE;
+            } else if (xstrcasecmp (arg, "REF") == 0) {
+                reusability = REUSABILITY_REFRESHABLE;
+            } else {
+                ld_error ("unsupported reusability '%s' specified", arg);
             }
             break;
 
