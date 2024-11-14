@@ -18,7 +18,7 @@ EXTRA2= cmsstart.obj cmssupa.obj
 else
 
 CFLAGS=-D__MVS__
-EXTRA1=--oformat mvs
+EXTRA1=--oformat mvs --amode 31 --rmode any
 EXTRA2= mvsstart.obj mvssupa.obj
 
 endif
