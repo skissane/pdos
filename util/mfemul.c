@@ -848,11 +848,32 @@ static void doemul(void)
         {
             int x;
             int amt;
-            
+
             /* +++ guessing */
             splitrs();
             amt = p[3];
             regs[x1] = (((I32)regs[x1]) >> amt);
+            p += 4;
+        }
+        else if (instr == 0x8e) /* srda */
+        {
+            int x;
+            int amt;
+
+            splitrs();
+            amt = p[3];
+            if (amt >= 32)
+            {
+                regs[x1+1] = regs[x1];
+                regs[x1] = 0;
+                regs[x1+1] <<= (amt-32);
+            }
+            else
+            {
+                regs[x1+1] <<= amt;
+                regs[x1+1] |= (regs[x1] << (32-amt));
+                regs[x1] <<= amt;
+            }
             p += 4;
         }
         else if (instr == 0x89) /* sll */
@@ -1042,7 +1063,31 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            regs[t] = (v[2] << 8) | v[3];
+            regs[t] = (v[0] << 8) | v[1];
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+            p += 4;
+        }
+        else if (instr == 0x40) /* sth */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            v[0] = (regs[t] >> 8) & 0xff;
+            v[1] = regs[t] & 0xff;
+
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
