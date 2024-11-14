@@ -391,6 +391,7 @@ void mvs_write (const char *filename)
 
     /* PDS2ATR2 */
     pos[38 + 13] = PDS2FLVL | PDS2ORG0 | PDS2LEF;
+    if (reusability == REUSABILITY_REFRESHABLE) pos[38 + 13] |= PDS2REFR;
     if (ld_state->entry_point == 0) pos[38 + 13] |= PDS2EP0;
     if (!num_relocs) pos[38 + 13] |= PDS2NRLD;
 
