@@ -7,11 +7,11 @@ COPTS=-nologo -O2 -Oi- -Zl -u -X -GS- -D__EFI__ -D__EFIBIOS__ -c -D__ARM__ -D__6
 
 pdptest: efistart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
        start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
-       ctype.obj math.obj __memmgr.obj fpfuncsm.obj
+       ctype.obj math.obj __memmgr.obj
     rm -f pdpefi.lib
     lib -nologo -out:pdpefi.lib efistart.obj a64supb.obj stdio.obj string.obj stdlib.obj
     lib -nologo -out:pdpefi.lib pdpefi.lib start.obj time.obj errno.obj assert.obj signal.obj
-    lib -nologo -out:pdpefi.lib pdpefi.lib locale.obj ctype.obj math.obj __memmgr.obj fpfuncsm.obj
+    lib -nologo -out:pdpefi.lib pdpefi.lib locale.obj ctype.obj math.obj __memmgr.obj
 #    link -nologo -subsystem:efi_application -out:pdptest.efi -entry:efimain efistart.obj pdptest.obj pdpefi.lib
 # I normally use the below when using the Visual C linker
 # Note that unlike pdld, it doesn't allow me to use an address below 4 GiB
