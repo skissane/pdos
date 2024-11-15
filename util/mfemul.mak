@@ -25,6 +25,7 @@ EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
 
 else ifeq "$(targ)" "x64"
 
+# This needs makefile.s64 to have been run in pdpclib
 CC=gccw64
 CFLAGS=-O2 -DPBEMUL
 AS=pdas --oformat coff --64
