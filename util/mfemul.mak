@@ -12,6 +12,7 @@
 
 ifeq "$(targ)" "arm"
 
+# This needs makefile.war to have been run in pdpclib
 CC=gccprm
 CFLAGS=-O0 -DPBEMUL
 AS=asprm
