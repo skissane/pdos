@@ -43,7 +43,8 @@ void memmgrSupply(MEMMGR *memmgr, void *buffer, size_t szbuf)
     if (((size_t)buffer % MEMMGR_ALIGN) != 0)
     {
         szbuf -= (MEMMGR_ALIGN - (size_t)buffer % MEMMGR_ALIGN);
-        buffer = (char *)buffer + (MEMMGR_ALIGN - (size_t)buffer % MEMMGR_ALIGN);
+        buffer = (char *)buffer
+                 + (MEMMGR_ALIGN - (size_t)buffer % MEMMGR_ALIGN);
     }
 
     if ((szbuf % MEMMGR_ALIGN) != 0)
