@@ -37,6 +37,7 @@ EXTRA2=../pdpclib/msvcrt.lib
 
 else
 
+# This needs makefile.std to have been run in pdpclib
 CC=gccwin
 CFLAGS=-O2 -DPBEMUL
 AS=pdas --oformat coff
