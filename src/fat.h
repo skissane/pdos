@@ -3,6 +3,13 @@
 #ifndef FAT_INCLUDED
 #define FAT_INCLUDED
 
+/* short names for C90-compliance */
+
+#define fatCreatFile fatCF
+#define fatCreateDir fatCDir
+#define fatCreatNewFile fatCNF
+
+
 #define MAXSECTSZ 512
 /* 255 UCS-2 characters for LFN is
  * artificial limit set by Microsoft.
