@@ -3,7 +3,8 @@
 # We don't normally need the assembler support file, but we build
 # it here for others to use
 
-CC=gcc370
+CC=gccmvs
+AS=as370 -mhlasm -mebcdic
 COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOSGEN__ \
     -D__NOBIVA__ -I . -I../generic -I../src
 
@@ -15,11 +16,11 @@ pdptest.exe: pgastart.o pdptest.o zpgsupa.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  as370 -o $@ $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
 
 .asm.o:
-  as370 -mhlasm -o $@ $<
+  $(AS) -o $@ $<
 
 clean:
   rm -f pdptest.exe

@@ -6,10 +6,11 @@
 # Need to disable builtins because an ASCII/EBCDIC issue
 # means that it thinks there is no '%' and can use an fputs
 
-CC=gcc370
+CC=gccmvs
+AS=as370 -mhlasm -mebcdic
 COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOS386__ \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
-    -DUSE_MEMMGR -fno-builtin
+    -DUSE_MEMMGR -fno-builtin -DNOUNDMAIN
 
 all: clean pdosgeno.a
 
@@ -23,11 +24,11 @@ pdosgeno.a: stdio.o string.o stdlib.o \
 
 .c.o:
         $(CC) $(COPTS) -o $*.s $<
-        as370 -o $@ $*.s
+        $(AS) -o $@ $*.s
         rm -f $*.s
 
 .asm.o:
-        as370 -mhlasm -o $@ $<
+        $(AS) -o $@ $<
 
 clean:
         rm -f pdosgeno.a
