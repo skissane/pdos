@@ -1068,6 +1068,26 @@ this then the 1 MiB value will get bigger too. Note that
 FAT32+ is another (unimplemented I think) proposal, hence
 FAT32-.
 
+Another thing I intend to do is obsolete a large part of the
+Pos* API and switch to using a subset of C90 itself.
+Specifically I will have a version of PDPCLIB that instead
+of doing a PosOpenFile to access the OS, it will do an
+fopen, or os_fopen, or os->fopen. And similar to the O_TEXT
+that was used to extend Linux, the os_fopen will take "r"
+or "rb" etc as a parameter, to allow the OS to translate
+line endings, or convert text files from EBCDIC to ASCII or
+whatever else may be desired. So the API would be fopen,
+fread, fwrite, fseek. Replacing PosOpenFile, PosReadFile,
+PosWriteFile, PosMoveFilePointer.
+
+And another thing is that PDPCLIB will be updated to handle
+generic "block" mode devices like disk drives with 512 or
+4096 byte sectors, or variable length blocks as seen on MVS.
+There is already block mode support but it is an independent
+compilation for the mainframe. I instead want to integrate it.
+Currently EFI works by requiring the caller to only request
+blocks that are an even multiple of the sector size instead
+of having the ability to buffer that itself.
 
 
 
