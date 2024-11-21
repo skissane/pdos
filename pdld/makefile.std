@@ -53,6 +53,24 @@ LD=clang -Wl,-e, -Wl,__start
 EXTRA2=../pdpclib/pdpmacos.a
 
 
+else ifeq "$(targ)" "macwin"
+# makefile.gar needs to have been run in pdpclib first
+CC=aarch64-none-elf-gcc \
+    -S -I../src -D__ARM__ -I. -D__WIN32__ -D__PDPCLIB_DLL \
+    -DNOUNDMAIN -D__GENSHELL__ -O2 -U__gnu_linux__ \
+    -D__64BIT__ -nostdlib -nostdinc \
+    -D__NODECLSPEC__ \
+    -fno-stack-protector \
+    -I./src -I./src/bytearray \
+    -I./src/hashtab -I../pdpclib \
+    -I../generic -I../src -I./src/ftebc
+AR=aarch64-none-elf-ar
+AS=aarch64-none-elf-as
+LD=pdld --no-insert-timestamp
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
+
+
 else ifeq "$(targ)" "gccarm64"
 # makefile.a64 needs to have been run in pdpclib first
 # untested
