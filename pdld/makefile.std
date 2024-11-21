@@ -63,7 +63,8 @@ CC=aarch64-none-elf-gcc \
     -fno-stack-protector \
     -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
-    -I../generic -I../src -I./src/ftebc
+    -I../generic -I../src -I./src/ftebc \
+    --no-pie
 AR=aarch64-none-elf-ar
 AS=aarch64-none-elf-as
 LD=pdld --no-insert-timestamp
