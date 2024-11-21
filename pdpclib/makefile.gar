@@ -3,6 +3,16 @@
 
 # run makek32.gar first
 
+# the compiler was obtained from:
+# https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+# specifically:
+# https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-darwin-arm64-aarch64-none-elf.pkg
+
+# Note that this compiler uses 64-bit long, so there will be
+# situations where that is an issue. But a lot of the time
+# that is not an issue, given the ARM64 calling convention
+
+
 CC=aarch64-none-elf-gcc
 COPTS=-c -I../src -D__ARM__ -I. -D__WIN32__ -D__PDPCLIB_DLL \
     -DNOUNDMAIN -D__GENSHELL__ -O2 -U__gnu_linux__ \
