@@ -17,7 +17,7 @@ endif
 
 COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 \
   -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector \
-  -U__gnu_linux__
+  -U__gnu_linux__ -D__GENSHELL__
 
 
 pdptest: efistart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
