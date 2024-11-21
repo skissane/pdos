@@ -42,7 +42,8 @@ unsigned long arbitrary_base= 0;
 #define NO_DLLENTRY 1
 #endif
 
-#if defined(__ARM__) && defined(GENSHELL)
+#if defined(__ARM__) && defined(GENSHELL) \
+    && !defined(__64BIT__)
 #define W32EMUL
 #endif
 
