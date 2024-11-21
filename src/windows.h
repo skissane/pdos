@@ -19,14 +19,18 @@
 /* Subheader: basetsd.h */
 #ifndef __EXPORT__
 
-#ifdef __SUBC__
+#if defined(__SUBC__) || defined(__NODECLSPEC__)
 #define WINAPI
 #else
 #define WINAPI __declspec(dllimport) __stdcall
 #endif
 
 #else
+#if defined(__NODECLSPEC__)
+#define WINAPI
+#else
 #define WINAPI __declspec(dllexport) __stdcall
+#endif
 #endif
 
 #define PASCAL __stdcall
