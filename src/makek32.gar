@@ -1,0 +1,51 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This is for Windows 64-bit ARM using gcc for MacOS that
+# doesn't use MacOS conventions
+
+# Note that we don't expect to actually use the result of
+# this, so we don't have Pos calls implemented.
+
+VPATH=../pdpclib
+
+CC=aarch64-none-elf-gcc
+COPTS=-c -I../pdpclib -D__ARM__ -I. -D__WIN32__ \
+    -DNOLIBALLOC \
+    -D__64BIT__ \
+    -D__NODECLSPEC__ \
+    -fno-stack-protector \
+    -fno-builtin \
+    -nostdinc -nostdlib
+
+LD=pdld --no-insert-timestamp
+#LD=link
+
+
+EXPORT_OBJS=dllcrt.obj kernel32.obj
+OBJS=pdossupc.obj pos.obj string.obj
+
+all: clean kernel32.dll
+
+kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+  $(LD) --export-all-symbols -s -o kernel32.dll --shared --kill-at --out-implib kernel32.lib $(EXPORT_OBJS) $(OBJS)
+
+dllcrt.obj: ../pdpclib/dllcrt.c
+  $(CC) -o $@ $(COPTS) -D__EXPORT__ $<
+
+kernel32.obj: kernel32.c
+  $(CC) -o $@ $(COPTS) -D__EXPORT__ $<
+
+.c.obj:
+  $(CC) -o $@ $(COPTS) $<
+
+clean:
+  rm -f *.obj
+  rm -f kernel32.dll
+  rm -f kernel32.lib
