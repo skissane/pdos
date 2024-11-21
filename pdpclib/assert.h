@@ -13,7 +13,8 @@
 #ifndef __ASSERT_INCLUDED
 #define __ASSERT_INCLUDED
 
-#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
+#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__) \
+  && !defined(__NODECLSPEC__)
 #define __PDPCLIB_HEADFUNC __declspec(dllexport)
 #endif
 

@@ -16,7 +16,8 @@
 /* Perhaps should copy these definitions in instead */
 #include <stdarg.h>
 
-#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
+#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__) \
+    && !defined(__NODECLSPEC__)
 #define __PDPCLIB_HEADFUNC __declspec(dllexport)
 #endif
 

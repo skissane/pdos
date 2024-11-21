@@ -59,7 +59,8 @@ typedef char wchar_t;
 #define NULL ((void *)0)
 #define offsetof(x, y) (size_t)&(((x *)0)->y)
 
-#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__)
+#if defined(__PDPCLIB_DLL) && !defined(__WATCOMC__) \
+    && !defined(__NODECLSPEC__)
 #define __PDPCLIB_API__ __declspec(dllexport)
 #elif defined(__CC64OS__)
 #define __PDPCLIB_API__ $callback
