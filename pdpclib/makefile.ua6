@@ -4,20 +4,33 @@
 # Probably want to add -ffixed-x18 if Windows or MacOS are involved, to
 # stop that register from being used
 
+ifeq "$(targ)" "macwin"
+CC=aarch64-none-elf-gcc
+AR=aarch64-none-elf-ar
+AS=aarch64-none-elf-as
+
+else
 CC=gcc
-COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector -U__gnu_linux__
+AR=ar
+AS=as
+endif
+
+COPTS=-D__LONG64__ --no-pie -D__EFI__ -D__EFIBIOS__ -c -O2 \
+  -D__ARM__ -fno-builtin -D__64BIT__ -I . -fno-stack-protector \
+  -U__gnu_linux__
+
 
 pdptest: efistart.o a64supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o math.o __memmgr.o
 	rm -f pdpefi.a
-	ar r pdpefi.a efistart.o a64supa.o stdio.o string.o stdlib.o
-	ar r pdpefi.a start.o time.o errno.o assert.o signal.o
-	ar r pdpefi.a locale.o ctype.o math.o __memmgr.o
+	$(AR) r pdpefi.a efistart.o a64supa.o stdio.o string.o stdlib.o
+	$(AR) r pdpefi.a start.o time.o errno.o assert.o signal.o
+	$(AR) r pdpefi.a locale.o ctype.o math.o __memmgr.o
 	pdld --no-insert-timestamp -o pdptest.efi -e efimain --oformat coff --subsystem 10 efistart.o pdptest.o pdpefi.a
 
 .c.o:
 	$(CC) $(COPTS) $<
 
 a64supa.o: a64supa.asm
-	as --defsym STACKPARM=0 --defsym ELF=1 -o $@ $*.asm
+	$(AS) --defsym STACKPARM=0 --defsym ELF=1 -o $@ $*.asm
