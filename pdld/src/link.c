@@ -352,50 +352,45 @@ static void reloc_generic (struct section_part *part,
         endianess = LITTLE_ENDIAN;
     }
     
-    /* If explicit addend is provided (ELF RELA),
-     * the implicit addend should not be used.
-     */
-    if (rel->addend) {
-        result = rel->addend;
-    } else {
-        switch (rel->howto->size) {
-            case 8:
-                {
-                    uint_fast64_t field8;
-                    bytearray_read_8_bytes (&field8, part->content + rel->offset, endianess);
-                    result = field8;
-                }
-                break;
+    switch (rel->howto->size) {
+        case 8:
+            {
+                uint_fast64_t field8;
+                bytearray_read_8_bytes (&field8, part->content + rel->offset, endianess);
+                result = field8;
+            }
+            break;
 
-            case 4:
-                {
-                    unsigned long field4;
-                    bytearray_read_4_bytes (&field4, part->content + rel->offset, endianess);
-                    result = field4;
-                }
-                break;
+        case 4:
+            {
+                unsigned long field4;
+                bytearray_read_4_bytes (&field4, part->content + rel->offset, endianess);
+                result = field4;
+            }
+            break;
 
-            case 3:
-                {
-                    unsigned long field3;
-                    bytearray_read_3_bytes (&field3, part->content + rel->offset, endianess);
-                    result = field3;
-                }
-                break;
+        case 3:
+            {
+                unsigned long field3;
+                bytearray_read_3_bytes (&field3, part->content + rel->offset, endianess);
+                result = field3;
+            }
+            break;
 
-            case 2:
-                {
-                    unsigned short field2;
-                    bytearray_read_2_bytes (&field2, part->content + rel->offset, endianess);
-                    result = field2;
-                }
-                break;
+        case 2:
+            {
+                unsigned short field2;
+                bytearray_read_2_bytes (&field2, part->content + rel->offset, endianess);
+                result = field2;
+            }
+            break;
 
-            default:
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "invalid relocation size");
-        }
+        default:
+            ld_internal_error_at_source (__FILE__, __LINE__,
+                                         "invalid relocation size");
     }
+
+    result += rel->addend;
         
     if (rel->howto->pc_relative
         || rel->howto->no_base) {

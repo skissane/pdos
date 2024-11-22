@@ -582,8 +582,19 @@ static void translate_relocation64_addend (struct reloc_entry *reloc,
                 reloc->addend += 4; /* ELF should not have the size of the field subtracted. */
                 break;
 
-            case R_AARCH64_ABS64: reloc->howto = &reloc_howtos[RELOC_TYPE_64]; break;
-            case R_AARCH64_ABS32: reloc->howto = &reloc_howtos[RELOC_TYPE_32]; break;
+            case R_AARCH64_ABS64:
+                reloc->howto = &reloc_howtos[RELOC_TYPE_64];
+                /* If explicit addend is provided (ELF RELA),
+                 * the implicit addend should not be used,
+                 * so the implicit addend is set to 0.
+                 */
+                bytearray_write_8_bytes (part->content + reloc->offset, 0, endianess);
+                break;
+            
+            case R_AARCH64_ABS32:
+                reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+                bytearray_write_4_bytes (part->content + reloc->offset, 0, endianess);
+                break;
 
             case R_AARCH64_ADR_PREL_PG_HI21: reloc->howto = &reloc_howtos[RELOC_TYPE_AARCH64_ADR_PREL_PG_HI21]; break;
             
