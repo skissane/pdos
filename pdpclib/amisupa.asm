@@ -16,8 +16,6 @@
         .globl ___setj
         .globl ___longj
 
-# These need to be implemented
-
 ___setj:
         link a6, #0
         move.l a5, -(sp)
