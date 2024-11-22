@@ -1023,66 +1023,8 @@ unsigned long __mulsi3(unsigned long a, unsigned long b)
    }
    return answer;
 }
-
-
-static unsigned long DivideMod(unsigned long a, unsigned long b, int doMod)
-{
-   unsigned long upper=a, lower=0;
-   int i;
-   a = b << 31;
-   for(i = 0; i < 32; ++i)
-   {
-      lower = lower << 1;
-      if(upper >= a && a && b < 2)
-      {
-         upper = upper - a;
-         lower |= 1;
-      }
-      a = ((b&2) << 30) | (a >> 1);
-      b = b >> 1;
-   }
-   if(!doMod)
-      return lower;
-   return upper;
-}
-
-
-#if 0
-unsigned long __udivsi3(unsigned long a, unsigned long b)
-{
-   return DivideMod(a, b, 0);
-}
 #endif
 
-
-#if 0
-long __divsi3(long a, long b)
-{
-   long answer, negate=0;
-   if(a < 0)
-   {
-      a = -a;
-      negate = !negate;
-   }
-   if(b < 0)
-   {
-      b = -b;
-      negate = !negate;
-   }
-   answer = DivideMod(a, b, 0);
-   if(negate)
-      answer = -answer;
-   return answer;
-}
-#endif
-
-
-#if 0
-unsigned long __umodsi3(unsigned long a, unsigned long b)
-{
-   return DivideMod(a, b, 1);
-}
-#endif
 
 #endif
 
@@ -1185,7 +1127,84 @@ void TestMathFull(void)
 #endif
 
 
+
+#if NEEDDIV
+static unsigned long DivideMod(unsigned long a, unsigned long b, int doMod)
+{
+   unsigned long upper=a, lower=0;
+   int i;
+   a = b << 31;
+   for(i = 0; i < 32; ++i)
+   {
+      lower = lower << 1;
+      if(upper >= a && a && b < 2)
+      {
+         upper = upper - a;
+         lower |= 1;
+      }
+      a = ((b&2) << 30) | (a >> 1);
+      b = b >> 1;
+   }
+   if(!doMod)
+      return lower;
+   return upper;
+}
+
+
+unsigned long __udivsi3(unsigned long a, unsigned long b)
+{
+   return DivideMod(a, b, 0);
+}
+
+
+long __divsi3(long a, long b)
+{
+   long answer, negate=0;
+   if(a < 0)
+   {
+      a = -a;
+      negate = !negate;
+   }
+   if(b < 0)
+   {
+      b = -b;
+      negate = !negate;
+   }
+   answer = DivideMod(a, b, 0);
+   if(negate)
+      answer = -answer;
+   return answer;
+}
+
+
+unsigned long __umodsi3(unsigned long a, unsigned long b)
+{
+   return DivideMod(a, b, 1);
+}
+
+/* guessing this */
+long __modsi3(long a, long b)
+{
+   long answer, negate=0;
+   if(a < 0)
+   {
+      a = -a;
+      negate = !negate;
+   }
+   if(b < 0)
+   {
+      b = -b;
+      negate = !negate;
+   }
+   answer = DivideMod(a, b, 1);
+   if(negate)
+      answer = -answer;
+   return answer;
+}
 #endif
+
+
+
 
 
 double __negdf2(double a_fp)
