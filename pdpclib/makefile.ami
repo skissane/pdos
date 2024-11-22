@@ -6,15 +6,16 @@ LD=ldami
 AS=asami
 # Changing this to 68000 requires support routines that
 # do not currently exist
-COPTS=-m68020 -S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga -fno-common
+COPTS=-m68000 -S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga -fno-common \
+    -DNEEDDIV
 
 pdptest.exe: amistart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o amisupa.o
+       ctype.o setjmp.o math.o amisupa.o fpfuncsa.o
   rm -f amiga.a
   $(AR) r amiga.a stdio.o string.o stdlib.o
   $(AR) r amiga.a start.o time.o errno.o assert.o signal.o locale.o
-  $(AR) r amiga.a ctype.o setjmp.o math.o amisupa.o
+  $(AR) r amiga.a ctype.o setjmp.o math.o amisupa.o fpfuncsa.o
   $(LD) -s -nostdlib -o pdptest.exe amistart.o pdptest.o amiga.a
 
 .c.o:

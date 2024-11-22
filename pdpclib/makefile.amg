@@ -4,13 +4,14 @@ CC=gccami
 AR=arami
 LD=ldami
 AS=asami
-COPTS=-S -O2 -D__PDOS386__ -U__AMIGA__ -D__AMIGEN__ -DNOLIBALLOC -D__NOBIVA__ -I. -I../src
+COPTS=-S -O2 -m68000 -D__PDOS386__ -U__AMIGA__ -D__AMIGEN__ -DNOLIBALLOC \
+    -D__NOBIVA__ -I. -I../src -DNEEDDIV
 
-pdptest.exe: stdio.o string.o stdlib.o \
+pdptest.exe: stdio.o string.o stdlib.o fpfuncsa.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o amisupa.o pdossupc.o
   rm -f pdosgeno.a
-  $(AR) r pdosgeno.a stdio.o string.o stdlib.o
+  $(AR) r pdosgeno.a stdio.o string.o stdlib.o fpfuncsa.o
   $(AR) r pdosgeno.a start.o time.o errno.o assert.o signal.o locale.o
   $(AR) r pdosgeno.a ctype.o setjmp.o math.o amisupa.o pdossupc.o
 

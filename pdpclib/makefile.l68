@@ -10,15 +10,16 @@ AS=asami
 
 LD=pdld --oformat elf
 
-COPTS=-S -O2 -m68020 -D__gnu_linux__ -D__NOBIVA__ -I. -fno-common
+COPTS=-S -O2 -m68000 -D__gnu_linux__ -D__NOBIVA__ -I. -fno-common \
+    -DNEEDDIV
 
 pdptest: l68supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
-       ctype.o setjmp.o math.o
+       ctype.o setjmp.o math.o fpfuncsa.o
   rm -f pdplinux.a
   $(AR) r pdplinux.a stdio.o string.o stdlib.o
   $(AR) r pdplinux.a start.o time.o errno.o assert.o signal.o
-  $(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o
+  $(AR) r pdplinux.a locale.o ctype.o setjmp.o math.o fpfuncsa.o
   $(AR) s pdplinux.a
   $(LD) -s --emit-relocs -nostdlib -e ___pdpent -o pdptest.exe l68supa.o pdptest.o pdplinux.a
 
