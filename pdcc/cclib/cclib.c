@@ -1015,6 +1015,11 @@ cc_variable cc_parse_variable(cc_reader *reader)
                 cc_consume_token(reader);
             else if (reader->curr_token->type == CC_TOKEN_RPAREN)
                 break;
+            else if (reader->curr_token->type == CC_TOKEN_KW_VOID)
+            {
+                /* a single void is ignored */
+                cc_consume_token(reader);
+            }
             else
                 cc_report(reader, CC_DL_ERROR, "Expected a comma after "
                     "parameter declaration but got \"%s\" instead",
