@@ -1,12 +1,12 @@
 # Produce Windows executables
-# links with PDPCLIB created by makefile.p32
+# links with PDPCLIB created by makefile.std
 
 all: world2.exe
 
-world2.exe: world2.o
-  ldwin -s -nostdlib -o world2.exe ../pdpclib/p32start.o world2.o ../pdpclib/pdpwin32.a ../src/kernel32.a
+world2.exe: world2.obj
+  pdld -s -nostdlib -o world2.exe ../pdpclib/w32start.obj world2.obj ../pdpclib/msvcrt.lib
 
-.c.o:
-  pdcc -D__WIN32__ -D__STATIC__ -I ../pdpclib -o $*.s $<
+.c.obj:
+  pdcc -D__WIN32__ -I ../pdpclib -o $*.s $<
   pdas -o $@ --oformat coff $*.s
   rm -f $*.s
