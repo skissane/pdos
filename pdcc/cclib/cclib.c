@@ -46,6 +46,7 @@ static void cc_dump_type(cc_reader *reader, const cc_type *type);
 static void cc_dump_variable(cc_reader *reader, const cc_variable *var);
 static void cc_dump_expr(cc_reader *reader, const cc_expr *expr);
 static cc_expr cc_parse_block_expr(cc_reader *reader);
+static void cc_resolve_symbol(cc_reader *reader, cc_token *tok);
 
 static void cc_dump_member(cc_reader *reader, const cc_member *member)
 {
@@ -232,6 +233,16 @@ static void cc_dump_expr(cc_reader *reader, const cc_expr *expr)
     }
 }
 
+static void ignore_arrays (cc_reader *reader)
+{
+    while (reader->curr_token->type == CC_TOKEN_LBRACKET) {
+        while (reader->curr_token->type != CC_TOKEN_RBRACKET) {
+            cc_consume_token(reader);
+        }
+        cc_consume_token(reader);
+    }
+}
+
 /**
  * @brief Adds a type to the current scope
  * 
@@ -280,6 +291,7 @@ cc_member cc_parse_member(cc_reader *reader)
                                        "member declaration");
     TOKEN_GETSTR(member.name, reader->curr_token->data.name);
     cc_consume_token(reader);
+    ignore_arrays (reader);
     return member;
 }
 
@@ -377,6 +389,8 @@ cc_type cc_parse_type(cc_reader *reader)
         {
             type.name = reader->curr_token->data.name;
             cc_consume_token(reader);
+        } else {
+            type.name = "<anonymous>";
         }
 
         /* Syntax of the form:
@@ -385,10 +399,22 @@ cc_type cc_parse_type(cc_reader *reader)
             cc_parse_struct_member_decl(reader, &type);
         return type;
     }
+
+    if (reader->curr_token->type == CC_TOKEN_IDENT) {
+        cc_resolve_symbol (reader, reader->curr_token);
+    }
+
+    if (reader->curr_token->type == CC_TOKEN_TYPE) {
+        /* Oversimplified for now, discards const and volatile. */
+        type = *reader->curr_token->data.type;
+        cc_consume_token (reader);
+    }
     
     for ( ; reader->curr_token->type != CC_TOKEN_IDENT; reader->curr_token++)
     {
-        if (reader->curr_token->type == CC_TOKEN_KW_INT)
+        if (reader->curr_token->type == CC_TOKEN_KW_VOID) {
+            type.mode = CC_TYPE_VOID;
+        } else if (reader->curr_token->type == CC_TOKEN_KW_INT)
         {
             if (type.mode != CC_TYPE_CHAR && type.mode != CC_TYPE_SHORT
              && type.mode != CC_TYPE_LONG)
@@ -634,7 +660,7 @@ static void cc_resolve_symbol(cc_reader *reader, cc_token *tok)
     if (!cc_resolve_symbol_1(reader, tok, reader->root_expr))
         return;
     
-    cc_report(reader, CC_DL_ERROR, "Can't resolve identifier %s to a variable "
+    cc_report(reader, CC_DL_ERROR, "Can't resolve identifier '%s' to a variable "
         "or a typename", tok->data.name);
 }
 
@@ -703,9 +729,12 @@ cc_expr cc_parse_expression(cc_reader *reader)
 #ifdef __CC64__
         cc_token ident_tok;
 #else
-        cc_token ident_tok = cc_consume_token(reader);
+        cc_token ident_tok = *reader->curr_token;
 #endif
         cc_resolve_symbol(reader, &ident_tok);
+        if (ident_tok.type == CC_TOKEN_TYPE) goto decl;
+        
+        cc_consume_token(reader);
         if (reader->curr_token->type == CC_TOKEN_LPAREN
          && ident_tok.type == CC_TOKEN_VARIABLE)
         {
@@ -772,12 +801,12 @@ cc_expr cc_parse_expression(cc_reader *reader)
     case CC_TOKEN_KW_EXTERN:
     case CC_TOKEN_KW_STATIC:
     case CC_TOKEN_KW_VOLATILE:
+    case CC_TOKEN_KW_VOID:
     case CC_TOKEN_KW_CONST:
+decl:
     {
         cc_variable *var;
         expr.type = CC_EXPR_DECL;
-        if (reader->curr_token->type == CC_TOKEN_IDENT)
-            cc_resolve_symbol(reader, reader->curr_token);
 #ifdef __CC64__
 #else
         expr.data.decl.var = cc_parse_variable(reader);
@@ -796,6 +825,31 @@ cc_expr cc_parse_expression(cc_reader *reader)
             expr.data.decl.var.block_expr = xcalloc(sizeof(cc_expr));
             *expr.data.decl.var.block_expr = *var->block_expr;
         }
+        return expr;
+    }
+
+    case CC_TOKEN_KW_TYPEDEF:
+    {
+        cc_type type;
+        
+        cc_consume_token (reader);
+        type = cc_parse_type (reader);
+
+        if (reader->curr_token->type != CC_TOKEN_IDENT) {
+            cc_report(reader, CC_DL_ERROR, "Expected an identifier but got \"%s\"",
+                      g_token_info[reader->curr_token->type].name);
+        } else {
+            type.name = reader->curr_token->data.name;
+            *cc_add_type (reader) = type;
+        }
+        cc_consume_token (reader);
+        
+        if (reader->curr_token->type != CC_TOKEN_SEMICOLON) {
+            cc_report(reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
+                      g_token_info[reader->curr_token->type].name);
+        }
+        cc_consume_token (reader);
+        
         return expr;
     }
 #ifdef __CC64__
@@ -985,6 +1039,9 @@ cc_variable cc_parse_variable(cc_reader *reader)
         TOKEN_GETSTR(var.name, reader->curr_token->data.name);
         cc_consume_token(reader);
     }
+    if (reader->curr_token->type == CC_TOKEN_LBRACKET) {
+        ignore_arrays (reader);
+    }
     if (reader->curr_token->type == CC_TOKEN_LPAREN) /* Function arguments */
     {
         cc_param param = {0};
@@ -992,6 +1049,9 @@ cc_variable cc_parse_variable(cc_reader *reader)
         var.type.data.f.return_type = xcalloc(sizeof(cc_type));
         *var.type.data.f.return_type = var.type;
         var.type.data.f.return_type->data.f.return_type = NULL;
+        var.type.data.f.params = NULL;
+        var.type.data.f.n_params = 0;
+        var.type.data.f.variadic = 0;
         var.type.mode = CC_TYPE_FUNCTION;
         cc_consume_token(reader);
         while (reader->curr_token->type != CC_TOKEN_RPAREN)
@@ -1046,6 +1106,7 @@ cc_variable cc_parse_variable(cc_reader *reader)
      || reader->curr_token->type == CC_TOKEN_ASSIGN
      || reader->curr_token->type == CC_TOKEN_SEMICOLON)
         return var;
+
     cc_report(reader, CC_DL_ERROR, "Unexpected token \"%s\" on declaration",
               g_token_info[reader->curr_token->type].name);
 }

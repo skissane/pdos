@@ -658,7 +658,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
             break;
         default:
             p--;
-            if (isalpha(*p))
+            if (!isdigit(*p))
             {
                 const char *start = p;
                 char is_keyword = 0;
@@ -686,7 +686,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
                     tok.data.name = xstrndup(start, len);
                 }
             }
-            else if (isdigit(*p))
+            else
             {
                 const char *start = p;
                 char *numstr;
