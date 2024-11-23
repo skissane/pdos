@@ -1,4 +1,4 @@
-extern int printf();
+int printf(const char *format, ...);
 
 int main(void)
 {
