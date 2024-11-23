@@ -30,23 +30,26 @@ void cc_report(cc_reader *reader, enum cc_diagnostic_level level,
     else
         fprintf(stderr, TTY_RED TTY_BOLD "<unknown>: " TTY_RESET TTY_BOLD);
     vfprintf(stderr, msg, arg);
+    va_end(arg);
     fprintf(stderr, ":" TTY_RESET "\n");
 
-    rewind(reader->input);
-    while (fgets(line, 80, reader->input) && line_cnt != loc->line)
-        line_cnt++;
-    
-    if (line_cnt == loc->line)
+    if (reader->input != NULL)
     {
-        char *p = strchr(line, '\n');
-        size_t i;
-        if (p) *p = '\0';
-        fprintf(stderr, "%s\n", line);
-        for (i = 0; i < loc->column; i++)
-            fputc('-', stderr);
-        fprintf(stderr, "^\n");
+        rewind(reader->input);
+        while (fgets(line, 80, reader->input) && line_cnt != loc->line)
+            line_cnt++;
+
+        if (line_cnt == loc->line)
+        {
+            char *p = strchr(line, '\n');
+            size_t i;
+            if (p) *p = '\0';
+            fprintf(stderr, "%s\n", line);
+            for (i = 0; i < loc->column; i++)
+                fputc('-', stderr);
+            fprintf(stderr, "^\n");
+        }
     }
-    va_end(arg);
 
     if (level == CC_DL_ERROR)
         exit(EXIT_FAILURE);
