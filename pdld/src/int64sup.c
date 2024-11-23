@@ -18,8 +18,6 @@
 
 static uint_fast64_t udivmodi (uint_fast64_t a, uint_fast64_t b, uint_fast64_t *rem_p)
 {
-    uint_fast64_t c = 0;
-
     if (b > a) {
         if (rem_p) *rem_p = a;
         return 0;
@@ -42,15 +40,42 @@ static uint_fast64_t udivmodi (uint_fast64_t a, uint_fast64_t b, uint_fast64_t *
             return ((unsigned long)a) / ((unsigned long)b);
         }
     }
-    
-    while (a >= b) {
-        a -= b;
-        c++;
-    }
 
-    if (rem_p) *rem_p = a;
-    
-    return c;
+#if 1
+    {
+        uint_fast64_t upper = a, lower = 0;
+        int i;
+        
+        a = b << 63;
+        for (i = 0; i < 64; ++i) {
+            lower = lower << 1;
+            if (upper >= a && a && b < 2) {
+                upper = upper - a;
+                lower |= 1;
+            }
+            a = ((b&2) << 62) | (a >> 1);
+            b = b >> 1;
+        }
+
+        if (rem_p) *rem_p = upper;
+        
+        return lower;
+    }
+#else
+    {
+        /* Simplest and slowest way. */
+        uint_fast64_t c = 0;
+        
+        while (a >= b) {
+            a -= b;
+            c++;
+        }
+
+        if (rem_p) *rem_p = a;
+
+        return c;
+    }
+#endif
 }
 
 int_fast64_t __divdi3 (int_fast64_t a, int_fast64_t b)
