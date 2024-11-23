@@ -1031,6 +1031,16 @@ cc_variable cc_parse_variable(cc_reader *reader)
         cc_consume_token(reader);
     }
 
+    /* if we hit a semicolon, and there was no extern keyword,
+       and this is a function, then we now assume extern */
+    if ((reader->curr_token->type == CC_TOKEN_SEMICOLON)
+        && (var.type.mode == CC_TYPE_FUNCTION)
+        && (var.linkage == CC_LINKAGE_AUTO)
+       )
+    {
+        var.linkage = CC_LINKAGE_EXTERN;
+    }
+
     /* Now, for normal variables we could end, or we could abort */
     if (reader->curr_token->type == CC_TOKEN_LBRACE
      || reader->curr_token->type == CC_TOKEN_ASSIGN
