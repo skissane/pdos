@@ -49,8 +49,13 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 8, 0, 0, 0, NULL, "RELOC_TYPE_64" },
     { 4, 0, 0, 0, NULL, "RELOC_TYPE_32" },
     { 3, 0, 0, 0, NULL, "RELOC_TYPE_24" },
+    { 2, 0, 0, 0, NULL, "RELOC_TYPE_16" },
+    { 1, 0, 0, 0, NULL, "RELOC_TYPE_8" },
 
+    { 8, 1, 0, 0, NULL, "RELOC_TYPE_PC64" },
     { 4, 1, 0, 0, NULL, "RELOC_TYPE_PC32" },
+    { 2, 1, 0, 0, NULL, "RELOC_TYPE_PC16" },
+    { 1, 1, 0, 0, NULL, "RELOC_TYPE_PC8" },
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
 
@@ -385,6 +390,14 @@ static void reloc_generic (struct section_part *part,
             }
             break;
 
+        case 1:
+            {
+                unsigned char field1;
+                bytearray_read_1_bytes (&field1, part->content + rel->offset, endianess);
+                result = field1;
+            }
+            break;
+
         default:
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "invalid relocation size");
@@ -425,6 +438,10 @@ static void reloc_generic (struct section_part *part,
 
         case 2:
             bytearray_write_2_bytes (part->content + rel->offset, result, endianess);
+            break;
+
+        case 1:
+            bytearray_write_1_bytes (part->content + rel->offset, result, endianess);
             break;
 
         default:

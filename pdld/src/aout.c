@@ -44,7 +44,10 @@ static size_t section_get_num_relocs (struct section *section)
         size_t i;
         
         for (i = 0; i < part->relocation_count; i++) {
-            if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+            if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64]
+                || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]
+                || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_16]
+                || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_8]) {
                 num_relocs++;
             }
         }
@@ -63,9 +66,18 @@ static unsigned char *write_relocs_for_section (unsigned char *pos,
         
         for (i = 0; i < part->relocation_count; i++) {
             struct relocation_info_internal rel;
-            struct symbol *symbol;
+            const struct symbol *symbol;
+            unsigned long size_log2;
             
-            if (part->relocation_array[i].howto != &reloc_howtos[RELOC_TYPE_32]) continue;
+            if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_64])  {
+                size_log2 = 3;
+            } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32]) {
+                size_log2 = 2;
+            } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_16]) {
+                size_log2 = 1;
+            } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_8]) {
+                size_log2 = 0;
+            } else continue;
 
             symbol = part->relocation_array[i].symbol;
             if (symbol_is_undefined (symbol)) symbol = symbol_find (symbol->name);
@@ -81,7 +93,7 @@ static unsigned char *write_relocs_for_section (unsigned char *pos,
             } else {
                 rel.r_symbolnum = N_TEXT;
             }
-            rel.r_symbolnum |= 2LU << 25;
+            rel.r_symbolnum |= size_log2 << 25;
 
             write_struct_relocation_info (pos, &rel);
             pos += SIZEOF_struct_relocation_info_file;
@@ -178,6 +190,8 @@ static void translate_relocation (struct reloc_entry *reloc,
                                   struct section_part *part,
                                   const struct exec_internal *exec_p)
 {
+    unsigned int size, pcrel;
+    
     if (input_reloc->r_symbolnum >> 28) {
         ld_internal_error_at_source (__FILE__, __LINE__,
                                      "relocation with r_symbolnum %#lx not yet supported",
@@ -207,9 +221,21 @@ static void translate_relocation (struct reloc_entry *reloc,
 
     reloc->offset = input_reloc->r_address;
 
-    switch (1U << ((input_reloc->r_symbolnum >> 25) & 3)) {
+    size = 1U << ((input_reloc->r_symbolnum >> 25) & 3);
+    pcrel = (input_reloc->r_symbolnum >> 24) & 1;
+
+    switch (size) {
+        case 8:
+            if (pcrel) {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_PC64];
+                reloc->addend += reloc->offset + 8;
+            } else {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_64];
+            }
+            break;
+        
         case 4:
-            if ((input_reloc->r_symbolnum >> 24) & 1) {
+            if (pcrel) {
                 reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
                 /* a.out PC relative relocations are relative to the start of section,
                  * not to the end of field.
@@ -220,10 +246,22 @@ static void translate_relocation (struct reloc_entry *reloc,
             }
             break;
 
-        default:
-            ld_internal_error_at_source (__FILE__, __LINE__,
-                                         "+++relocation size %u not supported yet",
-                                         1U << ((input_reloc->r_symbolnum >> 25) & 3));
+        case 2:
+            if (pcrel) {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_PC16];
+                reloc->addend += reloc->offset + 2;
+            } else {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_16];
+            }
+            break;
+
+        case 1:
+            if (pcrel) {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_PC8];
+                reloc->addend += reloc->offset + 1;
+            } else {
+                reloc->howto = &reloc_howtos[RELOC_TYPE_8];
+            }
             break;
     }
 }
