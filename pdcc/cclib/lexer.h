@@ -22,15 +22,27 @@ typedef struct cc_variable cc_variable;
 typedef struct cc_token cc_token;
 
 typedef enum cc_token_type {
+    CC_TOKEN_ASSIGN,
     CC_TOKEN_PLUS,
+    CC_TOKEN_ASPLUS,
     CC_TOKEN_MINUS,
+    CC_TOKEN_ASMINUS,
     CC_TOKEN_DIV,
+    CC_TOKEN_ASDIV,
     CC_TOKEN_REM,
+    CC_TOKEN_ASREM,
     CC_TOKEN_MUL,
+    CC_TOKEN_ASMUL,
     CC_TOKEN_LSHIFT,
+    CC_TOKEN_ASLSHIFT,
     CC_TOKEN_RSHIFT,
+    CC_TOKEN_ASRSHIFT,
     CC_TOKEN_BIT_AND,
+    CC_TOKEN_BIT_ASAND,
     CC_TOKEN_BIT_OR,
+    CC_TOKEN_BIT_ASOR,
+    CC_TOKEN_BIT_XOR,
+    CC_TOKEN_BIT_ASXOR,
     CC_TOKEN_BIT_NOT,
     CC_TOKEN_LPAREN,
     CC_TOKEN_RPAREN,
@@ -101,7 +113,6 @@ typedef enum cc_token_type {
     CC_TOKEN_KW_INLINE,
     CC_TOKEN_EOF,
     CC_NUM_TOKENS,
-    CC_TOKEN_ASSIGN = 0x20
 } cc_token_type;
 
 struct cc_token {

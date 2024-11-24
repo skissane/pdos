@@ -21,15 +21,27 @@
 
 /* Lookup table for parsing tokens */
 cc_token_info g_token_info[CC_NUM_TOKENS] = {
+    { CC_TOKEN_ASSIGN, "=" },
     { CC_TOKEN_PLUS, "+" },
+    { CC_TOKEN_ASPLUS, "+=" },
     { CC_TOKEN_MINUS, "-" },
+    { CC_TOKEN_ASMINUS, "-=" },
     { CC_TOKEN_DIV, "/" },
-    { CC_TOKEN_REM, "%%" },
+    { CC_TOKEN_ASDIV, "/=" },
+    { CC_TOKEN_REM, "%" },
+    { CC_TOKEN_ASREM, "%=" },
     { CC_TOKEN_MUL, "*" },
+    { CC_TOKEN_ASMUL, "*=" },
     { CC_TOKEN_LSHIFT, "<<" },
+    { CC_TOKEN_ASLSHIFT, "<<=" },
     { CC_TOKEN_RSHIFT, ">>" },
+    { CC_TOKEN_ASRSHIFT, ">>=" },
     { CC_TOKEN_BIT_AND, "&" },
+    { CC_TOKEN_BIT_ASAND, "&=" },
     { CC_TOKEN_BIT_OR, "|" },
+    { CC_TOKEN_BIT_ASOR, "|=" },
+    { CC_TOKEN_BIT_XOR, "^" },
+    { CC_TOKEN_BIT_ASXOR, "^=" },
     { CC_TOKEN_BIT_NOT, "~" },
 
     { CC_TOKEN_LPAREN, "(" },
@@ -294,12 +306,12 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_PLUS;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASPLUS;
                 p++;
             }
             else if (*p == '+')
             {
-                tok.type |= CC_TOKEN_INCREMENT;
+                tok.type = CC_TOKEN_INCREMENT;
                 p++;
             }
             break;
@@ -307,7 +319,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_MINUS;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASMINUS;
                 p++;
             }
             else if (*p == '-')
@@ -325,7 +337,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_DIV;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASDIV;
                 p++;
             }
             break;
@@ -333,7 +345,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_REM;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASREM;
                 p++;
             }
             break;
@@ -341,7 +353,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_ASTERISK;
             if (*p == '=')
             {
-                tok.type = CC_TOKEN_MUL | CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASMUL;
                 p++;
             }
             break;
@@ -385,7 +397,7 @@ int cc_lex_line(cc_reader *reader, const char *line)
             tok.type = CC_TOKEN_NOT;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_NEQ;
+                tok.type = CC_TOKEN_NEQ;
                 p++;
             }
             break;
@@ -396,12 +408,30 @@ int cc_lex_line(cc_reader *reader, const char *line)
                 tok.type = CC_TOKEN_OR;
                 p++;
             }
+            else if (*p == '=')
+            {
+                tok.type = CC_TOKEN_BIT_ASOR;
+                p++;
+            }
+            break;
+        case '^':
+            tok.type = CC_TOKEN_BIT_XOR;
+            if (*p == '=')
+            {
+                tok.type = CC_TOKEN_BIT_ASXOR;
+                p++;
+            }
             break;
         case '&':
             tok.type = CC_TOKEN_AMPERSAND;
             if (*p == '&')
             {
                 tok.type = CC_TOKEN_AND;
+                p++;
+            }
+            else if (*p == '=')
+            {
+                tok.type = CC_TOKEN_BIT_ASAND;
                 p++;
             }
             break;
@@ -535,7 +565,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
             tok.type = CC_TOKEN_PLUS;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASPLUS;
             }
             else if (*p == '+')
             {
@@ -546,7 +576,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
             tok.type = CC_TOKEN_MINUS;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASMINUS;
             }
             else if (*p == '-')
             {
@@ -561,21 +591,21 @@ int cc_lex_with_preprocess (cc_reader *reader)
             tok.type = CC_TOKEN_DIV;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASDIV;
             }
             break;
         case '%':
             tok.type = CC_TOKEN_REM;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASREM;
             }
             break;
         case '*':
             tok.type = CC_TOKEN_ASTERISK;
             if (*p == '=')
             {
-                tok.type = CC_TOKEN_MUL | CC_TOKEN_ASSIGN;
+                tok.type = CC_TOKEN_ASMUL;
             }
             break;
         case '?':
