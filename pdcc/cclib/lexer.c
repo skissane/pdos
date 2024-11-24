@@ -569,7 +569,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
             }
             else if (*p == '+')
             {
-                tok.type |= CC_TOKEN_INCREMENT;
+                tok.type = CC_TOKEN_INCREMENT;
             }
             break;
         case '-':
@@ -580,11 +580,11 @@ int cc_lex_with_preprocess (cc_reader *reader)
             }
             else if (*p == '-')
             {
-                tok.type |= CC_TOKEN_DECREMENT;
+                tok.type = CC_TOKEN_DECREMENT;
             }
             else if (*p == '>')
             {
-                tok.type |= CC_TOKEN_ARROW;
+                tok.type = CC_TOKEN_ARROW;
             }
             break;
         case '/':
@@ -645,7 +645,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
             tok.type = CC_TOKEN_NOT;
             if (*p == '=')
             {
-                tok.type |= CC_TOKEN_NEQ;
+                tok.type = CC_TOKEN_NEQ;
             }
             break;
         case '|':
