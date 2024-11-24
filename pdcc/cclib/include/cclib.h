@@ -121,6 +121,7 @@ typedef enum cc_expr_type {
     CC_EXPR_MUL,
     CC_EXPR_BIT_AND,
     CC_EXPR_BIT_OR,
+    CC_EXPR_BIT_XOR,
     CC_EXPR_BIT_NOT,
     CC_EXPR_LSHIFT,
     CC_EXPR_RSHIFT,
