@@ -81,6 +81,9 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_CONSTANT:
         fprintf(reader->output, "\tpushl $%lu\n", expr->data._const.numval);
         return 4;
+    case CC_EXPR_VARREF:
+        fprintf(reader->output, "\tpushl _%s\n", expr->data.var_ref.var->name);
+        return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
         abort();
@@ -183,8 +186,9 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         cc_i386gen_return(reader, expr->data.ret.ret_expr);
         break;
     case CC_EXPR_CALL:
-        /* Push arguments to the stack */
-        for (i = 0; i < expr->data.call.n_params; i++)
+        /* Push arguments to the stack, right to left */
+        i = expr->data.call.n_params;
+        while (i-- > 0)
         {
             const cc_expr *param_expr = &expr->data.call.params[i];
             stack_size += cc_i386gen_push(reader, param_expr);
@@ -234,8 +238,16 @@ static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
 {
     if (var->linkage != CC_LINKAGE_EXTERN)
     {
+        if (var->type.mode == CC_TYPE_INT)
+        {
+            fprintf(reader->output, ".balign 4\n");
+        }
         fprintf(reader->output, ".global _%s\n", var->name);
         fprintf(reader->output, "_%s:\n", var->name);
+        if (var->type.mode == CC_TYPE_INT)
+        {
+            fprintf(reader->output, ".long 0\n");
+        }
     }
     else
         fprintf(reader->output, "# _%s\n", var->name);
