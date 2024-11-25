@@ -1017,6 +1017,12 @@ static cc_expr cc_parse_block_expr(cc_reader *reader)
     cc_consume_token(reader);
 #endif
     expr.data.block.parent_id = reader->curr_block->id; /* Set parent rel */
+    expr.data.block.stack_depth = 0;
+    if (old_block != reader->root_expr)
+    {
+        expr.data.block.stack_depth = old_block->data.block.n_vars * 4;
+                                      + old_block->data.block.stack_depth;
+    }
     reader->curr_block = &expr; /* Temporarily set new block */
     while (reader->curr_token->type != CC_TOKEN_RBRACE)
     {

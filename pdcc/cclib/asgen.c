@@ -87,8 +87,9 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
             size_t size;
             size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
             fprintf(reader->output, "\tpushl -%d(%%ebp)\n",
-                    (int)expr->data.var_ref.var->block_offset
-                         + size);
+                    reader->curr_block->data.block.stack_depth
+                    + expr->data.var_ref.var->block_offset
+                    + size);
         }
         else
         {
@@ -96,14 +97,16 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
         }
         return 4;
     case CC_EXPR_ADDRESSOF:
-        if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
+        if ((expr->data.var_ref.var->type.mode != CC_TYPE_FUNCTION)
+            && (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO))
         {
             size_t size;
             size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
             fprintf(reader->output, "\tleal -%d(%%ebp), %%eax\n"
                                     "\tpushl %%eax\n",
-                    (int)expr->data.var_ref.var->block_offset
-                         + size);
+                    reader->curr_block->data.block.stack_depth
+                    + expr->data.var_ref.var->block_offset
+                    + size);
         }
         else
         {
@@ -251,11 +254,17 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         printf("%lu", expr->data._const.numval);
         break;
     case CC_EXPR_BLOCK:
+      {
+        cc_expr *oldblock;
+        oldblock = reader->curr_block;
         fprintf(reader->output, "# {\n");
+        reader->curr_block = (cc_expr *)expr;
         for (i = 0; i < expr->data.block.n_exprs; i++)
             cc_i386gen_top(reader, &expr->data.block.exprs[i]);
         fprintf(reader->output, "# }\n");
+        reader->curr_block = oldblock;
         break;
+      }
     default:
         printf("Unknown expr type %u\n", expr->type);
         abort();
@@ -301,6 +310,7 @@ void cc_i386gen(cc_reader *reader, const cc_expr *expr)
 {
     size_t i;
     assert(expr->type == CC_EXPR_BLOCK);
+    reader->curr_block = (cc_expr *)expr;
     fprintf(reader->output, "# bits 32\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
         cc_i386gen_variable(reader, &expr->data.block.vars[i]);

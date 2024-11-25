@@ -183,6 +183,7 @@ struct cc_expr {
             cc_variable *vars;
             size_t n_vars;
             size_t parent_id;
+            size_t stack_depth;
         } block;
         struct {
             unsigned long numval; /* Numeric value for constant */
