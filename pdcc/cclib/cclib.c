@@ -646,6 +646,7 @@ static int cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
 
 /**
  * @brief Resolves a symbol, makes the token TOK either a TYPE or an IDENTIFIER
+ * (I think it is VARIABLE, not IDENTIFIER)
  * depending on the given context
  * 
  * @param reader Reader object
@@ -874,6 +875,36 @@ decl:
         expr.type = CC_EXPR_MUL;
         cc_consume_token(reader);
         return expr;
+    case CC_TOKEN_AMPERSAND:
+      {
+        cc_type type;
+        cc_token ident_tok;
+
+        expr.type = CC_EXPR_ADDRESSOF;
+        cc_consume_token(reader);
+
+        ident_tok = *reader->curr_token;
+        if (ident_tok.type != CC_TOKEN_IDENT)
+        {
+            cc_report(reader, CC_DL_ERROR, "Expected an identifier but got \"%s\"",
+                      g_token_info[reader->curr_token->type].name);
+        }
+        else
+        {
+            cc_resolve_symbol(reader, &ident_tok);
+            if (ident_tok.type != CC_TOKEN_VARIABLE)
+            {
+                cc_report(reader, CC_DL_ERROR, "Expected a variable but got \"%s\"",
+                          g_token_info[reader->curr_token->type].name);
+            }
+            else
+            {
+                expr.data.var_ref.var = ident_tok.data.var;
+                cc_consume_token(reader);
+                return expr;
+            }
+        }
+      }
 #endif
     default:
         cc_report(reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",

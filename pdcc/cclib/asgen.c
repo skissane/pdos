@@ -84,6 +84,9 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_VARREF:
         fprintf(reader->output, "\tpushl _%s\n", expr->data.var_ref.var->name);
         return 4;
+    case CC_EXPR_ADDRESSOF:
+        fprintf(reader->output, "\tpushl $_%s\n", expr->data.var_ref.var->name);
+        return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
         abort();
@@ -240,6 +243,7 @@ static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
     {
         if (var->type.mode == CC_TYPE_INT)
         {
+            fprintf(reader->output, ".data\n");
             fprintf(reader->output, ".balign 4\n");
         }
         fprintf(reader->output, ".global _%s\n", var->name);
@@ -247,6 +251,7 @@ static void cc_i386gen_variable(cc_reader *reader, const cc_variable *var)
         if (var->type.mode == CC_TYPE_INT)
         {
             fprintf(reader->output, ".long 0\n");
+            fprintf(reader->output, ".text\n");
         }
     }
     else
