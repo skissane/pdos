@@ -134,6 +134,8 @@ typedef enum cc_expr_type {
     CC_EXPR_GT,
     CC_EXPR_GTE,
 
+    CC_EXPR_ADDRESSOF, /* & */
+    CC_EXPR_DEREF, /* * */
     CC_EXPR_CAST,
     CC_EXPR_CONSTANT,
     CC_EXPR_STRING,
