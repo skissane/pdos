@@ -82,10 +82,33 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
         fprintf(reader->output, "\tpushl $%lu\n", expr->data._const.numval);
         return 4;
     case CC_EXPR_VARREF:
-        fprintf(reader->output, "\tpushl _%s\n", expr->data.var_ref.var->name);
+        if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
+        {
+            size_t size;
+            size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
+            fprintf(reader->output, "\tpushl -%d(%%ebp)\n",
+                    (int)expr->data.var_ref.var->block_offset
+                         + size);
+        }
+        else
+        {
+            fprintf(reader->output, "\tpushl _%s\n", expr->data.var_ref.var->name);
+        }
         return 4;
     case CC_EXPR_ADDRESSOF:
-        fprintf(reader->output, "\tpushl $_%s\n", expr->data.var_ref.var->name);
+        if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
+        {
+            size_t size;
+            size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
+            fprintf(reader->output, "\tleal -%d(%%ebp), %%eax\n"
+                                    "\tpushl %%eax\n",
+                    (int)expr->data.var_ref.var->block_offset
+                         + size);
+        }
+        else
+        {
+            fprintf(reader->output, "\tpushl $_%s\n", expr->data.var_ref.var->name);
+        }
         return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
@@ -160,6 +183,7 @@ static void cc_i386gen_return(cc_reader *reader, const cc_expr *expr)
 static void cc_i386gen_decl(cc_reader *reader, const cc_variable *var)
 {
     size_t size = cc_get_variable_size(reader, var);
+    size /= 8; /* variable size given in bits - convert to bytes */
     stack_size += size;
     fprintf(reader->output, "\tsubl $%u, %%esp #_%s, %u\n", size, var->name,
             stack_size);
@@ -189,7 +213,8 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
         cc_i386gen_return(reader, expr->data.ret.ret_expr);
         break;
     case CC_EXPR_CALL:
-        /* Push arguments to the stack, right to left */
+        stack_size = 0;
+        /* Push arguments onto the stack, right to left */
         i = expr->data.call.n_params;
         while (i-- > 0)
         {

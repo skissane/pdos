@@ -536,7 +536,7 @@ size_t cc_get_type_size(cc_reader *reader, const cc_type *type)
         return max_size;
     }
     case CC_TYPE_ENUM:
-        printf("sizeof struct not supported");
+        printf("sizeof struct (enum?) not supported");
         abort();
     case CC_TYPE_FUNCTION:
         printf("sizeof a function instead of a func ptr");
@@ -814,6 +814,7 @@ decl:
 #endif
         var = cc_add_variable(reader); /* Add to list of variables */
         *var = expr.data.decl.var;
+        var->block_offset = (reader->curr_block->data.block.n_vars - 1) * 4;
         /* Now fuck you and make a good parsing of that lbrace */
         /* TODO: This is terrible, we're duplicating data!!! */
         if (reader->curr_token->type == CC_TOKEN_LBRACE)

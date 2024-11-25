@@ -108,6 +108,7 @@ struct cc_variable {
     char *name;
     cc_linkage linkage;
     cc_type type;
+    size_t block_offset; /* offset of this variable within the current block */
     cc_expr *block_expr; /* Expression for the block {} */
 };
 
