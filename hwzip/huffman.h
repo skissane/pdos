@@ -8,7 +8,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 #include "bits.h"
+
+#define huffman_decoder_init hdinit
+#define huffman_decode hfdec
+#define huffman_encoder_init heinit
+#define huffman_encoder_init2 heinit2
 
 #define MAX_HUFFMAN_SYMBOLS 288      /* Deflate uses max 288 symbols. */
 #define MAX_HUFFMAN_BITS 16          /* Implode uses max 16-bit codewords. */

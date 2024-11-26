@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 
+#define distance2dist_lo d2dlo
+#define distance2dist_hi d2dhi
+
 /* Element x contains the value of x with the bits in reverse order. */
 extern const uint8_t reverse8_tbl[UINT8_MAX + 1];
 
