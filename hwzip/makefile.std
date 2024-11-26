@@ -35,15 +35,15 @@ else ifeq "$(targ)" "zpg"
 # to generate tables.c, then rename gen.exe to wingen.exe
 # and then edit this makefile (search for wingen) as per
 # instructions and build using makefile.zpg in PDPCLIB
-# and then you can do pdmake targ=zpg -f makefile.zpg here
-CC=gcc370
+# and then you can do pdmake targ=zpg -f makefile.std here
+CC=gccmvs
 ####CFLAGS=-O0
 CFLAGS=-O0 -DNO_LONG_LONG -Dinline= -ansi -pedantic
-AS=as370
+AS=as370 -mhlasm -mebcdic
 AR=ar370
 COPTS=-S $(CFLAGS) -Wall -fno-common -DPOS_EXTEND -U__MVS__ \
     -I. -I../pdpclib -D__MF32__ -D__NOBIVA__ -D__PDOSGEN__ \
-    -I../generic -I../src
+    -I../generic -I../src -DHAVE_FOLDER
 EXTRA2=../src/pos2.obj
 START=../pdpclib/pgastart.o
 LDFLAGS=--no-insert-timestamp -s --stack ,300000 --oformat mvs
