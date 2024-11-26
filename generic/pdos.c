@@ -720,29 +720,166 @@ static int dirCreat(const char *dnm, int attrib)
     return (rc);
 }
 
+/*convert '/' to '\\' of the path*/
+static void convertcwd(char *dirname)
+{
+    char* p = dirname;
+    while (*p)
+    {
+        if (*p == '/') *p = '\\';
+        ++p;
+    }
+}
+
+
+static int formatcwd(const char *input, char *output)
+{
+    char *p;
+
+    /* The user provided '.'. */
+    if (input[0] == '.')
+    {
+        if (input[1] == '\\' || input[1] == '/')
+        {
+            input += 2;
+        }
+        else if (input[1] == '\0')
+        {
+            input++;
+        }
+    }
+   /*
+     The user only provides the <folder-name>
+     e.g. \from\1.txt the function corrects it to
+     e.g. c:\from\1.txt.
+     */
+    if (input[0] == '\\')
+    {
+        output[0] = 'A' + currentDrive;
+        strcpy(output + 1, ":");
+        strcat(output, input);
+    }
+
+    /*
+     The user provides the file name in full format
+     e.g. c:\from\1.txt
+     */
+    else if((strlen(input) >= 3)
+            && (memcmp(input + 1, ":\\", 2) == 0)
+           )
+    {
+        strcpy(output,input);
+    }
+
+    /*
+     The user misses the '\' e.g. c:1.txt.
+     */
+    else if (strlen(input) >= 2 && input[1] == ':'
+             && input[2] != '\\')
+    {
+        memcpy(output, input, 2);
+        memcpy(output + 2, "\\", 2);
+        strcat(output,cwd);
+        if(strcmp(cwd, "") != 0)
+        {
+            strcat(output, "\\");
+        }
+        strcat(output, input + 2);
+    }
+
+    /*
+     The user provides only the <file-name>
+     e.g. 1.txt in that case the drive name,'\'
+     and currect working directory needs to be
+     prepended e.g. c:\from\1.txt.
+     */
+    else
+    {
+        output[0] = 'A' + currentDrive;
+        strcpy(output + 1, ":");
+        strcat(output, "\\");
+        strcat(output, cwd);
+        if(strcmp(cwd, "") != 0)
+        {
+            strcat(output, "\\");
+        }
+        strcat(output, input);
+    }
+    
+    /* Checks for '\' or '/' before the null terminator and removes it. */
+    p = strchr(output, '\0') - 1;
+    if (p[0] == '\\' || p[0] == '/') p[0] = '\0';
+    
+    return (0);
+}
+
 
 int PosMakeDir(const char *dirname)
 {
-    dirCreat(dirname, 0);
+    char dname[MAX_PATH];
+
+    formatcwd(dirname, dname);
+    dirCreat(dname, 0);
     return (0);
 }
 
 
 int PosChangeDir(const char *dirname)
 {
-    if (dirname[0] == '\\')
+    if (dirname[0] == '\0') return(0);
+
+    char temp_dir[MAX_PATH] = {0};
+    char temp_cwd[MAX_PATH] = {0};
+    char *start, *end;
+    
+    int len = strlen(dirname);
+    /*trim space at start and end of dirname*/
+    start = dirname;
+    end = dirname + len - 1;
+    while (1)
     {
-        strcpy(cwd, dirname + 1);
+        if (*start != ' ' && *end != ' ')
+        {
+            strncpy_s(cwd, start, (end + 1 - start));
+            break;
+        }
+        if (*start == ' ') ++start;
+        if (*end == ' ') --end;
     }
-    else if (cwd[0] == '\0')
+    convertcwd(temp_dir);
+    strcpy(temp_cwd, cwd);
+
+    if (temp_dir[0] == '\\')
     {
-        strcpy(cwd, dirname);
+        /*return if cd to root directory*/
+        if (len == 1)
+        {
+            cwd[0] = '\0'; 
+            return (0);
+        }
+        strcpy(temp_cwd, temp_dir);
+    }
+    /*change to parent directory if the user input the ".." */
+    else if(len == 2 && temp_dir[0] == '.' && temp_dir[1] == '.')
+    {
+        char *p = strrchr(cwd, '\\');
+        if (p) *p = '\0';
+        return (0);
     }
     else
     {
-        strcat(cwd, "\\");
-        strcat(cwd, dirname);
+        strcat(temp_cwd, "\\");
+        strcat(temp_cwd, temp_dir);
     }
+
+    int result = fatCheckDir(&fat, temp_cwd + 1);
+    if(!result) {
+        strcpy(cwd, temp_cwd);
+    } 
+    else {
+        printf("cd %s: No such file or directory\n", temp_dir);
+    }
+
     return (0);
 }
 
@@ -922,11 +1059,8 @@ static int ff_search(void)
 
 int PosFindFirst(char *pat, int attrib)
 {
-    char dirname[FILENAME_MAX];
-
-    strcpy(dirname, "\\");
-    strcat(dirname, cwd);
-    fatOpenFile(&fat, dirname, &fatfile);
+    /*make sure the cwd point to current directory.*/
+    fatOpenFile(&fat, cwd, &fatfile);
     return (ff_search());
 }
 
