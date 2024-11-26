@@ -599,6 +599,20 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
     return (0);
 }
 
+
+unsigned int fatCheckDir(FAT *fat, const char *dnm)
+{
+    if(dnm[0] != '\0')
+    {
+        fatPosition(fat,dnm);
+        if (fat->pos_result == FATPOS_FOUND) {
+            return POS_ERR_NO_ERROR;
+        }
+    }
+    return POS_ERR_PATH_NOT_FOUND;
+}
+
+
 unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                              int attrib)
 {

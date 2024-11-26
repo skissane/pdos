@@ -235,6 +235,7 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                           int attrib);
 unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
                          int attrib);
+unsigned int fatCheckDir(FAT *fat, const char *dnm);
 unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                              int attrib);
 unsigned int fatOpenFile(FAT *fat, const char *fnm, FATFILE *fatfile);
