@@ -840,7 +840,7 @@ int PosChangeDir(const char *dirname)
     {
         if (*start != ' ' && *end != ' ')
         {
-            strncpy(cwd, start, (end + 1 - start));
+            strncpy(temp_dir, start, (end + 1 - start));
             break;
         }
         if (*start == ' ') ++start;
