@@ -8,6 +8,10 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
+#define read_struct_PH rsph
+#define write_struct_PH wsph
+
 void read_struct_PH (struct PH_internal *PH_internal, const void *memory);
 
 void write_struct_PH (void *memory, const struct PH_internal *PH_internal);

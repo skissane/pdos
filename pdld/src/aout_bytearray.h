@@ -8,6 +8,15 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
+#define read_struct_exec rsexec
+#define read_struct_relocation_info rsri
+#define read_struct_nlist rsnlist
+
+#define write_struct_exec wsexec
+#define write_struct_relocation_info wsri
+#define write_struct_nlist wsnlist
+
 void read_struct_exec (struct exec_internal *exec_internal, const void *memory);
 void read_struct_relocation_info (struct relocation_info_internal *relocation_info_internal, const void *memory);
 void read_struct_nlist (struct nlist_internal *nlist_internal, const void *memory);
