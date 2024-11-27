@@ -22,16 +22,15 @@ EXTRA2=../pdpclib/armsupa.obj ../pdpclib/fpfuncsa.obj ../pdpclib/msvcrt.lib
 
 else ifeq "$(targ)" "zpg"
 # Need to run makefile.zpg first
-# We are temporarily using NOFLOAT because hex float isn't currently working
-CC=gcc370
+CC=gccmvs
 CFLAGS=-Os
-AS=as370
+AS=as370 -mhlasm -mebcdic
 AR=ar370
 COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -ansi -pedantic-errors \
-    -I../generic -I../src -I./src/ftebc -DNOFLOAT
+    -I../generic -I../src -I./src/ftebc
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
