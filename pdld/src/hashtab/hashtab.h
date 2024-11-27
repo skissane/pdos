@@ -10,6 +10,14 @@
  *****************************************************************************/
 #include <stddef.h>
 
+#define hashtab_create_hashtab htcht
+#define hashtab_find htfind
+#define hashtab_delete htdelete
+#define hashtab_for_each_element htfee
+#define hashtab_destroy_hashtab htdest
+#define hashtab_insert htinsert
+#define hashtab_help_default_hash_string hthdhs
+
 typedef size_t hash_value_t;
 
 /* Callback function pointer types. */
