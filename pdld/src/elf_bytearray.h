@@ -8,6 +8,21 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
+#define read_struct_Elf32_Ehdr rsee
+#define read_struct_Elf32_Shdr rses
+#define read_struct_Elf32_Sym rsesym
+#define read_struct_Elf32_Rel rserel
+#define read_struct_Elf32_Rela rserla
+#define read_struct_Elf32_Phdr rsep
+
+#define write_struct_Elf32_Ehdr wsee
+#define write_struct_Elf32_Shdr wses
+#define write_struct_Elf32_Sym wsesym
+#define write_struct_Elf32_Rel wserel
+#define write_struct_Elf32_Rela wserla
+#define write_struct_Elf32_Phdr wsep
+
 void read_struct_Elf32_Ehdr (struct Elf32_Ehdr_internal *Elf32_Ehdr_internal, const void *memory, int endianess);
 void read_struct_Elf32_Shdr (struct Elf32_Shdr_internal *Elf32_Shdr_internal, const void *memory, int endianess);
 void read_struct_Elf32_Sym (struct Elf32_Sym_internal *Elf32_Sym_internal, const void *memory, int endianess);
