@@ -324,12 +324,12 @@ int cc_lex_line(cc_reader *reader, const char *line)
             }
             else if (*p == '-')
             {
-                tok.type |= CC_TOKEN_DECREMENT;
+                tok.type = CC_TOKEN_DECREMENT;
                 p++;
             }
             else if (*p == '>')
             {
-                tok.type |= CC_TOKEN_ARROW;
+                tok.type = CC_TOKEN_ARROW;
                 p++;
             }
             break;
