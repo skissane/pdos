@@ -11,6 +11,8 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "bytearray.h"
+
 /* It is necessary to avoid undefined behavior
  * that would be caused by the right operand of shift
  * being greater than or equal to the width in bits of the promoted left operand.
