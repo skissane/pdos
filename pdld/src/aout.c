@@ -84,7 +84,7 @@ static unsigned char *write_relocs_for_section (unsigned char *pos,
 
             rel.r_address = part->rva - part->section->rva + part->relocation_array[i].offset;
 
-            if (strcmp (symbol->part->section->name, ".text") == 0) {
+            if (!symbol->part || strcmp (symbol->part->section->name, ".text") == 0) {
                 rel.r_symbolnum = N_TEXT;
             } else if (strcmp (symbol->part->section->name, ".data") == 0) {
                 rel.r_symbolnum = N_DATA;
