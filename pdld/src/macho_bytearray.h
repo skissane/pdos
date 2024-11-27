@@ -8,6 +8,23 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
+#define read_struct_mach_header_64 rsmh64
+#define read_struct_load_command rslc
+#define read_struct_segment_command_64 rssc64
+#define read_struct_section_64 rss64
+#define read_struct_relocation_info rsri
+#define read_struct_symtab_command rssc
+#define read_struct_nlist_64 rsn64
+
+#define write_struct_mach_header_64 wsmh64
+#define write_struct_load_command wslc
+#define write_struct_segment_command_64 wssc64
+#define write_struct_section_64 wss64
+#define write_struct_relocation_info wsri
+#define write_struct_symtab_command wssc
+#define write_struct_nlist_64 wsn64
+
 void read_struct_mach_header_64 (struct mach_header_64_internal *mach_header_64_internal, const void *memory);
 void read_struct_load_command (struct load_command_internal *load_command_internal, const void *memory);
 void read_struct_segment_command_64 (struct segment_command_64_internal *segment_command_64_internal, const void *memory);
