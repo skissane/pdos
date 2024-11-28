@@ -830,7 +830,7 @@ int PosChangeDir(const char *dirname)
 
     char temp_dir[MAX_PATH] = {0};
     char temp_cwd[MAX_PATH] = {0};
-    char *start, *end;
+    const char *start, *end;
     
     int len = strlen(dirname);
     /*trim space at start and end of dirname*/
