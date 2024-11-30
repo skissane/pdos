@@ -1,10 +1,13 @@
 # This builds EFI executables for the 80386
 
+# Define __W32EMUL__ if you wish to make the pseudo-bios
+
 CC=gccwin
 AR=xar
 LD=pdld
 AS=pdas
-COPTS=-D__NO_LONG_LONG__ -S -O2 -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -fno-common -ansi
+COPTS=-D__NO_LONG_LONG__ -S -O2 -D__EFI__ -D__EFIBIOS__ -U__WIN32__ \
+    -I. -fno-common -ansi -D__W32EMUL__
 
 TARGET=pdptest.efi
 OBJS=efistart.o stdio.o string.o stdlib.o start.o time.o errno.o \
