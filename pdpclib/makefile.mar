@@ -24,7 +24,7 @@ $(TARGET): clean pdptest.obj $(OBJS)
   $(LD) -s -o msvcrt.dll --shared --out-implib msvcrt.lib dllcrt.obj temp.lib ../src/kernel32.lib
 #  $(LD) -nologo -fixed:no -dll -out:msvcrt.dll dllcrt.obj temp.lib ../src/kernel32.lib
   rm -f temp.lib
-  $(LD) -s -nostdlib -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib
+  $(LD) -s -nostdlib -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib armsupb.obj
 #  $(LD) -nologo -fixed:no -out:pdptest.exe w32start.obj pdptest.obj msvcrt.lib
 
 w32start.obj: w32start.c
