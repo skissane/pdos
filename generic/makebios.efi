@@ -13,7 +13,7 @@ COPTS=-D__NO_LONG_LONG__ -S $(CFLAGS) -fpack-struct -ansi \
     -I../pdpclib -I../src -U__WIN32__ -D__EFI__ -D__EFIBIOS__ \
     -D__STATIC__ -D__NOBIVA__ -DNEED_AOUT -DGENSHELL \
     -DNEED_MZ -DNO_DLLENTRY -DNEED_OS2 -DHAVE_DIR \
-    -DW32EMUL -D__W32EMUL__ -D__32BIT__
+    -DW32EMUL -D__W32EMUL__ -D__32BIT__ -DNEED_ELF
 
 all: clean bios.exe
 
