@@ -19,7 +19,7 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   lib -nologo -out:temp3.lib locale.obj ctype.obj setjmp.obj math.obj __memmgr.obj
   link -nologo -dll -fixed:no -nodefaultlib -out:msvcrt.dll dllcrt.obj temp1.lib temp2.lib temp3.lib ../src/kernel32.lib
   del temp*.lib
-  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe w32start.obj pdptest.obj msvcrt.lib
+  link -nologo -fixed:no -nodefaultlib -out:pdptest.exe w32start.obj pdptest.obj msvcrt.lib x64supa.obj setjmp.obj
 
 pdptest.obj: pdptest.c
   $(CC) -c $(CFLAGS) -D__WIN32__ -X -D__64BIT__ -D__MSC__ -I . -Oi- -Zl -GS- -nologo -I../src $*.c
