@@ -22,6 +22,15 @@
 extern int CTYP __setj(jmp_buf env);
 extern int CTYP __longj(void *);
 
+
+/* It is inappropriate to have a setjmp function here - the macro
+   needs to directy call some assembler function. Different optimization
+   levels can determine whether ebp is pushed, so the stack changes -
+   while you are attempting to get back up to the caller of this
+   C function, which is what longjmp will need. */
+
+#if 0
+
 #ifdef __MSC__
 #undef setjmp
 #endif
@@ -35,7 +44,14 @@ __PDPCLIB_API__ int _setjmp(jmp_buf env)
     return (__setj(env));
 }
 
-__PDPCLIB_API__ void longjmp(jmp_buf env, int val)
+#endif
+
+
+
+
+/* this function is no longer exported */
+
+void longjmp(jmp_buf env, int val)
 {
     if (val == 0)
     {
