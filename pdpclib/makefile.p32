@@ -2,6 +2,8 @@
 # the gcc compiler, and using custom-built Windows tools
 # and for static linking. Use with pdmake etc.
 
+# You should have run makek32.std in src first
+
 # define OLDWIN if you want to produce executables that can
 # run under command.com, with dosonly and ansi.sys in config.nt,
 # and using HX (as an unusual way to run PE executables,

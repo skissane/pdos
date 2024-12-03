@@ -7,6 +7,8 @@
 # of the pdp version doing ANSI escapes on Windows 10+
 # and also switch to 64-bit long
 
+# You should have run makek32.std in src first
+
 CC=gccwin
 #CC=gccwin_l64 -D__LONG64__
 AR=xar
