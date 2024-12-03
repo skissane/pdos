@@ -64,14 +64,14 @@ mov pc,lr
         .align  2
 # int setjmp(jmp_buf env);
 
-        .globl  __Ysetjmp
-        .globl  ___Ysetjmp
+        .globl  __setj
+        .globl  ___setj
 .if ELF
-        .type  __Ysetjmp, %function
+        .type  __setj, %function
 .endif
         .align  2
-__Ysetjmp:
-___Ysetjmp:
+__setj:
+___setj:
 
 .if STACKPARM
         ldr     r0,[sp]         @ env

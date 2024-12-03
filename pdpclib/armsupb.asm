@@ -21,9 +21,9 @@
 
  area .text, code, readonly, align=2
 
-        export  __Ysetjmp
-__Ysetjmp proc
-;___Ysetjmp:
+        export  __setj
+__setj proc
+;___setj:
 
         str     r1,[r0,#52]
         mov     r1,r0
