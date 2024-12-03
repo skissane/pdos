@@ -2765,6 +2765,9 @@ void w32exit(int status)
 #define STDTHUNK(x) { #x, (unsigned long)x },
 #endif
 
+/* Note that _setjmp and longjmp are not included because we
+   currently require executables to statically link those */
+
 #define STDTHUNKLIST \
 STDTHUNK(puts) \
 STDTHUNK(printf) \
