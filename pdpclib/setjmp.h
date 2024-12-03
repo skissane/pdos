@@ -30,7 +30,15 @@ typedef struct {
 #if defined(__ARM__) || defined(__ARMGEN__)
     long long regs[32-2+1];
 #else
+    /* I think this -2 + 1 is because I noticed in the
+       assembler code that I went up to position 16,
+       after skipping 2 (ie -2), and then we need 1 (ie +1)
+       to make the range inclusive. I still set position
+       1 though, in the setjmp assembler, but that's not
+       saving a register */
     long long regs[16-2+1];
+    /* need a total of 32 64-bit ints */
+    long long extra[15]; /* 15 + 17 = 32 */
 #endif
 
 #elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
@@ -60,6 +68,7 @@ typedef struct {
           new pc (r15) = old lr (r14) I think,
           fpscr (floating point status and control register),
           then 8 * 64-bit floating point */
+    /* probably no need to match - see x86 doco below */
     /* ip is scratch so doesn't need to be saved */
     void *sp;
     void *fp;
@@ -84,6 +93,9 @@ typedef struct {
        10 * 32-bit crap for a total of 16 32-bit values. We only
        have 15 here, because the 16th is the retval, which
        doesn't need to be in this buffer as a separate entry I think */
+    /* we "get away with it" so long as the setjmp and longjmp match - either
+       both use the Microsoft version of msvcrt.dll, or both statically link
+       our versions, or use our replacement DLL */
     int ebx;
     int ecx;
     int edx;
@@ -92,7 +104,7 @@ typedef struct {
     int esp;
     int ebp;
     int retaddr;
-    int extra[7]; /* for compatibility with MSVCRT */
+    int extra[7]; /* for compatibility with MSVCRT - 8 + 7 + 1 */
 #elif defined(__OS2__) || defined(__MSDOS__) || defined(__DOS__) \
       || defined(__POWERC)
     int bx;
@@ -114,25 +126,21 @@ typedef struct {
 #endif
 } jmp_buf[1];
 
-__PDPCLIB_HEADFUNC void longjmp(jmp_buf env, int val);
 
-#if defined(__MSC__) && !defined(__ARM__)
-#define setjmp(x) __setj(x)
-int __setj(jmp_buf env);
+/* this function is no longer exported in msvcrt.dll */
+void longjmp(jmp_buf env, int val);
 
-#elif defined(__ARM__) || defined(__ARMGEN__)
-/* it appears that gcc has _setjmp as a known keyword which
-   is causing issues on ARM, so we change the name */
-#define setjmp(x) __Ysetjmp(x)
-int __Ysetjmp(jmp_buf env);
 
-/* we need to standardize on setj I think */
-#elif defined(__EFI__) || defined(__AMIGA__) \
-    || defined(__64BIT__)
-#define setjmp(x) __setj(x)
-int __setj(jmp_buf env);
+/* Visual C 2005 recognizes _setjmp and converts it to _setjmp3
+   with no apparent way to stop that, so we can't use _setjmp */
+/* But we nominally need that name for msvcrt.lib. So we could
+   define it as _setjmP here and have a program to zap the
+   uppercase P to lowercase p. But that's not a very good
+   solution, and we have issues with ARM as well (_setjmp being
+   a known keyword), so it makes more sense to mandate that
+   executables are statically linked with the supporting assembler
+   if they wish to use setjmp/longjmp */
 
-#elif defined(__MSDOS__) || (defined(__OS2__) && defined(__16BIT__))
 #define setjmp(x) __setj(x)
 #if defined(__WATCOMC__)
 int __cdecl __setj(jmp_buf env);
@@ -140,14 +148,6 @@ int __cdecl __setj(jmp_buf env);
 int __setj(jmp_buf env);
 #endif
 
-#elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
-    || defined(__MF32__)
-#define setjmp(x) __setj(x)
-
-#else
-#define setjmp(x) _setjmp(x)
-int _setjmp(jmp_buf env);
-#endif
 
 #if defined(__PDOSGEN__)
 #include <__os.h>
