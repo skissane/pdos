@@ -18,8 +18,8 @@
 
 ; int setjmp(jmp_buf env);
 
-        export  __Ysetjmp
-__Ysetjmp proc
+        export  __setj
+__setj proc
 
         str     x1,[x0,#52*2]
         mov     x1,x0

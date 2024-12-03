@@ -18,12 +18,12 @@
 
 # int setjmp(jmp_buf env);
 
-        .globl  __Ysetjmp
-        .globl  ___Ysetjmp
-        .type  __Ysetjmp, %function
+        .globl  __setj
+        .globl  ___setj
+        .type  __setj, %function
         .align  2
-__Ysetjmp:
-___Ysetjmp:
+__setj:
+___setj:
         str     x1,[x0,#52*2]
         mov     x1,x0
         str     x2,[x1,#40*2]
