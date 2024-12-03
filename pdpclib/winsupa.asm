@@ -18,13 +18,13 @@ public __moddi3
 public __divdi3
 
 __setj proc
-        mov eax, [esp+4]
-        push ebx
-        mov ebx, esp
-        mov [eax+20], ebx    ; esp
+        mov eax, [esp+4]   ; jmp_buf into eax
+        push ebx           ; preserve ebx
+        mov ebx, esp       ; get current stack
+        mov [eax+20], ebx    ; preserve esp
 
-        mov ebx, ebp
-        mov [eax+24], ebx    ; ebp
+        mov ebx, ebp         ; preserve ebp
+        mov [eax+24], ebx    ; store ebp
 
         mov [eax+4], ecx
         mov [eax+8], edx
