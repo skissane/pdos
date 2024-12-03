@@ -569,4 +569,10 @@ ___umodsi3:
         endp
 
 
+ area .data, data
+
+        export  _fltused
+_fltused dcd 0 % 4
+
+
         end
