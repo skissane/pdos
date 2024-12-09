@@ -194,6 +194,7 @@ struct cc_expr {
         } if_else;
         struct {
             cc_type type;
+            cc_expr *expr;
         } cast;
         struct {
             cc_expr *expr;

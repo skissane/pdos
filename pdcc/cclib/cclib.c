@@ -45,8 +45,11 @@ static cc_expr *cc_get_scoped_block(size_t id)
 static void cc_dump_type(cc_reader *reader, const cc_type *type);
 static void cc_dump_variable(cc_reader *reader, const cc_variable *var);
 static void cc_dump_expr(cc_reader *reader, const cc_expr *expr);
-static cc_expr cc_parse_block_expr(cc_reader *reader);
 static void cc_resolve_symbol(cc_reader *reader, cc_token *tok);
+static cc_expr cc_parse_assignment_expr (cc_reader *reader);
+cc_expr cc_parse_expression (cc_reader *reader);
+static cc_expr cc_parse_compound_statement (cc_reader *reader);
+static cc_expr cc_parse_declaration_or_fndef (cc_reader *reader, int fndef_allowed);
 
 static void cc_dump_member(cc_reader *reader, const cc_member *member)
 {
@@ -584,7 +587,7 @@ static void cc_parse_call_params(cc_reader *reader, cc_expr *call)
 {
     while (reader->curr_token->type != CC_TOKEN_RPAREN)
     {
-        cc_expr expr = cc_parse_statement(reader);
+        cc_expr expr = cc_parse_assignment_expr (reader);
         if (reader->curr_token->type == CC_TOKEN_COMMA)
         {
             cc_consume_token(reader);
@@ -665,8 +668,169 @@ static void cc_resolve_symbol(cc_reader *reader, cc_token *tok)
         "or a typename", tok->data.name);
 }
 
-static cc_expr cc_parse_assignment_expr(cc_reader *reader)
+#define cc_peek_token(reader) ((reader)->curr_token)
+
+static cc_token *cc_peek_2nd_token (cc_reader *reader)
 {
+    if (reader->curr_token->type == CC_TOKEN_EOF) {
+        return reader->curr_token;
+    }
+
+    return reader->curr_token + 1;
+}
+
+static int cc_next_token_starts_declaration (cc_reader *reader)
+{
+    switch (cc_peek_token (reader)->type) {
+        case CC_TOKEN_IDENT:
+        {
+#ifdef __CC64__
+            cc_token ident_tok;
+#else
+            cc_token ident_tok = *cc_peek_token (reader);
+#endif
+            cc_resolve_symbol (reader, &ident_tok);
+            if (ident_tok.type == CC_TOKEN_TYPE) return 1;
+            
+            return 0;
+        }
+        
+        /* <type> <decl> */
+        case CC_TOKEN_KW_AUTO:
+        case CC_TOKEN_KW_DOUBLE:
+        case CC_TOKEN_KW_FAR:
+        case CC_TOKEN_KW_FLOAT:
+        case CC_TOKEN_KW_INT:
+        case CC_TOKEN_KW_LONG:
+        case CC_TOKEN_KW_CHAR:
+        case CC_TOKEN_KW_STRUCT:
+        case CC_TOKEN_KW_UNION:
+        case CC_TOKEN_KW_ENUM:
+        case CC_TOKEN_KW_SHORT:
+        case CC_TOKEN_KW_SIGNED:
+        case CC_TOKEN_KW_UNSIGNED:
+        case CC_TOKEN_KW_EXTERN:
+        case CC_TOKEN_KW_STATIC:
+        case CC_TOKEN_KW_VOLATILE:
+        case CC_TOKEN_KW_VOID:
+        case CC_TOKEN_KW_CONST:
+        case CC_TOKEN_KW_TYPEDEF:
+            return 1;
+    }
+
+    return 0;
+}
+
+static cc_expr cc_parse_postfix_expr (cc_reader *reader)
+{
+    cc_expr expr = {0};
+    expr.id = cc_get_unique_id(reader);
+
+    switch (cc_peek_token (reader)->type) {
+        case CC_TOKEN_IDENT: {
+#ifdef __CC64__
+            cc_token ident_tok;
+#else
+            cc_token ident_tok = *cc_peek_token (reader);
+#endif
+            cc_resolve_symbol(reader, &ident_tok);
+            
+            cc_consume_token(reader);
+            if (cc_peek_token (reader)->type == CC_TOKEN_LPAREN
+                && ident_tok.type == CC_TOKEN_VARIABLE)
+            {
+                /* TODO: support runtime computed expressions like
+                   (ptr + cum)(parm, aprm2, ...); */
+                size_t i;
+#ifdef __CC64__
+#else
+                cc_consume_token(reader);
+#endif
+
+                /* Find function */
+                if (ident_tok.type != CC_TOKEN_VARIABLE)
+                    cc_report(reader, CC_DL_ERROR, "Expected a variable name"
+                                                   "on function call");
+                expr.type = CC_EXPR_CALL;
+                expr.data.call.callee_func = ident_tok.data.var;
+                expr.data.call.callee_type = ident_tok.data.var->type;
+                cc_parse_call_params(reader, &expr);
+                return expr;
+            }
+            else if(ident_tok.type == CC_TOKEN_VARIABLE)
+            {
+                expr.type = CC_EXPR_VARREF;
+                expr.data.var_ref.var = ident_tok.data.var;
+                return expr;
+            }
+            cc_report(reader, CC_DL_ERROR, "Unresolvable identifier \"%s\"",
+                ident_tok.data.name);
+            break;
+        }
+        /* <string> ? */
+        case CC_TOKEN_STRING:
+            expr.type = CC_EXPR_STRING;
+            expr.data.string.data = cc_peek_token (reader)->data.string;
+#ifdef __CC64__
+#else
+            cc_consume_token(reader);
+#endif
+            return expr;
+        /* <number> ? */
+        case CC_TOKEN_NUMBER:
+            expr.type = CC_EXPR_CONSTANT;
+            expr.data._const.numval = cc_peek_token (reader)->data.numval;
+#ifdef __CC64__
+#else
+            cc_consume_token(reader);
+#endif
+            return expr;
+
+        case CC_TOKEN_LPAREN:
+            cc_consume_token(reader);
+            expr = cc_parse_expression (reader);
+            if (cc_peek_token (reader)->type != CC_TOKEN_RPAREN) {
+                cc_report (reader, CC_DL_ERROR, "Missing terminating \")\" in "
+                                                "primary expression");
+            } else cc_consume_token (reader);
+            return expr;
+
+        default:
+            cc_report (reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",
+                       g_token_info[cc_peek_token (reader)->type].name);
+            return expr;
+    }
+}
+
+static cc_expr cc_parse_cast_expr (cc_reader *reader)
+{
+    if (cc_peek_token (reader)->type == CC_TOKEN_LPAREN
+        && cc_peek_2nd_token (reader)->type == CC_TOKEN_IDENT) {
+        cc_expr expr = {0};
+        expr.id = cc_get_unique_id (reader);
+        
+        cc_consume_token (reader);
+        if (reader->curr_token->type == CC_TOKEN_IDENT)
+        {
+            expr.type = CC_EXPR_CAST;
+            expr.data.cast.type = cc_parse_type(reader);
+            if (cc_peek_token (reader)->type != CC_TOKEN_RPAREN)
+                cc_report (reader, CC_DL_ERROR, "Missing terminating \")\" in "
+                                                "cast");
+            cc_consume_token (reader);
+        }
+
+        expr.data.cast.expr = xcalloc (sizeof *expr.data.cast.expr);
+        *expr.data.cast.expr = cc_parse_postfix_expr (reader);
+        return expr;
+    }
+    
+    return cc_parse_postfix_expr (reader);
+}
+
+static cc_expr cc_parse_assignment_expr (cc_reader *reader)
+{
+#if 0
     cc_expr expr = {0};
     while (reader->curr_token->type != CC_TOKEN_EOF
         && reader->curr_token->type != CC_TOKEN_SEMICOLON)
@@ -674,6 +838,8 @@ static cc_expr cc_parse_assignment_expr(cc_reader *reader)
 
     }
     return expr;
+#endif
+    return cc_parse_cast_expr (reader);
 }
 
 static cc_expr cc_parse_condition(cc_reader *reader, cc_token_type stop_type)
@@ -704,156 +870,12 @@ static cc_expr cc_parse_condition(cc_reader *reader, cc_token_type stop_type)
     return expr;
 }
 
-cc_expr cc_parse_expression(cc_reader *reader)
+cc_expr cc_parse_expression (cc_reader *reader)
 {
     cc_expr expr = {0};
     expr.id = cc_get_unique_id(reader);
     switch (reader->curr_token->type)
     {
-    case CC_TOKEN_LPAREN:
-        cc_consume_token(reader);
-        if (reader->curr_token->type == CC_TOKEN_IDENT)
-        {
-            expr.type = CC_EXPR_CAST;
-            expr.data.cast.type = cc_parse_type(reader);
-            if (reader->curr_token->type != CC_TOKEN_RPAREN)
-                cc_report(reader, CC_DL_ERROR, "Missing terminating \")\" in "
-                                               "cast");
-            cc_consume_token(reader);
-        }
-        else
-            cc_report(reader, CC_DL_ERROR, "Parenthized expressions not "
-                                           "supported\n");
-        return expr;
-    case CC_TOKEN_IDENT:
-    {
-#ifdef __CC64__
-        cc_token ident_tok;
-#else
-        cc_token ident_tok = *reader->curr_token;
-#endif
-        cc_resolve_symbol(reader, &ident_tok);
-        if (ident_tok.type == CC_TOKEN_TYPE) goto decl;
-        
-        cc_consume_token(reader);
-        if (reader->curr_token->type == CC_TOKEN_LPAREN
-         && ident_tok.type == CC_TOKEN_VARIABLE)
-        {
-            /* TODO: support runtime computed expressions like
-               (ptr + cum)(parm, aprm2, ...); */
-            size_t i;
-#ifdef __CC64__
-#else
-            cc_consume_token(reader);
-#endif
-
-            /* Find function */
-            if (ident_tok.type != CC_TOKEN_VARIABLE)
-                cc_report(reader, CC_DL_ERROR, "Expected a variable name"
-                                               "on function call");
-            expr.type = CC_EXPR_CALL;
-            expr.data.call.callee_func = ident_tok.data.var;
-            expr.data.call.callee_type = ident_tok.data.var->type;
-            cc_parse_call_params(reader, &expr);
-            return expr;
-        }
-        else if(ident_tok.type == CC_TOKEN_VARIABLE)
-        {
-            expr.type = CC_EXPR_VARREF;
-            expr.data.var_ref.var = ident_tok.data.var;
-            return expr;
-        }
-        cc_report(reader, CC_DL_ERROR, "Unresolvable identifier \"%s\"",
-            ident_tok.data.name);
-        break;
-    }
-    /* <string> ? */
-    case CC_TOKEN_STRING:
-        expr.type = CC_EXPR_STRING;
-        expr.data.string.data = reader->curr_token->data.string;
-#ifdef __CC64__
-#else
-        cc_consume_token(reader);
-#endif
-        return expr;
-    /* <number> ? */
-    case CC_TOKEN_NUMBER:
-        expr.type = CC_EXPR_CONSTANT;
-        expr.data._const.numval = reader->curr_token->data.numval;
-#ifdef __CC64__
-#else
-        cc_consume_token(reader);
-#endif
-        return expr;
-    /* <type> <decl> */
-    case CC_TOKEN_KW_AUTO:
-    case CC_TOKEN_KW_DOUBLE:
-    case CC_TOKEN_KW_FAR:
-    case CC_TOKEN_KW_FLOAT:
-    case CC_TOKEN_KW_INT:
-    case CC_TOKEN_KW_LONG:
-    case CC_TOKEN_KW_CHAR:
-    case CC_TOKEN_KW_STRUCT:
-    case CC_TOKEN_KW_UNION:
-    case CC_TOKEN_KW_ENUM:
-    case CC_TOKEN_KW_SHORT:
-    case CC_TOKEN_KW_SIGNED:
-    case CC_TOKEN_KW_UNSIGNED:
-    case CC_TOKEN_KW_EXTERN:
-    case CC_TOKEN_KW_STATIC:
-    case CC_TOKEN_KW_VOLATILE:
-    case CC_TOKEN_KW_VOID:
-    case CC_TOKEN_KW_CONST:
-decl:
-    {
-        cc_variable *var;
-        expr.type = CC_EXPR_DECL;
-#ifdef __CC64__
-#else
-        expr.data.decl.var = cc_parse_variable(reader);
-#endif
-        var = cc_add_variable(reader); /* Add to list of variables */
-        *var = expr.data.decl.var;
-        var->block_offset = (reader->curr_block->data.block.n_vars - 1) * 4;
-        /* Now fuck you and make a good parsing of that lbrace */
-        /* TODO: This is terrible, we're duplicating data!!! */
-        if (reader->curr_token->type == CC_TOKEN_LBRACE)
-        {
-            var->block_expr = xcalloc(sizeof(cc_expr));
-#ifdef __CC64__
-#else
-            *var->block_expr = cc_parse_block_expr(reader);
-#endif
-            expr.data.decl.var.block_expr = xcalloc(sizeof(cc_expr));
-            *expr.data.decl.var.block_expr = *var->block_expr;
-        }
-        return expr;
-    }
-
-    case CC_TOKEN_KW_TYPEDEF:
-    {
-        cc_type type;
-        
-        cc_consume_token (reader);
-        type = cc_parse_type (reader);
-
-        if (reader->curr_token->type != CC_TOKEN_IDENT) {
-            cc_report(reader, CC_DL_ERROR, "Expected an identifier but got \"%s\"",
-                      g_token_info[reader->curr_token->type].name);
-        } else {
-            type.name = reader->curr_token->data.name;
-            *cc_add_type (reader) = type;
-        }
-        cc_consume_token (reader);
-        
-        if (reader->curr_token->type != CC_TOKEN_SEMICOLON) {
-            cc_report(reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
-                      g_token_info[reader->curr_token->type].name);
-        }
-        cc_consume_token (reader);
-        
-        return expr;
-    }
 #ifdef __CC64__
 #else
     case CC_TOKEN_PLUS:
@@ -907,15 +929,13 @@ decl:
         }
       }
 #endif
-    default:
-        cc_report(reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",
-            g_token_info[reader->curr_token->type].name);
-        break;
+        default:
+            return cc_parse_assignment_expr (reader);
     }
 }
 
 /**
- * @brief Parses an expression in the context of a block
+ * @brief Parses statement inside compound statement
  * 
  * @param reader Reader object
  * @return cc_expr Expression resulting from parsing
@@ -936,7 +956,7 @@ cc_expr cc_parse_statement(cc_reader *reader)
 #ifdef __CC64__
         return expr;
 #else
-        return cc_parse_block_expr(reader);
+        return cc_parse_compound_statement (reader);
 #endif
     }
     /* return <expr> ; */
@@ -980,7 +1000,7 @@ cc_expr cc_parse_statement(cc_reader *reader)
 #ifdef __CC64__
 ;
 #else
-            *expr.data.if_else.body_expr = cc_parse_block_expr(reader);
+            *expr.data.if_else.body_expr = cc_parse_compound_statement (reader);
 #endif
         /* Single line block */
         else
@@ -990,21 +1010,26 @@ cc_expr cc_parse_statement(cc_reader *reader)
 #endif
         return expr;
     }
-    /* Fallback to declaration :) */
 #ifdef __CC64__
     return expr;
 #else
-    return cc_parse_expression(reader);
+    expr = cc_parse_expression (reader);
+    if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
+        cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
+                   g_token_info[cc_peek_token (reader)->type].name);
+    }
+    cc_consume_token (reader);
+    return expr;
 #endif
 }
 
 /**
- * @brief Parses a block expression
+ * @brief Parses a compound statement
  * 
  * @param reader Reader object
  * @return cc_expr Block expression
  */
-static cc_expr cc_parse_block_expr(cc_reader *reader)
+static cc_expr cc_parse_compound_statement (cc_reader *reader)
 {
     cc_expr *old_block = reader->curr_block;
     cc_expr expr = {0};
@@ -1029,8 +1054,13 @@ static cc_expr cc_parse_block_expr(cc_reader *reader)
         expr.data.block.exprs = xrealloc(expr.data.block.exprs,
                                         (expr.data.block.n_exprs + 1)
                                         * sizeof(cc_expr));
-        expr.data.block.exprs[expr.data.block.n_exprs++]
-            = cc_parse_statement(reader); /* Save statement into block */
+        if (cc_next_token_starts_declaration (reader)) {
+            expr.data.block.exprs[expr.data.block.n_exprs++]
+                = cc_parse_declaration_or_fndef (reader, 0);
+        } else {
+            expr.data.block.exprs[expr.data.block.n_exprs++]
+                = cc_parse_statement(reader); /* Save statement into block */
+        }
         if (reader->curr_token->type == CC_TOKEN_EOF)
             cc_report(reader, CC_DL_ERROR, "Expected a brace \"}\"");
     }
@@ -1154,6 +1184,124 @@ static void cc_delete_redundant(cc_reader *reader, const cc_expr *expr)
 
 }
 
+static cc_expr cc_parse_declaration_or_fndef (cc_reader *reader, int fndef_allowed)
+{
+    cc_expr expr = {0};
+    expr.id = cc_get_unique_id(reader);
+    switch (cc_peek_token (reader)->type)
+    {
+    case CC_TOKEN_IDENT:
+    {
+#ifdef __CC64__
+        cc_token ident_tok;
+#else
+        cc_token ident_tok = *cc_peek_token (reader);
+#endif
+        cc_resolve_symbol(reader, &ident_tok);
+        if (ident_tok.type == CC_TOKEN_TYPE) goto decl;
+        
+        goto default_;
+    }
+    
+    /* <type> <decl> */
+    case CC_TOKEN_KW_AUTO:
+    case CC_TOKEN_KW_DOUBLE:
+    case CC_TOKEN_KW_FAR:
+    case CC_TOKEN_KW_FLOAT:
+    case CC_TOKEN_KW_INT:
+    case CC_TOKEN_KW_LONG:
+    case CC_TOKEN_KW_CHAR:
+    case CC_TOKEN_KW_STRUCT:
+    case CC_TOKEN_KW_UNION:
+    case CC_TOKEN_KW_ENUM:
+    case CC_TOKEN_KW_SHORT:
+    case CC_TOKEN_KW_SIGNED:
+    case CC_TOKEN_KW_UNSIGNED:
+    case CC_TOKEN_KW_EXTERN:
+    case CC_TOKEN_KW_STATIC:
+    case CC_TOKEN_KW_VOLATILE:
+    case CC_TOKEN_KW_VOID:
+    case CC_TOKEN_KW_CONST:
+decl:
+    {
+        cc_variable *var;
+        expr.type = CC_EXPR_DECL;
+#ifdef __CC64__
+#else
+        expr.data.decl.var = cc_parse_variable(reader);
+#endif
+        var = cc_add_variable(reader); /* Add to list of variables */
+        *var = expr.data.decl.var;
+        var->block_offset = (reader->curr_block->data.block.n_vars - 1) * 4;
+        /* Now fuck you and make a good parsing of that lbrace */
+        /* TODO: This is terrible, we're duplicating data!!! */
+        if (cc_peek_token (reader)->type == CC_TOKEN_LBRACE)
+        {
+            if (!fndef_allowed) {
+                cc_report (reader, CC_DL_WARNING, "nested functions are not allowed");
+            }
+            var->block_expr = xcalloc(sizeof(cc_expr));
+#ifdef __CC64__
+#else
+            *var->block_expr = cc_parse_compound_statement (reader);
+#endif
+            expr.data.decl.var.block_expr = xcalloc(sizeof(cc_expr));
+            *expr.data.decl.var.block_expr = *var->block_expr;
+        } else {
+            if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
+                cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
+                           g_token_info[cc_peek_token (reader)->type].name);
+            }
+            cc_consume_token (reader);
+        }
+        return expr;
+    }
+
+    case CC_TOKEN_KW_TYPEDEF:
+    {
+        cc_type type;
+        
+        cc_consume_token (reader);
+        type = cc_parse_type (reader);
+
+        if (cc_peek_token (reader)->type != CC_TOKEN_IDENT) {
+            cc_report(reader, CC_DL_ERROR, "Expected an identifier but got \"%s\"",
+                      g_token_info[cc_peek_token (reader)->type].name);
+        } else {
+            type.name = cc_peek_token (reader)->data.name;
+            *cc_add_type (reader) = type;
+        }
+        cc_consume_token (reader);
+        
+        if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
+            cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
+                       g_token_info[cc_peek_token (reader)->type].name);
+        }
+        cc_consume_token (reader);
+        
+        return expr;
+    }
+
+    default:
+default_:
+        cc_report (reader, CC_DL_ERROR, "Expected a declaration but got \"%s\"",
+                   g_token_info[cc_peek_token (reader)->type].name);
+        break;
+    }
+}
+
+static cc_expr cc_parse_external_declaration (cc_reader *reader)
+{
+    if (cc_peek_token (reader)->type == CC_TOKEN_SEMICOLON) {
+        cc_expr expr = {0};
+        cc_report (reader, CC_DL_WARNING, "extra ';' outside of a function is not allowed");
+        cc_consume_token (reader);
+        return expr;
+    }
+    
+    return cc_parse_declaration_or_fndef (reader, 1);
+}
+
 /**
  * @brief Perform the parsing until EOF is reached
  * @param reader 
@@ -1171,7 +1319,7 @@ static void cc_parser_do(cc_reader *reader)
                                           (expr->data.block.n_exprs + 1)
                                           * sizeof(cc_expr));
         expr->data.block.exprs[expr->data.block.n_exprs++]
-            = cc_parse_statement(reader); /* Statement */
+            = cc_parse_external_declaration (reader);
     }
 
     /* TODO: constant propagation, operator precedence,
