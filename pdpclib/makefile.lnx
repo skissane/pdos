@@ -3,7 +3,8 @@
 #
 
 CC=gcc
-COPTS=-c -O2 -fno-builtin -nostdlib -nostdinc -I . -m32 -fno-stack-protector
+COPTS=-c -O2 -fno-builtin -nostdlib -nostdinc -I . -m32 -fno-stack-protector \
+    --no-pie -D__NOBIVA__
 
 pdptest: linstart.o linsupa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
