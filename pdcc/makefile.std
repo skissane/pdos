@@ -77,7 +77,7 @@ CC=gcc -S -O2 -D__gnu_linux__ -nostdinc -nostdlib -fno-builtin \
    -Icclib -Icclib/include -Icpplib \
    -Icpplib/include -I. -I../pdpclib
 AR=ar
-AS=as -32
+AS=as --32
 LD=gcc -s -static -m32 -nostdlib
 EXTRA1=../pdpclib/linstart.o ../pdpclib/pdplinux.a
 EXTRA2=../pdpclib/pdplinux.a
