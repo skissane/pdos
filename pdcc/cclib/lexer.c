@@ -36,7 +36,6 @@ cc_token_info g_token_info[CC_NUM_TOKENS] = {
     { CC_TOKEN_ASLSHIFT, "<<=" },
     { CC_TOKEN_RSHIFT, ">>" },
     { CC_TOKEN_ASRSHIFT, ">>=" },
-    { CC_TOKEN_BIT_AND, "&" },
     { CC_TOKEN_BIT_ASAND, "&=" },
     { CC_TOKEN_BIT_OR, "|" },
     { CC_TOKEN_BIT_ASOR, "|=" },
@@ -629,15 +628,17 @@ int cc_lex_with_preprocess (cc_reader *reader)
             break;
         case '>':
             tok.type = CC_TOKEN_GT;
-            if (*p == '=')
-            {
+            if (*p == '>') {
+                tok.type = CC_TOKEN_RSHIFT;
+            } else if (*p == '=') {
                 tok.type = CC_TOKEN_GTE;
             }
             break;
         case '<':
             tok.type = CC_TOKEN_LT;
-            if (*p == '=')
-            {
+            if (*p == '<') {
+                tok.type = CC_TOKEN_LSHIFT;
+            } else if (*p == '=') {
                 tok.type = CC_TOKEN_LTE;
             }
             break;
@@ -650,9 +651,16 @@ int cc_lex_with_preprocess (cc_reader *reader)
             break;
         case '|':
             tok.type = CC_TOKEN_BIT_OR;
-            if (*p == '|')
-            {
+            if (*p == '|') {
                 tok.type = CC_TOKEN_OR;
+            } else if (*p == '=') {
+                tok.type = CC_TOKEN_BIT_ASOR;
+            }
+            break;
+        case '^':
+            tok.type = CC_TOKEN_BIT_XOR;
+            if (*p == '=') {
+                tok.type = CC_TOKEN_BIT_ASXOR;
             }
             break;
         case '&':

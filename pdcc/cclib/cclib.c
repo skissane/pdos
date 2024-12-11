@@ -828,6 +828,166 @@ static cc_expr cc_parse_cast_expr (cc_reader *reader)
     return cc_parse_postfix_expr (reader);
 }
 
+static cc_expr cc_parse_binary_expr (cc_reader *reader)
+{
+    enum {
+        PRIO_MULTIPLICATIVE = 0,
+        PRIO_ADDITIVE,
+        PRIO_SHIFT,
+        PRIO_RELATIONAL,
+        PRIO_EQUALITY,
+        PRIO_AND,
+        PRIO_XOR,
+        PRIO_OR,
+        PRIO_LOGICAL_AND,
+        PRIO_LOGICAL_OR,
+        PRIO_MAX
+    };
+    struct {
+        cc_expr left;
+        int type;
+        int prio;
+    } stack[PRIO_MAX];
+    int sp = 0;
+
+    while (1) {
+        cc_expr left;
+        int type, prio;
+
+        left = cc_parse_cast_expr (reader);
+
+        switch (cc_peek_token (reader)->type) {
+            case CC_TOKEN_ASTERISK:
+                type = CC_EXPR_MUL;
+                prio = PRIO_MULTIPLICATIVE;
+                break;
+
+            case CC_TOKEN_DIV:
+                type = CC_EXPR_DIV;
+                prio = PRIO_MULTIPLICATIVE;
+                break;
+
+            case CC_TOKEN_REM:
+                type = CC_EXPR_REM;
+                prio = PRIO_MULTIPLICATIVE;
+                break;
+            
+            case CC_TOKEN_PLUS:
+                type = CC_EXPR_PLUS;
+                prio = PRIO_ADDITIVE;
+                break;
+
+            case CC_TOKEN_MINUS:
+                type = CC_EXPR_MINUS;
+                prio = PRIO_ADDITIVE;
+                break;
+
+            case CC_TOKEN_LSHIFT:
+                type = CC_EXPR_LSHIFT;
+                prio = PRIO_SHIFT;
+                break;
+
+            case CC_TOKEN_RSHIFT:
+                type = CC_EXPR_RSHIFT;
+                prio = PRIO_SHIFT;
+                break;
+
+            case CC_TOKEN_LT:
+                type = CC_EXPR_LT;
+                prio = PRIO_RELATIONAL;
+                break;
+
+            case CC_TOKEN_GT:
+                type = CC_EXPR_GT;
+                prio = PRIO_RELATIONAL;
+                break;
+
+            case CC_TOKEN_LTE:
+                type = CC_EXPR_LTE;
+                prio = PRIO_RELATIONAL;
+                break;
+
+            case CC_TOKEN_GTE:
+                type = CC_EXPR_GTE;
+                prio = PRIO_RELATIONAL;
+                break;
+
+            case CC_TOKEN_EQ:
+                type = CC_EXPR_EQ;
+                prio = PRIO_EQUALITY;
+                break;
+
+            case CC_TOKEN_NEQ:
+                type = CC_EXPR_NEQ;
+                prio = PRIO_EQUALITY;
+                break;
+
+            case CC_TOKEN_AMPERSAND:
+                type = CC_EXPR_BIT_AND;
+                prio = PRIO_AND;
+                break;
+
+            case CC_TOKEN_BIT_XOR:
+                type = CC_EXPR_BIT_XOR;
+                prio = PRIO_XOR;
+                break;
+
+            case CC_TOKEN_BIT_OR:
+                type = CC_EXPR_BIT_OR;
+                prio = PRIO_OR;
+                break;
+
+            case CC_TOKEN_AND:
+                type = CC_EXPR_AND;
+                prio = PRIO_LOGICAL_AND;
+                break;
+
+            case CC_TOKEN_OR:
+                type = CC_EXPR_OR;
+                prio = PRIO_LOGICAL_OR;
+                break;
+
+            default:
+                while (sp) {
+                    cc_expr expr = {0};
+
+                    sp--;
+                    expr.id = cc_get_unique_id (reader);
+                    expr.data.binary_op.left = xcalloc (sizeof *expr.data.binary_op.left);
+                    expr.data.binary_op.right = xcalloc (sizeof *expr.data.binary_op.right);
+
+                    *expr.data.binary_op.left = stack[sp].left;
+                    expr.type = stack[sp].type;
+                    *expr.data.binary_op.right = left;
+                    left = expr;
+                }
+                
+                return left;
+        }
+
+        cc_consume_token(reader);
+
+        while (sp && stack[sp - 1].prio <= prio) {
+            cc_expr expr = {0};
+            
+            sp--;
+            expr.id = cc_get_unique_id (reader);
+            expr.data.binary_op.left = xcalloc (sizeof *expr.data.binary_op.left);
+            expr.data.binary_op.right = xcalloc (sizeof *expr.data.binary_op.right);
+
+            *expr.data.binary_op.left = stack[sp].left;
+            expr.type = stack[sp].type;
+            *expr.data.binary_op.right = left;
+            left = expr;
+        }
+
+        stack[sp].left = left;
+        stack[sp].type = type;
+        stack[sp].prio = prio;
+        sp++;
+    }
+}
+
 static cc_expr cc_parse_assignment_expr (cc_reader *reader)
 {
 #if 0
@@ -839,7 +999,7 @@ static cc_expr cc_parse_assignment_expr (cc_reader *reader)
     }
     return expr;
 #endif
-    return cc_parse_cast_expr (reader);
+    return cc_parse_binary_expr (reader);
 }
 
 static cc_expr cc_parse_condition(cc_reader *reader, cc_token_type stop_type)
@@ -878,29 +1038,8 @@ cc_expr cc_parse_expression (cc_reader *reader)
     {
 #ifdef __CC64__
 #else
-    case CC_TOKEN_PLUS:
-        expr.type = CC_EXPR_PLUS;
-        cc_consume_token(reader);
-        return expr;
-    case CC_TOKEN_MINUS:
-        expr.type = CC_EXPR_MINUS;
-        cc_consume_token(reader);
-        return expr;
-    case CC_TOKEN_REM:
-        expr.type = CC_EXPR_REM;
-        cc_consume_token(reader);
-        return expr;
-    case CC_TOKEN_DIV:
-        expr.type = CC_EXPR_DIV;
-        cc_consume_token(reader);
-        return expr;
-    case CC_TOKEN_ASTERISK:
-        expr.type = CC_EXPR_MUL;
-        cc_consume_token(reader);
-        return expr;
     case CC_TOKEN_AMPERSAND:
       {
-        cc_type type;
         cc_token ident_tok;
 
         expr.type = CC_EXPR_ADDRESSOF;

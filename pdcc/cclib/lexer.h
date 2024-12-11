@@ -37,7 +37,6 @@ typedef enum cc_token_type {
     CC_TOKEN_ASLSHIFT,
     CC_TOKEN_RSHIFT,
     CC_TOKEN_ASRSHIFT,
-    CC_TOKEN_BIT_AND,
     CC_TOKEN_BIT_ASAND,
     CC_TOKEN_BIT_OR,
     CC_TOKEN_BIT_ASOR,

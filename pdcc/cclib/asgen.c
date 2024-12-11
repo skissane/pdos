@@ -198,76 +198,131 @@ static void cc_i386gen_if(cc_reader *reader, const cc_expr *cond_expr,
     fprintf(reader->output, "\t/* TODO: comparison */\n");
 }
 
+static void cc_i386gen_binary_op (cc_reader *reader, const cc_expr *expr)
+{
+    cc_i386gen_top (reader, expr->data.binary_op.left);
+    fprintf (reader->output, "\tpushl %%eax\n");
+    cc_i386gen_top (reader, expr->data.binary_op.right);
+    fprintf (reader->output, "\tmovl %%eax, %%ecx\n");
+    fprintf (reader->output, "\tpop %%eax\n");
+    
+    switch (expr->type) {
+        case CC_EXPR_MUL:
+            fprintf (reader->output, "\tmull %%ecx\n");
+            break;
+        
+        case CC_EXPR_PLUS:
+            fprintf (reader->output, "\taddl %%ecx, %%eax\n");
+            break;
+
+        case CC_EXPR_MINUS:
+            fprintf (reader->output, "\tsubl %%ecx, %%eax\n");
+            break;
+
+        case CC_EXPR_LSHIFT:
+            fprintf (reader->output, "\tshl %%cl, %%eax\n");
+            break;
+    }
+}
+
 static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
 {
     size_t i;
     switch (expr->type)
     {
-    case CC_EXPR_NONE:
-        break;
-    case CC_EXPR_DECL:
-        cc_i386gen_decl(reader, &expr->data.decl.var);
-        break;
-    case CC_EXPR_IF:
-        cc_i386gen_if(reader, expr->data.if_else.cond_expr,
-                      expr->data.if_else.body_expr);
-        break;
-    case CC_EXPR_RETURN:
-        cc_i386gen_return(reader, expr->data.ret.ret_expr);
-        break;
-    case CC_EXPR_CALL:
-        stack_size = 0;
-        /* Push arguments onto the stack, right to left */
-        i = expr->data.call.n_params;
-        while (i-- > 0)
-        {
-            const cc_expr *param_expr = &expr->data.call.params[i];
-            stack_size += cc_i386gen_push(reader, param_expr);
-        }
+        case CC_EXPR_NONE:
+            break;
+        case CC_EXPR_MUL:
+        case CC_EXPR_PLUS:
+        case CC_EXPR_MINUS:
+        case CC_EXPR_LSHIFT:
+            cc_i386gen_binary_op (reader, expr);
+            break;
+        case CC_EXPR_DECL:
+            cc_i386gen_decl(reader, &expr->data.decl.var);
+            break;
+        case CC_EXPR_IF:
+            cc_i386gen_if(reader, expr->data.if_else.cond_expr,
+                          expr->data.if_else.body_expr);
+            break;
+        case CC_EXPR_RETURN:
+            cc_i386gen_return(reader, expr->data.ret.ret_expr);
+            break;
+        case CC_EXPR_CALL:
+            stack_size = 0;
+            /* Push arguments onto the stack, right to left */
+            i = expr->data.call.n_params;
+            while (i-- > 0)
+            {
+                const cc_expr *param_expr = &expr->data.call.params[i];
+#if 0
+                stack_size += cc_i386gen_push(reader, param_expr);
+#else
+                cc_i386gen_top (reader, param_expr);
+                fprintf (reader->output, "\tpushl %%eax\n");
+                stack_size += 4;
+#endif
+            }
 
-        fprintf(reader->output, "\tcall ");
-        if (expr->data.call.callee_func)
-            fprintf(reader->output, "_%s\n", expr->data.call.callee_func->name);
-        else if (expr->data.call.callee)
-            cc_i386gen_runtime_funptr(reader, expr->data.call.callee);
-        else
-        {
-            printf("No function on call expression???");
+            fprintf(reader->output, "\tcall ");
+            if (expr->data.call.callee_func)
+                fprintf(reader->output, "_%s\n", expr->data.call.callee_func->name);
+            else if (expr->data.call.callee)
+                cc_i386gen_runtime_funptr(reader, expr->data.call.callee);
+            else
+            {
+                printf("No function on call expression???");
+                abort();
+            }
+
+            /* Pop stack */
+            fprintf(reader->output, "\taddl $%u, %%esp\n", stack_size);
+            stack_size = 0;
+            break;
+        case CC_EXPR_STRING:
+#if 0
+            printf("str_%u: db ", expr->id);
+            for (i = 0; i < strlen(expr->data.string.data); i++)
+            {
+                printf("0x%x", expr->data.string.data[i]);
+                if (i < strlen(expr->data.string.data) - 1)
+                    printf(", ");
+            }
+            printf("\n");
+#endif
+            fprintf(reader->output, "\tmovl $S%u, %%eax\n", expr->id);
+            fprintf(reader->output, "\tjmp S%u_end\n", expr->id);
+            fprintf(reader->output, "S%u:\n", expr->id);
+            {
+                size_t len = strlen(expr->data.string.data);
+                for (i = 0; i < len; i++)
+                    fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
+            }
+            fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
+            fprintf(reader->output, "\n");
+            fprintf(reader->output, "S%u_end:\n", expr->id);
+            break;
+        case CC_EXPR_CONSTANT:
+#if 0
+            printf("%lu", expr->data._const.numval);
+#endif
+            fprintf (reader->output, "\tmovl $%lu, %%eax\n", expr->data._const.numval);
+            break;
+        case CC_EXPR_BLOCK:
+          {
+            cc_expr *oldblock;
+            oldblock = reader->curr_block;
+            fprintf(reader->output, "# {\n");
+            reader->curr_block = (cc_expr *)expr;
+            for (i = 0; i < expr->data.block.n_exprs; i++)
+                cc_i386gen_top(reader, &expr->data.block.exprs[i]);
+            fprintf(reader->output, "# }\n");
+            reader->curr_block = oldblock;
+            break;
+          }
+        default:
+            printf("Unknown expr type %u\n", expr->type);
             abort();
-        }
-
-        /* Pop stack */
-        fprintf(reader->output, "\taddl $%u, %%esp\n", stack_size);
-        stack_size = 0;
-        break;
-    case CC_EXPR_STRING:
-        printf("str_%u: db ", expr->id);
-        for (i = 0; i < strlen(expr->data.string.data); i++)
-        {
-            printf("0x%x", expr->data.string.data[i]);
-            if (i < strlen(expr->data.string.data) - 1)
-                printf(", ");
-        }
-        printf("\n");
-        break;
-    case CC_EXPR_CONSTANT:
-        printf("%lu", expr->data._const.numval);
-        break;
-    case CC_EXPR_BLOCK:
-      {
-        cc_expr *oldblock;
-        oldblock = reader->curr_block;
-        fprintf(reader->output, "# {\n");
-        reader->curr_block = (cc_expr *)expr;
-        for (i = 0; i < expr->data.block.n_exprs; i++)
-            cc_i386gen_top(reader, &expr->data.block.exprs[i]);
-        fprintf(reader->output, "# }\n");
-        reader->curr_block = oldblock;
-        break;
-      }
-    default:
-        printf("Unknown expr type %u\n", expr->type);
-        abort();
     }
 }
 
