@@ -186,9 +186,11 @@ extern unsigned char _cpp_trigraph_map[0x100];
 #define _cpp_lex_token_direct _cppltd
 #define _cpp_lex_token _cppltok
 #define _cpp_remaining_tokens_in_unknown2 _cpprtiu
+#define _cpp_destroy_token _cppdt
 #define _cpp_init_tokenrow _cppitr
 #define _cpp_destroy_tokenrows _cppdtr
 
+void _cpp_destroy_token (cpp_token *token);
 void _cpp_init_tokenrow(tokenrow *row);
 void _cpp_destroy_tokenrows (tokenrow *base_row);
 void _cpp_clean_line(cpp_reader *reader);

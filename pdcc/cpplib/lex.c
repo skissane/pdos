@@ -37,7 +37,30 @@ static tokenrow *next_tokenrow(tokenrow *row)
     return (row->next);
 }
 
-static destroy_tokens (cpp_token *start)
+void _cpp_destroy_token (cpp_token *token)
+{
+    switch (token->type) {
+        case CPP_NUMBER:
+        
+        case CPP_CHAR:
+        case CPP_LCHAR:
+        case CPP_uCHAR:
+        case CPP_UCHAR:
+        case CPP_OTHER:
+
+        case CPP_STRING:
+        case CPP_LSTRING:
+        case CPP_uSTRING:
+        case CPP_USTRING:
+        case CPP_u8STRING:
+        case CPP_HEADER_NAME:
+            free ((void *)(token->value.string.text));
+            token->value.string.text = NULL;
+            break;
+    }
+}
+
+static void destroy_tokens (cpp_token *start)
 {
     cpp_token *token;
 
@@ -58,8 +81,18 @@ static destroy_tokens (cpp_token *start)
             case CPP_u8STRING:
             case CPP_HEADER_NAME:
                 free ((void *)(token->value.string.text));
+                token->value.string.text = NULL;
                 break;
         }
+    }
+}
+
+static void free_all_tokens (tokenrow *base_row)
+{
+    tokenrow *row;
+
+    for (row = base_row; row; row = row->next) {
+        destroy_tokens (row->start);
     }
 }
 
@@ -542,6 +575,7 @@ new_line:
         }
         if (reader->keep_tokens == 0)
         {
+            free_all_tokens (&(reader->base_tokenrow));
             reader->cur_tokenrow = &(reader->base_tokenrow);
             result = reader->cur_tokenrow->start;
             reader->cur_token = result + 1;

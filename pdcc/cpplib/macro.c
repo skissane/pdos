@@ -32,8 +32,13 @@ static cpp_macro *new_macro(void)
 
 static void destroy_macro(cpp_macro *macro)
 {
-    free(macro->parameters);
-    free(macro);
+    cpp_token *token;
+    
+    free (macro->parameters);
+    for (token = macro->tokens; token < macro->tokens + macro->count; token++) {
+        _cpp_destroy_token (token);
+    }
+    free (macro);
 }
 
 typedef struct {
@@ -455,7 +460,7 @@ int _cpp_define_macro(cpp_reader *reader, cpp_unknown *unknown)
 
 void _cpp_undefine_macro(cpp_unknown *unknown)
 {
+    if (unknown->type == UNKNOWN_MACRO) destroy_macro (unknown->value.macro);
     unknown->type = UNKNOWN_VOID;
     unknown->flags &= ~UNKNOWN_DISABLED;
-    destroy_macro (unknown->value.macro);
 }
