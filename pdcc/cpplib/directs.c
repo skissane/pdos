@@ -864,6 +864,7 @@ void _cpp_remove_mffc(cpp_reader *reader)
 
     free(old->notes);
     free((void *)(old->start));
+    if (old->file) _cpp_free_file (old->file);
     free(old);
 }
 

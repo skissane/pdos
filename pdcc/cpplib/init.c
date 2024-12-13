@@ -106,10 +106,13 @@ cpp_reader *cpp_create_reader(enum c_lang lang, symtab *tab)
 
 void cpp_destroy_reader(cpp_reader *reader)
 {
-    _cpp_destroy_symtab(reader);
-    free(reader->date);
-    free(reader->Ztime);
-    free(reader);
+    _cpp_destroy_symtab (reader);
+    _cpp_destroy_tokenrows (&(reader->base_tokenrow));
+    free (reader->macro_memory);
+    free (reader->op_stack);
+    free (reader->date);
+    free (reader->Ztime);
+    free (reader);
 }
 
 struct builtin_macro {

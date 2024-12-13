@@ -219,8 +219,10 @@ static _cpp_file *create__cpp_file(cpp_reader *reader,
 
 void _cpp_free_file(_cpp_file *file)
 {
-    if (file->name) free(file->name);
-    free(file);
+    free (file->name);
+    free (file->path);
+    free (file->dir_name);
+    free (file);
 }
 
 static char *add_file_to_dir(_cpp_file *file,

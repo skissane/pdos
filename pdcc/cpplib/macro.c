@@ -445,7 +445,7 @@ int _cpp_define_macro(cpp_reader *reader, cpp_unknown *unknown)
                                 "\"%s\" redefined", UNKNOWN_NAME(unknown));
         }
 
-        _cpp_undefine_macro(unknown);
+        if (unknown->type == UNKNOWN_MACRO) _cpp_undefine_macro (unknown);
     }
 
     unknown->type = UNKNOWN_MACRO;
@@ -457,5 +457,5 @@ void _cpp_undefine_macro(cpp_unknown *unknown)
 {
     unknown->type = UNKNOWN_VOID;
     unknown->flags &= ~UNKNOWN_DISABLED;
-    destroy_macro(unknown->value.macro);
+    destroy_macro (unknown->value.macro);
 }

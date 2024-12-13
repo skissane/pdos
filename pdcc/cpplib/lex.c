@@ -19,7 +19,7 @@
 
 void _cpp_init_tokenrow(tokenrow *row)
 {
-    row->start = xmalloc(sizeof(cpp_token) * TOKENROW_LEN);
+    row->start = xcalloc (sizeof(cpp_token) * TOKENROW_LEN);
     row->end = row->start + TOKENROW_LEN;
     row->prev = NULL;
     row->next = NULL;
@@ -35,6 +35,47 @@ static tokenrow *next_tokenrow(tokenrow *row)
     }
 
     return (row->next);
+}
+
+static destroy_tokens (cpp_token *start)
+{
+    cpp_token *token;
+
+    for (token = start; token < start + TOKENROW_LEN; token++) {
+        switch (token->type) {
+            case CPP_NUMBER:
+            
+            case CPP_CHAR:
+            case CPP_LCHAR:
+            case CPP_uCHAR:
+            case CPP_UCHAR:
+            case CPP_OTHER:
+
+            case CPP_STRING:
+            case CPP_LSTRING:
+            case CPP_uSTRING:
+            case CPP_USTRING:
+            case CPP_u8STRING:
+            case CPP_HEADER_NAME:
+                free ((void *)(token->value.string.text));
+                break;
+        }
+    }
+}
+
+void _cpp_destroy_tokenrows (tokenrow *base_row)
+{
+    tokenrow *row, *next_row;
+    
+    /* base_row is part of reader and should not be freed here. */
+    destroy_tokens (base_row->start);
+    free (base_row->start);
+    for (row = base_row->next; row; row = next_row) {
+        next_row = row->next;
+        destroy_tokens (row->start);
+        free (row->start);
+        free (row);
+    }
 }
 
 void _cpp_process_line_notes(cpp_reader *reader)

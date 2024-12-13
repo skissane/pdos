@@ -24,9 +24,17 @@ static symtab_cell *alloc_cell(void)
 }
 
 static void free_cell(symtab_cell *cell)
-{
-    if (cell->name) free(cell->name);
-    free(cell);
+{    
+    if (cell->name) {
+        cpp_unknown *unknown = CPP_UNKNOWN (cell);
+        
+        if (unknown->type == UNKNOWN_MACRO) {
+            _cpp_undefine_macro (unknown);
+        }
+        
+        free (cell->name);
+    }
+    free (cell);
 }
 
 void _cpp_init_symtab(cpp_reader *reader, symtab *tab)
