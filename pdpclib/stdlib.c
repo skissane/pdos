@@ -431,6 +431,8 @@ __PDPCLIB_API__ void *malloc(size_t size)
             *(size_t *)ptr = size;
             ptr = (char *)ptr + sizeof(size_t);
         }
+#else
+        ptr = NULL;
 #endif
     }
     else
