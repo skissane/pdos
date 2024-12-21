@@ -1340,6 +1340,12 @@ static void doemul(void)
             regs[x1] -= regs[x2];
             p += 2;
         }
+        else if (instr == 0x14) /* nr */
+        {
+            splitrr();
+            regs[x1] &= regs[x2];
+            p += 2;
+        }
         else if (instr == 0x16) /* or */
         {
             splitrr();
