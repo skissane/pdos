@@ -596,6 +596,36 @@ static EFI_STATUS all_disks_block_test (void)
 }
 #endif
 
+static EFI_STATUS serial_io_test (void)
+{
+    EFI_STATUS Status = EFI_SUCCESS;
+    EFI_GUID sio_guid = EFI_SERIAL_IO_PROTOCOL_GUID;
+    UINTN NoHandles, i;
+    EFI_HANDLE *Handles;
+
+    print_string ("Serial io test start\n");
+    return_Status_if_fail (gBS->LocateHandleBuffer (ByProtocol, &sio_guid, NULL, &NoHandles, &Handles));
+    print_string ("Obtained handles\n");
+    for (i = 0; i < NoHandles; i++) {
+        EFI_SERIAL_IO_PROTOCOL *sio_protocol;
+        UINTN written = sizeof ("Serial IO test message\n");
+
+        print_string ("Getting serial io protocol for handle\n");
+        return_Status_if_fail (gBS->HandleProtocol (Handles[i], &sio_guid, (void **)&sio_protocol));
+        print_string ("Resetting serial\n");
+        sio_protocol->Reset (sio_protocol);
+        print_string ("Writing\n");
+        sio_protocol->Write (sio_protocol, &written, "Serial IO test message\n");
+        print_string ("Success\n");
+    }
+    
+    return_Status_if_fail (print_string ("Freeing handles buffer\n"));
+    return_Status_if_fail (gBS->FreePool (Handles));
+    print_string ("Serial io test success\n");
+
+    return Status;
+}
+
 
 int __start(int argc, char **argv);
 
@@ -693,6 +723,7 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #if 0
     return_Status_if_fail (all_disks_block_test());
 #endif
+    return_Status_if_fail (serial_io_test ());
 
 #ifndef EFITEST
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)
