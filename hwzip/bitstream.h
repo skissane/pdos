@@ -31,7 +31,11 @@ static inline void istream_init(istream_t *is, const uint8_t *src, size_t n)
         is->bitpos_end = n * 8;
 }
 
+#ifdef NO_LONG_LONG
+#define ISTREAM_MIN_BITS (32 - 7)
+#else
 #define ISTREAM_MIN_BITS (64 - 7)
+#endif
 
 /* Get the next bits from the input stream. The number of bits returned is
  * between ISTREAM_MIN_BITS and 64, depending on the position in the stream, or
@@ -46,8 +50,12 @@ static inline uint64_t istream_bits(const istream_t *is)
 
         assert(next <= is->end && "Cannot read past end of stream.");
 
+#ifdef NO_LONG_LONG
+        if (is->end - next >= 4) {
+#else
         if (is->end - next >= 8) {
-                /* Common case: read 8 bytes in one go. */
+#endif
+                /* Common case: read 4 bytes in one go. */
                 bits = read64le(next);
         } else {
                 /* Read the available bytes and zero-pad. */
@@ -132,7 +140,11 @@ static inline bool ostream_write(ostream_t *os, uint64_t bits, size_t n)
         uint64_t x;
         size_t shift, i;
 
+#ifdef NO_LONG_LONG
+        assert(n <= 25);
+#else
         assert(n <= 57);
+#endif
         assert(bits <= ((uint64_t)1 << n) - 1 && "Must fit in n bits.");
 
         if (os->bitpos_end - os->bitpos < n) {
@@ -143,8 +155,12 @@ static inline bool ostream_write(ostream_t *os, uint64_t bits, size_t n)
         p = &os->dst[os->bitpos / 8];
         shift = os->bitpos % 8;
 
+#ifdef NO_LONG_LONG
+        if (os->end - p >= 4) {
+#else
         if (os->end - p >= 8) {
-                /* Common case: read and write 8 bytes in one go. */
+#endif
+                /* Common case: read and write 4 bytes in one go. */
                 x = read64le(p);
                 x = lsb(x, shift);
                 x |= bits << shift;

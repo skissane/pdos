@@ -174,8 +174,13 @@ expand_stat_t hwexpand(const uint8_t *src, size_t src_len, size_t uncomp_len,
                 assert(dist <= max_dist(comp_factor));
 
                 /* Output the back reference. */
+#ifdef NO_LONG_LONG
+                if (round_up(len, 4) <= uncomp_len - dst_pos &&
+                    dist <= dst_pos) {
+#else
                 if (round_up(len, 8) <= uncomp_len - dst_pos &&
                     dist <= dst_pos) {
+#endif
                         /* Enough room and no implicit zeros; chunked copy. */
                         lz77_output_backref64(dst, dst_pos, dist, len);
                         dst_pos += len;

@@ -478,6 +478,12 @@ explode_stat_t hwexplode(const uint8_t *src, size_t src_len, size_t uncomp_len,
                         used_tot += 6;
                 }
 
+#ifdef NO_LONG_LONG
+                if (!istream_advance(&is, used_tot)) { return HWEXPLODE_ERR; }
+                used_tot = 0;
+                bits = istream_bits(&is);
+#endif
+
                 /* Read the Huffman-encoded high dist bits. */
                 sym = huffman_decode(&dist_decoder, (uint16_t)~bits, &used);
                 assert(sym >= 0 && "huffman decode successful");
@@ -485,6 +491,12 @@ explode_stat_t hwexplode(const uint8_t *src, size_t src_len, size_t uncomp_len,
                 bits >>= used;
                 dist |= (size_t)sym << (large_wnd ? 7 : 6);
                 dist += 1;
+
+#ifdef NO_LONG_LONG
+                if (!istream_advance(&is, used_tot)) { return HWEXPLODE_ERR; }
+                used_tot = 0;
+                bits = istream_bits(&is);
+#endif
 
                 /* Read the Huffman-encoded len. */
                 sym = huffman_decode(&len_decoder, (uint16_t)~bits, &used);
@@ -494,6 +506,13 @@ explode_stat_t hwexplode(const uint8_t *src, size_t src_len, size_t uncomp_len,
                 len = (size_t)(sym + min_len);
 
                 if (sym == 63) {
+#ifdef NO_LONG_LONG
+                        if (!istream_advance(&is, used_tot)) {
+                                return HWEXPLODE_ERR;
+                        }
+                        used_tot = 0;
+                        bits = istream_bits(&is);
+#endif
                         /* Read an extra len byte. */
                         len += (size_t)lsb(bits, 8);
                         used_tot += 8;
@@ -505,8 +524,13 @@ explode_stat_t hwexplode(const uint8_t *src, size_t src_len, size_t uncomp_len,
                         return HWEXPLODE_ERR;
                 }
 
+#ifdef NO_LONG_LONG
+                if (round_up(len, 4) <= uncomp_len - dst_pos &&
+                    dist <= dst_pos) {
+#else
                 if (round_up(len, 8) <= uncomp_len - dst_pos &&
                     dist <= dst_pos) {
+#endif
                         /* Enough room and no implicit zeros; chunked copy. */
                         lz77_output_backref64(dst, dst_pos, dist, len);
                         dst_pos += len;

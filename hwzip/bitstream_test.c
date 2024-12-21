@@ -58,7 +58,11 @@ void test_istream_min_bits(void)
         istream_init(&is, data, sizeof(data));
 
         /* Check that we always get at least ISTREAM_MIN_BITS back. */
+#ifdef NO_LONG_LONG
+        for (i = 0; i < 32; i++) {
+#else
         for (i = 0; i < 64; i++) {
+#endif
                 bits = istream_bits(&is);
                 CHECK(bits >= ((uint64_t)1 << ISTREAM_MIN_BITS) - 1);
                 istream_advance(&is, 1);

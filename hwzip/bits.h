@@ -32,6 +32,12 @@ static inline uint64_t read64le(const uint8_t *p)
 {
         /* The one true way, see
          * https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html */
+#ifdef NO_LONG_LONG
+        return ((uint64_t)p[0] << 0)  |
+               ((uint64_t)p[1] << 8)  |
+               ((uint64_t)p[2] << 16) |
+               ((uint64_t)p[3] << 24);
+#else
         return ((uint64_t)p[0] << 0)  |
                ((uint64_t)p[1] << 8)  |
                ((uint64_t)p[2] << 16) |
@@ -40,6 +46,7 @@ static inline uint64_t read64le(const uint8_t *p)
                ((uint64_t)p[5] << 40) |
                ((uint64_t)p[6] << 48) |
                ((uint64_t)p[7] << 56);
+#endif
 }
 
 static inline uint32_t read32le(const uint8_t *p)
@@ -64,10 +71,12 @@ static inline void write64le(uint8_t *dst, uint64_t x)
         dst[1] = (uint8_t)(x >> 8);
         dst[2] = (uint8_t)(x >> 16);
         dst[3] = (uint8_t)(x >> 24);
+#ifndef NO_LONG_LONG
         dst[4] = (uint8_t)(x >> 32);
         dst[5] = (uint8_t)(x >> 40);
         dst[6] = (uint8_t)(x >> 48);
         dst[7] = (uint8_t)(x >> 56);
+#endif
 }
 
 static inline void write32le(uint8_t *dst, uint32_t x)
@@ -87,8 +96,13 @@ static inline void write16le(uint8_t *dst, uint16_t x)
 /* Get the n least significant bits of x. */
 static inline uint64_t lsb(uint64_t x, size_t n)
 {
+#ifdef NO_LONG_LONG
+        assert(n <= 31);
+        return x & (((uint32_t)1 << n) - 1);
+#else
         assert(n <= 63);
         return x & (((uint64_t)1 << n) - 1);
+#endif
 }
 
 /* Round x up to the next multiple of m, which must be a power of 2. */

@@ -57,17 +57,25 @@ static inf_stat_t inf_block(istream_t *is, uint8_t *dst, size_t dst_cap,
                 /* Read a litlen symbol. */
                 bits = istream_bits(is);
                 litlen = huffman_decode(litlen_dec, (uint16_t)bits, &used);
+#ifdef NO_LONG_LONG
+                if (!istream_advance(is, used)) {
+                        return HWINF_ERR;
+                }
+#else
                 bits >>= used;
                 used_tot = used;
+#endif
 
                 if (litlen < 0 || litlen > LITLEN_MAX) {
                         /* Failed to decode, or invalid symbol. */
                         return HWINF_ERR;
                 } else if (litlen <= UINT8_MAX) {
                         /* Literal. */
+#ifndef NO_LONG_LONG
                         if (!istream_advance(is, used_tot)) {
                                 return HWINF_ERR;
                         }
+#endif
                         if (*dst_pos == dst_cap) {
                                 return HWINF_FULL;
                         }
@@ -75,9 +83,11 @@ static inf_stat_t inf_block(istream_t *is, uint8_t *dst, size_t dst_cap,
                         continue;
                 } else if (litlen == LITLEN_EOB) {
                         /* End of block. */
+#ifndef NO_LONG_LONG
                         if (!istream_advance(is, used_tot)) {
                                 return HWINF_ERR;
                         }
+#endif
                         return HWINF_OK;
                 }
 
@@ -86,16 +96,34 @@ static inf_stat_t inf_block(istream_t *is, uint8_t *dst, size_t dst_cap,
                 len   = litlen_tbl[litlen - LITLEN_TBL_OFFSET].base_len;
                 ebits = litlen_tbl[litlen - LITLEN_TBL_OFFSET].ebits;
                 if (ebits != 0) {
+#ifdef NO_LONG_LONG
+                        bits = istream_bits(is);
+#endif
                         len += lsb(bits, ebits);
+#ifdef NO_LONG_LONG
+                        if (!istream_advance(is, ebits)) {
+                                return HWINF_ERR;
+                        }
+#else
                         bits >>= ebits;
                         used_tot += ebits;
+#endif
                 }
                 assert(len >= MIN_LEN && len <= MAX_LEN);
 
                 /* Get the distance. */
+#ifdef NO_LONG_LONG
+                bits = istream_bits(is);
+#endif
                 distsym = huffman_decode(dist_dec, (uint16_t)bits, &used);
+#ifdef NO_LONG_LONG
+                if (!istream_advance(is, used)) {
+                        return HWINF_ERR;
+                }
+#else
                 bits >>= used;
                 used_tot += used;
+#endif
 
                 if (distsym < 0 || distsym > DISTSYM_MAX) {
                         /* Failed to decode, or invalid symbol. */
@@ -104,22 +132,36 @@ static inf_stat_t inf_block(istream_t *is, uint8_t *dst, size_t dst_cap,
                 dist  = dist_tbl[distsym].base_dist;
                 ebits = dist_tbl[distsym].ebits;
                 if (ebits != 0) {
+#ifdef NO_LONG_LONG
+                        bits = istream_bits(is);
+#endif
                         dist += lsb(bits, ebits);
+#ifdef NO_LONG_LONG
+                        if (!istream_advance(is, ebits)) {
+                                return HWINF_ERR;
+                        }
+#else
                         bits >>= ebits;
                         used_tot += ebits;
+#endif
                 }
                 assert(dist >= MIN_DISTANCE && dist <= MAX_DISTANCE);
 
+#ifndef NO_LONG_LONG
                 assert(used_tot <= ISTREAM_MIN_BITS);
                 if (!istream_advance(is, used_tot)) {
                         return HWINF_ERR;
                 }
-
+#endif
                 /* Bounds check and output the backref. */
                 if (dist > *dst_pos) {
                         return HWINF_ERR;
                 }
+#ifdef NO_LONG_LONG
+                if (round_up(len, 4) <= dst_cap - *dst_pos) {
+#else
                 if (round_up(len, 8) <= dst_cap - *dst_pos) {
+#endif
                         lz77_output_backref64(dst, *dst_pos, dist, len);
                 } else if (len <= dst_cap - *dst_pos) {
                         lz77_output_backref(dst, *dst_pos, dist, len);
@@ -710,28 +752,53 @@ static bool write_huffman_block(deflate_state_t *s,
                 /* litlen bits */
                 bits = litlen_enc->codewords[litlen];
                 nbits = litlen_enc->lengths[litlen];
-
+#ifdef NO_LONG_LONG
+                if (!ostream_write(&s->os, bits, nbits)) {
+                        return false;
+                }
+#endif
                 /* ebits */
                 ebits = len - litlen_tbl[litlen - LITLEN_TBL_OFFSET].base_len;
+#ifdef NO_LONG_LONG
+                nbits = litlen_tbl[litlen - LITLEN_TBL_OFFSET].ebits;
+                if (!ostream_write(&s->os, ebits, nbits)) {
+                        return false;
+                }
+#else
                 bits |= ebits << nbits;
                 nbits += litlen_tbl[litlen - LITLEN_TBL_OFFSET].ebits;
+#endif
 
                 /* Back reference distance. */
                 distance = s->block[i].distance;
                 dist = distance2dist(distance);
 
                 /* dist bits */
+#ifdef NO_LONG_LONG
+                bits = (uint64_t)dist_enc->codewords[dist];
+                nbits = dist_enc->lengths[dist];
+                if (!ostream_write(&s->os, bits, nbits)) {
+                        return false;
+                }
+#else
                 bits |= (uint64_t)dist_enc->codewords[dist] << nbits;
                 nbits += dist_enc->lengths[dist];
-
+#endif
                 /* ebits */
                 ebits = distance - dist_tbl[dist].base_dist;
+#ifdef NO_LONG_LONG
+                nbits = dist_tbl[dist].ebits;
+                if (!ostream_write(&s->os, ebits, nbits)) {
+                        return false;
+                }
+#else
                 bits |= ebits << nbits;
                 nbits += dist_tbl[dist].ebits;
 
                 if (!ostream_write(&s->os, bits, nbits)) {
                         return false;
                 }
+#endif
         }
 
         return true;

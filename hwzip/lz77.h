@@ -61,9 +61,15 @@ static inline void lz77_output_backref64(uint8_t *dst, size_t dst_pos,
 
         i = 0;
         do {
+#ifdef NO_LONG_LONG
+                memcpy(&tmp, &dst[dst_pos - dist + i], 4);
+                memcpy(&dst[dst_pos + i], &tmp, 4);
+                i += 4;
+#else
                 memcpy(&tmp, &dst[dst_pos - dist + i], 8);
                 memcpy(&dst[dst_pos + i], &tmp, 8);
                 i += 8;
+#endif
         } while (i < len);
 }
 

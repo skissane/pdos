@@ -73,9 +73,14 @@ void test_bits_write16le(void)
 
 void test_bits_lsb(void)
 {
+#ifdef NO_LONG_LONG
+        CHECK(lsb(0x55667788, 0) == 0x0);
+        CHECK(lsb(0x55667788, 5) == 0x8);
+#else
         CHECK(lsb(0x1122334455667788, 0) == 0x0);
         CHECK(lsb(0x1122334455667788, 5) == 0x8);
         CHECK(lsb(0x7722334455667788, 63) == 0x7722334455667788);
+#endif
 }
 
 void test_bits_round_up(void)

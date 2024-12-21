@@ -698,10 +698,14 @@ uint32_t zip_max_size(uint16_t num_memb, const char *const *filenames,
                 total += LFH_BASE_SZ + name_len; /* Local File Header */
                 total += file_sizes[i];          /* Uncompressed data size. */
         }
+#ifdef NO_LONG_LONG
+        return total;
+#else 
 
         if (total > UINT32_MAX) {
                 return 0;
         }
 
         return (uint32_t)total;
+#endif
 }

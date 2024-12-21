@@ -357,7 +357,11 @@ static void copy_from_prev_pos(uint8_t *dst, size_t dst_cap,
         assert(len > 0);
         assert(len <= dst_cap - dst_pos);
 
+#ifdef NO_LONG_LONG
+        if (round_up(len, 4) > dst_cap - dst_pos) {
+#else
         if (round_up(len, 8) > dst_cap - dst_pos) {
+#endif
                 /* Not enough room in dst for the sloppy copy below. */
                 memmove(&dst[dst_pos], &dst[prev_pos], len);
                 return;
@@ -371,10 +375,17 @@ static void copy_from_prev_pos(uint8_t *dst, size_t dst_cap,
 
         i = 0;
         do {
+#ifdef NO_LONG_LONG
+                /* Sloppy copy: 32 bits at a time; a few extra don't matter. */
+                memcpy(&tmp, &dst[prev_pos + i], 4);
+                memcpy(&dst[dst_pos + i], &tmp, 4);
+                i += 4;
+#else
                 /* Sloppy copy: 64 bits at a time; a few extra don't matter. */
                 memcpy(&tmp, &dst[prev_pos + i], 8);
                 memcpy(&dst[dst_pos + i], &tmp, 8);
                 i += 8;
+#endif
         } while (i < len);
 }
 
