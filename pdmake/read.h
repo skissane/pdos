@@ -13,5 +13,7 @@ int read_makefile (const char *filename);
 #define read_memory_makefile _Prmemmk
 void read_memory_makefile (char *memory);
 
+#define include_dir_add incdad
 void include_dir_add (const char *name);
+#define include_dirs_destroy incddy
 void include_dirs_destroy (void);
