@@ -51,28 +51,24 @@ static char *xstrdup(const char *name)
 
 static uint8_t *read_file(const char *filename, size_t *file_sz)
 {
-        FILE *f;
+        FILE *fp;
         uint8_t *buf;
         size_t buf_cap;
 
-        f = fopen(filename, "rb");
-        PERROR_IF(f == NULL, "fopen");
+        fp = fopen(filename, "rb");
+        PERROR_IF(fp == NULL, "fopen");
 
-        buf_cap = 4096;
-        buf = xmalloc(buf_cap);
+        fseek(fp, 0, SEEK_END);
+        buf_cap = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
 
-        *file_sz = 0;
-        while (feof(f) == 0) {
-                if (buf_cap - *file_sz == 0) {
-                        buf_cap *= 2;
-                        buf = xrealloc(buf, buf_cap);
-                }
+        buf = (uint8_t*)xmalloc(buf_cap);
+        PERROR_IF(buf == NULL, "xmalloc");
 
-                *file_sz += fread(&buf[*file_sz], 1, buf_cap - *file_sz, f);
-                PERROR_IF(ferror(f), "fread");
-        }
+        *file_sz = fread(buf, sizeof(uint8_t), buf_cap, fp);
+        PERROR_IF(ferror(fp), "fread");
 
-        PERROR_IF(fclose(f) != 0, "fclose");
+        PERROR_IF(fclose(fp) != 0, "fclose");
         return buf;
 }
 
