@@ -682,7 +682,7 @@ int cc_lex_with_preprocess (cc_reader *reader)
 
                 if (*p == term)
                 {
-#if 1
+#if 0
                     size_t len = (size_t)(p - start);
                     char *non_escaped, *escaped;
                     non_escaped = xstrndup(start, len);
@@ -692,7 +692,6 @@ int cc_lex_with_preprocess (cc_reader *reader)
                     free(non_escaped);
 #else
                     /* The assembler can handle escape sequences on its own. */
-                    /* not working for i386 target at least */
                     tok.data.string = xstrndup (start, p - start);
 #endif
                 }
