@@ -9,6 +9,17 @@
 
 
 
+ifeq "$(flavor)" "x64"
+COPT2=-DTARGET_X64
+TDIR=x64
+
+else
+COPT2=-DTARGET_I386
+TDIR=i386
+
+endif
+
+
 
 ifeq "$(targ)" "zpg"
 # Produces z/PDOS-generic executable.
@@ -22,7 +33,7 @@ LDFLAGS=-s --no-insert-timestamp
 COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \
     -Icpplib/include -I. -I../pdpclib \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
-    -I../generic -I../src
+    -I../generic -I../src $(COPT2)
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
@@ -33,7 +44,7 @@ CC=clang -S -O0 -D__ARM__ -fno-builtin -D__MACOS__ \
    -D__64BIT__ -fno-stack-protector -D__USEBIVA__ \
    -Wno-error=implicit-function-declaration \
    -Icclib -Icclib/include -Icpplib \
-   -Icpplib/include -I. -I../pdpclib
+   -Icpplib/include -I. -I../pdpclib $(COPT2)
 AR=ar
 AS=as
 LD=clang -Wl,-e, -Wl,__start
@@ -46,7 +57,7 @@ else ifeq "$(targ)" "gccarm64"
 CC=gcc -S -O2 -D__ARM__ -nostdinc -nostdlib -fno-builtin \
    -D__64BIT__ -fno-stack-protector --no-pie -D__USEBIVA__ \
    -Icclib -Icclib/include -Icpplib \
-   -Icpplib/include -I. -I../pdpclib
+   -Icpplib/include -I. -I../pdpclib $(COPT2)
 AR=ar
 AS=as
 LD=gcc -static -s -m64 -nostdlib
@@ -61,7 +72,7 @@ CC=gcc -S -O0 -D__gnu_linux__ -nostdinc -nostdlib -fno-builtin \
    -D__64BIT__ -fno-stack-protector --no-pie -D__USEBIVA__ \
    -m64 -fno-common \
    -Icclib -Icclib/include -Icpplib \
-   -Icpplib/include -I. -I../pdpclib
+   -Icpplib/include -I. -I../pdpclib $(COPT2)
 AR=ar
 AS=as
 LD=gcc -s -static -m64 -nostdlib
@@ -75,7 +86,7 @@ CC=gcc -S -O2 -D__gnu_linux__ -nostdinc -nostdlib -fno-builtin \
    -fno-stack-protector --no-pie -D__NOBIVA__ \
    -m32 -fno-common \
    -Icclib -Icclib/include -Icpplib \
-   -Icpplib/include -I. -I../pdpclib
+   -Icpplib/include -I. -I../pdpclib $(COPT2)
 AR=ar
 AS=as --32
 LD=gcc -s -static -m32 -nostdlib
@@ -83,7 +94,19 @@ EXTRA1=../pdpclib/linstart.o ../pdpclib/pdplinux.a
 EXTRA2=../pdpclib/pdplinux.a
 
 
-
+else ifeq "$(targ)" "mingw64"
+# links with PDPCLIB created with makefile.s64
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2
+LD=pdld
+LDFLAGS=-s --no-insert-timestamp
+AS=pdas --64 --oformat coff
+AR=xar
+COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \
+    -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ $(COPT2) \
+    -D__64BIT__
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib
 
 
 else
@@ -96,7 +119,7 @@ LDFLAGS=-s --no-insert-timestamp
 AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \
-    -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__
+    -Icpplib/include -I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ $(COPT2)
 EXTRA1=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib
 endif
@@ -122,10 +145,10 @@ cpplib.lib: cpplib/core.obj cpplib/directs.obj cpplib/errors.obj \
     $(AR) r cpplib.lib xmalloc.obj
     $(AR) s cpplib.lib
 
-cclib.lib: cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
+cclib.lib: cclib/cclib.obj cclib/$(TDIR)/asgen.obj cclib/lexer.obj cclib/diag.obj \
          xmalloc.obj
     rm -f cclib.lib
-    $(AR) r cclib.lib cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj
+    $(AR) r cclib.lib cclib/cclib.obj cclib/$(TDIR)/asgen.obj cclib/lexer.obj cclib/diag.obj
     $(AR) s cclib.lib
 
 .c.obj:
@@ -134,4 +157,4 @@ cclib.lib: cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
     rm -f $*.s
 
 clean:
-    rm -f *.obj cpplib/*.obj cpplib.lib cclib/*.obj cclib.lib pdcc.exe
+    rm -f *.obj cpplib/*.obj cpplib.lib cclib/*.obj cclib/$(TDIR)/*.obj cclib.lib pdcc.exe
