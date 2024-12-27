@@ -19,7 +19,7 @@
 #include "support.h"
 #include "xmalloc.h"
 
-void cc_i386gen(cc_reader *reader, const cc_expr *expr);
+void cc_codegen (cc_reader *reader, const cc_expr *expr);
 
 #define cc_parse_expression ccpexp
 
@@ -1496,8 +1496,8 @@ int cc_parse_file(cc_reader *reader)
     reader->tokens[reader->n_tokens++].type = CC_TOKEN_EOF;
     reader->curr_token = &reader->tokens[0];
 
-    cc_parser_do(reader);
-    cc_i386gen(reader, reader->root_expr);
+    cc_parser_do (reader);
+    cc_codegen (reader, reader->root_expr);
 #ifdef DEBUG
     printf("+++End of compilation\n");
 #endif
