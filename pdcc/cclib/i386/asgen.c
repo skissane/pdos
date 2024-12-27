@@ -293,12 +293,7 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
             fprintf(reader->output, "\tmovl $S%u, %%eax\n", expr->id);
             fprintf(reader->output, "\tjmp S%u_end\n", expr->id);
             fprintf(reader->output, "S%u:\n", expr->id);
-            {
-                size_t len = strlen(expr->data.string.data);
-                for (i = 0; i < len; i++)
-                    fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
-            }
-            fprintf(reader->output, ".byte 0x%x\n", expr->data.string.data[i]);
+            fprintf(reader->output, ".asciz \"%s\"\n", expr->data.string.data);
             fprintf(reader->output, "\n");
             fprintf(reader->output, "S%u_end:\n", expr->id);
             break;
