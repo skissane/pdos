@@ -1,5 +1,14 @@
+ifeq "$(targ)" "x64"
+# Produce Win64 executables
+# links with PDPCLIB created by makefile.s64
+AS=pdas --64
+
+else
 # Produce Windows executables
 # links with PDPCLIB created by makefile.std
+AS=pdas
+
+endif
 
 all: world.exe
 
@@ -8,5 +17,5 @@ world.exe: world.obj
 
 .c.obj:
   pdcc -D__NODECLSPEC__ -D__WIN32__ -I ../pdpclib -o $*.s $<
-  pdas -o $@ --oformat coff $*.s
+  $(AS) -o $@ --oformat coff $*.s
   rm -f $*.s
