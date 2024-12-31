@@ -583,6 +583,27 @@ static void doemul(void)
                     continue;
                 }
             }
+            /* BNLR */
+            else if (x1 == 0xb)
+            {
+               if (!lt)
+                {
+                    p = base + regs[x2];
+#if DEBUG
+                    printf("updating with %x %x\n", x2, regs[x2]);
+                    printf("base %p, p %p, at p is %x\n", base, p, *p);
+#endif
+                    if ((p - base) < 0x10000)
+                    {
+                        printf("branched below - terminating\n");
+#if PBEMUL
+                        return;
+#endif
+                        exit(EXIT_SUCCESS);
+                    }
+                    continue;
+                }
+            }
             else
             {
                 printf("unknown instruction %02X %02X\n", p[0], p[1]);
@@ -836,23 +857,49 @@ static void doemul(void)
         }
         else if (instr == 0x88) /* srl */
         {
-            int x;
-            int amt;
+            int x = 0;
             
             splitrs();
-            amt = p[3];
-            regs[x1] >>= amt;
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+            regs[x1] >>= x;
+            
             p += 4;
         }
         else if (instr == 0x8a) /* sra */
         {
-            int x;
-            int amt;
+            int x = 0;
 
-            /* +++ guessing */
+            /* +++ suggest */
             splitrs();
-            amt = p[3];
-            regs[x1] = (((I32)regs[x1]) >> amt);
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+            regs[x1] = (((I32)regs[x1]) >> x);
+
+            p += 4;
+        }
+        else if (instr == 0x8b) /* sla */
+        {
+            int x = 0;
+
+            /* +++ suggest */
+            splitrs();
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+            regs[x1] = (((I32)regs[x1]) << x);
+
             p += 4;
         }
         else if (instr == 0x8e) /* srda */
@@ -878,12 +925,17 @@ static void doemul(void)
         }
         else if (instr == 0x89) /* sll */
         {
-            int x;
-            int amt;
-            
+            int x = 0;
+
             splitrs();
-            amt = p[3];
-            regs[x1] <<= amt;
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+            regs[x1] <<= x;
+            
             p += 4;
         }
         else if (instr == 0x8c) /* srdl */
@@ -1159,6 +1211,32 @@ static void doemul(void)
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
+            eq = (regs[t] == 0);
+            p += 4;
+        }
+        else if (instr == 0x4a) /* ah */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            int val = 0;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            val = (short)gethalfword(v);
+            regs[t] += val;
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+            eq = (regs[t] == 0);
             p += 4;
         }
         else if (instr == 0x5b) /* s */
@@ -1178,6 +1256,34 @@ static void doemul(void)
             }
             v = base + one + two + d;
             regs[t] -= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+
+            /* we need to set the eq flag at least */
+            /* for when the result is 0 */
+            eq =  (regs[t] == 0);
+            p += 4;
+        }
+        else if (instr == 0x4b) /* sh */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            int val = 0;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            val = (short)gethalfword(v);
+            regs[t] -= val;
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
@@ -1426,6 +1532,34 @@ static void doemul(void)
 #if DEBUG
             printf("writing to address %x %p\n", one, base + one);
 #endif
+            p += 6;
+        }
+        else if (instr == 0xd4) /* nc */
+        {
+            int one = 0;
+            int two = 0;
+            int i;
+            unsigned char *v, *z;
+
+            splitssl();
+            if (b1 != 0)
+            {
+                one = regs[b1];
+            }
+            one += d1;
+            if (b2 != 0)
+            {
+                two = regs[b2];
+            }
+            two += d2;
+
+            v = base + one;
+            z = base + two; 
+            for(i = 0; i < l + 1; i++)
+            {
+                v[i] = (v[i] & z[i]);
+            }
+
             p += 6;
         }
         else if (instr == 0xd5) /* clc */
