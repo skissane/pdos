@@ -116,6 +116,8 @@ int main(int argc, char **argv)
         printf("executes a mainframe OS that relies on a pseudo-bios\n");
         return (EXIT_FAILURE);
     }
+    /* this probably needs to change */
+    setvbuf(stdin, NULL, _IONBF, 0);
 #endif
 
 #if COMEMUL
@@ -215,6 +217,8 @@ int main(int argc, char **argv)
     doemul();
 #if PBEMUL
     printf("program returned with hex %x\n", regs[15]);
+    /* this may need to change */
+    setvbuf(stdin, NULL, _IOLBF, 0);
 #endif
     return (EXIT_SUCCESS);
 }
