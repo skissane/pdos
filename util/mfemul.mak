@@ -35,7 +35,7 @@ COPTS=-S $(CFLAGS) -fno-builtin -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA_
 EXTRA=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib
 
-else
+else ifeq "$(targ)" "std"
 
 # This needs makefile.std to have been run in pdpclib
 CC=gccwin
@@ -45,6 +45,17 @@ COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBI
     -DNEED_MVS
 EXTRA=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib
+
+else
+
+# This needs makefile.p32 to have been run in pdpclib
+CC=gccwin
+CFLAGS=-O2 -DPBEMUL
+AS=pdas --oformat coff
+COPTS=-S $(CFLAGS) -ansi -pedantic -fno-common -I../pdpclib -D__WIN32__ -D__NOBIVA__ \
+    -DNEED_MVS -D__STATIC__
+EXTRA=../pdpclib/p32start.obj
+EXTRA2=../pdpclib/pdpwin32.lib ../src/kernel32.lib
 
 endif
 
