@@ -1400,6 +1400,21 @@ static void doemul(void)
 #endif
             p += 4;
         }
+        else if (instr == 0x94) /* ni */
+        {
+            unsigned long one = 0;
+            unsigned char *v;
+
+            splitsi();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            one += d;
+            v = base + one;
+            *v &= imm;
+            p += 4;
+        }
         else if (instr == 0x95) /* cli */
         {
             unsigned long one = 0;
@@ -1456,6 +1471,12 @@ static void doemul(void)
         {
             splitrr();
             regs[x1] |= regs[x2];
+            p += 2;
+        }
+        else if (instr == 0x17) /* xr */
+        { 
+            splitrr();
+            regs[x1] ^= regs[x2];
             p += 2;
         }
         else if (instr == 0x1f) /* slr */
@@ -1583,6 +1604,34 @@ static void doemul(void)
             lt = ret < 0;
             gt = ret > 0;
             eq = (ret == 0);
+            p += 6;
+        }
+        else if (instr == 0xd6) /* oc */
+        {
+            int one = 0;
+            int two = 0;
+            int i;
+            unsigned char *v, *z;
+
+            splitssl();
+            if (b1 != 0)
+            {
+                one = regs[b1];
+            }
+            one += d1;
+            if (b2 != 0)
+            {
+                two = regs[b2];
+            }
+            two += d2;
+
+            v = base + one;
+            z = base + two; 
+            for(i = 0; i < l + 1; i++)
+            {
+                v[i] = (v[i] | z[i]);
+            }
+
             p += 6;
         }
         else if (instr == 0x19) /* cr */
