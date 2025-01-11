@@ -7,7 +7,9 @@
 # define OLDWIN if you want to produce executables that can
 # run under command.com, with dosonly and ansi.sys in config.nt,
 # and using HX (as an unusual way to run PE executables,
-# but at least you then get ANSI)
+# but at least you then get ANSI). As per comments in stdio.c,
+# you don't want OLDWIN defined if the executable is intended
+# to run on PDOS/386 that doesn't have the extra functions.
 
 CC=gccwin
 COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src -DXOLDWIN

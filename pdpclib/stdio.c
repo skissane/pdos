@@ -2451,6 +2451,8 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
    as determined by GetFileType() returning FILE_TYPE_CHAR, but that doesn't
    appear to exist in Windows 2000, so we need a special "oldwin" build
    anyway. */
+/* But these complicated functions are not available on PDOS/386, so we
+   can't enable this by default */
 #ifdef OLDWIN
     if ((stream == __stdin)
         && (stream->bufTech = _IONBF)
