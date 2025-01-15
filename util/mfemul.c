@@ -909,7 +909,7 @@ static void doemul(void)
         }
         else if (instr == 0x8e) /* srda */
         {
-            int x;
+            int x = 0;
 
             splitrs();
             if (b != 0)
@@ -935,7 +935,7 @@ static void doemul(void)
         }
         else if (instr == 0x8f) /* slda */
         {
-            int x;
+            int x = 0;
 
             splitrs();
             if (b != 0)
