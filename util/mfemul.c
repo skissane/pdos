@@ -910,21 +910,52 @@ static void doemul(void)
         else if (instr == 0x8e) /* srda */
         {
             int x;
-            int amt;
 
             splitrs();
-            amt = p[3];
-            if (amt >= 32)
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+
+            if (x >= 32)
             {
                 regs[x1+1] = regs[x1];
                 regs[x1] = 0;
-                regs[x1+1] <<= (amt-32);
+                regs[x1+1] >>= (x-32);
             }
             else
             {
-                regs[x1+1] <<= amt;
-                regs[x1+1] |= (regs[x1] << (32-amt));
-                regs[x1] <<= amt;
+                regs[x1+1] >>= x;
+                regs[x1+1] |= (regs[x1] << (32-x));
+                regs[x1] >>= x;
+            }
+            p += 4;
+        }
+        else if (instr == 0x8f) /* slda */
+        {
+            int x;
+
+            splitrs();
+            if (b != 0)
+            {
+                x = regs[b];
+            }
+            x += d;
+            x &= 0x3f;
+
+            if (x >= 32)
+            {
+                regs[x1] = regs[x1+1];
+                regs[x1+1] = 0;
+                regs[x1] <<= (x-32);
+            }
+            else
+            {
+                regs[x1] <<= x;
+                regs[x1] |= (regs[x1+1] >> (32-x));
+                regs[x1+1] <<= x;
             }
             p += 4;
         }
@@ -1102,6 +1133,12 @@ static void doemul(void)
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
+            p += 4;
+        }
+        else if (instr == 0x68) /* ld */
+        {
+            /*a dummy instruction, not implement yet */
+            regs[t] = 0;
             p += 4;
         }
         else if (instr == 0x48) /* lh */
@@ -1454,6 +1491,21 @@ static void doemul(void)
             *v |= imm;
             p += 4;
         }
+        else if (instr == 0x97) /* xi */
+        {
+            unsigned long one = 0;
+            unsigned char *v;
+
+            splitsi();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            one += d;
+            v = base + one;
+            *v ^= imm;
+            p += 4;
+        }
         else if (instr == 0x1a) /* ar */
         {
             splitrr();
@@ -1536,6 +1588,11 @@ static void doemul(void)
             v[1] = (regs[t] >> 16) & 0xff;
             v[2] = (regs[t] >> 8) & 0xff;
             v[3] = regs[t] & 0xff;
+            p += 4;
+        }
+        else if (instr == 0x60) /* std */
+        {
+            /*a dummy instruction, not implement yet */
             p += 4;
         }
         else if (instr == 0xd2) /* mvc */
