@@ -44,7 +44,10 @@ extern int __minstart;
 #define CHAR_ESC_STR "\x1b"
 #endif
 
+/*use the FILENAME_MAX in stdio.h*/
+#if 0
 #define MAX_PATH 260 /* With trailing '\0' included. */
+#endif
 
 #define BIOS_SEEK_SET SEEK_SET
 #define BIOS_IONBF _IONBF
@@ -141,6 +144,8 @@ static void runexe(char *prog_name);
 static void readLogical(void *diskptr, unsigned long sector, void *buf);
 static void writeLogical(void *diskptr, unsigned long sector, void *buf);
 static void getDateTime(FAT_DATETIME *ptr);
+static void convertPath(char *dirname);
+static int formatPath(const char *input, char *output);
 
 
 /* The BIOS C library will call this, and then we call our own C library */
@@ -217,56 +222,56 @@ int main(int argc, char **argv)
     __envptr = "COMSPEC=\\COMMAND.EXE\0\0\0"; /* extra 3 NULs to signify no program name */
     if (argc > argupto)
     {
-    printf("about to open\n");
-    /* for (;;) ; */
-    disk = bios->Xfopen(argv[argupto], "r+b");
-    if (disk == NULL)
-    {
-        printf("can't open hard disk %s\n", argv[argupto]);
-        return (EXIT_FAILURE);
-    }
-    printf("done open\n");
-    {
-    /* we should be able to do this, but for now, we'll read
-       an entire sector to unburden the C library */
+        printf("about to open\n");
+        /* for (;;) ; */
+        disk = bios->Xfopen(argv[argupto], "r+b");
+        if (disk == NULL)
+        {
+            printf("can't open hard disk %s\n", argv[argupto]);
+            return (EXIT_FAILURE);
+        }
+        printf("done open\n");
+        {
+            /* we should be able to do this, but for now, we'll read
+            an entire sector to unburden the C library */
 #if 0
-    bios->Xfseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
-    printf("done seek\n");
-    bios->Xfread(lbabuf, 1, 4, disk);
-    printf("done read\n");
+            bios->Xfseek(disk, 0x1be + 0x8, BIOS_SEEK_SET);
+            printf("done seek\n");
+            bios->Xfread(lbabuf, 1, 4, disk);
+            printf("done read\n");
 #else
-    bios->Xfseek(disk, 0, BIOS_SEEK_SET);
-    bios->Xfread(sect, 1, 512, disk);
-    /* this is not ideal as the MBR code could contain this */
-    /* this is to support drives with just a single VBR, no MBR */
-    /* EFI effectively gives us this, and in addition, we need
-       to squelch the hidden sectors */
-    if ((memcmp(sect + 0x52, "FAT32", 5) == 0)
-        || (memcmp(sect + 0x36, "FAT12", 5) == 0)
-        || (memcmp(sect + 0x36, "FAT16", 5) == 0))
-    {
-        memcpy(lbabuf, "\x00\x00\x00\x00", 4);
-        memcpy(sect + 11 + 17, "\x00\x00\x00\x00", 4);
-    }
-    else
-    {
-         memcpy(lbabuf, sect + 0x1be + 0x8, 4);
-    }
+            bios->Xfseek(disk, 0, BIOS_SEEK_SET);
+            bios->Xfread(sect, 1, 512, disk);
+            /* this is not ideal as the MBR code could contain this */
+            /* this is to support drives with just a single VBR, no MBR */
+            /* EFI effectively gives us this, and in addition, we need
+            to squelch the hidden sectors */
+            if ((memcmp(sect + 0x52, "FAT32", 5) == 0)
+                || (memcmp(sect + 0x36, "FAT12", 5) == 0)
+                || (memcmp(sect + 0x36, "FAT16", 5) == 0))
+            {
+                memcpy(lbabuf, "\x00\x00\x00\x00", 4);
+                memcpy(sect + 11 + 17, "\x00\x00\x00\x00", 4);
+            }
+            else
+            {
+                memcpy(lbabuf, sect + 0x1be + 0x8, 4);
+            }
 #endif
-    }
-    lba = ((unsigned long)lbabuf[3] << 24)
-           | ((unsigned long)lbabuf[2] << 16)
-           | (lbabuf[1] << 8)
-           | lbabuf[0];
-    printf("lba is %lx\n", lba);
-    if (lba != 0)
-    {
-        bios->Xfseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
-        bios->Xfread(sect, SECTSZ, 1, disk);
-    }
-    printf("fat type is %.5s\n", &sect[0x36]);
-    fatDefaults(&fat);
-    fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
+        }
+        lba = ((unsigned long)lbabuf[3] << 24)
+            | ((unsigned long)lbabuf[2] << 16)
+            | (lbabuf[1] << 8)
+            | lbabuf[0];
+        printf("lba is %lx\n", lba);
+        if (lba != 0)
+        {
+            bios->Xfseek(disk, lba * SECTSZ, BIOS_SEEK_SET);
+            bios->Xfread(sect, SECTSZ, 1, disk);
+        }
+        printf("fat type is %.5s\n", &sect[0x36]);
+        fatDefaults(&fat);
+        fatInit(&fat, &sect[11], readLogical, writeLogical, disk, getDateTime);
     }
 
 
@@ -511,6 +516,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     {
         char fullname[FILENAME_MAX];
         
+#if 0
         strcpy(fullname, "");
         if (name[0] == '\\')
         {
@@ -522,7 +528,9 @@ int PosOpenFile(const char *name, int mode, int *handle)
             strcat(fullname, "\\");
         }
         strcat(fullname, name);
-        ret = fatOpenFile(&fat, fullname, &handles[x].ff);
+#endif
+        formatPath(name, fullname);
+        ret = fatOpenFile(&fat, fullname + 3, &handles[x].ff);
     }
     if (ret != 0) return (1);
     *handle = x;
@@ -675,7 +683,7 @@ static int dirCreat(const char *dnm, int attrib)
     const char *p;
     int drive;
     int rc;
-    char parentname[MAX_PATH];
+    char parentname[FILENAME_MAX];
     char *end;
     char *temp;
 
@@ -721,80 +729,75 @@ static int dirCreat(const char *dnm, int attrib)
 }
 
 /*convert '/' to '\\' of the path*/
-static void convertcwd(char *dirname)
+static void convertPath(char *dirname)
 {
     char* p = dirname;
     while (*p)
     {
         if (*p == '/') *p = '\\';
-        ++p;
+        ++p;    
     }
 }
 
 
-static int formatcwd(const char *input, char *output)
+static int formatPath(const char *input, char *output)
 {
-    char *p;
+    char *p, *q, *k, *z;
+    int n, len;
+    char temp[FILENAME_MAX];
+    
+    len = strlen(input);
+    strcpy(temp, input);
+    convertPath(temp);
 
-    /* The user provided '.'. */
-    if (input[0] == '.')
-    {
-        if (input[1] == '\\' || input[1] == '/')
-        {
-            input += 2;
-        }
-        else if (input[1] == '\0')
-        {
-            input++;
-        }
-    }
-   /*
-     The user only provides the <folder-name>
-     e.g. \from\1.txt the function corrects it to
-     e.g. c:\from\1.txt.
-     */
-    if (input[0] == '\\')
+    p = temp;
+    /*
+    e.g. \from\1.txt the function corrects it to
+    e.g. c:\from\1.txt.
+    */
+    if (p[0] == '\\')
     {
         output[0] = 'A' + currentDrive;
         strcpy(output + 1, ":");
-        strcat(output, input);
+        strcat(output, p);
     }
-
     /*
-     The user provides the file name in full format
-     e.g. c:\from\1.txt
-     */
-    else if((strlen(input) >= 3)
-            && (memcmp(input + 1, ":\\", 2) == 0)
-           )
+    The user provides the file name in full format, don't use cwd
+    e.g. c:\from\1.txt
+    */
+    else if((len >= 3) && (memcmp(p + 1, ":\\", 2) == 0))
     {
-        strcpy(output,input);
+        strcpy(output, p);
     }
-
     /*
-     The user misses the '\' e.g. c:1.txt.
-     */
-    else if (strlen(input) >= 2 && input[1] == ':'
-             && input[2] != '\\')
+    The user create at the root directory but misses the '\' e.g. c:1.txt.
+    */
+    else if (len >= 2 && p[1] == ':' && p[2] != '\\')
     {
-        memcpy(output, input, 2);
+        memcpy(output, p, 2);
         memcpy(output + 2, "\\", 2);
-        strcat(output,cwd);
-        if(strcmp(cwd, "") != 0)
-        {
-            strcat(output, "\\");
-        }
-        strcat(output, input + 2);
+        strcat(output, p + 2);
     }
-
     /*
-     The user provides only the <file-name>
-     e.g. 1.txt in that case the drive name,'\'
-     and currect working directory needs to be
-     prepended e.g. c:\from\1.txt.
-     */
+    The user provides only the <file-name>
+    e.g. 1.txt in that case the drive name,'\'
+    and currect working directory needs to be
+    prepended e.g. c:\from\1.txt.
+    */
     else
     {
+        /* The user provided '.' or .\test */
+        if (p[0] == '.')
+        {
+            if (p[1] == '\\')
+            {
+                p += 2;
+            }
+            else if (p[1] == '\0') 
+            {
+                p++;
+            }
+        }
         output[0] = 'A' + currentDrive;
         strcpy(output + 1, ":");
         strcat(output, "\\");
@@ -803,12 +806,41 @@ static int formatcwd(const char *input, char *output)
         {
             strcat(output, "\\");
         }
-        strcat(output, input);
+        strcat(output, p);
     }
     
     /* Checks for '\' or '/' before the null terminator and removes it. */
     p = strchr(output, '\0') - 1;
-    if (p[0] == '\\' || p[0] == '/') p[0] = '\0';
+    if (p[0] == '\\') p[0] = '\0';
+
+    /*parse the '..' in the path*/
+    q = strstr(output, "..");
+    k = NULL, z = NULL;
+    n = 0;
+    while (q)
+    {
+        n++;
+        if (n == 1) 
+        {
+            k = q - 2;
+        }
+        else 
+        {
+            k--;
+        }
+        
+        /*loop until found the '\' or the first of string*/
+        while (k[0] != '\\' && k[0] != ('A' + currentDrive))
+        {
+             k--;
+        }
+
+        q += 2;
+        /*backup the last position of '..' */
+        z = q;
+        q = strstr(q, "..");
+    }
+    strcpy(k, z);
     
     return (0);
 }
@@ -816,10 +848,20 @@ static int formatcwd(const char *input, char *output)
 
 int PosMakeDir(const char *dirname)
 {
-    char dname[MAX_PATH];
+    char dname[FILENAME_MAX];
 
-    formatcwd(dirname, dname);
-    dirCreat(dname, 0);
+    formatPath(dirname, dname);
+    /*the dname is a full path, we need to ignore three characters.*/
+    int result = fatCheckDir(&fat, dname + 3);
+    if(!result)
+    {
+        printf("Can't create directory '%s': File exists\n", dname);
+    } 
+    else 
+    {
+        dirCreat(dname, 0);
+    }
+    
     return (0);
 }
 
@@ -827,9 +869,8 @@ int PosMakeDir(const char *dirname)
 int PosChangeDir(const char *dirname)
 {
     if (dirname[0] == '\0') return(0);
-
-    char temp_dir[MAX_PATH] = {0};
-    char temp_cwd[MAX_PATH] = {0};
+    char temp_dir[FILENAME_MAX] = {0};
+    char dname[FILENAME_MAX] = {0};
     const char *start, *end;
     
     int len = strlen(dirname);
@@ -846,35 +887,26 @@ int PosChangeDir(const char *dirname)
         if (*start == ' ') ++start;
         if (*end == ' ') --end;
     }
-    convertcwd(temp_dir);
-    strcpy(temp_cwd, cwd);
 
-    if (temp_dir[0] == '\\')
+     /*return if cd to root directory*/
+    if (len == 1 && temp_dir[0] == '\\' )
     {
-        /*return if cd to root directory*/
-        if (len == 1)
-        {
-            cwd[0] = '\0'; 
-            return (0);
-        }
-        strcpy(temp_cwd, temp_dir);
+        cwd[0] = '\0';
+        return (0);
     }
-    /*change to parent directory if the user input the ".." */
     else if(len == 2 && temp_dir[0] == '.' && temp_dir[1] == '.')
     {
         char *p = strrchr(cwd, '\\');
         if (p) *p = '\0';
+        else cwd[0] = '\0';
+
         return (0);
     }
-    else
-    {
-        strcat(temp_cwd, "\\");
-        strcat(temp_cwd, temp_dir);
-    }
-
-    int result = fatCheckDir(&fat, temp_cwd + 1);
+    
+    formatPath(temp_dir, dname);
+    int result = fatCheckDir(&fat, dname + 3);
     if(!result) {
-        strcpy(cwd, temp_cwd);
+        strcpy(cwd, dname + 3);
     } 
     else {
         printf("cd %s: No such file or directory\n", temp_dir);
@@ -888,24 +920,21 @@ int PosChangeDir(const char *dirname)
 /* We should check that the directory is empty before removing it,
    but we are currently not doing so */
    
-int PosRemoveDir(const char *name)
+int PosRemoveDir(const char *dirname)
 {
-    int ret;
-    char fullname[FILENAME_MAX];
+    int ret = 0;
+    char dname[FILENAME_MAX];
 
-    strcpy(fullname, "");
-    if (name[0] == '\\')
-    {
-        /* if they provide the full path, don't use cwd */
+    formatPath(dirname, dname);
+    /*the dname is a full path, we need to ignore three characters.*/
+    ret = fatCheckDir(&fat, dname + 3);
+    if(ret) {
+        printf("Can't remove '%s': No such file or directory\n", dname + 2);
+    } 
+    else {
+        ret = fatDeleteFile(&fat, dname + 2);
     }
-    else if (cwd[0] != '\0')
-    {
-        strcat(fullname, cwd);
-        strcat(fullname, "\\");
-    }
-    strcat(fullname, name);
-    ret = fatDeleteFile(&fat, fullname);
-    return (ret);
+    return (ret);   
 }
 
 
