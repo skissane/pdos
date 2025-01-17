@@ -530,6 +530,13 @@ int cc_lex_with_preprocess (cc_reader *reader)
         if (token->type == CPP_PADDING) continue;
         
         tok.loc = loc;
+        /* The original file name is freed when preprocessor exits the source file,
+         * so it needs to be preserved. Linked list with filenames
+         * and checking the most recent filename using original pointer
+         * would be probably better.
+         * Memory leak currently.
+         */
+        tok.loc.file = xstrdup (loc.file);
         cpp_spell_token (reader->cpp_reader, token, spelled_token, 1)[0] = '\0';
         p = spelled_token;
         
