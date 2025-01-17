@@ -13,6 +13,10 @@ ifeq "$(flavor)" "x64"
 COPT2=-DTARGET_X64
 TDIR=x64
 
+else ifeq "$(flavor)" "i370"
+COPT2=-DTARGET_I370
+TDIR=i370
+
 else
 COPT2=-DTARGET_I386
 TDIR=i386
