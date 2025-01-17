@@ -467,6 +467,8 @@ static void runexe(char *prog_name)
     printf("return from app is hex %x\n", ret);
     lastcc = ret;
     ascii_flag = old_ascii;
+
+    free(p);
     return;
 }
 
