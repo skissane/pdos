@@ -88,10 +88,17 @@ void mainCRTStartup(void)
      * (2 instead of 64) what makes Windows msvcrt.dll return error
      * and identify itself.
      */
+    /* this logic is commented out for now, because changing
+       IOLBF to an unusual value caused a problem when dealing
+       with other systems - possibly the integrated Linux executables
+       under PDOS/386 and the original problem is not affecting
+       anyone at the moment */
+#if 0
     if (setvbuf (stdout, NULL, _IOLBF, BUFSIZ)) {
         setvbuf (stdout, NULL, _IONBF, BUFSIZ);
         setvbuf (stderr, NULL, _IONBF, BUFSIZ);
     }
+#endif
 
 /* 0 = don't expand wildcards, 1 = expand */
 #ifndef __SUBC__
