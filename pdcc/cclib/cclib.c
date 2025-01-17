@@ -334,6 +334,10 @@ static void cc_parse_struct_member_decl(cc_reader *reader, cc_type *type)
     cc_consume_token(reader); /* Skip opening brace */
     while (reader->curr_token->type != CC_TOKEN_RBRACE)
     {
+        if (type->mode == CC_TYPE_ENUM) {
+            cc_consume_token(reader);
+            continue;
+        }
         /* <member-decl> <,> <member-decl> <,> <...> <;> */
         do
         {
@@ -400,66 +404,55 @@ cc_type cc_parse_type(cc_reader *reader)
          * <struct|union|enum> <identifier> { <members> } <var-expr>; */
         if (reader->curr_token->type == CC_TOKEN_LBRACE)
             cc_parse_struct_member_decl(reader, &type);
-        return type;
-    }
+    } else {
+        if (reader->curr_token->type == CC_TOKEN_IDENT) {
+            cc_resolve_symbol (reader, reader->curr_token);
+        }
 
-    if (reader->curr_token->type == CC_TOKEN_IDENT) {
-        cc_resolve_symbol (reader, reader->curr_token);
-    }
-
-    if (reader->curr_token->type == CC_TOKEN_TYPE) {
-        /* Oversimplified for now, discards const and volatile. */
-        type = *reader->curr_token->data.type;
-        cc_consume_token (reader);
-    }
-    
-    for ( ; reader->curr_token->type != CC_TOKEN_IDENT; reader->curr_token++)
-    {
-        if (reader->curr_token->type == CC_TOKEN_KW_VOID) {
-            type.mode = CC_TYPE_VOID;
-        } else if (reader->curr_token->type == CC_TOKEN_KW_INT)
-        {
-            if (type.mode != CC_TYPE_CHAR && type.mode != CC_TYPE_SHORT
-             && type.mode != CC_TYPE_LONG)
-            {
-                type.mode = CC_TYPE_INT;
-            }
+        if (reader->curr_token->type == CC_TOKEN_TYPE) {
+            /* Oversimplified for now, discards const and volatile. */
+            type = *reader->curr_token->data.type;
+            cc_consume_token (reader);
         }
-        else if (reader->curr_token->type == CC_TOKEN_KW_SHORT)
+        
+        for ( ; reader->curr_token->type != CC_TOKEN_IDENT; reader->curr_token++)
         {
-            type.mode = CC_TYPE_SHORT;
+            if (reader->curr_token->type == CC_TOKEN_KW_VOID) {
+                type.mode = CC_TYPE_VOID;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_INT) {
+                if (type.mode != CC_TYPE_CHAR
+                    && type.mode != CC_TYPE_SHORT
+                    && type.mode != CC_TYPE_LONG) {
+                    type.mode = CC_TYPE_INT;
+                }
+            } else if (reader->curr_token->type == CC_TOKEN_KW_SHORT) {
+                type.mode = CC_TYPE_SHORT;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_CHAR) {
+                type.mode = CC_TYPE_CHAR;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_LONG) {
+                type.mode = CC_TYPE_LONG;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_FLOAT) {
+                type.mode = CC_TYPE_FLOAT;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_DOUBLE) {
+                type.mode = CC_TYPE_DOUBLE;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_SIGNED) {
+                type.data.sign = 1;
+            } else if (reader->curr_token->type == CC_TOKEN_KW_UNSIGNED) {
+                if (type.mode == CC_TYPE_FLOAT || type.mode == CC_TYPE_DOUBLE
+                    || type.mode == CC_TYPE_LDOUBLE || type.mode == CC_TYPE_UNION
+                    || type.mode == CC_TYPE_STRUCT || type.mode == CC_TYPE_ENUM)
+                    cc_report(reader, CC_DL_ERROR, "This combination of types"
+                                                   "do not support sign "
+                                                   "qualifiers");
+                
+                if (type.mode != CC_TYPE_CHAR && type.mode != CC_TYPE_SHORT
+                    && type.mode != CC_TYPE_LONG && type.mode != CC_TYPE_LLONG
+                    && type.mode != CC_TYPE_INT) {
+                    type.mode = CC_TYPE_INT;
+                }
+                type.data.sign = 0;
+            } else break;
         }
-        else if (reader->curr_token->type == CC_TOKEN_KW_CHAR)
-        {
-            type.mode = CC_TYPE_CHAR;
-        }
-        else if (reader->curr_token->type == CC_TOKEN_KW_LONG)
-        {
-            type.mode = CC_TYPE_LONG;
-        }
-        else if (reader->curr_token->type == CC_TOKEN_KW_SIGNED)
-        {
-            type.data.sign = 1;
-        }
-        else if (reader->curr_token->type == CC_TOKEN_KW_UNSIGNED)
-        {
-            if (type.mode == CC_TYPE_FLOAT || type.mode == CC_TYPE_DOUBLE
-             || type.mode == CC_TYPE_LDOUBLE || type.mode == CC_TYPE_UNION
-             || type.mode == CC_TYPE_STRUCT || type.mode == CC_TYPE_ENUM)
-                cc_report(reader, CC_DL_ERROR, "This combination of types"
-                                               "do not support sign "
-                                               "qualifiers");
-            
-            if (type.mode != CC_TYPE_CHAR && type.mode != CC_TYPE_SHORT
-             && type.mode != CC_TYPE_LONG && type.mode != CC_TYPE_LLONG
-             && type.mode != CC_TYPE_INT)
-            {
-                type.mode = CC_TYPE_INT;
-            }
-            type.data.sign = 0;
-        }
-        else
-            break;
     }
 
     /* Pointers of the form <*> <cv> may come now */
@@ -1364,11 +1357,20 @@ static cc_expr cc_parse_declaration_or_fndef (cc_reader *reader, int fndef_allow
 decl:
     {
         cc_variable *var;
-        expr.type = CC_EXPR_DECL;
 #ifdef __CC64__
 #else
         expr.data.decl.var = cc_parse_variable(reader);
+        if (expr.data.decl.var.name == NULL) {
+            /* Declaration without declarator (variable name) is allowed. */
+            if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
+                cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
+                           g_token_info[cc_peek_token (reader)->type].name);
+            }
+            cc_consume_token (reader);
+            return expr;
+        }
 #endif
+        expr.type = CC_EXPR_DECL;
         var = cc_add_variable(reader); /* Add to list of variables */
         *var = expr.data.decl.var;
         var->block_offset = (reader->curr_block->data.block.n_vars - 1) * 4;
@@ -1411,6 +1413,10 @@ decl:
             *cc_add_type (reader) = type;
         }
         cc_consume_token (reader);
+
+        if (reader->curr_token->type == CC_TOKEN_LBRACKET) {
+            ignore_arrays (reader);
+        }
         
         if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
             cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
