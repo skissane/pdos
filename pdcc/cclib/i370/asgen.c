@@ -89,7 +89,7 @@ static size_t cc_i370gen_push(cc_reader *reader, const cc_expr *expr)
         tprintf(reader->output, "@@S%u\tEQU\t*\n", expr->id);
         len = strlen(expr->data.string.data) + 1;
         for (i = 0; i < len; i++)
-            tprintf(reader->output, "\tDC X'%02X'\n", expr->data.string.data[i]);
+            tprintf(reader->output, "\tDC\tX'%02X'\n", expr->data.string.data[i]);
         tprintf(reader->output, "*\n");
         tprintf(reader->output, "@@T%u\tDS\t0H\n", expr->id);
         tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
@@ -148,7 +148,8 @@ static size_t cc_i370gen_push(cc_reader *reader, const cc_expr *expr)
 
 static void cc_i370gen_prologue(cc_reader *reader, const cc_expr *expr)
 {
-    fprintf(reader->output, "\tSTM\t(14,12),12(13)\n");
+    fprintf(reader->output, "\tSTM\t14,12,12(13)\n");
+    fprintf(reader->output, "\tUSING\t*,13\n");
     stack_size = 0;
 }
 
@@ -163,8 +164,9 @@ static void cc_i370gen_epilogue(cc_reader *reader, const cc_expr *expr)
 
     if (expr->type == CC_EXPR_BLOCK)
     {
-        tprintf(reader->output, "\tLM\t(14,12),12(13)\n");
+        tprintf(reader->output, "\tLM\t14,12,12(13)\n");
         tprintf(reader->output, "\tBR\t14\n");
+        tprintf(reader->output, "\tLTORG\n");
         return;
     }
     printf("Unknown expr type %u for epilogue\n", expr->type);
@@ -199,7 +201,7 @@ static void cc_i370gen_return(cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_NONE:
         break;
     case CC_EXPR_CONSTANT:
-        tprintf(reader->output, "\tL\t15,=F'%u\n", expr->data._const.numval);
+        tprintf(reader->output, "\tL\t15,=F'%u'\n", expr->data._const.numval);
         break;
     default:
         printf("unknown expr %u\n", expr->type);
@@ -325,7 +327,7 @@ static void cc_i370gen_top(cc_reader *reader, const cc_expr *expr)
             tprintf(reader->output, "@@S%u\tEQU\t*\n", expr->id);
             len = strlen(expr->data.string.data) + 1;
             for (i = 0; i < len; i++)
-                tprintf(reader->output, "\tDC X'%02X'\n", expr->data.string.data[i]);
+                tprintf(reader->output, "\tDC\tX'%02X'\n", expr->data.string.data[i]);
             tprintf(reader->output, "*\n");
             tprintf(reader->output, "@@T%u\tDS\t0H\n", expr->id);
 
@@ -393,6 +395,8 @@ void cc_codegen(cc_reader *reader, const cc_expr *expr)
     assert(expr->type == CC_EXPR_BLOCK);
     reader->curr_block = (cc_expr *)expr;
     tprintf(reader->output, "* bits 32\n");
+    tprintf(reader->output, "\tCSECT\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
         cc_i370gen_variable(reader, &expr->data.block.vars[i]);
+    tprintf(reader->output, "\tEND\n");
 }
