@@ -850,16 +850,13 @@ static int formatPath(const char *input, char *output)
 
 int PosMakeDir(const char *dirname)
 {
+    int ret = 0;
     char dname[FILENAME_MAX];
 
     formatPath(dirname, dname);
     /*the dname is a full path, we need to ignore three characters.*/
-    int result = fatCheckDir(&fat, dname + 3);
-    if(!result)
-    {
-        printf("Can't create directory '%s': File exists\n", dname);
-    } 
-    else 
+    ret = fatCheckDir(&fat, dname + 3);
+    if(ret)
     {
         dirCreat(dname, 0);
     }
@@ -930,10 +927,8 @@ int PosRemoveDir(const char *dirname)
     formatPath(dirname, dname);
     /*the dname is a full path, we need to ignore three characters.*/
     ret = fatCheckDir(&fat, dname + 3);
-    if(ret) {
-        printf("Can't remove '%s': No such file or directory\n", dname + 2);
-    } 
-    else {
+    if(!ret) 
+    {
         ret = fatDeleteFile(&fat, dname + 2);
     }
     return (ret);   
