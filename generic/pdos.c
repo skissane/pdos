@@ -29,6 +29,7 @@
 #include <__os.h>
 
 #include <__memmgr.h>
+extern int __mmgid;
 
 #include <fat.h>
 
