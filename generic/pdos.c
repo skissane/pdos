@@ -461,10 +461,12 @@ static void runexe(char *prog_name)
 
 #endif
 
-
+    __mmgid += 256;
     printf("about to call app at address %p\n", pgastart);
     ret = pgastart(&os);
     printf("return from app is hex %x\n", ret);
+    memmgrFreeId(&__memmgr, __mmgid);
+    __mmgid -= 256;
     lastcc = ret;
     ascii_flag = old_ascii;
 
