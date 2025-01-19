@@ -601,7 +601,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     }
     {
         char fullname[FILENAME_MAX];
-        
+#if 0 
         strcpy(fullname, "");
         if (name[0] == '\\')
         {
@@ -613,7 +613,9 @@ int PosCreatFile(const char *name, int attrib, int *handle)
             strcat(fullname, "\\");
         }
         strcat(fullname, name);
-        ret = fatCreatFile(&fat, fullname, &handles[x].ff, attrib);
+#endif
+        formatPath(name, fullname);
+        ret = fatCreatFile(&fat, fullname + 3, &handles[x].ff, attrib);
     }
     if (ret != 0) return (1);
     *handle = x;
