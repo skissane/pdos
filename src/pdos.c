@@ -355,7 +355,8 @@ static OS bios = { __start, 0, 0, NULL /* cmd */, printf, 0, malloc, NULL, NULL,
   sin, cos, tan, floor, asin, acos, atan, sinh, cosh, tanh,
   rand, srand, strftime, puts,
   pow, modf, log, log10, atan2, fabs, exp, sqrt,
-  strtok, atol, mktime, vprintf,
+  strtok, atol, mktime, vprintf, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, PosGetReturnCode, PosRenameFile,
 };
 #endif
 
