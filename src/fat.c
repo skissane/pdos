@@ -613,6 +613,14 @@ unsigned int fatCheckDir(FAT *fat, const char *dnm)
 }
 
 
+unsigned int fatCheckFile(FAT *fat, const char *fnm)
+{
+    fatPosition(fat, fnm);
+    if (fat->notfound) return (POS_ERR_FILE_NOT_FOUND);
+    return POS_ERR_NO_ERROR;
+}
+
+
 unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                              int attrib)
 {
