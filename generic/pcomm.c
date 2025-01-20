@@ -93,7 +93,7 @@ int main(int argc, char **argv)
         {
             printf("commands that might be available are:\n");
             printf("exit, type, dir, md, rd, cd, date, time, del, copy\n");
-            printf("fill, fzap\n");
+            printf("fill, fzap, rename\n");
         }
         else if (strncmp(buf, "type", 4) == 0)
         {
@@ -239,6 +239,30 @@ int main(int argc, char **argv)
             if (p != NULL)
             {
                 remove(p + 1);
+            }
+        }
+        else if (strncmp(buf, "rename", 6) == 0)
+        {
+            int ret = 0;
+            p = strchr(buf, ' ');
+            if (p != NULL)
+            {
+                p++;
+                q = strchr(p, ' ');
+                if (q == NULL)
+                {
+                    printf("two files needed\n");
+                }
+                else
+                {
+                    *q = '\0';
+                    q++;
+                    ret = PosRenameFile(p, q);
+                    if (ret != 0)
+                    {
+                        printf("%s: file not found\n", p);
+                    }
+                }
             }
         }
         else
