@@ -8,6 +8,8 @@
 #define fatCreatFile fatCF
 #define fatCreateDir fatCDir
 #define fatCreatNewFile fatCNF
+#define fatCheckDir fatCKD
+#define fatCheckFile fatCKF
 
 
 #define MAXSECTSZ 512
@@ -236,6 +238,7 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
 unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
                          int attrib);
 unsigned int fatCheckDir(FAT *fat, const char *dnm);
+unsigned int fatCheckFile(FAT *fat, const char *fnm);
 unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                              int attrib);
 unsigned int fatOpenFile(FAT *fat, const char *fnm, FATFILE *fatfile);
