@@ -547,6 +547,7 @@ typedef struct {
 #define PosExec __os->XPosExec
 #define PosGetCommandLine __os->XPosGetCommandLine
 #define PosGetReturnCode __os->XPosGetReturnCode
+#define PosRenameFile __os->XPosRenameFile
 
 #else
 /* create short names to work around assembler/linker limitations */
