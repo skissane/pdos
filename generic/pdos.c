@@ -103,6 +103,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   0, /* service call */
   PosGetCommandLine2,
   PosGetReturnCode,
+  PosRenameFile,
 };
 
 static int (*pgastart)(OS *os);
@@ -1029,7 +1030,19 @@ int PosDeleteFile(const char *name)
 
 int PosRenameFile(const char *old, const char *new)
 {
-    return (0);
+    int ret = 0;
+    char f1[FILENAME_MAX];
+    char f2[FILENAME_MAX];
+
+    formatPath(old, f1);
+
+    ret = fatCheckFile(&fat, f1 + 3);
+    if (ret == POS_ERR_NO_ERROR)
+    {
+        formatPath(new, f2);
+        ret = fatRenameFile(&fat, f1 + 3, f2 + 3);
+    }
+    return (ret);
 }
 
 int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
