@@ -484,7 +484,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     int x;
     int bios_file = 0;
 
-    printf("got request to open %s\n", name);
+    /* printf("got request to open %s\n", name); */
     for (x = 3; x < MAX_HANDLE; x++)
     {
         if (!handles[x].inuse) break;
@@ -565,7 +565,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     int x;
     int bios_file = 0;
 
-    printf("got request to create %s\n", name);
+    /* printf("got request to create %s\n", name); */
     for (x = 3; x < MAX_HANDLE; x++)
     {
         if (!handles[x].inuse) break;
