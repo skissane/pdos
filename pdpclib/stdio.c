@@ -119,8 +119,8 @@ extern int CTYP __write(int handle, const void *buf, unsigned int len,
                         int *errind);
 extern int CTYP __seek(int handle, long offset, int whence);
 extern void CTYP __close(int handle);
-extern void CTYP __remove(const char *filename);
-extern void CTYP __rename(const char *old, const char *newnam);
+extern int CTYP __remove(const char *filename);
+extern int CTYP __rename(const char *old, const char *newnam);
 extern int CTYP __devginfo(int handle, unsigned int *info);
 extern void CTYP __devsinfo(int handle, unsigned int info);
 #endif
@@ -173,8 +173,8 @@ extern int __write(int a, const void *b, int c);
 extern int __read(int a, void *b, int c);
 extern int __seek(int handle, long offset, int whence);
 extern void __close(int handle);
-extern void __remove(const char *filename);
-extern void __rename(const char *old, const char *newnam);
+extern int __remove(const char *filename);
+extern int __rename(const char *old, const char *newnam);
 
 #define O_RDONLY 0x0
 #define O_WRONLY 0x1
@@ -4256,8 +4256,7 @@ __PDPCLIB_API__ int remove(const char *filename)
     }
 #endif
 #ifdef __MSDOS__
-    __remove(filename);
-    ret = 0;
+    ret = __remove(filename);
 #endif
 #ifdef __MVS__
     char buf[FILENAME_MAX + 50];
@@ -4397,8 +4396,7 @@ __PDPCLIB_API__ int rename(const char *old, const char *newnam)
     }
 #endif
 #ifdef __MSDOS__
-    __rename(old, newnam);
-    ret = 0;
+    ret = __rename(old, newnam);
 #endif
 #ifdef __MVS__
     char buf[FILENAME_MAX + FILENAME_MAX + 50];

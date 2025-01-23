@@ -75,16 +75,18 @@ void CTYP __devsinfo(int handle, unsigned int info)
     return;
 }
 
-void CTYP __remove(const char *filename)
+int CTYP __remove(const char *filename)
 {
-    PosDeleteFile(filename);
-    return;
+    int rc;
+    rc = PosDeleteFile(filename);
+    return (rc);
 }
 
-void CTYP __rename(const char *old, const char *new)
+int CTYP __rename(const char *old, const char *new)
 {
-    PosRenameFile(old, new);
-    return;
+    int rc;
+    rc = PosRenameFile(old, new);
+    return (rc);
 }
 
 #if defined(__32BIT__) && !defined(NOLIBALLOC)
