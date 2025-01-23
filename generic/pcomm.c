@@ -235,10 +235,15 @@ int main(int argc, char **argv)
         }
         else if (strncmp(buf, "del", 3) == 0)
         {
+            int ret = 0;
             p = strchr(buf, ' ');
             if (p != NULL)
             {
-                remove(p + 1);
+                ret = remove(p + 1);
+                if (ret != 0)
+                {
+                    printf("%s: file not found\n", p + 1);
+                }
             }
         }
         else if (strncmp(buf, "rename", 6) == 0)
@@ -257,7 +262,7 @@ int main(int argc, char **argv)
                 {
                     *q = '\0';
                     q++;
-                    ret = PosRenameFile(p, q);
+                    ret = rename(p, q);
                     if (ret != 0)
                     {
                         printf("%s: file not found\n", p);
