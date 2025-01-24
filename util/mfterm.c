@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     if (argc < 2)
     {
-        printf("usage: mfterm [-lu=xxx] [-3270|-3275|-1052}-1057]"
+        printf("usage: mfterm [-lu=xxx] [-3270|-3275|-1052|-1057]"
                " <serial file>\n");
         printf("establishes a telnet ANSI terminal connection to mainframe\n");
         printf("e.g. mfterm com1:\n");
