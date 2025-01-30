@@ -38,10 +38,10 @@ cpplib.a: cpplib/core.o cpplib/directs.o cpplib/errors.o \
     $(AR) r cpplib.a cpplib/macro.o cpplib/support.o cpplib/symtab.o
     $(AR) r cpplib.a xmalloc.o
 
-cclib.a: cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o \
+cclib.a: cclib/cclib.o cclib/i386/asgen.o cclib/lexer.o cclib/diag.o \
          xmalloc.o
     rm -f cclib.a
-    $(AR) r cclib.a cclib/cclib.o cclib/asgen.o cclib/lexer.o cclib/diag.o
+    $(AR) r cclib.a cclib/cclib.o cclib/i386/asgen.o cclib/lexer.o cclib/diag.o
     $(AR) r cpplib.a xmalloc.o
 
 .c.o:
