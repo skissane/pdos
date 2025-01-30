@@ -1,15 +1,17 @@
 # This builds the PDOS-generic OS library for ARM
 
 CC=gccarm
-COPTS=-msoft-float -S -O0 -fno-common -fno-builtin -mapcs-32 -U__ARM__ -DNOUNDMAIN -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -D__NOBIVA__ -I . -I../src
+COPTS=-msoft-float -S -O0 -fno-common -fno-builtin -mapcs-32 \
+    -U__ARM__ -DNOUNDMAIN -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC \
+    -D__NOBIVA__ -I . -I../src -DUSE_MEMMGR
 
 all: clean pdosgeno.a
 
 pdosgeno.a: stdio.o string.o stdlib.o \
-       start.o time.o errno.o assert.o signal.o locale.o \
+       start.o time.o errno.o assert.o signal.o locale.o __memmgr.o \
        ctype.o setjmp.o math.o armsupa.o pdossupc.o fpfuncsa.o
         rm -f pdosgeno.a
-        ararm r pdosgeno.a stdio.o string.o stdlib.o armsupa.o
+        ararm r pdosgeno.a stdio.o string.o stdlib.o armsupa.o __memmgr.o
         ararm r pdosgeno.a start.o time.o errno.o assert.o signal.o
         ararm r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o fpfuncsa.o
 
