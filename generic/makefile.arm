@@ -12,13 +12,13 @@ AR=ararm
 # attempted to execute pcomm. Pinebook Pro had the same issue.
 # Seems that we need a cache flush
 COPTS=-S $(CFLAGS) -fno-common -mapcs-32 -ansi \
-   -I. -I../bios -I../pdpclib -I../src \
+   -I. -I../bios -I../pdpclib -I../src -DUSE_MEMMGR \
    -D__PDOS386__ -D__ARMGEN__ -DNOLIBALLOC -DNEED_AOUT -DNEED_FLUSH
 
 all: clean pdos.exe
 
-pdos.exe: genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o
-    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../pdpclib/__memmgr.o ../src/fat.o ../pdpclib/pdosgeno.a
+pdos.exe: genstart.o pdos.o ../bios/exeload.o ../src/fat.o
+    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../src/fat.o ../pdpclib/pdosgeno.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
