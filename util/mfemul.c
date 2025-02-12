@@ -1192,7 +1192,7 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            regs[t] = (v[0] << 8) | v[1];
+            regs[t] = (short)((v[0] << 8) | v[1]);
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
