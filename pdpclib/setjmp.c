@@ -49,7 +49,10 @@ __PDPCLIB_API__ int _setjmp(jmp_buf env)
 
 
 
-/* this function is no longer exported */
+/* this function is no longer exported in msvcrt.lib and msvcrt.dll */
+/* you now need to explicitly link with this object code, plus
+   the supporting assembler code (winsupa.obj or whatever) */
+/* see setjmp.h for an explanation as to why */
 
 void longjmp(jmp_buf env, int val)
 {
