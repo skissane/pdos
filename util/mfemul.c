@@ -60,6 +60,8 @@ static int instr;
 
 static char *boot_name;
 
+static unsigned long icount = 0;
+
 static U32 regs[16];
 
 static int x1;
@@ -81,6 +83,8 @@ static int gt;
 static int eq;
 */
 /* static int zero; */ /* i don't think this is a separate flag - just use eq */
+
+/* cc of 2 is +, cc of 1 is -, cc of 0 is 0 */
 static int cc = 0;
 
 static FILE *handles[FOPEN_MAX];
@@ -223,6 +227,7 @@ int main(int argc, char **argv)
     doemul();
 #if PBEMUL
     printf("program returned with hex %x\n", regs[15]);
+    printf("instruction count is %ld\n", icount);
     /* this may need to change */
     setvbuf(stdin, NULL, _IOLBF, 0);
 #endif
@@ -444,12 +449,14 @@ static void doemul(void)
     while (1)
     {
         instr = *p;
+        icount++;
 #if COMEMUL
         printf("instr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base - 0x10000, *watching, regs[14]);
 #endif
 #if PBEMUL
 #if DEBUG
         printf("\ninstr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base, *watching, regs[14]);
+        printf("icount is %ld\n", icount);
 #endif
 #endif
 #if DUMPREGS
@@ -1253,7 +1260,7 @@ static void doemul(void)
             }
             v = base + one + two + d;
             val = (short)gethalfword(v);
-            cc = (regs[t] > val) ? 2 : (regs[t] < val) ? 1 : 0;
+            cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
             p += 4;
         }
         else if (instr == 0x59) /* c */
