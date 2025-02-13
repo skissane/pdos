@@ -779,6 +779,12 @@ static void doemul(void)
             splitrx();
             p += 4;
         }
+        else if (instr == 0x6d) /* dd */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrx();
+            p += 4;
+        }
         else if (instr == 0xbd) /* clm */
         {
             int x;
@@ -1173,7 +1179,14 @@ static void doemul(void)
         else if (instr == 0x68) /* ld */
         {
             /*a dummy instruction, not implement yet */
-            regs[t] = 0;
+            splitrx();
+            p += 4;
+        }
+        else if (instr == 0x69) /* cd */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrx();
+            cc = 0;
             p += 4;
         }
         else if (instr == 0x48) /* lh */
@@ -1264,11 +1277,43 @@ static void doemul(void)
             cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
             p += 4;
         }
+        else if (instr == 0x28) /* ldr */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrr();
+            p += 2;
+        }
         else if (instr == 0x29) /* cdr */
         {
             /*a dummy instruction, not implement yet */
             splitrr();
             cc = 0;
+            p += 2;
+        }
+        else if (instr == 0x2a) /* adr */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrr();
+            cc = 0;
+            p += 2;
+        }
+        else if (instr == 0x2b) /* sdr */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrr();
+            cc = 0;
+            p += 2;
+        }
+        else if (instr == 0x2c) /* mdr */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrr();
+            p += 2;
+        }
+        else if (instr == 0x2d) /* ddr */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrr();
             p += 2;
         }
         else if (instr == 0x5a) /* a */
@@ -1353,6 +1398,13 @@ static void doemul(void)
 
             /* we need to set the eq flag at least */
             /* for when the result is 0 */
+            p += 4;
+        }
+        else if (instr == 0x6a) /* ad */
+        {
+            /*a dummy instruction, not implement yet */
+            splitrx();
+            cc = 0;
             p += 4;
         }
         else if (instr == 0x6b) /* sd */
