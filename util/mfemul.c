@@ -1493,8 +1493,10 @@ static void doemul(void)
             op2 = getfullword(v);
             if (op2 != 0)
             {
-                quot = ((I32)regs[t] << 32 | (I32)regs[t + 1]) / op2;
-                rem = ((I32)regs[t] << 32 | (I32)regs[t + 1]) % op2;
+                /* I assume reges[t] to 0 since we are only 
+                dealing with 32-bit C-generated code at the moment.*/
+                quot = ((I32)regs[t + 1]) / op2;
+                rem = ((I32)regs[t + 1]) % op2;
                 regs[t] = (U32)quot;
                 regs[t + 1] = (U32)rem;
             }
