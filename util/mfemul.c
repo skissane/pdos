@@ -1809,6 +1809,12 @@ static void doemul(void)
             splitsi(); /* this should be splits but we don't have one yet */
                /* also - this should be further distinguished to just x'05'
                   as STCK - ie B205 */
+               /* actually, at least at this stage, this shouldn't be here
+                  at all. PDOS should be doing a call into the pseudo-bios
+                  to get the time, and that is where the STCK should be
+                  executed for a real pseudo-bios on real hardware, but
+                  in our case, this emulator should be doing a time() call
+                  to the host C library */
             if (b != 0)
             {
                 one = regs[b];
