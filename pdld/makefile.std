@@ -28,7 +28,7 @@ AS=as370 -mhlasm -mebcdic
 AR=ar370
 COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
-    -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
+    -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -ansi -pedantic-errors \
     -I../generic -I../src -I./src/ftebc
 LD=pdld
