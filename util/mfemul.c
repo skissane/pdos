@@ -1407,6 +1407,36 @@ static void doemul(void)
             /* for when the result is 0 */
             p += 4;
         }
+        else if (instr == 0x5f) /* sl */
+        {
+            int one = 0;
+            int two = 0;
+            int x;
+            int r1;
+            unsigned char *v;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+            r1 = regs[t];
+            regs[t] -= x;
+            cc = (check_sub32(r1, x)) ? 3 : (regs[t] > 0) ? 2 : 0;
+#if DEBUG
+            printf("new value of %x is %08X\n", t, regs[t]);
+#endif
+
+            /* we need to set the eq flag at least */
+            /* for when the result is 0 */
+            p += 4;
+        }
         else if (instr == 0x6a) /* ad */
         {
             /*a dummy instruction, not implement yet */
@@ -1767,6 +1797,23 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
+            memset(v, '\x00', 8);
+            p += 4;
+        }
+        else if (instr == 0xb2) /* stck */
+        {
+            /*a dummy instruction, not implement yet */
+            int one = 0;
+            unsigned char *v;
+
+            splitsi(); /* this should be splits but we don't have one yet */
+               /* also - this should be further distinguished to just x'05'
+                  as STCK - ie B205 */
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            v = base + one + d;
             memset(v, '\x00', 8);
             p += 4;
         }
