@@ -1471,6 +1471,35 @@ static void doemul(void)
             cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
             p += 4;
         }
+        else if (instr == 0x5d) /* d */
+        {
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            I32 op2;
+            I32 quot;
+            I32 rem;
+
+            splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            op2 = getfullword(v);
+            if (op2 != 0)
+            {
+                quot = ((I32)regs[t] << 32 | (I32)regs[t + 1]) / op2;
+                rem = ((I32)regs[t] << 32 | (I32)regs[t + 1]) % op2;
+                regs[t] = (U32)quot;
+                regs[t + 1] = (U32)rem;
+            }
+            p += 4;
+        }
         else if (instr == 0x54) /* n */
         {
             int one = 0;
@@ -1836,6 +1865,35 @@ static void doemul(void)
             for(i = 0; i < l + 1; i++)
             {
                 v[i] = (v[i] | z[i]);
+                if (v[i] != 0) cc = 1;
+            }
+            p += 6;
+        }
+        else if (instr == 0xd7) /* xc */
+        {
+            int one = 0;
+            int two = 0;
+            int i;
+            unsigned char *v, *z;
+
+            splitssl();
+            if (b1 != 0)
+            {
+                one = regs[b1];
+            }
+            one += d1;
+            if (b2 != 0)
+            {
+                two = regs[b2];
+            }
+            two += d2;
+
+            v = base + one;
+            z = base + two;
+            cc = 0;
+            for(i = 0; i < l + 1; i++)
+            {
+                v[i] = (v[i] ^= z[i]);
                 if (v[i] != 0) cc = 1;
             }
             p += 6;
