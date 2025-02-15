@@ -227,7 +227,7 @@ int main(int argc, char **argv)
     doemul();
 #if PBEMUL
     printf("program returned with hex %x\n", regs[15]);
-    printf("instruction count is %ld\n", icount);
+    printf("instruction count is %lu\n", icount);
     /* this may need to change */
     setvbuf(stdin, NULL, _IOLBF, 0);
 #endif
