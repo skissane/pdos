@@ -1411,8 +1411,7 @@ static void doemul(void)
         {
             int one = 0;
             int two = 0;
-            int x;
-            int r1;
+            U32 x;
             unsigned char *v;
 
             splitrx();
@@ -1426,9 +1425,8 @@ static void doemul(void)
             }
             v = base + one + two + d;
             x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            r1 = regs[t];
+            cc = (regs[t] == x) ? 2 : (regs[t] < x) ? 1 : 3;
             regs[t] -= x;
-            cc = (check_sub32(r1, x)) ? 3 : (regs[t] > 0) ? 2 : 0;
 #if DEBUG
             printf("new value of %x is %08X\n", t, regs[t]);
 #endif
@@ -1725,11 +1723,9 @@ static void doemul(void)
         }
         else if (instr == 0x1f) /* slr */
         {
-            int r;
             splitrr();
-            r = regs[x1];
+            cc = (regs[x1] == regs[x2]) ? 2 : (regs[x1] < regs[x2]) ? 1 : 3;
             regs[x1] -= regs[x2];
-            cc = ((I32)regs[x1] == 0 ? 0 : 1) | (r < (I32)regs[x1] ? 0 : 2);
             p += 2;
         }
         else if (instr == 0x45) /* bal */
