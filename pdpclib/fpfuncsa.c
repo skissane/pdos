@@ -79,15 +79,15 @@ unsigned long __fixdfsi(double a)
 #ifndef __RTOS_H__
 #define __RTOS_H__
 
-// Symmetric Multi-Processing
+/* Symmetric Multi-Processing */
 #define OS_CPU_COUNT 1
 
-// Typedefs
+/* Typedefs */
 typedef unsigned int   uint32;
 typedef unsigned short uint16;
 typedef unsigned char  uint8;
 
-// Memory Access
+/* Memory Access */
 #ifdef __TINYC__
    #define WIN32
 #endif
@@ -122,7 +122,7 @@ typedef unsigned char  uint8;
 #define isalpha(c) (islower(c)||isupper(c))
 #define isalnum(c) (isalpha(c)||isdigit(c))
 #define min(a,b)   ((a)<(b)?(a):(b))
-#define strcpy     strcpy2  //don't use intrinsic functions
+#define strcpy     strcpy2  /*don't use intrinsic functions*/
 #define strncpy    strncpy2
 #define strcat     strcat2
 #define strncat    strncat2
@@ -187,7 +187,7 @@ char *itoa(int num, char *dst, int base);
 
 #else
    #define UartPrintfCritical UartPrintf
-#endif //_LIBC
+#endif /*_LIBC */
 
 #ifdef INCLUDE_DUMP
    void dump(const unsigned char *data, int length);
@@ -205,17 +205,17 @@ char *itoa(int num, char *dst, int base);
 #endif
 #ifdef INCLUDE_TIMELIB
    #define difftime(time2,time1) (time2-time1)
-   typedef unsigned long time_t;  //start at 1/1/80
+   typedef unsigned long time_t;  /* start at 1/1/80 */
    struct tm {
-      int tm_sec;      //(0,59)
-      int tm_min;      //(0,59)
-      int tm_hour;     //(0,23)
-      int tm_mday;     //(1,31)
-      int tm_mon;      //(0,11)
-      int tm_year;     //(0,n) from 1900
-      int tm_wday;     //(0,6)     calculated
-      int tm_yday;     //(0,365)   calculated
-      int tm_isdst;    //          calculated
+      int tm_sec;      /*(0,59)*/
+      int tm_min;      /*(0,59)*/
+      int tm_hour;     /*(0,23)*/
+      int tm_mday;     /*(1,31)*/
+      int tm_mon;      /*(0,11)*/
+      int tm_year;     /*(0,n) from 1900*/
+      int tm_wday;     /*(0,6)     calculated*/
+      int tm_yday;     /*(0,365)   calculated*/
+      int tm_isdst;    /*          calculated*/
    };
    time_t mktime(struct tm *tp);
    void gmtime_r(const time_t *tp, struct tm *out);
@@ -250,14 +250,14 @@ void OS_HeapRegister(void *index, OS_Heap_t *heap);
 
 /***************** Critical Sections *****************/
 #if OS_CPU_COUNT <= 1
-   // Single CPU
+   /* Single CPU */
    #define OS_CpuIndex() 0
    #define OS_CriticalBegin() OS_AsmInterruptEnable(0)
    #define OS_CriticalEnd(S) OS_AsmInterruptEnable(S)
    #define OS_SpinLock() 0
    #define OS_SpinUnlock(S) 
 #else
-   // Symmetric multiprocessing
+   /* Symmetric multiprocessing */
    uint32 OS_CpuIndex(void);
    #define OS_CriticalBegin() OS_SpinLock()
    #define OS_CriticalEnd(S) OS_SpinUnlock(S)
@@ -302,7 +302,7 @@ void OS_ThreadCpuLock(OS_Thread_t *thread, int cpuIndex);
 typedef struct OS_Semaphore_s OS_Semaphore_t;
 OS_Semaphore_t *OS_SemaphoreCreate(const char *name, uint32 count);
 void OS_SemaphoreDelete(OS_Semaphore_t *semaphore);
-int OS_SemaphorePend(OS_Semaphore_t *semaphore, int ticks); //tick ~= 10ms
+int OS_SemaphorePend(OS_Semaphore_t *semaphore, int ticks); /* tick ~= 10ms */
 void OS_SemaphorePost(OS_Semaphore_t *semaphore);
 
 /***************** Mutex ******************/
@@ -386,7 +386,7 @@ void KeyboardInit(void);
 int KeyboardGetch(void);
 
 /***************** Math ******************/
-//IEEE single precision floating point math
+/*IEEE single precision floating point math */
 #ifndef WIN32
 #define FP_Neg     __negsf2
 #define FP_Add     __addsf3
@@ -456,7 +456,7 @@ void FlashRead(uint16 *dst, uint32 byteOffset, int bytes);
 void FlashWrite(uint16 *src, uint32 byteOffset, int bytes);
 void FlashErase(uint32 byteOffset);
 
-#endif //__RTOS_H__
+#endif /*__RTOS_H__*/
 
 
 
@@ -512,13 +512,13 @@ float FP_Neg(float a_fp)
 float FP_Add(float a_fp, float b_fp)
 {
    unsigned long a, b, c;
-   unsigned long as, bs, cs;     //sign
-   long ae, af, be, bf, ce, cf;  //exponent and fraction
+   unsigned long as, bs, cs;     /*sign*/
+   long ae, af, be, bf, ce, cf;  /*exponent and fraction*/
    a = FtoL(a_fp);
    b = FtoL(b_fp);
-   as = a >> 31;                        //sign
-   ae = (a >> 23) & 0xff;               //exponent
-   af = 0x00800000 | (a & 0x007fffff);  //fraction
+   as = a >> 31;                        /*sign*/
+   ae = (a >> 23) & 0xff;               /*exponent*/
+   af = 0x00800000 | (a & 0x007fffff);  /*fraction*/
    bs = b >> 31;
    be = (b >> 23) & 0xff;
    bf = 0x00800000 | (b & 0x007fffff);
@@ -635,10 +635,10 @@ float FP_Div(float a_fp, float b_fp)
    bf = 0x00800000 | (b & 0x007fffff);
    cs = as ^ bs;
    ce = ae - (be - 0x80) + 6 - 8;
-   a1 = af << 4; //8
+   a1 = af << 4; /*8*/
    b1 = bf >> 8;
    cf = a1 / b1;
-   cf <<= 12; //8
+   cf <<= 12; /*8*/
 #if 1                  /*non-quick*/
 #ifndef USE_MULT64
    a1 = cf & 0xffff;
@@ -656,7 +656,7 @@ float FP_Div(float a_fp, float b_fp)
    lo = OS_AsmMult(cf, bf, &hi);
 #endif
    lo = (hi << 8) | (lo >> 24);
-   d = af - lo;    //remainder
+   d = af - lo;    /*remainder*/
    assert(-0xffff < d && d < 0xffff);
    d <<= 16;
    b1 = bf >> 8;
@@ -752,7 +752,7 @@ float FP_ToFloat(long af)
 }
 
 
-//0 iff a==b; 1 iff a>b; -1 iff a<b
+/*0 iff a==b; 1 iff a>b; -1 iff a<b*/
 int FP_Cmp(float a_fp, float b_fp)
 {
    unsigned long a, b;
@@ -819,14 +819,14 @@ float FP_Sqrt(float a)
    float x1, y1, x2, y2, x3;
    long i;
    x1 = FP_ToFloat(1);
-   y1 = FP_Sub(FP_Mult(x1, x1), a);  //y1=x1*x1-a;
+   y1 = FP_Sub(FP_Mult(x1, x1), a);  /*y1=x1*x1-a;*/
    x2 = FP_ToFloat(100);
    y2 = FP_Sub(FP_Mult(x2, x2), a);
    for(i = 0; i < 10; ++i) 
    {
       if(FtoL(y1) == FtoL(y2)) 
          return x2;     
-      //x3=x2-(x1-x2)*y2/(y1-y2);
+      /*x3=x2-(x1-x2)*y2/(y1-y2);*/
       x3 = FP_Sub(x2, FP_Div(FP_Mult(FP_Sub(x1, x2), y2), FP_Sub(y1, y2)));
       x1 = x2;
       y1 = y2;
@@ -880,7 +880,7 @@ float FP_Sin(float rad)
 float FP_Atan(float x)
 {
    const float b=(float)(PI/8.0);
-   const float atan_b=(float)0.37419668; //atan(b);
+   const float atan_b=(float)0.37419668; /*atan(b);*/
    int n;
    float answer, x2, top;
    if(FP_Cmp(x, (float)0.0) >= 0) 
@@ -895,18 +895,18 @@ float FP_Atan(float x)
    }
    if(FP_Cmp(x, (float)0.45) > 0) 
    {
-      //answer = (x - atan_b) / (1 + x * atan_b);
+      /*answer = (x - atan_b) / (1 + x * atan_b);*/
       answer = FP_Div(FP_Sub(x, atan_b), FP_Add(1.0, FP_Mult(x, atan_b)));
-      //answer = b + FP_Atan(answer) - (float)0.034633; /*FIXME fudge?*/
+      /*answer = b + FP_Atan(answer) - (float)0.034633;*/ /*FIXME fudge?*/
       answer = FP_Sub(FP_Add(b, FP_Atan(answer)), (float)0.034633);
       return answer;
    }
    if(FP_Cmp(x, (float)-0.45) < 0)
    {
       x = FP_Neg(x);
-      //answer = (x - atan_b) / (1 + x * atan_b);
+      /*answer = (x - atan_b) / (1 + x * atan_b);*/
       answer = FP_Div(FP_Sub(x, atan_b), FP_Add(1.0, FP_Mult(x, atan_b)));
-      //answer = b + FP_Atan(answer) - (float)0.034633; /*FIXME*/
+      /*answer = b + FP_Atan(answer) - (float)0.034633;*/ /*FIXME*/
       answer = FP_Sub(FP_Add(b, FP_Atan(answer)), (float)0.034633);
       return FP_Neg(answer);
    }
@@ -1009,7 +1009,7 @@ float FP_Pow(float x, float y)
 
 
 /********************************************/
-//These five functions will only be used if the flag "-mno-mul" is enabled
+/*These five functions will only be used if the flag "-mno-mul" is enabled*/
 #ifdef USE_SW_MULT
 unsigned long __mulsi3(unsigned long a, unsigned long b)
 {
@@ -1067,7 +1067,7 @@ void TestMathFull(void)
       printf("%10f %10f %10f %10f %10f\n",
          (double)a, (double)b, (double)(a/b), (double)c, (double)(a/b-c));
    }
-   //getch();
+   /*getch();*/
 
    for(test = 0; test < 6; ++test) 
    {
@@ -1081,7 +1081,7 @@ void TestMathFull(void)
          d = b - c;
          printf("%s %10f %10f %10f %10f\n", test_info[test].name, a, b, c, d);
       }
-      //getch();
+      /*getch();*/
    }
 
    a = FP_ToFloat((long)6.0);
@@ -1095,7 +1095,7 @@ void TestMathFull(void)
    printf("mult %f %f\n", (double)(a * b), (double)c);
    c = FP_Div(a, b);
    printf("div %f %f\n", (double)(a / b), (double)c);
-   //getch();
+   /*getch();*/
 
    for(a = (float)-13756.54; a < (float)17400.0; a += (float)64.45) 
    {
@@ -1117,12 +1117,12 @@ void TestMathFull(void)
                                    (double)FP_ToFloat((long)a));
          printf("  %f %f %f %f\n", (double)error1, (double)error2,
             (double)error3, (double)error4);
-         //if(error5 > 0.001) 
-         //   getch();
+         /*if(error5 > 0.001)*/
+         /*   getch(); */
       }
    }
    printf("done.\n");
-   //getch();
+   /*getch();*/
 }
 #endif
 
