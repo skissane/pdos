@@ -792,8 +792,23 @@ static void doemul(void)
         }
         else if (instr == 0x6c) /* md */
         {
-            /*a dummy instruction, not implement yet */
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            float x;
+
             splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            ibm2ieee(&x, v, 1);
+            fpregs[t] *= x;
             p += 4;
         }
         else if (instr == 0x6d) /* dd */
@@ -1195,8 +1210,23 @@ static void doemul(void)
         }
         else if (instr == 0x68) /* ld */
         {
-            /*a dummy instruction, not implement yet */
+            int one = 0;
+            int two = 0;
+            float x;
+            unsigned char *v;
+
             splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            ibm2ieee(&x, v, 1);
+            fpregs[t] = x;
             p += 4;
         }
         else if (instr == 0x69) /* cd */
@@ -1447,7 +1477,6 @@ static void doemul(void)
         }
         else if (instr == 0x6a) /* ad */
         {
-            /* probably not properly implemented yet */
             int one = 0;
             int two = 0;
             float x;
@@ -1465,7 +1494,7 @@ static void doemul(void)
             v = base + one + two + d;
             ibm2ieee(&x, v, 1);
             fpregs[t] += x;
-            cc = 0;
+            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
         else if (instr == 0x6b) /* sd */
