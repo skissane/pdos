@@ -94,6 +94,10 @@ static int eq;
 /* cc of 2 is +, cc of 1 is -, cc of 0 is 0 */
 static int cc = 0;
 
+/* this is a hack i put in to get around an immediate problem.
+   I have no idea why it is necessary */
+static int float_special = 0;
+
 static FILE *handles[FOPEN_MAX];
 
 static char cmd_line[400] = "prog !BOOT";
@@ -1532,8 +1536,15 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
-            fpregs[t] += x;
+            if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
+            {
+                float_special = 1;
+            }
+            else
+            {
+                ibm2ieee(&x, v, 1);
+                fpregs[t] += x;
+            }
             cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
@@ -1905,6 +1916,10 @@ static void doemul(void)
             v = base + one + two + d;
             ieee2ibm(v, &fpregs[t], 1);
             memset(v + 4, '\x00', 4);
+            if (float_special)
+            {
+                putfullword(v + 4, (int)fpregs[t]);
+            }
             p += 4;
         }
         else if (instr == 0xb2) /* stck */
