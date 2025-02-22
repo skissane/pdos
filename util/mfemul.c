@@ -1185,6 +1185,13 @@ static void doemul(void)
             cc = (check_sub32(r1, (I32)regs[x2]) != 0) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
             p += 2;
         }
+        else if (instr == 0x23) /* lcdr */
+        {
+            splitrr();
+            fpregs[x1] = -fpregs[x2];
+            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
+            p += 2;
+        }
         else if (instr == 0x10) /* lpr */
         {
             int r1;
@@ -1256,7 +1263,15 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
+            if (memcmp(v, "\x4E\x00\x00\x00", 4) == 0)
+            {
+                float_special = 1;
+                x = (I32)(getfullword(v+4) & 0x7FFFFFFF);
+            }
+            else
+            {
+                ibm2ieee(&x, v, 1);
+            }
             fpregs[t] = x;
             p += 4;
         }
@@ -1565,8 +1580,20 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
-            fpregs[t] -= x;
+            if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
+            {
+                if (!float_special)
+                {
+                    printf("internal error with sd\n");
+                    exit(EXIT_FAILURE);
+                }
+                float_special = 0;
+            }
+            else
+            {
+                ibm2ieee(&x, v, 1);
+                fpregs[t] -= x;
+            }
             cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
@@ -1918,7 +1945,7 @@ static void doemul(void)
             memset(v + 4, '\x00', 4);
             if (float_special)
             {
-                putfullword(v + 4, (int)fpregs[t]);
+                putfullword(v + 4, (I32)fpregs[t]);
                 float_special = 0;
             }
             p += 4;
