@@ -1904,7 +1904,7 @@ static void doemul(void)
             }
             v = base + one + two + d;
             ieee2ibm(v, &fpregs[t], 1);
-            memset(v + 4, '0x0', 4);
+            memset(v + 4, '\x00', 4);
             p += 4;
         }
         else if (instr == 0xb2) /* stck */
