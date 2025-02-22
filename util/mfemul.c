@@ -1919,6 +1919,7 @@ static void doemul(void)
             if (float_special)
             {
                 putfullword(v + 4, (int)fpregs[t]);
+                float_special = 0;
             }
             p += 4;
         }
