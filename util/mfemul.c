@@ -1189,7 +1189,7 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] = -fpregs[x2];
-            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
+            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
             p += 2;
         }
         else if (instr == 0x10) /* lpr */
