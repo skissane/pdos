@@ -7738,7 +7738,7 @@ static void dblcvt(double num, int cnvtype, int nwidth,
        with them. We need to switch GCC to using IEEE for
        this MF32 situation. Until then, just make all floating
        point values get printed as 0.0 */
-#ifdef __MF32__
+#if 0 /* def __MF32__ */
     memset(result, ' ', nwidth);
     if (nprecision >= 3)
     {
