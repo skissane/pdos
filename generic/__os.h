@@ -202,6 +202,7 @@ typedef struct {
     int (*Xservice)(int svcnum, void *regsin, void *regsout);
     char *(*XPosGetCommandLine)(void);
     int (*XPosGetReturnCode)(void);
+    double (*Xstrtod)(const char *nptr, char **endptr);
 } OS;
 
 extern OS *__os;

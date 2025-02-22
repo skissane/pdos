@@ -170,6 +170,7 @@ long _Builtin __labs(long j);
 #define rand __os->Xrand
 #define srand __os->Xsrand
 #define atol __os->Xatol
+#define strtod __os->Xstrtod
 
 #endif
 
