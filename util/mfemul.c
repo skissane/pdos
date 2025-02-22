@@ -2162,6 +2162,13 @@ static void doemul(void)
             cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
             p += 2;
         }
+        else if (instr == 0x22) /* ltdr */
+        {
+            splitrr();
+            fpregs[x1] = fpregs[x2];
+            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
+            p += 2;
+        }
         else if (instr == 0x98) /* lm */
         {
             int start;
