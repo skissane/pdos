@@ -813,8 +813,28 @@ static void doemul(void)
         }
         else if (instr == 0x6d) /* dd */
         {
-            /*a dummy instruction, not implement yet */
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            float x;
+            float quot;
+            float rem;
+
             splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            ibm2ieee(&x, v, 1);
+            if (x != 0)
+            {
+                fpregs[t] = fpregs[t] / x;
+            }
             p += 4;
         }
         else if (instr == 0xbd) /* clm */
@@ -1231,9 +1251,23 @@ static void doemul(void)
         }
         else if (instr == 0x69) /* cd */
         {
-            /*a dummy instruction, not implement yet */
+            int one = 0;
+            int two = 0;
+            unsigned char *v;
+            float x;
+
             splitrx();
-            cc = 0;
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            ibm2ieee(&x, v, 1);
+            cc = (fpregs[t] > x) ? 2 : (fpregs[t] < x) ? 1 : 0;
             p += 4;
         }
         else if (instr == 0x48) /* lh */
@@ -1326,41 +1360,40 @@ static void doemul(void)
         }
         else if (instr == 0x28) /* ldr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
+            fpregs[x1] = fpregs[x2];
             p += 2;
         }
         else if (instr == 0x29) /* cdr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
-            cc = 0;
+            cc = (fpregs[x1] > fpregs[x2]) ? 2 : (fpregs[x1] < fpregs[x2]) ? 1 : 0;
             p += 2;
         }
         else if (instr == 0x2a) /* adr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
-            cc = 0;
+            fpregs[x1] += fpregs[x2];
+            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
             p += 2;
         }
         else if (instr == 0x2b) /* sdr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
-            cc = 0;
+            fpregs[x1] -= fpregs[x2];
+            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
             p += 2;
         }
         else if (instr == 0x2c) /* mdr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
+            fpregs[x1] *= fpregs[x2];
             p += 2;
         }
         else if (instr == 0x2d) /* ddr */
         {
-            /*a dummy instruction, not implement yet */
             splitrr();
+            fpregs[x1] = fpregs[x1] / fpregs[x2];
             p += 2;
         }
         else if (instr == 0x5a) /* a */
@@ -1499,8 +1532,24 @@ static void doemul(void)
         }
         else if (instr == 0x6b) /* sd */
         {
-            /*a dummy instruction, not implement yet */
+            int one = 0;
+            int two = 0;
+            float x;
+            unsigned char *v;
+
             splitrx();
+            if (b != 0)
+            {
+                one = regs[b];
+            }
+            if (i != 0)
+            {
+                two = regs[i];
+            }
+            v = base + one + two + d;
+            ibm2ieee(&x, v, 1);
+            fpregs[t] -= x;
+            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
         else if (instr == 0x4b) /* sh */
@@ -1833,7 +1882,6 @@ static void doemul(void)
         }
         else if (instr == 0x60) /* std */
         {
-            /*a dummy instruction, not implement yet */
             int one = 0;
             int two = 0;
             unsigned char *v;
@@ -1848,7 +1896,8 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            memset(v, '\x00', 8);
+            ieee2ibm(v, &fpregs[t], 1);
+            memset(v + 4, '0x0', 4);
             p += 4;
         }
         else if (instr == 0xb2) /* stck */
