@@ -1144,6 +1144,13 @@ static void doemul(void)
             splitrr();
             /* +++ I believe the x1 and x1+1 are a pair, but I don't
                know how to do that, so I'll just ignore x1 */
+
+            /* so
+               the dividend is in regs[x1] and regs[x1+1]
+               the divisor is in regs[x2]
+               the remainder is placed in regs[x1]
+               the quotient is placed in regs[x1+1]
+            */
             value = regs[x1+1] / regs[x2];
             remainder = regs[x1+1] % regs[x2];
             regs[x1] = remainder;
