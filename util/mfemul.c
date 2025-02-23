@@ -108,6 +108,12 @@ static int float_special = 0;
    from IBM to IEEE, we can potentially preserve the
    original value and then convert it to IEEE whenever
    an instruction actually requires that */
+/* or maybe we can do the floating point manipulations
+   in software - ie have an fp_add() etc function */
+/* or maybe we can switch gcc or a replacement compiler
+   to generate IEEE floating point, ie instructions
+   like ADBR instead of ADR. This requires the machine
+   to support it and bit 45 of CR0 needs to be 1 */
 static int last_fp_ld[16] = { 0 };
 static int last_fp_reg[16] = { 0 };
 static char last_fp_intact[16][8];
