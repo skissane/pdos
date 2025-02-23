@@ -104,6 +104,10 @@ static int float_special = 0;
 /* was the last floating point instruction an ld? */
 /* we can support a near-immediate ld and std */
 /* we do this on a per-register basis */
+/* when we have support for converting 64-bit floats
+   from IBM to IEEE, we can potentially preserve the
+   original value and then convert it to IEEE whenever
+   an instruction actually requires that */
 static int last_fp_ld[16] = { 0 };
 static int last_fp_reg[16] = { 0 };
 static char last_fp_intact[16][8];
