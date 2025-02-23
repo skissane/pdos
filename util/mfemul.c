@@ -96,7 +96,17 @@ static int cc = 0;
 
 /* this is a hack i put in to get around an immediate problem.
    I have no idea why it is necessary */
+/* explanation has been provided here:
+   https://groups.io/g/hercules-380/message/3133
+ */
 static int float_special = 0;
+
+/* was the last floating point instruction an ld? */
+/* we can support a near-immediate ld and std */
+/* we do this on a per-register basis */
+static int last_fp_ld[16] = { 0 };
+static int last_fp_reg[16] = { 0 };
+static char last_fp_intact[16][8];
 
 static FILE *handles[FOPEN_MAX];
 
@@ -813,6 +823,7 @@ static void doemul(void)
             v = base + one + two + d;
             ibm2ieee(&x, v, 1);
             fpregs[t] *= x;
+            last_fp_ld[t] = 0;
             p += 4;
         }
         else if (instr == 0x6d) /* dd */
@@ -839,6 +850,7 @@ static void doemul(void)
             {
                 fpregs[t] = fpregs[t] / x;
             }
+            last_fp_ld[t] = 0;
             p += 4;
         }
         else if (instr == 0xbd) /* clm */
@@ -1189,6 +1201,7 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] = -fpregs[x2];
+            last_fp_ld[x1] = 0;
             cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
             p += 2;
         }
@@ -1273,6 +1286,9 @@ static void doemul(void)
                 ibm2ieee(&x, v, 1);
             }
             fpregs[t] = x;
+            last_fp_ld[t] = 1;
+            /* preserve the full value in case it is useful later */
+            memcpy(last_fp_intact[t], v, 8);
             p += 4;
         }
         else if (instr == 0x69) /* cd */
@@ -1292,8 +1308,23 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
-            cc = (fpregs[t] > x) ? 2 : (fpregs[t] < x) ? 1 : 0;
+            if (last_fp_ld[t])
+            {
+                cc = memcmp(last_fp_intact[t], v, 8);
+                if (cc == -1)
+                {
+                    cc = 1;
+                }
+                else if (cc == 1)
+                {
+                    cc = 2;
+                }
+            }
+            else
+            {
+                ibm2ieee(&x, v, 1);
+                cc = (fpregs[t] > x) ? 2 : (fpregs[t] < x) ? 1 : 0;
+            }
             p += 4;
         }
         else if (instr == 0x48) /* lh */
@@ -1388,18 +1419,39 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] = fpregs[x2];
+            /* preserve status */
+            last_fp_ld[x1] = last_fp_ld[x2];
+            memcpy(last_fp_intact[x1], last_fp_intact[x2], 8);
             p += 2;
         }
         else if (instr == 0x29) /* cdr */
         {
             splitrr();
-            cc = (fpregs[x1] > fpregs[x2]) ? 2 : (fpregs[x1] < fpregs[x2]) ? 1 : 0;
+            /* this could use the preserved values, and it doesn't
+               need to clear the ld status */
+            if (last_fp_ld[x1] && last_fp_ld[x2])
+            {
+                cc = memcmp(last_fp_intact[x1], last_fp_intact[x2], 8);
+                if (cc == 1)
+                {
+                    cc = 2;
+                }
+                else if (cc == -1)
+                {
+                    cc = 1;
+                }
+            }
+            else
+            {
+                cc = (fpregs[x1] > fpregs[x2]) ? 2 : (fpregs[x1] < fpregs[x2]) ? 1 : 0;
+            }
             p += 2;
         }
         else if (instr == 0x2a) /* adr */
         {
             splitrr();
             fpregs[x1] += fpregs[x2];
+            last_fp_ld[x1] = 0;
             cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
             p += 2;
         }
@@ -1407,6 +1459,7 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] -= fpregs[x2];
+            last_fp_ld[x1] = 0;
             cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
             p += 2;
         }
@@ -1414,12 +1467,14 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] *= fpregs[x2];
+            last_fp_ld[x1] = 0;
             p += 2;
         }
         else if (instr == 0x2d) /* ddr */
         {
             splitrr();
             fpregs[x1] = fpregs[x1] / fpregs[x2];
+            last_fp_ld[x1] = 0;
             p += 2;
         }
         else if (instr == 0x5a) /* a */
@@ -1560,6 +1615,7 @@ static void doemul(void)
                 ibm2ieee(&x, v, 1);
                 fpregs[t] += x;
             }
+            last_fp_ld[t] = 0;
             cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
@@ -1594,6 +1650,7 @@ static void doemul(void)
                 ibm2ieee(&x, v, 1);
                 fpregs[t] -= x;
             }
+            last_fp_ld[t] = 0;
             cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
             p += 4;
         }
@@ -1941,12 +1998,19 @@ static void doemul(void)
                 two = regs[i];
             }
             v = base + one + two + d;
-            ieee2ibm(v, &fpregs[t], 1);
-            memset(v + 4, '\x00', 4);
-            if (float_special)
+            if (last_fp_ld[t])
             {
-                putfullword(v + 4, (I32)fpregs[t]);
-                float_special = 0;
+                memcpy(v, last_fp_intact[t], 8);
+            }
+            else
+            {
+                ieee2ibm(v, &fpregs[t], 1);
+                memset(v + 4, '\x00', 4);
+                if (float_special)
+                {
+                    putfullword(v + 4, (I32)fpregs[t]);
+                    float_special = 0;
+                }
             }
             p += 4;
         }
@@ -2209,6 +2273,11 @@ static void doemul(void)
         {
             splitrr();
             fpregs[x1] = fpregs[x2];
+            /* this could preserve the ld status from x2 instead */
+            /* actually, it doesn't make sense to test a
+               floating point register containing a non-floating
+               point value */
+            last_fp_ld[x1] = 0;
             cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
             p += 2;
         }
