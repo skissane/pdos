@@ -786,7 +786,10 @@ FCMOVcc ("fcmovnu", 0xDBD8)
 "fucompi", 0xDFE9, NONE, CPU_687, NO_SUF, {}
 
 /* SSE instructions. */
+"addps", 0x0F58, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "addss", 0xF30F58, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
+"andnps", 0x0F55, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"andps", 0x0F54, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
 "comiss", 0x0F2F, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
@@ -795,15 +798,14 @@ FCMOVcc ("fcmovnu", 0xDBD8)
 "cvtss2si", 0xF30F2D, NONE, CPU_SSE | CPU_64, LQ_SUF | IGNORE_SIZE | MODRM | TO_QWORD, { REG_XMM | ANY_MEM | Dword, REG32 | REG64 }
 
 "cvttss2si", 0xF30F2C, NONE, CPU_SSE | CPU_64, LQ_SUF | IGNORE_SIZE | MODRM | TO_QWORD, { REG_XMM | ANY_MEM | Dword, REG32 | REG64 }
-
+"divps", 0x0F5E, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "divss", 0xF30F5E, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
+"maxps", 0x0F5F, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "maxss", 0xF30F5F, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
-
+"minps", 0x0F5D, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "minss", 0xF30F5D, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
-
 "movaps", 0x0F28, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
-
 "movhlps", 0x0F12, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM, REG_XMM }
 
 "movhps", 0x0F16, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { Qword | ANY_MEM, REG_XMM }
@@ -811,11 +813,16 @@ FCMOVcc ("fcmovnu", 0xDBD8)
 "movss", 0xF30F10, NONE, CPU_SSE, NO_SUF | D | MODRM | IGNORE_SIZE, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 
 "movups", 0x0F10, NONE, CPU_SSE, NO_SUF | D | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
-
+"mulps", 0x0F59, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "mulss", 0xF30F59, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
+"orps", 0x0F56, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
+"subps", 0x0F5C, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 "subss", 0xF30F5C, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
 "ucomiss", 0x0F2E, NONE, CPU_SSE, NO_SUF | IGNORE_SIZE | MODRM, { REG_XMM | ANY_MEM | Dword, REG_XMM }
+"unpckhps", 0x0F15, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"unpcklps", 0x0F14, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
+"xorps", 0x0F57, NONE, CPU_SSE, NO_SUF | MODRM, { REG_XMM | ANY_MEM | Xmmword, REG_XMM }
 
 /* SSE2 instructions. */
 "punpcklbw", 0x660F60, NONE, CPU_SSE2, NO_SUF | MODRM, { REG_XMM | Xmmword | ANY_MEM, REG_XMM }
