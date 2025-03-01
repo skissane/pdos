@@ -2977,7 +2977,7 @@ static void freadSlowB(void *ptr,
         if (stream->errorInd)
         {
         }
-        else if (tempRead < stream->szfbuf)
+        else if (tempRead < left)
         {
             stream->eofInd = 1;
         }
