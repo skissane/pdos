@@ -1089,6 +1089,20 @@ Currently EFI works by requiring the caller to only request
 blocks that are an even multiple of the sector size instead
 of having the ability to buffer that itself.
 
+Another thing I intend to do is support Vietnamese by using
+something similar to VISCII but change the control characters
+to not interfere with microemacs keystrokes.
+
+And support Japanese by using Katakana (not Kanji) and the
+Moon Array keyboard from 2channel (now 5channel). And make
+toupper() on certain Katakana characters map to uppercase
+English Alphabet characters - and for programs to not be
+case-sensitive - so that there is no need to switch to an
+English keyboard in order to use English language C90 programs.
+Cultural changes to make a switch from Kanji to Katakana
+are out of scope. Pandering to people who refuse to use their
+own perfectly fine alphabet is also out of scope.
+
 
 
 OBTAINING
