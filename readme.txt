@@ -1103,6 +1103,15 @@ Cultural changes to make a switch from Kanji to Katakana
 are out of scope. Pandering to people who refuse to use their
 own perfectly fine alphabet is also out of scope.
 
+Another plan is to have a parameter or whatever to mfemul so
+that instead of accessing a boot disk (VHD), all accesses to
+files are assumed to be to the host filesystem, ie an implied
+leading ":", so that the mainframe manipulates EBCDIC files
+on the host. Although text files could still be stored as
+ASCII and be auto-converted. This would be a relatively minor
+change/detection in PosOpenFile or whatever in pdos.c to pass
+requests on to the pseudo-bios.
+
 
 
 OBTAINING
