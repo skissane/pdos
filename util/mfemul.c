@@ -1741,8 +1741,8 @@ static void doemul(void)
                 dealing with 32-bit C-generated code at the moment.*/
                 quot = ((I32)regs[t + 1]) / op2;
                 rem = ((I32)regs[t + 1]) % op2;
-                regs[t] = (U32)quot;
-                regs[t + 1] = (U32)rem;
+                regs[t] = (U32)rem;
+                regs[t+1] = (U32)quot;
             }
             p += 4;
         }
