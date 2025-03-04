@@ -61,7 +61,7 @@ endif
 
 
 LD=pdld
-LDFLAGS=-s
+LDFLAGS=-s --no-insert-timestamp
 
 OBJS=mfemul.obj ../bios/exeload.obj
 
