@@ -851,7 +851,7 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
         /* +++Find out what error should be returned. */
         return (POS_ERR_ACCESS_DENIED);
     }
-    if (!fatfile->dir && (fatfile->currpos >= fatfile->fileSize))
+    if (!fatfile->dir && (fatfile->currpos > fatfile->fileSize))
     {
         /* position is after EOF */
         /* so nothing is read and error is returned */
