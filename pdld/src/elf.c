@@ -90,8 +90,14 @@ static size_t section_get_num_relocs (struct section *section)
                     num_relocs++;
                 }
             } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
-                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
-                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32_NO_BASE]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]
+                    || part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_BLX23]) {
+                    num_relocs++;
+                }
+                if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
                     num_relocs++;
                 }
             } else if (ld_state->target_machine == LD_TARGET_MACHINE_AARCH64) {
@@ -149,10 +155,25 @@ static unsigned char *write_relocs_for_section (unsigned char *file,
             } else if (ld_state->target_machine == LD_TARGET_MACHINE_ARM) {
                 if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_IGNORED]) {
                     continue;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_32_NO_BASE]) {
+                    type = R_ARM_RELATIVE;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_32]) {
                     type = R_ARM_ABS32;
                 } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_PC26]) {
-                    type = R_ARM_PC24;
+                    type = R_ARM_JUMP24;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_MOV32]) {
+                    type = R_ARM_THM_MOVW_ABS_NC;
+                    /* MOV32 are actually two instructions (MOVW and MOVT) relocated together in PE/COFF
+                     * but separately in ELF, so another relocation must be created for the second instruction.
+                     */
+                    rel.r_offset = ld_state->base_address + part->rva + part->relocation_array[i].offset + 4;
+                    /* Symbol table is not yet supported. */
+                    rel.r_info = ELF32_R_INFO (0, R_ARM_THM_MOVT_ABS);
+
+                    write_struct_Elf32_Rel (rel_pos, &rel, endianess);
+                    rel_pos += SIZEOF_struct_Elf32_Rel_file;
+                } else if (part->relocation_array[i].howto == &reloc_howtos[RELOC_TYPE_ARM_THUMB_BLX23]) {
+                    type = R_ARM_CALL;
                 } else {
                     ld_error ("%s cannot be converted to Elf32 relocation",
                               part->relocation_array[i].howto->name);
