@@ -1,0 +1,25 @@
+# Produces ARM32 Linux ELF executable.
+# We link with the library produced by makefile.mal
+# And we use executables produced by pdpclib makefile.mar
+# which are PE, to create a mini Windows clone
+
+CC=cl
+LD=pdld --no-insert-timestamp --emit-relocs -s
+COPTS=-c -nologo -O2 -Oi- -GS- -Za -Zl -u -X -D__MSC__ \
+    -U__WIN32__ -I../pdpclib -I../bios -I../src \
+    -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY -D__ARM__ \
+    -DGENSHELL -D__GENSHELL__ -DLINDIR -DHAVE_DIR \
+    -D__gnu_linux__
+
+TARGET=bios.exe
+OBJS=../bios/exeload.obj
+
+$(TARGET): clean bios.obj $(OBJS)
+  $(LD) --oformat elf --image-base 0x400000 -e _start -o $(TARGET) ../pdpclib/linstart.obj bios.obj $(OBJS) ../pdpclib/pdplinux.lib
+
+.c.obj:
+  $(CC) $(COPTS) -Fo$*.obj $<
+
+clean:
+  rm -f *.obj
+  rm -f $(TARGET)
