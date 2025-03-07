@@ -52,7 +52,7 @@ int __mkdir(const char *filename, int x);
 int __rmdir(const char *filename);
 #endif
 
-#ifdef __CC64__
+#if defined(__64BIT__) && !defined(__LONG64__)
 int __getdents(int dirfile, void *buf, int n);
 #endif
 
@@ -1142,7 +1142,7 @@ static int ff_search(void)
         }
     }
     strncpy((char *)origdta.file_name,
-#ifdef __CC64__
+#if defined(__64BIT__) && !defined(__LONG64__)
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 4
 #else
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
@@ -1152,7 +1152,7 @@ static int ff_search(void)
     origdta.file_name[sizeof origdta.file_name - 1] = '\0';
 
     strncpy((char *)origdta.lfn,
-#ifdef __CC64__
+#if defined(__64BIT__) && !defined(__LONG64__)
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 4
 #else
             (char *)curdirsave->buf + curdirsave->upto + sizeof(long) * 2
@@ -1170,7 +1170,7 @@ static int ff_search(void)
     if (*(curdirsave->buf + curdirsave->upto
           + *(unsigned short *)(curdirsave->buf
                                 + curdirsave->upto
-#ifdef __CC64__
+#if defined(__64BIT__) && !defined(__LONG64__)
                                 + sizeof(long) * 4)
 #else
                                 + sizeof(long) * 2)
@@ -1190,7 +1190,7 @@ static int ff_search(void)
 
     curdirsave->upto += *(short *)(curdirsave->buf
                                    + curdirsave->upto
-#ifdef __CC64__
+#if defined(__64BIT__) && !defined(__LONG64__)
                                    + sizeof(long) * 4);
 #else
                                    + sizeof(long) * 2);
