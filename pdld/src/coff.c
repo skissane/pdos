@@ -39,7 +39,7 @@ static int can_be_relocated = 0;
 static int nx_compat = 1;
 
 static int leading_underscore = 0;
-static int arm_thumb_mode = 0;
+static int arm_thumb_mode = -1;
 
 static unsigned long SectionAlignment = DEFAULT_SECTION_ALIGNMENT;
 static unsigned long FileAlignment = DEFAULT_FILE_ALIGNMENT;
@@ -1809,7 +1809,14 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
      * Only real object files should be used for determing which mode is used,
      * not short import libraries.
      */
-    if (coff_hdr.Machine == IMAGE_FILE_MACHINE_ARMNT) arm_thumb_mode = 1;
+    if (coff_hdr.Machine == IMAGE_FILE_MACHINE_ARMNT) {
+        if (arm_thumb_mode == 0) ld_warn ("%s: Thumb code when other code is non-Thumb", filename);
+        arm_thumb_mode = 1;
+    } else if (coff_hdr.Machine == IMAGE_FILE_MACHINE_THUMB) {
+        if (arm_thumb_mode == 1) ld_warn ("%s: non-Thumb code when other code is Thumb", filename);
+        arm_thumb_mode = 0;
+    }
+        
 
     pos = file + coff_hdr.PointerToSymbolTable + SIZEOF_struct_symbol_table_entry_file * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, SIZEOF_struct_string_table_header_file);
