@@ -8,7 +8,7 @@ LD=pdld --no-insert-timestamp --emit-relocs -s
 COPTS=-c -nologo -O2 -Oi- -GS- -Za -Zl -u -X -D__MSC__ -D__64BIT__ \
     -U__WIN32__ -I../pdpclib -I../bios -I../src -DTARGET_64BIT \
     -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY -D__ARM__ \
-    -DW64DLL -DW64SHELL -D__W64SHELL__ \
+    -DGENSHELL -D__GENSHELL__ -DLINDIR -DHAVE_DIR \
     -D__gnu_linux__
 
 TARGET=bios.exe
