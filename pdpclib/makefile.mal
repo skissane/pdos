@@ -1,0 +1,21 @@
+# This is the makefile to build pdpclib for ARM32 Linux ELF using
+# the Visual C compiler and pdld.
+
+CC=cl
+COPTS=-nologo -O2 -Oi- -Zl -GS- -D__gnu_linux__ -c -D__ARM__ -I . -D__MSC__ -D__GENSHELL__
+
+pdptest: linstart.obj armsupb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
+       start.obj time.obj errno.obj assert.obj signal.obj locale.obj \
+       ctype.obj math.obj __memmgr.obj
+    rm -f pdplinux.lib
+    lib -nologo -out:pdplinux.lib linstart.obj armsupb.obj stdio.obj string.obj stdlib.obj
+    lib -nologo -out:pdplinux.lib pdplinux.lib start.obj time.obj errno.obj assert.obj signal.obj
+    lib -nologo -out:pdplinux.lib pdplinux.lib locale.obj ctype.obj math.obj __memmgr.obj
+    pdld --no-insert-timestamp --emit-relocs --image-base 0x400000 -o pdptest.exe -e _start --oformat elf linstart.obj pdptest.obj pdplinux.lib
+
+.c.obj:
+    $(CC) $(COPTS) $<
+
+a64supb.obj: a64supb.asm
+    armasm -PreDefine "LINUX SETL {TRUE}" -o $@ $*.asm
+#    ml64 -o $@ $*.asm
