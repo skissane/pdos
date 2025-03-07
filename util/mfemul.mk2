@@ -12,6 +12,24 @@
 # This builds a Win64 ARM64 executable using Visual Studio
 # You need to have run makefile.var in PDPCLIB first
 
+# With targ=arm32 you can build a Win32 ARM32 executable
+# instead, still using Visual Studio
+# You need to have run makefile.mar in PDPCLIB first
+
+ifeq "$(targ)" "arm32"
+
+CFLAGS=-O2 -Oi- -DPBEMUL
+CC=cl
+AR=lib
+#LD=link
+LD=pdld --emit-relocs -s -nostdlib --no-insert-timestamp
+COPTS=$(CFLAGS) -c -nologo -GS- -Za -Zl -u -X -D__MSC__ \
+    -D__WIN32__ -I. -I../pdpclib -D__ARM__ -DNEED_MVS
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/armsupb.obj
+
+else
+
 CFLAGS=-O2 -Oi -DPBEMUL
 CC=cl
 AR=lib
@@ -21,6 +39,9 @@ COPTS=$(CFLAGS) -c -nologo -GS- -Za -Zl -u -X -D__MSC__ -D__64BIT__ \
     -D__WIN32__ -I. -I../pdpclib -D__ARM__ -DNEED_MVS
 EXTRA=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/a64supb.obj
+
+endif
+
 
 OBJS=mfemul.obj ../bios/exeload.obj
 
