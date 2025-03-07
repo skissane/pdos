@@ -47,6 +47,12 @@ unsigned long arbitrary_base= 0;
 #define W32EMUL
 #endif
 
+#if defined(__ARM__) && defined(GENSHELL) \
+    && defined(__64BIT__)
+#define W64EMUL
+/* we should retire W64HACK and W64DLL, I believe */
+#endif
+
 #ifdef __OS2__
 #include <os2.h>
 #endif
@@ -2662,7 +2668,9 @@ int getmainargs(int *_Argc, char ***_Argv);
 void w64exit(int status);
 #endif
 
-#ifdef W32EMUL
+#if defined(W32EMUL) || defined(W64EMUL)
+/* we should rename w32exit to genexit or something,
+   as it is applicable to 64-bit too */
 int getmainargs(int *_Argc, char ***_Argv);
 void w32exit(int status);
 
@@ -2759,7 +2767,7 @@ void w32exit(int status)
 #endif
 
 
-#if defined(W64HACK) || defined(W64DLL)
+#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL)
 #define STDTHUNK(x) { #x, (void *)x },
 #else
 #define STDTHUNK(x) { #x, (unsigned long)x },
@@ -3225,7 +3233,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
              * and the array has a null terminator. */
             for (; import_desc->OriginalFirstThunk; import_desc++)
             {
-#if defined(W64HACK) || defined(W64DLL)
+#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL)
                 void **thunk;
 
                 for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
@@ -3284,7 +3292,7 @@ STDTHUNKLIST
                         }
                         else if (strcmp((char *)hintname, "exit") == 0)
                         {
-                            *thunk = (void *)w64exit;
+                            *thunk = (void *)w32exit; /* rename this to genexit or whatever */
                         }
                         else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
