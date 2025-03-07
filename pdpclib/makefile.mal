@@ -17,5 +17,5 @@ pdptest: linstart.obj armsupb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
     $(CC) $(COPTS) $<
 
 armsupb.obj: armsupb.asm
-    armasm -PreDefine "LINUX SETL {TRUE}" -o $@ $*.asm
+    armasm -nologo -PreDefine "LINUX SETL {TRUE}" -o $@ $*.asm
 #    ml -o $@ $*.asm

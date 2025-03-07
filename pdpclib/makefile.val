@@ -17,5 +17,5 @@ pdptest: linstart.obj a64supb.obj pdptest.obj stdio.obj string.obj stdlib.obj \
     $(CC) $(COPTS) $<
 
 a64supb.obj: a64supb.asm
-    armasm64 -PreDefine "LINUX SETL {TRUE}" -o $@ $*.asm
+    armasm64 -nologo -PreDefine "LINUX SETL {TRUE}" -o $@ $*.asm
 #    ml64 -o $@ $*.asm
