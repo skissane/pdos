@@ -82,37 +82,55 @@ static size_t cc_i386gen_push(cc_reader *reader, const cc_expr *expr)
         fprintf(reader->output, "\tpushl $%lu\n", expr->data._const.numval);
         return 4;
     case CC_EXPR_VARREF:
-        if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
         {
-            size_t size;
-            size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
-            fprintf(reader->output, "\tpushl -%d(%%ebp)\n",
-                    reader->curr_block->data.block.stack_depth
-                    + expr->data.var_ref.var->block_offset
-                    + size);
+            cc_variable *var = expr->data.var_ref.var;
+
+            if (TREE_TYPE (expr->data.var_ref.var) != CC_TREE_VAR) {
+                printf("Unknown varref tree type %u\n", TREE_TYPE (expr->data.var_ref.var));
+                abort();
+            }
+            
+            if (var->linkage == CC_LINKAGE_AUTO)
+            {
+                size_t size;
+                size = cc_get_variable_size(reader, var) / 8;
+                fprintf(reader->output, "\tpushl -%d(%%ebp)\n",
+                        reader->curr_block->data.block.stack_depth
+                        + var->block_offset
+                        + size);
+            }
+            else
+            {
+                fprintf(reader->output, "\tpushl _%s\n", var->name);
+            }
+            return 4;
         }
-        else
-        {
-            fprintf(reader->output, "\tpushl _%s\n", expr->data.var_ref.var->name);
-        }
-        return 4;
     case CC_EXPR_ADDRESSOF:
-        if ((expr->data.var_ref.var->type.mode != CC_TYPE_FUNCTION)
-            && (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO))
         {
-            size_t size;
-            size = cc_get_variable_size(reader, expr->data.var_ref.var) / 8;
-            fprintf(reader->output, "\tleal -%d(%%ebp), %%eax\n"
-                                    "\tpushl %%eax\n",
-                    reader->curr_block->data.block.stack_depth
-                    + expr->data.var_ref.var->block_offset
-                    + size);
+            cc_variable *var = expr->data.var_ref.var;
+
+            if (TREE_TYPE (expr->data.var_ref.var) != CC_TREE_VAR) {
+                printf("Unknown varref tree type %u\n", TREE_TYPE (expr->data.var_ref.var));
+                abort();
+            }
+
+            if ((var->type.mode != CC_TYPE_FUNCTION)
+                && (var->linkage == CC_LINKAGE_AUTO))
+            {
+                size_t size;
+                size = cc_get_variable_size(reader, var) / 8;
+                fprintf(reader->output, "\tleal -%d(%%ebp), %%eax\n"
+                                        "\tpushl %%eax\n",
+                        reader->curr_block->data.block.stack_depth
+                        + var->block_offset
+                        + size);
+            }
+            else
+            {
+                fprintf(reader->output, "\tpushl $_%s\n", var->name);
+            }
+            return 4;
         }
-        else
-        {
-            fprintf(reader->output, "\tpushl $_%s\n", expr->data.var_ref.var->name);
-        }
-        return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
         abort();
@@ -239,7 +257,7 @@ static void cc_i386gen_top(cc_reader *reader, const cc_expr *expr)
             cc_i386gen_binary_op (reader, expr);
             break;
         case CC_EXPR_DECL:
-            cc_i386gen_decl(reader, &expr->data.decl.var);
+            cc_i386gen_decl (reader, expr->data.decl.var);
             break;
         case CC_EXPR_IF:
             cc_i386gen_if(reader, expr->data.if_else.cond_expr,
@@ -363,5 +381,5 @@ void cc_codegen(cc_reader *reader, const cc_expr *expr)
     reader->curr_block = (cc_expr *)expr;
     fprintf(reader->output, "# bits 32\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
-        cc_i386gen_variable(reader, &expr->data.block.vars[i]);
+        cc_i386gen_variable (reader, expr->data.block.vars[i]);
 }

@@ -114,15 +114,21 @@ typedef enum cc_token_type {
     CC_NUM_TOKENS,
 } cc_token_type;
 
+enum cc_id_kind {
+    CC_ID_NONE,
+    CC_ID_ID,
+    CC_ID_TYPE
+};
+
 struct cc_token {
     cc_token_type type;
+    enum cc_id_kind id_kind;
     union {
         char *name; /* Name */
         char *string; /* String */
         unsigned long numval; /* Numeric value */
-        cc_variable *var;
-        cc_type *type;
     } data;
+    cc_tree decl;
     location_t loc;
 };
 

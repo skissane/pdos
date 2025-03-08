@@ -21,6 +21,89 @@
 
 void cc_codegen (cc_reader *reader, const cc_expr *expr);
 
+/* Some memory needs to be allocated until the end of program
+ * and then all of it can be freed together instead of individually.
+ */
+#define pxmalloc xmalloc
+
+typedef struct cc_id_decl {
+    struct cc_id_decl *prev;
+    const char *name;
+    cc_tree decl;
+} cc_id_decl;
+
+typedef struct cc_scope {
+    struct cc_scope *outer;
+    struct cc_id_decl *id_decl;
+} cc_scope;
+
+static cc_tree entering_function;
+static cc_scope *cur_scope;
+
+static void add_to_scope (const char *name, cc_tree decl)
+{
+    cc_id_decl *id_decl = xmalloc (sizeof *id_decl);
+
+    id_decl->prev = cur_scope->id_decl;
+    cur_scope->id_decl = id_decl;
+    id_decl->name = name;
+    id_decl->decl = decl;
+}
+
+static void enter_scope (void)
+{
+    cc_scope *scope = xmalloc (sizeof *scope);
+
+    scope->outer = cur_scope;
+    cur_scope = scope;
+    scope->id_decl = NULL;
+
+    if (entering_function) {
+        size_t i;
+        cc_expr *fn = (void *)entering_function;
+
+        for (i = 0; i < fn->data.decl.var->type.data.f.n_params; i++) {
+            add_to_scope (fn->data.decl.var->type.data.f.params[i].name,
+                          &fn->data.decl.var->type.data.f.params[i]);
+        }
+
+        entering_function = NULL;
+    }
+}
+
+static void exit_scope (void)
+{
+    cc_id_decl *id_decl;
+    cc_scope *scope = cur_scope;
+
+    cur_scope = cur_scope->outer;
+    for (id_decl = scope->id_decl; id_decl; id_decl = scope->id_decl) {
+        scope->id_decl = id_decl->prev;
+        free (id_decl);
+    }
+    free (scope);
+}
+
+static void search_scope (cc_token *tok)
+{
+    cc_scope *scope;
+    cc_id_decl *id_decl;
+
+    tok->id_kind = CC_ID_ID;
+
+    for (scope = cur_scope; scope; scope = scope->outer) {
+        for (id_decl = scope->id_decl; id_decl; id_decl = id_decl->prev) {
+            if (!strcmp (tok->data.name, id_decl->name)) {
+                tok->decl = id_decl->decl;
+                if (TREE_TYPE (tok->decl) == CC_TREE_TYPE) {
+                    tok->id_kind = CC_ID_TYPE;
+                }
+                return;
+            }
+        }
+    }
+}
+
 #define cc_parse_expression ccpexp
 
 /** Stores all the scoped blocks for lookup of symbols */
@@ -168,7 +251,7 @@ static void cc_dump_expr(cc_reader *reader, const cc_expr *expr)
         break;
     case CC_EXPR_DECL:
         printf("declare(");
-        cc_dump_variable(reader, &expr->data.decl.var);
+        cc_dump_variable(reader, expr->data.decl.var);
         printf(")");
         break;
     case CC_EXPR_VARREF:
@@ -220,11 +303,11 @@ static void cc_dump_expr(cc_reader *reader, const cc_expr *expr)
 
         printf("types=%u\n", expr->data.block.n_types);
         for (i = 0; i < expr->data.block.n_types; i++)
-            cc_dump_type(reader, &expr->data.block.types[i]);
+            cc_dump_type(reader, expr->data.block.types[i]);
 
         printf("vars=%u\n", expr->data.block.n_vars);
         for (i = 0; i < expr->data.block.n_vars; i++)
-            cc_dump_variable(reader, &expr->data.block.vars[i]);
+            cc_dump_variable(reader, expr->data.block.vars[i]);
 
         for (i = 0; i < expr->data.block.n_exprs; i++)
             cc_dump_expr(reader, &expr->data.block.exprs[i]);
@@ -257,9 +340,9 @@ static cc_type *cc_add_type(cc_reader *reader)
     reader->curr_block->data.block.types
         = xrealloc(reader->curr_block->data.block.types,
                     (reader->curr_block->data.block.n_types + 1)
-                    * sizeof(cc_type));
-    return &reader->curr_block->data.block.types[
-        reader->curr_block->data.block.n_types++];
+                    * sizeof(*reader->curr_block->data.block.types));
+    reader->curr_block->data.block.types[reader->curr_block->data.block.n_types] = pxmalloc (sizeof (cc_type));
+    return reader->curr_block->data.block.types[reader->curr_block->data.block.n_types++];
 }
 
 /**
@@ -273,9 +356,9 @@ static cc_variable *cc_add_variable(cc_reader *reader)
     reader->curr_block->data.block.vars
         = xrealloc(reader->curr_block->data.block.vars,
                     (reader->curr_block->data.block.n_vars + 1)
-                    * sizeof(cc_variable));
-    return &reader->curr_block->data.block.vars[
-        reader->curr_block->data.block.n_vars++];
+                    * sizeof(*reader->curr_block->data.block.vars));
+    reader->curr_block->data.block.vars[reader->curr_block->data.block.n_vars] = pxmalloc (sizeof (cc_variable));
+    return reader->curr_block->data.block.vars[reader->curr_block->data.block.n_vars++];
 }
 
 /**
@@ -375,7 +458,7 @@ static void cc_parse_struct_member_decl(cc_reader *reader, cc_type *type)
 
 cc_type cc_parse_type(cc_reader *reader)
 {
-    cc_type type = {0};
+    cc_type type = {CC_TREE_TYPE};
     cc_parse_cv(reader, &type);
     type.ptr_depth++;
 
@@ -406,12 +489,12 @@ cc_type cc_parse_type(cc_reader *reader)
             cc_parse_struct_member_decl(reader, &type);
     } else {
         if (reader->curr_token->type == CC_TOKEN_IDENT) {
-            cc_resolve_symbol (reader, reader->curr_token);
+            search_scope (reader->curr_token);
         }
 
-        if (reader->curr_token->type == CC_TOKEN_TYPE) {
+        if (reader->curr_token->id_kind == CC_ID_TYPE) {
             /* Oversimplified for now, discards const and volatile. */
-            type = *reader->curr_token->data.type;
+            type = *(cc_type *)reader->curr_token->decl;
             cc_consume_token (reader);
         }
         
@@ -558,7 +641,7 @@ size_t cc_get_variable_size(cc_reader *reader, const cc_variable *var)
  */
 cc_param cc_parse_param_decl(cc_reader *reader)
 {
-    cc_param param = {0};
+    cc_param param = {CC_TREE_PARAM};
     param.type = cc_parse_type(reader);
     if (reader->curr_token->type == CC_TOKEN_IDENT)
     {
@@ -617,22 +700,21 @@ static int cc_resolve_symbol_1(cc_reader *reader, cc_token *tok,
 
     for (i = 0; i < expr->data.block.n_vars; i++)
     {
-        cc_variable *var = &expr->data.block.vars[i];
+        cc_variable *var = expr->data.block.vars[i];
         if (!strcmp(var->name, tok->data.name))
         {
-            tok->type = CC_TOKEN_VARIABLE;
-            tok->data.var = var;
+            tok->decl = var;
             return 0;
         }
     }
 
     for (i = 0; i < expr->data.block.n_types; i++)
     {
-        cc_type *type = &expr->data.block.types[i];
+        cc_type *type = expr->data.block.types[i];
         if (!strcmp(type->name, tok->data.name))
         {
-            tok->type = CC_TOKEN_TYPE;
-            tok->data.type = type;
+            tok->id_kind = CC_ID_TYPE;
+            tok->decl = type;
             return 0;
         }
     }
@@ -682,8 +764,8 @@ static int cc_next_token_starts_declaration (cc_reader *reader)
 #else
             cc_token ident_tok = *cc_peek_token (reader);
 #endif
-            cc_resolve_symbol (reader, &ident_tok);
-            if (ident_tok.type == CC_TOKEN_TYPE) return 1;
+            search_scope (&ident_tok);
+            if (ident_tok.id_kind == CC_ID_TYPE) return 1;
             
             return 0;
         }
@@ -726,38 +808,44 @@ static cc_expr cc_parse_postfix_expr (cc_reader *reader)
 #else
             cc_token ident_tok = *cc_peek_token (reader);
 #endif
-            cc_resolve_symbol(reader, &ident_tok);
+            search_scope (&ident_tok);
             
             cc_consume_token(reader);
+            if (ident_tok.id_kind == CC_ID_ID && !ident_tok.decl) {
+                cc_report (reader, CC_DL_ERROR, "'%s' undeclared",
+                           ident_tok.data.name);
+                break;
+            }
             if (cc_peek_token (reader)->type == CC_TOKEN_LPAREN
-                && ident_tok.type == CC_TOKEN_VARIABLE)
+                && ident_tok.id_kind == CC_ID_ID)
             {
                 /* TODO: support runtime computed expressions like
                    (ptr + cum)(parm, aprm2, ...); */
-                size_t i;
+                cc_variable *var;
 #ifdef __CC64__
 #else
                 cc_consume_token(reader);
 #endif
 
                 /* Find function */
-                if (ident_tok.type != CC_TOKEN_VARIABLE)
-                    cc_report(reader, CC_DL_ERROR, "Expected a variable name"
-                                                   "on function call");
+                if (TREE_TYPE (ident_tok.decl) != CC_TREE_VAR) {
+                    cc_report (reader, CC_DL_ERROR,
+                               "calling something other than variable is not yet supported");
+                }
+                var = ident_tok.decl;
                 expr.type = CC_EXPR_CALL;
-                expr.data.call.callee_func = ident_tok.data.var;
-                expr.data.call.callee_type = ident_tok.data.var->type;
+                expr.data.call.callee_func = var;
+                expr.data.call.callee_type = var->type;
                 cc_parse_call_params(reader, &expr);
                 return expr;
             }
-            else if(ident_tok.type == CC_TOKEN_VARIABLE)
+            else if (ident_tok.id_kind == CC_ID_ID)
             {
                 expr.type = CC_EXPR_VARREF;
-                expr.data.var_ref.var = ident_tok.data.var;
+                expr.data.var_ref.var = ident_tok.decl;
                 return expr;
             }
-            cc_report(reader, CC_DL_ERROR, "Unresolvable identifier \"%s\"",
-                ident_tok.data.name);
+            cc_report (reader, CC_DL_ERROR, "expected expression");
             break;
         }
         /* <string> ? */
@@ -1054,7 +1142,7 @@ cc_expr cc_parse_expression (cc_reader *reader)
             }
             else
             {
-                expr.data.var_ref.var = ident_tok.data.var;
+                expr.data.var_ref.var = ident_tok.decl;
                 cc_consume_token(reader);
                 return expr;
             }
@@ -1181,6 +1269,7 @@ static cc_expr cc_parse_compound_statement (cc_reader *reader)
                                       + old_block->data.block.stack_depth;
     }
     reader->curr_block = &expr; /* Temporarily set new block */
+    enter_scope ();
     while (reader->curr_token->type != CC_TOKEN_RBRACE)
     {
         expr.data.block.exprs = xrealloc(expr.data.block.exprs,
@@ -1196,6 +1285,7 @@ static cc_expr cc_parse_compound_statement (cc_reader *reader)
         if (reader->curr_token->type == CC_TOKEN_EOF)
             cc_report(reader, CC_DL_ERROR, "Expected a brace \"}\"");
     }
+    exit_scope ();
     reader->curr_block = old_block; /* Restore old block */
     cc_add_scoped_block(expr); /* Save a copy of the block into the scoped
                                 * block list so we will have access to the
@@ -1209,7 +1299,7 @@ static cc_expr cc_parse_compound_statement (cc_reader *reader)
 
 cc_variable cc_parse_variable(cc_reader *reader)
 {
-    cc_variable var = {0};
+    cc_variable var = {CC_TREE_VAR};
     var.linkage = CC_LINKAGE_AUTO;
     while (1) /* Parse storage qualifiers */
     {
@@ -1244,7 +1334,7 @@ cc_variable cc_parse_variable(cc_reader *reader)
     }
     if (reader->curr_token->type == CC_TOKEN_LPAREN) /* Function arguments */
     {
-        cc_param param = {0};
+        cc_param param;
         /* Make current type be the return type */
         var.type.data.f.return_type = xcalloc(sizeof(cc_type));
         *var.type.data.f.return_type = var.type;
@@ -1267,6 +1357,7 @@ cc_variable cc_parse_variable(cc_reader *reader)
                 break;
             }
             param = cc_parse_param_decl(reader);
+            param.index = var.type.data.f.n_params;
             var.type.data.f.params = xrealloc(var.type.data.f.params,
                                             (var.type.data.f.n_params + 1)
                                             * sizeof(cc_param));
@@ -1329,8 +1420,8 @@ static cc_expr cc_parse_declaration_or_fndef (cc_reader *reader, int fndef_allow
 #else
         cc_token ident_tok = *cc_peek_token (reader);
 #endif
-        cc_resolve_symbol(reader, &ident_tok);
-        if (ident_tok.type == CC_TOKEN_TYPE) goto decl;
+        search_scope (&ident_tok);
+        if (ident_tok.id_kind == CC_ID_TYPE) goto decl;
         
         goto default_;
     }
@@ -1356,11 +1447,11 @@ static cc_expr cc_parse_declaration_or_fndef (cc_reader *reader, int fndef_allow
     case CC_TOKEN_KW_CONST:
 decl:
     {
-        cc_variable *var;
+        cc_variable s_var, *var;
 #ifdef __CC64__
 #else
-        expr.data.decl.var = cc_parse_variable(reader);
-        if (expr.data.decl.var.name == NULL) {
+        s_var = cc_parse_variable(reader);
+        if (s_var.name == NULL) {
             /* Declaration without declarator (variable name) is allowed. */
             if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
                 cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
@@ -1371,23 +1462,22 @@ decl:
         }
 #endif
         expr.type = CC_EXPR_DECL;
-        var = cc_add_variable(reader); /* Add to list of variables */
-        *var = expr.data.decl.var;
+        var = expr.data.decl.var = cc_add_variable(reader); /* Add to list of variables */
+        *var = s_var;
+        add_to_scope (var->name, var);
         var->block_offset = (reader->curr_block->data.block.n_vars - 1) * 4;
         /* Now fuck you and make a good parsing of that lbrace */
-        /* TODO: This is terrible, we're duplicating data!!! */
         if (cc_peek_token (reader)->type == CC_TOKEN_LBRACE)
         {
             if (!fndef_allowed) {
                 cc_report (reader, CC_DL_WARNING, "nested functions are not allowed");
             }
+            entering_function = &expr;
             var->block_expr = xcalloc(sizeof(cc_expr));
 #ifdef __CC64__
 #else
             *var->block_expr = cc_parse_compound_statement (reader);
 #endif
-            expr.data.decl.var.block_expr = xcalloc(sizeof(cc_expr));
-            *expr.data.decl.var.block_expr = *var->block_expr;
         } else {
             if (cc_peek_token (reader)->type != CC_TOKEN_SEMICOLON) {
                 cc_report (reader, CC_DL_ERROR, "Expected a semicolon but got \"%s\"",
@@ -1400,17 +1490,21 @@ decl:
 
     case CC_TOKEN_KW_TYPEDEF:
     {
-        cc_type type;
+        cc_type s_type;
         
         cc_consume_token (reader);
-        type = cc_parse_type (reader);
+        s_type = cc_parse_type (reader);
 
         if (cc_peek_token (reader)->type != CC_TOKEN_IDENT) {
             cc_report(reader, CC_DL_ERROR, "Expected an identifier but got \"%s\"",
                       g_token_info[cc_peek_token (reader)->type].name);
         } else {
-            type.name = cc_peek_token (reader)->data.name;
-            *cc_add_type (reader) = type;
+            cc_type *type;
+
+            type = cc_add_type (reader);
+            *type = s_type;
+            type->name = cc_peek_token (reader)->data.name;
+            add_to_scope (type->name, type);
         }
         cc_consume_token (reader);
 
@@ -1458,6 +1552,7 @@ static void cc_parser_do(cc_reader *reader)
     expr->id = cc_get_unique_id(reader);
     expr->type = CC_EXPR_BLOCK;
     reader->curr_block = expr;
+    enter_scope ();
     while (reader->curr_token->type != CC_TOKEN_EOF)
     {
         expr->data.block.exprs = xrealloc(expr->data.block.exprs,
@@ -1474,6 +1569,7 @@ static void cc_parser_do(cc_reader *reader)
 #ifdef DEBUG
     cc_dump_expr(reader, reader->root_expr);
 #endif
+    exit_scope ();
 }
 
 int cc_parse_file(cc_reader *reader)

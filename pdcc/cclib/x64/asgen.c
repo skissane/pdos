@@ -45,7 +45,7 @@ struct cc_reg_info regs[NUM_REGS] = {
 static unsigned long stack_size;
 
 static size_t cc_x64gen_push (cc_reader *reader, const cc_expr *expr);
-static void cc_x64gen_prologue (cc_reader *reader, const cc_expr *expr);
+static void cc_x64gen_prologue (cc_reader *reader, const cc_variable *var);
 static void cc_x64gen_epilogue (cc_reader *reader, const cc_expr *expr);
 static void cc_x64gen_runtime_funptr (cc_reader *reader, const cc_expr *expr);
 static void cc_x64gen_return (cc_reader *reader, const cc_expr *expr);
@@ -81,6 +81,7 @@ static size_t cc_x64gen_push (cc_reader *reader, const cc_expr *expr)
     case CC_EXPR_CONSTANT:
         fprintf(reader->output, "\tpushl $%lu\n", expr->data._const.numval);
         return 4;
+#if 0
     case CC_EXPR_VARREF:
         if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
         {
@@ -113,6 +114,7 @@ static size_t cc_x64gen_push (cc_reader *reader, const cc_expr *expr)
             fprintf(reader->output, "\tpushl $_%s\n", expr->data.var_ref.var->name);
         }
         return 4;
+#endif
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
         abort();
@@ -120,8 +122,15 @@ static size_t cc_x64gen_push (cc_reader *reader, const cc_expr *expr)
     return 0;
 }
 
-static void cc_x64gen_prologue (cc_reader *reader, const cc_expr *expr)
+static void cc_x64gen_prologue (cc_reader *reader, const cc_variable *var)
 {
+    switch (var->type.data.f.n_params) {
+        default: fprintf (reader->output, "\tmov 32[rsp], r9\n");
+        case 3: fprintf (reader->output, "\tmov 24[rsp], r8\n");
+        case 2: fprintf (reader->output, "\tmov 16[rsp], rdx\n");
+        case 1: fprintf (reader->output, "\tmov 8[rsp], rcx\n");
+        case 0: break;
+    }
     fprintf(reader->output, "\tpush rbp\n");
     fprintf(reader->output, "\tmov rbp, rsp\n");
     stack_size = 0;
@@ -238,7 +247,7 @@ static void cc_x64gen_top (cc_reader *reader, const cc_expr *expr)
             break;
         
         case CC_EXPR_DECL:
-            cc_x64gen_decl (reader, &expr->data.decl.var);
+            cc_x64gen_decl (reader, expr->data.decl.var);
             break;
         
         case CC_EXPR_IF:
@@ -297,7 +306,7 @@ static void cc_x64gen_top (cc_reader *reader, const cc_expr *expr)
                 printf("No function on call expression???");
                 abort();
             }
-
+            
             /* Pop stack */
             fprintf (reader->output, "\tadd rsp, %lu\n", stack_size);
             stack_size = 0;
@@ -315,6 +324,16 @@ static void cc_x64gen_top (cc_reader *reader, const cc_expr *expr)
         case CC_EXPR_CONSTANT:
             fprintf (reader->output, "\tmov eax, %lu\n", expr->data._const.numval);
             break;
+
+        case CC_EXPR_VARREF:
+            if (TREE_TYPE (expr->data.var_ref.var) == CC_TREE_PARAM) {
+                const cc_param *param = expr->data.var_ref.var;
+                fprintf (reader->output, "\tmov rax, %u[rbp]\n", 16 + param->index * 8);
+            } else {
+                printf("Unknown varref tree type %u\n", TREE_TYPE (expr->data.var_ref.var));
+                abort();
+            }
+            break;
         
         case CC_EXPR_BLOCK:
             {
@@ -322,8 +341,9 @@ static void cc_x64gen_top (cc_reader *reader, const cc_expr *expr)
                 oldblock = reader->curr_block;
                 fprintf (reader->output, "# {\n");
                 reader->curr_block = (cc_expr *)expr;
-                for (i = 0; i < expr->data.block.n_exprs; i++)
+                for (i = 0; i < expr->data.block.n_exprs; i++) {
                     cc_x64gen_top (reader, &expr->data.block.exprs[i]);
+                }
                 fprintf (reader->output, "# }\n");
                 reader->curr_block = oldblock;
             }
@@ -353,7 +373,7 @@ static void cc_x64gen_variable (cc_reader *reader, const cc_variable *var)
     switch (var->type.mode) {
         case CC_TYPE_FUNCTION:
             if (var->block_expr) {
-                cc_x64gen_prologue (reader, var->block_expr);    
+                cc_x64gen_prologue (reader, var);    
                 cc_x64gen_top (reader, var->block_expr);
                 cc_x64gen_epilogue (reader, var->block_expr);
             }
@@ -371,5 +391,5 @@ void cc_codegen (cc_reader *reader, const cc_expr *expr)
     fprintf (reader->output, "# bits 64\n");
     fprintf (reader->output, ".intel_syntax noprefix\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
-        cc_x64gen_variable (reader, &expr->data.block.vars[i]);
+        cc_x64gen_variable (reader, expr->data.block.vars[i]);
 }

@@ -15,7 +15,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "cpplib.h"
-#include "lexer.h"
 
 #ifndef CC_READER_DEFINED
 #   define CC_READER_DEFINED 1
@@ -27,6 +26,16 @@ typedef struct cc_member cc_member;
 typedef struct cc_enum_member cc_enum_member;
 typedef struct cc_param cc_param;
 typedef struct cc_expr cc_expr;
+
+/* To make it simple to use any tree in any place
+ * (for example, varriable reference can reference either parameter or variable)
+ * all tree structs can be pointed to by cc_tree and they begin with "int tree_type;"
+ * so they can be cast to "(const int *)" to know what exact struct they are.
+ */
+typedef void *cc_tree;
+#define TREE_TYPE(tree) (*(const int *)(tree))
+
+#include "lexer.h"
 
 typedef enum cc_type_mode {
     CC_TYPE_VOID,
@@ -46,6 +55,7 @@ typedef enum cc_type_mode {
 
 #define MAX_PTR_DEPTH 3
 struct cc_type {
+    int tree_type;
     cc_type_mode mode;
     struct cc_ptrinfo {
         enum cc_ptrinfo_flags {
@@ -81,8 +91,10 @@ struct cc_member {
 };
 
 struct cc_param {
+    int tree_type;
     char *name;
     cc_type type;
+    size_t index;
 };
 
 struct cc_enum_member {
@@ -105,6 +117,7 @@ typedef enum cc_linkage {
 } cc_linkage;
 
 struct cc_variable {
+    int tree_type;
     char *name;
     cc_linkage linkage;
     cc_type type;
@@ -151,7 +164,11 @@ typedef enum cc_expr_type {
     CC_EXPR_ELSE,
     CC_EXPR_ELIF,
     CC_EXPR_RETURN,
-    CC_EXPR_GOTO
+    CC_EXPR_GOTO,
+
+    CC_TREE_PARAM,
+    CC_TREE_TYPE,
+    CC_TREE_VAR
 } cc_expr_type;
 
 struct cc_expr {
@@ -174,7 +191,7 @@ struct cc_expr {
         struct {
             cc_expr *exprs; /* Body of the block */
             size_t n_exprs;
-            cc_type *types;
+            cc_type **types;
             size_t n_types;
             cc_type *union_types;
             size_t n_union_types;
@@ -182,7 +199,7 @@ struct cc_expr {
             size_t n_struct_types;
             cc_type *enum_types;
             size_t n_enum_types;
-            cc_variable *vars;
+            cc_variable **vars;
             size_t n_vars;
             size_t parent_id;
             size_t stack_depth;
@@ -206,10 +223,10 @@ struct cc_expr {
             cc_expr *right;
         } binary_op;
         struct {
-            cc_variable var;
+            cc_variable *var;
         } decl;
         struct {
-            cc_variable *var;
+            cc_tree var;
         } var_ref;
     } data;
     size_t id; /* Unique Id for this expression */

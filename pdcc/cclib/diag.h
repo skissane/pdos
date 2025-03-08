@@ -17,13 +17,17 @@ typedef struct cc_reader cc_reader;
 #endif
 
 #ifdef ANSI_ESCAPES
-#   define TTY_RED     "\x1B[0;91m"
-#   define TTY_RESET   "\x1B[0;0m"
-#   define TTY_BOLD    "\x1B[1m"
+ #define TTY_MAGENTA "\x1B[0;35m"
+ #define TTY_RED     "\x1B[0;91m"
+ #define TTY_CYAN    "\x1B[0;96m"
+ #define TTY_RESET   "\x1B[0;0m"
+ #define TTY_BOLD    "\x1B[1m"
 #else
-#   define TTY_RED     ""
-#   define TTY_RESET   ""
-#   define TTY_BOLD    ""
+ #define TTY_MAGENTA ""
+ #define TTY_RED     ""
+ #define TTY_CYAN    ""
+ #define TTY_RESET   ""
+ #define TTY_BOLD    ""
 #endif
 
 typedef struct {

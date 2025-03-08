@@ -106,39 +106,57 @@ static size_t cc_i370gen_push(cc_reader *reader, const cc_expr *expr)
         tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
         return 4;
     case CC_EXPR_VARREF:
-        if (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO)
         {
-            tprintf(reader->output, "\tL\t9,%d(13)\n",
-                    88
-                    /* + stack_size ??? */
-                    + reader->curr_block->data.block.stack_depth
-                    + expr->data.var_ref.var->block_offset
-                    );
+            cc_variable *var = expr->data.var_ref.var;
+
+            if (TREE_TYPE (expr->data.var_ref.var) != CC_TREE_VAR) {
+                printf("Unknown varref tree type %u\n", TREE_TYPE (expr->data.var_ref.var));
+                abort();
+            }
+            
+            if (var->linkage == CC_LINKAGE_AUTO)
+            {
+                tprintf(reader->output, "\tL\t9,%d(13)\n",
+                        88
+                        /* + stack_size ??? */
+                        + reader->curr_block->data.block.stack_depth
+                        + var->block_offset
+                        );
+            }
+            else
+            {
+                tprintf(reader->output, "\tL\t9,=A(%s)\n", var->name);
+                tprintf(reader->output, "\tL\t9,0(9)\n");
+            }
+            tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
+            return 4;
         }
-        else
-        {
-            tprintf(reader->output, "\tL\t9,=A(%s)\n", expr->data.var_ref.var->name);
-            tprintf(reader->output, "\tL\t9,0(9)\n");
-        }
-        tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
-        return 4;
     case CC_EXPR_ADDRESSOF:
-        if ((expr->data.var_ref.var->type.mode != CC_TYPE_FUNCTION)
-            && (expr->data.var_ref.var->linkage == CC_LINKAGE_AUTO))
         {
-            tprintf(reader->output, "\tLA\t9,%d(13)\n",
-                    88
-                    /* + stack_size ??? */
-                    + reader->curr_block->data.block.stack_depth
-                    + expr->data.var_ref.var->block_offset
-                    );
+            cc_variable *var = expr->data.var_ref.var;
+
+            if (TREE_TYPE (expr->data.var_ref.var) != CC_TREE_VAR) {
+                printf("Unknown varref tree type %u\n", TREE_TYPE (expr->data.var_ref.var));
+                abort();
+            }
+
+            if ((var->type.mode != CC_TYPE_FUNCTION)
+                && (var->linkage == CC_LINKAGE_AUTO))
+            {
+                tprintf(reader->output, "\tLA\t9,%d(13)\n",
+                        88
+                        /* + stack_size ??? */
+                        + reader->curr_block->data.block.stack_depth
+                        + var->block_offset
+                        );
+            }
+            else
+            {
+                tprintf(reader->output, "\tL\t9,=A(%s)\n", var->name);
+            }
+            tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
+            return 4;
         }
-        else
-        {
-            tprintf(reader->output, "\tL\t9,=A(%s)\n", expr->data.var_ref.var->name);
-        }
-        tprintf(reader->output, "\tST\t9,%d(,13)\n", 88 + stack_size);
-        return 4;
     default:
         printf("Unknown expr type %u for prologue\n", expr->type);
         abort();
@@ -273,7 +291,7 @@ static void cc_i370gen_top(cc_reader *reader, const cc_expr *expr)
             cc_i370gen_binary_op (reader, expr);
             break;
         case CC_EXPR_DECL:
-            cc_i370gen_decl(reader, &expr->data.decl.var);
+            cc_i370gen_decl (reader, expr->data.decl.var);
             break;
         case CC_EXPR_IF:
             cc_i370gen_if(reader, expr->data.if_else.cond_expr,
@@ -397,6 +415,6 @@ void cc_codegen(cc_reader *reader, const cc_expr *expr)
     tprintf(reader->output, "* bits 32\n");
     tprintf(reader->output, "\tCSECT\n");
     for (i = 0; i < expr->data.block.n_vars; i++)
-        cc_i370gen_variable(reader, &expr->data.block.vars[i]);
+        cc_i370gen_variable(reader, expr->data.block.vars[i]);
     tprintf(reader->output, "\tEND\n");
 }
