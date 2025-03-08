@@ -79,6 +79,209 @@ longjmp proc
         endp
 
 
+
+ if :def:LINUX
+
+; int __ioctl(unsigned int fd, unsigned int cmd, unsigned long arg);
+
+        export  __ioctl
+__ioctl proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r7,#54           ; @ SYS_ioctl
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; void __exita(int rc);
+
+        export  __exita
+
+__exita proc
+        mov     r7,#1           ; @ SYS_exit
+        svc     0
+        mov pc,lr
+
+        endp
+
+
+
+; int __getpid(void);
+
+        export  __getpid
+
+__getpid proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#20           ; @ SYS_getpid
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+; int __open(char *path, int flags);
+
+        export  __open
+__open proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r2,#0x1A4       ; @ 0644
+        mov     r7,#5           ; @ SYS_open
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; int __close(int fd);
+
+        export  __close
+__close proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#6           ; @ SYS_close
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; int __write(int fd, void *buf, int len);
+
+        export __write
+__write proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r7,#4           ; @ SYS_write
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; int __read(int fd, void *buf, int len);
+
+        export  __read
+__read proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r7,#3           ; @ SYS_read
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; int __seek(int fd, int pos, int how);
+
+        export  __seek
+__seek proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r7,#19          ; @ SYS_lseek
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; int ___mmap(...);
+
+        export  __mmap
+__mmap proc
+        stmfd   sp!,{r2,r3,r4,r5,r6,r7,lr}
+        mov     r7,#192          ; @ SYS_mmap2
+        svc     0
+        ldmia   sp!,{r2,r3,r4,r5,r6,r7,pc}
+        
+        endp
+
+
+; int __munmap(char *addr, int len);
+
+        export  __munmap
+__munmap proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#91          ; @ SYS_munmap
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; int __clone(...);
+
+        export  __clone
+__clone proc
+        stmfd   sp!,{r2,r3,r4,r7,lr}
+        mov     r7,#120          ; @ SYS_clone
+        svc     0
+        ldmia   sp!,{r2,r3,r4,r7,pc}
+
+        endp
+
+
+
+; int __waitid(...);
+
+        export  __waitid
+__waitid proc
+        stmfd   sp!,{r2,r3,r4,r7,lr}
+        mov     r7,#280          ; @ SYS_waitid
+        svc     0
+        ldmia   sp!,{r2,r3,r4,r7,pc}
+
+        endp
+
+
+
+; int __execve(...)
+
+        export  __execve
+__execve proc
+        stmfd   sp!,{r2,r7,lr}
+        mov     r7,#11           ; @ SYS_execve
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
+
+; int __remove(char *path);
+
+        export  __remove
+__remove proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#10          ; @ SYS_unlink
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; int __rename(char *old, char *new);
+
+        export __rename
+__rename proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#0x26        ; @ SYS_rename
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; LINUX
+ endif
+
+
+
 ; Enable floating point in a privileged environment
 ; by setting bits 20-23 of the CPACR to 1
 
