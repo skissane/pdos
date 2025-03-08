@@ -41,6 +41,8 @@ __setj proc
         str     r8,[r1,#28]
         str     r9,[r1,#32]   ;@ rfp
         str     r10,[r1,#36]  ;@ sl
+        ldr     r2,[r1,#40]
+        ldr     r1,[r0,#52]
         mov     r0,#0
         mov     pc,lr
 
@@ -100,9 +102,10 @@ __ioctl proc
         export  __exita
 
 __exita proc
+        stmfd   sp!,{r7,lr}
         mov     r7,#1           ; @ SYS_exit
         svc     0
-        mov pc,lr
+        ldmia   sp!,{r7,pc}
 
         endp
 
@@ -336,7 +339,7 @@ __rmdir proc
 
         export __time
 __time proc
-        stmfd   sp!,{r7,lr}
+        stmfd   sp!,{r1,r7,lr}
         sub     sp,sp,#16       ; @ struct timespec
         mov     r1,sp
         mov     r0,#0           ; @ CLOCK_REALTIME
@@ -344,7 +347,7 @@ __time proc
         svc     0
         ldr     r0,[sp]
         add     sp,sp,#16
-        ldmia   sp!,{r7,pc}
+        ldmia   sp!,{r1,r7,pc}
 
         endp
 
