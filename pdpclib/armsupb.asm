@@ -331,6 +331,25 @@ __rmdir proc
         endp
 
 
+
+; int __time(void);
+
+        export __time
+__time proc
+        stmfd   sp!,{r7,lr}
+        sub     sp,sp,#16       ; @ struct timespec
+        mov     r1,sp
+        mov     r0,#0           ; @ CLOCK_REALTIME
+        ldr     r7,=0x107       ; @ SYS_clock_gettime
+        svc     0
+        ldr     r0,[sp]
+        add     sp,sp,#16
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
 ; LINUX
  endif
 
