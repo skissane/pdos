@@ -358,6 +358,32 @@ __time proc
 
 
 
+; Trying cacheflush instead
+;
+; Some documentation says that the parameters are
+;
+; start pointer, size and flags as follows:
+; ICACHE = 1
+; DCACHE = 2
+; BCACHE = 3 (I | D)
+;
+; However, other documentation - that actually worked -
+; says that the parameters are start pointer, end pointer,
+; and 0. So that is what is shown below and used.
+
+        export  __cacheflush
+__cacheflush proc
+        stmfd   sp!,{r2,r7,lr}
+; Can't use this directly
+;        mov     r7,#0xf0002     ; @ SYS_cacheflush
+        mov     r7, #0xf0000
+        add     r7,r7,#2
+        svc     0
+        ldmia   sp!,{r2,r7,pc}
+
+        endp
+
+
 ; Enable floating point in a privileged environment
 ; by setting bits 20-23 of the CPACR to 1
 
