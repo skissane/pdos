@@ -13,9 +13,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-#include "lexer.h"
 #include "diag.h"
 #include "cclib.h"
+#include "lexer.h"
 #include "support.h"
 #include "xmalloc.h"
 

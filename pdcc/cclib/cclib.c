@@ -901,7 +901,7 @@ static cc_expr cc_parse_cast_expr (cc_reader *reader)
             cc_consume_token (reader);
         }
 
-        expr.data.cast.expr = xcalloc (sizeof *expr.data.cast.expr);
+        expr.data.cast.expr = xcalloc (1, sizeof *expr.data.cast.expr);
         *expr.data.cast.expr = cc_parse_postfix_expr (reader);
         return expr;
     }
@@ -1034,8 +1034,8 @@ static cc_expr cc_parse_binary_expr (cc_reader *reader)
 
                     sp--;
                     expr.id = cc_get_unique_id (reader);
-                    expr.data.binary_op.left = xcalloc (sizeof *expr.data.binary_op.left);
-                    expr.data.binary_op.right = xcalloc (sizeof *expr.data.binary_op.right);
+                    expr.data.binary_op.left = xcalloc (1, sizeof *expr.data.binary_op.left);
+                    expr.data.binary_op.right = xcalloc (1, sizeof *expr.data.binary_op.right);
 
                     *expr.data.binary_op.left = stack[sp].left;
                     expr.type = stack[sp].type;
@@ -1053,8 +1053,8 @@ static cc_expr cc_parse_binary_expr (cc_reader *reader)
             
             sp--;
             expr.id = cc_get_unique_id (reader);
-            expr.data.binary_op.left = xcalloc (sizeof *expr.data.binary_op.left);
-            expr.data.binary_op.right = xcalloc (sizeof *expr.data.binary_op.right);
+            expr.data.binary_op.left = xcalloc (1, sizeof *expr.data.binary_op.left);
+            expr.data.binary_op.right = xcalloc (1, sizeof *expr.data.binary_op.right);
 
             *expr.data.binary_op.left = stack[sp].left;
             expr.type = stack[sp].type;
@@ -1187,7 +1187,7 @@ cc_expr cc_parse_statement(cc_reader *reader)
         cc_consume_token(reader);
 #endif
         expr.type = CC_EXPR_RETURN;
-        expr.data.ret.ret_expr = xcalloc(sizeof(cc_expr));
+        expr.data.ret.ret_expr = xcalloc (1, sizeof(cc_expr));
 #ifdef __CC64__
 #else
         *expr.data.ret.ret_expr = cc_parse_expression(reader);
@@ -1208,14 +1208,14 @@ cc_expr cc_parse_statement(cc_reader *reader)
         cc_consume_token(reader);
 #endif
         expr.type = CC_EXPR_IF;
-        expr.data.if_else.cond_expr = xcalloc(sizeof(cc_expr));
+        expr.data.if_else.cond_expr = xcalloc (1, sizeof(cc_expr));
 #ifdef __CC64__
 #else
         *expr.data.if_else.cond_expr = cc_parse_condition(reader,
                                                           CC_TOKEN_RPAREN);
 #endif
         /* Multiline block */
-        expr.data.if_else.body_expr = xcalloc(sizeof(cc_expr));
+        expr.data.if_else.body_expr = xcalloc (1,sizeof(cc_expr));
         if (reader->curr_token->type == CC_TOKEN_LBRACE)
 #ifdef __CC64__
 ;
@@ -1336,7 +1336,7 @@ cc_variable cc_parse_variable(cc_reader *reader)
     {
         cc_param param;
         /* Make current type be the return type */
-        var.type.data.f.return_type = xcalloc(sizeof(cc_type));
+        var.type.data.f.return_type = xcalloc (1, sizeof(cc_type));
         *var.type.data.f.return_type = var.type;
         var.type.data.f.return_type->data.f.return_type = NULL;
         var.type.data.f.params = NULL;
@@ -1344,6 +1344,11 @@ cc_variable cc_parse_variable(cc_reader *reader)
         var.type.data.f.variadic = 0;
         var.type.mode = CC_TYPE_FUNCTION;
         cc_consume_token(reader);
+        if (cc_peek_token (reader)->type == CC_TOKEN_KW_VOID
+            && cc_peek_2nd_token (reader)->type == CC_TOKEN_RPAREN) {
+            /* a single void is ignored */
+            cc_consume_token(reader);
+        }
         while (reader->curr_token->type != CC_TOKEN_RPAREN)
         {
             if (reader->curr_token->type == CC_TOKEN_ELLIPSIS)
@@ -1366,11 +1371,6 @@ cc_variable cc_parse_variable(cc_reader *reader)
                 cc_consume_token(reader);
             else if (reader->curr_token->type == CC_TOKEN_RPAREN)
                 break;
-            else if (reader->curr_token->type == CC_TOKEN_KW_VOID)
-            {
-                /* a single void is ignored */
-                cc_consume_token(reader);
-            }
             else
                 cc_report(reader, CC_DL_ERROR, "Expected a comma after "
                     "parameter declaration but got \"%s\" instead",
@@ -1473,7 +1473,7 @@ decl:
                 cc_report (reader, CC_DL_WARNING, "nested functions are not allowed");
             }
             entering_function = &expr;
-            var->block_expr = xcalloc(sizeof(cc_expr));
+            var->block_expr = xcalloc (1, sizeof(cc_expr));
 #ifdef __CC64__
 #else
             *var->block_expr = cc_parse_compound_statement (reader);
@@ -1548,7 +1548,7 @@ static cc_expr cc_parse_external_declaration (cc_reader *reader)
 static void cc_parser_do(cc_reader *reader)
 {
     cc_expr *expr;
-    expr = reader->root_expr = xcalloc(sizeof(cc_expr));
+    expr = reader->root_expr = xcalloc (1, sizeof(cc_expr));
     expr->id = cc_get_unique_id(reader);
     expr->type = CC_EXPR_BLOCK;
     reader->curr_block = expr;
