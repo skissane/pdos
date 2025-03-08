@@ -19,7 +19,7 @@
 
 void _cpp_init_tokenrow(tokenrow *row)
 {
-    row->start = xcalloc (sizeof(cpp_token) * TOKENROW_LEN);
+    row->start = xcalloc (TOKENROW_LEN, sizeof(cpp_token));
     row->end = row->start + TOKENROW_LEN;
     row->prev = NULL;
     row->next = NULL;
