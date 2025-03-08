@@ -9,7 +9,7 @@ COPTS=$(CFLAGS) -D__CC64__ -D__gnu_linux__ \
     -DNEED_MZ -DNOUNDMAIN -DXUSE_MEMMGR \
     -DNO_DLLENTRY -DGENSHELL -D__W64SHELL__ \
     -D__64BIT__ -DHAVE_DIR -DLINDIR -DTARGET_64BIT \
-    -DXW64HACK -DW64DLL -Dconst=
+    -DW64EMUL -Dconst=
 
 AR=xar
 AS=pdas --oformat coff --64
