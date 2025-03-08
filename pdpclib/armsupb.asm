@@ -277,6 +277,60 @@ __rename proc
 
 
 
+; int __getdents(unsigned int fd, struct linux_dirent *dirent, int count);
+
+        export  __getdents
+__getdents proc
+
+; Now that we're using stack parameters, we likely
+; need to preserve r1 too (ditto for other functions)
+        stmfd   sp!,{r1,r2,r7,lr}
+        mov     r7,#141          ; @ SYS_getdents
+        svc     0
+        ldmia   sp!,{r1,r2,r7,pc}
+
+        endp
+
+
+
+;int __chdir(const char *filename);
+
+        export  __chdir
+__chdir proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#12           ; @ SYS_chdir
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; int __mkdir(const char *pathname, unsigned int mode);
+
+        export  __mkdir
+__mkdir proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#39           ; @ SYS_mkdir
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
+
+; int __rmdir(const char *pathname);
+
+        export  __rmdir
+__rmdir proc
+        stmfd   sp!,{r7,lr}
+        mov     r7,#40           ; @ SYS_rmdir
+        svc     0
+        ldmia   sp!,{r7,pc}
+
+        endp
+
+
 ; LINUX
  endif
 
