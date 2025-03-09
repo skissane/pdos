@@ -1,5 +1,6 @@
 # This is the makefile for Win64 to build pdpclib using
 # Microsoft Visual Studio and MASM
+# and with static linking (NOT using msvcrt.dll)
 
 # You need to have built kernel32 with makek32.vs6 first
 
