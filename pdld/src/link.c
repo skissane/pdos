@@ -674,15 +674,6 @@ static void check_unresolved (void)
 
 void link (void)
 {
-    add_automatic_symbols ();
-    
-    /* In the future this might be controlled by command line option. */
-    check_unresolved ();
-    
-    collapse_subsections ();
-
-    calculate_section_sizes_and_rvas ();
-
     if (!ld_state->use_custom_base_address) {
         switch (ld_state->oformat) {
             case LD_OFORMAT_AOUT:
@@ -722,6 +713,15 @@ void link (void)
                 break;
         }
     }
+    
+    add_automatic_symbols ();
+    
+    /* In the future this might be controlled by command line option. */
+    check_unresolved ();
+    
+    collapse_subsections ();
+
+    calculate_section_sizes_and_rvas ();
 
     relocate_sections ();
 
