@@ -10,14 +10,13 @@
 # define COMEMUL for a COM file, or PBEMUL for a pseudo-bios
 
 # This builds a Win64 ARM64 executable using Visual Studio
-# You need to have run makefile.var in PDPCLIB first
+# by default
 
-# With targ=arm32 you can build a Win32 ARM32 executable
+# With targ=arm you can build a Win32 ARM32 executable
 # instead, still using Visual Studio
-# You need to have run makefile.mar in PDPCLIB first
 
-ifeq "$(targ)" "arm32"
-
+ifeq "$(targ)" "arm"
+# This requires makefile.mar in PDPCLIB to be run first
 CFLAGS=-O2 -Oi- -DPBEMUL
 CC=cl
 AR=lib
@@ -28,9 +27,22 @@ COPTS=$(CFLAGS) -c -nologo -GS- -Za -Zl -u -X -D__MSC__ \
 EXTRA=../pdpclib/w32start.obj
 EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/armsupb.obj
 
+else ifeq "$(targ)" "x64"
+# This required makefile.vsx in PDPCLIB to be run first
+CFLAGS=-O2 -Oi- -DPBEMUL
+CC=cl
+AR=lib
+#LD=link
+LD=pdld --emit-relocs -s -nostdlib --no-insert-timestamp
+COPTS=$(CFLAGS) -c -nologo -GS- -Za -Zl -u -X -D__MSC__ \
+    -D__WIN32__ -I. -I../pdpclib -D__64BIT__ -DNEED_MVS
+EXTRA=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/x64supa.obj
+
 else
 
 CFLAGS=-O2 -Oi -DPBEMUL
+# You need to have run makefile.var in PDPCLIB first
 CC=cl
 AR=lib
 #LD=link
