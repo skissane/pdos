@@ -855,6 +855,15 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
     {
         /* position is after EOF */
         /* so nothing is read and error is returned */
+        /* note that if the current position is sensibly located
+           at the end of file, we go through the normal logic
+           which should detect that there is no more data available */
+        /* also note that the reason for this logic in the first
+           place is that (I believe) MSDOS allows you to seek past
+           EOF so long as you seek back within the legitimate data
+           before doing an actual read. We may wish to stop
+           mimicking this behavior and instead prevent seeing before
+           or after the legitimate range. As I believe Windows does */
         *readbytes = 0;
         /* +++Find out what error should be returned. */
         return (POS_ERR_ACCESS_DENIED);
