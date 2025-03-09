@@ -596,6 +596,7 @@ static EFI_STATUS all_disks_block_test (void)
 }
 #endif
 
+#if 0
 static EFI_STATUS serial_io_test (void)
 {
     EFI_STATUS Status = EFI_SUCCESS;
@@ -625,7 +626,7 @@ static EFI_STATUS serial_io_test (void)
 
     return Status;
 }
-
+#endif
 
 int __start(int argc, char **argv);
 
@@ -723,7 +724,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #if 0
     return_Status_if_fail (all_disks_block_test());
 #endif
+#if 0
     return_Status_if_fail (serial_io_test ());
+#endif
 
 #ifndef EFITEST
     if (__gBS->HandleProtocol (ImageHandle, &sp_guid, (void **)&sp_protocol) == EFI_SUCCESS)
