@@ -274,13 +274,15 @@ typedef struct
 #if !defined(__PDPCLIB_DLL) && !defined(__CC64OS__)
 #if !defined(__SUBC__) && !defined(__NODECLSPEC__) && !defined(__CC64__) \
     && !defined(__W64SHELL__) && !defined(__W32EMUL__) \
-    && !defined(__GENSHELL__) && !defined(__ARM__)
+    && !defined(__GENSHELL__) && !defined(__ARM__) \
+    && !(defined(__WIN32__) && defined(__64BIT__))
 
 __declspec(dllimport) __DUMMYFILE _iob[3];
 
 #else
 
-#if defined(__CC64__) || defined(__W64SHELL__) || defined(__ARM__)
+#if defined(__CC64__) || defined(__W64SHELL__) || defined(__ARM__) \
+    || (defined(__WIN32__) && defined(__64BIT__))
 extern __DUMMYFILE *__iob_func(void);
 #elif defined(__64BIT__)
 extern __DUMMYFILE *_imp__iob;
@@ -295,13 +297,15 @@ extern __DUMMYFILE *_imp___iob;
     !(defined(__CC64__) && !defined(__PDPCLIB_DLL)) && \
     !defined(__CC64OS__) && !defined(__W64SHELL__) && \
     !defined(__W32EMUL__) && !defined(__GENSHELL__) && \
-    !defined(__ARM__)
+    !defined(__ARM__) && \
+    !(defined(__WIN32__) && defined(__64BIT__))
 #define stdin ((FILE *) &(_iob[0]))
 #define stdout ((FILE *) &(_iob[1]))
 #define stderr ((FILE *) &(_iob[2]))
 #else
 
-#if defined(__CC64__) || defined(__W64SHELL__) || defined(__ARM__)
+#if defined(__CC64__) || defined(__W64SHELL__) || defined(__ARM__) \
+    || (defined(__WIN32__) && defined(__64BIT__))
 #if defined(__CC64OS__) || defined(__W64SHELL__) || defined(__ARM__)
 extern __PDPCLIB_HEADFUNC __DUMMYFILE _iob[3];
 extern __PDPCLIB_HEADFUNC __DUMMYFILE *__iob_func(void);
