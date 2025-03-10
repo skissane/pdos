@@ -8,6 +8,7 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+typedef void VOID;
 typedef unsigned char BOOLEAN;
 #if defined(__64BIT__) && !defined(__SUBC__)
 #ifdef __LONG64__
@@ -412,6 +413,42 @@ typedef struct {
     void *CreateEventEx;
 } EFI_BOOT_SERVICES;
 
+typedef enum {
+    EfiResetCold,
+    EfiResetWarm,
+    EfiResetShutdown,
+    EfiResetPlatformSpecific
+} EFI_RESET_TYPE;
+
+typedef VOID (EFIAPI *EFI_RESET_SYSTEM) (IN EFI_RESET_TYPE ResetType,
+                                         IN EFI_STATUS ResetStatus,
+                                         IN UINTN DatatSize,
+                                         IN VOID *ResetData OPTIONAL);
+
+typedef struct {
+    EFI_TABLE_HEADER Hdr;
+
+    void *GetTime;
+    void *SetTime;
+    void *GetWakeupTime;
+    void *SetWakeupTime;
+    
+    void *SetVirtualAddressMap;
+    void *ConvertPointer;
+
+    void *GetVariable;
+    void *GetNextVariableName;
+    void *SetVariable;
+
+    void *GetNextHighMonotonicCount;
+    EFI_RESET_SYSTEM ResetSystem;
+
+    void *UpdateCapsule;
+    void *QueryCapsuleCapabilities;
+
+    void *QueryVariableInfo;
+} EFI_RUNTIME_SERVICES;
+
 typedef struct {
     EFI_TABLE_HEADER Hdr;
     CHAR16 *FirmwareVendor;
@@ -425,7 +462,7 @@ typedef struct {
     EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *ConOut;
     EFI_HANDLE StandardErrorHandle;
     EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *StdErr;
-    void *RuntimeServices;
+    EFI_RUNTIME_SERVICES *RuntimeServices;
     EFI_BOOT_SERVICES *BootServices;
     UINTN NumberOfTableEntries;
     void *ConfigurationTable;

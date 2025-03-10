@@ -628,6 +628,26 @@ static EFI_STATUS serial_io_test (void)
 }
 #endif
 
+#if 0
+static void shutdown_test (void)
+{
+    UINTN Index;
+    EFI_INPUT_KEY key;
+    
+    print_string ("Press C for cold reset, W for warm reset or any other key to shutdown\n");
+    gST->BootServices->WaitForEvent (1, &gST->ConIn->WaitForKey, &Index);
+    gST->ConIn->ReadKeyStroke (gST->ConIn, &key);
+    if (key.UnicodeChar == 'c' || key.UnicodeChar == 'C') {
+        gST->RuntimeServices->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
+    } else if (key.UnicodeChar == 'w' || key.UnicodeChar == 'W') {
+        gST->RuntimeServices->ResetSystem (EfiResetWarm, EFI_SUCCESS, 0, NULL);
+    } else {
+        gST->RuntimeServices->ResetSystem (EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+    }
+    print_string ("Shutdown failed?\n");
+}
+#endif
+
 int __start(int argc, char **argv);
 
 void __exita(int status)
@@ -726,6 +746,9 @@ EFI_STATUS efimain (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #endif
 #if 0
     return_Status_if_fail (serial_io_test ());
+#endif
+#if 0
+    shutdown_test ();
 #endif
 
 #ifndef EFITEST
