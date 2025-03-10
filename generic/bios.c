@@ -1383,6 +1383,7 @@ static EFI_STATUS check_path(unsigned char *path)
     EFI_GUID sfs_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs_protocol;
     EFI_FILE_PROTOCOL *EfiRoot, *dir;
+    size_t len;
 
 #ifndef __NO_LONGLONG_AND_LONG_IS_ONLY_32BIT__
     static UINT64 OpenModeDirReadWrite = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
@@ -1414,7 +1415,7 @@ static EFI_STATUS check_path(unsigned char *path)
         }
     }
     
-    size_t len = strlen(cur_path);
+    len = strlen(cur_path);
     if (len == 0) {
         path_check[0] = '\\';
         path_check[1] = '\0';
