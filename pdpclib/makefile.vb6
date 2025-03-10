@@ -7,7 +7,7 @@ CC=cl
 AR=lib
 LD=link
 AS=ml64
-COPTS=-c -nologo -GS- -Za -u -X -D__MSC__ -D__64BIT__ \
+COPTS=-c -nologo -O2 -Oi- -GS- -Za -u -X -D__MSC__ -D__64BIT__ \
     -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. -D__W64SHELL__
 
 TARGET=pdptest.efi
