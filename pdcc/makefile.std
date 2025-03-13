@@ -28,9 +28,9 @@ endif
 ifeq "$(targ)" "zpg"
 # Produces z/PDOS-generic executable.
 # Links with PDPCLIB created by makefile.zpg
-CC=gcc370
+CC=gccmvs
 CFLAGS=-Os
-AS=as370
+AS=as370 -mhlasm -mebcdic
 AR=ar370
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
