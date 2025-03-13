@@ -12,6 +12,84 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+
+#define cond_handler_ifdef chifdef
+#define cond_handler_ifndef chifndef
+#define cond_handler_else chelse
+#define cond_handler_endif chendif
+
+#define as_error_at aserat
+#define as_internal_error_at_source_at asieasa
+
+#define frag_alloc_space faspace
+#define frag_align_code facode
+
+#define add_listing_message alistm
+
+#define load_line_create_internal_data llcid
+#define load_line_destroy_internal_data lldid
+
+#define handler_ignore hignore
+#define handler_lcomm hlcomm
+#define process_destroy pdestroy
+
+#define symbol_get_value_expression symgve
+#define symbol_get_frag symgfr
+#define symbol_create symcreate
+#define symbol_find symfind
+#define symbol_find_or_make symfom
+#define symbol_label symlab
+#define symbol_make symmake
+#define symbol_temp_new_now symtnnow
+#define symbol_temp_make symtmak
+#define symbol_get_section symgsec
+#define symbol_get_name symgnam
+#define symbol_force_reloc symfrel
+#define symbol_is_external symisext
+#define symbol_is_resolved symisrest
+#define symbol_is_section_symbol symissecs
+#define symbol_is_undefined symisu
+#define symbol_uses_other_symbol symuos
+#define symbol_uses_reloc_symbol symurs
+#define symbol_get_symbol_table_index symgsti
+#define symbol_get_value symgval
+#define symbol_resolve_value symresval
+#define symbol_add_to_chain symatoch
+#define symbol_set_external symsext
+#define symbol_set_frag symsfrag
+#define symbol_set_section symssec
+#define symbol_set_symbol_table_index symssti
+#define symbol_set_value symsval
+#define symbol_set_value_expression symsve
+#define symbol_set_value_now symsvn
+
+#define fixup_new_expr fupnexp
+
+#define machine_dependent_init mdinit
+#define machine_dependent_destroy mddest
+#define machine_dependent_number_to_chars  mdntoc
+#define machine_dependent_assemble_line mdal
+#define machine_dependent_force_relocation_local  mdfrl
+#define machine_dependent_estimate_size_before_relax mdesbr
+#define machine_dependent_pcrel_from mdpfrm
+#define machine_dependent_relax_frag mdrfrag
+#define machine_dependent_apply_fixup mdappfix
+#define machine_dependent_finish_frag mdfinfrag
+#define machine_dependent_get_pseudo_op_table mdgpot
+#define machine_dependent_get_line_separators mdgls
+#define machine_dependent_get_comment_at_the_start_of_line_beginners mdgcats
+#define machine_dependent_parse_name mdpname
+#define machine_dependent_parse_operand mdprand
+#define machine_dependent_parse_operator mdpoper
+#define machine_dependent_need_index_operator mdnio
+#define machine_dependent_simplified_expression_read_into mdseri
+#define machine_dependent_get_options mdgetopt
+#define machine_dependent_print_help mdprthelp
+#define machine_dependent_handle_option mdhandopt
+
+#define get_symbol_name_end gsymnam
+
+
 enum { AS_FORMAT_A_OUT, AS_FORMAT_COFF, AS_FORMAT_ELF };
 
 #if     defined (__GNUC__)

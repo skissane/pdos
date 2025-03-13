@@ -8,6 +8,12 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
+#define current_location curloc
+
+#define absolute_expression_read_into abexprri
+
+
 enum expr_type {
 
     EXPR_TYPE_INVALID,

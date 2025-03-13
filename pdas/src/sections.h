@@ -8,6 +8,7 @@
  * commercial and non-commercial, without any restrictions, without
  * complying with any conditions and by any means.
  *****************************************************************************/
+
 #define SECTION_FLAG_ALLOC      (1U << 0)
 #define SECTION_FLAG_LOAD       (1U << 1)
 #define SECTION_FLAG_READONLY   (1U << 2)
@@ -23,6 +24,34 @@
 #define SECTION_FLAG_LINK_DUPLICATES_ONE_ONLY  (1U << 12)
 #define SECTION_FLAG_LINK_DUPLICATES_SAME_SIZE  (1U << 13)
 #define SECTION_FLAG_LINK_DUPLICATES_SAME_CONTENTS  (1U << 14)
+
+
+#define section_symbol secsym
+#define section_subsection_set secss
+#define section_set secset
+#define section_subsection_set_by_name secssbn
+#define section_set_by_name secsbn
+#define section_get_next_section secgns
+#define section_get_name secgnam
+#define section_get_number secgnum
+#define section_set_number secsetn
+#define sections_get_count secsgcnt
+#define sections_chain_subsection_frags secscsf
+#define sections_init secsinit
+#define sections_destroy secsdest
+#define section_set_object_format_dependent_data ssetof
+#define sections_number secsnum
+#define section_get_object_format_dependent_data secgof
+#define section_find_by_number secfbn
+#define section_set_flags secsfl
+#define section_get_flags secgfl
+#define section_set_alignment_power secsap
+#define section_get_alignment_power secgap
+#define section_record_alignment_power secrap
+
+#define current_section cursect
+#define current_subsection cursubs
+
 
 struct frag_chain {
 

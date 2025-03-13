@@ -42,6 +42,19 @@
 /* Fake instructions outside of the range of allowed instructions. */
 #define INTERNAL_CFI_rel_offset 0x100
 
+
+
+#define cfi_add_CFA_offset caoff
+#define cfi_add_CFA_restore cares
+#define cfi_add_CFA_remember_state carstat
+#define cfi_add_CFA_restore_state carsts
+#define cfi_add_CFA_def_cfa cadef
+#define cfi_add_CFA_def_cfa_register cadcr
+#define cfi_add_CFA_def_cfa_offset cadoff
+
+#define cfi_finish_frag cffrag
+
+
 struct cfi_instruction_data {
 
     struct cfi_instruction_data *next;

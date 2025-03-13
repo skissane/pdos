@@ -36,6 +36,8 @@ struct frag {
 
 #define     FRAG_BUF_REALLOC_STEP       16
 
+#define current_frag crfrag
+
 extern struct frag zero_address_frag;
 extern struct frag *current_frag;
 

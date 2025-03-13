@@ -10,6 +10,10 @@
  *****************************************************************************/
 #include    <limits.h>
 
+#include "bytearray.h"
+
+
+
 void bytearray_write_1_bytes (unsigned char *dest, unsigned char value, int little_endian) {
 
     dest[0] = value;
