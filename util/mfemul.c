@@ -337,18 +337,40 @@ static void spec_call(int val)
         else if (cnt == 1)
         {
             /* assume pcomm.exe */
-            handles[4] = fopen("pcomm.exe", "r+b");
+            handles[4] = fopen("pcomm.exe", "rb");
 #if DEBUG
             printf("fopen got %p\n", handles[4]);
 #endif
             regs[15] = 4;
+        }
+        else if (cnt == 2)
+        {
+            /* assume mfemul.in */
+            handles[5] = fopen("mfemul.in", "rb");
+#if DEBUG
+            printf("fopen got %p\n", handles[5]);
+#endif
+            regs[15] = 5;
+        }
+        else if (cnt == 3)
+        {
+            /* assume mfemul.out */
+            handles[6] = fopen("mfemul.out", "wb");
+#if DEBUG
+            printf("fopen got %p\n", handles[6]);
+#endif
+            regs[15] = 6;
         }
         cnt++;
     }
     else if (val == 13) /* fclose */
     {
         static int cnt = 0;
+        int fq;
 
+        fq = getfullword(base + parms + sizeof(U32)*0);
+
+#if 0
         if (cnt == 0)
         {
             /* assume pcomm.exe */
@@ -356,6 +378,11 @@ static void spec_call(int val)
             handles[4] = NULL;
             regs[15] = 0;
         }
+#endif
+        /* the order of the remaining is unknown */
+        /* so don't really close any of them */
+        /* they will all be closed when mfemul exits */
+#if 0
         else if (cnt == 1)
         {        
             /* assume main disk */
@@ -363,6 +390,31 @@ static void spec_call(int val)
             handles[3] = NULL;
             regs[15] = 0;
         }
+        else if (cnt == 2)
+        {
+            /* assume mfemul.in */
+            fclose(handles[5]);
+            handles[5] = NULL;
+            regs[15] = 0;
+        }
+        else if (cnt == 3)
+        {
+            /* assume mfemul.out */
+            fclose(handles[6]);
+            handles[6] = NULL;
+            regs[15] = 0;
+        }
+#else
+#if 0
+        else
+        {
+            regs[15] = 0;
+        }
+#endif
+#endif
+        fclose(handles[fq]);
+        handles[fq] = NULL;
+        regs[15] = 0;
         cnt++;
     }
     else if (val == 11) /* fseek */
