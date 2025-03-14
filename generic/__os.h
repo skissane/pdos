@@ -203,6 +203,7 @@ typedef struct {
     char *(*XPosGetCommandLine)(void);
     int (*XPosGetReturnCode)(void);
     double (*Xstrtod)(const char *nptr, char **endptr);
+    FILE *(*Xtmpfile)(void);
 } OS;
 
 extern OS *__os;
