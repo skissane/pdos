@@ -367,6 +367,25 @@ void write_coff_file (void) {
     FILE *outfile;
     struct symbol *symbol;
     section_t section;
+
+#ifdef __MF32__
+    /* The output object is always ASCII, inluding section and symbol names. */
+    for (section = sections; section; section = section_get_next_section (section)) {
+        char *p = (char *)section_get_name (section);
+        while (*p) {
+            *p = tasc(*p);
+            p++;
+        }
+    }
+    
+    for (symbol = symbols; symbol; symbol = symbol->next) {
+        char *p = symbol->name;
+        while (*p) {
+            *p = tasc(*p);
+            p++;
+        }
+    }
+#endif
     
     sections_number (1);
     sort_symbols ();
@@ -712,6 +731,27 @@ void write_coff_file (void) {
     if (fclose (outfile)) {
         as_error_at (NULL, 0, "Failed to close file!");
     }
+
+#ifdef __MF32__
+    /* The section and symbol names need to be converted back to EBCDIC
+     * for listing to be printed properly.
+     */
+    for (section = sections; section; section = section_get_next_section (section)) {
+        char *p = (char *)section_get_name (section);
+        while (*p) {
+            *p = fasc(*p);
+            p++;
+        }
+    }
+    
+    for (symbol = symbols; symbol; symbol = symbol->next) {
+        char *p = symbol->name;
+        while (*p) {
+            *p = fasc(*p);
+            p++;
+        }
+    }
+#endif
 }
 
 static void handler_bss (char **pp) {

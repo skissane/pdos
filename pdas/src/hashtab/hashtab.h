@@ -12,6 +12,16 @@
 
 typedef size_t hash_value_t;
 
+#ifdef __MF32__
+#define hashtab_create_hashtab htch
+#define hashtab_find htfind
+#define hashtab_delete htdel
+#define hashtab_for_each_element htfee
+#define hashtab_destroy_hashtab htdh
+#define hashtab_insert htins
+#define hashtab_help_default_hash_string hthdhs
+#endif
+
 /* Callback function pointer types. */
 typedef hash_value_t (*hashtab_hash_element_func_t) (const void *);
 typedef int (*hashtab_elements_equal_func_t) (const void *, const void *);

@@ -48,6 +48,7 @@ char is_end_of_line[256] = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 /* '\0' and '\n' */
 
 };
+#define is_end_of_line(c) (is_end_of_line[(int)tasc(c)])
 
 static char is_comment_at_the_start_of_line[256] = {0}; /* Fully target dependent. */
 
@@ -211,7 +212,7 @@ static int read_and_append_char_in_ascii (char **pp) {
             as_warn ("unterminated string; newline inserted");
             
             line_number++;
-            frag_append_1_char (ch);
+            frag_append_1_char (tasc(ch));
             
             break;
         
@@ -269,7 +270,7 @@ static int read_and_append_char_in_ascii (char **pp) {
                 case '\\':
                 case '"':
                 
-                    frag_append_1_char (ch);
+                    frag_append_1_char (tasc(ch));
                     break;
                 
                 default:
@@ -283,7 +284,7 @@ static int read_and_append_char_in_ascii (char **pp) {
         
         default:
         
-            frag_append_1_char (ch);
+            frag_append_1_char (tasc(ch));
             break;
     
     }
@@ -844,7 +845,7 @@ static void handler_linkonce (char **pp)
     flags = section_get_flags (current_section);
     flags |= SECTION_FLAG_LINK_ONCE;
 
-    if (!is_end_of_line[(int) **pp]) {
+    if (!is_end_of_line (**pp)) {
         char *name;
         char ch;
 
@@ -1287,7 +1288,7 @@ int process (const char *fname)
                 continue;
             }
             
-            if (is_end_of_line[(int) *line]) {
+            if (is_end_of_line (*line)) {
                 line++;
                 continue;
             }
@@ -1318,7 +1319,7 @@ void demand_empty_rest_of_line (char **pp) {
 
     *pp = skip_whitespace (*pp);
     
-    if (is_end_of_line[(int) **pp]) {
+    if (is_end_of_line (**pp)) {
         ++*pp;
     } else {
     
@@ -1350,7 +1351,7 @@ void ignore_rest_of_line (char **pp) {
 
 char *find_end_of_line (char *line)
 {
-    while (!is_end_of_line[(int) *line]) {
+    while (!is_end_of_line (*line)) {
         if (line[0] == '\"') {
             line++;
             while (*line && *line != '\"') {
@@ -1359,7 +1360,7 @@ char *find_end_of_line (char *line)
                 }
             }
         } else if (line[0] == '\'') {
-            if (is_end_of_line[(int)line[1]] != 1) {
+            if (is_end_of_line (line[1]) != 1) {
                 if (line[2] == '\'') line++;
                 line++;
             }

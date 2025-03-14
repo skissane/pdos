@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-
+#ifdef __MF32__
 #define cond_handler_ifdef chifdef
 #define cond_handler_ifndef chifndef
 #define cond_handler_else chelse
@@ -88,7 +88,16 @@
 #define machine_dependent_handle_option mdhandopt
 
 #define get_symbol_name_end gsymnam
+#endif
 
+#ifdef __MF32__
+#include "fasc.h"
+#include "tasc.h"
+#else
+/* Outside of mainframe fasc () and tasc () are not needed, so they are not even compiled in. */
+#define fasc(c) (c)
+#define tasc(c) (c)
+#endif
 
 enum { AS_FORMAT_A_OUT, AS_FORMAT_COFF, AS_FORMAT_ELF };
 
@@ -128,8 +137,8 @@ extern const char *program_name;
 
 extern char lex_table[];
 
-#define     is_name_beginner(c)         (lex_table[(c)] & LEX_NAME_START)
-#define     is_name_part(c)             (lex_table[(c)] & LEX_NAME_PART)
+#define     is_name_beginner(c)         (lex_table[tasc(c)] & LEX_NAME_START)
+#define     is_name_part(c)             (lex_table[tasc(c)] & LEX_NAME_PART)
 
 extern char is_end_of_line[];
 

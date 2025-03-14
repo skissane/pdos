@@ -46,6 +46,12 @@ OBJS=a_out.obj as.obj bytearray.obj cfi.obj coff.obj cond.obj cstr.obj elf.obj e
 expr.obj frags.obj hashtab.obj libas.obj listing.obj load_line.obj process.obj sections.obj symbols.obj write.obj int64sup.obj \
 i386_as.obj
 
+ifeq "$(targ)" "zpg"
+VPATH:=$(VPATH);src/ftasc
+OBJS:=$(OBJS) fasc.obj tasc.obj
+COPTS:=$(COPTS) -I./src/ftasc
+endif
+
 TARGET=pdas.exe
 
 all: clean generate $(TARGET)
