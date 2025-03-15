@@ -368,7 +368,7 @@ void write_coff_file (void) {
     struct symbol *symbol;
     section_t section;
 
-#ifdef __MF32__
+#ifdef CONV_SYMBOLS
     /* The output object is always ASCII, inluding section and symbol names. */
     for (section = sections; section; section = section_get_next_section (section)) {
         char *p = (char *)section_get_name (section);
@@ -732,7 +732,7 @@ void write_coff_file (void) {
         as_error_at (NULL, 0, "Failed to close file!");
     }
 
-#ifdef __MF32__
+#ifdef CONV_SYMBOLS
     /* The section and symbol names need to be converted back to EBCDIC
      * for listing to be printed properly.
      */

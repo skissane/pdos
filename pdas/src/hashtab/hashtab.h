@@ -12,7 +12,7 @@
 
 typedef size_t hash_value_t;
 
-#ifdef __MF32__
+#ifdef SHORT_NAMES
 #define hashtab_create_hashtab htch
 #define hashtab_find htfind
 #define hashtab_delete htdel

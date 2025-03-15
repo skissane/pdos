@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#ifdef __MF32__
+#ifdef SHORT_NAMES
 #define cond_handler_ifdef chifdef
 #define cond_handler_ifndef chifndef
 #define cond_handler_else chelse
@@ -90,7 +90,7 @@
 #define get_symbol_name_end gsymnam
 #endif
 
-#ifdef __MF32__
+#ifdef CONV_CHARSET
 #include "fasc.h"
 #include "tasc.h"
 #else

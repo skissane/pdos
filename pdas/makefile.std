@@ -23,7 +23,7 @@ COPTS=-S $(CFLAGS) -fno-common -ansi \
     -I. -I./src -I./src/hashtab -I../pdpclib \
     -I../generic -I../src \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
-    -DNO_LONG_LONG
+    -DNO_LONG_LONG -DSHORT_NAMES -DCONV_CHARSET
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
