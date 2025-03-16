@@ -28,6 +28,13 @@ _puts:
 	add	rsp, 40
 	ret
 
+.globl	___iob_func
+___iob_func:
+	sub	rsp, 40
+	call	__iob_func
+	add	rsp, 40
+	ret
+
 .globl	_malloc
 _malloc:
 	sub	rsp, 40
