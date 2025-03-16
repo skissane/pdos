@@ -1,11 +1,14 @@
 # This builds Win64 executables for x86_64
 # For use with SubC
+# You need to have run makefile.s64 or similar first,
+# to get msvcrt.lib
 
 CC=sccx64
 AR=ar
 LD=pdld --no-insert-timestamp
 AS=pdas --64 --oformat coff
-COPTS=-D__64BIT__ -D__WIN32__ -I. -D__SUBC__ -Dunsigned= -Dlong=int -Dshort=int -Dconst= -Ddouble=int
+COPTS=-D__64BIT__ -D__WIN32__ -I. -D__SUBC__ -Dunsigned= \
+    -Dlong=int -Dshort=int -Dconst= -Ddouble=int
 
 TARGET=pdptest.exe
 OBJS=w32start.obj subcglue.obj pdptest.obj
