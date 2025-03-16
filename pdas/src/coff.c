@@ -756,7 +756,7 @@ void write_coff_file (void) {
 
 static void handler_bss (char **pp) {
 
-    if (is_end_of_line[(int) **pp]) {
+    if (is_end_of_line (**pp)) {
     
         section_subsection_set (bss_section, (subsection_t) get_result_of_absolute_expression (pp));
         demand_empty_rest_of_line (pp);

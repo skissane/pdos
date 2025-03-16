@@ -48,7 +48,6 @@ char is_end_of_line[256] = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 /* '\0' and '\n' */
 
 };
-#define is_end_of_line(c) (is_end_of_line[(int)tasc(c)])
 
 static char is_comment_at_the_start_of_line[256] = {0}; /* Fully target dependent. */
 
@@ -1142,7 +1141,7 @@ void process_init (void) {
     
     /* Installs machine dependent line separators. */
     for (p = machine_dependent_get_line_separators (); *p; p++) {
-        is_end_of_line[(int) *p] = 2;
+        is_end_of_line (*p) = 2;
     }
     
     /* Installs machine dependent start-of-line comment characters. */

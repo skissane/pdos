@@ -141,6 +141,7 @@ extern char lex_table[];
 #define     is_name_part(c)             (lex_table[tasc(c)] & LEX_NAME_PART)
 
 extern char is_end_of_line[];
+#define is_end_of_line(c) (is_end_of_line[(int)tasc(c)])
 
 typedef     struct section              *section_t;
 typedef     signed long                 subsection_t;

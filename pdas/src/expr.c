@@ -175,7 +175,7 @@ static section_t operand (char **pp, struct expr *expr, enum expr_mode expr_mode
     
     *pp = skip_whitespace (*pp);
     
-    if (is_end_of_line[(int) **pp]) {
+    if (is_end_of_line (**pp)) {
         goto end_of_line;
     }
     

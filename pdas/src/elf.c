@@ -644,7 +644,7 @@ static void handler_section (char **pp)
      * into names should be accepted too.
      */
     name = *pp;
-    while (**pp != ',' && **pp != ' ' && !is_end_of_line[(unsigned char)**pp]) {
+    while (**pp != ',' && **pp != ' ' && !is_end_of_line (**pp)) {
         ++*pp;
     }
     ch = **pp;
@@ -667,7 +667,7 @@ static void handler_section (char **pp)
             return;
         }
 
-        while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
+        while ((attribute = *++*pp), attribute != '"' && !is_end_of_line (attribute)) {
             switch (attribute) {
                 case 'a':
                     sh_flags |= SHF_ALLOC;
@@ -730,7 +730,7 @@ static void handler_section (char **pp)
             }
             
             **pp = ch;
-        } else if (!is_end_of_line[(unsigned char)**pp]) {
+        } else if (!is_end_of_line (**pp)) {
             as_warn ("rest of line ignored; first ignored character is '%c'", **pp);
             ignore_rest_of_line (pp);
             return;
