@@ -3515,7 +3515,7 @@ static void set_syntax (char **pp, int set_intel_syntax)
     
     *pp = skip_whitespace (*pp);
     
-    if (!is_end_of_line[(int) **pp]) {
+    if (!is_end_of_line (**pp)) {
         char *s = *pp;
         char saved_c = get_symbol_name_end (pp);
         

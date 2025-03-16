@@ -43,7 +43,7 @@ char lex_table[256] = {
  *
  * Line separators allowing having multiple logical lines on a single physical line.
  */
-char is_end_of_line[256] = {
+char is_end_of_line_array[256] = {
 
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 /* '\0' and '\n' */
 

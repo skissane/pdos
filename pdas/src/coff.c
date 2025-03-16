@@ -825,7 +825,7 @@ static void handler_section (char **pp) {
             int readonly_removed = 0;
             int load_removed = 0;
 
-            while ((attribute = *++*pp), attribute != '"' && !is_end_of_line[(int)attribute]) {
+            while ((attribute = *++*pp), attribute != '"' && !is_end_of_line (attribute)) {
 
                 if (isdigit ((unsigned char)attribute)) {
 
