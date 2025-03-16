@@ -1,0 +1,26 @@
+# This is the makefile to build a RISC-V UEFI executable
+# using gcc and pdld
+#
+
+CC=gcc
+COPTS=-c -O2 -fno-builtin -nostdlib -nostdinc -I . -m32 -fno-stack-protector \
+    --no-pie -D__NOBIVA__ \
+    -D__EFI__ -D__EFIBIOS__ \
+    -U__gnu_linux__ -D__GENSHELL__ \
+    -D__RISCV__
+
+
+pdptest: efistart.o rv3supa.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o __memmgr.o
+	rm -f pdplinux.a
+	ar r pdplinux.a efistart.o rv3supa.o stdio.o string.o stdlib.o
+	ar r pdplinux.a start.o time.o errno.o assert.o signal.o
+	ar r pdplinux.a locale.o ctype.o setjmp.o math.o __memmgr.o
+        pdld --no-insert-timestamp -o pdptest.efi -e efimain --oformat coff --subsystem 10 efistart.o pdptest.o pdpefi.a
+
+.c.o:
+	$(CC) $(COPTS) $<
+
+rv3supa.o: rv3supa.asm
+	as --32 -o $@ $*.asm
