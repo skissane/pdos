@@ -12,10 +12,50 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#ifdef SHORT_NAMES
 #define coff_get_stub_file cgsf
 #define coff_get_SizeOfStackCommit cgsosc
 #define coff_get_base_address cgba
 #define coff_get_first_section_rva cgfsr
+
+#define mainframe_get_amode mfgamode
+#define mainframe_read mfread
+#define mainframe_symbol_find mfsf
+#define mainframe_symbol_check_undefined mfscu
+#define mainframe_print_help mfph
+#define mainframe_use_option mfuo
+
+#define section_find sefind
+#define section_find_or_make sfom
+#define section_write swrite
+#define section_count scount
+#define section_part_new spnew
+#define section_append_section_part sasp
+
+#define sections_destroy sedestroy
+#define sections_destroy_empty_before_collapse sdebc
+
+#define subsection_find ssfind
+#define subsection_find_or_make ssfom
+#define subsection_append_section_part ssasp
+
+#define symbols_init sinit
+#define symbols_destroy symdestroy
+#define symbol_find syfind
+#define symbol_add_to_hashtab sath
+#define symbol_remove_from_hashtab srfh
+#define symbol_record_external_symbol sres
+#define symbol_is_undefined siu
+#define symbol_get_value_with_base sgvwb
+#define symbol_get_value_no_base sgvnb
+#define symbols_for_each_global sfeg
+#endif /* SHORT_NAMES */
+
+#ifdef CONV_CHARSET
+#include "tasc.h"
+#else
+#define tasc(c) (c)
+#endif
 
 #if defined (_WIN32)
 # define NORETURN __declspec (noreturn)
@@ -329,13 +369,6 @@ const struct long_option *lx_get_long_options (void);
 int macho_read (unsigned char *file, size_t file_size, const char *filename);
 
 /* mainframe.c */
-#define mainframe_get_amode mfgamode
-#define mainframe_read mfread
-#define mainframe_symbol_find mfsf
-#define mainframe_symbol_check_undefined mfscu
-#define mainframe_print_help mfph
-#define mainframe_use_option mfuo
-
 int mainframe_get_amode (void);
 
 address_type mvs_get_base_address (void);
@@ -359,31 +392,6 @@ void map_write (const char *filename);
 void read_input_file (const char *filename);
 
 /* sections.c */
-#define section_find sefind
-#define section_find_or_make sfom
-#define section_write swrite
-#define section_count scount
-#define section_part_new spnew
-#define section_append_section_part sasp
-
-#define sections_destroy sedestroy
-#define sections_destroy_empty_before_collapse sdebc
-
-#define subsection_find ssfind
-#define subsection_find_or_make ssfom
-#define subsection_append_section_part ssasp
-
-#define symbols_init sinit
-#define symbols_destroy symdestroy
-#define symbol_find syfind
-#define symbol_add_to_hashtab sath
-#define symbol_remove_from_hashtab srfh
-#define symbol_record_external_symbol sres
-#define symbol_is_undefined siu
-#define symbol_get_value_with_base sgvwb
-#define symbol_get_value_no_base sgvnb
-#define symbols_for_each_global sfeg
-
 struct section *section_find (const char *name);
 struct section *section_find_or_make (const char *name);
 void section_write (struct section *section, unsigned char *memory);
