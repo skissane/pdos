@@ -258,12 +258,22 @@ static int process_input (void *input_file,
     struct export_name *enames = NULL;
     size_t num_enames = 0;
     size_t max_enames = 0;
-    char *input = input_file;
+    char *next_line = input_file;
     
-    while (*input) {
+    while (*next_line) {
+        char *input = next_line;
         char *p;
 
-        /* Format is "++symbol_name.dll_name.ignored.ordinal". */
+        for (next_line = input; *next_line && !isspace (*next_line); next_line++) {}
+        *next_line = '\0';
+        for (next_line++; *next_line && isspace (*next_line); next_line++) {}
+
+        if (*input != '+') continue;
+
+        /* Format is "++symbol_name.dll_name.ignored"
+         * or "++symbol_name.dll_name.ignored.ordinal".
+         * The dll_name can be enclosed in single quotes to allow '.' inside it.
+         */
         while (*input == '+') input++;
         p = strchr (input, '.');
         if (!p) return 1;
@@ -278,25 +288,38 @@ static int process_input (void *input_file,
         enames[num_enames].name_no_at = input;
         input = p + 1;
 
-        p = strchr (input, '.');
-        if (!p) return 1;
-        *p = '\0';
+        if (*input == '\'') {
+            input++;
+            p = strchr (input, '\'');
+            if (!p) return 1;
+            *p = '\0';
+            p++;
+        } else {
+            p = strchr (input, '.');
+            if (!p) return 1;
+            *p = '\0';
+        }
 
         dll_filename = input;
         input = p + 1;
 
         p = strchr (input, '.');
-        if (!p) return 1;
-        *p = '\0';
-        input = p + 1;
+        if (!p) {
+            for (p = input; *p && !isspace (*p); p++) {}
+            *p = '\0';
+            input = p + 1;
 
-        enames[num_enames].ordinal = (unsigned short)strtol (input, &p, 0);
-        input = p;
+            enames[num_enames].ordinal = 0;
+        } else {
+            *p = '\0';
+            input = p + 1;
+
+            enames[num_enames].ordinal = (unsigned short)strtol (input, &p, 0);
+            input = p;
+        }
         
         enames[num_enames].export_type = EXPORT_TYPE_CODE;
         num_enames++;
-        
-        while (isspace (*(unsigned char *)input)) input++;
     }
 
     *export_names_p = enames;
@@ -312,9 +335,17 @@ int main (int argc, char **argv)
     struct export_name *enames = NULL;
     size_t num_enames;
     
-    if (argc != 3) {
-        printf ("usage: %s input_file output_file\n", argv[0]);
+    if (argc != 3 && argc != 4) {
+        printf ("usage: %s input_file output_file (optional) x64/i386\n", argv[0]);
         return 0;
+    }
+
+    if (argc == 4) {
+        if (!strcmp (argv[3], "x64")) {
+            wanted_Machine = IMAGE_FILE_MACHINE_AMD64;
+        } else if (!strcmp (argv[3], "i386")) {
+            wanted_Machine = IMAGE_FILE_MACHINE_I386;
+        }
     }
 
     if (read_file_into_memory (argv[1], &input_file, &input_file_size)) {
