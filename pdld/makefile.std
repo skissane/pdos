@@ -30,7 +30,7 @@ COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
     -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -ansi -pedantic-errors \
-    -I../generic -I../src -I./src/ftebc
+    -I../generic -I../src -I./src/ftebc -DSHORT_NAMES -DCONV_CHARSET
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
@@ -145,6 +145,12 @@ OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj \
     macho.obj macho_bytearray.obj \
     mainframe.obj map.obj read.obj sections.obj symbols.obj \
     tebc.obj vse.obj xmalloc.obj int64sup.obj
+
+ifeq "$(targ)" "zpg"
+VPATH:=$(VPATH);src/tasc
+OBJS:=$(OBJS) tasc.obj
+COPTS:=$(COPTS) -I./src/tasc
+endif
 
 TARGET=pdld.exe
 
