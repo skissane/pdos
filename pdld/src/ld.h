@@ -53,11 +53,24 @@
 
 #ifdef CONV_CHARSET
 #include "tasc.h"
+
+#ifndef CONVTMAC
+#define CONVTMAC tasc
+#endif
+#define ttgtchs(c) CONVTMAC(c)
+
 #else
 #define tasc(c) (c)
+#define ttgtchs(c) (c)
 #endif
 
-#if defined (_WIN32)
+#ifndef __STDC_VERSION__
+#define __STDC_VERSION__ 0
+#endif
+
+#if __STDC_VERSION__ >= 202311L
+# define NORETURN [[noreturn]]
+#elif defined (_WIN32)
 # define NORETURN __declspec (noreturn)
 #else
 # define NORETURN

@@ -21,17 +21,17 @@
 #include "coff_bytearray.h"
 
 #ifdef CONV_CHARSET
-void tascmem (void *mem, size_t size)
+void ttgtchsmem (void *mem, size_t size)
 {
     char *p = mem;
     
     while (size--) {
-        *p = tasc(*p);
+        *p = ttgtchs(*p);
         p++;
     }
 }
 #else
-#define tascmem(mem, size)
+#define ttgtchsmem(mem, size)
 #endif
 
 /* Specification does not seem to say that there must actually be 16 IMAGE_DATA_DIRECTORYs
@@ -312,7 +312,7 @@ static void write_sections (unsigned char *file)
                 (strlen (section->name) >= sizeof (hdr->Name))
                 ? sizeof (hdr->Name)
                 : strlen (section->name));
-        tascmem(hdr->Name, sizeof (hdr->Name));
+        ttgtchsmem(hdr->Name, sizeof (hdr->Name));
 
         hdr->VirtualSize = section->total_size;
         hdr->VirtualAddress = section->rva;
@@ -1426,8 +1426,8 @@ void coff_write (const char *filename)
     } else {
         memset (&dos_hdr, 0, sizeof (dos_hdr));
 
-        dos_hdr.Magic[0] = tasc('M');
-        dos_hdr.Magic[1] = tasc('Z');
+        dos_hdr.Magic[0] = ttgtchs('M');
+        dos_hdr.Magic[1] = ttgtchs('Z');
 
         dos_hdr.SizeOfHeaderInParagraphs = SIZEOF_struct_IMAGE_DOS_HEADER_file / IMAGE_DOS_HEADER_PARAGRAPH_SIZE;
 
@@ -1438,7 +1438,7 @@ void coff_write (const char *filename)
     }
 
     memcpy (pos, "PE\0\0", 4);
-    tascmem(pos, 4);
+    ttgtchsmem(pos, 4);
     pos += 4;
 
     coff_hdr.Machine = get_Machine ();
@@ -2356,7 +2356,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     strcpy ((char *)(part->content), dll_name);
-    tascmem(part->content, strlen (part->content));
+    ttgtchsmem(part->content, strlen (part->content));
 
     of->symbol_array[2].name = xstrdup (".idata$7");
     of->symbol_array[2].value = 0;
@@ -2460,7 +2460,7 @@ static void import_generate_import (const char *import_name,
         memset (part->content, 0, part->content_size);
         bytearray_write_2_bytes (part->content, OrdinalHint, LITTLE_ENDIAN);
         strcpy ((char *)(part->content + 2), real_import_name);
-        tascmem(part->content + 2, strlen (part->content + 2));
+        ttgtchsmem(part->content + 2, strlen (part->content + 2));
 
         free (real_import_name);
     }
