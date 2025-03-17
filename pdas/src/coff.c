@@ -373,7 +373,7 @@ void write_coff_file (void) {
     for (section = sections; section; section = section_get_next_section (section)) {
         char *p = (char *)section_get_name (section);
         while (*p) {
-            *p = tasc(*p);
+            *p = ttgtchs(*p);
             p++;
         }
     }
@@ -381,7 +381,7 @@ void write_coff_file (void) {
     for (symbol = symbols; symbol; symbol = symbol->next) {
         char *p = symbol->name;
         while (*p) {
-            *p = tasc(*p);
+            *p = ttgtchs(*p);
             p++;
         }
     }
@@ -739,7 +739,7 @@ void write_coff_file (void) {
     for (section = sections; section; section = section_get_next_section (section)) {
         char *p = (char *)section_get_name (section);
         while (*p) {
-            *p = fasc(*p);
+            *p = ftgtchs(*p);
             p++;
         }
     }
@@ -747,7 +747,7 @@ void write_coff_file (void) {
     for (symbol = symbols; symbol; symbol = symbol->next) {
         char *p = symbol->name;
         while (*p) {
-            *p = fasc(*p);
+            *p = ftgtchs(*p);
             p++;
         }
     }

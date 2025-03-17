@@ -93,16 +93,32 @@
 #ifdef CONV_CHARSET
 #include "fasc.h"
 #include "tasc.h"
+
+#ifndef CONVFMAC
+#define CONVFMAC fasc
+#endif
+#ifndef CONVTMAC
+#define CONVTMAC tasc
+#endif
+#define ftgtchs(c) CONVFMAC(c)
+#define ttgtchs(c) CONVTMAC(c)
+
 #else
 /* Outside of mainframe fasc () and tasc () are not needed, so they are not even compiled in. */
 #define fasc(c) (c)
 #define tasc(c) (c)
+#define ftgtchs(c) (c)
+#define ttgtchs(c) (c)
 #endif
 
 enum { AS_FORMAT_A_OUT, AS_FORMAT_COFF, AS_FORMAT_ELF };
 
-#if     defined (__GNUC__)
-# define    NORETURN            __attribute__ ((noreturn))
+#ifndef __STDC_VERSION__
+#define __STDC_VERSION__ 0
+#endif
+
+#if __STDC_VERSION__ >= 202311L
+# define NORETURN [[noreturn]]
 #elif   defined (_WIN32)
 # define    NORETURN            __declspec (noreturn)
 #else

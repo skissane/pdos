@@ -211,7 +211,7 @@ static int read_and_append_char_in_ascii (char **pp) {
             as_warn ("unterminated string; newline inserted");
             
             line_number++;
-            frag_append_1_char (tasc(ch));
+            frag_append_1_char (ttgtchs(ch));
             
             break;
         
@@ -269,7 +269,7 @@ static int read_and_append_char_in_ascii (char **pp) {
                 case '\\':
                 case '"':
                 
-                    frag_append_1_char (tasc(ch));
+                    frag_append_1_char (ttgtchs(ch));
                     break;
                 
                 default:
@@ -283,7 +283,7 @@ static int read_and_append_char_in_ascii (char **pp) {
         
         default:
         
-            frag_append_1_char (tasc(ch));
+            frag_append_1_char (ttgtchs(ch));
             break;
     
     }
