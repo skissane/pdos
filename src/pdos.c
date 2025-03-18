@@ -4216,8 +4216,17 @@ static int ff_search(void)
                     |(dirent.start_cluster[1]<<8);
 
                     memset(dta->file_name, '\0', sizeof(dta->file_name));
-                    strcpy(dta->file_name, file);
-
+                    if (strcmp(cwd, ff_path) != 0)
+                    {
+                        if (strcmp(ff_path, "") == 0)
+                        {
+                            strcat(dta->file_name, "\\");
+                        } else {
+                            strcat(dta->file_name, ff_path);
+                            strcat(dta->file_name, "\\");
+                        }
+                    }
+                    strcat(dta->file_name, file);
                     /* Checks if this file has LFN associated
                      * and stores it in the DTA. This check
                      * is sufficient, because the check before
