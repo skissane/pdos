@@ -281,43 +281,6 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
 
         if (line[0] == '\0') continue;
 
-        if (line[0] == ' ' || line[0] == '\t') {
-            if (filenames) {                
-                while (line[0] == ' ' || line[0] == '\t') line++;
-
-                if (commands_index + strlen (line) + 1 > commands_size) {
-                    commands_size = (commands_index + strlen (line) + 1) * 2;
-                    commands = xrealloc(commands, commands_size);
-                }
-                
-                {
-                    /* Escaped newlines in command lines must be preserved
-                     * but if the character following escaped newline is <tab>,
-                     * the <tab> should be removed. */
-                    char *source;
-                    char *dest;
-
-                    source = line;
-                    dest = &commands[commands_index];
-
-                    for (; *source; source++, dest++) {
-                        if (source[0] == '\n' && source[-1] == '\\' && source[1] == '\t') {
-                            *dest = *source;
-                            source++;
-                            continue;
-                        }
-                        *dest = *source;
-                    }
-
-                    *dest = '\0';
-                    commands_index += dest - &commands[commands_index] + 1; 
-                }
-                commands[commands_index - 1] = '\n';
-
-                continue;
-            }
-        }
-
         if (strlen(line) + 1 > clean_size)
         {
             clean_size = strlen(line) + 1;
@@ -333,6 +296,11 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
         /* Skip blank lines */
         while (isspace (*p)) p++;
         if (*p == '\0') continue;
+
+        /* In command lines ifeq etc. with space/tab before them
+         * should be treated as real commands, not directives.
+         */
+        if (filenames && p != clean) goto is_command;
 
         if (strncmp (p, "else", 4) == 0 && (isspace (p[4]) || p[4] == '\0')) {
             if (!cur_if_stack) {
@@ -498,8 +466,45 @@ ifeq_invalid_syntax:
             
             continue;
         }
-
+is_command:
         if (cur_if_stack && cur_if_stack->ignoring) continue;
+
+        if (line[0] == ' ' || line[0] == '\t') {
+            if (filenames) {                
+                while (line[0] == ' ' || line[0] == '\t') line++;
+
+                if (commands_index + strlen (line) + 1 > commands_size) {
+                    commands_size = (commands_index + strlen (line) + 1) * 2;
+                    commands = xrealloc(commands, commands_size);
+                }
+                
+                {
+                    /* Escaped newlines in command lines must be preserved
+                     * but if the character following escaped newline is <tab>,
+                     * the <tab> should be removed. */
+                    char *source;
+                    char *dest;
+
+                    source = line;
+                    dest = &commands[commands_index];
+
+                    for (; *source; source++, dest++) {
+                        if (source[0] == '\n' && source[-1] == '\\' && source[1] == '\t') {
+                            *dest = *source;
+                            source++;
+                            continue;
+                        }
+                        *dest = *source;
+                    }
+
+                    *dest = '\0';
+                    commands_index += dest - &commands[commands_index] + 1; 
+                }
+                commands[commands_index - 1] = '\n';
+
+                continue;
+            }
+        }
 
         if (strncmp (p, "include", 7) == 0 && (isspace (p[7]) || p[7] == '\0')) {
 
