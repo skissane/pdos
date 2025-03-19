@@ -1,4 +1,4 @@
-gcc -O2 -DBLDGENERIC -o cc64 cc64.c junk.c
+gcc -O2 -DBLDGENERIC -o cc64 cc64.c junk.c -lm
 
 rem don't attempt to get cc64 to rebuild itself
 rem because that requires the non-generic version
