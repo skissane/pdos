@@ -2356,7 +2356,7 @@ static void import_generate_head (const char *dll_name, const char *filename)
     part->content = xmalloc (part->content_size);
     memset (part->content, 0, part->content_size);
     strcpy ((char *)(part->content), dll_name);
-    ttgtchsmem(part->content, strlen (part->content));
+    ttgtchsmem(part->content, strlen ((char *)part->content));
 
     of->symbol_array[2].name = xstrdup (".idata$7");
     of->symbol_array[2].value = 0;
@@ -2460,7 +2460,7 @@ static void import_generate_import (const char *import_name,
         memset (part->content, 0, part->content_size);
         bytearray_write_2_bytes (part->content, OrdinalHint, LITTLE_ENDIAN);
         strcpy ((char *)(part->content + 2), real_import_name);
-        ttgtchsmem(part->content + 2, strlen (part->content + 2));
+        ttgtchsmem(part->content + 2, strlen ((char *)part->content + 2));
 
         free (real_import_name);
     }
