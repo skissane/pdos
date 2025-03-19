@@ -285,15 +285,15 @@ void as_warn (const char *fmt, ...);
 void as_warn_at (const char *filename, unsigned long line_number, const char *fmt, ...);
 
 NORETURN void as_internal_error_at_source (const char *code_filename,
-                                  unsigned long code_line_number,
-                                  const char *fmt,
-                                  ...);
+                                           unsigned long code_line_number,
+                                           const char *fmt,
+                                           ...);
 NORETURN void as_internal_error_at_source_at (const char *code_filename,
-                                     unsigned long code_line_number,
-                                     const char *filename,
-                                     unsigned long line_number,
-                                     const char *fmt,
-                                     ...);
+                                              unsigned long code_line_number,
+                                              const char *filename,
+                                              unsigned long line_number,
+                                              const char *fmt,
+                                              ...);
 
 /* libas.c */
 char *skip_whitespace (char *p);
