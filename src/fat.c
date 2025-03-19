@@ -897,9 +897,17 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
                               &fatfile->nextCluster);
             /* sectorUpto is potentially wrong after a seek/write too,
                so we recalculate */
-            fatfile->sectorUpto = (fatfile->currpos %
+
+            if (fatfile->currpos < fatfile->fileSize)
+            {
+                fatfile->sectorUpto = (fatfile->currpos %
                                   (fat->sectors_per_cluster * MAXSECTSZ))
                                    / MAXSECTSZ;
+            }
+            else
+            {
+                fatfile->sectorUpto = fatfile->sectorCount;
+            }
         }
     }
     /* until we reach the end of the chain
