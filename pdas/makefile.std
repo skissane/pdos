@@ -19,7 +19,7 @@ AS=as370 -mhlasm -mebcdic
 AR=ar370
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
-# If targeting ASCII, get rid of the CONVTMACRO define
+# If targeting ASCII, get rid of the CONV*MAC defines
 # (the current = is important)
 # At time of writing, gen.exe needs to be gen and
 # copied to \dos and the process repeated, too
@@ -28,7 +28,7 @@ COPTS=-S $(CFLAGS) -fno-common -ansi \
     -I../generic -I../src \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -DSHORT_NAMES \
-    -DCONV_CHARSET -DCONVTMACRO=
+    -DCONV_CHARSET -DCONVTMAC= -DCONVFMAC=
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
