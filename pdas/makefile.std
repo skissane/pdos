@@ -19,12 +19,16 @@ AS=as370 -mhlasm -mebcdic
 AR=ar370
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
-# Don't define CONV_CHARSET if you are targeting EBCDIC
+# If targeting ASCII, get rid of the CONVTMACRO define
+# (the current = is important)
+# At time of writing, gen.exe needs to be gen and
+# copied to \dos and the process repeated, too
 COPTS=-S $(CFLAGS) -fno-common -ansi \
     -I. -I./src -I./src/hashtab -I../pdpclib \
     -I../generic -I../src \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
-    -DNO_LONG_LONG -DSHORT_NAMES -DXCONV_CHARSET
+    -DNO_LONG_LONG -DSHORT_NAMES \
+    -DCONV_CHARSET -DCONVTMACRO=
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
