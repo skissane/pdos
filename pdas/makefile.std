@@ -19,11 +19,12 @@ AS=as370 -mhlasm -mebcdic
 AR=ar370
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
+# Don't define CONV_CHARSET if you are targeting EBCDIC
 COPTS=-S $(CFLAGS) -fno-common -ansi \
     -I. -I./src -I./src/hashtab -I../pdpclib \
     -I../generic -I../src \
     -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
-    -DNO_LONG_LONG -DSHORT_NAMES -DCONV_CHARSET
+    -DNO_LONG_LONG -DSHORT_NAMES -DXCONV_CHARSET
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
 
 
