@@ -90,8 +90,8 @@ void as_error_at (const char *filename, unsigned long line_number, const char *f
 
 }
 
-void as_fatal_error_at (const char *filename, unsigned long line_number, const char *fmt, ...) {
-
+NORETURN void as_fatal_error_at (const char *filename, unsigned long line_number, const char *fmt, ...)
+{
     va_list ap;
     
     va_start (ap, fmt);
@@ -122,7 +122,6 @@ void as_fatal_error_at (const char *filename, unsigned long line_number, const c
     }
     
     exit (EXIT_FAILURE);
-
 }
 
 void as_warn (const char *fmt, ...) {
@@ -180,11 +179,11 @@ static void report_internal (const char *code_filename,
 
 }
 
-void as_internal_error_at_source (const char *code_filename,
-                                  unsigned long code_line_number,
-                                  const char *fmt,
-                                  ...) {
-
+NORETURN void as_internal_error_at_source (const char *code_filename,
+                                           unsigned long code_line_number,
+                                           const char *fmt,
+                                           ...)
+{
     va_list ap;
 
     const char *filename;
@@ -202,16 +201,15 @@ void as_internal_error_at_source (const char *code_filename,
     }
     
     exit (EXIT_FAILURE);
-
 }
 
-void as_internal_error_at_source_at (const char *code_filename,
-                                     unsigned long code_line_number,
-                                     const char *filename,
-                                     unsigned long line_number,
-                                     const char *fmt,
-                                     ...) {
-
+NORETURN void as_internal_error_at_source_at (const char *code_filename,
+                                              unsigned long code_line_number,
+                                              const char *filename,
+                                              unsigned long line_number,
+                                              const char *fmt,
+                                              ...)
+{
     va_list ap;
     
     va_start (ap, fmt);
@@ -224,5 +222,4 @@ void as_internal_error_at_source_at (const char *code_filename,
     }
     
     exit (EXIT_FAILURE);
-
 }
