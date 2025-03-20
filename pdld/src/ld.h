@@ -52,15 +52,22 @@
 #endif /* SHORT_NAMES */
 
 #ifdef CONV_CHARSET
+#include "fasc.h"
 #include "tasc.h"
 
+#ifndef CONVFMAC
+#define CONVFMAC fasc
+#endif
 #ifndef CONVTMAC
 #define CONVTMAC tasc
 #endif
+#define ftgtchs(c) CONVFMAC(c)
 #define ttgtchs(c) CONVTMAC(c)
 
 #else
+#define fasc(c) (c)
 #define tasc(c) (c)
+#define ftgtchs(c) (c)
 #define ttgtchs(c) (c)
 #endif
 

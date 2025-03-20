@@ -21,6 +21,16 @@
 #include "coff_bytearray.h"
 
 #ifdef CONV_CHARSET
+void ftgtchsmem (void *mem, size_t size)
+{
+    char *p = mem;
+    
+    while (size--) {
+        *p = ftgtchs(*p);
+        p++;
+    }
+}
+
 void ttgtchsmem (void *mem, size_t size)
 {
     char *p = mem;
@@ -31,6 +41,7 @@ void ttgtchsmem (void *mem, size_t size)
     }
 }
 #else
+#define ftgtchsmem(mem, size)
 #define ttgtchsmem(mem, size)
 #endif
 
@@ -1650,9 +1661,13 @@ void coff_write (const char *filename)
 
 #define CHECK_READ(memory_position, size_to_read) \
     do { if (((memory_position) - file + (size_to_read) > file_size) \
-             || (memory_position) < file) ld_fatal_error ("corrupted input file"); } while (0)
+             || (memory_position) < file) ld_fatal_error ("%s: corrupted input file", filename); } while (0)
 
-static void interpret_dot_drectve_section (const unsigned char *file, size_t file_size, const unsigned char *pos, size_t size)
+static void interpret_dot_drectve_section (const unsigned char *file,
+                                           size_t file_size,
+                                           const char *filename,
+                                           const unsigned char *pos,
+                                           size_t size)
 {
     char *temp_buf, *p;
 
@@ -1666,6 +1681,7 @@ static void interpret_dot_drectve_section (const unsigned char *file, size_t fil
     if (pos[0] == 0xEF && pos[1] == 0xBB && pos[2] == 0xBF) {
         ld_internal_error_at_source (__FILE__, __LINE__, "UTF-8 byte order marker not yet supported at the start of .drectve section");
     }
+    ftgtchsmem(temp_buf, size);
 
     p = temp_buf;
     while (*p) {
@@ -2071,6 +2087,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                 if (strcmp (section_name, ".drectve") == 0) {
                     interpret_dot_drectve_section (file,
                                                    file_size,
+                                                   filename,
                                                    file + section_hdr.PointerToRawData,
                                                    section_hdr.SizeOfRawData);
                     part_p_array[i + 1] = NULL;
