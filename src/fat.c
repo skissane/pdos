@@ -891,13 +891,34 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
          * so we obtain the correct value again. */
         if (fatfile->nextCluster == 0)
         {
+            int adjust;
+
             fatClusterAnalyse(fat,
                               fatfile->currentCluster,
                               &fatfile->sectorStart,
                               &fatfile->nextCluster);
+
             /* sectorUpto is potentially wrong after a seek/write too,
                so we recalculate */
-            fatfile->sectorUpto = (fatfile->currpos %
+
+            /* I believe the way it works is that we don't waste time
+               reading the next sector until it is actually requested.
+               So we will be sitting one sector behind, even when we
+               have logically broken into the next sector.
+
+               Adjusting by 1 byte will solve this edge case
+
+               But that logic doesn't work at the beginning of the file.
+            */
+            if (fatfile->currpos != 0)
+            {
+                adjust = 1;
+            }
+            else
+            {
+                adjust = 0;
+            }
+            fatfile->sectorUpto = ((fatfile->currpos - adjust) %
                                   (fat->sectors_per_cluster * MAXSECTSZ))
                                    / MAXSECTSZ;
         }
