@@ -26,11 +26,20 @@ CC=gccmvs
 CFLAGS=-Os
 AS=as370 -mhlasm -mebcdic
 AR=ar370
+# Producing an ASCII Windows executable with embedded
+# EBCDIC strings suitable for a pseudo-bios running on
+# ASCII Windows requires you to specify
+# -DCONV_CHARSET -DCONVFMAC=
+# but NOT specify =DCONVTMAC=
+# A pure ASCII executable produced on an EBCDIC machine
+# requires CONVTMAC to be specified and nullified as well
+# A pure EBCDIC system requires none of those
 COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
     -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
     -DNO_LONG_LONG -ansi -pedantic-errors \
-    -I../generic -I../src -I./src/ftebc -DSHORT_NAMES -DCONV_CHARSET
+    -I../generic -I../src -I./src/ftebc -DSHORT_NAMES \
+    -DCONV_CHARSET -DCONVFMAC=
 LD=pdld
 LDFLAGS=-s -nostdlib --no-insert-timestamp
 EXTRA1=--oformat mvs ../pdpclib/pgastart.o
