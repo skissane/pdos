@@ -783,6 +783,7 @@ static void generate_edata (void)
 
     symbol = of->symbol_array + 1;
     strcpy ((char *)(part->content + name_table_offset), ld_state->output_filename);
+    ttgtchsmem(part->content + name_table_offset, strlen (ld_state->output_filename));
     name_table_offset += strlen (ld_state->output_filename) + 1;
     for (i = 0; i < num_names; i++) {
         {
@@ -827,6 +828,7 @@ static void generate_edata (void)
             const char *name;
             name = kill_at ? (export_names[i].name_no_at) : (export_names[i].name);
             strcpy ((char *)(part->content + name_table_offset), name);
+            ttgtchsmem(part->content + name_table_offset, strlen (name));
             name_table_offset += strlen (name) + 1;
         }
     }
