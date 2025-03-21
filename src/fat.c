@@ -913,6 +913,10 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
             if (fatfile->currpos != 0)
             {
                 adjust = 1;
+                if (fatfile->byteUpto == 0)
+                {
+                    fatfile->byteUpto = 512;
+                }
             }
             else
             {
