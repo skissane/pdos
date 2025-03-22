@@ -2999,6 +2999,531 @@ static void freadSlowB(void *ptr,
 #endif
 
 
+
+#ifdef CONV_CHARSET
+
+/* we only need one pair of these compiled in, but I have
+   both included because the use case is rare */
+
+/*********************************************************************/
+/*                                                                   */
+/*  This Program Written By Paul Edwards.                            */
+/*  Released to the public domain.                                   */
+/*                                                                   */
+/*********************************************************************/
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a representation of an ascii character.  An integer  */
+/*  is returned, containing the representation of that character     */
+/*  in whatever character set you are using on this system.          */
+/*                                                                   */
+/*********************************************************************/
+static int fasc(int asc)
+{
+  switch (asc)
+  {
+    case 0x09 : return('\t');
+    case 0x0a : return('\n');
+    case 0x0c : return('\f');
+    case 0x0d : return('\r');
+    case 0x20 : return(' ');
+    case 0x21 : return('!');
+    case 0x22 : return('\"');
+    case 0x23 : return('#');
+    case 0x24 : return('$');
+    case 0x25 : return('%');
+    case 0x26 : return('&');
+    case 0x27 : return('\'');
+    case 0x28 : return('(');
+    case 0x29 : return(')');
+    case 0x2a : return('*');
+    case 0x2b : return('+');
+    case 0x2c : return(',');
+    case 0x2d : return('-');
+    case 0x2e : return('.');
+    case 0x2f : return('/');
+    case 0x30 : return('0');
+    case 0x31 : return('1');
+    case 0x32 : return('2');
+    case 0x33 : return('3');
+    case 0x34 : return('4');
+    case 0x35 : return('5');
+    case 0x36 : return('6');
+    case 0x37 : return('7');
+    case 0x38 : return('8');
+    case 0x39 : return('9');
+    case 0x3a : return(':');
+    case 0x3b : return(';');
+    case 0x3c : return('<');
+    case 0x3d : return('=');
+    case 0x3e : return('>');
+    case 0x3f : return('?');
+    case 0x40 : return('@');
+    case 0x41 : return('A');
+    case 0x42 : return('B');
+    case 0x43 : return('C');
+    case 0x44 : return('D');
+    case 0x45 : return('E');
+    case 0x46 : return('F');
+    case 0x47 : return('G');
+    case 0x48 : return('H');
+    case 0x49 : return('I');
+    case 0x4a : return('J');
+    case 0x4b : return('K');
+    case 0x4c : return('L');
+    case 0x4d : return('M');
+    case 0x4e : return('N');
+    case 0x4f : return('O');
+    case 0x50 : return('P');
+    case 0x51 : return('Q');
+    case 0x52 : return('R');
+    case 0x53 : return('S');
+    case 0x54 : return('T');
+    case 0x55 : return('U');
+    case 0x56 : return('V');
+    case 0x57 : return('W');
+    case 0x58 : return('X');
+    case 0x59 : return('Y');
+    case 0x5a : return('Z');
+    case 0x5b : return('[');
+    case 0x5c : return('\\');
+    case 0x5d : return(']');
+    case 0x5e : return('^');
+    case 0x5f : return('_');
+    case 0x60 : return('`');
+    case 0x61 : return('a');
+    case 0x62 : return('b');
+    case 0x63 : return('c');
+    case 0x64 : return('d');
+    case 0x65 : return('e');
+    case 0x66 : return('f');
+    case 0x67 : return('g');
+    case 0x68 : return('h');
+    case 0x69 : return('i');
+    case 0x6a : return('j');
+    case 0x6b : return('k');
+    case 0x6c : return('l');
+    case 0x6d : return('m');
+    case 0x6e : return('n');
+    case 0x6f : return('o');
+    case 0x70 : return('p');
+    case 0x71 : return('q');
+    case 0x72 : return('r');
+    case 0x73 : return('s');
+    case 0x74 : return('t');
+    case 0x75 : return('u');
+    case 0x76 : return('v');
+    case 0x77 : return('w');
+    case 0x78 : return('x');
+    case 0x79 : return('y');
+    case 0x7a : return('z');
+    case 0x7b : return('{');
+    case 0x7c : return('|');
+    case 0x7d : return('}');
+    case 0x7e : return('~');
+    default   : return(0);
+  }
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*  This Program Written by Paul Edwards                             */
+/*  Released to the Public Domain                                    */
+/*                                                                   */
+/*********************************************************************/
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a representation of a character.  An integer         */
+/*  is returned, containing the representation of that character     */
+/*  in the ASCII character set.                                      */
+/*                                                                   */
+/*********************************************************************/
+static int tasc(int loc)
+{
+  switch (loc)
+  {
+    case '\t' : return (0x09);
+    case '\n' : return (0x0a);
+    case '\f' : return (0x0c);
+    case '\r' : return (0x0d);
+    case ' '  : return (0x20);
+    case '!'  : return (0x21);
+    case '\"' : return (0x22);
+    case '#'  : return (0x23);
+    case '$'  : return (0x24);
+    case '%'  : return (0x25);
+    case '&'  : return (0x26);
+    case '\'' : return (0x27);
+    case '('  : return (0x28);
+    case ')'  : return (0x29);
+    case '*'  : return (0x2a);
+    case '+'  : return (0x2b);
+    case ','  : return (0x2c);
+    case '-'  : return (0x2d);
+    case '.'  : return (0x2e);
+    case '/'  : return (0x2f);
+    case '0'  : return (0x30);
+    case '1'  : return (0x31);
+    case '2'  : return (0x32);
+    case '3'  : return (0x33);
+    case '4'  : return (0x34);
+    case '5'  : return (0x35);
+    case '6'  : return (0x36);
+    case '7'  : return (0x37);
+    case '8'  : return (0x38);
+    case '9'  : return (0x39);
+    case ':'  : return (0x3a);
+    case ';'  : return (0x3b);
+    case '<'  : return (0x3c);
+    case '='  : return (0x3d);
+    case '>'  : return (0x3e);
+    case '?'  : return (0x3f);
+    case '@'  : return (0x40);
+    case 'A'  : return (0x41);
+    case 'B'  : return (0x42);
+    case 'C'  : return (0x43);
+    case 'D'  : return (0x44);
+    case 'E'  : return (0x45);
+    case 'F'  : return (0x46);
+    case 'G'  : return (0x47);
+    case 'H'  : return (0x48);
+    case 'I'  : return (0x49);
+    case 'J'  : return (0x4a);
+    case 'K'  : return (0x4b);
+    case 'L'  : return (0x4c);
+    case 'M'  : return (0x4d);
+    case 'N'  : return (0x4e);
+    case 'O'  : return (0x4f);
+    case 'P'  : return (0x50);
+    case 'Q'  : return (0x51);
+    case 'R'  : return (0x52);
+    case 'S'  : return (0x53);
+    case 'T'  : return (0x54);
+    case 'U'  : return (0x55);
+    case 'V'  : return (0x56);
+    case 'W'  : return (0x57);
+    case 'X'  : return (0x58);
+    case 'Y'  : return (0x59);
+    case 'Z'  : return (0x5a);
+    case '['  : return (0x5b);
+    case '\\' : return (0x5c);
+    case ']'  : return (0x5d);
+    case '^'  : return (0x5e);
+    case '_'  : return (0x5f);
+    case '`'  : return (0x60);
+    case 'a'  : return (0x61);
+    case 'b'  : return (0x62);
+    case 'c'  : return (0x63);
+    case 'd'  : return (0x64);
+    case 'e'  : return (0x65);
+    case 'f'  : return (0x66);
+    case 'g'  : return (0x67);
+    case 'h'  : return (0x68);
+    case 'i'  : return (0x69);
+    case 'j'  : return (0x6a);
+    case 'k'  : return (0x6b);
+    case 'l'  : return (0x6c);
+    case 'm'  : return (0x6d);
+    case 'n'  : return (0x6e);
+    case 'o'  : return (0x6f);
+    case 'p'  : return (0x70);
+    case 'q'  : return (0x71);
+    case 'r'  : return (0x72);
+    case 's'  : return (0x73);
+    case 't'  : return (0x74);
+    case 'u'  : return (0x75);
+    case 'v'  : return (0x76);
+    case 'w'  : return (0x77);
+    case 'x'  : return (0x78);
+    case 'y'  : return (0x79);
+    case 'z'  : return (0x7a);
+    case '{'  : return (0x7b);
+    case '|'  : return (0x7c);
+    case '}'  : return (0x7d);
+    case '~'  : return (0x7e);
+    default   : return(0);
+  }
+}
+
+/*********************************************************************/
+/*                                                                   */
+/*  This Program Written By Paul Edwards.                            */
+/*  Released to the public domain.                                   */
+/*                                                                   */
+/*********************************************************************/
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a representation of an EBCDIC character.  An integer */
+/*  is returned, containing the representation of that character     */
+/*  in whatever character set you are using on this system.          */
+/*                                                                   */
+/*********************************************************************/
+static int febc(int ebc)
+{
+  switch (ebc)
+  {
+    case 0x15 : return('\n');
+    case 0x25 : return('\n');
+    case 0x40 : return(' ');
+    case 0x5A : return('!');
+    case 0x7f : return('\"');
+    case 0x7b : return('#');
+    case 0x5b : return('$');
+    case 0x6c : return('%');
+    case 0x50 : return('&');
+    case 0x7d : return('\'');
+    case 0x4d : return('(');
+    case 0x5d : return(')');
+    case 0x5c : return('*');
+    case 0x4e : return('+');
+    case 0x6b : return(',');
+    case 0x60 : return('-');
+    case 0x4b : return('.');
+    case 0x61 : return('/');
+    case 0xf0 : return('0');
+    case 0xf1 : return('1');
+    case 0xf2 : return('2');
+    case 0xf3 : return('3');
+    case 0xf4 : return('4');
+    case 0xf5 : return('5');
+    case 0xf6 : return('6');
+    case 0xf7 : return('7');
+    case 0xf8 : return('8');
+    case 0xf9 : return('9');
+    case 0x7a : return(':');
+    case 0x5e : return(';');
+    case 0x4c : return('<');
+    case 0x7e : return('=');
+    case 0x6e : return('>');
+    case 0x6f : return('?');
+    case 0x7c : return('@');
+    case 0xc1 : return('A');
+    case 0xc2 : return('B');
+    case 0xc3 : return('C');
+    case 0xc4 : return('D');
+    case 0xc5 : return('E');
+    case 0xc6 : return('F');
+    case 0xc7 : return('G');
+    case 0xc8 : return('H');
+    case 0xc9 : return('I');
+    case 0xd1 : return('J');
+    case 0xd2 : return('K');
+    case 0xd3 : return('L');
+    case 0xd4 : return('M');
+    case 0xd5 : return('N');
+    case 0xd6 : return('O');
+    case 0xd7 : return('P');
+    case 0xd8 : return('Q');
+    case 0xd9 : return('R');
+    case 0xe2 : return('S');
+    case 0xe3 : return('T');
+    case 0xe4 : return('U');
+    case 0xe5 : return('V');
+    case 0xe6 : return('W');
+    case 0xe7 : return('X');
+    case 0xe8 : return('Y');
+    case 0xe9 : return('Z');
+    case 0xad : return('[');
+    case 0xe0 : return('\\');
+    case 0xbd : return(']');
+    case 0x5f : return('^');
+    case 0x6d : return('_');
+    case 0x79 : return('`');
+    case 0x81 : return('a');
+    case 0x82 : return('b');
+    case 0x83 : return('c');
+    case 0x84 : return('d');
+    case 0x85 : return('e');
+    case 0x86 : return('f');
+    case 0x87 : return('g');
+    case 0x88 : return('h');
+    case 0x89 : return('i');
+    case 0x91 : return('j');
+    case 0x92 : return('k');
+    case 0x93 : return('l');
+    case 0x94 : return('m');
+    case 0x95 : return('n');
+    case 0x96 : return('o');
+    case 0x97 : return('p');
+    case 0x98 : return('q');
+    case 0x99 : return('r');
+    case 0xa2 : return('s');
+    case 0xa3 : return('t');
+    case 0xa4 : return('u');
+    case 0xa5 : return('v');
+    case 0xa6 : return('w');
+    case 0xa7 : return('x');
+    case 0xa8 : return('y');
+    case 0xa9 : return('z');
+    case 0xc0 : return('{');
+    case 0x4f : return('|');
+    case 0xd0 : return('}');
+    case 0xa1 : return('~');
+    default   : return(0);
+  }
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*  This Program Written By Paul Edwards.                            */
+/*  Released to the public domain.                                   */
+/*                                                                   */
+/*********************************************************************/
+/*********************************************************************/
+/*                                                                   */
+/*  This program takes an integer as a parameter.  The integer       */
+/*  should have a character in the local character set.  It will be  */
+/*  converted into the EBCDIC equivalent.                            */
+/*                                                                   */
+/*********************************************************************/
+
+static int tebc(int local)
+{
+  switch (local)
+  {
+    case '\n' : return (0x15);
+    case '\f' : return (0x0c);
+    case ' '  : return (0x40);
+    case '!'  : return (0x5A);
+    case '\"' : return (0x7f);
+    case '#'  : return (0x7b);
+    case '$'  : return (0x5b);
+    case '%'  : return (0x6c);
+    case '&'  : return (0x50);
+    case '\'' : return (0x7d);
+    case '('  : return (0x4d);
+    case ')'  : return (0x5d);
+    case '*'  : return (0x5c);
+    case '+'  : return (0x4e);
+    case ','  : return (0x6b);
+    case '-'  : return (0x60);
+    case '.'  : return (0x4b);
+    case '/'  : return (0x61);
+    case '0'  : return (0xf0);
+    case '1'  : return (0xf1);
+    case '2'  : return (0xf2);
+    case '3'  : return (0xf3);
+    case '4'  : return (0xf4);
+    case '5'  : return (0xf5);
+    case '6'  : return (0xf6);
+    case '7'  : return (0xf7);
+    case '8'  : return (0xf8);
+    case '9'  : return (0xf9);
+    case ':'  : return (0x7a);
+    case ';'  : return (0x5e);
+    case '<'  : return (0x4c);
+    case '='  : return (0x7e);
+    case '>'  : return (0x6e);
+    case '?'  : return (0x6f);
+    case '@'  : return (0x7c);
+    case 'A'  : return (0xc1);
+    case 'B'  : return (0xc2);
+    case 'C'  : return (0xc3);
+    case 'D'  : return (0xc4);
+    case 'E'  : return (0xc5);
+    case 'F'  : return (0xc6);
+    case 'G'  : return (0xc7);
+    case 'H'  : return (0xc8);
+    case 'I'  : return (0xc9);
+    case 'J'  : return (0xd1);
+    case 'K'  : return (0xd2);
+    case 'L'  : return (0xd3);
+    case 'M'  : return (0xd4);
+    case 'N'  : return (0xd5);
+    case 'O'  : return (0xd6);
+    case 'P'  : return (0xd7);
+    case 'Q'  : return (0xd8);
+    case 'R'  : return (0xd9);
+    case 'S'  : return (0xe2);
+    case 'T'  : return (0xe3);
+    case 'U'  : return (0xe4);
+    case 'V'  : return (0xe5);
+    case 'W'  : return (0xe6);
+    case 'X'  : return (0xe7);
+    case 'Y'  : return (0xe8);
+    case 'Z'  : return (0xe9);
+    case '['  : return (0xad);
+    case '\\' : return (0xe0);
+    case ']'  : return (0xbd);
+    case '^'  : return (0x5f);
+    case '_'  : return (0x6d);
+    case '`'  : return (0x79);
+    case 'a'  : return (0x81);
+    case 'b'  : return (0x82);
+    case 'c'  : return (0x83);
+    case 'd'  : return (0x84);
+    case 'e'  : return (0x85);
+    case 'f'  : return (0x86);
+    case 'g'  : return (0x87);
+    case 'h'  : return (0x88);
+    case 'i'  : return (0x89);
+    case 'j'  : return (0x91);
+    case 'k'  : return (0x92);
+    case 'l'  : return (0x93);
+    case 'm'  : return (0x94);
+    case 'n'  : return (0x95);
+    case 'o'  : return (0x96);
+    case 'p'  : return (0x97);
+    case 'q'  : return (0x98);
+    case 'r'  : return (0x99);
+    case 's'  : return (0xa2);
+    case 't'  : return (0xa3);
+    case 'u'  : return (0xa4);
+    case 'v'  : return (0xa5);
+    case 'w'  : return (0xa6);
+    case 'x'  : return (0xa7);
+    case 'y'  : return (0xa8);
+    case 'z'  : return (0xa9);
+    case '{'  : return (0xc0);
+    case '|'  : return (0x4f);
+    case '}'  : return (0xd0);
+    case '~'  : return (0xa1);
+    default   : return (0);
+  }
+}
+
+
+
+#ifndef CONVFMAC
+#define CONVFMAC fasc
+#endif
+#ifndef CONVTMAC
+#define CONVTMAC tasc
+#endif
+
+#define ftgtchs(c) CONVFMAC(c)
+#define ttgtchs(c) CONVTMAC(c)
+
+
+static void ftgtchsmem (void *mem, size_t size)
+{
+    unsigned char *p = mem;
+
+    while (size--) {
+        *p = ftgtchs(*p);
+        p++;
+    }
+}
+
+static void ttgtchsmem (void *mem, size_t size)
+{
+    unsigned char *p = mem;
+
+    while (size--) {
+        *p = ttgtchs(*p);
+        p++;
+    }
+}
+
+#endif
+
+
+
 #if !defined(__MVS__) && !defined(__CMS__)
 static void iwrite(FILE *stream,
                    const void *ptr,
@@ -3042,6 +3567,13 @@ static void iwrite(FILE *stream,
     static int numansi = 0;
     static char ansibuf[50];
     static int currentAttrib = 0;
+#endif
+
+#ifdef CONV_CHARSET
+    if (stream->permfile)
+    {
+        ttgtchsmem(ptr, towrite);
+    }
 #endif
 
 #ifdef __ZPDOSGPB__

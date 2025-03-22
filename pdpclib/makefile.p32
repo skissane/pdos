@@ -15,6 +15,17 @@ CC=gccwin
 COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src -DXOLDWIN
 AR=xar
 
+# define this if you are producing an EBCDIC to ASCII pseudo-bios
+# The -funsigned-char should be done a different way
+# it is currently being used to get the case statement for
+# tasc to generate correct code
+# char needs to be unsigned for EBCDIC so this should be
+# a default in the compiler
+ifeq "$(tgtchs)" "ascii"
+COPTS:=$(COPTS) -DCONV_CHARSET -DCONVFMAC=fasc -DCONVTMAC=tasc -funsigned-char
+endif
+
+
 all: pdptest.exe
 
 pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
