@@ -909,8 +909,12 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
                Adjusting by 1 byte will solve this edge case
 
                But that logic doesn't work at the beginning of the file.
+
+               And actually I think we only need this logic when we are
+               positioned at the end of the file - not sure why
             */
-            if (fatfile->currpos != 0)
+            if ((fatfile->currpos != 0)
+                && (fatfile->currpos == fatfile->fileSize))
             {
                 adjust = 1;
                 if (fatfile->byteUpto == 0)
