@@ -2606,6 +2606,7 @@ static int febc(int ebc)
     case 0xd0 : return('}');
     case 0xa1 : return('~');
     case 0x27 : return(0x1b); /* ESC character */
+    case 0x16 : return('\b'); /* Backspace */
     default   : return(0);
   }
 }
