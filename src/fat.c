@@ -891,8 +891,6 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
          * so we obtain the correct value again. */
         if (fatfile->nextCluster == 0)
         {
-            int adjust;
-
             fatClusterAnalyse(fat,
                               fatfile->currentCluster,
                               &fatfile->sectorStart,
@@ -901,34 +899,51 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
             /* sectorUpto is potentially wrong after a seek/write too,
                so we recalculate */
 
-            /* I believe the way it works is that we don't waste time
-               reading the next sector until it is actually requested.
-               So we will be sitting one sector behind, even when we
-               have logically broken into the next sector.
+            fatfile->sectorUpto = (fatfile->currpos %
+                                  (fat->sectors_per_cluster * fat->sector_size))
+                                   / fat->sector_size;
 
-               Adjusting by 1 byte will solve this edge case
+            /* In normal operation, if we have read an entire sector,
+               we position on the next sector, even if data hasn't
+               been requested. So for example, if we have 4096-byte
+               cluster and a file size of 12288, if we read 50 bytes,
+               we will still be on sector 0, but a full 512 bytes
+               would position it to offset 0 of sector 1.
 
-               But that logic doesn't work at the beginning of the file.
+               If we have a 1024 byte file and read 1024 bytes, we will
+               still go into sector 2.
 
-               And actually I think we only need this logic when we are
-               positioned at the end of the file - not sure why
+               The exception is if we have a 4096 byte file and read
+               4096 bytes. That would naturally drop down to sector 0,
+               offset (byte upto) 0, ie a wraparound.
+
+               So the way read works, is in this exception condition, we
+               need to maintain sector 7 (in this case), and the byte
+               upto will be 512. And the read routines can handle those
+               numbers.
+
+               So we need to reproduce that now. This only occurs if
+               the file size is an exact multiple of the cluster size,
+               and we are positioned at the end of the file (otherwise
+               we would have broken into a new cluster - but we can't
+               do that in this situation, as a new cluster doesn't
+               exist).
+
+               We can recognize it as the sectorUpto and byteUpto will
+               have been reset to 0 naturally. Unless we are at the
+               beginning of the file, and then they are zero for a
+               different reason. We could also redo a divide to find
+               out if it is a multiple of the cluster size
             */
             if ((fatfile->currpos != 0)
-                && (fatfile->currpos == fatfile->fileSize))
+                && (fatfile->currpos == fatfile->fileSize)
+                && (fatfile->sectorUpto == 0)
+                && (fatfile->byteUpto == 0)
+               )
             {
-                adjust = 1;
-                if (fatfile->byteUpto == 0)
-                {
-                    fatfile->byteUpto = 512;
-                }
+                fatfile->sectorUpto = fat->sectors_per_cluster - 1;
+                fatfile->byteUpto = fat->sector_size;
             }
-            else
-            {
-                adjust = 0;
-            }
-            fatfile->sectorUpto = ((fatfile->currpos - adjust) %
-                                  (fat->sectors_per_cluster * MAXSECTSZ))
-                                   / MAXSECTSZ;
         }
     }
     /* until we reach the end of the chain
@@ -1022,6 +1037,12 @@ int fatReadFile(FAT *fat, FATFILE *fatfile, void *buf, unsigned int szbuf,
             }
             else
             {
+                /* if we have 4096 byte clusters, a 1024 byte file, then
+                   an empty read will have actually put this up to sector 3,
+                   ie skipping an entire sector. This will set it back to a
+                   more logical 2 (ie into the next sector) - even though
+                   that sector doesn't exist either. This is the normal
+                   logic */
                 fatfile->sectorUpto = (fatfile->currpos %
                                       (fat->sectors_per_cluster * MAXSECTSZ))
                                        / MAXSECTSZ;
