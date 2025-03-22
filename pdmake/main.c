@@ -30,35 +30,38 @@ static FILE *redirect_stdout;
 variable *default_goal_var;
 int doing_inference_rule_commands = 0;
 
-int rule_run_command(const char *name, char *p, char *q) {
+int rule_run_command (const char *name, char *p, char *q)
+{
     int is_silent = silent;
     int is_ignore_error = ignore_errors;
+    int is_execute = !dry_run;
     char *new_cmds;
-    char *s;
+    const char *s;
 
     *q = '\0';
-    new_cmds = xstrdup(p);
+    new_cmds = xstrdup (p);
     *q = '\n';
-    new_cmds = variable_expand_line(new_cmds);
+    new_cmds = variable_expand_line (new_cmds);
     s = new_cmds;
-    while (isspace(*s) || *s == '-' || *s == '@') {
-        if (*s == '-') is_silent = 1;
-        if (*s == '@') is_ignore_error = 1;
+    while (isspace (*s) || *s == '-' || *s == '@' || *s == '+') {
+        switch (*s) {
+            case '-': is_ignore_error = 1; break;
+            case '@': is_silent = !dry_run || silent; break;
+            case '+': is_execute = 1; break;
+        }
         s++;
     }
     
-    if (!is_silent) fprintf (redirect_stdout, "%s\n", new_cmds);
-    if (!dry_run)
-    {
-        int error = system(s);
-        if (!is_ignore_error && error)
-        {
+    if (!is_silent) fprintf (redirect_stdout, "%s\n", s);
+    if (is_execute) {
+        int error = system (s);
+        if (!is_ignore_error && error) {
             fprintf (stderr, "[%s] Error %d: %s\n", name, error,
-                     strerror(error));
+                     strerror (error));
             exit (EXIT_FAILURE);
         }
     }
-    free(new_cmds);
+    free (new_cmds);
     return 0;
 }
 
