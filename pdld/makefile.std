@@ -27,13 +27,24 @@ CFLAGS=-Os
 AS=as370 -mhlasm -mebcdic
 AR=ar370
 # Producing an ASCII Windows executable with embedded
-# EBCDIC strings suitable for a pseudo-bios running on
+# EBCDIC strings (ie pdas emitting EBCDIC) suitable
+# for a pseudo-bios running on
 # ASCII Windows requires you to specify
 # -DCONV_CHARSET -DCONVFMAC=
 # but NOT specify =DCONVTMAC=
+#
 # A pure ASCII executable produced on an EBCDIC machine
-# requires CONVTMAC to be specified and nullified as well
-# A pure EBCDIC system requires none of those
+# (including pdas outputting ASCII strings) requires
+# just -DCONV_CHARSET so that the default ASCII conversion
+# routines fasc/tasc are executed (not overridden)
+# so that the drectve strings are interpreted
+
+# A pure EBCDIC system requires none of those, although
+# if there was an embedded ASCII lex table for instance,
+# then -DCONV_CHARSET -DCONVFMAC= =DCONVTMAC=
+# would be required. We might want to decouple CONV_CHARSET
+# from the others, so that conversion of a lex table doesn't
+# imply that you want to do other conversion.
 COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
     -I./src/hashtab -I../pdpclib \
     -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ -D__NOBIVA__ \
