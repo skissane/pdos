@@ -16,6 +16,12 @@ AS=pdas --oformat coff
 LD=pdld
 COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
 
+
+ifeq "$(tgtchs)" "ebcdic"
+COPTS:=$(COPTS) -funsigned-char
+endif
+
+
 all: pdptest.exe
 
 pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
