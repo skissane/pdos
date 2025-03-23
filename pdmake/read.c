@@ -260,6 +260,10 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
     char *clean = NULL;
     size_t clean_size = 0;
     char *depstr;
+    struct if_stack *saved_if_stack;
+
+    saved_if_stack = cur_if_stack;
+    cur_if_stack = NULL;
 
     commands = xmalloc(commands_size);
 
@@ -311,8 +315,10 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
             p += 4;
             for (; isspace (*p); p++) {}
 
-            if ((strncmp (p, "ifeq", 4) == 0 && (isspace (p[4]) || p[4] == '\0'))
-                || (strncmp (p, "ifneq", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))
+            if ((strncmp (p, "ifeq", 4) == 0
+                 && (isspace (p[4]) || p[4] == '(' || p[4] == '\'' || p[4] == '"' || p[4] == '\0'))
+                || (strncmp (p, "ifneq", 5) == 0
+                    && (isspace (p[5]) || p[5] == '(' || p[5] == '\'' || p[5] == '"' || p[5] == '\0'))
                 || (strncmp (p, "ifdef", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))
                 || (strncmp (p, "ifndef", 6) == 0 && (isspace (p[6]) || p[6] == '\0'))) {
                 after_else = 1;
@@ -330,8 +336,10 @@ static void read_lbuf(struct linebuf *lbuf, int set_default)
             }
         }
 
-        if ((strncmp (p, "ifeq", 4) == 0 && (isspace (p[4]) || p[4] == '\0'))
-            || (strncmp (p, "ifneq", 5) == 0 && (isspace (p[5]) || p[5] == '\0'))) {
+        if ((strncmp (p, "ifeq", 4) == 0
+             && (isspace (p[4]) || p[4] == '(' || p[4] == '\'' || p[4] == '"' || p[4] == '\0'))
+            || (strncmp (p, "ifneq", 5) == 0
+                && (isspace (p[5]) || p[5] == '(' || p[5] == '\'' || p[5] == '"' || p[5] == '\0'))) {
             int ifneq;
             char *q, *end;
 
@@ -507,7 +515,6 @@ is_command:
         }
 
         if (strncmp (p, "include", 7) == 0 && (isspace (p[7]) || p[7] == '\0')) {
-
             char *q;
 
             p += 7;
@@ -519,7 +526,6 @@ is_command:
             p = line = variable_expand_line (xstrdup (p));
 
             while (1) {
-
                 char saved_c;
 
                 for (; isspace (*p); p++) {}
@@ -534,12 +540,10 @@ is_command:
                 include_makefile (p);
                 *q = saved_c;
                 p = q;
-                
             }
 
             free (line);
             continue;
-            
         }
 
         if (strchr (p, '='))
@@ -644,6 +648,7 @@ is_command:
         fprintf (stderr, "*** missing 'endif'. Stop.\n");
         exit (EXIT_FAILURE);
     }
+    cur_if_stack = saved_if_stack;
 }
 
 int read_makefile (const char *filename)
