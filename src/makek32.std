@@ -25,6 +25,11 @@ LD=pdld
 EXPORT_OBJS=dllcrt.obj kernel32.obj
 OBJS=pdossupc.obj pos.obj string.obj supportf.obj
 
+
+ifeq "$(tgtchs)" "ebcdic"
+COPTS:=$(COPTS) -funsigned-char
+endif
+
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
