@@ -15,7 +15,7 @@ ifeq "$(targ)" "zpg"
 CC=gccmvs
 CFLAGS=-O2
 AS=as370 -mhlasm -mebcdic
-AR=ar370
+AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. \
     -I../pdld/src -I../pdld/src/bytearray -I../pdpclib \
     -I../generic -I../src -U__MVS__ -D__MF32__ -D__PDOSGEN__ \

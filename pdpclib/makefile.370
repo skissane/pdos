@@ -32,7 +32,7 @@ AS=as370 -mhlasm -mebcdic
 COPTS=-S -Os -fno-common $(CFLAGS) \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
     -fno-builtin
-AR=ar370
+AR=xar
 LD=pdld --emit-relocs --entry __crt0
 
 

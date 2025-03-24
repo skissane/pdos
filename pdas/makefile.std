@@ -16,7 +16,7 @@ CC=gccmvs
 PREPROCESSOR=pdcc -E
 CFLAGS=-Os
 AS=as370 -mhlasm -mebcdic
-AR=ar370
+AR=xar
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
 # If targeting ASCII, get rid of the CONV*MAC defines

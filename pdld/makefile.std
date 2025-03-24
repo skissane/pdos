@@ -25,7 +25,7 @@ else ifeq "$(targ)" "zpg"
 CC=gccmvs
 CFLAGS=-Os
 AS=as370 -mhlasm -mebcdic
-AR=ar370
+AR=xar
 # Producing an ASCII Windows executable with embedded
 # EBCDIC strings (ie pdas emitting EBCDIC) suitable
 # for a pseudo-bios running on

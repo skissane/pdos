@@ -18,9 +18,9 @@ pdosgeno.a: stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
        ctype.o setjmp.o math.o zpgsupa.o pdossupc.o
         rm -f pdosgeno.a
-        ar370 r pdosgeno.a stdio.o string.o stdlib.o zpgsupa.o
-        ar370 r pdosgeno.a start.o time.o errno.o assert.o signal.o
-        ar370 r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o
+        xar r pdosgeno.a stdio.o string.o stdlib.o zpgsupa.o
+        xar r pdosgeno.a start.o time.o errno.o assert.o signal.o
+        xar r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o
 
 .c.o:
         $(CC) $(COPTS) -o $*.s $<

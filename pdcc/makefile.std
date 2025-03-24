@@ -31,7 +31,7 @@ ifeq "$(targ)" "zpg"
 CC=gccmvs
 CFLAGS=-Os
 AS=as370 -mhlasm -mebcdic
-AR=ar370
+AR=xar
 LD=pdld
 LDFLAGS=-s --no-insert-timestamp
 COPTS=-S $(CFLAGS) -fno-common -ansi -Icclib -Icclib/include -Icpplib \

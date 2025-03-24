@@ -20,7 +20,7 @@ else ifeq "$(targ)" "zpg"
 CC=gccmvs
 CFLAGS=-O2
 AS=as370 -mhlasm -mebcdic
-AR=ar370
+AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I./hashtab -I../pdpclib \
     -I../generic -I../src -DNOFLOAT -U__MVS__ -D__MF32__ -D__PDOSGEN__ \
     -D__NOBIVA__
