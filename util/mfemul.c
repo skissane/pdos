@@ -134,6 +134,7 @@ static int febc(int ebc);
 static int tebc(int local);
 static int check_add32(int a, int b);
 static int check_sub32(int a, int b);
+static int get_fd();
 
 static void ibm2ieee(void *to, const void *from, int len);
 static void ieee2ibm(void *to, const void *from, int len);
@@ -323,99 +324,70 @@ static void spec_call(int val)
     }
     else if (val == 10) /* fopen */
     {
-        static int cnt = 0;
+        int fd;
 
-        if (cnt == 0)
-        {        
-            /* assume main disk */
-            handles[3] = fopen(boot_name, "r+b");
-#if DEBUG
-            printf("fopen got %p\n", handles[3]);
-#endif
-            regs[15] = 3;
-        }
-        else if (cnt == 1)
+        fd = get_fd();
+        if(fd >= 0)
         {
-            /* assume pcomm.exe */
-            handles[4] = fopen("pcomm.exe", "rb");
+            /*open files */
+            unsigned char *fname;
+            unsigned char *mode;
+            int i;
+
+            fname = base + getfullword(base + parms + sizeof(U32)*0);
+            mode = base + getfullword(base + parms + sizeof(U32)*1);
+
+            for (i = 0; fname[i] != '\0'; i++)
+            {
+                fname[i] = febc(fname[i]);
+            }
+            for (i = 0; mode[i] != '\0'; i++)
+            {
+                mode[i] = febc(mode[i]);
+            }
+
+            if (strcmp(fname, "!BOOT") == 0)
+            {
+                handles[fd] = fopen(boot_name, (char*)mode);
+            }
+            else {
+                handles[fd] = fopen((char*)fname, (char*)mode);
+            }
+
+            /*revert data in buffer*/
+            for (i = 0; fname[i] != '\0'; i++)
+            {
+                fname[i] = tebc(fname[i]);
+            }
+            for (i = 0; mode[i] != '\0'; i++)
+            {
+                mode[i] = tebc(mode[i]);
+            }
 #if DEBUG
-            printf("fopen got %p\n", handles[4]);
+            printf("fopen got %p, %s, %s\n", handles[fd], (const char*)fname, (const char*)mode);
 #endif
-            regs[15] = 4;
+            regs[15] = fd;
         }
-        else if (cnt == 2)
+        else
         {
-            /* assume mfemul.in */
-            handles[5] = fopen("mfemul.in", "rb");
 #if DEBUG
-            printf("fopen got %p\n", handles[5]);
+            printf("The file cannot be opened. Max file opened is reached.\n");
 #endif
-            regs[15] = 5;
+            regs[15] = 0;
         }
-        else if (cnt == 3)
-        {
-            /* assume mfemul.out */
-            handles[6] = fopen("mfemul.out", "wb");
-#if DEBUG
-            printf("fopen got %p\n", handles[6]);
-#endif
-            regs[15] = 6;
-        }
-        cnt++;
     }
     else if (val == 13) /* fclose */
     {
-        static int cnt = 0;
         int fq;
 
         fq = getfullword(base + parms + sizeof(U32)*0);
 
-#if 0
-        if (cnt == 0)
-        {
-            /* assume pcomm.exe */
-            fclose(handles[4]);
-            handles[4] = NULL;
-            regs[15] = 0;
-        }
-#endif
         /* the order of the remaining is unknown */
         /* so don't really close any of them */
         /* they will all be closed when mfemul exits */
-#if 0
-        else if (cnt == 1)
-        {        
-            /* assume main disk */
-            fclose(handles[3]);
-            handles[3] = NULL;
-            regs[15] = 0;
-        }
-        else if (cnt == 2)
-        {
-            /* assume mfemul.in */
-            fclose(handles[5]);
-            handles[5] = NULL;
-            regs[15] = 0;
-        }
-        else if (cnt == 3)
-        {
-            /* assume mfemul.out */
-            fclose(handles[6]);
-            handles[6] = NULL;
-            regs[15] = 0;
-        }
-#else
-#if 0
-        else
-        {
-            regs[15] = 0;
-        }
-#endif
-#endif
         fclose(handles[fq]);
         handles[fq] = NULL;
         regs[15] = 0;
-        cnt++;
     }
     else if (val == 11) /* fseek */
     {
@@ -2781,7 +2753,17 @@ static int check_sub32(int a, int b)
         return 0; 
 }
 
-
+static int get_fd()
+{
+    int i;
+    /*We need to start from 3 because 0, 1, and 2 were
+    allocated for stdin, stdout, and stderr.*/
+    for (i = 3; i < FOPEN_MAX; i++)
+    {
+        if (handles[i] == NULL) return i;
+    }
+    return -1;
+}
 
 
 
