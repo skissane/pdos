@@ -157,7 +157,6 @@ int main(int argc, char **argv)
                         if (fq == NULL)
                         {
                             printf("failed to open output file\n");
-                            fclose(fp);
                         }
                         else
                         {
@@ -167,9 +166,9 @@ int main(int argc, char **argv)
                             {
                                 fputc(c, fq);
                             }
-                            fclose(fp);
                             fclose(fq);
                         }
+                        fclose(fp);
                     }
                 }
             }
