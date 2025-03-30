@@ -53,7 +53,7 @@ EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/x64supa.obj
 
 else
 
-CFLAGS=-O2 -Oi -DPBEMUL
+CFLAGS=-O2 -Oi- -DPBEMUL
 # You need to have run makefile.var in PDPCLIB first
 CC=cl
 AR=lib
