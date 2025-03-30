@@ -13,7 +13,8 @@ VPATH=../pdpclib
 
 CC=cl
 CFLAGS=-O2
-COPTS=-c $(CFLAGS) -DNOLIBALLOC -D__32BIT__ -D__WIN32__ -D__STATIC__ -D__MSC__ -I . -Oi- -Zl -GS- -nologo -I../pdpclib
+COPTS=-c $(CFLAGS) -DNOLIBALLOC -D__32BIT__ -D__WIN32__ -QIfist \
+    -D__STATIC__ -D__MSC__ -I . -Oi- -Zl -Za -GS- -nologo -I../pdpclib
 AS=ml
 LD=link
 
