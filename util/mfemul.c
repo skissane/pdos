@@ -54,9 +54,29 @@ typedef unsigned int U32;
 extern int use_arbitrary;
 extern unsigned long arbitrary_base;
 
+typedef enum {
+    BALR = 0x05, BCTR = 0x06, BCR = 0x07, SVC = 0x0a, MVCL = 0x0e,
+    LPR = 0x10, LNR = 0x11, LTR = 0x12, LCR = 0x13, NR = 0x14,
+    CLR = 0x15, OR = 0x16, XR = 0x17, LR = 0x18, CR = 0x19,
+    AR = 0x1a, SR = 0x1b, MR = 0x1c, DR = 0x1d, SLR = 0x1f,
+    LTDR = 0x22, LCDR = 0x23, LDR = 0x28, CDR = 0x29, ADR = 0x2a,
+    SDR = 0x2b, MDR = 0x2c, DDR = 0x2d, STH = 0x40, LA = 0x41,
+    STC = 0x42, IC = 0x43, BAL = 0x45, BC = 0x47, LH = 0x48,
+    CH = 0x49, AH = 0x4a, SH = 0x4b, MH = 0x4c, ST = 0x50,
+    N = 0x54, CL = 0x55, O = 0x56, X = 0x57, L = 0x58,
+    C = 0x59, A = 0x5a, S = 0x5b, M = 0x5c, D = 0x5d,
+    SL = 0x5f, STD = 0x60, LD = 0x68, CD = 0x69, AD = 0x6a,
+    SD = 0x6b, MD = 0x6c, DD = 0x6d, SRL = 0x88, SLL = 0x89,
+    SRA = 0x8a, SLA = 0x8b, SRDL = 0x8c, SRDA = 0x8e, SLDA = 0x8f,
+    STM = 0x90, MVI = 0x92, NI = 0x94, CLI = 0x95, OI = 0x96,
+    XI = 0x97, LM = 0x98, STCK = 0xb2, CLM = 0xbd, MVC = 0xd2,
+    NC = 0xd4, CLC = 0xd5, OC = 0xd6, XC = 0xd7
+} INSTR;
+
+
 static unsigned char *base;
 static unsigned char *p;
-static int instr;
+static INSTR instr;
 
 static char *boot_name;
 
@@ -138,6 +158,7 @@ static int get_fd();
 
 static void ibm2ieee(void *to, const void *from, int len);
 static void ieee2ibm(void *to, const void *from, int len);
+static void log_debug(const char *fmt, ...);
 
 int main(int argc, char **argv)
 {
@@ -272,14 +293,10 @@ int main(int argc, char **argv)
 static void spec_call(int val)
 {
     unsigned long parms;
-
-#if DEBUG
-    printf("got a special call %d\n", val);
+#ifdef DEBUG
+    log_debug("got a special call %d\n", val);
 #endif
     parms = regs[1];
-#if DEBUG
-    printf("parms are %08lX\n", parms);
-#endif
 
     if (val == 14) /* fwrite */
     {
@@ -289,22 +306,10 @@ static void spec_call(int val)
         int fq;
         
         buf = base + getfullword(base + parms);
-#if DEBUG
-        printf("buf is %p\n", buf);
-#endif
 
         sz = (size_t)getfullword(base + parms + sizeof(U32));
-#if DEBUG
-        printf("sz is %x\n", (int)sz);
-#endif
         num = (size_t)getfullword(base + parms + sizeof(U32)*2);
-#if DEBUG
-        printf("num is %x\n", (int)num);
-#endif
         fq = getfullword(base + parms + sizeof(U32)*3);
-#if DEBUG
-        printf("fq is %d\n", fq);
-#endif
         if ((handles[fq] == stdout) || (handles[fq] == stderr))
         {
             size_t tot;
@@ -328,7 +333,7 @@ static void spec_call(int val)
 
         fd = get_fd();
         if(fd >= 0)
-        {
+        {        
             /*open files */
             unsigned char *fname;
             unsigned char *mode;
@@ -343,10 +348,10 @@ static void spec_call(int val)
             }
             for (i = 0; mode[i] != '\0'; i++)
             {
-                mode[i] = febc(mode[i]);
+                    mode[i] = febc(mode[i]);
             }
 
-            if (strcmp(fname, "!BOOT") == 0)
+            if (strcmp((const char*)fname, "!BOOT") == 0)
             {
                 handles[fd] = fopen(boot_name, (char*)mode);
             }
@@ -354,25 +359,22 @@ static void spec_call(int val)
                 handles[fd] = fopen((char*)fname, (char*)mode);
             }
 
-            /*revert data in buffer*/
+                /*revert data in buffer*/
             for (i = 0; fname[i] != '\0'; i++)
             {
                 fname[i] = tebc(fname[i]);
             }
             for (i = 0; mode[i] != '\0'; i++)
             {
-                mode[i] = tebc(mode[i]);
+                    mode[i] = tebc(mode[i]);
             }
 #if DEBUG
-            printf("fopen got %p, %s, %s\n", handles[fd], (const char*)fname, (const char*)mode);
+            log_debug("fopen got %p, %s, %s\n", handles[fd], (const char*)fname, (const char*)mode);
 #endif
             regs[15] = fd;
         }
         else
         {
-#if DEBUG
-            printf("The file cannot be opened. Max file opened is reached.\n");
-#endif
             regs[15] = 0;
         }
     }
@@ -396,17 +398,8 @@ static void spec_call(int val)
         int fq;
         
         fq = getfullword(base + parms + sizeof(U32)*0);
-#if DEBUG
-        printf("fq is %d\n", fq);
-#endif
         offset = getfullword(base + parms + sizeof(U32)*1);
-#if DEBUG
-        printf("offset is %d\n", offset);
-#endif
         whence = getfullword(base + parms + sizeof(U32)*2);
-#if DEBUG
-        printf("whence is %d\n", whence);
-#endif
         regs[15] = fseek(handles[fq], offset, whence);
     }
     else if (val == 12) /* fread */
@@ -472,14 +465,14 @@ static void spec_call(int val)
 
         /* called OS should have stored address here */
         regs[15] = getfullword(base + 0x7C);
-#if DEBUG
-        printf("r15 is %08x\n", regs[15]);
+#ifdef DEBUG
+        log_debug("r15 is %08x\n", regs[15]);
 #endif
         p = base + regs[15];
         /*exit(0);*/
         doemul();
-#if DEBUG
-        printf("returning from emulation\n");
+#ifdef DEBUG
+        log_debug("returning from emulation\n");
 #endif
         x1 = oldx1;
         regs[x1] = oldrx1;
@@ -497,24 +490,23 @@ static void spec_call(int val)
 static void doemul(void)
 {
     unsigned char *watching = base + 0x21943C;
-    
 #if COMEMUL
-    regs[13] = 0x100; /* save area */
+    regs[13] = 0x100;   /* save area */
     regs[15] = 0x10000; /* entry point */
-    regs[14] = 0; /* branch to zero will terminate */
+    regs[14] = 0;       /* branch to zero will terminate */
 #endif
 
     while (1)
     {
-        instr = *p;
+        instr = (INSTR)*p;
         icount++;
 #if COMEMUL
         printf("instr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base - 0x10000, *watching, regs[14]);
 #endif
 #if PBEMUL
-#if DEBUG
-        printf("\ninstr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base, *watching, regs[14]);
-        printf("icount is %ld\n", icount);
+#ifdef DEBUG
+        log_debug("\ninstr is %02X at %08X watching %02X, r14 %08X\n", instr, p - base, *watching, regs[14]);
+        log_debug("icount is %ld\n", icount);
 #endif
 #endif
 #if DUMPREGS
@@ -523,47 +515,22 @@ static void doemul(void)
         printf("R8: %08X, R9: %08X, R10: %08X, R11: %08X\n", regs[8], regs[9], regs[10], regs[11]);
         printf("R12: %08X, R13: %08X, R14: %08X, R15: %08X\n", regs[12], regs[13], regs[14], regs[15]);
 #endif
-        if (instr == 0x07) /* bcr */
+        switch (instr)
         {
-            splitrr();
-            /* x1 is condition, x2 is register to branch to */
-#if DEBUG
-            printf("cond %02x, eq %d, lt %d, gt %d\n", x1, eq, lt, gt);
-#endif
-            if ((x1 == 0) || (x2 == 0))
+            case BCR:
             {
-#if DEBUG
-                printf("noop\n");
-#endif
-            }
-            /* unconditional branch */
-            else if (x1 == 0xf)
-            {
-                p = base + regs[x2];
-#if DEBUG
-                printf("updating with %x %x\n", x2, regs[x2]);
-                printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                if ((p - base) < 0x10000)
+                splitrr();
+                /* x1 is condition, x2 is register to branch to */
+                if ((x1 == 0) || (x2 == 0))
                 {
-                    printf("branched below - terminating\n");
-#if PBEMUL
-                    return;
+#ifdef DEBUG
+                    log_debug("noop\n");
 #endif
-                    exit(EXIT_SUCCESS);
                 }
-                continue;
-            }
-            /* BHR */
-            else if (x1 == 0x2)
-            {
-                if (cc == 2)
+                /* unconditional branch */
+                else if (x1 == 0xf)
                 {
                     p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
                     if ((p - base) < 0x10000)
                     {
                         printf("branched below - terminating\n");
@@ -574,1831 +541,1839 @@ static void doemul(void)
                     }
                     continue;
                 }
-            }
-            /* BLR */
-            else if (x1 == 0x4)
-            {
-                if (cc == 1)
+                /* BHR */
+                else if (x1 == 0x2)
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                    if ((p - base) < 0x10000)
+                    if (cc == 2)
                     {
-                        printf("branched below - terminating\n");
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
 #if PBEMUL
-                        return;
+                            return;
 #endif
-                        exit(EXIT_SUCCESS);
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            }
-            /* BNHR */
-            else if (x1 == 0xd)
-            {
-                if (!(cc == 2))
+                /* BLR */
+                else if (x1 == 0x4)
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                    if ((p - base) < 0x10000)
+                    if (cc == 1)
                     {
-                        printf("branched below - terminating\n");
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
 #if PBEMUL
-                        return;
+                            return;
 #endif
-                        exit(EXIT_SUCCESS);
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            }
-            /* BNER */
-            else if (x1 == 0x7)
-            {
-                if (!(cc == 0))
+                /* BNHR */
+                else if (x1 == 0xd)
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                    if ((p - base) < 0x10000)
+                    if (!(cc == 2))
                     {
-                        printf("branched below - terminating\n");
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
 #if PBEMUL
-                        return;
+                            return;
 #endif
-                        exit(EXIT_SUCCESS);
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            }
-            /* BER */
-            else if (x1 == 0x8)
-            {
-                if (cc == 0)
+                /* BNER */
+                else if (x1 == 0x7)
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                    if ((p - base) < 0x10000)
+                    if (!(cc == 0))
                     {
-                        printf("branched below - terminating\n");
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
 #if PBEMUL
-                        return;
+                            return;
 #endif
-                        exit(EXIT_SUCCESS);
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            }
-            /* BNLR */
-            else if (x1 == 0xb)
-            {
-               if (!(cc == 1))
+                /* BER */
+                else if (x1 == 0x8)
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("updating with %x %x\n", x2, regs[x2]);
-                    printf("base %p, p %p, at p is %x\n", base, p, *p);
-#endif
-                    if ((p - base) < 0x10000)
+                    if (cc == 0)
                     {
-                        printf("branched below - terminating\n");
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
 #if PBEMUL
-                        return;
+                            return;
 #endif
-                        exit(EXIT_SUCCESS);
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
                     }
-                    continue;
                 }
-            }
-            else
-            {
-                printf("unknown instruction %02X %02X\n", p[0], p[1]);
-                exit(EXIT_FAILURE);
-            }
-            p += 2;
-        }
-        else if (instr == 0x05) /* balr */
-        {
-            splitrr();
-            if (x1 != 0)
-            {
-                regs[x1] = (p - base) + 2;
-            }
-            if (x2 != 0)
-            {
-#if DEBUG
-                printf("x2 is %x, regsx2 is %x\n", x2, regs[x2]);
-#endif
-#if PBEMUL
-                if (regs[x2] < 300)
+                /* BNLR */
+                else if (x1 == 0xb)
                 {
-#if DEBUG
-                    printf("special call\n");
+                    if (!(cc == 1))
+                    {
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            printf("branched below - terminating\n");
+#if PBEMUL
+                            return;
 #endif
-                    spec_call(regs[x2]);
-                    p = base + regs[x1];
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
+                    }
                 }
                 else
                 {
-                    p = base + regs[x2];
-#if DEBUG
-                    printf("new address is %08X\n", regs[x2]);
-#endif
-                }
-#endif
-#if COMEMUL
-                p = base + regs[x2];
-                printf("new address is %08X\n", regs[x2] - 0x10000);
-#endif
-                continue;
-            }
-            p += 2;
-        }
-        /* this is used for looping. subtract 1 from first register.
-           if 0, fall through. otherwise branch to second register */
-        else if (instr == 0x06) /* bctr */
-        {
-            splitrr();
-            regs[x1]--;
-#if DEBUG
-            printf("new value of %x is %08X\n", x1, regs[x1]);
-#endif
-            if (regs[x1] != 0)
-            {
-                if (x2 != 0)
-                {
-                    p = base + regs[x2];
-                    if ((p - base) < 0x10000)
-                    {
-                        printf("branched below - terminating\n");
-                        exit(EXIT_SUCCESS);
-                    }
-                    continue;
-                }
-            }
-            p += 2;
-        }
-        else if (instr == 0x41) /* la */
-        {
-            int one = 0;
-            int two = 0;
-
-            splitrx();            
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            regs[t] = one + two + d;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x43) /* ic */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned int val;
-
-            splitrx();            
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            val = base[one + two + d];
-            regs[t] &= 0xffffff00UL;
-            regs[t] |= val;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x4c) /* mh */
-        {
-            int one = 0;
-            int two = 0;
-            int val;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            val = (short)gethalfword(&base[one + two + d]);
-            regs[t] *= val;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x5c) /* m */
-        {
-            int one = 0;
-            int two = 0;
-            int val;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            val = getfullword(&base[one + two + d]);
-            /* +++ this takes and returns a result in a register pair, but
-               I don't know how to do that, so I am just ignoring the
-               first register, ie regs[t] */
-            regs[t + 1] = (I32)regs[t + 1] * val;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t+1]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x6c) /* md */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            float x;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
-            fpregs[t] *= x;
-            last_fp_ld[t] = 0;
-            p += 4;
-        }
-        else if (instr == 0x6d) /* dd */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            float x;
-            float quot;
-            float rem;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            ibm2ieee(&x, v, 1);
-            if (x != 0)
-            {
-                fpregs[t] = fpregs[t] / x;
-            }
-            last_fp_ld[t] = 0;
-            p += 4;
-        }
-        else if (instr == 0xbd) /* clm */
-        {
-            int x;
-            unsigned char *target;
-            int one = 0;
-            int mask;
-            int val;
-            
-            splitrs();
-            mask = x2;
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            target = base + one + d;
-#if DEBUG
-            printf("comparing at offset %x\n", (target - base));
-            printf("base %x, displacement %x\n", one, d);
-            printf("mask %x\n", mask);
-#endif
-            p += 4;
-            x = 0;
-            cc = 0;
-            if ((mask & 0x8) != 0)
-            {
-                val = (regs[x1] >> 24) & 0xff;
-                if (val > target[x])
-                {
-                    cc = 2;
-                    continue;
-                }
-                else if (val < target[x])
-                {
-                    cc = 1;
-                    continue;
-                }
-                x++;
-            }
-            if ((mask & 0x4) != 0)
-            {
-                val = (regs[x1] >> 16) & 0xff;
-                if (val > target[x])
-                {
-                    cc = 2;
-                    continue;
-                }
-                else if (val < target[x])
-                {
-                    cc = 1;
-                    continue;
-                }
-                x++;
-            }
-            if ((mask & 0x2) != 0)
-            {
-                val = (regs[x1] >> 8) & 0xff;
-                if (val > target[x])
-                {
-                    cc = 2;
-                    continue;
-                }
-                else if (val < target[x])
-                {
-                    cc = 1;
-                    continue;
-                }
-                x++;
-            }
-            if ((mask & 0x1) != 0)
-            {
-                val = regs[x1] & 0xff;
-#if DEBUG
-                printf("val is %x, target is %x\n", val, target[x]);
-#endif
-                if (val > target[x])
-                {
-                    cc = 2;
-#if DEBUG
-                    printf("gt detected\n");
-#endif
-                    continue;
-                }
-                else if (val < target[x])
-                {
-                    cc = 1;
-                    continue;
-                }
-                x++;
-            }
-            cc = 0;
-        }
-        else if (instr == 0x88) /* srl */
-        {
-            int x = 0;
-            
-            splitrs();
-            if (b != 0)
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-            regs[x1] >>= x;
-            p += 4;
-        }
-        else if (instr == 0x8a) /* sra */
-        {
-            int x = 0;
-            /* +++ suggest */
-            splitrs();
-            if (b != 0) 
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-            regs[x1] = (((I32)regs[x1]) >> x);
-            cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0; 
-            p += 4;
-        }
-        else if (instr == 0x8b) /* sla */
-        {
-            int i, j;
-            int x = 0;
-            U32 t1 = 0;
-            U32 t2 = 0;
-
-            /* +++ suggest */
-            splitrs();
-            t1 = regs[x1] & 0x7FFFFFFF;
-            /*the sign of the first operand remains unchanged.
-            All 31 numeric bits of the operand participate in the left shift.
-            */
-            t2 = regs[x1] & 0x80000000; 
-
-            if (b != 0)
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-
-            j = 0;
-            for (i = 0; i < x; i++)
-            {
-                t1 <<= 1;
-                if ((t1 & 0x80000000) != t2) j = 1;
-            }
-            regs[x1] = (t1 & 0x7FFFFFFF) | t2;
-            cc = (j == 1) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x8e) /* srda */
-        {
-            int x = 0;
-
-            splitrs();
-            if (b != 0)
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-            
-            if (x >= 32)
-            {
-                regs[x1+1] = regs[x1];
-                regs[x1] = 0;
-                regs[x1+1] >>= (x-32);
-            }
-            else
-            {
-                regs[x1+1] >>= x;
-                regs[x1+1] |= (regs[x1] << (32-x));
-                regs[x1] >>= x;
-            }
-            /*need handle overflow case*/
-            cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x8f) /* slda */
-        {
-            int x = 0;
-
-            splitrs();
-            if (b != 0)
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-            
-            if (x >= 32)
-            {
-                regs[x1] = regs[x1+1];
-                regs[x1+1] = 0;
-                regs[x1] <<= (x-32);
-            }
-            else
-            {
-                regs[x1] <<= x;
-                regs[x1] |= (regs[x1+1] >> (32-x));
-                regs[x1+1] <<= x;
-            }
-            /*need handle overflow case*/
-            cc = ((I32)regs[x1+1] > 0) ? 2 : ((I32)regs[x1+1] < 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x89) /* sll */
-        {
-            int x = 0;
-
-            splitrs();
-            if (b != 0)
-            {
-                x = regs[b];
-            }
-            x += d;
-            x &= 0x3f;
-            regs[x1] <<= x;
-            
-            p += 4;
-        }
-        else if (instr == 0x8c) /* srdl */
-        {
-            int x;
-            int amt;
-
-            splitrs();
-            amt = p[3];
-            if (amt >= 32)
-            {
-                regs[x1+1] = regs[x1];
-                regs[x1] = 0;
-                regs[x1+1] >>= (amt-32);
-            }
-            else
-            {
-                regs[x1+1] >>= amt;
-                regs[x1+1] |= (regs[x1] << (32-amt));
-                regs[x1] >>= amt;
-            }
-            p += 4;
-        }
-        else if (instr == 0x90) /* stm */
-        {
-            int start;
-            int end;
-            int x;
-            unsigned char *target;
-            int one = 0;
-            
-            splitrs();
-            start = x1;
-            end = x2;
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            target = base + one + d;
-#if DEBUG
-            printf("storing to offset %x\n", (target - base));
-            printf("base %x, displacement %x\n", one, d);
-#endif
-            if (x2 < x1)
-            {
-                end = 15;
-                for (x = start; x <= end; x++)
-                {
-                   writereg(target, regs[x]);
-                   target += 4;
-                }
-                start = 0;
-                end = x2;
-            }
-            for (x = start; x <= end; x++)
-            {
-                writereg(target, regs[x]);
-                target += 4;
-            }
-            p += 4;
-        }
-        else if (instr == 0x0e) /* mvcl */
-        {
-            splitrr();
-            /* +++ I think the x1+1 and x2+2 can be different lengths
-               and padding should be done - not sure if a pad byte is
-               included - I think it is - which is why the length is
-               restricted to 16 MiB */
-            memcpy(base + regs[x1], base + regs[x2], regs[x1+1]);
-            /* and the length registers may count down to 0 */
-            /* I think the main registers count up */
-            /* not sure what overlapping addresses do either, so not */
-            /* sure whether to use memmove */
-            regs[x1] += regs[x1+1];
-            regs[x2] += regs[x2+1];
-            cc = (regs[x1+1] > regs[x2+1]) ? 2 : (regs[x1+1] < regs[x2+1]) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x1d) /* dr */
-        {
-            U32 value;
-            U32 remainder;
-
-            splitrr();
-            /* +++ I believe the x1 and x1+1 are a pair, but I don't
-               know how to do that, so I'll just ignore x1 */
-
-            /* so
-               the dividend is in regs[x1] and regs[x1+1]
-               the divisor is in regs[x2]
-               the remainder is placed in regs[x1]
-               the quotient is placed in regs[x1+1]
-            */
-            value = regs[x1+1] / regs[x2];
-            remainder = regs[x1+1] % regs[x2];
-            regs[x1] = remainder;
-            regs[x1+1] = value;
-            p += 2;
-        }
-        else if (instr == 0x1c) /* mr */
-        {
-            splitrr();
-            /* +++ This takes and stores result in a register pair,
-               but I don't know how to do that, so we ignore the
-               first register, ie regs[x1] */
-            regs[x1 + 1] = (I32)regs[x1 +  1] * (I32)regs[x2];
-            p += 2;
-        }
-        else if (instr == 0x18) /* lr */
-        {
-            splitrr();
-            regs[x1] = regs[x2];
-            p += 2;
-        }
-        else if (instr == 0x13) /* lcr */
-        {
-            int r1 = 0;
-            splitrr();
-            r1 = regs[x1];
-            regs[x1] = -regs[x2];
-            cc = (check_sub32(r1, (I32)regs[x2]) != 0) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x23) /* lcdr */
-        {
-            splitrr();
-            fpregs[x1] = -fpregs[x2];
-            last_fp_ld[x1] = 0;
-            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x10) /* lpr */
-        {
-            int r1;
-            splitrr();
-            r1 = regs[x1];
-            /* +++ just guessing */
-            if ((I32)regs[x2] < 0)
-            {
-                regs[x1] = -regs[x2];
-            }
-            else
-            {
-                regs[x1] = regs[x2];
-            }
-            cc = (check_sub32(r1, (I32)regs[x2]) != 0) ? 3 : ((I32)regs[x1] > 0) ? 2 : 0;
-            p += 2;
-        }
-        else if (instr == 0x11) /* lnr */
-        {
-            splitrr();
-            /* +++ just guessing */
-            if ((I32)regs[x2] > 0)
-            {
-                regs[x1] = -regs[x2];
-            }
-            else
-            {
-                regs[x1] = regs[x2];
-            }
-            cc = ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x58) /* l */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            regs[t] = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x68) /* ld */
-        {
-            int one = 0;
-            int two = 0;
-            float x;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            if (memcmp(v, "\x4E\x00\x00\x00", 4) == 0)
-            {
-                float_special = 1;
-                x = (I32)(getfullword(v+4) & 0x7FFFFFFF);
-            }
-            else
-            {
-                ibm2ieee(&x, v, 1);
-            }
-            fpregs[t] = x;
-            last_fp_ld[t] = 1;
-            /* preserve the full value in case it is useful later */
-            memcpy(last_fp_intact[t], v, 8);
-            p += 4;
-        }
-        else if (instr == 0x69) /* cd */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            float x;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            if (last_fp_ld[t])
-            {
-                cc = memcmp(last_fp_intact[t], v, 8);
-                if (cc == -1)
-                {
-                    cc = 1;
-                }
-                else if (cc == 1)
-                {
-                    cc = 2;
-                }
-            }
-            else
-            {
-                ibm2ieee(&x, v, 1);
-                cc = (fpregs[t] > x) ? 2 : (fpregs[t] < x) ? 1 : 0;
-            }
-            p += 4;
-        }
-        else if (instr == 0x48) /* lh */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            regs[t] = (short)((v[0] << 8) | v[1]);
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x40) /* sth */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            v[0] = (regs[t] >> 8) & 0xff;
-            v[1] = regs[t] & 0xff;
-
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x49) /* ch */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            int val;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            val = (short)gethalfword(v);
-            cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x59) /* c */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            I32 val;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            val = getfullword(v);
-            cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x28) /* ldr */
-        {
-            splitrr();
-            fpregs[x1] = fpregs[x2];
-            /* preserve status */
-            last_fp_ld[x1] = last_fp_ld[x2];
-            memcpy(last_fp_intact[x1], last_fp_intact[x2], 8);
-            p += 2;
-        }
-        else if (instr == 0x29) /* cdr */
-        {
-            splitrr();
-            /* this could use the preserved values, and it doesn't
-               need to clear the ld status */
-            if (last_fp_ld[x1] && last_fp_ld[x2])
-            {
-                cc = memcmp(last_fp_intact[x1], last_fp_intact[x2], 8);
-                if (cc == 1)
-                {
-                    cc = 2;
-                }
-                else if (cc == -1)
-                {
-                    cc = 1;
-                }
-            }
-            else
-            {
-                cc = (fpregs[x1] > fpregs[x2]) ? 2 : (fpregs[x1] < fpregs[x2]) ? 1 : 0;
-            }
-            p += 2;
-        }
-        else if (instr == 0x2a) /* adr */
-        {
-            splitrr();
-            fpregs[x1] += fpregs[x2];
-            last_fp_ld[x1] = 0;
-            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x2b) /* sdr */
-        {
-            splitrr();
-            fpregs[x1] -= fpregs[x2];
-            last_fp_ld[x1] = 0;
-            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1]  < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x2c) /* mdr */
-        {
-            splitrr();
-            fpregs[x1] *= fpregs[x2];
-            last_fp_ld[x1] = 0;
-            p += 2;
-        }
-        else if (instr == 0x2d) /* ddr */
-        {
-            splitrr();
-            fpregs[x1] = fpregs[x1] / fpregs[x2];
-            last_fp_ld[x1] = 0;
-            p += 2;
-        }
-        else if (instr == 0x5a) /* a */
-        {
-            int one = 0;
-            int two = 0;
-            int x;
-            int r1;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            r1 = regs[t];
-            x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            regs[t] += x;
-            cc = (check_add32(r1, x) != 0) ? 3 : ((I32)regs[t] > 0) ? 2 : ((I32)regs[t] < 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif    
-            p += 4;
-        }
-        else if (instr == 0x4a) /* ah */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            int val = 0;
-            int r1;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            val = (short)gethalfword(v);
-            r1 = regs[t];
-            regs[t] += val;
-            cc = (check_add32(r1, val) != 0) ? 3 : ((I32)regs[t] > 0) ? 2 : ((I32)regs[t] < 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x5b) /* s */
-        {
-            int one = 0;
-            int two = 0;
-            int x;
-            int r1;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            r1 = regs[t];
-            regs[t] -= x;
-            cc = (check_sub32(r1, x)) ? 3 : ((I32)regs[t] > 0) ? 2 : ((I32)regs[t] < 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-
-            /* we need to set the eq flag at least */
-            /* for when the result is 0 */
-            p += 4;
-        }
-        else if (instr == 0x5f) /* sl */
-        {
-            int one = 0;
-            int two = 0;
-            U32 x;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            cc = (regs[t] == x) ? 2 : (regs[t] < x) ? 1 : 3;
-            regs[t] -= x;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-
-            /* we need to set the eq flag at least */
-            /* for when the result is 0 */
-            p += 4;
-        }
-        else if (instr == 0x6a) /* ad */
-        {
-            int one = 0;
-            int two = 0;
-            float x;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
-            {
-                float_special = 1;
-            }
-            else
-            {
-                ibm2ieee(&x, v, 1);
-                fpregs[t] += x;
-            }
-            last_fp_ld[t] = 0;
-            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x6b) /* sd */
-        {
-            int one = 0;
-            int two = 0;
-            float x;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
-            {
-                if (!float_special)
-                {
-                    printf("internal error with sd\n");
+                    printf("unknown instruction %02X %02X\n", p[0], p[1]);
                     exit(EXIT_FAILURE);
                 }
-                float_special = 0;
+                p += 2;
+                break;
             }
-            else
+            case BALR: /* balr */
             {
+                splitrr();
+                if (x1 != 0)
+                {
+                    regs[x1] = (p - base) + 2;
+                }
+                if (x2 != 0)
+                {
+#if PBEMUL
+                    if (regs[x2] < 300)
+                    {
+                        spec_call(regs[x2]);
+                        p = base + regs[x1];
+                    }
+                    else
+                    {
+                        p = base + regs[x2];
+                    }
+#endif
+#if COMEMUL
+                    p = base + regs[x2];
+                    printf("new address is %08X\n", regs[x2] - 0x10000);
+#endif
+                    continue;
+                }
+                p += 2;
+                break;
+            }
+            /* this is used for looping. subtract 1 from first register.
+               if 0, fall through. otherwise branch to second register */
+            case BCTR: /* bctr */
+            {
+                splitrr();
+                regs[x1]--;
+                if (regs[x1] != 0)
+                {
+                    if (x2 != 0)
+                    {
+                        p = base + regs[x2];
+                        if ((p - base) < 0x10000)
+                        {
+                            exit(EXIT_SUCCESS);
+                        }
+                        continue;
+                    }
+                }
+                p += 2;
+                break;
+            }
+            case LA: /* la */
+            {
+                int one = 0;
+                int two = 0;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                regs[t] = one + two + d;
+                p += 4;
+                break;
+            }
+            case IC: /* ic */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned int val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                val = base[one + two + d];
+                regs[t] &= 0xffffff00UL;
+                regs[t] |= val;
+                p += 4;
+                break;
+            }
+            case MH: /* mh */
+            {
+                int one = 0;
+                int two = 0;
+                int val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                val = (short)gethalfword(&base[one + two + d]);
+                regs[t] *= val;
+                p += 4;
+                break;
+            }
+            case M: /* m */
+            {
+                int one = 0;
+                int two = 0;
+                int val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                val = getfullword(&base[one + two + d]);
+                /* +++ this takes and returns a result in a register pair, but
+                   I don't know how to do that, so I am just ignoring the
+                   first register, ie regs[t] */
+                regs[t + 1] = (I32)regs[t + 1] * val;
+                p += 4;
+                break;
+            }
+            case MD: /* md */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                float x;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
                 ibm2ieee(&x, v, 1);
-                fpregs[t] -= x;
+                fpregs[t] *= x;
+                last_fp_ld[t] = 0;
+                p += 4;
+                break;
             }
-            last_fp_ld[t] = 0;
-            cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x4b) /* sh */
-        {
-            int one = 0;
-            int two = 0;
-            int val = 0;
-            int r1;
-            unsigned char *v;
+            case DD: /* dd */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                float x;
+                float quot;
+                float rem;
 
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            val = (short)gethalfword(v);
-            r1 = regs[t];
-            regs[t] -= val;
-            cc = (check_sub32(r1, val) != 0) ? 3 : ((I32)regs[t] > 0) ? 2 : ((I32)regs[t] < 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-
-            /* we need to set the eq flag at least */
-            /* for when the result is 0 */
-            p += 4;
-        }
-        else if (instr == 0x55) /* cl */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            unsigned long val;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            val = getfullword(v);
-            cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x5d) /* d */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-            I32 op2;
-            I32 quot;
-            I32 rem;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            op2 = getfullword(v);
-            if (op2 != 0)
-            {
-                /* I assume reges[t] to 0 since we are only 
-                dealing with 32-bit C-generated code at the moment.*/
-                quot = ((I32)regs[t + 1]) / op2;
-                rem = ((I32)regs[t + 1]) % op2;
-                regs[t] = (U32)rem;
-                regs[t+1] = (U32)quot;
-            }
-            p += 4;
-        }
-        else if (instr == 0x54) /* n */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            regs[t] &= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            cc = (regs[t] != 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x57) /* x */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            regs[t] ^= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            cc = (regs[t] != 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x56) /* o */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            regs[t] |= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
-            cc = (regs[t] != 0) ? 1 : 0;
-#if DEBUG
-            printf("new value of %x is %08X\n", t, regs[t]);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x92) /* mvi */
-        {
-            unsigned long one = 0;
-            unsigned char *v;
-
-            splitsi();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            one += d;
-            v = base + one;
-            *v = imm;
-#if DEBUG
-            printf("moved %x to %08X\n", imm, one);
-#endif
-            p += 4;
-        }
-        else if (instr == 0x94) /* ni */
-        {
-            unsigned long one = 0;
-            unsigned char *v;
-
-            splitsi();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            one += d;
-            v = base + one;
-            *v &= imm;
-            cc = ((int)*v != 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x95) /* cli */
-        {
-            unsigned long one = 0;
-            unsigned char *v;
-            int val;
-
-            splitsi();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            one += d;
-            v = base + one;
-            val = *v;
-            cc = (val > imm) ? 2 : (val < imm) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x96) /* oi */
-        {
-            unsigned long one = 0;
-            unsigned char *v;
-
-            splitsi();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            one += d;
-            v = base + one;
-            *v |= imm;
-            cc = ((int)*v != 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x97) /* xi */
-        {
-            unsigned long one = 0;
-            unsigned char *v;
-
-            splitsi();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            one += d;
-            v = base + one;
-            *v ^= imm;
-            cc = ((int)*v != 0) ? 1 : 0;
-            p += 4;
-        }
-        else if (instr == 0x1a) /* ar */
-        {
-            int r1;
-            splitrr();
-            r1 = regs[x1];
-            regs[x1] += regs[x2];
-            cc = (check_add32(r1, (I32)regs[x2]) != 0) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x1b) /* sr */
-        {
-            int r1;
-            splitrr();
-            r1 = regs[x1];
-            regs[x1] -= regs[x2];
-            cc = (check_sub32(r1, (I32)regs[x2]) != 0) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x14) /* nr */
-        {
-            splitrr();
-            regs[x1] &= regs[x2];
-            cc = (regs[x1] != 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x16) /* or */
-        {
-            splitrr();
-            regs[x1] |= regs[x2];
-            cc = (regs[x1] != 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x17) /* xr */
-        { 
-            splitrr();
-            regs[x1] ^= regs[x2];
-            cc = (regs[x1] != 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x1f) /* slr */
-        {
-            splitrr();
-            cc = (regs[x1] == regs[x2]) ? 2 : (regs[x1] < regs[x2]) ? 1 : 3;
-            regs[x1] -= regs[x2];
-            p += 2;
-        }
-        else if (instr == 0x45) /* bal */
-        {
-            int one = 0;
-            int two = 0;
-            int dest;
-
-            splitrx();            
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            dest = one + two + d;
-            if (t != 0)
-            {
-                regs[t] = p + 4 - base;
-                printf("new value of %x is %08X\n", t, regs[t]);
-            }
-#if DEBUG
-            printf("new dest is %08X\n", dest - 0x10000);
-#endif
-            p = base + dest;
-        }
-        else if (instr == 0x50) /* st */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            v[0] = (regs[t] >> 24) & 0xff;
-            v[1] = (regs[t] >> 16) & 0xff;
-            v[2] = (regs[t] >> 8) & 0xff;
-            v[3] = regs[t] & 0xff;
-            p += 4;
-        }
-        else if (instr == 0x60) /* std */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned char *v;
-
-            splitrx();
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            if (i != 0)
-            {
-                two = regs[i];
-            }
-            v = base + one + two + d;
-            if (last_fp_ld[t])
-            {
-                memcpy(v, last_fp_intact[t], 8);
-            }
-            else
-            {
-                ieee2ibm(v, &fpregs[t], 1);
-                memset(v + 4, '\x00', 4);
-                if (float_special)
+                splitrx();
+                if (b != 0)
                 {
-                    putfullword(v + 4, (I32)fpregs[t]);
-                    float_special = 0;
+                    one = regs[b];
                 }
-            }
-            p += 4;
-        }
-        else if (instr == 0xb2) /* stck */
-        {
-            /*a dummy instruction, not implement yet */
-            int one = 0;
-            unsigned char *v;
-
-            splitsi(); /* this should be splits but we don't have one yet */
-               /* also - this should be further distinguished to just x'05'
-                  as STCK - ie B205 */
-               /* actually, at least at this stage, this shouldn't be here
-                  at all. PDOS should be doing a call into the pseudo-bios
-                  to get the time, and that is where the STCK should be
-                  executed for a real pseudo-bios on real hardware, but
-                  in our case, this emulator should be doing a time() call
-                  to the host C library */
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            v = base + one + d;
-            memset(v, '\x00', 8);
-            p += 4;
-        }
-        else if (instr == 0xd2) /* mvc */
-        {
-            int one = 0;
-            int two = 0;
-
-            splitssl();
-            if (b1 != 0)
-            {
-                one = regs[b1];
-            }
-            one += d1;
-            if (b2 != 0)
-            {
-                two = regs[b2];
-            }
-            two += d2;
-            memcpy(base + one, base + two, l + 1);
-#if DEBUG
-            printf("writing to address %x %p\n", one, base + one);
-#endif
-            p += 6;
-        }
-        else if (instr == 0xd4) /* nc */
-        {
-            int one = 0;
-            int two = 0;
-            int i;
-            unsigned char *v, *z;
-
-            splitssl();
-            if (b1 != 0)
-            {
-                one = regs[b1];
-            }
-            one += d1;
-            if (b2 != 0)
-            {
-                two = regs[b2];
-            }
-            two += d2;
-
-            v = base + one;
-            z = base + two;
-            cc = 0;
-            for(i = 0; i < l + 1; i++)
-            {
-                v[i] = (v[i] & z[i]);
-                if (v[i] != 0) cc = 1;
-            }
-            p += 6;
-        }
-        else if (instr == 0xd5) /* clc */
-        {
-            int one = 0;
-            int two = 0;
-            int ret;
-
-            splitssl();
-            if (b1 != 0)
-            {
-                one = regs[b1];
-            }
-            one += d1;
-            if (b2 != 0)
-            {
-                two = regs[b2];
-            }
-            two += d2;
-            ret = memcmp(base + one, base + two, l + 1);
-            cc = (ret > 0) ? 2 : (ret < 0) ? 1 : 0;
-            p += 6;
-        }
-        else if (instr == 0xd6) /* oc */
-        {
-            int one = 0;
-            int two = 0;
-            int i;
-            unsigned char *v, *z;
-
-            splitssl();
-            if (b1 != 0)
-            {
-                one = regs[b1];
-            }
-            one += d1;
-            if (b2 != 0)
-            {
-                two = regs[b2];
-            }
-            two += d2;
-
-            v = base + one;
-            z = base + two;
-            cc = 0;
-            for(i = 0; i < l + 1; i++)
-            {
-                v[i] = (v[i] | z[i]);
-                if (v[i] != 0) cc = 1;
-            }
-            p += 6;
-        }
-        else if (instr == 0xd7) /* xc */
-        {
-            int one = 0;
-            int two = 0;
-            int i;
-            unsigned char *v, *z;
-
-            splitssl();
-            if (b1 != 0)
-            {
-                one = regs[b1];
-            }
-            one += d1;
-            if (b2 != 0)
-            {
-                two = regs[b2];
-            }
-            two += d2;
-
-            v = base + one;
-            z = base + two;
-            cc = 0;
-            for(i = 0; i < l + 1; i++)
-            {
-                v[i] = (v[i] ^= z[i]);
-                if (v[i] != 0) cc = 1;
-            }
-            p += 6;
-        }
-        else if (instr == 0x19) /* cr */
-        {
-            splitrr();
-            cc = ((I32)regs[x1] > (I32)regs[x2]) ? 2 : ((I32)regs[x1] < (I32)regs[x2]) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x15) /* clr */
-        {
-            splitrr();
-            cc = (regs[x1] > regs[x2]) ? 2 : (regs[x1] < regs[x2]) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x47) /* bc */
-        {
-            int branch = 0;
-            int one = 0;
-            int cond;
-
-            splitrx();
-            /* not sure if this is subject to r0 check */
-            if (b != 0)
-            {
-                one = regs[b];
-            }
-            cond = (t << 4) | i;
-#if DEBUG
-            printf("cond %02x, eq %d, lt %d, gt %d\n", cond, eq, lt, gt);
-#endif
-            /* bl */
-            if (cond == 0x40)
-            {
-                if (cc == 1)
+                if (i != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    two = regs[i];
                 }
-            }
-            /* bnz or bne */
-            else if (cond == 0x70)
-            {
-                if (!(cc == 0))
+                v = base + one + two + d;
+                ibm2ieee(&x, v, 1);
+                if (x != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    fpregs[t] = fpregs[t] / x;
                 }
+                last_fp_ld[t] = 0;
+                p += 4;
+                break;
             }
-            /* unconditional */
-            else if (cond == 0xf0)
+            case CLM: /* clm */
             {
-                p = base + one + d;
-                continue;
-            }
-            /* bnh */
-            else if (cond == 0xd0)
-            {
-                if (cc == 1 || cc == 0)
+                int x;
+                unsigned char *target;
+                int one = 0;
+                int mask;
+                int val;
+
+                splitrs();
+                mask = x2;
+                if (b != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    one = regs[b];
                 }
-            }
-            /* bnl */
-            else if (cond == 0xb0)
-            {
-                if (cc == 2 || cc == 0)
+                target = base + one + d;
+                p += 4;
+                x = 0;
+                cc = 0;
+                if ((mask & 0x8) != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    val = (regs[x1] >> 24) & 0xff;
+                    if (val > target[x])
+                    {
+                        cc = 2;
+                        continue;
+                    }
+                    else if (val < target[x])
+                    {
+                        cc = 1;
+                        continue;
+                    }
+                    x++;
                 }
-            }
-            /* be */
-            else if (cond == 0x80)
-            {
-                if (cc == 0)
+                if ((mask & 0x4) != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    val = (regs[x1] >> 16) & 0xff;
+                    if (val > target[x])
+                    {
+                        cc = 2;
+                        continue;
+                    }
+                    else if (val < target[x])
+                    {
+                        cc = 1;
+                        continue;
+                    }
+                    x++;
                 }
-            }
-            /* bh */
-            else if (cond == 0x20)
-            {
-                if (cc == 2)
+                if ((mask & 0x2) != 0)
                 {
-                    p = base + one + d;
-                    continue;
+                    val = (regs[x1] >> 8) & 0xff;
+                    if (val > target[x])
+                    {
+                        cc = 2;
+                        continue;
+                    }
+                    else if (val < target[x])
+                    {
+                        cc = 1;
+                        continue;
+                    }
+                    x++;
                 }
+                if ((mask & 0x1) != 0)
+                {
+                    val = regs[x1] & 0xff;
+                    if (val > target[x])
+                    {
+                        cc = 2;
+                        continue;
+                    }
+                    else if (val < target[x])
+                    {
+                        cc = 1;
+                        continue;
+                    }
+                    x++;
+                }
+                cc = 0;
+                break;
             }
-            else
+            case SRL: /* srl */
             {
-                printf("unknown condition %x at %08X\n", cond, p - base);
-                exit(EXIT_FAILURE);
+                int x = 0;
+
+                splitrs();
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+                regs[x1] >>= x;
+                p += 4;
+                break;
             }
-            p += 4;
-        }
-        else if (instr == 0x12) /* ltr */
-        {
-            splitrr();
-            regs[x1] = regs[x2];
-            cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x22) /* ltdr */
-        {
-            splitrr();
-            fpregs[x1] = fpregs[x2];
-            /* this could preserve the ld status from x2 instead */
-            /* actually, it doesn't make sense to test a
-               floating point register containing a non-floating
-               point value */
-            last_fp_ld[x1] = 0;
-            cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
-            p += 2;
-        }
-        else if (instr == 0x98) /* lm */
-        {
-            int start;
-            int end;
-            int x;
-            unsigned char *target;
-            int one = 0;
-            
-            splitrs();
-            start = x1;
-            end = x2;
-            if (b != 0)
+            case SRA: /* sra */
             {
-                one = regs[b];
+                int x = 0;
+                /* +++ suggest */
+                splitrs();
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+                regs[x1] = (((I32)regs[x1]) >> x);
+                cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
+                p += 4;
+                break;
             }
-            target = base + one + d;
-#if DEBUG
-            printf("loading from offset %x\n", (target - base));
-            printf("displacement %x\n", d);
-#endif
-            if (x2 < x1)
+            case SLA: /* sla */
             {
-                end = 15;
+                int i, j;
+                int x = 0;
+                U32 t1 = 0;
+                U32 t2 = 0;
+
+                /* +++ suggest */
+                splitrs();
+                t1 = regs[x1] & 0x7FFFFFFF;
+                /*the sign of the first operand remains unchanged.
+                All 31 numeric bits of the operand participate in the left shift.
+                */
+                t2 = regs[x1] & 0x80000000;
+
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+
+                j = 0;
+                for (i = 0; i < x; i++)
+                {
+                    t1 <<= 1;
+                    if ((t1 & 0x80000000) != t2)
+                        j = 1;
+                }
+                regs[x1] = (t1 & 0x7FFFFFFF) | t2;
+                cc = (j == 1) ? 3 : ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case SRDA: /* srda */
+            {
+                int x = 0;
+
+                splitrs();
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+
+                if (x >= 32)
+                {
+                    regs[x1 + 1] = regs[x1];
+                    regs[x1] = 0;
+                    regs[x1 + 1] >>= (x - 32);
+                }
+                else
+                {
+                    regs[x1 + 1] >>= x;
+                    regs[x1 + 1] |= (regs[x1] << (32 - x));
+                    regs[x1] >>= x;
+                }
+                /*need handle overflow case*/
+                cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case SLDA: /* slda */
+            {
+                int x = 0;
+
+                splitrs();
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+
+                if (x >= 32)
+                {
+                    regs[x1] = regs[x1 + 1];
+                    regs[x1 + 1] = 0;
+                    regs[x1] <<= (x - 32);
+                }
+                else
+                {
+                    regs[x1] <<= x;
+                    regs[x1] |= (regs[x1 + 1] >> (32 - x));
+                    regs[x1 + 1] <<= x;
+                }
+                /*need handle overflow case*/
+                cc = ((I32)regs[x1 + 1] > 0) ? 2 : ((I32)regs[x1 + 1] < 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case SLL: /* sll */
+            {
+                int x = 0;
+
+                splitrs();
+                if (b != 0)
+                {
+                    x = regs[b];
+                }
+                x += d;
+                x &= 0x3f;
+                regs[x1] <<= x;
+
+                p += 4;
+                break;
+            }
+            case SRDL: /* srdl */
+            {
+                int x;
+                int amt;
+
+                splitrs();
+                amt = p[3];
+                if (amt >= 32)
+                {
+                    regs[x1 + 1] = regs[x1];
+                    regs[x1] = 0;
+                    regs[x1 + 1] >>= (amt - 32);
+                }
+                else
+                {
+                    regs[x1 + 1] >>= amt;
+                    regs[x1 + 1] |= (regs[x1] << (32 - amt));
+                    regs[x1] >>= amt;
+                }
+                p += 4;
+                break;
+            }
+            case STM: /* stm */
+            {
+                int start;
+                int end;
+                int x;
+                unsigned char *target;
+                int one = 0;
+
+                splitrs();
+                start = x1;
+                end = x2;
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                target = base + one + d;
+                if (x2 < x1)
+                {
+                    end = 15;
+                    for (x = start; x <= end; x++)
+                    {
+                        writereg(target, regs[x]);
+                        target += 4;
+                    }
+                    start = 0;
+                    end = x2;
+                }
                 for (x = start; x <= end; x++)
                 {
-#if DEBUG
-                   printf("updating reg %x currently %x\n", x, regs[x]);
-#endif
-                   updatereg(&regs[x], target);
-#if DEBUG
-                   printf("new value %x\n", regs[x]);
-#endif
-                   target += 4;
+                    writereg(target, regs[x]);
+                    target += 4;
                 }
-                start = 0;
-                end = x2;
+                p += 4;
+                break;
             }
-            for (x = start; x <= end; x++)
+            case MVCL: /* mvcl */
             {
-                updatereg(&regs[x], target);
-                target += 4;
+                splitrr();
+                /* +++ I think the x1+1 and x2+2 can be different lengths
+                   and padding should be done - not sure if a pad byte is
+                   included - I think it is - which is why the length is
+                   restricted to 16 MiB */
+                memcpy(base + regs[x1], base + regs[x2], regs[x1 + 1]);
+                /* and the length registers may count down to 0 */
+                /* I think the main registers count up */
+                /* not sure what overlapping addresses do either, so not */
+                /* sure whether to use memmove */
+                regs[x1] += regs[x1 + 1];
+                regs[x2] += regs[x2 + 1];
+                cc = (regs[x1 + 1] > regs[x2 + 1]) ? 2 : (regs[x1 + 1] < regs[x2 + 1]) ? 1 : 0;
+                p += 2;
+                break;
             }
-            p += 4;
-        }
-        else if (instr == 0x42) /* stc */
-        {
-            int one = 0;
-            int two = 0;
-            unsigned long dest;
+            case DR: /* dr */
+            {
+                U32 value;
+                U32 remainder;
 
-            splitrx();            
-            if (b != 0)
-            {
-                one = regs[b];
+                splitrr();
+                /* +++ I believe the x1 and x1+1 are a pair, but I don't
+                   know how to do that, so I'll just ignore x1 */
+
+                /* so
+                   the dividend is in regs[x1] and regs[x1+1]
+                   the divisor is in regs[x2]
+                   the remainder is placed in regs[x1]
+                   the quotient is placed in regs[x1+1]
+                */
+                value = regs[x1 + 1] / regs[x2];
+                remainder = regs[x1 + 1] % regs[x2];
+                regs[x1] = remainder;
+                regs[x1 + 1] = value;
+                p += 2;
+                break;
             }
-            if (i != 0)
+            case MR: /* mr */
             {
-                two = regs[i];
+                splitrr();
+                /* +++ This takes and stores result in a register pair,
+                   but I don't know how to do that, so we ignore the
+                   first register, ie regs[x1] */
+                regs[x1 + 1] = (I32)regs[x1 + 1] * (I32)regs[x2];
+                p += 2;
+                break;
             }
-            dest = one + two + d;
-            base[dest] = regs[t] & 0xff;
-            p += 4;
-        }
-        else if (instr == 0x0a) /* svc */
-        {
-            int c;
-            
-            splitrr();
-            /* assume SVC 35 writing one character */
-            c = base[regs[1] + 4];
-            printf("WTO: %c\n", febc(c));
-            p += 2;
-        }
-        else
-        {
+            case LR: /* lr */
+            {
+                splitrr();
+                regs[x1] = regs[x2];
+                p += 2;
+                break;
+            }
+            case LCR: /* lcr */
+            {
+                int r1 = 0;
+                splitrr();
+                r1 = regs[x1];
+                regs[x1] = -regs[x2];
+                cc = (check_sub32(r1, (I32)regs[x2]) != 0) ?
+                        3 : ((I32)regs[x1] > 0) ?
+                        2 : ((I32)regs[x1] < 0) ?
+                        1 : 0;
+                p += 2;
+                break;
+            }
+            case LCDR: /* lcdr */
+            {
+                splitrr();
+                fpregs[x1] = -fpregs[x2];
+                last_fp_ld[x1] = 0;
+                cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1
+                                                             : 0;
+                p += 2;
+                break;
+            }
+            case LPR: /* lpr */
+            {
+                int r1;
+                splitrr();
+                r1 = regs[x1];
+                /* +++ just guessing */
+                if ((I32)regs[x2] < 0)
+                {
+                    regs[x1] = -regs[x2];
+                }
+                else
+                {
+                    regs[x1] = regs[x2];
+                }
+                cc = (check_sub32(r1, (I32)regs[x2]) != 0) ?
+                        3 : ((I32)regs[x1] > 0) ?
+                        2 : 0;
+                p += 2;
+                break;
+            }
+            case LNR: /* lnr */
+            {
+                splitrr();
+                /* +++ just guessing */
+                if ((I32)regs[x2] > 0)
+                {
+                    regs[x1] = -regs[x2];
+                }
+                else
+                {
+                    regs[x1] = regs[x2];
+                }
+                cc = ((I32)regs[x1] < 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case L: /* l */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                regs[t] = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                p += 4;
+                break;
+            }
+            case LD: /* ld */
+            {
+                int one = 0;
+                int two = 0;
+                float x;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                if (memcmp(v, "\x4E\x00\x00\x00", 4) == 0)
+                {
+                    float_special = 1;
+                    x = (I32)(getfullword(v + 4) & 0x7FFFFFFF);
+                }
+                else
+                {
+                    ibm2ieee(&x, v, 1);
+                }
+                fpregs[t] = x;
+                last_fp_ld[t] = 1;
+                /* preserve the full value in case it is useful later */
+                memcpy(last_fp_intact[t], v, 8);
+                p += 4;
+                break;
+            }
+            case CD: /* cd */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                float x;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                if (last_fp_ld[t])
+                {
+                    cc = memcmp(last_fp_intact[t], v, 8);
+                    if (cc == -1)
+                    {
+                        cc = 1;
+                    }
+                    else if (cc == 1)
+                    {
+                        cc = 2;
+                    }
+                }
+                else
+                {
+                    ibm2ieee(&x, v, 1);
+                    cc = (fpregs[t] > x) ? 2 : (fpregs[t] < x) ? 1
+                                                               : 0;
+                }
+                p += 4;
+                break;
+            }
+            case LH: /* lh */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                regs[t] = (short)((v[0] << 8) | v[1]);
+                p += 4;
+                break;
+            }
+            case STH: /* sth */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                v[0] = (regs[t] >> 8) & 0xff;
+                v[1] = regs[t] & 0xff;
+                p += 4;
+                break;
+            }
+            case CH: /* ch */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                int val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                val = (short)gethalfword(v);
+                cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1
+                                                                     : 0;
+                p += 4;
+                break;
+            }
+            case C: /* c */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                I32 val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                val = getfullword(v);
+                cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case LDR: /* ldr */
+            {
+                splitrr();
+                fpregs[x1] = fpregs[x2];
+                /* preserve status */
+                last_fp_ld[x1] = last_fp_ld[x2];
+                memcpy(last_fp_intact[x1], last_fp_intact[x2], 8);
+                p += 2;
+                break;
+            }
+            case CDR: /* cdr */
+            {
+                splitrr();
+                /* this could use the preserved values, and it doesn't
+                   need to clear the ld status */
+                if (last_fp_ld[x1] && last_fp_ld[x2])
+                {
+                    cc = memcmp(last_fp_intact[x1], last_fp_intact[x2], 8);
+                    if (cc == 1)
+                    {
+                        cc = 2;
+                    }
+                    else if (cc == -1)
+                    {
+                        cc = 1;
+                    }
+                }
+                else
+                {
+                    cc = (fpregs[x1] > fpregs[x2]) ? 2 : (fpregs[x1] < fpregs[x2]) ? 1 : 0;
+                }
+                p += 2;
+                break;
+            }
+            case ADR: /* adr */
+            {
+                splitrr();
+                fpregs[x1] += fpregs[x2];
+                last_fp_ld[x1] = 0;
+                cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case SDR: /* sdr */
+            {
+                splitrr();
+                fpregs[x1] -= fpregs[x2];
+                last_fp_ld[x1] = 0;
+                cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case MDR: /* mdr */
+            {
+                splitrr();
+                fpregs[x1] *= fpregs[x2];
+                last_fp_ld[x1] = 0;
+                p += 2;
+                break;
+            }
+            case DDR: /* ddr */
+            {
+                splitrr();
+                fpregs[x1] = fpregs[x1] / fpregs[x2];
+                last_fp_ld[x1] = 0;
+                p += 2;
+                break;
+            }
+            case A: /* a */
+            {
+                int one = 0;
+                int two = 0;
+                int x;
+                int r1;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                r1 = regs[t];
+                x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                regs[t] += x;
+                cc = (check_add32(r1, x) != 0) ?
+                        3 : ((I32)regs[t] > 0) ?
+                        2 : ((I32)regs[t] < 0) ? 
+                        1 : 0;
+                p += 4;
+                break;
+            }
+            case AH: /* ah */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                int val = 0;
+                int r1;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                val = (short)gethalfword(v);
+                r1 = regs[t];
+                regs[t] += val;
+                cc = (check_add32(r1, val) != 0) ? 
+                        3 : ((I32)regs[t] > 0) ?
+                        2 : ((I32)regs[t] < 0) ?
+                        1 : 0;
+                p += 4;
+                break;
+            }
+            case S: /* s */
+            {
+                int one = 0;
+                int two = 0;
+                int x;
+                int r1;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                r1 = regs[t];
+                regs[t] -= x;
+                cc = (check_sub32(r1, x)) ?
+                        3 : ((I32)regs[t] > 0) ?
+                        2 : ((I32)regs[t] < 0) ?
+                        1 : 0;
+                /* we need to set the eq flag at least */
+                /* for when the result is 0 */
+                p += 4;
+                break;
+            }
+            case SL: /* sl */
+            {
+                int one = 0;
+                int two = 0;
+                U32 x;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                x = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                cc = (regs[t] == x) ? 2 : (regs[t] < x) ? 1 : 3;
+                regs[t] -= x;
+                /* we need to set the eq flag at least */
+                /* for when the result is 0 */
+                p += 4;
+                break;
+            }
+            case AD: /* ad */
+            {
+                int one = 0;
+                int two = 0;
+                float x;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
+                {
+                    float_special = 1;
+                }
+                else
+                {
+                    ibm2ieee(&x, v, 1);
+                    fpregs[t] += x;
+                }
+                last_fp_ld[t] = 0;
+                cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case SD: /* sd */
+            {
+                int one = 0;
+                int two = 0;
+                float x;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                if (memcmp(v, "\x4F\x08\x00\x00", 4) == 0)
+                {
+                    if (!float_special)
+                    {
+                        printf("internal error with sd\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    float_special = 0;
+                }
+                else
+                {
+                    ibm2ieee(&x, v, 1);
+                    fpregs[t] -= x;
+                }
+                last_fp_ld[t] = 0;
+                cc = (fpregs[t] > 0) ? 2 : (fpregs[t] < 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case SH: /* sh */
+            {
+                int one = 0;
+                int two = 0;
+                int val = 0;
+                int r1;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                val = (short)gethalfword(v);
+                r1 = regs[t];
+                regs[t] -= val;
+                cc = (check_sub32(r1, val) != 0) ?
+                        3 : ((I32)regs[t] > 0) ?
+                        2 : ((I32)regs[t] < 0) ?
+                        1 : 0;
+
+                /* we need to set the eq flag at least */
+                /* for when the result is 0 */
+                p += 4;
+                break;
+            }
+            case CL: /* cl */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                unsigned long val;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                val = getfullword(v);
+                cc = ((I32)regs[t] > val) ? 2 : ((I32)regs[t] < val) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case D: /* d */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+                I32 op2;
+                I32 quot;
+                I32 rem;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                op2 = getfullword(v);
+                if (op2 != 0)
+                {
+                    /* I assume reges[t] to 0 since we are only
+                    dealing with 32-bit C-generated code at the moment.*/
+                    quot = ((I32)regs[t + 1]) / op2;
+                    rem = ((I32)regs[t + 1]) % op2;
+                    regs[t] = (U32)rem;
+                    regs[t + 1] = (U32)quot;
+                }
+                p += 4;
+                break;
+            }
+            case N: /* n */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                regs[t] &= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                cc = (regs[t] != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case X: /* x */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                regs[t] ^= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                cc = (regs[t] != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case O: /* o */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                regs[t] |= (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
+                cc = (regs[t] != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case MVI: /* mvi */
+            {
+                unsigned long one = 0;
+                unsigned char *v;
+
+                splitsi();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                one += d;
+                v = base + one;
+                *v = imm;
+                p += 4;
+                break;
+            }
+            case NI: /* ni */
+            {
+                unsigned long one = 0;
+                unsigned char *v;
+
+                splitsi();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                one += d;
+                v = base + one;
+                *v &= imm;
+                cc = ((int)*v != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case CLI: /* cli */
+            {
+                unsigned long one = 0;
+                unsigned char *v;
+                int val;
+
+                splitsi();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                one += d;
+                v = base + one;
+                val = *v;
+                cc = (val > imm) ? 2 : (val < imm) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case OI: /* oi */
+            {
+                unsigned long one = 0;
+                unsigned char *v;
+
+                splitsi();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                one += d;
+                v = base + one;
+                *v |= imm;
+                cc = ((int)*v != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case XI: /* xi */
+            {
+                unsigned long one = 0;
+                unsigned char *v;
+
+                splitsi();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                one += d;
+                v = base + one;
+                *v ^= imm;
+                cc = ((int)*v != 0) ? 1 : 0;
+                p += 4;
+                break;
+            }
+            case AR: /* ar */
+            {
+                int r1;
+                splitrr();
+                r1 = regs[x1];
+                regs[x1] += regs[x2];
+                cc = (check_add32(r1, (I32)regs[x2]) != 0) ? 
+                        3 : ((I32)regs[x1] > 0) ? 
+                        2 : ((I32)regs[x1] < 0) ? 
+                        1 : 0;
+                p += 2;
+                break;
+            }
+            case SR: /* sr */
+            {
+                int r1;
+                splitrr();
+                r1 = regs[x1];
+                regs[x1] -= regs[x2];
+                cc = (check_sub32(r1, (I32)regs[x2]) != 0) ?
+                            3 : ((I32)regs[x1] > 0) ?
+                            2 : ((I32)regs[x1] < 0) ?
+                            1 : 0;
+                p += 2;
+                break;
+            }
+            case NR: /* nr */
+            {
+                splitrr();
+                regs[x1] &= regs[x2];
+                cc = (regs[x1] != 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case OR: /* or */
+            {
+                splitrr();
+                regs[x1] |= regs[x2];
+                cc = (regs[x1] != 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case XR: /* xr */
+            {
+                splitrr();
+                regs[x1] ^= regs[x2];
+                cc = (regs[x1] != 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case SLR: /* slr */
+            {
+                splitrr();
+                cc = (regs[x1] == regs[x2]) ? 2 : (regs[x1] < regs[x2]) ? 1 : 3;
+                regs[x1] -= regs[x2];
+                p += 2;
+                break;
+            }
+            case BAL: /* bal */
+            {
+                int one = 0;
+                int two = 0;
+                int dest;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                dest = one + two + d;
+                if (t != 0)
+                {
+                    regs[t] = p + 4 - base;
+                    printf("new value of %x is %08X\n", t, regs[t]);
+                }
+                p = base + dest;
+                break;
+            }
+            case ST: /* st */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                v[0] = (regs[t] >> 24) & 0xff;
+                v[1] = (regs[t] >> 16) & 0xff;
+                v[2] = (regs[t] >> 8) & 0xff;
+                v[3] = regs[t] & 0xff;
+                p += 4;
+                break;
+            }
+            case STD: /* std */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned char *v;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                v = base + one + two + d;
+                if (last_fp_ld[t])
+                {
+                    memcpy(v, last_fp_intact[t], 8);
+                }
+                else
+                {
+                    ieee2ibm(v, &fpregs[t], 1);
+                    memset(v + 4, '\x00', 4);
+                    if (float_special)
+                    {
+                        putfullword(v + 4, (I32)fpregs[t]);
+                        float_special = 0;
+                    }
+                }
+                p += 4;
+                break;
+            }
+            case STCK: /* stck */
+            {
+                /*a dummy instruction, not implement yet */
+                int one = 0;
+                unsigned char *v;
+
+                splitsi(); /* this should be splits but we don't have one yet */
+                           /* also - this should be further distinguished to just x'05'
+                              as STCK - ie B205 */
+                           /* actually, at least at this stage, this shouldn't be here
+                              at all. PDOS should be doing a call into the pseudo-bios
+                              to get the time, and that is where the STCK should be
+                              executed for a real pseudo-bios on real hardware, but
+                              in our case, this emulator should be doing a time() call
+                              to the host C library */
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                v = base + one + d;
+                memset(v, '\x00', 8);
+                p += 4;
+                break;
+            }
+            case MVC: /* mvc */
+            {
+                int one = 0;
+                int two = 0;
+
+                splitssl();
+                if (b1 != 0)
+                {
+                    one = regs[b1];
+                }
+                one += d1;
+                if (b2 != 0)
+                {
+                    two = regs[b2];
+                }
+                two += d2;
+                memcpy(base + one, base + two, l + 1);
+                p += 6;
+                break;
+            }
+            case NC: /* nc */
+            {
+                int one = 0;
+                int two = 0;
+                int i;
+                unsigned char *v, *z;
+
+                splitssl();
+                if (b1 != 0)
+                {
+                    one = regs[b1];
+                }
+                one += d1;
+                if (b2 != 0)
+                {
+                    two = regs[b2];
+                }
+                two += d2;
+
+                v = base + one;
+                z = base + two;
+                cc = 0;
+                for (i = 0; i < l + 1; i++)
+                {
+                    v[i] = (v[i] & z[i]);
+                    if (v[i] != 0)
+                        cc = 1;
+                }
+                p += 6;
+                break;
+            }
+            case CLC: /* clc */
+            {
+                int one = 0;
+                int two = 0;
+                int ret;
+
+                splitssl();
+                if (b1 != 0)
+                {
+                    one = regs[b1];
+                }
+                one += d1;
+                if (b2 != 0)
+                {
+                    two = regs[b2];
+                }
+                two += d2;
+                ret = memcmp(base + one, base + two, l + 1);
+                cc = (ret > 0) ? 2 : (ret < 0) ? 1 : 0;
+                p += 6;
+                break;
+            }
+            case OC: /* oc */
+            {
+                int one = 0;
+                int two = 0;
+                int i;
+                unsigned char *v, *z;
+
+                splitssl();
+                if (b1 != 0)
+                {
+                    one = regs[b1];
+                }
+                one += d1;
+                if (b2 != 0)
+                {
+                    two = regs[b2];
+                }
+                two += d2;
+
+                v = base + one;
+                z = base + two;
+                cc = 0;
+                for (i = 0; i < l + 1; i++)
+                {
+                    v[i] = (v[i] | z[i]);
+                    if (v[i] != 0)
+                        cc = 1;
+                }
+                p += 6;
+                break;
+            }
+            case XC: /* xc */
+            {
+                int one = 0;
+                int two = 0;
+                int i;
+                unsigned char *v, *z;
+
+                splitssl();
+                if (b1 != 0)
+                {
+                    one = regs[b1];
+                }
+                one += d1;
+                if (b2 != 0)
+                {
+                    two = regs[b2];
+                }
+                two += d2;
+
+                v = base + one;
+                z = base + two;
+                cc = 0;
+                for (i = 0; i < l + 1; i++)
+                {
+                    v[i] = (v[i] ^= z[i]);
+                    if (v[i] != 0)
+                        cc = 1;
+                }
+                p += 6;
+                break;
+            }
+            case CR: /* cr */
+            {
+                splitrr();
+                cc = ((I32)regs[x1] > (I32)regs[x2]) ? 2 : ((I32)regs[x1] < (I32)regs[x2]) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case CLR: /* clr */
+            {
+                splitrr();
+                cc = (regs[x1] > regs[x2]) ? 2 : (regs[x1] < regs[x2]) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case BC: /* bc */
+            {
+                int branch = 0;
+                int one = 0;
+                int cond;
+
+                splitrx();
+                /* not sure if this is subject to r0 check */
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                cond = (t << 4) | i;
+                /* bl */
+                if (cond == 0x40)
+                {
+                    if (cc == 1)
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                /* bnz or bne */
+                else if (cond == 0x70)
+                {
+                    if (!(cc == 0))
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                /* unconditional */
+                else if (cond == 0xf0)
+                {
+                    p = base + one + d;
+                    continue;
+                }
+                /* bnh */
+                else if (cond == 0xd0)
+                {
+                    if (cc == 1 || cc == 0)
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                /* bnl */
+                else if (cond == 0xb0)
+                {
+                    if (cc == 2 || cc == 0)
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                /* be */
+                else if (cond == 0x80)
+                {
+                    if (cc == 0)
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                /* bh */
+                else if (cond == 0x20)
+                {
+                    if (cc == 2)
+                    {
+                        p = base + one + d;
+                        continue;
+                    }
+                }
+                else
+                {
+                    printf("unknown condition %x at %08X\n", cond, p - base);
+                    exit(EXIT_FAILURE);
+                }
+                p += 4;
+                break;
+            }
+            case LTR: /* ltr */
+            {
+                splitrr();
+                regs[x1] = regs[x2];
+                cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case LTDR: /* ltdr */
+            {
+                splitrr();
+                fpregs[x1] = fpregs[x2];
+                /* this could preserve the ld status from x2 instead */
+                /* actually, it doesn't make sense to test a
+                   floating point register containing a non-floating
+                   point value */
+                last_fp_ld[x1] = 0;
+                cc = (fpregs[x1] > 0) ? 2 : (fpregs[x1] < 0) ? 1 : 0;
+                p += 2;
+                break;
+            }
+            case LM: /* lm */
+            {
+                int start;
+                int end;
+                int x;
+                unsigned char *target;
+                int one = 0;
+
+                splitrs();
+                start = x1;
+                end = x2;
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                target = base + one + d;
+                if (x2 < x1)
+                {
+                    end = 15;
+                    for (x = start; x <= end; x++)
+                    {
+                        updatereg(&regs[x], target);
+                        target += 4;
+                    }
+                    start = 0;
+                    end = x2;
+                }
+                for (x = start; x <= end; x++)
+                {
+                    updatereg(&regs[x], target);
+                    target += 4;
+                }
+                p += 4;
+                break;
+            }
+            case STC: /* stc */
+            {
+                int one = 0;
+                int two = 0;
+                unsigned long dest;
+
+                splitrx();
+                if (b != 0)
+                {
+                    one = regs[b];
+                }
+                if (i != 0)
+                {
+                    two = regs[i];
+                }
+                dest = one + two + d;
+                base[dest] = regs[t] & 0xff;
+                p += 4;
+                break;
+            }
+            case SVC: /* svc */
+            {
+                int c;
+
+                splitrr();
+                /* assume SVC 35 writing one character */
+                c = base[regs[1] + 4];
+                printf("WTO: %c\n", febc(c));
+                p += 2;
+                break;
+            }
+            default:
+            {
 #if COMEMUL
-            printf("unknown instruction %02X at %08X\n", p[0],
-                   p - base - 0x10000);
+                printf("unknown instruction %02X at %08X\n", p[0],
+                       p - base - 0x10000);
 #endif
 #if PBEMUL
-            printf("unknown instruction %02X at %08X\n", p[0],
-                   p - base);
+                printf("unknown instruction %02X at %08X\n", p[0],
+                       p - base);
 #endif
-            exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
+            }
         }
     }
     return;
@@ -2765,6 +2740,17 @@ static int get_fd()
     return -1;
 }
 
+static void log_debug(const char *fmt, ...)
+{
+#if DEBUG
+    va_list arg;
+    int ret;
+
+    va_start(arg, fmt);
+    ret = vfprintf(__stdout, fmt, arg);
+    va_end(arg);
+#endif
+}
 
 
 
