@@ -1225,8 +1225,9 @@ static void osfopen(void)
     else if (modeType == 10)
     {
         fprintf(stderr, "we don't have the ability to do update, "
-                "but trying inout anyway\n");
-        mode = 4;
+                "but trying upd anyway\n");
+        mode = 2 + 0x10; /* asm routines need to be told block mode */
+        myfile->update = 1;
     }
     else if (modeType == 11)
     {
@@ -1608,6 +1609,11 @@ static void osfopen(void)
 
     mode &= 0x03; /* only interested in the simple mode now */
 
+    if (myfile->update)
+    {
+        mode = 0; /* make update start as read */
+    }
+
     /* errors from MVS __aopen are negative numbers */
     if ((int)myfile->hfile <= 0)
     {
@@ -1670,7 +1676,8 @@ static void osfopen(void)
        }
     }
 
-    if ((modeType == 4) || (modeType == 5) || (modeType == 11))
+    if ((modeType == 4) || (modeType == 5) || (modeType == 11)
+        || (modeType == 10))
     {
         myfile->style = 0; /* binary */
     }
@@ -7141,6 +7148,12 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
             stream->quickBin = 0;
         }
     }
+    else if (stream->justseeked && stream->update)
+    {
+        stream->mode = __WRITE_MODE;
+        stream->upto = stream->fbuf;
+        myfile->endbuf = myfile->fbuf + myfile->szfbuf;
+    }
     switch (stream->style)
     {
         case FIXED_BINARY:
@@ -7170,7 +7183,13 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
                to an MVS-provided area. */
             while (bytes >= stream->szfbuf)
             {
-                begwrite(stream, stream->lrecl);
+                /* don't override dptr if update mode
+                   and I think this assumes a read (any read)
+                   has been done prior */
+                if (!stream->update)
+                {
+                    begwrite(stream, stream->lrecl);
+                }
                 memcpy(dptr, ptr, stream->szfbuf);
                 finwrite(stream);
                 ptr = (char *)ptr + stream->szfbuf;
@@ -7581,6 +7600,13 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         {
             stream->quickBin = 0;
         }
+    }
+    else if (stream->justseeked && stream->update)
+    {
+        stream->mode = __READ_MODE;
+        myfile->upto = myfile->fbuf;
+        myfile->szfbuf = myfile->lrecl;
+        myfile->endbuf = myfile->fbuf;
     }
     if (stream->eofInd)
     {
