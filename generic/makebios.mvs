@@ -27,7 +27,7 @@ CC=gccmvs
 AS=as370 -mhlasm -mebcdic
 
 COPTS=-S -Os -fno-common $(CFLAGS) \
-    -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../bios -I../src \
+    -DGENSHELL -D__NOBIVA__ -I . -I../pdpclib -I../bios -I../src \
     -fno-builtin -DNEED_MVS
 AR=xar
 LD=pdld --emit-relocs --entry __crt0
