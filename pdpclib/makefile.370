@@ -3,6 +3,11 @@
 # Need to disable builtins because an ASCII/EBCDIC issue
 # means that it thinks there is no '%' and can use an fputs
 
+# for MVS ...
+# mvsstart.obj and mvssupa.obj need to be provided separately
+# and can be built with mvsasm as seen in pdpmvs4.bat
+
+# for CMS ...
 # cmsstart.o and cmssupa.o need to be provided separately
 # after building on CMS using pdpcms.bat
 # (and this will be F80 object code/text)
@@ -45,6 +50,7 @@ pdpclib.a: stdio.o string.o stdlib.o \
         $(AR) r pdpclib.a stdio.o string.o stdlib.o
         $(AR) r pdpclib.a start.o time.o errno.o assert.o signal.o
         $(AR) r pdpclib.a locale.o ctype.o setjmp.o math.o
+        $(AR) s pdpclib.a
         $(LD) $(EXTRA1) -o pdptest.exe $(EXTRA2) pdptest.o pdpclib.a
 
 .c.o:
