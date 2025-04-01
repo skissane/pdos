@@ -1,0 +1,47 @@
+# This builds a pseudo-bios for CMS or MVS using binutils
+
+# You need to have built PDPCLIB with pdpmvs4.bat first
+
+# Need to disable builtins because an ASCII/EBCDIC issue
+# means that it thinks there is no '%' and can use an fputs
+
+
+
+ifeq "$(targ)" "cms"
+
+CFLAGS=-U__MVS__ -D__CMS__
+EXTRA1=--oformat cms
+EXTRA2= ../pdpclib/cmsstart.obj ../pdpclib/cmssupa.obj
+
+
+else
+
+CFLAGS=-D__MVS__
+EXTRA1=--oformat mvs --amode 31 --rmode any
+EXTRA2= ../pdpclib/mvsstart.obj ../pdpclib/mvssupa.obj
+
+endif
+
+
+CC=gccmvs
+AS=as370 -mhlasm -mebcdic
+
+COPTS=-S -Os -fno-common $(CFLAGS) \
+    -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../bios -I../src \
+    -fno-builtin -DNEED_MVS
+AR=xar
+LD=pdld --emit-relocs --entry __crt0
+
+
+all: clean bios.exe
+
+bios.exe: bios.obj ../bios/exeload.obj
+  $(LD) $(EXTRA1) -o bios.exe bios.obj ../bios/exeload.obj $(EXTRA2) ../pdpclib/pdpclib.a
+
+.c.obj:
+        $(CC) $(COPTS) -o $*.s $<
+        $(AS) -o $@ $*.s
+        rm -f $*.s
+
+clean:
+  rm -f bios.exe
