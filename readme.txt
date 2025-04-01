@@ -1112,6 +1112,12 @@ ASCII and be auto-converted. This would be a relatively minor
 change/detection in PosOpenFile or whatever in pdos.c to pass
 requests on to the pseudo-bios.
 
+Another possible plan is to switch from the various
+PosWriteFile etc MSDOS API wrappers to the DosWrite etc
+wrappers found in the MSDOS 4.0 source code - which have
+a much better interface than the OS/2 functions of the
+same name.
+
 
 
 OBTAINING
