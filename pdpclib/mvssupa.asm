@@ -2830,7 +2830,7 @@ POINCOM  GAMAPP ,
 ***********************************************************************
 *                                                                     *
 *  ADCBA - Report the DCB parameters for an open file.                *
-*    Modified for more general information retrieval:          *
+*    Modified for more general information retrieval:                 *
 *    Call now has only two parameters -                               *
 *      Parm 1 is an integer (signed 32 bit) function code             *
 *      Parm 2 is the address of a user supplied return area           *
@@ -2899,7 +2899,7 @@ DCBF002  SLR   R0,R0              for non-DASD or no fit
                REGSAVE=YES,MF=(E,TRKLIST)  Get blocks per track
          GAMAPP
 *NEXT*   BXH   R15,R15,DCBF002B   SIZE TOO LARGE FOR TRACK
-DCBF002B STC   R0,ZPBLKPT         Remeber blocks per track
+DCBF002B STC   R0,ZPBLKPT         Remember blocks per track
          IC    R0,ZPBLKPT
          ST    R0,0(,R4)          Return RECFM
          SLR   R0,R0
@@ -2910,7 +2910,7 @@ DCBF002B STC   R0,ZPBLKPT         Remeber blocks per track
          CLI   ZDVTYPE,UCB3DACC   DASD ?
          BNE   DCBF#TRK             no; leave tracks at 0
          L     R3,DCBDEBAD        Get DEB
-         N     R3,=X'00FFFFFF'    faster tha nAM switches?
+         N     R3,=X'00FFFFFF'    faster than AM switches?
          USING DEBBASIC,R3        declare start of DEB proper
          SLR   R5,R5
          IC    R5,DEBNMEXT        Get extent count
@@ -2923,7 +2923,7 @@ DCBFXLUP ICM   R15,3,DEBNMTRK     Get tracks in this extent
          AR    R0,R15             add them in
          AR    R14,R6             Next extent
          BCT   R5,DCBFXLUP          until done
-DCBF#TRK ST    R0,12(,R4)         Totaal tracks
+DCBF#TRK ST    R0,12(,R4)         Total tracks
          B     ADCBGOOD
          POP   USING
          SPACE 1
