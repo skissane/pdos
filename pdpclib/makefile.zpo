@@ -21,6 +21,7 @@ pdosgeno.a: stdio.o string.o stdlib.o \
         xar r pdosgeno.a stdio.o string.o stdlib.o zpgsupa.o
         xar r pdosgeno.a start.o time.o errno.o assert.o signal.o
         xar r pdosgeno.a locale.o ctype.o setjmp.o math.o pdossupc.o
+        xar s pdosgeno.a
 
 .c.o:
         $(CC) $(COPTS) -o $*.s $<
