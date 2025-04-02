@@ -794,6 +794,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #endif /* MVS */
+    if (__runnum == 1)
+    {
     __doperm = 1;
     __stdout = fopen("dd:SYSPRINT", "w");
     if (__stdout == NULL)
@@ -821,6 +823,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     }
     __stdin->dynal = dyna_sysin;
     __doperm = 0;
+    }
 #if defined(__CMS__)
     __eplist = eplist;
     __plist = plist;
@@ -1726,9 +1729,12 @@ __PDPCLIB_API__ void _c_exit(void)
 #endif
 
 #if defined(__MVS__) || defined(__CMS__) || defined(__VSE__)
+    if (__runnum == 1)
+    {
     if (__stdin != NULL) fclose(__stdin);
     if (__stdout != NULL) fclose(__stdout);
     if (__stderr != NULL) fclose(__stderr);
+    }
 #endif
 
 
