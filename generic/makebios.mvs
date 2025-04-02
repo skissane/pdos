@@ -26,8 +26,12 @@ endif
 CC=gccmvs
 AS=as370 -mhlasm -mebcdic
 
+
+# Can't enable genshell because we just want to run pdos
+# and we don't want the .exe appended
+
 COPTS=-S -Os -fno-common $(CFLAGS) \
-    -DGENSHELL -D__NOBIVA__ -I . -I../pdpclib -I../bios -I../src \
+    -DXGENSHELL -D__NOBIVA__ -I . -I../pdpclib -I../bios -I../src \
     -fno-builtin -DNEED_MVS
 AR=xar
 LD=pdld --emit-relocs --entry __crt0
