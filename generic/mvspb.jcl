@@ -57,6 +57,17 @@
 //SYSTERM  DD  SYSOUT=*
 //SYSABEND DD  SYSOUT=*
 //PDOS     DD  DSN=&&UNZIP(PDOS),DISP=(SHR,PASS)
+//*
+//* The dd:pdos needs to be a host filename
+//* The dd:config is currently kludged and needs to be
+//* a host file with : in it, which happens to work
+//* The dd:dasd needs to be a host filename
+//* The dd:pcomm is a guest filename, but we don't want
+//* that at the moment, so we should ideally prefix
+//* with a : to signify to go up one level
+//* current logic sends it up anyway, but we shouldn't
+//* be relying on that
+//*
 //SYSIN    DD  *
 dd:pdos -c dd:config dd:dasd
 help
@@ -71,7 +82,7 @@ exit
 type dd:xyz
 /*
 //CONFIG   DD  *
-COMSPEC=dd:pcomm
+COMSPEC=:dd:pcomm
 /*
 //XYZ      DD  *
 fred was here
