@@ -4,7 +4,7 @@
 CC=x86_64-w64-mingw32-gcc
 #CC=gccx64
 #AR=x86_64-w64-mingw32-ar
-AR=ar
+AR=xar
 LD=x86_64-w64-mingw32-ld
 #LD=pdld --no-insert-timestamp
 AS=x86_64-w64-mingw32-as
