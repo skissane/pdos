@@ -1,0 +1,31 @@
+# Produces x64 EFI executable that is a shim to an
+# x86 PE32 module running in CM32.
+
+# We link with the library produced by makefile.vb6
+# And we use makefile.w64 and makecomm.w64
+# which are PE
+
+CC=cl
+AS=pdas --64 --oformat coff
+LD=link
+COPTS=-c -nologo -O2 -Oi- -GS- -Za -u -X -D__MSC__ -D__64BIT__ \
+   -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I../pdpclib \
+   -I../bios -I../src \
+   -DTARGET_64BIT -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY \
+   -DGENSHELL -DSHIMCM32 -w
+
+TARGET=bios.exe
+OBJS=../bios/exeload.o shimcm32.o
+
+$(TARGET): clean bios.o $(OBJS)
+  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+
+.c.o:
+  $(CC) $(COPTS) -Fo$*.o $<
+
+.asm.o:
+  $(AS) -o$@ $<
+
+clean:
+  rm -f *.o
+  rm -f $(TARGET)
