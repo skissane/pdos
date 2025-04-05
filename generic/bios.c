@@ -197,6 +197,12 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
 
 static int (*genstart)(OS *bios);
 
+#if SHIMCM32
+static void shimcm32_start(void);
+static void shimcm32_run(void);
+static void shimcm32_end(void);
+#endif
+
 static struct {
     char *name;
     int to_handle_num;
@@ -522,6 +528,11 @@ int main(int argc, char **argv)
         scr = stdin;
         printf(EXITMSG);
     }
+
+#if SHIMCM32
+    shimcm32_start();
+#endif
+
     do
     {
         if (need_usage) break; /* should put this before do */
@@ -840,6 +851,13 @@ int main(int argc, char **argv)
     {
         entry_point = (void *)strtoul(prog_name + 5, NULL, 16);
     }
+#if SHIMCM32
+    else if (1)
+    {
+        /* don't load anything for now - just run the
+           dummy code */
+    }
+#endif
     else if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
@@ -913,6 +931,8 @@ int main(int argc, char **argv)
 #if 1
 #ifdef __CC64__
     rc = (*genstart)(&bios);
+#elif SHIMCM32
+    shimcm32_run();
 #elif defined(__gnu_linux__) && defined(__M68K__)
     rc = callami(cmd);
 #else
@@ -992,6 +1012,9 @@ int main(int argc, char **argv)
     {
         fclose(scr);
     }
+#if SHIMCM32
+    shimcm32_end();
+#endif
     if (!quiet)
     {
         printf("bios exiting\n");
@@ -1565,6 +1588,87 @@ static int callami(char *buf)
                      p,
                      &SysBase,
                      genstart));
+}
+
+#endif
+
+
+
+#if SHIMCM32
+
+/* x64 to CM32 shim support */
+
+struct gdescriptor {
+    unsigned char limit[2];
+    unsigned char base[3];
+    unsigned char access_byte;
+    unsigned char limit_flags;
+    unsigned char base2;
+};
+
+int get_cs (void);
+
+void disable_interrupts (void);
+void enable_interrupts (void);
+
+void save_gdt (void *gdtr);
+void load_gdt (void *gdt, int size);
+
+void call_cm32 (int cm32_cs, void (*test32)(void));
+void test32 (void);
+
+static unsigned char gdtr[10];
+static size_t original_gdt_size;
+static void *original_gdt;
+static size_t gdt_size;
+static struct gdescriptor *gdt;
+static int cs;
+static int cm32_cs;
+
+static void shimcm32_start(void)
+{
+    printf ("start\n");
+    save_gdt (gdtr);
+    original_gdt_size = (*(unsigned short *)gdtr) + 1;
+    original_gdt = *(void **)(gdtr + 2);
+    cs = get_cs ();
+    printf ("gdt size: %u ptr: %p cs: %i\n", original_gdt_size, original_gdt, cs);
+
+    gdt_size = original_gdt_size + sizeof (*gdt);
+    gdt = malloc (gdt_size);
+    cm32_cs = original_gdt_size;
+    memcpy (gdt, original_gdt, original_gdt_size);
+    gdt[cm32_cs / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
+    /* Converts the duplicated code segment descriptor to 32 bit code
+     * by disabling long mode flag and setting size flag.
+     */
+    gdt[cm32_cs / sizeof (*gdt)].limit_flags &= ~0x20;
+    gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
+    disable_interrupts ();
+    load_gdt (gdt, gdt_size);
+    enable_interrupts ();
+
+    printf ("running with new gdt\n");
+}
+
+static void shimcm32_run(void)
+{
+    printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
+    call_cm32 (cm32_cs, &test32);
+    printf ("success\n");
+}
+
+static void shimcm32_end(void)
+{
+    printf ("restoring old gdt\n");
+    disable_interrupts ();
+    load_gdt (original_gdt, original_gdt_size);
+    enable_interrupts ();
+
+    free (gdt);
+    
+    printf ("end, press enter\n");
+    getc (stdin);
 }
 
 #endif
