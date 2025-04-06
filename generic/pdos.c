@@ -187,6 +187,7 @@ int main(int argc, char **argv)
     if (mem_base == NULL)
     {
         bios->Xfwrite("failed to do promised malloc\n", 29, 1, bios->Xstdout);
+        bios->Xsetvbuf(bios->Xstdin, NULL, _IOLBF, 0);
         return (EXIT_FAILURE);
     }
 
@@ -210,6 +211,7 @@ int main(int argc, char **argv)
         printf("must provide disk name as a parameter\n");
         printf("or at least -c config.sys or whatever\n");
         bios->free(mem_base);
+        bios->Xsetvbuf(bios->Xstdin, NULL, _IOLBF, 0);
         return (EXIT_FAILURE);
     }
     printf("before printing parm\n");
@@ -230,6 +232,8 @@ int main(int argc, char **argv)
         if (disk == NULL)
         {
             printf("can't open hard disk %s\n", argv[argupto]);
+            bios->free(mem_base);
+            bios->Xsetvbuf(bios->Xstdin, NULL, _IOLBF, 0);
             return (EXIT_FAILURE);
         }
         printf("done open\n");
@@ -315,6 +319,8 @@ int main(int argc, char **argv)
 #ifndef DONT_MM
     memmgrTerm(&__memmgr);
 #endif
+    bios->free(mem_base);
+    bios->Xsetvbuf(bios->Xstdin, NULL, _IOLBF, 0);
     return (0);
 }
 
