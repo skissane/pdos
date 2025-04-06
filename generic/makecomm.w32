@@ -4,24 +4,25 @@
 # The executable can be run under the BIOS built
 # with makebios.w32, makebios.lnp or makebios.efi
 
-# The executable is in a.out format
+# The executable is in PE format
 
-CC=gcc386
-COPTS=-fno-builtin -fno-common -S -O2 -U__WIN32__ -DHAVE_DIR -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ -I . -I../pdpclib -I../src
+CC=gccwin
+AS=pdas --oformat coff
+LD=pdld --oformat coff
+COPTS=-fno-builtin -fno-common -S -O2 -U__WIN32__ \
+    -DHAVE_DIR -D__PDOS386__ -D__PDOSGEN__ -D__NOBIVA__ \
+    -I . -I../pdpclib -I../src
 
 all: clean pcomm.exe
 
 pcomm.exe: ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o
   rm -f pcomm.exe
-  ld386 -s -N -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o
+  $(LD) -s -e ___crt0 -o pcomm.exe ../pdpclib/pgastart.o pcomm.o ../pdpclib/string.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  as386 -o $@ $*.s
+  $(AS) -o $@ $*.s
   rm -f $*.s
-
-.asm.obj:
-  as386 -o $@ $<
 
 clean:
   rm -f pcomm.exe
