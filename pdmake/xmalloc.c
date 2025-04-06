@@ -48,7 +48,7 @@ char *xstrdup(const char *str)
     return (p);
 }
 
-size_t strnlen(const char *str, size_t max_len)
+size_t xstrnlen(const char *str, size_t max_len)
 {
     size_t len;
     
@@ -59,7 +59,7 @@ size_t strnlen(const char *str, size_t max_len)
 
 char *xstrndup(const char *str, size_t max_len)
 {
-    size_t len = strnlen(str, max_len);
+    size_t len = xstrnlen(str, max_len);
     char *p = xmalloc(len + 1);
 
     p[len] = '\0';
