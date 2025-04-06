@@ -5841,6 +5841,25 @@ __PDPCLIB_API__ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
     }
 #endif
 
+#ifdef __WIN32__
+    /* for now, ignore any attempt to change stdin, other
+       than to put back line buffering */
+    if ((stream == __stdin) && (mode == _IOLBF))
+    {
+        DWORD dw;
+
+        stream->bufTech = mode;
+        if (GetConsoleMode(stream->hfile, &dw))
+        {
+            dw |= ENABLE_LINE_INPUT;
+            dw |= ENABLE_PROCESSED_INPUT;
+            dw |= ENABLE_ECHO_INPUT;
+            SetConsoleMode(stream->hfile, dw);
+        }
+        return (0);
+    }
+#endif
+
     if (buf == NULL)
     {
         if (size < 2)
