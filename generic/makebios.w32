@@ -10,7 +10,8 @@ LDFLAGS=
 AS=pdas --oformat coff
 AR=xar
 COPTS=-S $(CFLAGS) -ansi -I../pdpclib -I../src -D__WIN32__ -D__STATIC__ \
-  -D__NOBIVA__ -DNEED_AOUT -DNEED_MZ -DNEED_OS2 -D__32BIT__ -DNO_DLLENTRY
+  -D__NOBIVA__ -DNEED_AOUT -DNEED_MZ -DNEED_OS2 -D__32BIT__ -DNO_DLLENTRY \
+  -DGENSHELL
 
 all: clean bios.exe
 
