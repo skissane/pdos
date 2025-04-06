@@ -1,21 +1,25 @@
 # produce pdos.exe
 # Links against pdosgeno.a built with makefile.pgo
 
-CC=gcc386
+CC=gccwin
+#CC=gcc386
 CFLAGS=-O2
-LD=ld386
+#LD=ld386 -N
+LD=pdld --oformat coff
 LDFLAGS=
-AS=as386
-AR=ar386
+AS=pdas
+#AS=as386
+AR=xar
+#AR=ar386
 COPTS=-S $(CFLAGS) -fno-common -fno-builtin -ansi \
     -I. -I../bios -I../pdpclib -I../src \
     -U__WIN32__ -D__PDOS386__ -DNOLIBALLOC -D__NOBIVA__ -DNEED_AOUT \
-    -DUSE_MEMMGR
+    -DUSE_MEMMGR -DDONT_MM
 
 all: clean pdos.exe
 
 pdos.exe: genstart.o pdos.o ../bios/exeload.o ../src/fat.o
-    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../src/fat.o ../pdpclib/pdosgeno.a
+    $(LD) $(LDFLAGS) -s -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../src/fat.o ../pdpclib/pdosgeno.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
