@@ -16,26 +16,28 @@ COPTS=-DSEGHACK -D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -
 # Adding -d2 allows you to get source code in the disassembly
 # (wdis -l -s), but you need to switch off optimization (-oneatx)
 
+AR=xar
+
 pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o  locale.o \
        ctype.o setjmp.o math.o dossupc.o dossupa.o signal.o
   rm -f watcom.a
-  ar r watcom.a dosstart.o
-  ar r watcom.a stdio.o
-  ar r watcom.a string.o
-  ar r watcom.a stdlib.o
-  ar r watcom.a start.o
-  ar r watcom.a time.o
-  ar r watcom.a errno.o
-  ar r watcom.a assert.o
-  ar r watcom.a locale.o
-  ar r watcom.a ctype.o
-  ar r watcom.a setjmp.o
-  ar r watcom.a math.o
-  ar r watcom.a dossupc.o
-  ar r watcom.a dossupa.o
-  ar r watcom.a signal.o
-  ar s watcom.a
+  $(AR) r watcom.a dosstart.o
+  $(AR) r watcom.a stdio.o
+  $(AR) r watcom.a string.o
+  $(AR) r watcom.a stdlib.o
+  $(AR) r watcom.a start.o
+  $(AR) r watcom.a time.o
+  $(AR) r watcom.a errno.o
+  $(AR) r watcom.a assert.o
+  $(AR) r watcom.a locale.o
+  $(AR) r watcom.a ctype.o
+  $(AR) r watcom.a setjmp.o
+  $(AR) r watcom.a math.o
+  $(AR) r watcom.a dossupc.o
+  $(AR) r watcom.a dossupa.o
+  $(AR) r watcom.a signal.o
+  $(AR) s watcom.a
 # To create a COM file, make it "Form dos com" and change the name to .com
 # Stack size has no meaning for .com (the SP will be set by the OS, and the
 # SS will be set to the CS/DS/ES). Also dosstart.obj needs to come first
@@ -66,4 +68,4 @@ dosstart.o: dosstart.asm
 dossupa.o: dossupa.asm
 #  ml -c -Dmemodel=large -DWATCOM dossupa.asm
 #  wasm -zcm -q -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
-  as86 -o $@ -DWATCOM -D__XXSZ4__ -Dmemodel=large dossupa.asm
+  as86 -o $@ -DWATCOMC -D__XXSZ4__ -Dmemodel=large dossupa.asm
