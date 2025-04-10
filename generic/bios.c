@@ -1616,6 +1616,7 @@ void load_gdt (void *gdt, int size);
 
 void call_cm32 (int cm32_cs, void (*test32)(void));
 void test32 (void);
+void test16 (void);
 
 static unsigned char gdtr[10];
 static size_t original_gdt_size;
@@ -1643,7 +1644,22 @@ static void shimcm32_start(void)
      * by disabling long mode flag and setting size flag.
      */
     gdt[cm32_cs / sizeof (*gdt)].limit_flags &= ~0x20;
+
+#ifdef CM16
+    /* I am guessing this will set byte granularity */
+    gdt[cm32_cs / sizeof (*gdt)].limit_flags &= 0xf0;
+    /* I am guessing that this sets 0xffff as the maximum offset */
+    gdt[cm32_cs / sizeof (*gdt)].limit[0] = 0xff;
+    gdt[cm32_cs / sizeof (*gdt)].limit[1] = 0xff;
+    /* I am hoping that this sets 05b1:0000 as the base address */
+    gdt[cm32_cs / sizeof (*gdt)].base2 = 0x05;
+    gdt[cm32_cs / sizeof (*gdt)].base[2] = 0xb1;
+    gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
+    gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
+#else
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
+#endif
+
     disable_interrupts ();
     load_gdt (gdt, gdt_size);
     enable_interrupts ();
@@ -1654,7 +1670,14 @@ static void shimcm32_start(void)
 static void shimcm32_run(void)
 {
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
+    printf("test32 is at %p\n", test32);
+    printf("test16 is at %p\n", test16);
+#ifdef CM16
+    printf("this will only succeed if the test16 address is 05B1:xxxx\n");
+    call_cm32 (cm32_cs, ((unsigned int)&test16 & 0xffffU));
+#else
     call_cm32 (cm32_cs, &test32);
+#endif
     printf ("success\n");
 }
 
