@@ -55,6 +55,8 @@ call_cm32:
 call_cm32_end:
     ret
 
+
+
 .code32
 
 .globl test32
@@ -62,5 +64,17 @@ test32:
 #    cli
 #    hlt
     retf
+
+
+
+.code16
+
+.globl test16
+test16:
+#    cli
+#    hlt
+    retf
+
+
 
 .code64
