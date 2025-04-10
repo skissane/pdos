@@ -5,6 +5,8 @@
 # And we use makefile.w64 and makecomm.w64
 # which are PE
 
+# Define CM16 for a 16-bit version instead
+
 CC=cl
 AS=pdas --64 --oformat coff
 LD=link
@@ -12,7 +14,7 @@ COPTS=-c -nologo -O2 -Oi- -GS- -Za -u -X -D__MSC__ -D__64BIT__ \
    -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I../pdpclib \
    -I../bios -I../src \
    -DTARGET_64BIT -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY \
-   -DGENSHELL -DSHIMCM32 -w
+   -DGENSHELL -DSHIMCM32 -w -DCM16
 
 TARGET=bios.exe
 OBJS=../bios/exeload.o shimcm32.o
