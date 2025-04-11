@@ -1615,6 +1615,7 @@ void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
 void call_cm32 (int cm32_cs, void (*test32)(void));
+void call_cm16 (int cm32_cs, void (*test16)(void));
 void test32 (void);
 void test16 (void);
 
@@ -1674,7 +1675,7 @@ static void shimcm32_run(void)
     printf("test16 is at %p\n", test16);
 #ifdef CM16
     printf("this will only succeed if the test16 address is 05B1:xxxx\n");
-    call_cm32 (cm32_cs, ((unsigned int)&test16 & 0xffffU));
+    call_cm16 (cm32_cs, ((unsigned int)&test16 & 0xffffU));
 #else
     call_cm32 (cm32_cs, &test32);
 #endif

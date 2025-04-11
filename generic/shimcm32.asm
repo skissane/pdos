@@ -57,6 +57,30 @@ call_cm32_end:
 
 
 
+# This requires the test16 to be in the same 64k
+# segment. We need another routine after the test16
+# and use that instead, if this one is not suitable
+
+# Note that this creates a gap of 4 bytes on the stack
+# that will need to be compensated for by test16
+# Note that this is to keep the stack 8-byte aligned
+# which I think is a requirement
+
+.global call_cm16
+call_cm16:
+    sub rsp, 8
+    mov rax, cs
+    mov [rsp+6], ax
+    lea rax, call_cm16_end[rip]
+    mov [rsp+4], ax
+    push rcx
+    push rdx
+    retfq
+call_cm16_end:
+    ret
+
+
+
 .code32
 
 .globl test32
@@ -73,6 +97,16 @@ test32:
 test16:
 #    cli
 #    hlt
+# adding "-debugcon stdio" to qemu allows this to appear
+# Although I got a different character than 'X' for some reason
+#    mov al, 'X'
+#    out 0xe9, al
+#    mov al, '\n'
+#    out 0xe9, al
+#
+# Need to compensate as described above
+# Still doesn't work though
+    add sp, 4
     retf
 
 
