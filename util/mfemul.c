@@ -917,31 +917,34 @@ static void doemul(void)
             }
             case SRL: /* srl */
             {
-                int x = 0;
+                int amt;
 
+                amt = 0;
                 splitrs();
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
-                regs[x1] >>= x;
+                amt += d;
+                amt &= 0x3f;
+                regs[x1] >>= amt;
                 p += 4;
                 break;
             }
             case SRA: /* sra */
             {
-                int x = 0;
+                int amt;
+
+                amt = 0;
                 /* +++ suggest */
                 splitrs();
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
-                regs[x1] = (((I32)regs[x1]) >> x);
+                amt += d;
+                amt &= 0x3f;
+                regs[x1] = (((I32)regs[x1]) >> amt);
                 cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
                 p += 4;
                 break;
@@ -949,7 +952,7 @@ static void doemul(void)
             case SLA: /* sla */
             {
                 int i, j;
-                int x = 0;
+                int amt;
                 U32 t1 = 0;
                 U32 t2 = 0;
 
@@ -960,16 +963,16 @@ static void doemul(void)
                 All 31 numeric bits of the operand participate in the left shift.
                 */
                 t2 = regs[x1] & 0x80000000;
-
+                amt = 0;
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
+                amt += d;
+                amt &= 0x3f;
 
                 j = 0;
-                for (i = 0; i < x; i++)
+                for (i = 0; i < amt; i++)
                 {
                     t1 <<= 1;
                     if ((t1 & 0x80000000) != t2)
@@ -982,27 +985,28 @@ static void doemul(void)
             }
             case SRDA: /* srda */
             {
-                int x = 0;
+                int amt;
 
+                amt = 0;
                 splitrs();
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
+                amt += d;
+                amt &= 0x3f;
 
-                if (x >= 32)
+                if (amt >= 32)
                 {
                     regs[x1 + 1] = regs[x1];
                     regs[x1] = 0;
-                    regs[x1 + 1] >>= (x - 32);
+                    regs[x1 + 1] >>= (amt - 32);
                 }
                 else
                 {
-                    regs[x1 + 1] >>= x;
-                    regs[x1 + 1] |= (regs[x1] << (32 - x));
-                    regs[x1] >>= x;
+                    regs[x1 + 1] >>= amt;
+                    regs[x1 + 1] |= (regs[x1] << (32 - amt));
+                    regs[x1] >>= amt;
                 }
                 /*need handle overflow case*/
                 cc = ((I32)regs[x1] > 0) ? 2 : ((I32)regs[x1] < 0) ? 1 : 0;
@@ -1011,27 +1015,28 @@ static void doemul(void)
             }
             case SLDA: /* slda */
             {
-                int x = 0;
+                int amt;
 
+                amt = 0;
                 splitrs();
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
-
-                if (x >= 32)
+                amt += d;
+                amt &= 0x3f;
+                
+                if (amt >= 32)
                 {
                     regs[x1] = regs[x1 + 1];
                     regs[x1 + 1] = 0;
-                    regs[x1] <<= (x - 32);
+                    regs[x1] <<= (amt - 32);
                 }
                 else
                 {
-                    regs[x1] <<= x;
-                    regs[x1] |= (regs[x1 + 1] >> (32 - x));
-                    regs[x1 + 1] <<= x;
+                    regs[x1] <<= amt;
+                    regs[x1] |= (regs[x1 + 1] >> (32 - amt));
+                    regs[x1 + 1] <<= amt;
                 }
                 /*need handle overflow case*/
                 cc = ((I32)regs[x1 + 1] > 0) ? 2 : ((I32)regs[x1 + 1] < 0) ? 1 : 0;
@@ -1040,27 +1045,34 @@ static void doemul(void)
             }
             case SLL: /* sll */
             {
-                int x = 0;
+                int amt;
 
+                amt = 0;
                 splitrs();
                 if (b != 0)
                 {
-                    x = regs[b];
+                    amt = regs[b];
                 }
-                x += d;
-                x &= 0x3f;
-                regs[x1] <<= x;
+                amt += d;
+                amt &= 0x3f;
+                regs[x1] <<= amt;
 
                 p += 4;
                 break;
             }
             case SRDL: /* srdl */
             {
-                int x;
                 int amt;
-
+                
+                amt = 0;
                 splitrs();
-                amt = p[3];
+                if (b != 0)
+                {
+                    amt = regs[b];
+                }
+                amt += d;
+                amt &= 0x3f;
+
                 if (amt >= 32)
                 {
                     regs[x1 + 1] = regs[x1];
