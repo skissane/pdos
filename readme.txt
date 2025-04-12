@@ -1118,6 +1118,13 @@ wrappers found in the MSDOS 4.0 source code - which have
 a much better interface than the OS/2 functions of the
 same name.
 
+I might allow "dd:input;size=123456" as a filename for an
+MVS file to constrain the size of a dataset and allow fast
+seeking to end of file, as size information doesn't otherwise
+appear to be available from the mvssupa.asm routines (possibly
+the information is in the VTOC though, but that might in turn
+require privilege).
+
 
 
 OBTAINING
