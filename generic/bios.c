@@ -1686,8 +1686,8 @@ static void shimcm32_start(void)
     gdt[cm16_ss / sizeof (*gdt)].limit[0] = 0xff;
     gdt[cm16_ss / sizeof (*gdt)].limit[1] = 0xff;
     /* I am hoping this sets it to 16-bit stack */
-    /* I need ERW set and also S */
-    gdt[cm16_ss / sizeof (*gdt)].access_byte = 0x16;
+    /* I need ERW set and also S and also P */
+    gdt[cm16_ss / sizeof (*gdt)].access_byte = 0x96;
     gdt[cm16_ss / sizeof (*gdt)].limit_flags = 0;
 #else
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
