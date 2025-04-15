@@ -1657,7 +1657,6 @@ static void shimcm32_start(void)
     /* I am hoping that this sets 05b1 0000 as the base address */
     gdt[cm32_cs / sizeof (*gdt)].base2 = 0x05;
     gdt[cm32_cs / sizeof (*gdt)].base[2] = 0xb1;
-#endif
     gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
 #else
