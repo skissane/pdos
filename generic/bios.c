@@ -1615,7 +1615,7 @@ void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
 void call_cm32 (int cm32_cs, void (*test32)(void));
-void call_cm16 (int cm32_cs, void (*test16)(void));
+void call_cm16 (int cm32_cs, int cm16_ss, void (*test16)(void));
 void test32 (void);
 void test16 (void);
 
@@ -1627,6 +1627,14 @@ static struct gdescriptor *gdt;
 static int cs;
 static int cm32_cs;
 
+#ifdef CM16
+static int cm16_ss;
+static char *cm16_sbuf;
+static unsigned long cm16_sul;
+#endif
+
+
+
 static void shimcm32_start(void)
 {
     printf ("start\n");
@@ -1637,8 +1645,20 @@ static void shimcm32_start(void)
     printf ("gdt size: %u ptr: %p cs: %i\n", original_gdt_size, original_gdt, cs);
 
     gdt_size = original_gdt_size + sizeof (*gdt);
+#ifdef CM16
+    gdt_size += sizeof (*gdt);
+#endif
     gdt = malloc (gdt_size);
     cm32_cs = original_gdt_size;
+#ifdef CM16
+    cm16_ss = original_gdt_size + sizeof (*gdt);
+    /* enough room for stack to grow in either direction
+       for now */
+    cm16_sbuf = malloc(64*1024*4);
+    cm16_sul = (unsigned long)cm16_sbuf;
+    cm16_sul += 64*1024*2;
+    cm16_sul &= ~0xffffUL;
+#endif
     memcpy (gdt, original_gdt, original_gdt_size);
     gdt[cm32_cs / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
     /* Converts the duplicated code segment descriptor to 32 bit code
@@ -1652,11 +1672,23 @@ static void shimcm32_start(void)
     /* I am guessing that this sets 0xffff as the maximum offset */
     gdt[cm32_cs / sizeof (*gdt)].limit[0] = 0xff;
     gdt[cm32_cs / sizeof (*gdt)].limit[1] = 0xff;
-    /* I am hoping that this sets 05b1:0000 as the base address */
+    /* I am hoping that this sets 05b1 0000 as the base address */
     gdt[cm32_cs / sizeof (*gdt)].base2 = 0x05;
     gdt[cm32_cs / sizeof (*gdt)].base[2] = 0xb1;
     gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
+
+    gdt[cm16_ss / sizeof (*gdt)].base2 = (cm16_sul >> 24) & 0xff;
+    gdt[cm16_ss / sizeof (*gdt)].base[2] = (cm16_sul >> 16) & 0xff;
+    gdt[cm16_ss / sizeof (*gdt)].base[1] = 0x0;
+    gdt[cm16_ss / sizeof (*gdt)].base[0] = 0x0;
+    /* I am guessing that this sets 0xffff as the maximum offset */
+    gdt[cm16_ss / sizeof (*gdt)].limit[0] = 0xff;
+    gdt[cm16_ss / sizeof (*gdt)].limit[1] = 0xff;
+    /* I am hoping this sets it to 16-bit stack */
+    /* I need ERW set and also S */
+    gdt[cm16_ss / sizeof (*gdt)].access_byte = 016;
+    gdt[cm16_ss / sizeof (*gdt)].limit_flags = 0;
 #else
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
 #endif
@@ -1674,8 +1706,9 @@ static void shimcm32_run(void)
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
 #ifdef CM16
-    printf("this will only succeed if the test16 address is 05B1:xxxx\n");
-    call_cm16 (cm32_cs, ((unsigned int)&test16 & 0xffffU));
+    printf("this will only succeed if the test16 address is 05B1 xxxx\n");
+    printf("note that this is not a real mode address - it is basically flat\n");
+    call_cm16 (cm32_cs, cm16_ss, ((unsigned int)&test16 & 0xffffU));
 #else
     call_cm32 (cm32_cs, &test32);
 #endif

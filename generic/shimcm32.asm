@@ -68,15 +68,28 @@ call_cm32_end:
 
 .global call_cm16
 call_cm16:
+    push rbp
+    push r9
+    mov ax, ss
+    mov r9, ax
+    mov rbp, rsp
+    mov ax, dx
+    mov ss, ax
+    mov rsp, 0xfff0
     sub rsp, 8
     mov rax, cs
     mov [rsp+6], ax
     lea rax, call_cm16_end[rip]
     mov [rsp+4], ax
     push rcx
-    push rdx
+    push r8
     retfq
 call_cm16_end:
+    mov rax, r9
+    mov ss, ax
+    mov rsp, rbp
+    pop r9
+    pop rbp
     ret
 
 
