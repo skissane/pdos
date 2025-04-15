@@ -42,6 +42,8 @@ load_gdt:
     add rsp, 16
     ret
 
+.global call_cm16
+call_cm16:
 .global call_cm32
 call_cm32:
     sub rsp, 8
@@ -54,44 +56,6 @@ call_cm32:
     retfq
 call_cm32_end:
     ret
-
-
-
-# This requires the test16 to be in the same 64k
-# segment. We need another routine after the test16
-# and use that instead, if this one is not suitable
-
-# Note that this creates a gap of 4 bytes on the stack
-# that will need to be compensated for by test16
-# Note that this is to keep the stack 8-byte aligned
-# which I think is a requirement
-
-.global call_cm16
-call_cm16:
-    push rbp
-    push r9
-    mov ax, ss
-    mov r9, ax
-    mov rbp, rsp
-    mov ax, dx
-    mov ss, ax
-    mov rsp, 0xfff0
-    sub rsp, 8
-    mov rax, cs
-    mov [rsp+6], ax
-    lea rax, call_cm16_end[rip]
-    mov [rsp+4], ax
-    push rcx
-    push r8
-    retfq
-call_cm16_end:
-    mov rax, r9
-    mov ss, ax
-    mov rsp, rbp
-    pop r9
-    pop rbp
-    ret
-
 
 
 .code32
@@ -116,11 +80,8 @@ test16:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
-#
-# Need to compensate as described above
-# Still doesn't work though
-    add sp, 4
-    retf
+# Using 32-bit retf is simpler than preparing for 16-bit retf
+    data32 retf
 
 
 
