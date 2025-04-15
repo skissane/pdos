@@ -1678,7 +1678,7 @@ static void shimcm32_run(void)
 #ifdef CM16
     printf("this will only succeed if the test16 address is 05B1 xxxx\n");
     printf("note that this is not a real mode address - it is basically flat\n");
-    call_cm16 (cm32_cs, ((unsigned int)&test16 & 0xffffU));
+    call_cm16 (cm32_cs, &test16);
 #else
     call_cm32 (cm32_cs, &test32);
 #endif
