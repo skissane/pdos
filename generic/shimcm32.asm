@@ -93,12 +93,13 @@ test16:
 
 # Note that bp operations don't work, full ebp is presumably needed
 # But that is invalid syntax
+# data32 overrides don't seem to work either
 main16:
-    push bp
-    mov bp, sp
-    mov ax, [bp+4]
+    data32 push bp
+    data32 mov bp, sp
+    data32 mov ax, [bp+4]
     add ax, 1
-    pop bp
+    data32 pop bp
     ret
 
 
