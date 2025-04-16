@@ -82,13 +82,23 @@ test16:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
+    mov ax, 5
+    push ax
     call main16
+    add sp, 2
 # Using 32-bit retf is simpler than preparing for 16-bit retf
 #    mov ax, 5
     data32 retf
 
+
+# Note that bp operations don't work, full ebp is presumably needed
+# But that is invalid syntax
 main16:
-    mov ax, 4
+    push bp
+    mov bp, sp
+    mov ax, [bp+2]
+    add ax, 1
+    pop bp
     ret
 
 
