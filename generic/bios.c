@@ -929,10 +929,10 @@ int main(int argc, char **argv)
                entry_point);
     }
 #if 1
-#ifdef __CC64__
-    rc = (*genstart)(&bios);
-#elif SHIMCM32
+#if SHIMCM32
     shimcm32_run();
+#elif __CC64__
+    rc = (*genstart)(&bios);
 #elif defined(__gnu_linux__) && defined(__M68K__)
     rc = callami(cmd);
 #else
@@ -1656,7 +1656,11 @@ static void shimcm32_start(void)
     gdt[cm32_cs / sizeof (*gdt)].limit[1] = 0xff;
     /* I am hoping that this sets 0040 0000 as the base address */
     gdt[cm32_cs / sizeof (*gdt)].base2 = 0x0;
+#ifdef __CC64__
+    gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x44;
+#else
     gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x40;
+#endif
     gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
 #else
@@ -1676,7 +1680,11 @@ static void shimcm32_run(void)
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
 #ifdef CM16
+#ifdef __CC64__
+    printf("this will only succeed if the test16 address is 0044 xxxx\n");
+#else
     printf("this will only succeed if the test16 address is 0040 xxxx\n");
+#endif
     printf("note that this is not a real mode address - it is basically flat\n");
     call_cm16 (cm32_cs, &test16);
 #else
