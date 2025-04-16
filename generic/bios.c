@@ -1615,7 +1615,7 @@ void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
 void call_cm32 (int cm32_cs, void (*test32)(void));
-void call_cm16 (int cm32_cs, unsigned long test16);
+void call_cm16 (int cm32_cs, void (*test16)(void));
 void test32 (void);
 void test16 (void);
 
@@ -1686,7 +1686,7 @@ static void shimcm32_run(void)
     printf("this will only succeed if the test16 address is 0040 xxxx\n");
 #endif
     printf("note that this is not a real mode address - it is basically flat\n");
-    call_cm16 (cm32_cs, ((unsigned long)&test16 & 0xffffUL));
+    call_cm16 (cm32_cs, (void (*)(void))((ptrdiff_t)&test16 & 0xffffUL));
 #else
     call_cm32 (cm32_cs, &test32);
 #endif
