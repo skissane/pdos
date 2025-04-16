@@ -97,7 +97,7 @@ test16:
 main16:
     data32 push bp
     data32 mov bp, sp
-    data32 mov ax, [bp+4]
+    data32 mov ax, [bp+6]
     add ax, 1
     data32 pop bp
     ret
