@@ -20,7 +20,7 @@ TARGET=bios.exe
 OBJS=../bios/exeload.o shimcm32.o
 
 $(TARGET): clean bios.o $(OBJS)
-  $(LD) -nologo -fixed:no -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+  $(LD) -nologo -fixed:no -base:0x400000 -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
 
 .c.o:
   $(CC) $(COPTS) -Fo$*.o $<
