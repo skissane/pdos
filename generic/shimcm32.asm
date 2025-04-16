@@ -82,10 +82,14 @@ test16:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
+    call main16
 # Using 32-bit retf is simpler than preparing for 16-bit retf
-    mov ax, 5
+#    mov ax, 5
     data32 retf
 
+main16:
+    mov ax, 4
+    ret
 
 
 .code64
