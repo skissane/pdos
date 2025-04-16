@@ -51,6 +51,7 @@ call_cm32:
     mov [rsp+4], eax
     lea rax, call_cm32_end[rip]
     mov [rsp], eax
+    xor rax, rax
     push rcx
     push rdx
     retfq
@@ -64,6 +65,7 @@ call_cm32_end:
 test32:
 #    cli
 #    hlt
+    mov eax, 7
     retf
 
 
@@ -81,6 +83,7 @@ test16:
 #    mov al, '\n'
 #    out 0xe9, al
 # Using 32-bit retf is simpler than preparing for 16-bit retf
+    mov ax, 5
     data32 retf
 
 

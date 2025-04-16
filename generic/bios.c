@@ -199,7 +199,7 @@ static int (*genstart)(OS *bios);
 
 #if SHIMCM32
 static void shimcm32_start(void);
-static void shimcm32_run(void);
+static int shimcm32_run(void);
 static void shimcm32_end(void);
 #endif
 
@@ -930,7 +930,7 @@ int main(int argc, char **argv)
     }
 #if 1
 #if SHIMCM32
-    shimcm32_run();
+    rc = shimcm32_run();
 #elif __CC64__
     rc = (*genstart)(&bios);
 #elif defined(__gnu_linux__) && defined(__M68K__)
@@ -1614,10 +1614,10 @@ void enable_interrupts (void);
 void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
-void call_cm32 (int cm32_cs, void (*test32)(void));
-void call_cm16 (int cm32_cs, void (*test16)(void));
-void test32 (void);
-void test16 (void);
+int call_cm32 (int cm32_cs, int (*test32)(void));
+int call_cm16 (int cm32_cs, int (*test16)(void));
+int test32 (void);
+int test16 (void);
 
 static unsigned char gdtr[10];
 static size_t original_gdt_size;
@@ -1674,8 +1674,10 @@ static void shimcm32_start(void)
     printf ("running with new gdt\n");
 }
 
-static void shimcm32_run(void)
+static int shimcm32_run(void)
 {
+    int ret;
+
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
@@ -1686,11 +1688,12 @@ static void shimcm32_run(void)
     printf("this will only succeed if the test16 address is 0040 xxxx\n");
 #endif
     printf("note that this is not a real mode address - it is basically flat\n");
-    call_cm16 (cm32_cs, (void (*)(void))((ptrdiff_t)&test16 & 0xffffUL));
+    ret = call_cm16 (cm32_cs, (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL));
 #else
-    call_cm32 (cm32_cs, &test32);
+    ret = call_cm32 (cm32_cs, &test32);
 #endif
     printf ("success\n");
+    return (ret);
 }
 
 static void shimcm32_end(void)
