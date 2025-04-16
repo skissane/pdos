@@ -6,11 +6,14 @@
 # which are PE
 
 # Define CM16 for a 16-bit version instead
+# But note that CM16 requires the use of pdld for some
+# reason - perhaps it reacts badly to the .code16 in
+# the assembler file assembled with pdas
 
 CC=cl
 AS=pdas --64 --oformat coff
 LD=link
-COPTS=-c -nologo -O2 -Oi- -GS- -Za -u -X -D__MSC__ -D__64BIT__ \
+COPTS=-c -nologo -O2 -Oi- -GS- -Za -Zl -u -X -D__MSC__ -D__64BIT__ \
    -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I../pdpclib \
    -I../bios -I../src \
    -DTARGET_64BIT -DNEED_MZ -DNEED_ELF -DNO_DLLENTRY \
@@ -20,7 +23,8 @@ TARGET=bios.exe
 OBJS=../bios/exeload.o shimcm32.o
 
 $(TARGET): clean bios.o $(OBJS)
-  $(LD) -nologo -fixed:no -base:0x400000 -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+#  $(LD) -nologo -fixed:no -base:0x400000 -nodefaultlib -entry:efimain -out:$(TARGET) -subsystem:EFI_APPLICATION bios.o $(OBJS) ../pdpclib/pdpefi.a
+  pdld --no-insert-timestamp -s -subsystem 10 -e efimain -nostdlib --image-base 0x400000 -o bios.exe bios.obj $(OBJS) ../pdpclib/pdpefi.lib
 
 .c.o:
   $(CC) $(COPTS) -Fo$*.o $<
