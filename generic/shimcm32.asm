@@ -96,7 +96,7 @@ test16:
 main16:
     push bp
     mov bp, sp
-    mov ax, [bp+2]
+    mov ax, [bp+4]
     add ax, 1
     pop bp
     ret
