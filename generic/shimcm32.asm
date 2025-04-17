@@ -104,7 +104,9 @@ main16:
 #    add ax, 1
 #    pop bp
     mov bp, sp
-    addr32 mov ax, [bp + 2]
+# The di is actually ebp when addr32 is used
+    addr32 mov ax, [di + 2]
+    add ax, 1
     ret
 
 
