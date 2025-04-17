@@ -46,6 +46,8 @@ load_gdt:
 call_cm16:
 .global call_cm32
 call_cm32:
+    push rbp
+    mov rbp, rsp
     sub rsp, 8
     mov rax, cs
     mov [rsp+4], eax
@@ -56,6 +58,7 @@ call_cm32:
     push rdx
     retfq
 call_cm32_end:
+    pop rbp
     ret
 
 
@@ -95,11 +98,13 @@ test16:
 # But that is invalid syntax
 # data32 overrides don't seem to work either
 main16:
-    data32 push bp
-    data32 mov bp, sp
-    data32 mov ax, [bp+6]
-    add ax, 1
-    data32 pop bp
+#    push bp
+#    mov bp, sp
+#    addr32 mov ax, [bp+8]
+#    add ax, 1
+#    pop bp
+    mov bp, sp
+    addr32 mov ax, [bp + 2]
     ret
 
 
