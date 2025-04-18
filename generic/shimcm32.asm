@@ -42,8 +42,6 @@ load_gdt:
     add rsp, 16
     ret
 
-.global call_cm16
-call_cm16:
 .global call_cm32
 call_cm32:
     push rbp
@@ -62,13 +60,36 @@ call_cm32_end:
     ret
 
 
+.global call_cm16
+call_cm16:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rcx
+    mov rbx, r8
+    sub rsp, 8
+    mov rax, cs
+    mov [rsp+4], eax
+    lea rax, call_cm16_end[rip]
+    mov [rsp], eax
+    xor rax, rax
+    push rcx
+    push rdx
+    retfq
+call_cm16_end:
+    pop rbp
+    pop rcx
+    pop rbx
+    ret
+
+
 .code32
 
 .globl test32
 test32:
 #    cli
 #    hlt
-    mov eax, 7
+    mov eax, 4
     retf
 
 
@@ -85,28 +106,32 @@ test16:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
-    mov ax, 5
+    mov ax, ss
+# cx is preserved in previous function
+# and is now used to preserve the current ss value
+# bx contains the new ss value to be used
+    mov cx, ax
+    mov ax, bx
+    mov ss, ax
+    mov ax, 3
     push ax
     call main16
     add sp, 2
+# restore old ss, while preserving ax return value
+    mov bx, ax
+    mov ax, cx
+    mov ss, ax
+    mov ax, bx
 # Using 32-bit retf is simpler than preparing for 16-bit retf
-#    mov ax, 5
     data32 retf
 
 
-# Note that bp operations don't work, full ebp is presumably needed
-# But that is invalid syntax
-# data32 overrides don't seem to work either
 main16:
-#    push bp
-#    mov bp, sp
-#    addr32 mov ax, [bp+8]
-#    add ax, 1
-#    pop bp
+    push bp
     mov bp, sp
-# The di is actually ebp when addr32 is used
-    addr32 mov ax, [di + 2]
-    add ax, 1
+    mov ax, [bp + 4]
+    add ax, 2
+    pop bp
     ret
 
 

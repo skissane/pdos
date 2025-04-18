@@ -1615,7 +1615,7 @@ void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
 int call_cm32 (int cm32_cs, int (*test32)(void));
-int call_cm16 (int cm32_cs, int (*test16)(void));
+int call_cm16 (int cm32_cs, int (*test16)(void), int newss);
 int test32 (void);
 int test16 (void);
 
@@ -1627,6 +1627,9 @@ static struct gdescriptor *gdt;
 static int cs;
 static int cm32_cs;
 
+#ifdef CM16
+static int cm16_newss;
+#endif
 
 
 static void shimcm32_start(void)
@@ -1639,8 +1642,14 @@ static void shimcm32_start(void)
     printf ("gdt size: %u ptr: %p cs: %i\n", original_gdt_size, original_gdt, cs);
 
     gdt_size = original_gdt_size + sizeof (*gdt);
+#ifdef CM16
+    gdt_size += sizeof(*gdt);
+#endif
     gdt = malloc (gdt_size);
     cm32_cs = original_gdt_size;
+#ifdef CM16
+    cm16_newss = original_gdt_size + sizeof(*gdt);
+#endif
     memcpy (gdt, original_gdt, original_gdt_size);
     gdt[cm32_cs / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
     /* Converts the duplicated code segment descriptor to 32 bit code
@@ -1667,6 +1676,34 @@ static void shimcm32_start(void)
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
 #endif
 
+#ifdef CM16
+    {
+        ptrdiff_t sloc;
+
+        sloc = (ptrdiff_t)&sloc;
+
+        printf("this UEFI system gives you hex %x bytes of stack\n",
+               (unsigned int)(sloc & 0xffffU));
+        gdt[cm16_newss / sizeof (*gdt)].limit[0] = sloc & 0xff;
+        sloc >>= 8;
+        gdt[cm16_newss / sizeof (*gdt)].limit[1] = sloc & 0xff;
+        sloc >>= 8;
+        gdt[cm16_newss / sizeof (*gdt)].base[2] = sloc & 0xff;
+        sloc >>= 8;
+        gdt[cm16_newss / sizeof (*gdt)].base2 = sloc & 0xff;
+        sloc >>= 8;
+        gdt[cm16_newss / sizeof (*gdt)].base[1] = 0x0;
+        gdt[cm16_newss / sizeof (*gdt)].base[0] = 0x0;
+        if (sloc != 0)
+        {
+            printf("this UEFI system has a stack above 4 GiB "
+                   "so it won't work\n");
+        }
+        gdt[cm16_newss / sizeof (*gdt)].access_byte = 0x92;
+        gdt[cm16_newss / sizeof (*gdt)].limit_flags = 0;
+    }
+#endif
+
     disable_interrupts ();
     load_gdt (gdt, gdt_size);
     enable_interrupts ();
@@ -1688,7 +1725,9 @@ static int shimcm32_run(void)
     printf("this will only succeed if the test16 address is 0040 xxxx\n");
 #endif
     printf("note that this is not a real mode address - it is basically flat\n");
-    ret = call_cm16 (cm32_cs, (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL));
+    ret = call_cm16 (cm32_cs,
+                     (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
+                     cm16_newss);
 #else
     ret = call_cm32 (cm32_cs, &test32);
 #endif
