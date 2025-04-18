@@ -1611,7 +1611,32 @@ static void osfopen(void)
 
     if (myfile->update)
     {
+        unsigned int data[7];
+        unsigned int parm;
+
         mode = 0; /* make update start as read */
+
+#if 0
+        parm = 1;
+        __adcba(myfile->hfile, &parm, data);
+        printf("hex 0 %x\n", data[0]);
+        printf("hex 1 %x\n", data[1]);
+        printf("hex 2 %x\n", data[2]);
+        printf("hex 3 %x\n", data[3]);
+        printf("hex 4 %x\n", data[4]);
+        printf("hex 5 %x\n", data[5]);
+        printf("hex 6 %x\n", data[6]);
+#endif
+
+        parm = 2;
+        __adcba(myfile->hfile, &parm, data);
+        fprintf(stderr, "blocks per track decimal %u\n", data[0]);
+        myfile->blocks_per_track = data[0];
+#if 0
+        printf("first TTR hex %x\n", data[1]);
+        printf("curr TTR hex %x\n", data[2]);
+        printf("max tracks decimal %u\n", data[3]);
+#endif
     }
 
     /* errors from MVS __aopen are negative numbers */
@@ -5523,6 +5548,18 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         }
 #endif
 #if defined(__MVS__) || defined(__CMS__)
+#if 0 /* defined(__MVS__)
+    if (stream->update)
+    {
+        int i;
+        i = 0x200; /* TTR0 - upper 16-bits is relative track 0.
+                      next 8 bits is record 2
+                      bottom 8 bits are 0 */
+        __apoint(stream->hfile, &i);
+    }
+    else
+#endif
+    {
         char fnm[FILENAME_MAX];
         long int x;
         size_t y;
@@ -5556,6 +5593,7 @@ __PDPCLIB_API__ int fseek(FILE *stream, long int offset, int whence)
         {
             return (-1);
         }
+    }
 #endif
     }
     stream->justseeked = 1;

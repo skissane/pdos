@@ -126,6 +126,7 @@ typedef struct
     int reallyt;    /* 1 = this is really a text file */
     int dynal;      /* 1 = this file was dynamically allocated */
     int line_buf;   /* 1 = we are forcing line buffering */
+    int blocks_per_track; /* used for fast seeking */
 #endif
 #if defined(__VSE__)
     int vse_punch;  /* 1 = this is writing to a VSE library */
