@@ -1125,6 +1125,9 @@ appear to be available from the mvssupa.asm routines (possibly
 the information is in the VTOC though, but that might in turn
 require privilege).
 
+Another idea is for an fopen of COM1: to be redirected - in
+pdpclib - to a TCP/IP connection. Mainly for use in PdAndro.
+
 
 
 OBTAINING
