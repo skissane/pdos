@@ -18,6 +18,9 @@ COPTS=-DSEGHACK -D__XXSZ4__ -oneatx -ecc -zp1 -q -w -c -I. -ml -zl -D__MSDOS__ -
 
 AR=xar
 
+#LD=ld86
+LD=slink
+
 pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o  locale.o \
        ctype.o setjmp.o math.o dossupc.o dossupa.o signal.o
@@ -50,7 +53,7 @@ pdptest.exe: dosstart.o pdptest.o stdio.o string.o stdlib.o \
 # dosseg option, for some reason, because we need the stack to come last,
 # so that the calculations in dosstart.asm are accurate with regard to
 # releasing memory.
-  ld86 -e ___asmstart -N --oformat msdos-mz -o pdptest.exe dosstart.o pdptest.o watcom.a
+  $(LD) -e ___asmstart -N --oformat msdos-mz -o pdptest.exe dosstart.o pdptest.o watcom.a
 
 .c.o:
   $(CC) $(COPTS) $<
