@@ -7210,6 +7210,7 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
         stream->mode = __WRITE_MODE;
         stream->upto = stream->fbuf;
         myfile->endbuf = myfile->fbuf + myfile->szfbuf;
+        stream->justseeked = 0;
     }
     switch (stream->style)
     {
@@ -7664,6 +7665,7 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         myfile->upto = myfile->fbuf;
         myfile->szfbuf = myfile->lrecl;
         myfile->endbuf = myfile->fbuf;
+        stream->justseeked = 0;
     }
     if (stream->eofInd)
     {
