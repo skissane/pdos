@@ -10,8 +10,7 @@
 
 ; Be careful - we want to support as86, so a ret must
 ; only be done before endp to be auto-converted to retf
-; if required. Also as86 doesn't recognize eq - it only
-; recognizes == and will silently fail
+; if required.
 
 
 % .model memodel, c
@@ -364,7 +363,7 @@ else
 __allocmem proc uses bx dx ds, sz:word, res:ptr
 endif
 
-if @DataSize == 0
+if @DataSize eq 0
 
 ; return NULL
 
