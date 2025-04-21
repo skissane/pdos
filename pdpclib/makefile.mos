@@ -97,7 +97,7 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo DOSCREATECSALIAS @43 >>temp.def
   echo DOSDEVIOCTL @53 >>temp.def
   implib /nologo os2.lib temp.def
-# Note sure if there is a better way of doing this.
+# Not sure if there is a better way of doing this.
 # I either get an error on link or an error on bind
 # via my preferred method
   rm -f os2b.lib
