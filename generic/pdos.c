@@ -854,7 +854,7 @@ static int formatPath(const char *input, char *output)
         z = q;
         q = strstr(q, "..");
     }
-    strcpy(k, z);
+    if (k && z ) strcpy(k, z);
     
     return (0);
 }
