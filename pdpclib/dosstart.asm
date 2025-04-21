@@ -56,7 +56,7 @@ __psp   dd  ?
 __envptr dd ?
 __osver dw ?
 
-if @DataSize == 0
+if @DataSize eq 0
 copypsp db 256 dup(?)
 endif
 
@@ -126,7 +126,7 @@ int 21h
 ; to be valid because there is no relocation information, and in fact,
 ; ds will already be set correctly.
 
-if @Model == 1
+if @Model eq 1
 mov dx, cs
 else
 mov dx,DGROUP
@@ -193,7 +193,7 @@ pop es ; we preserved this right at the start
 ; only work if there is no test of NULL done. So we simply
 ; make a copy of the PSP while we have the chance.
 
-if @DataSize == 0
+if @DataSize eq 0
 
 ; move from ds:si to es:di for a length of cx
 ; but it is es that currently has the "from", and ds that
