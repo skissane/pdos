@@ -4950,7 +4950,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
     unsigned char zzz[2];
     unsigned int zzz_num;
     unsigned char *csalias;
-    int multby; /* should use shift instead */
+    int shiftby;
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -4964,28 +4964,16 @@ static int exeloadLoadNE(unsigned char **entry_point,
     return (2);
 #else
 
-    if ((firstbit[0x32] == 0x01) && (firstbit[0x33] == 0x00))
-    {
-        multby = 2;
-    }
-    else if ((firstbit[0x32] == 0x09) && (firstbit[0x33] == 0x00))
-    {
-        multby = 512;
-    }
-    else
-    {
-        printf("unusual granularity\n");
-        return (2);
-    }
+    shiftby = (firstbit[0x33] << 8) | firstbit[0x32];
 
     fread(segtable, sizeof(segtable), 1, fp);
     offs1 = segtable[0] | (segtable[1] << 8);
-    offs1 *= multby;
+    offs1 <<= shiftby;
     len1 = segtable[2] | (segtable[3] << 8);
 
     fread(segtable, sizeof(segtable), 1, fp);
     offs2 = segtable[0] | (segtable[1] << 8);
-    offs2 *= multby;
+    offs2 <<= shiftby;
     len2 = segtable[2] | (segtable[3] << 8);
 
     if (*loadloc == NULL)
