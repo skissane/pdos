@@ -113,7 +113,8 @@ static int exeloadLoadPE(unsigned char **entry_point,
 static int exeloadLoadLX(unsigned char **entry_point,
                          FILE *fp,
                          unsigned long e_lfanew);
-#ifdef __16BIT__
+#if defined(__16BIT__) \
+    || (defined(SHIMCM32) && defined(CM16))
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
@@ -2595,26 +2596,51 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     {
         return (1);
     }
+
     if (firstbit.header_size == 0)
     {
         printf("MZ Header has 0 size\n");
         return (2);
     }
+
     if (firstbit.header_size * 16 > sizeof(firstbit))
     {
+        int x;
+        int discard;
+
+        discard = firstbit.header_size * 16 - sizeof(firstbit);
+#if 0
         printf("MZ Header is too large, size: %u\n",
                (unsigned int)firstbit.header_size * 16);
         return (2);
+#endif
+        /* Loads the rest of the header. */
+        if (fread(((char *)&firstbit) + 16,
+                  sizeof firstbit - 16,
+                  1,
+                  fp) != 1)
+        {
+            printf("Error occured while reading MZ header\n");
+            return (2);
+        }
+        for (x = 0; x < discard; x++)
+        {
+            fgetc(fp);
+        }
     }
-    /* Loads the rest of the header. */
-    if (fread(((char *)&firstbit) + 16,
-              (firstbit.header_size - 1) * 16,
-              1,
-              fp) != 1)
+    else
     {
-        printf("Error occured while reading MZ header\n");
-        return (2);
+        /* Loads the rest of the header. */
+        if (fread(((char *)&firstbit) + 16,
+                  (firstbit.header_size - 1) * 16,
+                  1,
+                  fp) != 1)
+        {
+            printf("Error occured while reading MZ header\n");
+            return (2);
+        }
     }
+
     /* Determines whether the executable has extensions or is a pure MZ.
      * Extensions are at offset in e_lfanew,
      * so the header must have at least 4 paragraphs. */
@@ -2627,7 +2653,8 @@ static int exeloadLoadMZ(unsigned char **entry_point,
         ret = exeloadLoadPE(entry_point, fp, loadloc, firstbit.e_lfanew);
         if (ret == 1)
             ret = exeloadLoadLX(entry_point, fp, firstbit.e_lfanew);
-#ifdef __16BIT__
+#if defined(__16BIT__) \
+    || (defined(SHIMCM32) && defined(CM16))
         if (ret == 1)
             ret = exeloadLoadNE(entry_point, fp, loadloc, firstbit.e_lfanew);
 #endif
@@ -4884,13 +4911,20 @@ static int exeloadLoadLX(unsigned char **entry_point,
 #endif
 }
 
-#ifdef __16BIT__
+#if defined(__16BIT__) \
+    || (defined(SHIMCM32) && defined(CM16))
 extern int __shift;
 extern int __incr;
 
 /* Documentation on this format can be found here:
 https://en.wikipedia.org/wiki/New_Executable
 in the references
+*/
+
+/*
+STYLE1 is for PDOS/86
+STYLE2 is for OS/2 1.0 or equivalent
+STYLE3 is for CM16
 */
 
 static int exeloadLoadNE(unsigned char **entry_point,
@@ -4916,6 +4950,7 @@ static int exeloadLoadNE(unsigned char **entry_point,
     unsigned char zzz[2];
     unsigned int zzz_num;
     unsigned char *csalias;
+    int multby; /* should use shift instead */
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -4929,21 +4964,35 @@ static int exeloadLoadNE(unsigned char **entry_point,
     return (2);
 #else
 
+    if ((firstbit[0x32] == 0x01) && (firstbit[0x33] == 0x00))
+    {
+        multby = 2;
+    }
+    else if ((firstbit[0x32] == 0x09) && (firstbit[0x33] == 0x00))
+    {
+        multby = 512;
+    }
+    else
+    {
+        printf("unusual granularity\n");
+        return (2);
+    }
+
     fread(segtable, sizeof(segtable), 1, fp);
     offs1 = segtable[0] | (segtable[1] << 8);
-    offs1 *= 2;
+    offs1 *= multby;
     len1 = segtable[2] | (segtable[3] << 8);
 
     fread(segtable, sizeof(segtable), 1, fp);
     offs2 = segtable[0] | (segtable[1] << 8);
-    offs2 *= 2;
+    offs2 *= multby;
     len2 = segtable[2] | (segtable[3] << 8);
 
     if (*loadloc == NULL)
     {
-#if 0
+#if defined(STYLE1)
         *loadloc = malloc(65536UL * 2 + 0x100 + 48 + 12);
-#else
+#elif defined(STYLE2)
         *loadloc = malloc(65000UL);
         if (*loadloc != NULL)
         {
@@ -4958,6 +5007,9 @@ static int exeloadLoadNE(unsigned char **entry_point,
                       (((unsigned long)seg << 16) | (unsigned int)*loadloc);
             /* printf("new load is %p\n", csalias); */
         }
+#elif defined(STYLE3)
+        *loadloc = malloc(65536UL * 3);
+        /* printf("loadloc is now %p\n", *loadloc); */
 #endif
         if (*loadloc == NULL)
         {
@@ -4968,7 +5020,14 @@ static int exeloadLoadNE(unsigned char **entry_point,
         *loadloc += 12;
 #endif
     }
-    
+
+#if defined(STYLE3)
+    codeptr = (unsigned char *)(((ptrdiff_t)*loadloc + 65536) & ~0xffffU);
+    /* printf("codeptr is %p\n", codeptr); */
+    dataptr = codeptr + 65536U;
+    /* printf("dataptr is %p\n", dataptr); */
+    fseek(fp, offs1, SEEK_SET);
+#else
     codeptr = *loadloc;
     /* printf("codeptr is %p\n", codeptr); */
     /* first 65536 is wasted - for alignment */
@@ -4987,30 +5046,33 @@ static int exeloadLoadNE(unsigned char **entry_point,
     
     /* skip first 4 bytes of code - should be NOPs */
     fseek(fp, offs1 + 4, SEEK_SET);
+#endif
 
-#if 0
+#if defined(STYLE1)
     /* PDOS/86 needs this currently */
     fread(*loadloc + 0x100 + 48, len1, 1, fp);
-#else
+#elif defined(STYLE2)
     fread(codeptr + 4, len1 - 4, 1, fp);
+#elif defined(STYLE3)
+    fread(codeptr, len1, 1, fp);
 #endif
 
     fseek(fp, offs2, SEEK_SET);
-#if 0
+#if defined(STYLE1)
     /* PDOS/86 needs this currently */
     fread(*loadloc + 65536UL + 0x100 + 48, len2, 1, fp);
 #else
     fread(dataptr, len2, 1, fp);
 #endif
 
-#if 0
+#if defined(STYLE1)
     /* PDOS/86 needs this currently */
     codeptr = *loadloc + 0x100 + 48;
 #else
     /* codeptr = *loadloc; */
 #endif
 
-#if 0
+#if defined(STYLE1)
     dataptr = codeptr + 65536UL;
 #endif
 
@@ -5209,11 +5271,15 @@ static int exeloadLoadNE(unsigned char **entry_point,
             lloffs = zzz_num;
         }
     }
-#if 0
+#if defined(STYLE1)
     *entry_point = codeptr;
+#elif defined(STYLE3)
+    *entry_point = codeptr + 0x10; /* need to get proper IP */
+    /* printf("set entry point to %p\n", *entry_point); */
 #else
     *entry_point = csalias;
 #endif
+
     return (0);
 #endif
 }
