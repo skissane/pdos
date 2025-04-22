@@ -66,7 +66,12 @@ call_cm16:
     mov rbp, rsp
     push rbx
     push rcx
+    push rdi
+    push rsi
     mov rbx, r8
+    mov rdi, r9
+    mov rsi, r9
+    shr rsi, 16
     sub rsp, 8
     mov rax, cs
     mov [rsp+4], eax
@@ -77,9 +82,11 @@ call_cm16:
     push rdx
     retfq
 call_cm16_end:
-    pop rbp
+    pop rsi
+    pop rdi
     pop rcx
     pop rbx
+    pop rbp
     ret
 
 
@@ -115,6 +122,7 @@ test16:
     mov ss, ax
     mov ax, 3
     push ax
+    push cs
     call main16
     add sp, 2
 # restore old ss, while preserving ax return value
@@ -127,12 +135,15 @@ test16:
 
 
 main16:
-    push bp
-    mov bp, sp
-    mov ax, [bp + 4]
-    add ax, 2
-    pop bp
-    ret
+    push si
+    push di
+    retf
+#    push bp
+#    mov bp, sp
+#    mov ax, [bp + 4]
+#    add ax, 2
+#    pop bp
+#    ret
 
 
 .code64

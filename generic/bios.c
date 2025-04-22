@@ -1614,7 +1614,10 @@ void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
 int call_cm32 (int cm32_cs, int (*test32)(void));
-int call_cm16 (int cm32_cs, int (*test16)(void), int newss);
+int call_cm16 (int cm32_cs,
+               int (*test16)(void),
+               int newss,
+               unsigned long cm16_csip);
 int test32 (void);
 int test16 (void);
 
@@ -1628,6 +1631,7 @@ static int cm32_cs;
 
 #ifdef CM16
 static int cm16_newss;
+static unsigned long cm16_csip;
 #endif
 
 
@@ -1643,11 +1647,13 @@ static void shimcm32_start(void)
     gdt_size = original_gdt_size + sizeof (*gdt);
 #ifdef CM16
     gdt_size += sizeof(*gdt);
+    gdt_size += sizeof(*gdt);
 #endif
     gdt = malloc (gdt_size);
     cm32_cs = original_gdt_size;
 #ifdef CM16
     cm16_newss = original_gdt_size + sizeof(*gdt);
+    cm16_csip = original_gdt_size + sizeof(*gdt) * 2;
 #endif
     memcpy (gdt, original_gdt, original_gdt_size);
     gdt[cm32_cs / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
@@ -1664,6 +1670,7 @@ static void shimcm32_start(void)
     gdt[cm32_cs / sizeof (*gdt)].limit[1] = 0xff;
     /* I am hoping that this sets 0040 0000 as the base address */
     gdt[cm32_cs / sizeof (*gdt)].base2 = 0x0;
+
 #ifdef __CC64__
     gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x44;
 #else
@@ -1671,6 +1678,21 @@ static void shimcm32_start(void)
 #endif
     gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
+
+
+    gdt[cm16_csip / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
+    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= ~0x20;
+    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= 0xf0;
+    gdt[cm16_csip / sizeof (*gdt)].limit[0] = 0xff;
+    gdt[cm16_csip / sizeof (*gdt)].limit[1] = 0xff;
+    /* set 05b1 0000 as the base address */
+    gdt[cm16_csip / sizeof (*gdt)].base2 = 0x05;
+    gdt[cm16_csip / sizeof (*gdt)].base[2] = 0xb1;
+    gdt[cm16_csip / sizeof (*gdt)].base[1] = 0x0;
+    gdt[cm16_csip / sizeof (*gdt)].base[0] = 0x0;
+
+    cm16_csip <<= 16;
+    cm16_csip += 0x10;
 #else
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
 #endif
@@ -1726,7 +1748,8 @@ static int shimcm32_run(void)
     printf("note that this is not a real mode address - it is basically flat\n");
     ret = call_cm16 (cm32_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
-                     cm16_newss);
+                     cm16_newss,
+                     cm16_csip);
 #else
     ret = call_cm32 (cm32_cs, &test32);
 #endif
