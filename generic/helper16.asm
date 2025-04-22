@@ -24,8 +24,9 @@ top:
 ; and cx contains the old ss
 
 public __intstart
-__intstart proc
-        mov ax, 4
+__intstart proc var1: word
+        mov ax, var1
+        add ax, 4
 
 ; DosHugeShift is also known as _AHSHIFT
 ;        call __myDosHugeShift
