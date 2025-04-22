@@ -201,6 +201,12 @@ static int (*genstart)(OS *bios);
 static void shimcm32_start(void);
 static int shimcm32_run(void);
 static void shimcm32_end(void);
+
+#ifdef CM16
+int __shift;
+int __incr;
+#endif
+
 #endif
 
 static struct {
@@ -851,13 +857,6 @@ int main(int argc, char **argv)
     {
         entry_point = (void *)strtoul(prog_name + 5, NULL, 16);
     }
-#if SHIMCM32
-    else if (1)
-    {
-        /* don't load anything for now - just run the
-           dummy code */
-    }
-#endif
     else if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
         printf("failed to load executable\n");
