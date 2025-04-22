@@ -879,12 +879,14 @@ int PosMakeDir(const char *dirname)
 
 int PosChangeDir(const char *dirname)
 {
-    if (dirname[0] == '\0') return(0);
     char temp_dir[FILENAME_MAX] = {0};
     char dname[FILENAME_MAX] = {0};
     const char *start, *end;
-    
     int len = strlen(dirname);
+    int result;
+
+    if (dirname[0] == '\0') return(0);
+
     /*trim space at start and end of dirname*/
     start = dirname;
     end = dirname + len - 1;
@@ -915,7 +917,7 @@ int PosChangeDir(const char *dirname)
     }
     
     formatPath(temp_dir, dname);
-    int result = fatCheckDir(&fat, dname + 3);
+    result = fatCheckDir(&fat, dname + 3);
     if(!result) {
         strcpy(cwd, dname + 3);
     } 
