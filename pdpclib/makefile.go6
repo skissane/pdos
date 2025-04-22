@@ -17,7 +17,7 @@ SZ4=-D__SZ4__
 
 CC=wcl
 COPTS=$(SZ4) -zdf -D__16BIT__ -I. -I..\src -oneatx \
-      -D__PDOS386__ -DNOLIBALLOC \
+      -D__PDOS386__ -DNOLIBALLOC -DUSE_MEMMGR \
       -ecc -zp1 -q -w -c -I. -m$(MODELC) -zl -U__OS2__ -fpi87 -s -zu
 
 
