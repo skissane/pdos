@@ -4927,6 +4927,10 @@ STYLE2 is for OS/2 1.0 or equivalent
 STYLE3 is for CM16
 */
 
+#if !defined(STYLE1) && !defined(STYLE2) && !defined(STYLE3)
+#define STYLE2
+#endif
+
 static int exeloadLoadNE(unsigned char **entry_point,
                          FILE *fp,
                          unsigned char **loadloc,
