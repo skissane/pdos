@@ -13,6 +13,9 @@
 ;extrn __shift:word
 ;extrn __incr:word
 
+extrn hlp16st:proc
+
+
 .data
 banner  db  "HELPER16"
 
@@ -27,6 +30,9 @@ public __intstart
 __intstart proc var1: word
         mov ax, var1
         add ax, 4
+        push ax
+        call hlp16st
+        add sp, 2
 
 ; DosHugeShift is also known as _AHSHIFT
 ;        call __myDosHugeShift
