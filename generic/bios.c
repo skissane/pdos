@@ -1680,9 +1680,66 @@ static void shimcm32_start(void)
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
 
 
-    gdt[cm16_csip / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
+    /* gdt[cm16_csip / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
     gdt[cm16_csip / sizeof (*gdt)].limit_flags &= ~0x20;
-    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= 0xf0;
+    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= 0xf0; */
+
+    /* for the limit flags, we have:
+       G, D/B, L, AVL
+
+       G = granularity = clear (bytes) rather than set (4096 bytes)
+       D/B = default operand size - clear (16-bit) or set (32-bit)
+       unused bit = unused
+       L = set is 64-bit mode, otherwise 16 or 32 depending on D/B
+       AVL = available - for software use. We're not using it, but
+             we set it to 1 for good measure
+
+       The lower 4 bits are the top 4 bits of the 20-bit limit,
+       which for 16-bit we want as 0 with byte granularity, but
+       for CM32 we would want that set to ff and use 4096-byte
+       granularity to cover the entire 4 GiB region.
+    */
+    gdt[cm16_csip / sizeof (*gdt)].limit_flags = 0x80;
+
+    /* for the access byte, we have:
+       P, DPL (2 bits), S, T/Type (4 bits)
+       with the top bit of Type set meaning it is a code segment,
+       and set meaning data segment
+       The remaining 3 bits for code segment are:
+       C, R, A
+       For data segment they are:
+       E, W, A
+
+       P = present = we need this to set to 1 or the hardware will
+           create an exception
+       DPL = descriptor privilege level = I think this is what people
+           call "ring 0" - ie the highest level
+       S = system segment = 1 (code/data segment) rather than some
+          internal system segment, presumably needed to set up an LDT
+       Type top bit set, ie code, gives us
+           C = conforming = can be called from less privileged levels,
+               which we may want to set one day, but currently
+               everything is running privileged so not relevant
+           R = readable - set to say you can read the code, not just
+               execute it
+           A = accessed - set to 1 by hardware when the segment is
+               actually accessed. Software can clear it. We can set
+               it to either value. I'm choosing to leave it clear.
+       If Type had been set (ie data) we would have:
+           E = expand down - I think this is some sort of feature
+               that allows you to expand a stack down - but normally
+               we don't use this feature, and the stack segment is a
+               normal data segment - normally the exact same data
+               segment you normally use for data.
+           W = writable - the segment can be written, not just read
+           A = same as for code
+    */
+
+    /* P, S, T, R */
+    gdt[cm16_csip / sizeof (*gdt)].access_byte = 0x9a;
+
+    printf("limit_flags is %x\n", gdt[cm16_csip / sizeof (*gdt)].limit_flags);
+    printf("access_byte is %x\n", gdt[cm16_csip / sizeof (*gdt)].access_byte);
     gdt[cm16_csip / sizeof (*gdt)].limit[0] = 0xff;
     gdt[cm16_csip / sizeof (*gdt)].limit[1] = 0xff;
     /* set 05b1 0000 as the base address */
