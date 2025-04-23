@@ -1693,6 +1693,7 @@ static void shimcm32_start(void)
 
     cm16_csip <<= 16;
     cm16_csip += 0x10;
+    printf("entry point of helper16 will be %08X\n", cm16_csip);
 #else
     gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
 #endif
