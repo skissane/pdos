@@ -25,7 +25,7 @@ OMF=
 
 CFLAGS=-Oceglnt
 
-COPTS=-c -I. -I..\src $(SZ4) -D__OS2__ -D__16BIT__ $(CFLAGS) -A$(MODELC) \
+COPTS=-c -I. -I..\src $(SZ4) -D__16BIT__ $(CFLAGS) -A$(MODELC) \
     -Zl -Gs -nologo -Zp1 -DBUFSIZ=512 -Au -D__MSC__
 CC=cl
 AS=ml
@@ -33,16 +33,24 @@ LD=link
 
 all: clean helper16.exe
 
-helper16.exe: helper16.obj
+helper16.exe: helper16.obj hlp16st.obj
   if exist msc.lib del msc.lib
   lib msc /nologo ,
   lib msc /nologo +helper16.obj,,
+  lib msc /nologo +hlp16st.obj,,
 # Stub for NE executable
 # No idea why the stub executable produced is so large
   ml -c $(OMF) -DMSC -nologo -Dmemodel=tiny -DPDOS86 ..\src\needpdos.asm
   link /cp:1 /noe /noi /nod /map /nologo /dosseg needpdos.obj,needpdos.exe,,,,
   echo STUB 'needpdos.exe' >tempc.def
   link /pmtype:novio /noe /noi /nod /map /nologo /dosseg helper16.obj,helper16.exe,helper16.map,msc.lib,tempc.def
+#
+# Set the cs for the call based on what bios.c shows
+  zap helper16.exe 0x61d 0x58
+  zap helper16.exe 0x61e 0x00
+# Don't load ds with an invalid value
+  zap helper16.exe 0x62b 0x90
+  zap helper16.exe 0x62c 0x90
 
 .c.obj:
   $(CC) $(COPTS) $<
