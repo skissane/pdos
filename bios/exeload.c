@@ -5074,6 +5074,9 @@ static int exeloadLoadNE(unsigned char **entry_point,
     nr = numreloc[0] | (numreloc[1] << 8);
     
     /* printf("nr is %d\n", nr); */
+#if defined(STYLE3)
+    nr = 0;
+#endif
     for (x = 0; x < nr; x++)
     {
         /* 2 is segment, 3 is a far address,
@@ -5185,6 +5188,9 @@ static int exeloadLoadNE(unsigned char **entry_point,
     nr = numreloc[0] | (numreloc[1] << 8);
     /* printf("nr is %x\n", nr); */
     
+#if defined(STYLE3)
+    nr = 0;
+#endif
     for (x = 0; x < nr; x++)
     {
         unsigned int adjust = 0; /* zero? */
