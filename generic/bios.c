@@ -1626,17 +1626,22 @@ static size_t original_gdt_size;
 static void *original_gdt;
 static size_t gdt_size;
 static struct gdescriptor *gdt;
-static int cs;
-static int cm32_cs;
+
+static unsigned int cs;
+static unsigned int cm32_cs;
+static unsigned int cm32_ds;
 
 #ifdef CM16
-static int cm16_newss;
+static unsigned int cm16_ss;
+static unsigned int cm16_mapstart;
 static unsigned long cm16_csip;
 #endif
 
 
 static void shimcm32_start(void)
 {
+    unsigned int x;
+
     printf ("start\n");
     save_gdt (gdtr);
     original_gdt_size = (*(unsigned short *)gdtr) + 1;
@@ -1644,117 +1649,62 @@ static void shimcm32_start(void)
     cs = get_cs ();
     printf ("gdt size: %u ptr: %p cs: %i\n", original_gdt_size, original_gdt, cs);
 
-    gdt_size = original_gdt_size + sizeof (*gdt);
-#ifdef CM16
-    gdt_size += sizeof(*gdt);
-    gdt_size += sizeof(*gdt);
-#endif
+    if (original_gdt_size / 8 > 8000)
+    {
+        printf("too many existing GDT entries\n");
+        return;
+    }
+    gdt_size = 8192 * sizeof(*gdt);
     gdt = malloc (gdt_size);
+    if (gdt == NULL)
+    {
+        printf("insufficient memory\n");
+        return;
+    }
     cm32_cs = original_gdt_size;
-#ifdef CM16
-    cm16_newss = original_gdt_size + sizeof(*gdt);
-    cm16_csip = original_gdt_size + sizeof(*gdt) * 2;
-#endif
+    cm32_ds = cm32_cs + sizeof(*gdt);
+    cm16_ss = cm32_ds + sizeof(*gdt);
+    cm16_mapstart = cm16_ss + sizeof(*gdt);
+
+    /* preserve existing entries */
     memcpy (gdt, original_gdt, original_gdt_size);
-    gdt[cm32_cs / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
-    /* Converts the duplicated code segment descriptor to 32 bit code
-     * by disabling long mode flag and setting size flag.
-     */
-    gdt[cm32_cs / sizeof (*gdt)].limit_flags &= ~0x20;
 
-#ifdef CM16
-    /* I am guessing this will set byte granularity */
-    gdt[cm32_cs / sizeof (*gdt)].limit_flags &= 0xf0;
-    /* I am guessing that this sets 0xffff as the maximum offset */
-    gdt[cm32_cs / sizeof (*gdt)].limit[0] = 0xff;
+
+    /* 32-bit code segment */
+    /* need 4096 granularity, 32-bit and maximum limit */
+    gdt[cm32_cs / sizeof (*gdt)].limit_flags = 0xCF;
+
+    /* P, S, T, R */
+    gdt[cm32_cs / sizeof (*gdt)].access_byte = 0x9a;
+
     gdt[cm32_cs / sizeof (*gdt)].limit[1] = 0xff;
-    /* I am hoping that this sets 0040 0000 as the base address */
-    gdt[cm32_cs / sizeof (*gdt)].base2 = 0x0;
+    gdt[cm32_cs / sizeof (*gdt)].limit[0] = 0xff;
 
-#ifdef __CC64__
-    gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x44;
-#else
-    gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x40;
-#endif
+    /* base of 0 */
+    gdt[cm32_cs / sizeof (*gdt)].base2 = 0x0;
+    gdt[cm32_cs / sizeof (*gdt)].base[2] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[1] = 0x0;
     gdt[cm32_cs / sizeof (*gdt)].base[0] = 0x0;
 
 
-    /* gdt[cm16_csip / sizeof (*gdt)] = gdt[cs / sizeof (*gdt)];
-    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= ~0x20;
-    gdt[cm16_csip / sizeof (*gdt)].limit_flags &= 0xf0; */
+    /* 32-bit data segment */
+    /* need 4096 granularity, 32-bit and maximum limit */
+    gdt[cm32_ds / sizeof (*gdt)].limit_flags = 0xCF;
 
-    /* for the limit flags, we have:
-       G, D/B, L, AVL
+    /* P, S, no-T, W */
+    gdt[cm32_ds / sizeof (*gdt)].access_byte = 0x92;
 
-       G = granularity = clear (bytes) rather than set (4096 bytes)
-       D/B = default operand size - clear (16-bit) or set (32-bit)
-       unused bit = unused
-       L = set is 64-bit mode, otherwise 16 or 32 depending on D/B
-       AVL = available - for software use. We're not using it, but
-             we set it to 1 for good measure
+    gdt[cm32_ds / sizeof (*gdt)].limit[1] = 0xff;
+    gdt[cm32_ds / sizeof (*gdt)].limit[0] = 0xff;
 
-       The lower 4 bits are the top 4 bits of the 20-bit limit,
-       which for 16-bit we want as 0 with byte granularity, but
-       for CM32 we would want that set to ff and use 4096-byte
-       granularity to cover the entire 4 GiB region.
-    */
-    gdt[cm16_csip / sizeof (*gdt)].limit_flags = 0x80;
+    /* base of 0 */
+    gdt[cm32_ds / sizeof (*gdt)].base2 = 0x0;
+    gdt[cm32_ds / sizeof (*gdt)].base[2] = 0x0;
+    gdt[cm32_ds / sizeof (*gdt)].base[1] = 0x0;
+    gdt[cm32_ds / sizeof (*gdt)].base[0] = 0x0;
 
-    /* for the access byte, we have:
-       P, DPL (2 bits), S, T/Type (4 bits)
-       with the top bit of Type set meaning it is a code segment,
-       and set meaning data segment
-       The remaining 3 bits for code segment are:
-       C, R, A
-       For data segment they are:
-       E, W, A
 
-       P = present = we need this to set to 1 or the hardware will
-           create an exception
-       DPL = descriptor privilege level = I think this is what people
-           call "ring 0" - ie the highest level
-       S = system segment = 1 (code/data segment) rather than some
-          internal system segment, presumably needed to set up an LDT
-       Type top bit set, ie code, gives us
-           C = conforming = can be called from less privileged levels,
-               which we may want to set one day, but currently
-               everything is running privileged so not relevant
-           R = readable - set to say you can read the code, not just
-               execute it
-           A = accessed - set to 1 by hardware when the segment is
-               actually accessed. Software can clear it. We can set
-               it to either value. I'm choosing to leave it clear.
-       If Type had been set (ie data) we would have:
-           E = expand down - I think this is some sort of feature
-               that allows you to expand a stack down - but normally
-               we don't use this feature, and the stack segment is a
-               normal data segment - normally the exact same data
-               segment you normally use for data.
-           W = writable - the segment can be written, not just read
-           A = same as for code
-    */
-
-    /* P, S, T, R */
-    gdt[cm16_csip / sizeof (*gdt)].access_byte = 0x9a;
-
-    printf("limit_flags is %x\n", gdt[cm16_csip / sizeof (*gdt)].limit_flags);
-    printf("access_byte is %x\n", gdt[cm16_csip / sizeof (*gdt)].access_byte);
-    gdt[cm16_csip / sizeof (*gdt)].limit[0] = 0xff;
-    gdt[cm16_csip / sizeof (*gdt)].limit[1] = 0xff;
-    /* set 05b1 0000 as the base address */
-    gdt[cm16_csip / sizeof (*gdt)].base2 = 0x05;
-    gdt[cm16_csip / sizeof (*gdt)].base[2] = 0xb1;
-    gdt[cm16_csip / sizeof (*gdt)].base[1] = 0x0;
-    gdt[cm16_csip / sizeof (*gdt)].base[0] = 0x0;
-
-    cm16_csip <<= 16;
-    cm16_csip += 0x10;
-    printf("entry point of helper16 will be %08X\n", cm16_csip);
-#else
-    gdt[cm32_cs / sizeof (*gdt)].limit_flags |= 0x40;
-#endif
-
+    /* 16-bit stack segment */
 #ifdef CM16
     {
         ptrdiff_t sloc;
@@ -1763,25 +1713,118 @@ static void shimcm32_start(void)
 
         printf("this UEFI system gives you hex %x bytes of stack\n",
                (unsigned int)(sloc & 0xffffU));
-        gdt[cm16_newss / sizeof (*gdt)].limit[0] = sloc & 0xff;
+        gdt[cm16_ss / sizeof (*gdt)].limit[0] = sloc & 0xff;
         sloc >>= 8;
-        gdt[cm16_newss / sizeof (*gdt)].limit[1] = sloc & 0xff;
+        gdt[cm16_ss / sizeof (*gdt)].limit[1] = sloc & 0xff;
         sloc >>= 8;
-        gdt[cm16_newss / sizeof (*gdt)].base[2] = sloc & 0xff;
+        gdt[cm16_ss / sizeof (*gdt)].base[2] = sloc & 0xff;
         sloc >>= 8;
-        gdt[cm16_newss / sizeof (*gdt)].base2 = sloc & 0xff;
+        gdt[cm16_ss / sizeof (*gdt)].base2 = sloc & 0xff;
         sloc >>= 8;
-        gdt[cm16_newss / sizeof (*gdt)].base[1] = 0x0;
-        gdt[cm16_newss / sizeof (*gdt)].base[0] = 0x0;
+        gdt[cm16_ss / sizeof (*gdt)].base[1] = 0x0;
+        gdt[cm16_ss / sizeof (*gdt)].base[0] = 0x0;
         if (sloc != 0)
         {
             printf("this UEFI system has a stack above 4 GiB "
                    "so it won't work\n");
         }
-        gdt[cm16_newss / sizeof (*gdt)].access_byte = 0x92;
-        gdt[cm16_newss / sizeof (*gdt)].limit_flags = 0;
+        gdt[cm16_ss / sizeof (*gdt)].access_byte = 0x92;
+        gdt[cm16_ss / sizeof (*gdt)].limit_flags = 0;
     }
 #endif
+
+
+#ifdef CM16
+    /* map as much of memory in 16-bit as possible.
+       we need one code selector and one data selector for each 64k.
+       this gives us a maximum of approximately 256 MiB using just
+       the GDT. The LDT could seamlessly give us another 256 MiB by
+       aligning it where the GDT finishes. Adding the LDT is expected
+       to be done one day */
+    for (x = cm16_mapstart; x < 8190 * sizeof(*gdt); x += sizeof(*gdt) * 2)
+    {
+        /* first do the code */
+
+
+        /* for the limit flags, we have:
+           G, D/B, L, AVL
+
+           G = granularity = clear (bytes) rather than set (4096 bytes)
+           D/B = default operand size - clear (16-bit) or set (32-bit)
+           unused bit = unused
+           L = set is 64-bit mode, otherwise 16 or 32 depending on D/B
+           AVL = available - for software use.
+
+           The lower 4 bits are the top 4 bits of the 20-bit limit,
+           which for 16-bit we want as 0 with byte granularity, but
+           for CM32 we would want that set to ff and use 4096-byte
+           granularity to cover the entire 4 GiB region.
+        */
+        gdt[x / sizeof (*gdt)].limit_flags = 0x00;
+
+        /* for the access byte, we have:
+           P, DPL (2 bits), S, T/Type (4 bits)
+           with the top bit of Type set meaning it is a code segment,
+           and set meaning data segment
+           The remaining 3 bits for code segment are:
+           C, R, A
+           For data segment they are:
+           E, W, A
+
+           P = present = we need this to set to 1 or the hardware will
+               create an exception
+           DPL = descriptor privilege level = I think this is what people
+               call "ring 0" - ie the highest level
+           S = system segment = 1 (code/data segment) rather than some
+              internal system segment, presumably needed to set up an LDT
+           Type top bit set, ie code, gives us
+               C = conforming = can be called from less privileged levels,
+                   which we may want to set one day, but currently
+                   everything is running privileged so not relevant
+               R = readable - set to say you can read the code, not just
+                   execute it
+               A = accessed - set to 1 by hardware when the segment is
+                   actually accessed. Software can clear it. We can set
+                   it to either value. I'm choosing to leave it clear.
+           If Type had been set (ie data) we would have:
+               E = expand down - I think this is some sort of feature
+                   that allows you to expand a stack down - but normally
+                   we don't use this feature, and the stack segment is a
+                   normal data segment - normally the exact same data
+                   segment you normally use for data.
+               W = writable - the segment can be written, not just read
+               A = same as for code
+        */
+
+        /* P, S, T, R */
+        gdt[x / sizeof (*gdt)].access_byte = 0x9a;
+
+        gdt[x / sizeof (*gdt)].limit[1] = 0xff;
+        gdt[x / sizeof (*gdt)].limit[0] = 0xff;
+        gdt[x / sizeof (*gdt)].base2
+            = (((x - cm16_mapstart) / (sizeof(*gdt) * 2)) >> 8) & 0xff;
+        gdt[x / sizeof (*gdt)].base[2]
+            = ((x - cm16_mapstart) / (sizeof(*gdt) * 2)) & 0xff;;
+        gdt[x / sizeof (*gdt)].base[1] = 0x0;
+        gdt[x / sizeof (*gdt)].base[0] = 0x0;
+
+
+        /* now do the data */
+        gdt[x / sizeof (*gdt) + 1].limit_flags = 0x00;
+        /* P, S, no-T, W */
+        gdt[x / sizeof (*gdt) + 1].access_byte = 0x92;
+        gdt[x / sizeof (*gdt) + 1].limit[1] = 0xff;
+        gdt[x / sizeof (*gdt) + 1].limit[0] = 0xff;
+        gdt[x / sizeof (*gdt) + 1].base2
+            = (((x - cm16_mapstart) / (sizeof(*gdt) * 2)) >> 8) & 0xff;
+        gdt[x / sizeof (*gdt) + 1].base[2]
+            = ((x - cm16_mapstart) / (sizeof(*gdt) * 2)) & 0xff;;
+        gdt[x / sizeof (*gdt) + 1].base[1] = 0x0;
+        gdt[x / sizeof (*gdt) + 1].base[0] = 0x0;
+
+    }
+#endif
+
 
     disable_interrupts ();
     load_gdt (gdt, gdt_size);
@@ -1793,20 +1836,39 @@ static void shimcm32_start(void)
 static int shimcm32_run(void)
 {
     int ret;
+    unsigned int first_cs;
 
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
+
+    cm16_csip = ((ptrdiff_t)genstart >> 16) & 0xffffU;
+    cm16_csip = cm16_csip * sizeof(*gdt) * 2 + cm16_mapstart;
+    cm16_csip <<= 16;
+    cm16_csip += 0x10;
+    printf("entry point of helper16 will be %08X\n", cm16_csip);
+
 #ifdef CM16
+
+#if 0
 #ifdef __CC64__
     printf("this will only succeed if the test16 address is 0044 xxxx\n");
 #else
     printf("this will only succeed if the test16 address is 0040 xxxx\n");
 #endif
+#endif
+
+    printf("this will only succeed if the test16 address is in"
+           " the first 250 MiB approx\n");
+
+    first_cs = ((ptrdiff_t)&test16 >> 16) & 0xffffUL;
+    printf("first_cs is decimal %d\n", first_cs);
+    first_cs = first_cs * sizeof(*gdt) * 2 + cm16_mapstart;
+    printf("first_cs is now decimal %d\n", first_cs);
     printf("note that this is not a real mode address - it is basically flat\n");
-    ret = call_cm16 (cm32_cs,
+    ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
-                     cm16_newss,
+                     cm16_ss,
                      cm16_csip);
 #else
     ret = call_cm32 (cm32_cs, &test32);

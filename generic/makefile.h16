@@ -46,8 +46,10 @@ helper16.exe: helper16.obj hlp16st.obj
   link /pmtype:novio /noe /noi /nod /map /nologo /dosseg helper16.obj,helper16.exe,helper16.map,msc.lib,tempc.def
 #
 # Set the cs for the call based on what bios.c shows
-  zap helper16.exe 0x61d 0x58
-  zap helper16.exe 0x61e 0x00
+#  zap helper16.exe 0x61d 0x58
+#  zap helper16.exe 0x61e 0x00
+  zap helper16.exe 0x61d 0x70
+  zap helper16.exe 0x61e 0x5b
 # Don't load ds with an invalid value
   zap helper16.exe 0x62b 0x90
   zap helper16.exe 0x62c 0x90
