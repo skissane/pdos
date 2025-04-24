@@ -4916,6 +4916,8 @@ static int exeloadLoadLX(unsigned char **entry_point,
 extern int __shift;
 extern int __incr;
 
+unsigned int map16c(void *codeptr);
+
 /* Documentation on this format can be found here:
 https://en.wikipedia.org/wiki/New_Executable
 in the references
@@ -4955,6 +4957,9 @@ static int exeloadLoadNE(unsigned char **entry_point,
     unsigned int zzz_num;
     unsigned char *csalias;
     int shiftby;
+    unsigned int segmapc;
+    unsigned int segmapd;
+    unsigned int segmapb;
 
     if ((fseek(fp, e_lfanew, SEEK_SET) != 0)
         || (fread(firstbit, sizeof(firstbit), 1, fp) != 1)
@@ -5000,7 +5005,8 @@ static int exeloadLoadNE(unsigned char **entry_point,
             /* printf("new load is %p\n", csalias); */
         }
 #elif defined(STYLE3)
-        *loadloc = malloc(65536UL * 3);
+        *loadloc = malloc(65536UL * 4); /* alignment, code, data, bss */
+            /* not sure if bss is done correctly - see data relocations */
         /* printf("loadloc is now %p\n", *loadloc); */
 #endif
         if (*loadloc == NULL)
@@ -5068,15 +5074,18 @@ static int exeloadLoadNE(unsigned char **entry_point,
     dataptr = codeptr + 65536UL;
 #endif
 
+    segmapc = map16c(codeptr);
+
+    segmapd = map16d(dataptr);
+
+    segmapb = map16d(dataptr + 65536U);
+
     fseek(fp, offs1 + len1, SEEK_SET);
     fread(numreloc, sizeof numreloc, 1, fp);
-    
+
     nr = numreloc[0] | (numreloc[1] << 8);
-    
+
     /* printf("nr is %d\n", nr); */
-#if defined(STYLE3)
-    nr = 0;
-#endif
     for (x = 0; x < nr; x++)
     {
         /* 2 is segment, 3 is a far address,
@@ -5169,13 +5178,23 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             else if (reloc[4] == 1) /* code */
             {
+#ifdef STYLE3
+                codeptr[lloffs] = segmapc & 0xff;
+                codeptr[lloffs + 1] = (segmapc >> 8) & 0xff;
+#else
                 codeptr[lloffs] = ((unsigned long)csalias >> 16) & 0xff;
                 codeptr[lloffs + 1] = ((unsigned long)csalias >> 24) & 0xff;
+#endif
             }
             else if (reloc[4] == 2) /* data */
             {
+#ifdef STYLE3
+                codeptr[lloffs] = segmapd & 0xff;
+                codeptr[lloffs + 1] = (segmapd >> 8) & 0xff;
+#else
                 codeptr[lloffs] = ((unsigned long)dataptr >> 16) & 0xff;
                 codeptr[lloffs + 1] = ((unsigned long)dataptr >> 24) & 0xff;
+#endif
             }
             if (zzz_num == 0xffffU) break;
             lloffs = zzz_num;
@@ -5188,9 +5207,6 @@ static int exeloadLoadNE(unsigned char **entry_point,
     nr = numreloc[0] | (numreloc[1] << 8);
     /* printf("nr is %x\n", nr); */
     
-#if defined(STYLE3)
-    nr = 0;
-#endif
     for (x = 0; x < nr; x++)
     {
         unsigned int adjust = 0; /* zero? */
@@ -5247,18 +5263,33 @@ static int exeloadLoadNE(unsigned char **entry_point,
             }
             if (reloc[4] == 1) /* code */
             {
+#ifdef STYLE3
+                dataptr[lloffs + adjust] = segmapc & 0xff;
+                dataptr[lloffs + adjust + 1] = (segmapc >> 8) & 0xff;
+#else
                 dataptr[lloffs + adjust] = ((unsigned long)csalias >> 16) & 0xff;
                 dataptr[lloffs + adjust + 1] = ((unsigned long)csalias >> 24) & 0xff;
+#endif
             }
             else if (reloc[4] == 2) /* data */
             {
+#ifdef STYLE3
+                dataptr[lloffs + adjust] = segmapd & 0xff;
+                dataptr[lloffs + adjust + 1] = (segmapd >> 8) & 0xff;
+#else
                 dataptr[lloffs + adjust] = ((unsigned long)dataptr >> 16) & 0xff;
                 dataptr[lloffs + 1 + adjust] = ((unsigned long)dataptr >> 24) & 0xff;
+#endif
             }
             else if (reloc[4] == 3) /* bss */
             {
+#ifdef STYLE3
+                dataptr[lloffs + adjust] = segmapb & 0xff;
+                dataptr[lloffs + adjust + 1] = (segmapb >> 8) & 0xff;
+#else
                 dataptr[lloffs + adjust] = ((unsigned long)(dataptr + 65536UL) >> 16) & 0xff;
                 dataptr[lloffs + 1 + adjust] = ((unsigned long)(dataptr + 65536UL) >> 24) & 0xff;
+#endif
             }
             else
             {
