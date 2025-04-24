@@ -1638,6 +1638,27 @@ static unsigned long cm16_csip;
 #endif
 
 
+unsigned int map16c(void *codeptr)
+{
+    unsigned int seg;
+
+    seg = ((ptrdiff_t)codeptr >> 16) & 0xffffUL;
+    seg = seg * sizeof(*gdt) * 2 + cm16_mapstart;
+    return (seg);
+}
+
+
+unsigned int map16d(void *dataptr)
+{
+    unsigned int seg;
+
+    seg = ((ptrdiff_t)dataptr >> 16) & 0xffffUL;
+    seg = seg * sizeof(*gdt) * 2 + cm16_mapstart;
+    seg += sizeof(*gdt);
+    return (seg);
+}
+
+
 static void shimcm32_start(void)
 {
     unsigned int x;
