@@ -41,6 +41,8 @@ helper16.exe: helper16.obj hlp16st.obj
 # Stub for NE executable
 # No idea why the stub executable produced is so large
   ml -c $(OMF) -DMSC -nologo -Dmemodel=tiny -DPDOS86 ..\src\needpdos.asm
+# Note that cparmaxalloc is documented as requiring a minimum of 1
+# exehdr -max:1 can accept a value of 0 if you don't mind inconsistency
   link /cp:1 /noe /noi /nod /map /nologo /dosseg needpdos.obj,needpdos.exe,,,,
   echo STUB 'needpdos.exe' >tempc.def
   link /pmtype:novio /noe /noi /nod /map /nologo /dosseg helper16.obj,helper16.exe,helper16.map,msc.lib,tempc.def
