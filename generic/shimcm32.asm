@@ -188,6 +188,7 @@ callb16:
 #    mov ax, 0x30
     les bx, 8[bp]
     mov ax, bx
+    mov dx, es
     pop bx
     pop es
     pop bp
