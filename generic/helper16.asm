@@ -31,8 +31,11 @@ __intstart proc var1: word, var2: word
 ;
 ; Microsoft C assumes that es can be used as a scratch register,
 ; so we are responsible for preserving that
+; Ditto cx
 ;
         push es
+        push cx
+;
         mov ax, var2
         push ss
         push ax
@@ -49,6 +52,7 @@ __intstart proc var1: word, var2: word
 ;        call __myDosHugeIncr
 ;        mov __incr, ax
 
+        pop cx
         pop es
         ret
 __intstart endp
