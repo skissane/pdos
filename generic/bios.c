@@ -1941,6 +1941,7 @@ static int shimcm32_run(void)
     anchor16.cs = cs; /* original cs that needs to be restored */
     anchor16.callbm = (unsigned long)(ptrdiff_t)callb16m;
     printf("anchor16 is %p\n", &anchor16);
+    printf("callb is %08X\n", anchor16.callb);
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);

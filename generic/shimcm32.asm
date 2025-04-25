@@ -89,6 +89,14 @@ call_cm16:
     mov  rdx, r8
     retfq
 call_cm16_end:
+# return value is dx:ax - need to put in rax
+# rcx can be used as a scratch register
+    xor rcx, rcx
+    mov rcx, dx
+    shl rcx, 16
+    mov cx, ax
+    mov rax, rcx
+
     pop rdx
     pop rsi
     pop rdi
