@@ -156,4 +156,12 @@ main16:
 #    ret
 
 
+
+# callback function
+.globl callb16
+callb16:
+    mov ax, 0x30
+    retf
+
+
 .code64

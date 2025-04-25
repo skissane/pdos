@@ -1637,6 +1637,9 @@ static unsigned long cm16_csip;
 #endif
 
 
+
+/* may want to replace these two with the flat* below it */
+
 unsigned int map16c(void *codeptr)
 {
     unsigned int seg;
@@ -1656,6 +1659,34 @@ unsigned int map16d(void *dataptr)
     seg += sizeof(*gdt);
     return (seg);
 }
+
+
+unsigned long flatto16c(void *codeptr)
+{
+    unsigned int seg;
+    unsigned long segptr;
+
+    segptr = (unsigned long)(ptrdiff_t)codeptr;
+    seg = (segptr >> 16) & 0xffffU;
+    seg = seg * sizeof(*gdt) * 2 + cm16_mapstart;
+    segptr = ((unsigned long)seg << 16) | (segptr & 0xffffU);
+    return (segptr);
+}
+
+
+unsigned long flatto16d(void *dataptr)
+{
+    unsigned int seg;
+    unsigned long segptr;
+
+    segptr = (unsigned long)(ptrdiff_t)dataptr;
+    seg = (segptr >> 16) & 0xffffU;
+    seg = seg * sizeof(*gdt) * 2 + cm16_mapstart;
+    seg += sizeof(*gdt);
+    segptr = ((unsigned long)seg << 16) | (segptr & 0xffffU);
+    return (segptr);
+}
+
 
 
 static void shimcm32_start(void)
@@ -1865,7 +1896,11 @@ typedef struct {
     unsigned int eye1;
     unsigned int eye2;
     unsigned int eye3;
+    unsigned long callb;
 } ANCHOR16;
+
+unsigned long callb16(int x);
+
 
 static int shimcm32_run(void)
 {
@@ -1899,6 +1934,7 @@ static int shimcm32_run(void)
     anchor16.eye1 = 0x12;
     anchor16.eye2 = 0x11;
     anchor16.eye3 = 0x10;
+    anchor16.callb = flatto16c(callb16);
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);

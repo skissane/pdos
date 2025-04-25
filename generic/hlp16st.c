@@ -13,7 +13,9 @@
 int hlp16st(int val, void *parms)
 {
     unsigned long *pblk = parms;
+    int (*callb)(int x);
 
     /* return (val + 2); */
-    return (pblk[2]);
+    callb = (int (*)(int))pblk[5];
+    return (callb(0));
 }
