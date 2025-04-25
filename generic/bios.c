@@ -1900,6 +1900,7 @@ typedef struct {
     unsigned int cs;
     unsigned long callbm;
     unsigned long callbr;
+    unsigned int ss; /* set in assembler code */
 } ANCHOR16;
 
 unsigned long callb16(int x, void *y);
