@@ -2639,9 +2639,23 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
         *actualRead = tempRead;
         if (stream == __stdin)
         {
+            size_t x;
             char *p;
 
             p = ptr;
+#if defined(__gnu_linux__)
+            /* Linux is returning DEL for backspace instead of ^H so we
+               convert to ^H now, otherwise mfemul doesn't receive the
+               character */
+            for (x = 0; x < *actualRead; x++)
+            {
+                if (p[x] == 0x7f)
+                {
+                    p[x] = 0x08;
+                }
+            }
+#endif
+
 #if !defined(__gnu_linux__) && !(defined(__ARM__) && !defined(__WIN32__))
             if ((toread == 1) && (*actualRead == 1))
             {
