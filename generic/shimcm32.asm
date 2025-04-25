@@ -68,9 +68,13 @@ call_cm16:
     push rcx
     push rdi
     push rsi
-    mov rbx, r8
-    mov rdi, r9
-    mov rsi, r9
+    mov rdi, r8
+# both of these moves access above their boundaries
+# and pollute the upper bits - but that doesn't matter
+# should probably be changed though
+    mov rbx, [rdi+4]
+    mov rdi, [rdi]
+    mov rsi, rdi
     shr rsi, 16
     sub rsp, 8
     mov rax, cs

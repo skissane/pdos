@@ -1616,8 +1616,7 @@ void load_gdt (void *gdt, int size);
 int call_cm32 (int cm32_cs, int (*test32)(void));
 int call_cm16 (int cm32_cs,
                int (*test16)(void),
-               int newss,
-               unsigned long cm16_csip);
+               void *anchor16);
 int test32 (void);
 int test16 (void);
 
@@ -1854,10 +1853,23 @@ static void shimcm32_start(void)
     printf ("running with new gdt\n");
 }
 
+static unsigned long shimcm32_callback(unsigned long parm)
+{
+    printf("got callback!\n");
+    return (0);
+}
+
+typedef struct {
+    unsigned long cm16_csip;
+    unsigned int cm16_ss;
+} ANCHOR16;
+
 static int shimcm32_run(void)
 {
     int ret;
     unsigned int first_cs;
+    ANCHOR16 anchor16; /* must be on stack, otherwise 16-bit
+                          code won't be able to easily access it */
 
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
     printf("test32 is at %p\n", test32);
@@ -1871,14 +1883,6 @@ static int shimcm32_run(void)
 
 #ifdef CM16
 
-#if 0
-#ifdef __CC64__
-    printf("this will only succeed if the test16 address is 0044 xxxx\n");
-#else
-    printf("this will only succeed if the test16 address is 0040 xxxx\n");
-#endif
-#endif
-
     printf("this will only succeed if the test16 address is in"
            " the first 250 MiB approx\n");
 
@@ -1887,10 +1891,11 @@ static int shimcm32_run(void)
     first_cs = first_cs * sizeof(*gdt) * 2 + cm16_mapstart;
     printf("first_cs is now decimal %d\n", first_cs);
     printf("note that this is not a real mode address - it is basically flat\n");
+    anchor16.cm16_csip = cm16_csip;
+    anchor16.cm16_ss = cm16_ss;
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
-                     cm16_ss,
-                     cm16_csip);
+                     &anchor16);
 #else
     ret = call_cm32 (cm32_cs, &test32);
 #endif
