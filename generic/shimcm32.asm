@@ -193,6 +193,9 @@ callb16:
     mov dx, es:[bx + 30]
     mov ax, es:[bx + 32]
     mov dx, es:[bx + 34]
+    push dx
+    push ax
+    retf
 
 # I don't know if there is a better way of doing this
 # Even assuming the code isn't allowed to span a 64k segment
