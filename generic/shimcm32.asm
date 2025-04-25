@@ -70,6 +70,9 @@ call_cm16:
     push rsi
     push rdx
     mov rdi, r8
+# preserve old ss
+    mov ax, ss
+    mov [rdi+36], ax
 # both of these moves access above their boundaries
 # and pollute the upper bits - but that doesn't matter
 # should probably be changed though
@@ -110,11 +113,19 @@ call_cm16_end:
 # 64-bit code to support 16-bit callback
 .global callb16m
 callb16m:
+# complete switch to standard stack
+    mov ss, ax
 #    push rbp
 #    mov rbp, rsp
 #
-    mov rax, 0x60
+#    mov rax, 0x60
 #    pop rbp
+#    mov al, 'X'
+#    out 0xe9, al
+#    mov al, '\n'
+#    out 0xe9, al
+    mov dx, 0x1234
+    mov ax, 0x5678
     retfq
 
 
@@ -183,27 +194,98 @@ main16:
 callb16:
     push bp
     mov bp, sp
+    push cx
+    push ds
     push es
     push bx
 #    mov ax, 0x30
     les bx, 8[bp]
 #    mov ax, bx
 #    mov dx, es
-    mov ax, es:[bx + 28]
-    mov dx, es:[bx + 30]
-    mov ax, es:[bx + 32]
+
+
+# The stack will presumably need to be 8-byte or 16-byte
+# aligned to have any chance of working. Try to see if
+# something works
+#    push cx
+#    push cx
+#    push cx
+#    push cx
+#    push cx
+#    push cx
+#    push cx
+
+# this is callb16r
+# we need to prepare it for a 64-bit far return
+    mov ax, 0
+    push ax
+    push ax
+    push ax
     mov dx, es:[bx + 34]
     push dx
+
     push ax
-    retf
+    push ax
+    push ax
+    mov ax, es:[bx + 32]
+    push ax
+
+# and now we do our 16-bit return to execute callb16m (64-bit)
+# we need the old cs (expanded to 32 bits) first
+    mov ax, 0
+    push ax
+    mov ax, es:[bx + 24]
+    push ax
+# and now the 32-bit offset
+    mov dx, es:[bx + 30]
+    push dx
+    mov ax, es:[bx + 28]
+    push ax
+
+# save our 16-bit stack in bx
+    mov ax, ss
+    mov bx, ax
+
+# prepare to switch back to standard stack
+    mov ax, es:[bx + 36]
+
+# preserve these original values in the assembler instead
+# of relying on this to work
+# Note that this is probably superfluous
+    mov es, ax
+    mov ds, ax
+
+    data32 retf
 
 # I don't know if there is a better way of doing this
 # Even assuming the code isn't allowed to span a 64k segment
 #
 .globl callb16r
 callb16r:
+
+#    mov al, 'X'
+#    out 0xe9, al
+#    mov al, '\n'
+#    out 0xe9, al
+# For stack alignment
+#    pop cx
+#    pop cx
+#    pop cx
+#    pop cx
+#    pop cx
+#    pop cx
+#    pop cx
+
+# restore our 16-bit stack, while preserving ax
+    mov cx, ax
+    mov ax, bx
+    mov ss, ax
+    mov ax, cx
+
     pop bx
     pop es
+    pop ds
+    pop cx
     pop bp
     retf
 
