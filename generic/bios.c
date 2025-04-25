@@ -1862,6 +1862,9 @@ static unsigned long shimcm32_callback(unsigned long parm)
 typedef struct {
     unsigned long cm16_csip;
     unsigned int cm16_ss;
+    unsigned int eye1;
+    unsigned int eye2;
+    unsigned int eye3;
 } ANCHOR16;
 
 static int shimcm32_run(void)
@@ -1893,6 +1896,9 @@ static int shimcm32_run(void)
     printf("note that this is not a real mode address - it is basically flat\n");
     anchor16.cm16_csip = cm16_csip;
     anchor16.cm16_ss = cm16_ss;
+    anchor16.eye1 = 0x12;
+    anchor16.eye2 = 0x11;
+    anchor16.eye3 = 0x10;
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);

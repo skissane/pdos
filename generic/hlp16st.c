@@ -10,7 +10,9 @@
 /*                                                                   */
 /*********************************************************************/
 
-int hlp16st(int val)
+int hlp16st(int val, void *parms)
 {
+    unsigned long *pblk = parms;
+
     return (val + 2);
 }

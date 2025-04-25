@@ -68,6 +68,7 @@ call_cm16:
     push rcx
     push rdi
     push rsi
+    push rdx
     mov rdi, r8
 # both of these moves access above their boundaries
 # and pollute the upper bits - but that doesn't matter
@@ -84,8 +85,11 @@ call_cm16:
     xor rax, rax
     push rcx
     push rdx
+# rdx is now free, so load it with the parameter pointer
+    mov  rdx, r8
     retfq
 call_cm16_end:
+    pop rdx
     pop rsi
     pop rdi
     pop rcx
@@ -124,11 +128,13 @@ test16:
     mov cx, ax
     mov ax, bx
     mov ss, ax
+# dx contains parameter block
+    push dx
     mov ax, 3
     push ax
     push cs
     call main16
-    add sp, 2
+    add sp, 4
 # restore old ss, while preserving ax return value
     mov bx, ax
     mov ax, cx
