@@ -1118,6 +1118,9 @@ void w64exit(int status)
 
 /* this should be combined with the w64 version */
 #if defined(W32EMUL) || defined(GENSHELL)
+#ifdef __CC64__
+$callback
+#endif
 void w32exit(int status)
 {
     globrc = status;
