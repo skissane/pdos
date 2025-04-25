@@ -187,8 +187,10 @@ callb16:
     push bx
 #    mov ax, 0x30
     les bx, 8[bp]
-    mov ax, bx
-    mov dx, es
+#    mov ax, bx
+#    mov dx, es
+    mov ax, es:[bx + 28]
+    mov dx, es:[bx + 30]
     pop bx
     pop es
     pop bp
