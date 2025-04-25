@@ -191,6 +191,14 @@ callb16:
 #    mov dx, es
     mov ax, es:[bx + 28]
     mov dx, es:[bx + 30]
+    mov ax, es:[bx + 32]
+    mov dx, es:[bx + 34]
+
+# I don't know if there is a better way of doing this
+# Even assuming the code isn't allowed to span a 64k segment
+#
+.globl callb16r
+callb16r:
     pop bx
     pop es
     pop bp

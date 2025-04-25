@@ -1899,9 +1899,11 @@ typedef struct {
     unsigned long callb;
     unsigned int cs;
     unsigned long callbm;
+    unsigned long callbr;
 } ANCHOR16;
 
 unsigned long callb16(int x, void *y);
+unsigned long callb16r(int x, void *y);
 unsigned long callb16m(int x, void *y);
 
 
@@ -1938,11 +1940,13 @@ static int shimcm32_run(void)
     anchor16.eye2 = 0x11;
     anchor16.eye3 = 0x10;
     anchor16.callb = flatto16c(callb16);
+    anchor16.callbr = flatto16c(callb16r);
     anchor16.cs = cs; /* original cs that needs to be restored */
     anchor16.callbm = (unsigned long)(ptrdiff_t)callb16m;
     printf("anchor16 is %p\n", &anchor16);
     printf("callb is %08X\n", anchor16.callb);
     printf("callbm is %08X\n", anchor16.callbm);
+    printf("callbr is %08X\n", anchor16.callbr);
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);
