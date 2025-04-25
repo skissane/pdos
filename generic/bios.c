@@ -1887,9 +1887,9 @@ static void shimcm32_start(void)
     printf ("running with new gdt\n");
 }
 
-static unsigned long shimcm32_callback(unsigned long parm)
+unsigned long shimcm32_callback(void)
 {
-    /* printf("got callback!\n"); */
+    printf("got callback!\n");
     return (0x40);
 }
 

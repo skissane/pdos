@@ -132,8 +132,11 @@ callb16m:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
-    mov dx, 0x1234
-    mov ax, ss
+
+#    mov dx, 0x1234
+#    mov ax, ss
+
+    call shimcm32_callback
     retfq
 
 
