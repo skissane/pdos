@@ -125,7 +125,7 @@ callb16m:
 #    mov al, '\n'
 #    out 0xe9, al
     mov dx, 0x1234
-    mov ax, 0x5678
+    mov ax, sp
     retfq
 
 
@@ -215,6 +215,15 @@ callb16:
 #    push cx
 #    push cx
 
+# get the stack aligned on a 16-byte boundary
+    mov bp, sp
+    mov ax, bp
+    sub ax, 18
+    and ax, 0xFFF0
+    add ax, 2
+    mov sp, ax
+    push bp
+
 # this is callb16r
 # we need to prepare it for a 64-bit far return
     mov ax, 0
@@ -267,6 +276,16 @@ callb16r:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
+
+# restore our 16-bit stack, while preserving ax
+    mov cx, ax
+    mov ax, bx
+    mov ss, ax
+    mov ax, cx
+
+    pop bp
+    mov sp, bp
+
 # For stack alignment
 #    pop cx
 #    pop cx
@@ -275,12 +294,6 @@ callb16r:
 #    pop cx
 #    pop cx
 #    pop cx
-
-# restore our 16-bit stack, while preserving ax
-    mov cx, ax
-    mov ax, bx
-    mov ss, ax
-    mov ax, cx
 
     pop bx
     pop es
