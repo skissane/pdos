@@ -1894,16 +1894,18 @@ static unsigned long shimcm32_callback(unsigned long parm)
 }
 
 typedef struct {
-    unsigned long cm16_csip;
-    unsigned int cm16_ss;
-    unsigned int eye1;
-    unsigned int eye2;
-    unsigned int eye3;
-    unsigned long callb;
-    unsigned int cs;
-    unsigned long callbm;
-    unsigned long callbr;
-    unsigned int ss; /* set in assembler code */
+    unsigned long cm16_csip; /* 0 */
+    unsigned int cm16_ss; /* 4 */
+    unsigned int eye1; /* 8 */
+    unsigned int eye2; /* 12 */
+    unsigned int eye3; /* 16 */
+    unsigned long callb; /* 20 */
+    unsigned int cs; /* 24 */
+    unsigned long callbm; /* 28 */
+    unsigned long callbr; /* 32 */
+    unsigned int ss; /* 36 */ /* set in assembler code */
+    unsigned int ds; /* 40 */ /* ditto */
+    unsigned int es; /* 44 */ /* ditto */
 } ANCHOR16;
 
 unsigned long callb16(int x, void *y);

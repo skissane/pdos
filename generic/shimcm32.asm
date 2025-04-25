@@ -70,9 +70,17 @@ call_cm16:
     push rsi
     push rdx
     mov rdi, r8
+
 # preserve old ss
     mov ax, ss
     mov [rdi+36], ax
+# and old ds
+    mov ax, ds
+    mov [rdi+40], ax
+# and old es
+    mov ax, es
+    mov [rdi+44], ax
+
 # both of these moves access above their boundaries
 # and pollute the upper bits - but that doesn't matter
 # should probably be changed though
@@ -125,7 +133,7 @@ callb16m:
 #    mov al, '\n'
 #    out 0xe9, al
     mov dx, 0x1234
-    mov ax, sp
+    mov ax, ss
     retfq
 
 
@@ -251,20 +259,28 @@ callb16:
     mov ax, es:[bx + 28]
     push ax
 
+# Note that this is probably superfluous
+    mov ax, es:[bx + 40]
+    mov ds, ax
+
+# prepare to switch back to standard stack
+    mov ax, es:[bx + 36]
+    mov cx, ax
+
+# This is also probably superfluous
+    mov ax, es:[bx + 44]
+    mov es, ax
+
 # save our 16-bit stack in bx
     mov ax, ss
     mov bx, ax
 
-# prepare to switch back to standard stack
-    mov ax, es:[bx + 36]
-
-# preserve these original values in the assembler instead
-# of relying on this to work
-# Note that this is probably superfluous
-    mov es, ax
-    mov ds, ax
+# and now ax will carry the 64-bit ss
+    mov ax, cx
 
     data32 retf
+
+
 
 # I don't know if there is a better way of doing this
 # Even assuming the code isn't allowed to span a 64k segment
