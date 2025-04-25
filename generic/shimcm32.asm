@@ -98,6 +98,19 @@ call_cm16_end:
     ret
 
 
+
+# 64-bit code to support 16-bit callback
+.global callb16m
+callb16m:
+#    push rbp
+#    mov rbp, rsp
+#
+    mov rax, 0x60
+#    pop rbp
+    retfq
+
+
+
 .code32
 
 .globl test32
@@ -160,7 +173,16 @@ main16:
 # callback function
 .globl callb16
 callb16:
-    mov ax, 0x30
+    push bp
+    mov bp, sp
+    push es
+    push bx
+#    mov ax, 0x30
+    les bx, 8[bp]
+    mov ax, bx
+    pop bx
+    pop es
+    pop bp
     retf
 
 
