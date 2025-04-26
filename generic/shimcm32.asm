@@ -137,6 +137,12 @@ callb16m:
 #    mov ax, ss
 
     call shimcm32_callback
+
+# return code is in rax
+# needs to be split into dx:ax before returning to 16-bit code
+    mov rdx, rax
+    shr rdx, 16
+
     retfq
 
 
