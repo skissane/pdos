@@ -1690,6 +1690,19 @@ unsigned long flatto16d(void *dataptr)
     return (segptr);
 }
 
+/* both code and data pointers will be mapped to the same address */
+void *segtoflat(unsigned long segptr)
+{
+    unsigned int seg;
+    unsigned long flat;
+
+    seg = segptr >> 16;
+    flat = (seg - cm16_mapstart) / (sizeof(*gdt) * 2);
+    flat <<= 16;
+    flat |= (segptr & 0xffffU);
+    return ((void *)(ptrdiff_t)flat);
+}
+
 
 
 static void shimcm32_start(void)
@@ -1887,26 +1900,37 @@ static void shimcm32_start(void)
     printf ("running with new gdt\n");
 }
 
-unsigned long shimcm32_callback(void)
-{
-    printf("got callback!\n");
-    return (0x40);
-}
+typedef unsigned long UINT32;
 
 typedef struct {
-    unsigned long cm16_csip; /* 0 */
-    unsigned int cm16_ss; /* 4 */
-    unsigned int eye1; /* 8 */
-    unsigned int eye2; /* 12 */
-    unsigned int eye3; /* 16 */
-    unsigned long callb; /* 20 */
-    unsigned int cs; /* 24 */
-    unsigned long callbm; /* 28 */
-    unsigned long callbr; /* 32 */
-    unsigned int ss; /* 36 */ /* set in assembler code */
-    unsigned int ds; /* 40 */ /* ditto */
-    unsigned int es; /* 44 */ /* ditto */
+    UINT32 cm16_csip; /* 0 */
+    UINT32 cm16_ss; /* 4 */
+    UINT32 eye1; /* 8 */
+    UINT32 eye2; /* 12 */
+    UINT32 eye3; /* 16 */
+    UINT32 callb; /* 20 */
+    UINT32 cs; /* 24 */
+    UINT32 callbm; /* 28 */
+    UINT32 callbr; /* 32 */
+    UINT32 ss; /* 36 */ /* set in assembler code */
+    UINT32 ds; /* 40 */ /* ditto */
+    UINT32 es; /* 44 */ /* ditto */
+    UINT32 str; /* 48 */ /* string to print */
 } ANCHOR16;
+
+static ANCHOR16 *ganchor16;
+
+unsigned long shimcm32_callback(void)
+{
+    char *p;
+
+    printf("got callback!\n");
+    printf("str is %lx\n", (unsigned long)ganchor16->str);
+    p = segtoflat(ganchor16->str);
+    printf("p is %p\n", p);
+    printf("p is %s\n", p);
+    return (0x40);
+}
 
 unsigned long callb16(int x, void *y);
 unsigned long callb16r(int x, void *y);
@@ -1920,6 +1944,7 @@ static int shimcm32_run(void)
     ANCHOR16 anchor16; /* must be on stack, otherwise 16-bit
                           code won't be able to easily access it */
 
+    ganchor16 = &anchor16;
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
@@ -1949,6 +1974,7 @@ static int shimcm32_run(void)
     anchor16.callbr = flatto16c(callb16r);
     anchor16.cs = cs; /* original cs that needs to be restored */
     anchor16.callbm = (unsigned long)(ptrdiff_t)callb16m;
+    anchor16.str = 0;
     printf("anchor16 is %p\n", &anchor16);
     printf("callb is %08X\n", anchor16.callb);
     printf("callbm is %08X\n", anchor16.callbm);
