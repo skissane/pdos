@@ -42,7 +42,7 @@ unsigned long hlp16st(int val, void *parms)
 static void hlp16callback(char *str)
 {
     printf("in helper16 callback - yippee!\n");
-    printf("string to print is %s\n", str);
+    printf("%s\n", str);
     return;
 }
 
