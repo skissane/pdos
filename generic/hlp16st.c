@@ -19,10 +19,13 @@ unsigned long hlp16st(int val, void *parms)
 {
     int ret;
     char buf[20];
+    char *z;
 
     pblk = parms;
     callb = (long (*)(int, void *))pblk[5];
-    /* *(char **)&pblk[12] = offsetof(OS, Xprintf); */
+    z = (char *)pblk[13];
+    z[0] = 'G';
+    z[70000UL] = 'K';
     ret = printf("hi there %s\n", "paul");
     ret = printf("hi there %s\n", "john");
     buf[0] = '\0';

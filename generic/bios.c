@@ -1947,8 +1947,10 @@ unsigned long shimcm32_callback(void)
     char *p;
     int ret = 0x40;
 
+#if 0
     printf("got callback!\n");
     printf("offs is %lx\n", (unsigned long)ganchor16->offs);
+#endif
 #if 0
     p = segtoflat(ganchor16->str);
     printf("p is %p\n", p);
@@ -1984,6 +1986,7 @@ unsigned long callb16m(int x, void *y);
 
 static int shimcm32_run(void)
 {
+    char *junkptr;
     int ret;
     unsigned int first_cs;
     ANCHOR16 anchor16; /* must be on stack, otherwise 16-bit
@@ -2020,13 +2023,22 @@ static int shimcm32_run(void)
     anchor16.cs = cs; /* original cs that needs to be restored */
     anchor16.callbm = (unsigned long)(ptrdiff_t)callb16m;
     anchor16.offs = 0;
+#if 0
     printf("anchor16 is %p\n", &anchor16);
     printf("callb is %08X\n", anchor16.callb);
     printf("callbm is %08X\n", anchor16.callbm);
     printf("callbr is %08X\n", anchor16.callbr);
+#endif
+    junkptr = malloc(80000UL);
+    printf("junkptr is %p\n", junkptr);
+    junkptr[0] = 'A';
+    junkptr[70000] = 'B';
+    printf("at 0 and 70000 we have %c and %c\n", junkptr[0], junkptr[70000]);
+    anchor16.parm1 = flatto16d(junkptr);
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);
+    printf("at 0 and 70000 we now have %c and %c\n", junkptr[0], junkptr[70000]);
 #else
     ret = call_cm32 (cm32_cs, &test32);
 #endif
