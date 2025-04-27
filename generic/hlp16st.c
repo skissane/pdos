@@ -19,7 +19,5 @@ unsigned long hlp16st(int val, void *parms)
     callb = (long (*)(int, void *))pblk[5];
     *(char **)&pblk[12] = "hi from helper\n";
     /* return ((unsigned long)callb); */
-    /* add a dummy string to force a NUL terminator for the
-       previous string instead of relying on BSS to be cleared */
-    return (callb(0, parms, "dummy"));
+    return (callb(0, parms));
 }
