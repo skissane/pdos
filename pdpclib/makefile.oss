@@ -83,6 +83,10 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo ++DosCreateCSAlias.DOSCALLS.DOSCREATECSALIAS.43 >>temp.wat
   echo ++DosDevIOCtl.DOSCALLS.DOSDEVIOCTL.53 >>temp.wat
   wlib -q os2.lib @temp.wat
+# This is PMCompatible (vio) by default
+# Change to Form os2 full (novio) if you are building an editor etc
+# that will set the terminal to raw mode, otherwise the keyboard
+# may lock up
   wlink File os1strt.obj,pdptest.obj Name pdptest.exe Form os2 Library watcom.lib,os2.lib Option quiet,stack=8192,start=___intstart,map,verbose,dosseg,stub=needpdos.exe
 
 .c.obj:
