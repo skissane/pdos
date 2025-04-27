@@ -14,6 +14,7 @@
 
 static unsigned long *pblk;
 static long (*callb)(int x, void *y);
+static int (*subprog)(void);
 
 unsigned long hlp16st(int val, void *parms)
 {
@@ -23,6 +24,7 @@ unsigned long hlp16st(int val, void *parms)
 
     pblk = parms;
     callb = (long (*)(int, void *))pblk[5];
+    subprog = (int (*)(void))pblk[14];
     z = (char *)pblk[13];
     z[0] = 'G';
     z[70000UL] = 'K';
@@ -31,6 +33,7 @@ unsigned long hlp16st(int val, void *parms)
     buf[0] = '\0';
     ret = sprintf(buf, "%06lX", 0x1234UL);
     ret = printf("should have 2 leading zeros %s\n", buf);
+    ret = subprog();
     return (ret);
 }
 
