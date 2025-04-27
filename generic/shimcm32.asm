@@ -136,7 +136,38 @@ callb16m:
 #    mov dx, 0x1234
 #    mov ax, ss
 
+# rbx appears to be volatile
+# or maybe it is the rcx and rdx
+# or others?
+# i suspect rbp
+
+# emperical testing shows that i need some of
+# rdx, rbp, r8, r9
+# don't need rdx
+# don't need r9
+# so need rbp and r8
+# no idea how it could be demanding that r8 still be intact
+# when I haven't yet returned to the caller of call_cm16
+# Maybe it is related to calling functions with variable arguments
+# Or maybe it is UEFI that expects it to be intact on the
+# second call
+# More experimentation suggests that I need more than just
+# those 2 registers. Also the order potentially matters
+# Maybe it is expecting rbp to be in a particular spot
+
+    push rbx
+    push rcx
+    push rbp
+    push r8
+    push r10
+    push r11
     call shimcm32_callback
+    pop r11
+    pop r10
+    pop r8
+    pop rbp
+    pop rcx
+    pop rbx
 
 # return code is in rax
 # needs to be split into dx:ax before returning to 16-bit code
