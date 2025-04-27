@@ -2,12 +2,12 @@
 # that helps us run 16-bit programs x86 programs on an x64
 
 # Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
-MODELC=L
+MODELC=H
 # Choose long form of above name, required by wasm instead of wcl
-MODELA=large
+MODELA=huge
 
 # If you want to use a 32-bit size_t in huge memory model, uncomment this
-#SZ4=-D__SZ4__
+SZ4=-D__SZ4__
 
 # If you are using masm 6.11 or older, there is no -omf and you will get
 # a warning (which cannot be ignored as it consumes the next parameter).
@@ -44,8 +44,15 @@ helper16.exe: helper16.obj hlp16st.obj
 # Note that cparmaxalloc is documented as requiring a minimum of 1
 # exehdr -max:1 can accept a value of 0 if you don't mind inconsistency
   link /cp:1 /noe /noi /nod /map /nologo /dosseg needpdos.obj,needpdos.exe,,,,
+# Not sure if there is a better way of doing this.
+  rm -f os2b.lib
+  echo LIBRARY DOSCALLS >tempb.def
+  echo EXPORTS >>tempb.def
+  echo __AHINCR @136 >>tempb.def
+  echo __AHSHIFT @135 >>tempb.def
+  implib /nologo os2b.lib tempb.def
   echo STUB 'needpdos.exe' >tempc.def
-  link /pmtype:novio /noe /noi /nod /map /nologo /dosseg helper16.obj,helper16.exe,helper16.map,msc.lib,tempc.def
+  link /pmtype:novio /noe /noi /nod /map /nologo /dosseg helper16.obj,helper16.exe,helper16.map,msc.lib+os2b.lib,tempc.def
 
 .c.obj:
   $(CC) $(COPTS) $<
