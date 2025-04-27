@@ -1954,7 +1954,7 @@ unsigned long shimcm32_callback(void)
     printf("p is %p\n", p);
     printf("p is %s\n", p);
 #endif
-    if (ganchor16->offs == 0xc)
+    if (ganchor16->offs == 0xe) /* c if using large memory model */
     {
         const char *p1;
         const char *p2;
@@ -1963,7 +1963,7 @@ unsigned long shimcm32_callback(void)
         p2 = segtoflat(ganchor16->parm2);
         ret = printf(p1, p2);
     }
-    else if (ganchor16->offs == 0xd0)
+    else if (ganchor16->offs == 0xd2) /* d0 if using large memory model */
     {
         char *p1;
         const char *p2;

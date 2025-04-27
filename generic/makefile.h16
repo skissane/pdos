@@ -2,12 +2,12 @@
 # that helps us run 16-bit programs x86 programs on an x64
 
 # Choose t (tiny), s (small), m (medium), c (compact), l (large), h (huge)
-MODELC=L
+MODELC=H
 # Choose long form of above name, required by wasm instead of wcl
-MODELA=large
+MODELA=huge
 
 # If you want to use a 32-bit size_t in huge memory model, uncomment this
-#SZ4=-D__SZ4__
+SZ4=-D__SZ4__
 
 # If you are using masm 6.11 or older, there is no -omf and you will get
 # a warning (which cannot be ignored as it consumes the next parameter).
