@@ -35,7 +35,10 @@ __intstart proc var1: word, var2: word
 ;
         push es
         push cx
+        push ds
 ;
+        mov dx, DGROUP
+        mov ds, dx
         mov ax, var2
         push ss
         push ax
@@ -52,6 +55,7 @@ __intstart proc var1: word, var2: word
 ;        call __myDosHugeIncr
 ;        mov __incr, ax
 
+        pop ds
         pop cx
         pop es
         ret
