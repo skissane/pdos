@@ -2585,6 +2585,12 @@ static int exeloadLoadMZ(unsigned char **entry_point,
                          unsigned char **loadloc)
 {
     Mz_hdr firstbit;
+    unsigned char *reloctab;
+    unsigned int dseg;
+    unsigned char *codeptr;
+    unsigned char *dataptr;
+    unsigned long codelen;
+    unsigned int x;
 
     /* The header size is in paragraphs,
      * so the smallest possible header is 16 bytes (paragraph) long.
@@ -2657,11 +2663,45 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     || (defined(SHIMCM32) && defined(CM16))
         if (ret == 1)
             ret = exeloadLoadNE(entry_point, fp, loadloc, firstbit.e_lfanew);
-#endif
+#else
         if (ret == 1)
             printf("Unknown MZ extension\n");
         return (ret);
+#endif
     }
+
+#if defined(SHIMCM32) && defined(CM16)
+    fseek(fp, firstbit.reloc_tab_offset, SEEK_SET);
+    reloctab = malloc(firstbit.num_reloc_entries * 4);
+    fread(reloctab, 4, firstbit.num_reloc_entries, fp);
+    for (x = 0; x < firstbit.num_reloc_entries; x++)
+    {
+        dseg = (reloctab[x * 4 + 3] << 8) | reloctab[x * 4 + 2];
+        if (dseg != 0) break;
+    }
+    if (x == firstbit.num_reloc_entries)
+    {
+        printf("failed to find data segment\n");
+        free(reloctab);
+        return (2);
+    }
+    codelen = dseg * 16UL;
+    printf("code is %lx bytes long - should be 07740\n", codelen);
+    if (*loadloc == NULL)
+    {
+        *loadloc = calloc(1, 3 * 65536UL);
+        codeptr = *loadloc + 65536UL;
+        codeptr = (unsigned char *)
+                  (((ptrdiff_t)codeptr) & 0xffff0000UL);
+        dataptr = codeptr + 65536UL;
+        fseek(fp, firstbit.header_size * 16UL, SEEK_SET);
+        fread(codeptr, 1, codelen, fp);
+        fread(dataptr, 1, 65536UL, fp);
+        *entry_point = codeptr;
+        free(reloctab);
+        return (0);
+    }
+#endif
     /* Pure MZ executables are for 16-bit DOS, so we cannot run them. */
     printf("Pure MZ executables are not supported\n");
 
