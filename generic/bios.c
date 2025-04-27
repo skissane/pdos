@@ -1641,6 +1641,7 @@ static unsigned long cm16_csip;
 
 
 
+#ifdef CM16
 /* may want to replace these two with the flat* below it */
 
 unsigned int map16c(void *codeptr)
@@ -1719,6 +1720,7 @@ void *segtoflat(unsigned long segptr)
     return ((void *)(ptrdiff_t)flat);
 }
 
+#endif
 
 
 static void shimcm32_start(void)
@@ -1746,8 +1748,10 @@ static void shimcm32_start(void)
     }
     cm32_cs = original_gdt_size;
     cm32_ds = cm32_cs + sizeof(*gdt);
+#ifdef CM16
     cm16_ss = cm32_ds + sizeof(*gdt);
     cm16_mapstart = cm16_ss + sizeof(*gdt);
+#endif
 
     /* preserve existing entries */
     memcpy (gdt, original_gdt, original_gdt_size);
@@ -1956,6 +1960,8 @@ unsigned long shimcm32_callback(void)
     printf("p is %p\n", p);
     printf("p is %s\n", p);
 #endif
+
+#ifdef CM16
     if (ganchor16->offs == 0xe) /* c if using large memory model */
     {
         const char *p1;
@@ -1976,6 +1982,7 @@ unsigned long shimcm32_callback(void)
         x = ganchor16->parm3;
         ret = sprintf(p1, p2, x);
     }
+#endif
     return (ret);
 }
 
