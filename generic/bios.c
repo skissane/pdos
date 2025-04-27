@@ -1986,6 +1986,8 @@ unsigned long callb16m(int x, void *y);
 
 static int shimcm32_run(void)
 {
+    void *helper_entry_point;
+    void *helper_p = NULL;
     char *junkptr;
     int ret;
     unsigned int first_cs;
@@ -1997,12 +1999,6 @@ static int shimcm32_run(void)
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
 
-    cm16_csip = ((ptrdiff_t)genstart >> 16) & 0xffffU;
-    cm16_csip = cm16_csip * sizeof(*gdt) * 2 + cm16_mapstart;
-    cm16_csip <<= 16;
-    cm16_csip += 0x10;
-    printf("entry point of helper16 will be %08X\n", cm16_csip);
-
 #ifdef CM16
 
     printf("this will only succeed if the test16 address is in"
@@ -2013,7 +2009,6 @@ static int shimcm32_run(void)
     first_cs = first_cs * sizeof(*gdt) * 2 + cm16_mapstart;
     printf("first_cs is now decimal %d\n", first_cs);
     printf("note that this is not a real mode address - it is basically flat\n");
-    anchor16.cm16_csip = cm16_csip;
     anchor16.cm16_ss = cm16_ss;
     anchor16.eye1 = 0x12;
     anchor16.eye2 = 0x11;
@@ -2035,10 +2030,26 @@ static int shimcm32_run(void)
     junkptr[70000] = 'B';
     printf("at 0 and 70000 we have %c and %c\n", junkptr[0], junkptr[70000]);
     anchor16.parm1 = flatto16d(junkptr);
+
+    if (exeloadDoload(&helper_entry_point, "helper16.exe", &helper_p) != 0)
+    {
+        printf("failed to load helper16\n");
+        return (1);
+    }
+    anchor16.parm2 = flatto16c(genstart);
+
+    cm16_csip = ((ptrdiff_t)helper_entry_point >> 16) & 0xffffU;
+    cm16_csip = cm16_csip * sizeof(*gdt) * 2 + cm16_mapstart;
+    cm16_csip <<= 16;
+    cm16_csip += 0x10;
+    printf("entry point of helper16 will be %08X\n", cm16_csip);
+    anchor16.cm16_csip = cm16_csip;
+
     ret = call_cm16 (first_cs,
                      (int (*)(void))((ptrdiff_t)&test16 & 0xffffUL),
                      &anchor16);
     printf("at 0 and 70000 we now have %c and %c\n", junkptr[0], junkptr[70000]);
+    free(helper_p);
 #else
     ret = call_cm32 (cm32_cs, &test32);
 #endif
