@@ -107,11 +107,13 @@ pdptest.exe: os1strt.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   echo __AHSHIFT @135 >>tempb.def
   implib /nologo os2b.lib tempb.def
   echo STUB 'needpdos.exe' >tempc.def
-# Switching from vio to novio so that we can use
+# If you are creating an editor etc that does a setvbuf
+# to set raw mode, you will need to change the vio to
+# novio so that we can use
 # DosDevIOCtl to do raw reads without needing to
 # call a Win function like WinSetKeyboardStateTable
 # to inform PM about what is happening because that sucks
-  link /pmtype:novio /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
+  link /pmtype:vio /noe /noi /nod /map /nologo /dosseg os1strt.obj+pdptest.obj,pdptest.exe,pdptest.map,msc.lib+os2.lib+os2b.lib,tempc.def
 # No reason to bind for now, as that will drag in
 # presumably copyrighted code until that is replaced,
 # which isn't a priority (although there is no sign
