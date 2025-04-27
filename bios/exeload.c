@@ -5005,8 +5005,10 @@ static int exeloadLoadNE(unsigned char **entry_point,
             /* printf("new load is %p\n", csalias); */
         }
 #elif defined(STYLE3)
-        *loadloc = malloc(65536UL * 4); /* alignment, code, data, bss */
+        *loadloc = calloc(1, 65536UL * 4); /* alignment, code, data, bss */
             /* not sure if bss is done correctly - see data relocations */
+        /* I'm not sure if we are responsible for clearing BSS, so using
+           calloc. */
         /* printf("loadloc is now %p\n", *loadloc); */
 #endif
         if (*loadloc == NULL)
