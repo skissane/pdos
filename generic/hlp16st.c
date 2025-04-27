@@ -16,7 +16,7 @@ static unsigned long *pblk;
 static long (*callb)(int x, void *y);
 static int (*subprog)(void *);
 
-static void hlp16callback(void);
+static void hlp16callback(char *str);
 
 unsigned long hlp16st(int val, void *parms)
 {
@@ -39,9 +39,10 @@ unsigned long hlp16st(int val, void *parms)
     return (ret);
 }
 
-static void hlp16callback(void)
+static void hlp16callback(char *str)
 {
     printf("in helper16 callback - yippee!\n");
+    printf("string to print is %s\n", str);
     return;
 }
 
