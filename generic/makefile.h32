@@ -1,0 +1,38 @@
+# Released to the public domain.
+#
+# Anyone and anything may copy, edit, publish,
+# use, compile, sell and distribute this work
+# and all its parts in any form for any purpose,
+# commercial and non-commercial, without any restrictions,
+# without complying with any conditions
+# and by any means.
+
+# This is the standard for 32-bit
+
+VPATH=../pdpclib
+
+CC=gccwin
+CFLAGS=-O2 -ansi
+COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
+AS=pdas
+LD=pdld
+
+OBJS=helper32.obj
+
+
+all: clean helper32.exe
+
+helper32.exe: $(OBJS)
+  $(LD) -s -o helper32.exe $(OBJS)
+
+.c.obj:
+  $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
+  $(AS) -o $@ --oformat coff $*.s
+  rm -f $*.s
+
+.asm.obj:
+  as86 -o $@ -f coff $<
+
+clean:
+  rm -f *.obj
+  rm -f helper32.exe
