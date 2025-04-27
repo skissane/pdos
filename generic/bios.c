@@ -1691,13 +1691,29 @@ unsigned long flatto16d(void *dataptr)
 }
 
 /* both code and data pointers will be mapped to the same address */
+/* with an exception for stack references - obviously!
+   ("everything" is "obvious" in hindsight)
+   (first scare quote because I've been programming for too
+    long to make absolute statements about anything)
+   (second scare quote is sarcasm about all the "geniuses"
+    who claim how everything is "obvious" after someone
+    else has already solved the problem) */
 void *segtoflat(unsigned long segptr)
 {
     unsigned int seg;
     unsigned long flat;
 
     seg = segptr >> 16;
-    flat = (seg - cm16_mapstart) / (sizeof(*gdt) * 2);
+    if (seg == cm16_ss)
+    {
+        flat = gdt[cm16_ss / sizeof (*gdt)].base2;
+        flat <<= 8;
+        flat |= gdt[cm16_ss / sizeof (*gdt)].base[2];
+    }
+    else
+    {
+        flat = (seg - cm16_mapstart) / (sizeof(*gdt) * 2);
+    }
     flat <<= 16;
     flat |= (segptr & 0xffffU);
     return ((void *)(ptrdiff_t)flat);
@@ -1929,6 +1945,7 @@ static ANCHOR16 *ganchor16;
 unsigned long shimcm32_callback(void)
 {
     char *p;
+    int ret = 0x40;
 
     printf("got callback!\n");
     printf("offs is %lx\n", (unsigned long)ganchor16->offs);
@@ -1941,16 +1958,23 @@ unsigned long shimcm32_callback(void)
     {
         const char *p1;
         const char *p2;
-        int ret;
 
         p1 = segtoflat(ganchor16->parm1);
         p2 = segtoflat(ganchor16->parm2);
-        /* ret = printf(p1, p2); */
-        ret = printf("can't handle this %s %s!\n", p1, p2);
-        /* return ((long)ret); */
-        return (ret);
+        ret = printf(p1, p2);
     }
-    return (0x40);
+    else if (ganchor16->offs == 0xd0)
+    {
+        char *p1;
+        const char *p2;
+        unsigned long x;
+
+        p1 = segtoflat(ganchor16->parm1);
+        p2 = segtoflat(ganchor16->parm2);
+        x = ganchor16->parm3;
+        ret = sprintf(p1, p2, x);
+    }
+    return (ret);
 }
 
 unsigned long callb16(int x, void *y);
