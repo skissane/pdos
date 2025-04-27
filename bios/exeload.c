@@ -2591,6 +2591,7 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     unsigned char *dataptr;
     unsigned long codelen;
     unsigned int x;
+    int ret;
 
     /* The header size is in paragraphs,
      * so the smallest possible header is 16 bytes (paragraph) long.
@@ -2653,8 +2654,6 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     if ((firstbit.header_size >= 4)
         && (firstbit.e_lfanew != 0))
     {
-        int ret;
-
         /* Same logic as in exeloadDoload(). */
         ret = exeloadLoadPE(entry_point, fp, loadloc, firstbit.e_lfanew);
         if (ret == 1)
@@ -2663,6 +2662,10 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     || (defined(SHIMCM32) && defined(CM16))
         if (ret == 1)
             ret = exeloadLoadNE(entry_point, fp, loadloc, firstbit.e_lfanew);
+        if (ret != 1)
+        {
+            return (ret);
+        }
 #else
         if (ret == 1)
             printf("Unknown MZ extension\n");
@@ -2671,6 +2674,8 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     }
 
 #if defined(SHIMCM32) && defined(CM16)
+    if (ret == 1)
+    {
     fseek(fp, firstbit.reloc_tab_offset, SEEK_SET);
     reloctab = malloc(firstbit.num_reloc_entries * 4);
     fread(reloctab, 4, firstbit.num_reloc_entries, fp);
@@ -2690,6 +2695,10 @@ static int exeloadLoadMZ(unsigned char **entry_point,
     if (*loadloc == NULL)
     {
         *loadloc = calloc(1, 3 * 65536UL);
+    }
+
+    if (*loadloc != NULL)
+    {
         codeptr = *loadloc + 65536UL;
         codeptr = (unsigned char *)
                   (((ptrdiff_t)codeptr) & 0xffff0000UL);
@@ -2700,6 +2709,7 @@ static int exeloadLoadMZ(unsigned char **entry_point,
         *entry_point = codeptr;
         free(reloctab);
         return (0);
+    }
     }
 #endif
     /* Pure MZ executables are for 16-bit DOS, so we cannot run them. */
