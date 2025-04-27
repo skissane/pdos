@@ -203,8 +203,8 @@ static int shimcm32_run(void);
 static void shimcm32_end(void);
 
 #ifdef CM16
-int __shift;
-int __incr;
+int __shift = 4;
+int __incr = 0x10;
 #endif
 
 #endif
@@ -1915,7 +1915,13 @@ typedef struct {
     UINT32 ss; /* 36 */ /* set in assembler code */
     UINT32 ds; /* 40 */ /* ditto */
     UINT32 es; /* 44 */ /* ditto */
-    UINT32 str; /* 48 */ /* string to print */
+    UINT32 offs; /* 48 */ /* offset/code of desired function */
+    UINT32 parm1; /* 52 */ /* first parameter */
+    UINT32 parm2; /* 56 */ /* second parameter */
+    UINT32 parm3; /* 60 */ /* third parameter */
+    UINT32 parm4; /* 64 */ /* fourth parameter */
+           /* note that a pseudobios only needs to support 4
+              parameters in order to be officially certified */
 } ANCHOR16;
 
 static ANCHOR16 *ganchor16;
@@ -1925,10 +1931,25 @@ unsigned long shimcm32_callback(void)
     char *p;
 
     printf("got callback!\n");
-    printf("str is %lx\n", (unsigned long)ganchor16->str);
+    printf("offs is %lx\n", (unsigned long)ganchor16->offs);
+#if 0
     p = segtoflat(ganchor16->str);
     printf("p is %p\n", p);
     printf("p is %s\n", p);
+#endif
+    if (ganchor16->offs == 0xc)
+    {
+        const char *p1;
+        const char *p2;
+        int ret;
+
+        p1 = segtoflat(ganchor16->parm1);
+        p2 = segtoflat(ganchor16->parm2);
+        /* ret = printf(p1, p2); */
+        ret = printf("can't handle this %s %s!\n", p1, p2);
+        /* return ((long)ret); */
+        return (ret);
+    }
     return (0x40);
 }
 
@@ -1974,7 +1995,7 @@ static int shimcm32_run(void)
     anchor16.callbr = flatto16c(callb16r);
     anchor16.cs = cs; /* original cs that needs to be restored */
     anchor16.callbm = (unsigned long)(ptrdiff_t)callb16m;
-    anchor16.str = 0;
+    anchor16.offs = 0;
     printf("anchor16 is %p\n", &anchor16);
     printf("callb is %08X\n", anchor16.callb);
     printf("callbm is %08X\n", anchor16.callbm);
