@@ -2996,7 +2996,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
         printf("Error occured while reading COFF header\n");
         return (2);
     }
-#if TARGET_64BIT
+#if TARGET_64BIT && !SHIMCM32
     if ((coff_hdr.Machine != IMAGE_FILE_MACHINE_AMD64)
         && (coff_hdr.Machine != IMAGE_FILE_MACHINE_ARM64))
     {
@@ -3039,7 +3039,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
         free(optional_hdr);
         return (2);
     }
-#if TARGET_64BIT
+#if TARGET_64BIT && !SHIMCM32
     if (optional_hdr->Magic != MAGIC_PE32PLUS)
     {
         printf("Unknown PE optional header magic: %04x\n",
@@ -3274,7 +3274,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                         *(unsigned long *)(rel_target + 4) = field;
                     }
 #endif
-#if TARGET_64BIT
+#if TARGET_64BIT && !SHIMCM32
                     else if (rel_type == IMAGE_REL_BASED_DIR64)
                     {
                         if (lower_exeStart)
