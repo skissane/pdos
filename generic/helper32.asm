@@ -18,11 +18,16 @@ banner  db  "HELPER32"
 top:
 
 public __intstart
-__intstart proc var1: dword
+__intstart:
+; not sure why 66 is being generated
+; proc var1: dword
 ;
+        push ebp
+        mov ebp, esp
         mov eax, 13
+        pop ebp
         ret
-__intstart endp
+;__intstart endp
 
 
 end top

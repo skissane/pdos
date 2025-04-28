@@ -46,16 +46,30 @@ load_gdt:
 call_cm32:
     push rbp
     mov rbp, rsp
-    sub rsp, 8
+    push rdi
+
+    mov rdi, r8
+# This accesses more memory than it really should
+    mov rdi, [rdi]
+    sub rsp, 16
     mov rax, cs
-    mov [rsp+4], eax
+    mov [rsp+12], eax
     lea rax, call_cm32_end[rip]
-    mov [rsp], eax
+    mov [rsp+8], eax
+
+# Why didn't we need one of these for 16-bit?
+# Anyway, we need helper32 to return to this address first
+    lea rax, test32_end[rip]
+    mov [rsp + 4], eax
+
     xor rax, rax
+
     push rcx
     push rdx
     retfq
 call_cm32_end:
+
+    pop rdi
     pop rbp
     ret
 
@@ -184,7 +198,17 @@ callb16m:
 test32:
 #    cli
 #    hlt
-    mov eax, 4
+#    mov eax, 4
+    add esp, 4
+#    push eax
+    push edi
+# call helper32
+    ret
+test32_end:
+#    mov al, 'X'
+#    out 0xe9, al
+#    mov al, '\n'
+#    out 0xe9, al
     retf
 
 

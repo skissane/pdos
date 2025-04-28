@@ -1616,7 +1616,7 @@ void enable_interrupts (void);
 void save_gdt (void *gdtr);
 void load_gdt (void *gdt, int size);
 
-int call_cm32 (int cm32_cs, int (*test32)(void));
+int call_cm32 (int cm32_cs, int (*test32)(void), void *anchor32);
 int call_cm16 (int cm32_cs,
                int (*test16)(void),
                void *anchor16);
@@ -1632,6 +1632,7 @@ static struct gdescriptor *gdt;
 static unsigned int cs;
 static unsigned int cm32_cs;
 static unsigned int cm32_ds;
+static unsigned long cm32_ip;
 
 #ifdef CM16
 static unsigned int cm16_ss;
@@ -1923,7 +1924,11 @@ static void shimcm32_start(void)
 typedef unsigned long UINT32;
 
 typedef struct {
+#ifdef CM16
     UINT32 cm16_csip; /* 0 */
+#else
+    UINT32 cm32_ip; /* 0 */
+#endif
     UINT32 cm16_ss; /* 4 */
     UINT32 eye1; /* 8 */
     UINT32 eye2; /* 12 */
@@ -1942,9 +1947,15 @@ typedef struct {
     UINT32 parm4; /* 64 */ /* fourth parameter */
            /* note that a pseudobios only needs to support 4
               parameters in order to be officially certified */
+#ifdef CM16
 } ANCHOR16;
-
 static ANCHOR16 *ganchor16;
+
+#else
+} ANCHOR32;
+static ANCHOR32 *ganchor32;
+
+#endif
 
 unsigned long shimcm32_callback(void)
 {
@@ -1998,10 +2009,17 @@ static int shimcm32_run(void)
     char *junkptr;
     int ret;
     unsigned int first_cs;
+#ifdef CM16
     ANCHOR16 anchor16; /* must be on stack, otherwise 16-bit
                           code won't be able to easily access it */
 
     ganchor16 = &anchor16;
+#else
+    ANCHOR32 anchor32;
+
+    ganchor32 = &anchor32;
+#endif
+
     printf ("trying cm32 (cm32_cs: %i)\n", cm32_cs);
     printf("test32 is at %p\n", test32);
     printf("test16 is at %p\n", test16);
@@ -2058,7 +2076,14 @@ static int shimcm32_run(void)
     printf("at 0 and 70000 we now have %c and %c\n", junkptr[0], junkptr[70000]);
     free(helper_p);
 #else
-    ret = call_cm32 (cm32_cs, &test32);
+    if (exeloadDoload(&helper_entry_point, "helper32.exe", &helper_p) != 0)
+    {
+        printf("failed to load helper16\n");
+        return (1);
+    }
+    cm32_ip = (unsigned long)helper_entry_point;
+    anchor32.cm32_ip = cm32_ip;
+    ret = call_cm32 (cm32_cs, &test32, &anchor32);
 #endif
     printf ("success\n");
     return (ret);
