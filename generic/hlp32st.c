@@ -23,6 +23,11 @@ unsigned long hlp32st(void *parms)
     int ret;
     char buf[20];
     char *z;
+    int (*subprog2)(void *);
+
+    subprog2 = (int (*)(void *))*((unsigned long *)parms + 14);
+    ret = subprog2(NULL);
+    return (ret);
 
     return (long)parms;
     return *((unsigned long *)parms + 3);
