@@ -45,6 +45,8 @@ pdptest.exe: p32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
 
 .asm.obj:
   as86 -f coff -o $@ $<
+#  ml -nologo -coff -c -Fo$@ $<
+#  wasm -zq -zcm -fo=$@ $<
 
 clean:
   rm -f *.obj
