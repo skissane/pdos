@@ -16,7 +16,7 @@ static unsigned long *pblk;
 static long (*callb)(int x, void *y);
 static int (*subprog)(void *);
 
-static void hlp32callback(char *str);
+static OS os;
 
 /* with the 16-bit version we had another parameter first,
    an we should standardize this one way or the other.
@@ -46,15 +46,10 @@ unsigned long hlp32st(void *parms)
     ret = sprintf(buf, "%06lX", 0x1234UL);
     ret = printf("should have 2 leading zeros %s\n", buf);
 #endif
-    ret = subprog((void *)hlp32callback);
+    os.Xprintf = printf;
+    os.Xsprintf = sprintf;
+    ret = subprog((void *)&os);
     return (ret);
-}
-
-static void hlp32callback(char *str)
-{
-    printf("in helper32 callback - yippee!\n");
-    printf("%s\n", str);
-    return;
 }
 
 int printf(const char *format, ...)
