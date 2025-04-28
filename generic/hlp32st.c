@@ -18,6 +18,9 @@ static int (*subprog)(void *);
 
 static void hlp32callback(char *str);
 
+/* with the 16-bit version we had another parameter first,
+   an we should standardize this one way or the other.
+   And be consistent with the callback function */
 unsigned long hlp32st(void *parms)
 {
     int ret;
@@ -35,8 +38,10 @@ unsigned long hlp32st(void *parms)
 #endif
 
 /* this doesn't work yet */
-#if 0
+#if 1
     ret = printf("hi there %s\n", "paul");
+    return (ret);
+
     ret = printf("hi there %s\n", "john");
     buf[0] = '\0';
     ret = sprintf(buf, "%06lX", 0x1234UL);

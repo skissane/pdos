@@ -227,6 +227,10 @@ callb16m:
 callb32m:
 
 # Not sure which of these are required
+
+# Note that we don't need to provide a parameter - that will
+# be resurrected from the global variable
+
     push rbx
     push rcx
     push rbp
@@ -241,7 +245,7 @@ callb32m:
     pop rcx
     pop rbx
 
-# return code is in rax
+# return code is in eax
 
     retfq
 
@@ -284,7 +288,7 @@ callb32:
     push es
     push ebx
 
-    mov ebx,[ebp+8]
+    mov ebx,[ebp+12]
 
 # get the stack aligned on a 16-byte boundary
     mov ebp, esp
@@ -299,12 +303,17 @@ callb32:
 # we need to prepare it for a 64-bit far return
     mov eax, 0
     push eax
-    mov edx, [ebx + 34]
+    mov ax, cs
+    push eax
+    mov eax, 0
+    push eax
+    mov edx, [ebx + 32]
     push edx
 
 # and now we do our 32-bit return to execute callb32m (64-bit)
 # we need the old cs (expanded to 32 bits) first
-    mov eax, [ebx + 24]
+    xor eax, eax
+    mov ax, [ebx + 24]
     push eax
 # and now the 32-bit offset
     mov eax, [ebx + 28]
