@@ -24,10 +24,18 @@ unsigned long hlp32st(int val, void *parms)
     char buf[20];
     char *z;
 
-return (2);
+    return (long)parms;
+    return *((unsigned long *)parms + 3);
+
+    return *((unsigned long *)parms + 14);
+
     pblk = parms;
     callb = (long (*)(int, void *))pblk[5];
     subprog = (int (*)(void *))pblk[14];
+
+    ret = subprog((void *)hlp32callback);
+    return (ret);
+
     z = (char *)pblk[13];
     z[0] = 'G';
     z[70000UL] = 'K';
