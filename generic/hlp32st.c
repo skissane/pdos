@@ -18,7 +18,7 @@ static int (*subprog)(void *);
 
 static void hlp32callback(char *str);
 
-unsigned long hlp32st(int val, void *parms)
+unsigned long hlp32st(void *parms)
 {
     int ret;
     char buf[20];
