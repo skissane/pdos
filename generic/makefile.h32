@@ -26,7 +26,7 @@ all: clean helper32.exe
 
 helper32.exe: $(OBJS)
   $(LD) --emit-relocs --image-base 0x400000 -nostdlib -s -o helper32.exe $(OBJS)
-#  link -nologo -fixed:no -base:0x400000 -nodefaultlib -subsystem:EFI_APPLICATION -out:helper32.exe $(OBJS)
+#  link -nologo -entry:__intstart -fixed:no -base:0x400000 -nodefaultlib -subsystem:EFI_APPLICATION -out:helper32.exe $(OBJS)
 
 .c.obj:
   $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
