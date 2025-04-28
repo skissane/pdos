@@ -1749,6 +1749,25 @@ static void interpret_dot_drectve_section (const unsigned char *file,
             }
             *q = saved_c;
             p = q;
+        } else if (strncmp (p, "-entry:", 7) == 0) {
+            char *q;
+            char saved_c;
+
+            p += 7;
+            q = strchr (p, ' ');
+            if (q == NULL) q = p + strlen (p);
+            saved_c = *q;
+            *q = '\0';
+            {
+                /* Simple way to ensure the duplicated entry point name gets freed. */
+                struct object_file *fake_of = object_file_make (0, p);
+                if (ld_state->entry_symbol_name && strcmp (ld_state->entry_symbol_name, "")) {
+                    ld_warn ("%s: .drectve option '-entry:' overrides previously specified entry point", filename);
+                }
+                ld_state->entry_symbol_name = fake_of->filename;
+            }
+            *q = saved_c;
+            p = q;
         } else if (*p) {
             ld_internal_error_at_source (__FILE__, __LINE__, "unsupported .drectve option: %s", p);
         }
