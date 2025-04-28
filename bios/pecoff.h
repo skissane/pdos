@@ -76,11 +76,11 @@ typedef struct {
     U32 SizeOfUninitializedData;
     U32 AddressOfEntryPoint; /* Relative to ImageBase. */
     U32 BaseOfCode;
-#ifndef TARGET_64BIT
+#if !defined(TARGET_64BIT) || defined(SHIMCM32)
     U32 BaseOfData;
 #endif
     /* Extension fields. */
-#ifdef W32HACK
+#if defined(W32HACK) || defined(SHIMCM32)
     U32 ImageBase;
 #else
     unsigned char *ImageBase;
@@ -100,19 +100,19 @@ typedef struct {
     unsigned short Subsystem;
     unsigned short DllCharacteristics;
     U32 SizeOfStackReserve;
-#ifdef TARGET_64BIT
+#if defined(TARGET_64BIT) && !defined(SHIMCM32)
     U32 dummy1;
 #endif
     U32 SizeOfStackCommit;
-#ifdef TARGET_64BIT
+#if defined(TARGET_64BIT) && !defined(SHIMCM32)
     U32 dummy2;
 #endif
     U32 SizeOfHeapReserve;
-#ifdef TARGET_64BIT
+#if defined(TARGET_64BIT) && !defined(SHIMCM32)
     U32 dummy3;
 #endif
     U32 SizeOfHeapCommit;
-#ifdef TARGET_64BIT
+#if defined(TARGET_64BIT) && !defined(SHIMCM32)
     U32 dummy4;
 #endif
     U32 LoaderFlags; /* Reserved, should be 0. */

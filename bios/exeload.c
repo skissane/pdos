@@ -3153,7 +3153,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
             if (optional_hdr->ImageBase > exeStart)
             {
                 /* Image is loaded at lower address than preferred. */
-#ifdef W32HACK
+#if defined(W32HACK) || defined(SHIMCM32)
                 image_diff = (unsigned char *)optional_hdr->ImageBase
                              - exeStart;
 #else
@@ -4478,7 +4478,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
             if (optional_hdr->ImageBase > dllStart)
             {
                 /* Image is loaded  at lower address than preferred. */
-#ifdef W32HACK
+#if defined(W32HACK) || defined(SHIMCM32)
                 image_diff = (unsigned char *)optional_hdr->ImageBase
                              - dllStart;
 #else
