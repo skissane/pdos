@@ -25,6 +25,7 @@ unsigned long hlp32st(void *parms)
     char *z;
     int (*subprog2)(void *);
 
+#if 0
     subprog2 = (int (*)(void *))*((unsigned long *)parms + 14);
     ret = subprog2(NULL);
     return (ret);
@@ -33,6 +34,7 @@ unsigned long hlp32st(void *parms)
     return *((unsigned long *)parms + 3);
 
     return *((unsigned long *)parms + 14);
+#endif
 
     pblk = parms;
     callb = (long (*)(int, void *))pblk[5];
