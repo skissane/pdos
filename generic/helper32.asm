@@ -26,7 +26,7 @@ __intstart:
         mov ebp, esp
         mov eax, [ebp + 8]
         push eax
-;        call hlp32st
+        call hlp32st
         add esp, 4
 ;        mov eax, 13
         pop ebp
