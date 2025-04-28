@@ -14,9 +14,10 @@ VPATH=../pdpclib
 
 CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I ../src -I . -DNOLIBALLOC -fno-builtin
+COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I ../src -I . \
+    -DNOLIBALLOC -fno-builtin -D__NOBIVA__
 AS=pdas
-LD=pdld
+LD=pdld --no-insert-timestamp
 
 OBJS=helper32.obj hlp32st.obj
 
@@ -24,7 +25,7 @@ OBJS=helper32.obj hlp32st.obj
 all: clean helper32.exe
 
 helper32.exe: $(OBJS)
-  $(LD) -s -o helper32.exe $(OBJS)
+  $(LD) --emit-relocs --image-base 0x400000 -nostdlib -s -o helper32.exe $(OBJS)
 
 .c.obj:
   $(CC) $(COPTS) -D__32BIT__ -o $*.s $<
