@@ -47,11 +47,21 @@ call_cm32:
     push rbp
     mov rbp, rsp
     push rdi
+    push rbx
 
     mov rdi, r8
     sub rsp, 16
     mov rax, cs
     mov [rsp+12], eax
+
+# new ds/es is stored at unused ss location
+# we preserve that in bx
+    mov rbx, [rdi + 36]
+
+# and preserve current ds/es too
+    mov [rdi+40], ds
+    mov [rdi+44], es
+
     lea rax, call_cm32_end[rip]
     mov [rsp+8], eax
 
@@ -74,6 +84,13 @@ call_cm32:
     retfq
 call_cm32_end:
 
+# gain access to parms again
+    mov rdi, r8
+# restore ds and es
+    mov ds, [rdi+40]
+    mov es, [rdi+44]
+
+    pop rbx
     pop rdi
     pop rbp
     ret

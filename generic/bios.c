@@ -2086,6 +2086,10 @@ static int shimcm32_run(void)
     anchor32.eye1 = 0x12;
     anchor32.eye2 = 0x11;
     anchor32.eye3 = 0x10;
+    /* we use the ss variable to set what will become ds and es,
+       since we don't change ss, and the original values need to
+       be preserved */
+    anchor32.ss = cm32_ds;
     anchor32.parm2 = (unsigned long)genstart;
     printf("anchor32 is at %p\n", &anchor32);
     ret = call_cm32 (cm32_cs, &test32, &anchor32);
