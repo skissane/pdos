@@ -2083,6 +2083,11 @@ static int shimcm32_run(void)
     }
     cm32_ip = (unsigned long)helper_entry_point;
     anchor32.cm32_ip = cm32_ip;
+    anchor32.eye1 = 0x12;
+    anchor32.eye2 = 0x11;
+    anchor32.eye3 = 0x10;
+    anchor32.parm2 = (unsigned long)genstart;
+    printf("anchor32 is at %p\n", &anchor32);
     ret = call_cm32 (cm32_cs, &test32, &anchor32);
 #endif
     printf ("success\n");
