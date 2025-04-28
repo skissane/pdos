@@ -31,7 +31,9 @@ helper32.exe: $(OBJS)
   rm -f $*.s
 
 .asm.obj:
-  as86 -o $@ -f coff $<
+#  as86 -o $@ -f coff $<
+#  wasm $<
+  ml -nologo -c -coff $<
 
 clean:
   rm -f *.obj
