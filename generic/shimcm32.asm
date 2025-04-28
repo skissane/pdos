@@ -222,6 +222,12 @@ test32:
 #    hlt
 #    mov eax, 4
 #    push eax
+
+# point to new segment registers
+# things seem to work even without this
+    mov ds, bx
+    mov es, bx
+
     push edi
 # call helper32
     ret
