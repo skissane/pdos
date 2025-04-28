@@ -1964,7 +1964,6 @@ unsigned long shimcm32_callback(void)
 
 #if !CM16
     printf("got callback!\n");
-    return (6);
     printf("offs is %lx\n", (unsigned long)ganchor32->offs);
 #endif
 #if 0
@@ -1994,6 +1993,20 @@ unsigned long shimcm32_callback(void)
         x = ganchor16->parm3;
         ret = sprintf(p1, p2, x);
     }
+#else
+    if (ganchor32->offs == 0x10)
+    {
+        const char *p1;
+        const char *p2;
+
+        p1 = (const char *)ganchor32->parm1;
+        p2 = (const char *)ganchor32->parm2;
+        ret = printf(p1, p2);
+        /* printf("p1 is %p\n", p1);
+        printf("p2 is %p\n", p2);
+        return (p1); */
+    }
+
 #endif
     return (ret);
 }
@@ -2099,8 +2112,9 @@ static int shimcm32_run(void)
        since we don't change ss, and the original values need to
        be preserved */
     anchor32.ss = cm32_ds;
-    anchor32.parm2 = (unsigned long)genstart;
+    anchor32.parm2 = (unsigned long)(ptrdiff_t)genstart;
     printf("anchor32 is at %p\n", &anchor32);
+    printf("parm2 is %p\n", (void *)anchor32.parm2);
     ret = call_cm32 (cm32_cs, &test32, &anchor32);
 #endif
     printf ("success\n");
