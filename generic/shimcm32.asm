@@ -99,10 +99,11 @@ call_cm32_end:
     ret
 
 
-# Note that ideally we would subtract 64k + 16 bytes
+# Note that ideally we would subtract FFE0 bytes
 # from the UEFI-provided stack and then max the sp
-# out to FFF0 so that our 16-bit apps start with a full
-# 64k stack
+# out to FFC0 so that our 16-bit apps start with a
+# nearly full 64k stack. The odd numbers are to
+# avoid any possible edge cases
 
 .global call_cm16
 call_cm16:
