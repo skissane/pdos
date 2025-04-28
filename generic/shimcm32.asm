@@ -49,18 +49,23 @@ call_cm32:
     push rdi
 
     mov rdi, r8
-# This accesses more memory than it really should
-    mov rdi, [rdi]
     sub rsp, 16
     mov rax, cs
     mov [rsp+12], eax
     lea rax, call_cm32_end[rip]
     mov [rsp+8], eax
 
-# Why didn't we need one of these for 16-bit?
+# We will need access to the parameter block
+    mov [rsp + 4], edi
+# We don't need this for 16-bit because we are taking advantage
+# of the fact that helper16 will return by a retf
 # Anyway, we need helper32 to return to this address first
     lea rax, test32_end[rip]
-    mov [rsp + 4], eax
+    mov [rsp], eax
+
+# Carry the address of helper32 in edi/rdi
+# This accesses more memory than it really should
+    mov rdi, [rdi]
 
     xor rax, rax
 
@@ -199,7 +204,6 @@ test32:
 #    cli
 #    hlt
 #    mov eax, 4
-    add esp, 4
 #    push eax
     push edi
 # call helper32
@@ -209,6 +213,7 @@ test32_end:
 #    out 0xe9, al
 #    mov al, '\n'
 #    out 0xe9, al
+    add esp, 4
     retf
 
 
