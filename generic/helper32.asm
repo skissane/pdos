@@ -7,7 +7,7 @@
 .386p
 .model flat, c
 
-;extrn hlp32st:proc
+extrn hlp32st:proc
 
 
 .data
@@ -24,7 +24,11 @@ __intstart:
 ;
         push ebp
         mov ebp, esp
-        mov eax, 13
+        mov eax, [ebp + 8]
+        push eax
+        call hlp32st
+        add esp, 4
+#        mov eax, 13
         pop ebp
         ret
 ;__intstart endp
