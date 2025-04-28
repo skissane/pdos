@@ -404,6 +404,9 @@ const struct long_option *mainframe_get_long_options (void);
 /* map.c */
 void map_write (const char *filename);
 
+/* omf.c */
+int omf_read (unsigned char *file, size_t file_size, const char *filename);
+
 /* read.c */
 #define INPUT_FILE_NO_NEW_SYMBOLS  0
 #define INPUT_FILE_FINISHED        1
