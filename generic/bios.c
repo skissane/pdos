@@ -1957,6 +1957,12 @@ static ANCHOR32 *ganchor32;
 
 #endif
 
+static int newmain(int argc, char **argv)
+{
+    printf("reached newmain\n");
+    return (0);
+}
+
 unsigned long shimcm32_callback(void)
 {
     char *p;
@@ -2016,6 +2022,18 @@ unsigned long shimcm32_callback(void)
         p2 = (const char *)ganchor32->parm2;
         x = ganchor32->parm3;
         ret = sprintf(p1, p2, x);
+    }
+    else if (ganchor32->offs == 0) /* unfortunate number */
+    {
+        *bios.main = newmain;
+        ret = bios.__start("");
+        printf("ret is %d\n", ret);
+        *bios.main = 0;
+    }
+    else
+    {
+        printf("unknown offs %lx\n", (unsigned long)ganchor32->offs);
+        ret = -1;
     }
 
 #endif
@@ -2108,7 +2126,7 @@ static int shimcm32_run(void)
 #else
     if (exeloadDoload(&helper_entry_point, "helper32.exe", &helper_p) != 0)
     {
-        printf("failed to load helper16\n");
+        printf("failed to load helper32\n");
         return (1);
     }
     cm32_ip = (unsigned long)helper_entry_point;
@@ -2126,6 +2144,7 @@ static int shimcm32_run(void)
     anchor32.parm2 = (unsigned long)(ptrdiff_t)genstart;
     printf("anchor32 is at %p\n", &anchor32);
     printf("parm2 is %p\n", (void *)anchor32.parm2);
+    anchor32.parm3 = (unsigned long)(ptrdiff_t)&bios;
     ret = call_cm32 (cm32_cs, &test32, &anchor32);
 #endif
     printf ("success\n");
