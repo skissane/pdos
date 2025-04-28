@@ -1962,9 +1962,10 @@ unsigned long shimcm32_callback(void)
     char *p;
     int ret = 0x40;
 
-#if 0
+#if !CM16
     printf("got callback!\n");
-    printf("offs is %lx\n", (unsigned long)ganchor16->offs);
+    return (6);
+    printf("offs is %lx\n", (unsigned long)ganchor32->offs);
 #endif
 #if 0
     p = segtoflat(ganchor16->str);
@@ -1998,8 +1999,13 @@ unsigned long shimcm32_callback(void)
 }
 
 unsigned long callb16(int x, void *y);
+unsigned long callb32(int x, void *y);
+
 unsigned long callb16r(int x, void *y);
 unsigned long callb16m(int x, void *y);
+
+unsigned long callb32r(int x, void *y);
+unsigned long callb32m(int x, void *y);
 
 
 static int shimcm32_run(void)
@@ -2086,6 +2092,9 @@ static int shimcm32_run(void)
     anchor32.eye1 = 0x12;
     anchor32.eye2 = 0x11;
     anchor32.eye3 = 0x10;
+    anchor32.callb = (unsigned long)(ptrdiff_t)callb32;
+    anchor32.callbr = (unsigned long)(ptrdiff_t)callb32r;
+    anchor32.callbm = (unsigned long)(ptrdiff_t)callb32m;
     /* we use the ss variable to set what will become ds and es,
        since we don't change ss, and the original values need to
        be preserved */

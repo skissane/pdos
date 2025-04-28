@@ -23,34 +23,25 @@ unsigned long hlp32st(void *parms)
     int ret;
     char buf[20];
     char *z;
-    int (*subprog2)(void *);
-
-#if 0
-    subprog2 = (int (*)(void *))*((unsigned long *)parms + 14);
-    ret = subprog2(NULL);
-    return (ret);
-
-    return (long)parms;
-    return *((unsigned long *)parms + 3);
-
-    return *((unsigned long *)parms + 14);
-#endif
 
     pblk = parms;
     callb = (long (*)(int, void *))pblk[5];
     subprog = (int (*)(void *))pblk[14];
 
-    ret = subprog((void *)hlp32callback);
-    return (ret);
-
+#if 0
     z = (char *)pblk[13];
     z[0] = 'G';
     z[70000UL] = 'K';
+#endif
+
+/* this doesn't work yet */
+#if 0
     ret = printf("hi there %s\n", "paul");
     ret = printf("hi there %s\n", "john");
     buf[0] = '\0';
     ret = sprintf(buf, "%06lX", 0x1234UL);
     ret = printf("should have 2 leading zeros %s\n", buf);
+#endif
     ret = subprog((void *)hlp32callback);
     return (ret);
 }

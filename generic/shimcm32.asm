@@ -62,6 +62,9 @@ call_cm32:
     mov [rdi+40], ds
     mov [rdi+44], es
 
+# and cs
+    mov [rdi+24], cs
+
     lea rax, call_cm32_end[rip]
     mov [rsp+8], eax
 
@@ -95,6 +98,11 @@ call_cm32_end:
     pop rbp
     ret
 
+
+# Note that ideally we would subtract 64k + 16 bytes
+# from the UEFI-provided stack and then max the sp
+# out to FFF0 so that our 16-bit apps start with a full
+# 64k stack
 
 .global call_cm16
 call_cm16:
@@ -214,6 +222,31 @@ callb16m:
 
 
 
+# 64-bit code to support 32-bit callback
+.global callb32m
+callb32m:
+
+# Not sure which of these are required
+    push rbx
+    push rcx
+    push rbp
+    push r8
+    push r10
+    push r11
+    call shimcm32_callback
+    pop r11
+    pop r10
+    pop r8
+    pop rbp
+    pop rcx
+    pop rbx
+
+# return code is in rax
+
+    retfq
+
+
+
 .code32
 
 .globl test32
@@ -238,6 +271,81 @@ test32_end:
 #    out 0xe9, al
     add esp, 4
     retf
+
+
+
+# callback function
+.globl callb32
+callb32:
+    push ebp
+    mov ebp, esp
+    push ecx
+    push ds
+    push es
+    push ebx
+
+    mov ebx,[ebp+8]
+
+# get the stack aligned on a 16-byte boundary
+    mov ebp, esp
+    mov eax, ebp
+    sub eax, 18
+    and eax, 0xFFFFFFF0
+    add eax, 4
+    mov esp, eax
+    push ebp
+
+# this is callb32r
+# we need to prepare it for a 64-bit far return
+    mov eax, 0
+    push eax
+    mov edx, [ebx + 34]
+    push edx
+
+# and now we do our 32-bit return to execute callb32m (64-bit)
+# we need the old cs (expanded to 32 bits) first
+    mov eax, [ebx + 24]
+    push eax
+# and now the 32-bit offset
+    mov eax, [ebx + 28]
+    push eax
+
+# Note that this is probably superfluous
+    mov eax, [ebx + 40]
+    mov ds, ax
+
+# This is also probably superfluous
+    mov eax, [ebx + 44]
+    mov es, ax
+
+    retf
+
+
+
+#
+.globl callb32r
+callb32r:
+
+#    mov al, 'X'
+#    out 0xe9, al
+#    mov al, '\n'
+#    out 0xe9, al
+
+# return code is in eax already
+# but need to reinstate ds/es
+# the pops should be good enough for that
+
+# restore our 32-bit stack alignment
+
+    pop ebp
+    mov esp, ebp
+
+    pop ebx
+    pop es
+    pop ds
+    pop ecx
+    pop ebp
+    ret
 
 
 
