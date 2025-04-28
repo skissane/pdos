@@ -13,11 +13,11 @@ VPATH=../pdpclib
 
 CC=gccwin
 CFLAGS=-O2 -ansi
-COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
+COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I ../src -I . -DNOLIBALLOC -fno-builtin
 AS=pdas
 LD=pdld
 
-OBJS=helper32.obj
+OBJS=helper32.obj hlp32st.obj
 
 
 all: clean helper32.exe
