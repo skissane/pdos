@@ -7,7 +7,8 @@
 # without complying with any conditions
 # and by any means.
 
-# This is the standard for 32-bit
+# This is designed to execute the PDOS-generic created
+# by makefile.w32
 
 VPATH=../pdpclib
 
