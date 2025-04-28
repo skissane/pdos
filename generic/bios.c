@@ -1962,7 +1962,7 @@ unsigned long shimcm32_callback(void)
     char *p;
     int ret = 0x40;
 
-#if !CM16
+#if 0
     printf("got callback!\n");
     printf("offs is %lx\n", (unsigned long)ganchor32->offs);
 #endif
@@ -2005,6 +2005,17 @@ unsigned long shimcm32_callback(void)
         /* printf("p1 is %p\n", p1);
         printf("p2 is %p\n", p2);
         return (p1); */
+    }
+    else if (ganchor32->offs == 0xd4)
+    {
+        char *p1;
+        const char *p2;
+        unsigned long x;
+
+        p1 = (char *)ganchor32->parm1;
+        p2 = (const char *)ganchor32->parm2;
+        x = ganchor32->parm3;
+        ret = sprintf(p1, p2, x);
     }
 
 #endif

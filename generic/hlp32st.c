@@ -40,7 +40,6 @@ unsigned long hlp32st(void *parms)
 /* this doesn't work yet */
 #if 1
     ret = printf("hi there %s\n", "paul");
-    return (ret);
 
     ret = printf("hi there %s\n", "john");
     buf[0] = '\0';
