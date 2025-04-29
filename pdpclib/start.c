@@ -582,6 +582,9 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __stdin->theirBuffer = 0;
     __stdin->permfile = 1;
     __stdin->isopen = 1;
+#ifdef __OS2__
+    __stdin->kbdfile = 0;
+#endif
 
     __stdout->quickBin = 0;
     __stdout->quickText = 0;
