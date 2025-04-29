@@ -140,6 +140,21 @@ EXTRA2=../pdpclib/pdplinux.a
 
 
 
+else ifeq "$(targ)" "x64"
+# links with PDPCLIB created with makefile.s64
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-O2
+AS=pdas --64 --oformat coff
+AR=xar
+COPTS=-S $(CFLAGS) -Wall -fno-common -I./src -I./src/bytearray \
+    -I./src/hashtab -I./src/ftebc -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp
+EXTRA1=../pdpclib/w32start.obj
+EXTRA2=../pdpclib/msvcrt.lib ../pdpclib/x64supa.obj
+
+
+
 else
 CC=gccwin
 CFLAGS=-O2
