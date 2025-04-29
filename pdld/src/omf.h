@@ -20,3 +20,7 @@
 #define RECORD_TYPE_LEDATA 0xA0
 
 #define SEGMENT_ATTR_P 0x1
+
+#define METHOD_F5 5
+
+#define METHOD_T2_EXTDEF 2

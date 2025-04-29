@@ -123,6 +123,11 @@ static int read_omf_object (unsigned char *file,
     size_t num_pubdefs, i_pubdefs;
     size_t num_lnames, i_lnames;
     char **lnames;
+    struct {
+        struct section_part *part;
+        size_t offset;
+        size_t size;
+    } prev_ledata = {NULL};
     
     unsigned char *pos;
 
@@ -185,7 +190,7 @@ static int read_omf_object (unsigned char *file,
                 unsigned char extdef_name_len = extdef_name[0];
                 struct symbol *symbol = of->symbol_array + i_extdefs++;
                 
-                symbol->name = xstrndup (extdef_name + 1, extdef_name_len);
+                symbol->name = xstrndup ((const char *)extdef_name + 1, extdef_name_len);
                 symbol->value = 0;
                 symbol->part = NULL;
                 symbol->section_number = UNDEFINED_SECTION_NUMBER;
@@ -211,7 +216,7 @@ static int read_omf_object (unsigned char *file,
                     ld_fatal_error ("%s: invalid base segment index", filename);
                 }
 
-                symbol->name = xstrndup (pubdef_name + 3, pubdef_name_len);
+                symbol->name = xstrndup ((const char *)pubdef_name + 3, pubdef_name_len);
                 symbol->value = public_offset;
                 symbol->part = part_p_array[base_segment_index];
                 symbol->section_number = base_segment_index;
@@ -225,7 +230,7 @@ static int read_omf_object (unsigned char *file,
             
             while (lname != end) {
                 unsigned char lname_len = lname[0];
-                lnames[i_lnames++] = xstrndup (lname + 1, lname_len);
+                lnames[i_lnames++] = xstrndup ((const char *)lname + 1, lname_len);
                 lname += 1 + lname_len;
             }                
         } else if (record_type == RECORD_TYPE_SEGDEF) {
@@ -306,27 +311,107 @@ static int read_omf_object (unsigned char *file,
         } else if (record_type == RECORD_TYPE_GRPDEF) {
             /* Nothing needs to be done. */
         } else if (record_type == RECORD_TYPE_FIXUPP) {
+            struct section_part *part = prev_ledata.part;
             unsigned char *subrec = pos;
+            const unsigned char *end = pos + record_len - 1;
+
+            if (!part) {
+                ld_fatal_error ("%s: FIXUPP record has no preceding LEDATA record");
+            }
             
             if (!big_fields) {
                 ld_internal_error_at_source (__FILE__, __LINE__,
                                              "%s: non-big fields not supported for record %#x",
                                              filename, record_type);
             }
+            
+            while (subrec != end) {
+                if (subrec[0] & 0x80) {
+                    unsigned short data_record_offset;
+                    unsigned char fixdat;
+                    unsigned char frame_method, target_method;
+                    unsigned short target_datum;
+                    struct reloc_entry *reloc;
 
-            if (subrec[0] & 0x80) {
-                if (!(subrec[0] & 0x40) /* self-relative */
-                    && (((subrec[0] >> 2) & 0xf) == 9) /* 32-bit offset */) {
-                    ld_warn ("%s: OMF relocations are not yet supported", filename);
+                    if (subrec[0] & 0x40) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only self-relative OMF fixups are supported",
+                                                     filename);
+                    }
+                    
+                    if (((subrec[0] >> 2) & 0xf) != 9) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only 32-bit offset OMF fixups are supported",
+                                                     filename);
+                    }
+
+                    data_record_offset = ((unsigned short)(subrec[0] & 0x3)) << 8;
+                    data_record_offset |= subrec[1];
+                    if (data_record_offset >= prev_ledata.size) {
+                        ld_fatal_error ("%s: invalid data record offset", filename);
+                    }
+
+                    fixdat = subrec[2];
+                    if (fixdat & 0x80) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only explicit frame methods in OMF fixups are supported",
+                                                     filename);
+                    }
+                    if (fixdat & 0x08) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only explicit targets in OMF fixups are supported",
+                                                     filename);
+                    }
+                    if (!(fixdat & 0x04)) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: displacement fields in OMF fixups are not supported",
+                                                     filename);
+                    }
+                    frame_method = (fixdat & 0x70) >> 4;
+                    target_method = fixdat & 0x3;
+                    target_datum = subrec[3];
+
+                    if (frame_method != METHOD_F5) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only F5 frame method in OMF fixups is supported",
+                                                     filename);
+                    }
+                    if (target_method != METHOD_T2_EXTDEF) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: only T2 target method in OMF fixups is supported",
+                                                     filename);
+                    }
+
+                    {
+                        size_t old_reloc_count = part->relocation_count;
+
+                        part->relocation_count += 1;
+                        part->relocation_array = xrealloc (part->relocation_array,
+                                                           part->relocation_count
+                                                           * sizeof *part->relocation_array);
+                        memset (part->relocation_array + old_reloc_count,
+                                0,
+                                (part->relocation_count - old_reloc_count) * sizeof *part->relocation_array);
+                        reloc = part->relocation_array + old_reloc_count;
+                    }
+
+                    if (target_method == METHOD_T2_EXTDEF) {
+                        if (target_datum > num_extdefs || !target_datum) {
+                            ld_fatal_error ("%s: invalid target datum", filename);
+                        }
+                        reloc->symbol = of->symbol_array + num_segments + num_pubdefs + target_datum - 1;
+                    }
+
+                    reloc->offset = data_record_offset;
+                    reloc->addend = 0;
+                    reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+
+                    subrec += 4;
                 } else {
                     ld_internal_error_at_source (__FILE__, __LINE__,
-                                                 "%s: unsupported FIXUP",
+                                                 "%s: THREAD subrecords are not yet supported",
                                                  filename);
                 }
-            } else {
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "%s: THREAD subrecords are not yet supported",
-                                             filename);
             }
         } else if (record_type == RECORD_TYPE_LEDATA) {
             unsigned char seg_index;
@@ -358,6 +443,10 @@ static int read_omf_object (unsigned char *file,
             }
 
             memcpy (part->content + offset, data_bytes, size);
+
+            prev_ledata.part = part;
+            prev_ledata.offset = offset;
+            prev_ledata.size = size;
         } else {
             ld_internal_error_at_source (__FILE__, __LINE__,
                                          "%s: not yet supported record type %#x",
