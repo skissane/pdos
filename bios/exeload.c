@@ -5126,11 +5126,13 @@ static int exeloadLoadNE(unsigned char **entry_point,
     dataptr = codeptr + 65536UL;
 #endif
 
+#if defined(STYLE3)
     segmapc = map16c(codeptr);
 
     segmapd = map16d(dataptr);
 
     segmapb = map16d(dataptr + 65536U);
+#endif
 
     fseek(fp, offs1 + len1, SEEK_SET);
     fread(numreloc, sizeof numreloc, 1, fp);
