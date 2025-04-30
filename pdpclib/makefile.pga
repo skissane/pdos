@@ -18,7 +18,8 @@
 # PDOS-generic (built with generic/makefile.w32 and run under
 # a suitable pseudobios such as makebios.efi) or it can be
 # run directly under a pseudobios, such as generic/makebios.w32,
-# allowing you to run a.out etc executables under Windows.
+# allowing you to run a.out etc executables under Windows, like this:
+# bios -quiet pdptest "abc def"
 
 
 CC=gccwin
