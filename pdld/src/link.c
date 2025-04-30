@@ -569,6 +569,11 @@ static void calculate_entry_point (void)
 {
     const struct section *section;
 
+    if (ld_state->entry_local_symbol) {
+        ld_state->entry_point = symbol_get_value_no_base (ld_state->entry_local_symbol);
+        return;
+    }
+
     if (ld_state->entry_symbol_name) {
         if (ld_state->entry_symbol_name[0] == '\0') {
             ld_state->entry_point -= ld_state->base_address;

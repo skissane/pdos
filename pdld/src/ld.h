@@ -121,6 +121,8 @@ typedef unsigned long flag_int;
 
 extern const char *program_name;
 
+struct symbol;
+
 struct ld_state {
     const char *entry_symbol_name;
     const char *output_map_filename;
@@ -134,6 +136,7 @@ struct ld_state {
     
     address_type base_address;
     address_type entry_point;
+    struct symbol *entry_local_symbol;
 
     int use_custom_base_address;
 };

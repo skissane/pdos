@@ -1665,13 +1665,14 @@ void coff_write (const char *filename)
     do { if (((memory_position) - file + (size_to_read) > file_size) \
              || (memory_position) < file) ld_fatal_error ("%s: corrupted input file", filename); } while (0)
 
-static void interpret_dot_drectve_section (const unsigned char *file,
-                                           size_t file_size,
-                                           const char *filename,
-                                           const unsigned char *pos,
-                                           size_t size)
+static int interpret_dot_drectve_section (const unsigned char *file,
+                                          size_t file_size,
+                                          const char *filename,
+                                          const unsigned char *pos,
+                                          size_t size)
 {
     char *temp_buf, *p;
+    int ret = 0;
 
     /* According to specification the content of .drectve should be a string
      * but that cannot be trusted, so NUL is appended. */
@@ -1749,7 +1750,8 @@ static void interpret_dot_drectve_section (const unsigned char *file,
             }
             *q = saved_c;
             p = q;
-        } else if (strncmp (p, "-entry:", 7) == 0) {
+        } else if (strncmp (p, "-entry:", 7) == 0
+                   || strncmp (p, "/ENTRY:", 7) == 0) {
             char *q;
             char saved_c;
 
@@ -1758,13 +1760,24 @@ static void interpret_dot_drectve_section (const unsigned char *file,
             if (q == NULL) q = p + strlen (p);
             saved_c = *q;
             *q = '\0';
-            {
+            /* If user specified entry point,
+             * entry point specified in object file
+             * should be silently overriden.
+             */
+            if (!ld_state->entry_symbol_name) {
                 /* Simple way to ensure the duplicated entry point name gets freed. */
-                struct object_file *fake_of = object_file_make (0, p);
-                if (ld_state->entry_symbol_name && strcmp (ld_state->entry_symbol_name, "")) {
-                    ld_warn ("%s: .drectve option '-entry:' overrides previously specified entry point", filename);
+                const struct object_file *fake_of;
+                if (leading_underscore) {
+                    char *tmp = xmalloc (1 + strlen (p) + 1);
+                    tmp[0] = '_';
+                    strcpy (tmp + 1, p);
+                    fake_of = object_file_make (0, tmp);
+                    free (tmp);
+                } else {
+                    fake_of = object_file_make (0, p);
                 }
                 ld_state->entry_symbol_name = fake_of->filename;
+                ret = 1;
             }
             *q = saved_c;
             p = q;
@@ -1774,6 +1787,7 @@ static void interpret_dot_drectve_section (const unsigned char *file,
     }
 
     free (temp_buf);
+    return ret;
 }
 
 union sym_tab_entry {
@@ -1842,6 +1856,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     unsigned long *comdat_aux_symbol_indexes;
     unsigned long *comdat_comdat_symbol_indexes;
     struct section_part dummy_comdat_part_s;
+    int use_local_entry_point = 0;
 
     unsigned char *pos;
 
@@ -2106,11 +2121,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                 }
 
                 if (strcmp (section_name, ".drectve") == 0) {
-                    interpret_dot_drectve_section (file,
-                                                   file_size,
-                                                   filename,
-                                                   file + section_hdr.PointerToRawData,
-                                                   section_hdr.SizeOfRawData);
+                    use_local_entry_point |= interpret_dot_drectve_section (file,
+                                                                            file_size,
+                                                                            filename,
+                                                                            file + section_hdr.PointerToRawData,
+                                                                            section_hdr.SizeOfRawData);
                     part_p_array[i + 1] = NULL;
                     free (section_name);
                     continue;
@@ -2208,6 +2223,11 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             } else ld_fatal_error ("invalid offset into string table");
             
         } else symbol->name = xstrndup (coff_symbol->Name, 8);
+
+        if (use_local_entry_point
+            && strcmp (ld_state->entry_symbol_name, symbol->name) == 0) {
+            ld_state->entry_local_symbol = symbol;
+        }
 
         if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_STATIC
             && coff_symbol->Value == 0) {
@@ -2313,6 +2333,15 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
             i += coff_symbol->NumberOfAuxSymbols;
         }
+    }
+
+    if (use_local_entry_point
+        && !ld_state->entry_local_symbol) {
+        /* .drectve "-entry:" refers only to symbols from the same object file
+         * and if there is no symbol with that name present,
+         * default entry point should be used.
+         */
+        ld_state->entry_symbol_name = NULL;
     }
 
     free (comdat_aux_symbol_indexes);
