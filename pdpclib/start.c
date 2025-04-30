@@ -438,6 +438,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     __runnum++;
     memcpy(&oldjb, &jb, sizeof oldjb);
 
+
 #ifdef __ZPDOSGPB__
     memcpy(parmbuf, (char *)0x280, 64);
     parmbuf[64] = '\0';
@@ -1202,14 +1203,18 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 
 #ifdef __WIN32__
-    p = GetCommandLine();
-
-    /* kludge for presumed HX bug */
-    if (strncmp(p, "C:\\COMMAND.COM /c", 17) == 0)
+    if (__runnum == 1)
     {
-        p += 17;
-        p += strspn(p, " ");
+        p = GetCommandLine();
+
+        /* kludge for presumed HX bug */
+        if (strncmp(p, "C:\\COMMAND.COM /c", 17) == 0)
+        {
+            p += 17;
+            p += strspn(p, " ");
+        }
     }
+
 #endif
 
 #if defined(__EFI__)
