@@ -1,5 +1,16 @@
 # This builds a PDOS-generic executable
 
+# Note that you can use Watcom tools instead by going:
+# wcl386 -q -D__PDOS386__ -D__PDOSGEN__
+# -I. -I..\generic -I..\src -zl -s -ecc
+# -"option start=___crt0"
+# -fe=pdptest.exe pgastart.c pdptest.c fpfuncsw.c
+
+# or alternatively, add "-c" to the above and change linker,
+# such as:
+# pdld -o pdptest.exe --oformat a.out --emit-relocs -e ___crt0
+# pgastart.obj pdptest.obj fpfuncsw.obj
+
 CC=gccwin
 COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ -D__PDOSGEN__ \
     -D__NOBIVA__ -I . -I../generic -I../src
@@ -8,15 +19,15 @@ all: clean pdptest.exe
 
 pdptest.exe: pgastart.o pdptest.o
   rm -f pdptest.exe
-  ldwin -s -e ___crt0 -o pdptest.exe pgastart.o pdptest.o
+  pdld -s -e ___crt0 -o pdptest.exe pgastart.o pdptest.o
 
 .c.o:
   $(CC) $(COPTS) -o $*.s $<
-  aswin -o $@ $*.s
+  pdas -o $@ $*.s
   rm -f $*.s
 
 .asm.obj:
-  aswin -o $@ $<
+  pdas -o $@ $<
 
 clean:
   rm -f pdptest.exe
