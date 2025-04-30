@@ -64,28 +64,39 @@ static int estimate (unsigned char *file,
             while (extdef_name != end) {
                 unsigned char extdef_name_len = extdef_name[0];
                 if (extdef_name + 1 + extdef_name_len + 1 > end) {
-                    ld_fatal_error ("%s: incorrect string length", filename);
+                    ld_fatal_error ("%s: incorrect EXTDEF string length", filename);
                 }
                 num_extdefs++;
                 extdef_name += 1 + extdef_name_len + 1;
             }
         } else if (record_type == RECORD_TYPE_PUBDEF) {
-            unsigned char *pubdef_name = pos;
+            unsigned char *pubdef_name;
+            unsigned short base_segment_index;
+            size_t prefix = 1;
+            size_t suffix = 2 + 1;
             const unsigned char *end = pos + record_len - 1;
 
             if (big_fields) {
-                ld_internal_error_at_source (__FILE__, __LINE__,
-                                             "%s: big fields not supported for record %#x",
-                                             filename, record_type);
+                /* Applies only to Public Offset field. */
+                suffix += 2;
             }
-            
+
+            base_segment_index = pos[1];
+            if (!base_segment_index) {
+                ld_warn ("%s: PUBDEF Base Frame is not supported");
+                prefix += 2;
+            }
+            pubdef_name = pos + 2;
+
             while (pubdef_name != end) {
-                unsigned char pubdef_name_len = pubdef_name[2];
-                if (pubdef_name + 2 + 1 + pubdef_name_len + 3 > end) {
-                    ld_fatal_error ("%s: incorrect string length", filename);
+                unsigned char pubdef_name_len;
+
+                pubdef_name_len = pubdef_name[prefix - 1];
+                if (pubdef_name + prefix + pubdef_name_len + suffix > end) {
+                    ld_fatal_error ("%s: incorrect PUBDEF string length", filename);
                 }
                 num_pubdefs++;
-                pubdef_name += 2 + 1 + pubdef_name_len + 3;
+                pubdef_name += prefix + pubdef_name_len + suffix;
             }
         } else if (record_type == RECORD_TYPE_LNAMES) {
             unsigned char *lname = pos;
@@ -94,7 +105,7 @@ static int estimate (unsigned char *file,
             while (lname != end) {
                 unsigned char lname_len = lname[0];
                 if (lname + 1 + lname_len > end) {
-                    ld_fatal_error ("%s: incorrect string length", filename);
+                    ld_fatal_error ("%s: incorrect LNAMES string length", filename);
                 }
                 num_lnames++;
                 lname += 1 + lname_len;
@@ -199,30 +210,48 @@ static int read_omf_object (unsigned char *file,
                 extdef_name += 1 + extdef_name_len + 1;
             }
         } else if (record_type == RECORD_TYPE_PUBDEF) {
-            unsigned char *pubdef_name = pos;
+            unsigned char *pubdef_name;
+            unsigned short base_segment_index;
+            size_t prefix = 1;
+            size_t suffix = 2 + 1;
             const unsigned char *end = pos + record_len - 1;
+
+            if (big_fields) {
+                /* Applies only to Public Offset field. */
+                suffix += 2;
+            }
+
+            base_segment_index = pos[1];
+            if (!base_segment_index) {
+                ld_warn ("%s: PUBDEF Base Frame is not supported");
+                prefix += 2;
+            }
+            if (base_segment_index >= i_segments || !base_segment_index) {
+                ld_fatal_error ("%s: invalid base segment index", filename);
+            }
+            pubdef_name = pos + 2;
             
             while (pubdef_name != end) {
-                unsigned char base_segment_index;
                 unsigned char pubdef_name_len;
-                unsigned short public_offset;
+                unsigned long public_offset;
                 struct symbol *symbol = of->symbol_array + i_pubdefs++;
 
-                base_segment_index = pubdef_name[1];
-                pubdef_name_len = pubdef_name[2];
-                bytearray_read_2_bytes (&public_offset, pubdef_name + 3 + pubdef_name_len, LITTLE_ENDIAN);
-
-                if (base_segment_index >= i_segments || !base_segment_index) {
-                    ld_fatal_error ("%s: invalid base segment index", filename);
+                pubdef_name_len = pubdef_name[prefix - 1];
+                if (big_fields) {
+                    bytearray_read_4_bytes (&public_offset, pubdef_name + prefix + pubdef_name_len, LITTLE_ENDIAN);
+                } else {
+                    unsigned short field2;
+                    bytearray_read_2_bytes (&field2, pubdef_name + prefix + pubdef_name_len, LITTLE_ENDIAN);
+                    public_offset = field2;
                 }
 
-                symbol->name = xstrndup ((const char *)pubdef_name + 3, pubdef_name_len);
+                symbol->name = xstrndup ((const char *)pubdef_name + prefix, pubdef_name_len);
                 symbol->value = public_offset;
                 symbol->part = part_p_array[base_segment_index];
                 symbol->section_number = base_segment_index;
                 symbol_record_external_symbol (symbol);
 
-                pubdef_name += 3 + pubdef_name_len + 3;
+                pubdef_name += prefix + pubdef_name_len + suffix;
             }
         } else if (record_type == RECORD_TYPE_LNAMES) {
             unsigned char *lname = pos;
