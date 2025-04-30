@@ -1,5 +1,6 @@
 # This builds a PDOS-generic executable
 
+
 # Note that you can use Watcom tools instead by going:
 # wcl386 -q -D__PDOS386__ -D__PDOSGEN__
 # -I. -I..\generic -I..\src -zl -s -ecc
@@ -10,6 +11,15 @@
 # such as:
 # pdld -o pdptest.exe --oformat a.out --emit-relocs -e ___crt0
 # pgastart.obj pdptest.obj fpfuncsw.obj
+
+
+# Note that a PDOS-generic executable can be run under
+# PDOS/386 (built with comp4w.bat, comp5w.bat and comp6w.bat),
+# PDOS-generic (built with generic/makefile.w32 and run under
+# a suitable pseudobios such as makebios.efi) or it can be
+# run directly under a pseudobios, such as generic/makebios.w32,
+# allowing you to run a.out etc executables under Windows.
+
 
 CC=gccwin
 COPTS=-S -O2 -U__WIN32__ -D__PDOS386__ -D__PDOSGEN__ \
