@@ -17,8 +17,13 @@
 # PDOS/386 (built with comp4w.bat, comp5w.bat and comp6w.bat),
 # PDOS-generic (built with generic/makefile.w32 and run under
 # a suitable pseudobios such as makebios.efi) or it can be
-# run directly under a pseudobios, such as generic/makebios.w32,
-# allowing you to run a.out etc executables under Windows, like this:
+# run directly under the pseudobios itself if it happens to
+# export an entire C90 library in a compatible way (ie
+# processor and calling convention need to match), as the
+# above example does. And makebios.w32 is another example of
+# a pseudobios that is in a position to export the entire C
+# library, allowing you to run a.out etc executables under
+# Windows, like this:
 # bios -quiet pdptest "abc def"
 
 
