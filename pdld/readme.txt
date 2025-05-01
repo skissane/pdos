@@ -143,3 +143,14 @@ responds to bug reports with bug fixes normally within 24
 FUCKING HOURS you literally can't ask for any more than that
 and he does this ALL FOR FUCKING FREE. Slovakia is on my
 list of places to travel to to be sure!!! GO GO SLOVAKIA!!!
+
+Some more technical information about the libraries produced
+by both pdld and ld - the first member of the library is
+known as the "archive symbol table" and despite the fact
+that kill-at has been used, they maintain the @nn decoration.
+Also note that dlltwin (gnu tool) has a "-k" option, or you
+can write it in full as "--kill-at", which does the same
+thing as a single pdld command, which is to leave the
+decorated @@ in the symbol table names, but remove them from
+the .idata import names. Or to put it more simply - it all
+works using magic.
