@@ -1,0 +1,31 @@
+# This is the makefile for Win32 to build pdpclib using
+# the gcc compiler, and using custom-built Windows tools
+# and for static linking. Use with pdmake etc.
+
+# You need to have run makek32.w32 in src first
+
+CC=gccwin
+COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__STATIC__ -D__NOBIVA__ -I . -I../src
+
+all: pdptest.exe
+
+pdptest.exe: p32start.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o __memmgr.o winsupc.obj
+  rm -f pdpwin32.a
+  arwin r pdpwin32.a p32start.o stdio.o string.o stdlib.o winsupc.obj
+  arwin r pdpwin32.a start.o time.o errno.o assert.o signal.o
+  arwin r pdpwin32.a locale.o ctype.o setjmp.o math.o __memmgr.o
+  ldwin -s -o pdptest.exe p32start.o pdptest.o pdpwin32.a ../src/kernel32.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  aswin -o $@ $*.s
+  rm -f $*.s
+
+.asm.obj:
+  aswin -o $@ $<
+
+clean:
+  rm -f *.o
+  rm -f pdptest.exe
