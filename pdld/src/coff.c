@@ -1760,11 +1760,13 @@ static int interpret_dot_drectve_section (const unsigned char *file,
             if (q == NULL) q = p + strlen (p);
             saved_c = *q;
             *q = '\0';
-            /* If user specified entry point,
-             * entry point specified in object file
-             * should be silently overriden.
+            /* The last entry point overrides all previously specified entry points.
+             * Giving a warning about it is PDLD specific.
              */
-            if (!ld_state->entry_symbol_name) {
+            if (ld_state->entry_symbol_name) {
+                ld_warn ("%s: .drectve option '-entry:' overrides previously specified entry point", filename);
+            }
+            {
                 /* Simple way to ensure the duplicated entry point name gets freed. */
                 const struct object_file *fake_of;
                 if (leading_underscore) {
@@ -1776,7 +1778,12 @@ static int interpret_dot_drectve_section (const unsigned char *file,
                 } else {
                     fake_of = object_file_make (0, p);
                 }
+                /* .drectve "-entry:" should first check all symbols
+                 * from the same object file (including local only symbols)
+                 * and if no symbol matches, global symbols should be searched.
+                 */
                 ld_state->entry_symbol_name = fake_of->filename;
+                ld_state->entry_local_symbol = NULL;
                 ret = 1;
             }
             *q = saved_c;
@@ -2224,11 +2231,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             
         } else symbol->name = xstrndup (coff_symbol->Name, 8);
 
-        if (use_local_entry_point
-            && strcmp (ld_state->entry_symbol_name, symbol->name) == 0) {
-            ld_state->entry_local_symbol = symbol;
-        }
-
         if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_STATIC
             && coff_symbol->Value == 0) {
             symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
@@ -2322,6 +2324,12 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             symbol_record_external_symbol (symbol);
         }
 
+        if (use_local_entry_point
+            && strcmp (ld_state->entry_symbol_name, symbol->name) == 0
+            && !symbol_is_undefined (symbol)) {
+            ld_state->entry_local_symbol = symbol;
+        }
+
         if (coff_symbol->NumberOfAuxSymbols) {
             unsigned long j;
             
@@ -2333,15 +2341,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
             i += coff_symbol->NumberOfAuxSymbols;
         }
-    }
-
-    if (use_local_entry_point
-        && !ld_state->entry_local_symbol) {
-        /* .drectve "-entry:" refers only to symbols from the same object file
-         * and if there is no symbol with that name present,
-         * default entry point should be used.
-         */
-        ld_state->entry_symbol_name = NULL;
     }
 
     free (comdat_aux_symbol_indexes);
