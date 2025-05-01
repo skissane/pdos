@@ -53,4 +53,12 @@ The kill-at kills the name in the DLL only, not the library.
 This is intentional.
 
 pdld differs slightly from GNU ld in this regard, because
-instead of xyz it does abc.
+instead of removing the @nn from the symbol table names
+it instead removes it from the .idata import name. Both
+ways are technically valid (according to what spec?),
+but it is an example of where you cannot mix and match
+tools willy nilly. In this specific case, if pdld is
+used as the linker for a final executable, it can handle
+a library that was created by either method, but GNU ld
+at time of writing can only handle libraries created by
+the former method.
