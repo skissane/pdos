@@ -110,7 +110,12 @@ not present. Again - don't mix and match tools from vendors.
 
 It's not just Microsoft who can't handle it. GNU ld can't
 handle it either, and instead of reporting "this archive
-isn't from my tool so it is missing the idata table", it
+isn't from my tool so it is missing the idata table" or
+some other technical issue that would occur if you fed it
+say a motion jpeg of a dog licking its balls instead of
+an archive that meets all its technical requirements (as
+would have been met if you had simply used their tool in
+the first place instead of mixing and matching), it
 instead produces a technically invalid executable (in this
 circumstance it is not possible to have an executable with
 no idata), without warning. And you instead have to take
