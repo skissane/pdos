@@ -23,10 +23,19 @@
 VPATH=../pdpclib
 
 CC=gccwin
+#CC=gcc
 CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
+
 AS=aswin
+#AS=as
+
 LD=ldwin
+#LD=ld
+
+DLLT=dlltwin
+#DLLT=dlltool
+
 
 EXPORT_OBJS=dllcrt.o kernel32.o
 OBJS=support.o pdossupc.o pos.o string.o
@@ -34,8 +43,10 @@ OBJS=support.o pdossupc.o pos.o string.o
 all: clean kernel32.dll
 
 kernel32.dll: $(EXPORT_OBJS) $(OBJS)
+# one shot doesn't work
+#  $(LD) -s --out-implib kernel32.a -o kernel32.dll --shared --kill-at $(EXPORT_OBJS) $(OBJS)
   $(LD) -s -o kernel32.dll --shared --kill-at $(EXPORT_OBJS) $(OBJS)
-  dlltwin -S aswin -k --export-all-symbols -D kernel32.dll kernel32.o -l kernel32.a
+  $(DLLT) -S $(AS) -k --export-all-symbols -D kernel32.dll kernel32.o -l kernel32.a
 
 dllcrt.o: ../pdpclib/dllcrt.c
   $(CC) $(COPTS) -D__EXPORT__ -o $*.s $<
