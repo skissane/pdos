@@ -52,9 +52,11 @@ library itself needs to have the full, "decorated" name.
 The kill-at kills the name in the DLL only, not the library.
 This is intentional.
 
-Note that although pdld can create both the DLL and library
-in a single command, the GNU tools we use are not capable
-of doing that, and instead you need to separately create
+Note that although pdld can create both the DLL and correct
+--kill-at import library in a single command, the GNU tools
+we use are not capable of creating a correct --kill-at
+import library (the DLL is fine though), so instead
+you need to separately create
 the DLL (using ldwin) and the library (using dlltwin). You
 can see an example of this being done in PDPCLIB (src/makek32.w32).
 This is why it is always best to start with a working system and
@@ -159,3 +161,16 @@ thing as a single pdld command, which is to leave the
 decorated @@ in the symbol table names, but remove them from
 the .idata import names. Or to put it more simply - it all
 works using magic.
+
+Clarification:
+
+I have used the word "library" above to refer to a traditional
+.lib file (.a on Unix), and DLL to refer to ".dll" (.so on
+Unix), but in actual fact, both of those things are in fact
+"libraries", the former being more technically a "import
+library" and the DLL being a "dynamic link library".
+
+The PE/COFF specification has the concept of an "archive", and
+import libraries are included in this. The first member of an
+archive/import library is called the "first linker member"
+and can be considered to be an "archive symbol table".
