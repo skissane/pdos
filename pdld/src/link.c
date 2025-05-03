@@ -16,6 +16,10 @@
 #include "xmalloc.h"
 #include "bytearray.h"
 
+static void reloc_section_index (struct section_part *part,
+                                 struct reloc_entry *rel,
+                                 struct symbol *symbol);
+
 static void reloc_i386_secrel (struct section_part *part,
                                struct reloc_entry *rel,
                                struct symbol *symbol);
@@ -62,6 +66,8 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 1, 1, 0, 0, NULL, "RELOC_TYPE_PC8" },
 
     { 4, 0, 1, 0, NULL, "RELOC_TYPE_32_NO_BASE" },
+
+    { 2, 0, 1, 0, &reloc_section_index, "RELOC_TYPE_16_SECTION_INDEX" },
     
     { 4, 0, 1, 0, &reloc_i386_secrel, "RELOC_TYPE_I386_SECREL" },
 
@@ -82,6 +88,29 @@ const struct reloc_howto reloc_howtos[RELOC_TYPE_END] = {
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_JUMP26", 0x3ffffff },
     { 4, 1, 0, 2, &reloc_aarch64_generic, "RELOC_TYPE_AARCH64_CALL26", 0x3ffffff },
 };
+
+static void reloc_section_index (struct section_part *part,
+                                 struct reloc_entry *rel,
+                                 struct symbol *symbol)
+{
+    address_type result;
+    unsigned short field2;
+
+    if (!symbol->part) {
+        ld_error ("relocation target '%s' of section index relocation has no section",
+                  symbol->name);
+        return;
+    }
+
+    bytearray_read_2_bytes (&field2, part->content + rel->offset, LITTLE_ENDIAN);
+    result = field2;
+    
+    result += rel->addend;
+    result += symbol->part->section->target_index;
+    
+    field2 = result;
+    bytearray_write_2_bytes (part->content + rel->offset, field2, LITTLE_ENDIAN);
+}
 
 static void reloc_i386_secrel (struct section_part *part,
                                struct reloc_entry *rel,

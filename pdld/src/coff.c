@@ -884,6 +884,7 @@ void coff_before_link (void)
     struct section *section;
     struct subsection *subsection;
     struct section_part *part;
+    size_t i;
 
     if (ld_state->base_address % 0x10000) {
         /* Other output formats set their base address using --image-base too
@@ -941,6 +942,11 @@ void coff_before_link (void)
     size_of_headers += NUMBER_OF_DATA_DIRECTORIES * SIZEOF_struct_IMAGE_DATA_DIRECTORY_file;
     size_of_headers += SIZEOF_struct_section_table_entry_file * section_count ();
     size_of_headers = ALIGN (size_of_headers, FileAlignment);
+
+    /* 1-based section index is needed for IMAGE_REL_I386_SECTION relocations. */
+    for (section = all_sections, i = 1; section; section = section->next, i++) {
+        section->target_index = i;
+    }
 
     /* .idata$2 contains Import Directory Table which needs to be terminated with null entry. */
     section = section_find (".idata");
@@ -1183,11 +1189,12 @@ static void translate_relocation (struct reloc_entry *reloc,
 
         case IMAGE_REL_I386_DIR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
+        case IMAGE_REL_I386_SECTION: reloc->howto = &reloc_howtos[RELOC_TYPE_16_SECTION_INDEX]; break;
+
         case IMAGE_REL_I386_SECREL: reloc->howto = &reloc_howtos[RELOC_TYPE_I386_SECREL]; break;
 
         case IMAGE_REL_I386_REL32: reloc->howto = &reloc_howtos[RELOC_TYPE_PC32]; break;
 
-        case IMAGE_REL_I386_SECTION:
         case IMAGE_REL_I386_TOKEN:
         case IMAGE_REL_I386_SECREL7:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
