@@ -1183,10 +1183,11 @@ static void translate_relocation (struct reloc_entry *reloc,
 
         case IMAGE_REL_I386_DIR32NB: reloc->howto = &reloc_howtos[RELOC_TYPE_32_NO_BASE]; break;
 
+        case IMAGE_REL_I386_SECREL: reloc->howto = &reloc_howtos[RELOC_TYPE_I386_SECREL]; break;
+
         case IMAGE_REL_I386_REL32: reloc->howto = &reloc_howtos[RELOC_TYPE_PC32]; break;
 
         case IMAGE_REL_I386_SECTION:
-        case IMAGE_REL_I386_SECREL:
         case IMAGE_REL_I386_TOKEN:
         case IMAGE_REL_I386_SECREL7:
             ld_internal_error_at_source (__FILE__, __LINE__, "+++relocation type 0x%04hx not supported yet", input_reloc->Type);
