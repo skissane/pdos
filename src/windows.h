@@ -1469,3 +1469,57 @@ LPVOID WINAPI VirtualAlloc (LPVOID lpAddress,
 BOOL WINAPI VirtualFree (LPVOID lpAddress,
                          SIZE_T dwSize,
                          DWORD dwFreeType);
+
+/* Subheader: winbase.h */
+#define CBR_110 110
+#define CBR_300 300
+#define CBR_600 600
+#define CBR_1200 1200
+#define CBR_2400 2400
+#define CBR_4800 4800
+#define CBR_9600 9600
+#define CBR_14400 14400
+#define CBR_19200 19200
+#define CBR_38400 38400U
+#define CBR_56000 56000U
+#define CBR_57600 57600U
+#define CBR_115200 115200UL
+#define CBR_128000 128000UL
+#define CBR_256000 256000UL
+#define NOPARITY 0
+#define ODDPARITY 1
+#define EVENPARITY 2
+#define DTR_CONTROL_DISABLE 0
+#define DTR_CONTROL_ENABLE 1
+
+typedef struct {
+    DWORD dummy1;
+    DWORD BaudRate;
+    DWORD dummy2:4;
+    int fDtrControl:2;
+    DWORD dummy3:26;
+    char dummy4[6];
+    BYTE ByteSize;
+    BYTE Parity;
+    BYTE StopBits;
+    char dummy5[7];
+} DCB;
+
+typedef struct {
+    DWORD dummy1;
+    DWORD cbInQue;
+    DWORD cbOutQue;
+} COMSTAT;
+
+#define BuildCommDCB BuildCommDCBA
+BOOL WINAPI BuildCommDCBA(char *str, void *x);
+
+BOOL WINAPI GetCommState(HANDLE a, void *b);
+
+BOOL WINAPI SetCommState(HANDLE a, void *b);
+
+BOOL WINAPI ClearCommError(HANDLE a, void *b, void *c);
+
+
+/* Subheader: synchapi.h */
+void WINAPI Sleep(DWORD dwMilliseconds);

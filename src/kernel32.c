@@ -534,6 +534,36 @@ BOOL WINAPI VirtualFree (LPVOID lpAddress,
     for (;;) ;
 }
 
+
+
+BOOL WINAPI BuildCommDCBA(char *str, void *x)
+{
+    return (TRUE);
+}
+
+BOOL WINAPI GetCommState(HANDLE a, void *b)
+{
+    return (TRUE);
+}
+
+BOOL WINAPI SetCommState(HANDLE a, void *b)
+{
+    return (TRUE);
+}
+
+BOOL WINAPI ClearCommError(HANDLE a, void *b, void *c)
+{
+    return (TRUE);
+}
+
+void WINAPI Sleep(DWORD dwMilliseconds)
+{
+    return;
+}
+
+
+
+
 /* auto-genned dummy functions */
 
 BOOL WINAPI AllocConsole(void)
@@ -565,12 +595,6 @@ void WINAPI ClearCommBreak(void)
 {
     unsigned int len = 30;
     PosWriteFile(1, "ClearCommBreak unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI ClearCommError(void)
-{
-    unsigned int len = 30;
-    PosWriteFile(1, "ClearCommError unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI CompareFileTime(void)
@@ -774,12 +798,6 @@ void WINAPI GetCommModemStatus(void)
 {
     unsigned int len = 34;
     PosWriteFile(1, "GetCommModemStatus unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI GetCommState(void)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "GetCommState unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI GetCommandLineW(void)
@@ -1336,12 +1354,6 @@ void WINAPI SetCommMask(void)
     PosWriteFile(1, "SetCommMask unimplemented\r\n", len, &len);
     for (;;) ;
 }
-void WINAPI SetCommState(void)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "SetCommState unimplemented\r\n", len, &len);
-    for (;;) ;
-}
 void WINAPI SetCommTimeouts(void)
 {
     unsigned int len = 31;
@@ -1477,12 +1489,6 @@ void WINAPI SetThreadPriority(void)
 {
     unsigned int len = 33;
     PosWriteFile(1, "SetThreadPriority unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-void WINAPI Sleep(void)
-{
-    unsigned int len = 21;
-    PosWriteFile(1, "Sleep unimplemented\r\n", len, &len);
     for (;;) ;
 }
 void WINAPI SuspendThread(void)
