@@ -555,27 +555,22 @@ static void fopen2(void)
 
     /* leading : mean go up one level, not that it is
        a device */
+    myfile->devfile = 0;
     while (*p == ':')
     {
         p++;
     }
     q = p;
-    /* if this is a device file, like COM1:, set the
-       buffer size to just 1 byte so that it doesn't
-       block for more than 1 byte. We still want it
-       to block while waiting for that 1 byte though */
-    /* it is only reading that can cause the block, so
-       ideally it is only during a read operation that
-       we have the small block size (or probably better -
-       override the normal block size. so this logic
-       should probably be revised */
+    /* if this is a device file, like COM1:, note that it
+       is a device file so that when reading we can set
+       the byte count to 1 */
     p = strchr(q, ':');
     if (p != NULL)
     {
         /* we need COM1 to be a device file, but not c:xyz.txt */
         if ((p - q) > 1)
         {
-            myfile->szfbuf = 1;
+            myfile->devfile = 1;
 
             /* HX, using the underlying DOS 4.0, can't handle
                the colon, so we need to strip it */
@@ -624,6 +619,18 @@ static void fopen3(void)
         *myfile->fbuf++ = '\0';
         *myfile->fbuf++ = '\0';
         myfile->szfbuf = BUFSIZ;
+
+        /* we don't want a device file like COM1 to block on
+           anything except the first character. Setting the
+           buffer size to 1 is the easiest way to do that, but
+           ideally we would make that only apply to reading,
+           and what we really want is to not exceed the number
+           of characters the user has requested for an fread */
+        if (myfile->devfile)
+        {
+            myfile->szfbuf = 1;
+        }
+
 #if !defined(__MVS__) && !defined(__CMS__)
         myfile->quickText = 0;
 #endif
