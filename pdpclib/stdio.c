@@ -568,9 +568,12 @@ static void fopen2(void)
     if (p != NULL)
     {
         /* we need COM1 to be a device file, but not c:xyz.txt */
-        if ((p - q) > 1)
+        /* and don't match dd:xxx on MVS either */
+        if ((p - q) > 2)
         {
             myfile->devfile = 1;
+
+#ifdef __WIN32__
 
             /* HX, using the underlying DOS 4.0, can't handle
                the colon, so we need to strip it */
@@ -580,6 +583,8 @@ static void fopen2(void)
                 newfnm[p - fnm] = '\0';
                 fnm = newfnm;
             }
+#endif
+
         }
     }
 
