@@ -549,6 +549,45 @@ __PDPCLIB_API__ FILE *fopen(const char *filename, const char *mode)
 
 static void fopen2(void)
 {
+    const char *p = fnm;
+    const char *q;
+    static char newfnm[FILENAME_MAX];
+
+    /* leading : mean go up one level, not that it is
+       a device */
+    while (*p == ':')
+    {
+        p++;
+    }
+    q = p;
+    /* if this is a device file, like COM1:, set the
+       buffer size to just 1 byte so that it doesn't
+       block for more than 1 byte. We still want it
+       to block while waiting for that 1 byte though */
+    /* it is only reading that can cause the block, so
+       ideally it is only during a read operation that
+       we have the small block size (or probably better -
+       override the normal block size. so this logic
+       should probably be revised */
+    p = strchr(q, ':');
+    if (p != NULL)
+    {
+        /* we need COM1 to be a device file, but not c:xyz.txt */
+        if ((p - q) > 1)
+        {
+            myfile->szfbuf = 1;
+
+            /* HX, using the underlying DOS 4.0, can't handle
+               the colon, so we need to strip it */
+            if ((p - fnm) < sizeof newfnm)
+            {
+                strncpy(newfnm, fnm, sizeof newfnm);
+                newfnm[p - fnm] = '\0';
+                fnm = newfnm;
+            }
+        }
+    }
+
     checkMode();
     if (!err)
     {
