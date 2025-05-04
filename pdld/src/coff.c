@@ -1949,7 +1949,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     if (offset < string_table_hdr.StringTableSize) {
                         free (section_name);
                         section_name = xstrdup (string_table + offset);
-                    } else ld_fatal_error ("invalid offset into string table");
+                    } else ld_fatal_error ("%s: invalid offset into string table", filename);
                 }
 
                 p = strchr (section_name, '$');
@@ -1963,8 +1963,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     unsigned long sym_i = comdat_aux_symbol_indexes[i];
                     
                     if (!sym_i) {
-                        ld_error ("missing section symbol for COMDAT section '%s'",
-                                  section_name);
+                        ld_error ("%s: missing section symbol for COMDAT section '%s'",
+                                  filename, section_name);
                         return 1;
                     }
                     
@@ -1972,8 +1972,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                         || read_symtab[sym_i - 1].sym.Type != IMAGE_SYM_TYPE_NULL
                         || read_symtab[sym_i - 1].sym.StorageClass != IMAGE_SYM_CLASS_STATIC
                         || read_symtab[sym_i - 1].sym.NumberOfAuxSymbols != 1) {
-                        ld_error ("invalid section symbol for COMDAT section '%s'",
-                                  section_name);
+                        ld_error ("%s: invalid section symbol for COMDAT section '%s'",
+                                  filename, section_name);
                         return 1;
                     }
 
@@ -1982,8 +1982,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                     if (aux_symbol.Length != section_hdr.SizeOfRawData
                         || aux_symbol.NumberOfRelocations != section_hdr.NumberOfRelocations
                         || aux_symbol.NumberOfLinenumbers != section_hdr.NumberOfLinenumbers) {
-                        ld_warn ("section auxiliary symbol inconsistent with section header for COMDAT section '%s'",
-                                 section_name);
+                        ld_warn ("%s: section auxiliary symbol inconsistent with section header for COMDAT section '%s'",
+                                 filename, section_name);
                     }
 
                     if (aux_symbol.Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
@@ -2035,7 +2035,8 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                         }
 
                         if (comdat_comdat_symbol_indexes[assoc_i] == 0) {
-                            ld_fatal_error ("COMDAT section missing COMDAT symbol");
+                            ld_fatal_error ("%s: COMDAT section missing COMDAT symbol",
+                                            filename);
                         }
 
                         coff_symbol = &read_symtab[comdat_comdat_symbol_indexes[assoc_i]].sym;
@@ -2047,7 +2048,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                             if (offset < string_table_hdr.StringTableSize) {
                                 sym_name = xstrdup (string_table + offset);
-                            } else ld_fatal_error ("invalid offset into string table");
+                            } else ld_fatal_error ("%s: invalid offset into string table", filename);
                         } else sym_name = xstrndup (coff_symbol->Name, 8);
 
                         old_comdat_symbol = symbol_find (sym_name);
@@ -2086,7 +2087,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
                         struct symbol_table_entry_internal *coff_symbol;
 
                         if (comdat_comdat_symbol_indexes[i] == 0) {
-                            ld_fatal_error ("COMDAT section missing COMDAT symbol");
+                            ld_fatal_error ("%s: COMDAT section missing COMDAT symbol", filename);
                         }
 
                         coff_symbol = &read_symtab[comdat_comdat_symbol_indexes[i]].sym;
@@ -2098,7 +2099,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                             if (offset < string_table_hdr.StringTableSize) {
                                 sym_name = xstrdup (string_table + offset);
-                            } else ld_fatal_error ("invalid offset into string table");
+                            } else ld_fatal_error ("%s: invalid offset into string table", filename);
                         } else sym_name = xstrndup (coff_symbol->Name, 8);
 
                         old_comdat_symbol = symbol_find (sym_name);

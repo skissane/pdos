@@ -167,13 +167,26 @@ static int read_archive_member (unsigned char *file,
         /* Outside of members starting with '/' the '/' serves as name terminator
          * according to the specification. */
         if (member_name_len && hdr.name[member_name_len - 1] == '/' && hdr.name[0] != '/') member_name_len--;
-        
+
+#if 0
         filename = xmalloc (archive_name_len + 1 + member_name_len + 1 + 1);
         memcpy (filename, archive_name, archive_name_len);
         filename[archive_name_len] = '(';
         memcpy (filename + archive_name_len + 1, hdr.name, member_name_len);
         filename[archive_name_len + 1 + member_name_len] = ')';
         filename[archive_name_len + 1 + member_name_len + 1] = '\0';
+#else
+        filename = xmalloc (archive_name_len + 3 + 2 * sizeof (unsigned long) + 1 + member_name_len + 1 + 1);
+        memcpy (filename, archive_name, archive_name_len);
+        {
+            char *p = filename + archive_name_len;
+            p += sprintf (p, "+%#lx", (unsigned long)(pos - file));
+            *p = '(';
+            memcpy (p + 1, hdr.name, member_name_len);
+            p[1 + member_name_len] = ')';
+            p[1 + member_name_len + 1] = '\0';
+        }
+#endif
     }
 
     ret = read_file (pos, MIN (hdr.size, file_size - (pos - file)), filename);
