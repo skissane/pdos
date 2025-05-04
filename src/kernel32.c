@@ -182,7 +182,7 @@ DWORD WINAPI GetLastError(void)
 HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
 {
 #ifndef NOLIBALLOC
-    __malloc(dwBytes);
+    return (__malloc(dwBytes));
 #else
     return (PosAllocMem(dwBytes, POS_LOC32));
 #endif
@@ -515,25 +515,6 @@ BOOL WINAPI WriteFileEx (HANDLE hFile,
     for (;;) ;
 }
 
-LPVOID WINAPI VirtualAlloc (LPVOID lpAddress,
-                            SIZE_T dwSize,
-                            DWORD flAllocationType,
-                            DWORD flProtect)
-{
-    unsigned int len = 28;
-    PosWriteFile(1, "VirtualAlloc unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-
-BOOL WINAPI VirtualFree (LPVOID lpAddress,
-                         SIZE_T dwSize,
-                         DWORD dwFreeType)
-{
-    unsigned int len = 27;
-    PosWriteFile(1, "VirtualFree unimplemented\r\n", len, &len);
-    for (;;) ;
-}
-
 
 
 BOOL WINAPI BuildCommDCBA(char *str, void *x)
@@ -559,6 +540,30 @@ BOOL WINAPI ClearCommError(HANDLE a, void *b, void *c)
 void WINAPI Sleep(DWORD dwMilliseconds)
 {
     return;
+}
+
+LPVOID WINAPI VirtualAlloc (LPVOID lpAddress,
+                            SIZE_T dwSize,
+                            DWORD flAllocationType,
+                            DWORD flProtect)
+{
+#ifndef NOLIBALLOC
+    return (__malloc(dwSize));
+#else
+    return (PosAllocMem(dwSize, POS_LOC32));
+#endif
+}
+
+BOOL WINAPI VirtualFree (LPVOID lpAddress,
+                         SIZE_T dwSize,
+                         DWORD dwFreeType)
+{
+#ifndef NOLIBALLOC
+    __free(lpAddress);
+#else
+    PosFreeMem(lpAddress);
+#endif
+    return (TRUE);
 }
 
 
