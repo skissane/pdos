@@ -3737,9 +3737,17 @@ STDTHUNKLIST
                         {
                             *thunk = (unsigned long)GlobalAlloc;
                         }
+                        else if (strcmp((char *)hintname, "VirtualAlloc") == 0)
+                        {
+                            *thunk = (unsigned long)VirtualAlloc;
+                        }
                         else if (strcmp((char *)hintname, "GlobalFree") == 0)
                         {
                             *thunk = (unsigned long)GlobalFree;
+                        }
+                        else if (strcmp((char *)hintname, "VirtualFree") == 0)
+                        {
+                            *thunk = (unsigned long)VirtualFree;
                         }
                         else if (strcmp((char *)hintname, "MoveFileA") == 0)
                         {
