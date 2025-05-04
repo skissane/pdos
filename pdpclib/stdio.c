@@ -297,6 +297,7 @@ static char *__vsepb = NULL;
 FILE *__stdpch = NULL;
 #endif
 
+static char newfnm[FILENAME_MAX];
 static const char *fnm;
 static const char *modus;
 static int modeType;
@@ -551,7 +552,6 @@ static void fopen2(void)
 {
     const char *p = fnm;
     const char *q;
-    static char newfnm[FILENAME_MAX];
 
     /* leading : mean go up one level, not that it is
        a device */
@@ -574,14 +574,20 @@ static void fopen2(void)
             myfile->devfile = 1;
 
 #ifdef __WIN32__
-
             /* HX, using the underlying DOS 4.0, can't handle
                the colon, so we need to strip it */
+            /* but we don't yet know if this is HX, so don't
+               switch to the new name yet */
+            /* And PDOS/386 can't cope with the colon being stripped */
+            /* Windows 2000 at least can handle with or without */
             if ((p - fnm) < sizeof newfnm)
             {
                 strncpy(newfnm, fnm, sizeof newfnm);
                 newfnm[p - fnm] = '\0';
-                fnm = newfnm;
+            }
+            else
+            {
+                newfnm[0] = '\0';
             }
 #endif
 
@@ -1186,6 +1192,21 @@ static void osfopen(void)
                                dwCreationDisposition,
                                dwFlagsAndAttributes,
                                NULL);
+
+    if ((myfile->hfile == INVALID_HANDLE_VALUE)
+        && myfile->devfile
+        && (newfnm[0] != '\0'))
+    {
+        fnm = newfnm;
+        myfile->hfile = CreateFile(fnm,
+                                   dwDesiredAccess,
+                                   dwShareMode,
+                                   NULL,
+                                   dwCreationDisposition,
+                                   dwFlagsAndAttributes,
+                                   NULL);
+    }
+
     if ((myfile->hfile == INVALID_HANDLE_VALUE)
         && ((modeType == 3) || (modeType == 6)
             || (modeType == 9) || (modeType == 12)))
