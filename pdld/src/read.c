@@ -215,6 +215,7 @@ static void read_archive (unsigned char *file, size_t file_size, const char *arc
 
     unsigned long start_header_object_offset = 0;
     unsigned long end_header_object_offset = 0;
+    int is_traditional_import_library = 0;
 
     pos = file + strlen (IMAGE_ARCHIVE_START);
     /* Empty archive is also allowed to not contain any members at all,
@@ -276,26 +277,32 @@ repeat:
     free (hdr.name);
 
     {        
-        /* This is necessary because the member containing symbol "__head_something"
-         * contains the first part of the .idata content
-         * and the member containing symbol "_something_iname" contains the terminators for the .idata content.
+        /* This is necessary because the member containing symbol "__IMPORT_DESCRIPTOR_something"
+         * or "__head_something" contains the first part of the .idata content
+         * and the member containing symbol "something_NULL_THUNK_DATA" or "_something_iname"
+         * contains the terminators for the .idata content.
          * (Applies only to the traditional import library format,
          * for the short format whole .idata is automatically generated.)
          */
         for (i = 0; i < NumberOfSymbols && (!start_header_object_offset || !end_header_object_offset); i++) {
-            if (strncmp (offset_name_table[i].name, "__head_", 7) == 0
-                || (ld_state->target_machine == LD_TARGET_MACHINE_X64
+            if (strncmp (offset_name_table[i].name, "__IMPORT_DESCRIPTOR_", sizeof ("__IMPORT_DESCRIPTOR_") - 1) == 0
+                || strncmp (offset_name_table[i].name, "__head_", 7) == 0
+                || (ld_state->target_machine != LD_TARGET_MACHINE_I386
                     && strncmp (offset_name_table[i].name, "_head_", 6) == 0)) {
                 start_header_object_offset = offset_name_table[i].offset;
-            } else if (strlen (offset_name_table[i].name) > 6
-                       && strcmp (offset_name_table[i].name + strlen (offset_name_table[i].name) - 6, "_iname") == 0) {
+            } else if ((strlen (offset_name_table[i].name) > sizeof ("_NULL_THUNK_DATA") - 1
+                        && strcmp (offset_name_table[i].name
+                                   + strlen (offset_name_table[i].name)
+                                   - (sizeof ("_NULL_THUNK_DATA") - 1),
+                                   "_NULL_THUNK_DATA") == 0)
+                       || (strlen (offset_name_table[i].name) > 6
+                           && strcmp (offset_name_table[i].name
+                                      + strlen (offset_name_table[i].name)
+                                      - 6, "_iname") == 0)) {
                 end_header_object_offset = offset_name_table[i].offset;
             }
         }
     }
-
-    if (start_header_object_offset)
-        read_archive_member (file, file_size, file + start_header_object_offset, archive_name, &longnames);
 
     while (1) {
         int change = 0;
@@ -319,6 +326,20 @@ repeat:
                 || offset_name_table[i].offset == end_header_object_offset) continue;
             
             pos = file + offset_name_table[i].offset;
+            if (start_header_object_offset) {
+                /* Some short import libraries contain the "__IMPORT_DESCRIPTOR_something" member etc.
+                 * despite them being necessary only for traditional import libraries.
+                 * Those members must not be imported in that case
+                 * as they would interfere with automatically generated .idata.
+                 */
+                unsigned char *test = pos + SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
+                if (!coff_is_import_header (test, file_size - (test - file))) {
+                    read_archive_member (file, file_size, file + start_header_object_offset, archive_name, &longnames);
+                    is_traditional_import_library = 1;
+                }
+                start_header_object_offset = 0;
+            }
+            
             ret = read_archive_member (file, file_size, pos, archive_name, &longnames);
             if (ret == INPUT_FILE_ERROR) return;
             /* If the archive member is a real object (not short import entry),
@@ -329,8 +350,10 @@ repeat:
         if (change == 0) break;
     }
 
-    if (end_header_object_offset)
-        read_archive_member (file, file_size, file + end_header_object_offset, archive_name, &longnames);
+    if (is_traditional_import_library) {
+        if (end_header_object_offset)
+            read_archive_member (file, file_size, file + end_header_object_offset, archive_name, &longnames);
+    }
 
     coff_archive_end ();
 

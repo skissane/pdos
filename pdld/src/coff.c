@@ -1873,7 +1873,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
     struct section_part dummy_comdat_part_s;
     int use_local_entry_point = 0;
 
-    unsigned char *pos;
+    unsigned char *pos, *section_table;
 
     struct object_file *of;
     struct section_part **part_p_array;
@@ -1899,7 +1899,6 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         if (arm_thumb_mode == 1) ld_warn ("%s: non-Thumb code when other code is Thumb", filename);
         arm_thumb_mode = 0;
     }
-        
 
     pos = file + coff_hdr.PointerToSymbolTable + SIZEOF_struct_symbol_table_entry_file * coff_hdr.NumberOfSymbols;
     CHECK_READ (pos, SIZEOF_struct_string_table_header_file);
@@ -1926,9 +1925,14 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
         }
     }
 
+    /* Despite PE/COFF specification saying that SizeOfOptionalHeader
+     * should be 0 for object files, it is not always followed
+     * and needs to be considered (because it is between COFF header and section table).
+     */
+    section_table = file + SIZEOF_struct_coff_header_file + coff_hdr.SizeOfOptionalHeader;
     for (i = 0; i < coff_hdr.NumberOfSections; i++) {
 
-        pos = file + SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file * i;
+        pos = section_table + SIZEOF_struct_section_table_entry_file * i;
         CHECK_READ (pos, SIZEOF_struct_section_table_entry_file);
         read_struct_section_table_entry (&section_hdr, pos);
 
@@ -2011,7 +2015,7 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
 
                         assoc_i = aux_symbol.Number - 1;
                         
-                        pos = file + SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file * assoc_i;
+                        pos = section_table + SIZEOF_struct_section_table_entry_file * assoc_i;
                         CHECK_READ (pos, SIZEOF_struct_section_table_entry_file);
                         read_struct_section_table_entry (&assoc_section_hdr, pos);
 
@@ -2739,6 +2743,22 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename)
     }
 
     return INPUT_FILE_FINISHED;
+}
+
+int coff_is_import_header (unsigned char *file, size_t file_size)
+{
+    unsigned short Machine;
+
+    if (file_size < 4) return 0;
+    bytearray_read_2_bytes (&Machine, file, LITTLE_ENDIAN);
+    if (Machine == IMAGE_FILE_MACHINE_UNKNOWN) {
+        unsigned short Magic2;
+        
+        bytearray_read_2_bytes (&Magic2, file + 2, LITTLE_ENDIAN);
+        if (Magic2 == IMPORT_OBJECT_HDR_MAGIC2) return 1;
+    }
+
+    return 0;
 }
 
 void coff_archive_end (void)

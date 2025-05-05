@@ -362,6 +362,7 @@ void coff_after_link (void);
 void coff_write (const char *filename);
 int coff_read (unsigned char *file, size_t file_size, const char *filename);
 
+int coff_is_import_header (unsigned char *file, size_t file_size);
 void coff_archive_end (void);
 
 void coff_print_help (void);
