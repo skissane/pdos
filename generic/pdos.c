@@ -513,7 +513,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     }
     if (bios_file)
     {
-        handles[x].fptr = bios->Xfopen(name, "rb");
+        handles[x].fptr = bios->Xfopen(name, "r+b");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
@@ -594,7 +594,7 @@ int PosCreatFile(const char *name, int attrib, int *handle)
     }
     if (bios_file)
     {
-        handles[x].fptr = bios->Xfopen(name, "wb");
+        handles[x].fptr = bios->Xfopen(name, "w+b");
         if (handles[x].fptr != NULL)
         {
             *handle = x;
