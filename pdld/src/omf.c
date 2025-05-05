@@ -17,6 +17,15 @@
 #include "omf.h"
 #include "xmalloc.h"
 
+/* OMF has local undefined and defined symbols which are visible only in the same module
+ * (RECORD_TYPE_LEXTDEF and RECORD_TYPE_LPUBDEF) but trying to match them locally
+ * would be complicated, so instead they are given unique suffix and global matching system is used.
+ * (The unique id is necessary because there can be multiple files with the same name.)
+ */
+static unsigned long unique_id = 0;
+#define LOCAL_SYMBOL_NAME_SUFFIX_FORMAT " (OMF symbol local to %s (unique id: %lu))"
+#define LOCAL_SYMBOL_NAME_SUFFIX_FORMAT_SIZE (sizeof (LOCAL_SYMBOL_NAME_SUFFIX_FORMAT) + sizeof (unique_id) * 2)
+
 #define CHECK_READ(memory_position, size_to_read) \
     do { if (((memory_position) - file + (size_to_read) > file_size) \
              || (memory_position) < file) ld_fatal_error ("%s: corrupted input file", filename); } while (0)
@@ -57,7 +66,8 @@ static int estimate (unsigned char *file,
         }
         pos += 3;
 
-        if (record_type == RECORD_TYPE_EXTDEF) {
+        if (record_type == RECORD_TYPE_EXTDEF
+            || record_type == RECORD_TYPE_LEXTDEF) {
             unsigned char *extdef_name = pos;
             const unsigned char *end = pos + record_len - 1;
             
@@ -69,7 +79,8 @@ static int estimate (unsigned char *file,
                 num_extdefs++;
                 extdef_name += 1 + extdef_name_len + 1;
             }
-        } else if (record_type == RECORD_TYPE_PUBDEF) {
+        } else if (record_type == RECORD_TYPE_PUBDEF
+                   || record_type == RECORD_TYPE_LPUBDEF) {
             unsigned char *pubdef_name;
             unsigned short base_segment_index;
             size_t prefix = 1;
@@ -139,6 +150,8 @@ static int read_omf_object (unsigned char *file,
         size_t offset;
         size_t size;
     } prev_ledata = {NULL};
+    char *local_name_suffix;
+    size_t local_name_suffix_size;
     
     unsigned char *pos;
 
@@ -167,6 +180,10 @@ static int read_omf_object (unsigned char *file,
     part_p_array = xmalloc (sizeof (*part_p_array) * num_segments);
     of = object_file_make (num_segments + num_pubdefs + num_extdefs, filename);
 
+    local_name_suffix_size = LOCAL_SYMBOL_NAME_SUFFIX_FORMAT_SIZE + strlen (filename);
+    local_name_suffix = xmalloc (local_name_suffix_size);
+    sprintf (local_name_suffix, LOCAL_SYMBOL_NAME_SUFFIX_FORMAT, filename, unique_id++);
+
     pos = file;
     while (pos < file + file_size) {
         unsigned char record_type;
@@ -193,7 +210,8 @@ static int read_omf_object (unsigned char *file,
             if (pos + record_len != file + file_size) {
                 ld_fatal_error ("%s: MODEND record is not the last record");
             }
-        } else if (record_type == RECORD_TYPE_EXTDEF) {
+        } else if (record_type == RECORD_TYPE_EXTDEF
+                   || record_type == RECORD_TYPE_LEXTDEF) {
             unsigned char *extdef_name = pos;
             const unsigned char *end = pos + record_len - 1;
             
@@ -201,7 +219,13 @@ static int read_omf_object (unsigned char *file,
                 unsigned char extdef_name_len = extdef_name[0];
                 struct symbol *symbol = of->symbol_array + i_extdefs++;
                 
-                symbol->name = xstrndup ((const char *)extdef_name + 1, extdef_name_len);
+                if (record_type == RECORD_TYPE_LEXTDEF) {
+                    symbol->name = xmalloc (extdef_name_len + local_name_suffix_size);
+                    memcpy (symbol->name, extdef_name + 1, extdef_name_len);
+                    memcpy (symbol->name + extdef_name_len, local_name_suffix, local_name_suffix_size);
+                } else {
+                    symbol->name = xstrndup ((const char *)extdef_name + 1, extdef_name_len);
+                }
                 symbol->value = 0;
                 symbol->part = NULL;
                 symbol->section_number = UNDEFINED_SECTION_NUMBER;
@@ -209,7 +233,8 @@ static int read_omf_object (unsigned char *file,
                 
                 extdef_name += 1 + extdef_name_len + 1;
             }
-        } else if (record_type == RECORD_TYPE_PUBDEF) {
+        } else if (record_type == RECORD_TYPE_PUBDEF
+                   || record_type == RECORD_TYPE_LPUBDEF) {
             unsigned char *pubdef_name;
             unsigned short base_segment_index;
             size_t prefix = 1;
@@ -245,7 +270,13 @@ static int read_omf_object (unsigned char *file,
                     public_offset = field2;
                 }
 
-                symbol->name = xstrndup ((const char *)pubdef_name + prefix, pubdef_name_len);
+                if (record_type == RECORD_TYPE_LPUBDEF) {
+                    symbol->name = xmalloc (pubdef_name_len + local_name_suffix_size);
+                    memcpy (symbol->name, pubdef_name + prefix, pubdef_name_len);
+                    memcpy (symbol->name + pubdef_name_len, local_name_suffix, local_name_suffix_size);
+                } else {
+                    symbol->name = xstrndup ((const char *)pubdef_name + prefix, pubdef_name_len);
+                }
                 symbol->value = public_offset;
                 symbol->part = part_p_array[base_segment_index];
                 symbol->section_number = base_segment_index;
@@ -303,6 +334,9 @@ static int read_omf_object (unsigned char *file,
                 section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_READONLY | SECTION_FLAG_CODE;
             } else if (strcmp (lnames[class_name_index], "DATA") == 0) {
                 section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_DATA;
+            } else if (strcmp (lnames[class_name_index], "BSS") == 0) {
+                section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_DATA;
+                section->is_bss = 1;
             } else {
                 section->flags = SECTION_FLAG_ALLOC | SECTION_FLAG_LOAD | SECTION_FLAG_DATA;
             }
@@ -322,7 +356,7 @@ static int read_omf_object (unsigned char *file,
             }
             
             part->content_size = segment_len;
-            part->content = xmalloc (part->content_size);
+            if (!section->is_bss) part->content = xmalloc (part->content_size);
 
             {
                 struct symbol *symbol = of->symbol_array + i_segments;
@@ -356,25 +390,21 @@ static int read_omf_object (unsigned char *file,
             
             while (subrec != end) {
                 if (subrec[0] & 0x80) {
+                    unsigned char locat;
                     unsigned short data_record_offset;
                     unsigned char fixdat;
                     unsigned char frame_method, target_method;
                     unsigned short target_datum;
                     struct reloc_entry *reloc;
 
-                    if (subrec[0] & 0x40) {
-                        ld_internal_error_at_source (__FILE__, __LINE__,
-                                                     "%s: only self-relative OMF fixups are supported",
-                                                     filename);
-                    }
-                    
-                    if (((subrec[0] >> 2) & 0xf) != 9) {
+                    locat = subrec[0];                    
+                    if (((locat >> 2) & 0xf) != 9) {
                         ld_internal_error_at_source (__FILE__, __LINE__,
                                                      "%s: only 32-bit offset OMF fixups are supported",
                                                      filename);
                     }
 
-                    data_record_offset = ((unsigned short)(subrec[0] & 0x3)) << 8;
+                    data_record_offset = ((unsigned short)(locat & 0x3)) << 8;
                     data_record_offset |= subrec[1];
                     if (data_record_offset >= prev_ledata.size) {
                         ld_fatal_error ("%s: invalid data record offset", filename);
@@ -398,18 +428,28 @@ static int read_omf_object (unsigned char *file,
                     }
                     frame_method = (fixdat & 0x70) >> 4;
                     target_method = fixdat & 0x3;
-                    target_datum = subrec[3];
+                    subrec += 3;
 
-                    if (frame_method != METHOD_F5) {
+                    if (frame_method != METHOD_F1_GRPDEF
+                        && frame_method != METHOD_F5) {
                         ld_internal_error_at_source (__FILE__, __LINE__,
-                                                     "%s: only F5 frame method in OMF fixups is supported",
-                                                     filename);
+                                                     "%s: only F5 frame method in OMF fixups is supported (method %u)",
+                                                     filename, frame_method);
                     }
-                    if (target_method != METHOD_T2_EXTDEF) {
+                    if (target_method != METHOD_T0_SEGDEF
+                        && target_method != METHOD_T2_EXTDEF) {
                         ld_internal_error_at_source (__FILE__, __LINE__,
-                                                     "%s: only T2 target method in OMF fixups is supported",
-                                                     filename);
+                                                     "%s: only T2 target method in OMF fixups is supported (method %u)",
+                                                     filename, target_method);
                     }
+
+                    if (frame_method == METHOD_F1_GRPDEF) {
+                        /* Frame datum does not matter, just skip it. */
+                        subrec++;
+                    }
+
+                    target_datum = subrec[0];
+                    subrec++;
 
                     {
                         size_t old_reloc_count = part->relocation_count;
@@ -424,18 +464,25 @@ static int read_omf_object (unsigned char *file,
                         reloc = part->relocation_array + old_reloc_count;
                     }
 
-                    if (target_method == METHOD_T2_EXTDEF) {
+                    if (target_method == METHOD_T0_SEGDEF) {
+                        if (target_datum > num_segments || !target_datum) {
+                            ld_fatal_error ("%s: invalid target datum", filename);
+                        }
+                        reloc->symbol = of->symbol_array + target_datum;
+                    } else if (target_method == METHOD_T2_EXTDEF) {
                         if (target_datum > num_extdefs || !target_datum) {
                             ld_fatal_error ("%s: invalid target datum", filename);
                         }
                         reloc->symbol = of->symbol_array + num_segments + num_pubdefs + target_datum - 1;
                     }
 
-                    reloc->offset = data_record_offset;
+                    reloc->offset = prev_ledata.offset + data_record_offset;
                     reloc->addend = 0;
-                    reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
-
-                    subrec += 4;
+                    if (locat & FIXUP_LOCAT_M_SEGMENT_RELATIVE) {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_32];
+                    } else {
+                        reloc->howto = &reloc_howtos[RELOC_TYPE_PC32];
+                    }
                 } else {
                     ld_internal_error_at_source (__FILE__, __LINE__,
                                                  "%s: THREAD subrecords are not yet supported",
@@ -466,6 +513,9 @@ static int read_omf_object (unsigned char *file,
                 ld_fatal_error ("%s: invalid seg index", filename);
             }
             part = part_p_array[seg_index];
+            if (part->section->is_bss) {
+                ld_fatal_error ("%s: LEDATA seg index references BSS section", filename);
+            }
 
             if (offset + size > part->content_size) {
                 ld_fatal_error ("%s: invalid LEDATA offset and size combination for segment", filename);
@@ -484,6 +534,8 @@ static int read_omf_object (unsigned char *file,
         
         pos += record_len;
     }
+
+    free (local_name_suffix);
 
     for (i_lnames = 0; i_lnames < num_lnames; i_lnames++) {
         free (lnames[i_lnames]);
