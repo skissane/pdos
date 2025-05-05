@@ -166,7 +166,6 @@ typedef struct
     int tempch; /* work variable for putc */
     int istemp; /* opened by tmpfile? */
     int runnum; /* which level in start.c opened this file */
-    int devfile; /* is this a device? */
 } FILE;
 
 typedef unsigned long fpos_t;

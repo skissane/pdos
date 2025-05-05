@@ -298,6 +298,7 @@ FILE *__stdpch = NULL;
 #endif
 
 static char newfnm[FILENAME_MAX];
+static int devfile;
 static const char *fnm;
 static const char *modus;
 static int modeType;
@@ -555,7 +556,7 @@ static void fopen2(void)
 
     /* leading : mean go up one level, not that it is
        a device */
-    myfile->devfile = 0;
+    devfile = 0;
     while (*p == ':')
     {
         p++;
@@ -571,8 +572,7 @@ static void fopen2(void)
         /* and don't match dd:xxx on MVS either */
         if ((p - q) > 2)
         {
-            myfile->devfile = 1;
-
+            devfile = 1;
 #ifdef __WIN32__
             /* HX, using the underlying DOS 4.0, can't handle
                the colon, so we need to strip it */
@@ -637,7 +637,7 @@ static void fopen3(void)
            ideally we would make that only apply to reading,
            and what we really want is to not exceed the number
            of characters the user has requested for an fread */
-        if (myfile->devfile)
+        if (devfile)
         {
             myfile->szfbuf = 1;
         }
@@ -1194,7 +1194,7 @@ static void osfopen(void)
                                NULL);
 
     if ((myfile->hfile == INVALID_HANDLE_VALUE)
-        && myfile->devfile
+        && devfile
         && (newfnm[0] != '\0'))
     {
         fnm = newfnm;
