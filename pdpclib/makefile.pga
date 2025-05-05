@@ -9,7 +9,7 @@
 
 # or alternatively, add "-c" to the above and change linker,
 # such as:
-# pdld -o pdptest.exe --oformat a.out --emit-relocs -e ___crt0
+# pdld -o pdptest.exe --emit-relocs -e ___crt0
 # pgastart.obj pdptest.obj fpfuncsw.obj
 
 
