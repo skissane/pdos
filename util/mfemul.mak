@@ -49,6 +49,23 @@ EXTRA2=../pdpclib/msvcrt.lib
 else
 
 # This needs makefile.p32 to have been run in pdpclib
+# And you will need to change makefile.p32 to activate
+# OLDWIN if you want to run on Windows 2000 or Freewindows
+# and have cursor keys come through. And the COM routines
+# won't work on those environments without this either.
+# The keyboard routines won't work on PDOS/386 though
+# And if you put this into C:\WINNT\system32\config.nt on a win2k system:
+#  dosonly
+#  dos=high, umb
+#  device=%SystemRoot%\system32\himem.sys
+#  device=%SystemRoot%\system32\ansi.sys /x
+#  files=40
+# (/x makes extended keys "independent")
+# and then at a windows command prompt run command, then hxldr32
+# you will be able to use ANSI
+# but you may lose COM port support, or place a lot of stress on
+# the system, so you can switch back to a windows prompt for that
+
 CC=gccwin
 CFLAGS=-O2 -DPBEMUL
 AS=pdas --oformat coff
