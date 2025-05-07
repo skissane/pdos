@@ -2244,6 +2244,74 @@ static int read_coff_object (unsigned char *file, size_t file_size, const char *
             
         } else symbol->name = xstrndup (coff_symbol->Name, 8);
 
+        if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_SECTION) {
+            /* Some tools create section symbols with IMAGE_SYM_CLASS_SECTION
+             * instead of IMAGE_SYM_CLASS_STATIC.
+             * For such symbols all fields except Name and StorageClass
+             * might have incorrect values and must be ignored
+             * and the section to which they belong must be determined
+             * using name only.
+             */
+            char *p;
+            size_t j;
+
+            coff_symbol->SectionNumber = 0;
+
+            p = strchr (symbol->name, '$');
+            if (p) {
+                *p = '\0';
+                p++;
+            }
+            for (j = 1; j < coff_hdr.NumberOfSections + 1; j++) {
+                const struct subsection *subsection;
+                struct section_part *part = part_p_array[j];
+                if (!part) continue;
+                if (strcmp (part->section->name, symbol->name)) continue;
+                if (!p) {
+                    coff_symbol->SectionNumber = j;
+                    break;
+                }
+                subsection = subsection_find (part->section, p);
+                if (!subsection) continue;
+                if (&part->next != subsection->last_part_p) continue;
+                coff_symbol->SectionNumber = j;
+                break;
+            }
+
+            if (!coff_symbol->SectionNumber) {
+                /* It is possible that the section to which the symbol belongs
+                 * is not actually present in the object file
+                 * and in that case the section should be created with empty section part.
+                 */
+                struct section *section;
+                struct subsection *subsection;
+                struct section_part *part;
+
+                section = section_find_or_make (symbol->name);
+
+                if (p) subsection = subsection_find_or_make (section, p);
+                else subsection = NULL;
+
+                part = section_part_new (section, of);
+
+                if (subsection) {
+                    subsection_append_section_part (subsection, part);
+                } else {
+                    section_append_section_part (section, part);
+                }
+
+                coff_hdr.NumberOfSections = j;
+                part_p_array = xrealloc (part_p_array, sizeof (*part_p_array) * (coff_hdr.NumberOfSections + 1));
+
+                part_p_array[j] = part;
+                coff_symbol->SectionNumber = j;
+            }
+            if (p) p[-1] = '$';
+            
+            coff_symbol->StorageClass = IMAGE_SYM_CLASS_STATIC;
+            coff_symbol->Value = 0;
+        }
+
         if (coff_symbol->StorageClass == IMAGE_SYM_CLASS_STATIC
             && coff_symbol->Value == 0) {
             symbol->flags |= SYMBOL_FLAG_SECTION_SYMBOL;
