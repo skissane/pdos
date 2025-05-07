@@ -21,6 +21,7 @@ CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
 AS=pdas
 LD=pdld
+#LD=slink --oformat pe-i386
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
 OBJS=pdossupc.obj pos.obj string.obj supportf.obj
