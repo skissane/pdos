@@ -40,8 +40,14 @@
 # defined) is redundant
 
 # Note that a separate version of Microemacs is available
-# that uses traditional Windows screen manipulation (instead
-# of ANSI). That won't work on PDOS/386 but does work elsewhere.
+# (ewin.exe) that uses traditional Windows screen manipulation
+# (instead of ANSI). That won't work on PDOS/386 but should
+# work elsewhere. For some reason it isn't working on
+# Freedos+HX though. That's built by uemacs\nt\makefile.w32
+
+# And although we shouldn't need it, there happens to be
+# a statically-linked non-OLDWIN built with uemacs\mvs\makefile.w32
+# known as epdos.exe that works on Win10+ and PDOS/386
 
 CC=gccwin
 #CC=gccwin_l64 -D__LONG64__
