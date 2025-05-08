@@ -399,6 +399,34 @@ void write_struct_section_table_entry (void *memory, const struct section_table_
     COPY(section_table_entry, Characteristics, 4);
 }
 
+void write_struct_relocation_entry (void *memory, const struct relocation_entry_internal *relocation_entry_internal)
+{
+    struct relocation_entry_file *relocation_entry_file = memory;
+    
+    COPY(relocation_entry, VirtualAddress, 4);
+    COPY(relocation_entry, SymbolTableIndex, 4);
+    COPY(relocation_entry, Type, 2);
+}
+
+void write_struct_symbol_table_entry (void *memory, const struct symbol_table_entry_internal *symbol_table_entry_internal)
+{
+    struct symbol_table_entry_file *symbol_table_entry_file = memory;
+
+    COPY_CHAR_ARRAY (symbol_table_entry, Name);
+
+    COPY(symbol_table_entry, Value, 4);
+    COPY(symbol_table_entry, SectionNumber, 2);
+    COPY(symbol_table_entry, Type, 2);
+    COPY(symbol_table_entry, StorageClass, 1);
+    COPY(symbol_table_entry, NumberOfAuxSymbols, 1);
+}
+
+void write_struct_string_table_header (void *memory, const struct string_table_header_internal *string_table_header_internal)
+{
+    struct string_table_header_file *string_table_header_file = memory;
+
+    COPY(string_table_header, StringTableSize, 4);
+}
 
 void write_struct_IMAGE_EXPORT_DIRECTORY (void *memory, const struct IMAGE_EXPORT_DIRECTORY_internal *IMAGE_EXPORT_DIRECTORY_internal)
 {

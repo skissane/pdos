@@ -20,6 +20,8 @@
 
 #include "coff_bytearray.h"
 
+#include "coff_implib_compat.h"
+
 #ifdef CONV_CHARSET
 void ftgtchsmem (void *mem, size_t size)
 {
@@ -62,6 +64,9 @@ static int kill_at = 0;
 static int generate_reloc_section = 1;
 static int can_be_relocated = 0;
 static int nx_compat = 1;
+
+/* Some other linkers require extra archive members in import libraries. */
+static int implib_compat = 0;
 
 static int leading_underscore = 0;
 static int arm_thumb_mode = -1;
@@ -556,6 +561,12 @@ static void write_implib (const struct export_name *export_names,
         file_size = ALIGN (file_size, 2);
     }
 
+    if (implib_compat) {
+        coff_implib_compat_calculate (&file_size,
+                                      &num_linker_member_offsets,
+                                      &linker_member_size);
+    }
+
     linker_member_size = ALIGN (linker_member_size, 2);
     file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file + linker_member_size;
 
@@ -642,6 +653,14 @@ static void write_implib (const struct export_name *export_names,
         }
 
         pos = file + ALIGN (pos - file, 2);
+    }
+
+    if (implib_compat) {
+        coff_implib_compat_write (file,
+                                  pos,
+                                  offset_pos,
+                                  string_table_pos,
+                                  lu_timestamp);
     }
 
     {
@@ -2855,7 +2874,8 @@ enum option_index {
     COFF_OPTION_ENABLE_RELOC_SECTION,
     COFF_OPTION_DISABLE_RELOC_SECTION,
     COFF_OPTION_NX_COMPAT,
-    COFF_OPTION_DISABLE_NX_COMPAT
+    COFF_OPTION_DISABLE_NX_COMPAT,
+    COFF_OPTION_IMPLIB_COMPAT
 
 };
 
@@ -2875,6 +2895,7 @@ static const struct long_option long_options[] = {
     { STR_AND_LEN("disable-reloc-section"), COFF_OPTION_DISABLE_RELOC_SECTION, OPTION_NO_ARG},
     { STR_AND_LEN("nxcompat"), COFF_OPTION_NX_COMPAT, OPTION_NO_ARG},
     { STR_AND_LEN("disable-nxcompat"), COFF_OPTION_DISABLE_NX_COMPAT, OPTION_NO_ARG},
+    { STR_AND_LEN("implib-compat"), COFF_OPTION_IMPLIB_COMPAT, OPTION_NO_ARG},
     { NULL, 0, 0}
 
 };
@@ -2897,6 +2918,8 @@ void coff_print_help (void)
     printf ("  --disable-reloc-section            Do not create the base relocation table\n");
     printf ("  --[disable-]nxcompat               Image is compatible with data execution\n");
     printf ("                                       prevention\n");
+    printf ("  --implib-compat                    --out-implib generates extra archive members\n");
+    printf ("                                       for compatibility with other linkers\n");
 }
 
 static void use_option (enum option_index option_index, char *arg)
@@ -3062,6 +3085,10 @@ static void use_option (enum option_index option_index, char *arg)
 
         case COFF_OPTION_DISABLE_NX_COMPAT:
             nx_compat = 0;
+            break;
+
+        case COFF_OPTION_IMPLIB_COMPAT:
+            implib_compat = 1;
             break;
 
     }

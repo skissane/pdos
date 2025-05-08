@@ -57,6 +57,9 @@ void write_struct_optional_header (void *memory, const struct optional_header_in
 void write_struct_optional_header_plus (void *memory, const struct optional_header_plus_internal *optional_header_plus_internal);
 void write_struct_IMAGE_DATA_DIRECTORY (void *memory, const struct IMAGE_DATA_DIRECTORY_internal *IMAGE_DATA_DIRECTORY_internal);
 void write_struct_section_table_entry (void *memory, const struct section_table_entry_internal *section_table_entry_internal);
+void write_struct_relocation_entry (void *memory, const struct relocation_entry_internal *relocation_entry_internal);
+void write_struct_symbol_table_entry (void *memory, const struct symbol_table_entry_internal *symbol_table_entry_internal);
+void write_struct_string_table_header (void *memory, const struct string_table_header_internal *string_table_header_internal);
 void write_struct_IMAGE_EXPORT_DIRECTORY (void *memory, const struct IMAGE_EXPORT_DIRECTORY_internal *IMAGE_EXPORT_DIRECTORY_internal);
 void write_struct_EXPORT_Name_Pointer_Table (void *memory, const struct EXPORT_Name_Pointer_Table_internal *EXPORT_Name_Pointer_Table_internal);
 void write_struct_EXPORT_Ordinal_Table (void *memory, const struct EXPORT_Ordinal_Table_internal *EXPORT_Ordinal_Table_internal);

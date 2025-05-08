@@ -174,7 +174,8 @@ endif
 
 
 OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj \
-    binary.obj bytearray.obj cms.obj coff.obj coff_bytearray.obj elf.obj \
+    binary.obj bytearray.obj cms.obj coff.obj coff_bytearray.obj \
+    coff_implib_compat.obj elf.obj \
     elf_bytearray.obj error.obj febc.obj hashtab.obj hunk.obj \
     ld.obj libld.obj link.obj lx.obj lx_bytearray.obj \
     macho.obj macho_bytearray.obj \
