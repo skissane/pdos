@@ -18,7 +18,8 @@
 # So for example with microemacs, we need to run (in
 # memacs) both makefile.std (that links with makefile.p32)
 # for use on real Windows 10 and above (that supports
-# ANSI escapes natively). And we need to run makefile.dyn
+# ANSI escapes natively) - and we call this mew.exe.
+# And we need to run makefile.dyn (which becomes me.exe)
 # that uses msvcrt.dll for use on 32-bit Windows before
 # Windows 10 in a DOSONLY environment with HX, like this:
 
