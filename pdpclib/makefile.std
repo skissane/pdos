@@ -9,12 +9,46 @@
 
 # You should have run makek32.std in src first
 
+# define OLDWIN if you want to target HX/Freewindows
+# Since PDOS/386 doesn't use mscvrt.dll (it is instead
+# built-in), and since Windows does use our msvcrt.dll
+# and we instead need to bypass it, we may as well
+# always build with OLDWIN
+
+# So for example with microemacs, we need to run (in
+# memacs) both makefile.std (that links with makefile.p32)
+# for use on real Windows 10 and above (that supports
+# ANSI escapes natively). And we need to run makefile.dyn
+# that uses msvcrt.dll for use on 32-bit Windows before
+# Windows 10 in a DOSONLY environment with HX, like this:
+
+# In C:\WINNT\system32\config.nt on a win2k system:
+#  dosonly
+#  dos=high, umb
+#  device=%SystemRoot%\system32\himem.sys
+#  device=%SystemRoot%\system32\ansi.sys /x
+#  files=40
+# (/x makes extended keys "independent")
+# and then at a windows command prompt run command, then hxldr32
+
+# In FreeDOS and DOS 4.0 and Freewindows you need to have
+# an ANSI driver loaded and run hxldr32. And msvcrt.dll needs
+# to be in the path
+# So makefile.p32 should never need OLDWIN defined, as the
+# static version (which won't work on PDOS/386 if OLDWIN is
+# defined) is redundant
+
+# Note that a separate version of Microemacs is available
+# that uses traditional Windows screen manipulation (instead
+# of ANSI). That won't work on PDOS/386 but does work elsewhere.
+
 CC=gccwin
 #CC=gccwin_l64 -D__LONG64__
 AR=xar
 AS=pdas --oformat coff
 LD=pdld
-COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL -D__NOBIVA__ -I . -I ../src
+COPTS=-S -fno-common -ansi -O2 -D__WIN32__ -D__PDPCLIB_DLL \
+    -D__NOBIVA__ -I . -I ../src -DOLDWIN
 
 
 ifeq "$(tgtchs)" "ebcdic"
