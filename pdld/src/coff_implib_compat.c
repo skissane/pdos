@@ -198,6 +198,11 @@ static void write_import_descriptor (unsigned char *pos)
     pos += strlen (ld_state->output_filename) + 1;
 
     reloc.Type = get_reloc_type ();
+    reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
+    reloc.SymbolTableIndex = 1;
+    write_struct_relocation_entry (pos, &reloc);
+    pos += SIZEOF_struct_relocation_entry_file;
+    
     reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
     reloc.SymbolTableIndex = 2;
     write_struct_relocation_entry (pos, &reloc);
@@ -205,11 +210,6 @@ static void write_import_descriptor (unsigned char *pos)
 
     reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportAddressTableRVA);
     reloc.SymbolTableIndex = 3;
-    write_struct_relocation_entry (pos, &reloc);
-    pos += SIZEOF_struct_relocation_entry_file;
-
-    reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
-    reloc.SymbolTableIndex = 1;
     write_struct_relocation_entry (pos, &reloc);
     pos += SIZEOF_struct_relocation_entry_file;
 
@@ -229,6 +229,7 @@ static void write_import_descriptor (unsigned char *pos)
     
     memset (&sym, 0, sizeof sym);
     memcpy (sym.Name, ".idata$4", sizeof sym.Name);
+    sym.Value = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
     sym.SectionNumber = 0;
     sym.StorageClass = IMAGE_SYM_CLASS_SECTION;
     write_struct_symbol_table_entry (pos, &sym);
@@ -236,6 +237,7 @@ static void write_import_descriptor (unsigned char *pos)
     
     memset (&sym, 0, sizeof sym);
     memcpy (sym.Name, ".idata$5", sizeof sym.Name);
+    sym.Value = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
     sym.SectionNumber = 0;
     sym.StorageClass = IMAGE_SYM_CLASS_SECTION;
     write_struct_symbol_table_entry (pos, &sym);
