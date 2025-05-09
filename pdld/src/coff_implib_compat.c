@@ -131,6 +131,10 @@ void coff_implib_compat_calculate (size_t *file_size_p,
         hdr_Characteristics = IMAGE_FILE_32BIT_MACHINE;
     }
 
+    file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
+    file_size += strlen (ld_state->output_filename) + 1;
+    file_size = ALIGN (file_size, 2);
+
     for (i = 0; i < 3; i++) {
         switch (i) {
             case 0: file_size += get_size_import_descriptor (); break;
@@ -358,12 +362,26 @@ static void write_null_thunk_data (unsigned char *pos)
 }
 
 void coff_implib_compat_write (unsigned char *file,
-                               unsigned char *pos,
-                               unsigned char *offset_pos,
-                               unsigned char *string_table_pos,
+                               unsigned char **pos_p,
+                               unsigned char **offset_pos_p,
+                               unsigned char **string_table_pos_p,
                                unsigned long lu_timestamp)
 {
     size_t i;
+    unsigned char *pos = *pos_p;
+    unsigned char *offset_pos = *offset_pos_p;
+    unsigned char *string_table_pos = *string_table_pos_p;
+
+    /* All archive members must be named after the DLL for compatibility
+     * because other linkers pointlessly depend on it.
+     */
+    write_archive_member_header (pos, IMAGE_ARCHIVE_LONGNAMES_MEMBER_Name,
+                                 strlen (ld_state->output_filename) + 1,
+                                 lu_timestamp);
+    pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
+    strcpy (pos, ld_state->output_filename);
+    pos += strlen (ld_state->output_filename) + 1;
+    pos = file + ALIGN (pos - file, 2);
     
     for (i = 0; i < 3; i++)
     {
@@ -375,23 +393,19 @@ void coff_implib_compat_write (unsigned char *file,
     
         switch (i) {
             case 0:
-                write_archive_member_header (pos, "COMPAT/",
+                write_archive_member_header (pos, "/0",
                                              get_size_import_descriptor (),
                                              lu_timestamp);
                 break;
             
             case 1:
-                write_archive_member_header (pos, "COMPAT/",
+                write_archive_member_header (pos, "/0",
                                              get_size_null_import_descriptor (),
                                              lu_timestamp);
                 break;
 
             case 2:
-                /* It is exactly as absurd as it looks like:
-                 * one linker imports members from archive
-                 * in alphabetic order and it took hours to figure that out...
-                 */
-                write_archive_member_header (pos, "ZZZZZZ/",
+                write_archive_member_header (pos, "/0",
                                              get_size_null_thunk_data (),
                                              lu_timestamp);
                 break;
@@ -423,5 +437,9 @@ void coff_implib_compat_write (unsigned char *file,
     free (symbol_names[1]);
     free (symbol_names[2]);
     free (no_suffix_name);
+
+    *pos_p = pos;
+    *offset_pos_p = offset_pos;
+    *string_table_pos_p = string_table_pos;
 }
 

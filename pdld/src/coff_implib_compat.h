@@ -12,7 +12,7 @@ void coff_implib_compat_calculate (size_t *file_size_p,
                                    unsigned long *num_linker_member_offsets_p,
                                    unsigned long *linker_member_size_p);
 void coff_implib_compat_write (unsigned char *file,
-                               unsigned char *pos,
-                               unsigned char *offset_pos,
-                               unsigned char *string_table_pos,
+                               unsigned char **pos_p,
+                               unsigned char **offset_pos_p,
+                               unsigned char **string_table_pos_p,
                                unsigned long lu_timestamp);

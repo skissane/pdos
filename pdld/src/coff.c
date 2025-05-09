@@ -542,6 +542,11 @@ static void write_implib (const struct export_name *export_names,
     linker_member_size = 1 * 4;
 
     num_linker_member_offsets = 0;
+    if (implib_compat) {
+        coff_implib_compat_calculate (&file_size,
+                                      &num_linker_member_offsets,
+                                      &linker_member_size);
+    }
     for (i = 0; i < num_names; i++) {
         file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
         file_size += SIZEOF_struct_IMPORT_OBJECT_HEADER_file;
@@ -559,12 +564,6 @@ static void write_implib (const struct export_name *export_names,
         num_linker_member_offsets++;
 
         file_size = ALIGN (file_size, 2);
-    }
-
-    if (implib_compat) {
-        coff_implib_compat_calculate (&file_size,
-                                      &num_linker_member_offsets,
-                                      &linker_member_size);
     }
 
     linker_member_size = ALIGN (linker_member_size, 2);
@@ -588,6 +587,14 @@ static void write_implib (const struct export_name *export_names,
     string_table_pos = pos + num_linker_member_offsets * 4;
     pos = file + strlen (IMAGE_ARCHIVE_START) + SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file + linker_member_size;
 
+    if (implib_compat) {
+        coff_implib_compat_write (file,
+                                  &pos,
+                                  &offset_pos,
+                                  &string_table_pos,
+                                  lu_timestamp);
+    }
+
     for (i = 0; i < num_names; i++) {
 
         if (export_names[i].export_type == EXPORT_TYPE_CODE) {
@@ -610,7 +617,11 @@ static void write_implib (const struct export_name *export_names,
             string_table_pos += strlen (export_names[i].name) + 1;
         }
 
-        write_archive_member_header (pos, "IMPORT/",
+        /* With --implib-compat,
+         * all archive members must be named after the DLL for compatibility
+         * because other linkers pointlessly depend on it.
+         */
+        write_archive_member_header (pos, !implib_compat ? "IMPORT/" : "/0",
                                      SIZEOF_struct_IMPORT_OBJECT_HEADER_file
                                      + (leading_underscore ? 1 : 0)
                                      + strlen (export_names[i].name) + 1
@@ -653,14 +664,6 @@ static void write_implib (const struct export_name *export_names,
         }
 
         pos = file + ALIGN (pos - file, 2);
-    }
-
-    if (implib_compat) {
-        coff_implib_compat_write (file,
-                                  pos,
-                                  offset_pos,
-                                  string_table_pos,
-                                  lu_timestamp);
     }
 
     {
