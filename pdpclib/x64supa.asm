@@ -2,7 +2,11 @@ ifndef PDAS
 ; Written by Paul Edwards
 ; Released to the public domain
 
+ifdef SASM
+.amd64
+else
 .code
+endif
 
 ; I think rcx will have env
 ; And it looks like we only need to save rbx, rcx, rdx, r8, r9, rsp
@@ -122,60 +126,123 @@ endif
 
 ifdef CC64
 
-# These routines were copied (and then modified) from bcclib.asm generated
-# by the public domain cc64, and are used for cc64
-# (Converted to PDAS .intel_syntax noprefix by guessing.)
+ifndef PDAS
+; These routines were copied (and then modified) from bcclib.asm generated
+; by the public domain cc64, and are used for cc64
+; (Converted to PDAS .intel_syntax noprefix by guessing.)
+endif
 
+
+ifndef PDAS
+public m$ufloat_r64u32
+else
 .globl m$ufloat_r64u32
+endif
 m$ufloat_r64u32:
-	mov ecx, ecx					# clear top half (already done if value just moved there)
+
+ifndef PDAS
+; clear top half (already done if value just moved there)
+endif
+	mov ecx, ecx
 	cvtsi2sd xmm15, rcx
 	ret
 
+ifndef PDAS
+public m$ufloat_r32u32
+else
 .globl m$ufloat_r32u32
+endif
 m$ufloat_r32u32:
 	mov ecx, ecx
 	cvtsi2ss xmm15, rcx
 	ret
 
+ifndef PDAS
+public m$ufloat_r64u64
+else
 .globl m$ufloat_r64u64
+endif
 m$ufloat_r64u64:
-#jjj: jmp jjj
-#mov rax, 0x1234567
-#mov rax, 1234567
-#xorpd xmm15, xmm15
-#ret
+
+ifndef PDAS
+;jjj: jmp jjj
+;mov rax, 0x1234567
+;mov rax, 1234567
+;xorpd xmm15, xmm15
+;ret
+endif
 
 	cmp ecx, 0
 	jl fl1
-#number is positive, so can treat like i64
+ifndef PDAS
+;number is positive, so can treat like i64
+endif
 	cvtsi2sd xmm15, rcx
 	ret
-fl1:						#negative value
-	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+fl1:
+ifndef PDAS
+;negative value
+endif
+
+
+ifndef PDAS
+;clear top bit (subtract 2**63)
+endif
+	and rcx, QWORD PTR mask63[rip]
 	cvtsi2sd xmm15, rcx
-	addsd xmm15, QWORD PTR offset64[rip]	#(add 2**63 back to result)
+ifndef PDAS
+;(add 2**63 back to result)
+endif
+	addsd xmm15, QWORD PTR offset64[rip]
 	ret
 
+
+
+ifndef PDAS
+public m$ufloat_r32u64
+else
 .globl m$ufloat_r32u64
+endif
+
 m$ufloat_r32u64:
 	cmp ecx, 0
 	jl fl2
-#number is positive, so can treat like i64
+ifndef PDAS
+;number is positive, so can treat like i64
+endif
 	cvtsi2ss xmm15, rcx
 	ret
-fl2:						#negative value
-	and rcx, QWORD PTR mask63[rip]		#clear top bit (subtract 2**63)
+fl2:
+ifndef PDAS
+;negative value
+endif
+
+
+ifndef PDAS
+;clear top bit (subtract 2**63)
+endif
+	and rcx, QWORD PTR mask63[rip]
 	cvtsi2ss xmm15, rcx
-	addss xmm15, DWORD PTR offset32[rip]	#(add 2**63 back to result)
+ifndef PDAS
+;(add 2**63 back to result)
+endif
+	addss xmm15, DWORD PTR offset32[rip]
 	ret
 
+
+ifndef PDAS
+public m$pushcallback
+else
 .globl m$pushcallback
+endif
 m$pushcallback:
 	incd __ncallbacks[rip]
         push r12
 	mov r12,__ncallbacks[rip]
-	shl r12,6					#8x8 bytes is size per entry
+ifndef PDAS
+;8x8 bytes is size per entry
+endif
+	shl r12,6
 	lea r11,callbackstack[rip]
 	add r11,r12
         pop r12
@@ -189,10 +256,18 @@ m$pushcallback:
 	mov [r11+48],r15
 	ret
 
+
+ifndef PDAS
+public m$popcallback
+else
 .globl m$popcallback
+endif
 m$popcallback:
         mov r12,__ncallbacks[rip]
-	shl r12,6					#8x8 bytes is size per entry
+ifndef PDAS
+;8x8 bytes is size per entry
+endif
+	shl r12,6
 	lea r11,callbackstack[rip]
 	add r11,r12
 	mov rbx,[r11]
@@ -235,16 +310,28 @@ ifdef CC64
 mask63:
 	.quad 0x7fffffffffffffff
 offset64:
-	.quad 9223372036854775808		# 2**63 as r64
+
+ifndef PDAS
+; 2**63 as r64
+endif
+	.quad 9223372036854775808
 offset32:
-	.quad 9223372036854775808		# 2**63 as r32
+ifndef PDAS
+; 2**63 as r32
+endif
+	.quad 9223372036854775808
 
 
 .bss
 .balign 8
 callbackstack:
-	.space 576			#8-level stack
-#	resb 5'120'000
+ifndef PDAS
+;8-level stack
+endif
+	.space 576
+ifndef PDAS
+;	resb 5'120'000
+endif
 
 .balign 8
 .globl __ncallbacks
