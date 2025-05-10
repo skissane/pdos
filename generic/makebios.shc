@@ -3,13 +3,15 @@
 # Using cc64 as compiler
 
 # We link with the library produced by makefile.ne6
-# And we use makefile.p64 and makecomm.p64
+# And we (don't) use makefile.p64 and makecomm.p64
 # which are PE. Or makecomm.c64
 
 # Define CM16 for a 16-bit version instead
 
 # We need this executable to load below the 4 GiB mark.
 # So we use the image-base keyword on the link step
+
+# See makefile.h32 for more documentation
 
 CC=cc64
 AR=xar
@@ -18,7 +20,7 @@ AS=pdas --64 --oformat coff
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -D__CC64__ \
     -I../pdpclib -I../bios -I. -I../src -DNEED_ELF -D__NO_LONG_LONG__ \
     -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64EMUL -D__CC64OS__ \
-    -DGENSHELL -DSHIMCM32 -DCM16
+    -DGENSHELL -DSHIMCM32 -DXCM16
 
 all: clean bios.exe
 
