@@ -3133,7 +3133,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
         }
     }
 
-    if (exeStart != optional_hdr->ImageBase)
+    if (exeStart != (void *)(ptrdiff_t)optional_hdr->ImageBase)
     {
         /* Relocations are not stripped, so the executable can be relocated. */
         if (optional_hdr->NumberOfRvaAndSizes > DATA_DIRECTORY_REL)
@@ -3150,7 +3150,7 @@ static int exeloadLoadPE(unsigned char **entry_point,
                                                     ->VirtualAddress)));
             Base_relocation_block *end_rel_block;
 
-            if (optional_hdr->ImageBase > exeStart)
+            if ((unsigned char *)(ptrdiff_t)optional_hdr->ImageBase > exeStart)
             {
                 /* Image is loaded at lower address than preferred. */
 #if defined(W32HACK) || defined(SHIMCM32)
@@ -3163,7 +3163,8 @@ static int exeloadLoadPE(unsigned char **entry_point,
             }
             else
             {
-                image_diff = exeStart - optional_hdr->ImageBase;
+                image_diff = exeStart - (unsigned char *)
+                                        (ptrdiff_t)optional_hdr->ImageBase;
                 lower_exeStart = 0;
             }
 
@@ -4466,7 +4467,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
     }
     fclose(fp);
 
-    if (dllStart != optional_hdr->ImageBase)
+    if (dllStart != (void *)(ptrdiff_t)optional_hdr->ImageBase)
     {
         /* Relocations are not stripped, so the executable can be relocated. */
         if (optional_hdr->NumberOfRvaAndSizes > DATA_DIRECTORY_REL)
@@ -4483,7 +4484,7 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
                                                     ->VirtualAddress)));
             Base_relocation_block *end_rel_block;
 
-            if (optional_hdr->ImageBase > dllStart)
+            if ((unsigned char *)(ptrdiff_t)optional_hdr->ImageBase > dllStart)
             {
                 /* Image is loaded  at lower address than preferred. */
 #if defined(W32HACK) || defined(SHIMCM32)
@@ -4498,7 +4499,8 @@ static int exeloadLoadPEDLL(unsigned char *exeStart,
             else
             {
                 image_diff = dllStart
-                             - optional_hdr->ImageBase;
+                             - (unsigned char *)
+                               (ptrdiff_t)optional_hdr->ImageBase;
                 lower_dllStart = 0;
             }
             end_rel_block = rel_block + ((data_dir->Size)
