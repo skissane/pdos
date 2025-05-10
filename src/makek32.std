@@ -20,8 +20,8 @@ CC=gccwin
 CFLAGS=-O2 -ansi
 COPTS=$(CFLAGS) -S -D__WIN32__ -I ../pdpclib -I . -DNOLIBALLOC
 AS=pdas
-LD=pdld
-#LD=pdld --implib-compat
+#LD=pdld
+LD=pdld --implib-compat
 #LD=slink --oformat pe-i386
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
