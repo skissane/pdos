@@ -25,7 +25,7 @@ pdptest.exe: w32start.obj pdptest.obj stdio.obj string.obj stdlib.obj \
   $(AR) r temp.lib start.obj time.obj errno.obj assert.obj signal.obj
   $(AR) r temp.lib locale.obj ctype.obj setjmp.obj math.obj
   $(AR) s temp.lib
-  $(LD) -s --export-all-symbols --no-insert-timestamp --image-base 0x400000 -o msvcrt.dll --shared --out-implib msvcrt.lib dllcrt.obj temp.lib ../src/kernel32.lib
+  $(LD) -s --implib-compat --export-all-symbols --no-insert-timestamp --image-base 0x400000 -o msvcrt.dll --shared --out-implib msvcrt.lib dllcrt.obj temp.lib ../src/kernel32.lib
   rm -f temp.lib
   $(LD) -s -nostdlib --no-insert-timestamp --image-base 0x400000 -o pdptest.exe w32start.obj pdptest.obj msvcrt.lib
 
