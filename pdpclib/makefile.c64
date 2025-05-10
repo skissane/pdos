@@ -1,4 +1,4 @@
-# This is the makefile for Win32 to build pdpclib using
+# This is the makefile for Win64 to build pdpclib using
 # the cc64 compiler and static linking. Use pdmake etc
 # And using the new standard tools
 
