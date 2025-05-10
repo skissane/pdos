@@ -22,7 +22,8 @@ CC=cc64
 CFLAGS=
 COPTS=$(CFLAGS) -D__WIN32__ -D__STATIC__ -I ../pdpclib -I . -DNOLIBALLOC -D__64BIT__
 AS=pdas --oformat coff --64
-LD=pdld
+LD=pdld --implib-compat
+#LD=pdld
 
 EXPORT_OBJS=dllcrt.obj kernel32.obj
 OBJS=pdossupc.obj pos.obj string.obj supportc.obj
