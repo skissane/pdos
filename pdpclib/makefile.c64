@@ -2,6 +2,9 @@
 # the cc64 compiler and static linking. Use pdmake etc
 # And using the new standard tools
 
+# You need to have run makek32.n64 before using this
+
+
 CC=cc64
 CFLAGS=
 COPTS=$(CFLAGS) -D__CC64__ -D__WIN32__ -D__STATIC__ -I . -I../src -D__64BIT__ -DNOUNDMAIN
