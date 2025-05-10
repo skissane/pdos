@@ -193,7 +193,7 @@ endif
 ifndef PDAS
 ;(add 2**63 back to result)
 endif
-	addsd xmm15, QWORD PTR offset64
+	addsd xmm15, QWORD PTR offst64
 	ret
 
 
@@ -226,7 +226,7 @@ endif
 ifndef PDAS
 ;(add 2**63 back to result)
 endif
-	addss xmm15, DWORD PTR offset32
+	addss xmm15, DWORD PTR offst32
 	ret
 
 
@@ -310,14 +310,25 @@ ifdef PDAS
 .section rdata
 endif
 
+ifndef PDAS
+align 8
+endif
+
+ifndef PDAS
+; Use dd values instead of dq so as to not stress the 32-bit
+; infrastructure
+endif
+
 mask63:
 ifdef PDAS
 	.quad 0x7fffffffffffffff
 else
-	dq 07fffffffffffffffh
+;	dq 07fffffffffffffffh
+        dd 0ffffffffh
+        dd 07fffffffh
 endif
 
-offset64:
+offst64:
 
 ifndef PDAS
 ; 2**63 as r64
@@ -326,10 +337,12 @@ endif
 ifdef PDAS
 	.quad 9223372036854775808
 else
-	dq 9223372036854775808
+;	dq 9223372036854775808
+        dd 0h
+        dd 080000000h
 endif
 
-offset32:
+offst32:
 ifndef PDAS
 ; 2**63 as r32
 endif
@@ -337,7 +350,9 @@ endif
 ifdef PDAS
 	.quad 9223372036854775808
 else
-	dq 9223372036854775808
+;	dq 9223372036854775808
+        dd 0h
+        dd 080000000h
 endif
 
 
@@ -349,7 +364,7 @@ endif
 ifdef PDAS
 .balign 8
 else
-        dq ?
+align 8
 endif
 
 callbackstack:
@@ -371,7 +386,7 @@ endif
 ifdef PDAS
 .balign 8
 else
-        dq ?
+align 8
 endif
 
 ifdef PDAS
