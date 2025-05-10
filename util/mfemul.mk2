@@ -74,6 +74,7 @@ TARGET=mfemul.exe
 all: clean $(TARGET)
 
 $(TARGET): $(OBJS)
+#  $(LD) -nologo -largeaddressaware:no -fixed:no -nodefaultlib -out:$(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
 #  $(LD) -nologo -fixed:no -nodefaultlib -out:$(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
   $(LD) -o $(TARGET) $(EXTRA) $(OBJS) $(EXTRA2)
 
