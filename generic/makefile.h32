@@ -7,8 +7,11 @@
 # without complying with any conditions
 # and by any means.
 
-# This is designed to execute the PDOS-generic created
-# by makefile.w32
+# This is standalone.
+# See makebios.shm for more documentation
+
+# This is designed to execute the PDOS-generic OS
+# created by makefile.w32
 
 VPATH=../pdpclib
 

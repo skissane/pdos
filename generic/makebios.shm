@@ -2,10 +2,17 @@
 # x86 PE32 module running in CM32.
 
 # We link with the library produced by makefile.vb6
-# And we use makefile.w64 and makecomm.w64
+# And we (don't) use makefile.w64 and makecomm.w64
 # which are PE
 
 # Define CM16 for a 16-bit version instead
+
+# Rename bios.exe to bios.efi and then run it under qemu
+# or whatever and then type "pdos" and then "exit" and enter
+
+# It needs a helper program built with makefile.h32 and
+# that contains more documentation on how to build pdos.exe
+
 
 CC=cl
 AS=pdas --64 --oformat coff
