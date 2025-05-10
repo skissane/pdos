@@ -74,6 +74,17 @@
 #define FILE_ATTR_DIRECTORY 0x10
 #define FILE_ATTR_ARCHIVE 0x20
 
+
+
+#if !defined(__PDOSGEN__)
+/* create short names to work around assembler/linker limitations */
+/* C90 requires externals to be unique in 6 characters */
+#define PosGetSystemTime PosGST
+
+#endif
+
+
+
 /* Video subsystem information */
 typedef struct pos_video_info {
     unsigned int mode;
@@ -547,11 +558,6 @@ typedef struct {
 #define PosExec __os->XPosExec
 #define PosGetCommandLine __os->XPosGetCommandLine
 #define PosGetReturnCode __os->XPosGetReturnCode
-
-#else
-/* create short names to work around assembler/linker limitations */
-/* C90 requires externals to be unique in 6 characters */
-#define PosGetSystemTime PosGST
 
 #endif
 
