@@ -22,7 +22,6 @@
 static char *no_suffix_name;
 static char *symbol_names[3];
 static size_t thunk_size;
-unsigned short hdr_Characteristics;
 
 static unsigned short get_Machine (void)
 {
@@ -128,7 +127,6 @@ void coff_implib_compat_calculate (size_t *file_size_p,
         thunk_size = 8;
     } else {
         thunk_size = 4;
-        hdr_Characteristics = IMAGE_FILE_32BIT_MACHINE;
     }
 
     file_size += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
@@ -170,7 +168,6 @@ static void write_import_descriptor (unsigned char *pos)
                                      + strlen (ld_state->output_filename) + 1
                                      + 3 * SIZEOF_struct_relocation_entry_file);
     coff_hdr.NumberOfSymbols = 6;
-    coff_hdr.Characteristics = hdr_Characteristics;
     
     write_struct_coff_header (pos, &coff_hdr);
     pos += SIZEOF_struct_coff_header_file;
@@ -202,13 +199,13 @@ static void write_import_descriptor (unsigned char *pos)
     pos += strlen (ld_state->output_filename) + 1;
 
     reloc.Type = get_reloc_type ();
-    reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
-    reloc.SymbolTableIndex = 1;
-    write_struct_relocation_entry (pos, &reloc);
-    pos += SIZEOF_struct_relocation_entry_file;
-    
     reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, ImportNameTableRVA);
     reloc.SymbolTableIndex = 2;
+    write_struct_relocation_entry (pos, &reloc);
+    pos += SIZEOF_struct_relocation_entry_file;
+
+    reloc.VirtualAddress = offsetof (struct IMPORT_Directory_Table_file, NameRVA);
+    reloc.SymbolTableIndex = 1;
     write_struct_relocation_entry (pos, &reloc);
     pos += SIZEOF_struct_relocation_entry_file;
 
@@ -286,7 +283,6 @@ static void write_null_import_descriptor (unsigned char *pos)
     coff_hdr.NumberOfSections = 1;
     coff_hdr.PointerToSymbolTable = SIZEOF_struct_coff_header_file + SIZEOF_struct_section_table_entry_file + SIZEOF_struct_IMPORT_Directory_Table_file;
     coff_hdr.NumberOfSymbols = 1;
-    coff_hdr.Characteristics = hdr_Characteristics;
     
     write_struct_coff_header (pos, &coff_hdr);
     pos += SIZEOF_struct_coff_header_file;
@@ -325,7 +321,6 @@ static void write_null_thunk_data (unsigned char *pos)
     coff_hdr.NumberOfSections = 2;
     coff_hdr.PointerToSymbolTable = SIZEOF_struct_coff_header_file + 2 * SIZEOF_struct_section_table_entry_file + 2 * thunk_size;
     coff_hdr.NumberOfSymbols = 1;
-    coff_hdr.Characteristics = hdr_Characteristics;
     
     write_struct_coff_header (pos, &coff_hdr);
     pos += SIZEOF_struct_coff_header_file;
