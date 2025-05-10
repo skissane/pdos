@@ -188,12 +188,12 @@ endif
 ifndef PDAS
 ;clear top bit (subtract 2**63)
 endif
-	and rcx, QWORD PTR mask63[rip]
+	and rcx, QWORD PTR mask63
 	cvtsi2sd xmm15, rcx
 ifndef PDAS
 ;(add 2**63 back to result)
 endif
-	addsd xmm15, QWORD PTR offset64[rip]
+	addsd xmm15, QWORD PTR offset64
 	ret
 
 
@@ -221,12 +221,12 @@ endif
 ifndef PDAS
 ;clear top bit (subtract 2**63)
 endif
-	and rcx, QWORD PTR mask63[rip]
+	and rcx, QWORD PTR mask63
 	cvtsi2ss xmm15, rcx
 ifndef PDAS
 ;(add 2**63 back to result)
 endif
-	addss xmm15, DWORD PTR offset32[rip]
+	addss xmm15, DWORD PTR offset32
 	ret
 
 
@@ -236,14 +236,14 @@ else
 .globl m$pushcallback
 endif
 m$pushcallback:
-	incd __ncallbacks[rip]
+	inc dword ptr __ncallbacks
         push r12
-	mov r12,__ncallbacks[rip]
+	mov r12,__ncallbacks
 ifndef PDAS
 ;8x8 bytes is size per entry
 endif
 	shl r12,6
-	lea r11,callbackstack[rip]
+	lea r11,callbackstack
 	add r11,r12
         pop r12
 
@@ -263,12 +263,12 @@ else
 .globl m$popcallback
 endif
 m$popcallback:
-        mov r12,__ncallbacks[rip]
+        mov r12,__ncallbacks
 ifndef PDAS
 ;8x8 bytes is size per entry
 endif
 	shl r12,6
-	lea r11,callbackstack[rip]
+	lea r11,callbackstack
 	add r11,r12
 	mov rbx,[r11]
 	mov rsi,[r11+8]
@@ -277,7 +277,7 @@ endif
 	mov r13,[r11+32]
 	mov r14,[r11+40]
 	mov r15,[r11+48]
-	decd __ncallbacks[rip]
+	dec dword ptr __ncallbacks
 	ret
 
 endif
@@ -306,37 +306,88 @@ endif
 
 ifdef CC64
 
+ifdef PDAS
 .section rdata
+endif
+
 mask63:
+ifdef PDAS
 	.quad 0x7fffffffffffffff
+else
+	dq 07fffffffffffffffh
+endif
+
 offset64:
 
 ifndef PDAS
 ; 2**63 as r64
 endif
+
+ifdef PDAS
 	.quad 9223372036854775808
+else
+	dq 9223372036854775808
+endif
+
 offset32:
 ifndef PDAS
 ; 2**63 as r32
 endif
+
+ifdef PDAS
 	.quad 9223372036854775808
+else
+	dq 9223372036854775808
+endif
 
 
+
+ifdef PDAS
 .bss
+endif
+
+ifdef PDAS
 .balign 8
+else
+        dq ?
+endif
+
 callbackstack:
 ifndef PDAS
 ;8-level stack
 endif
+
+ifdef PDAS
 	.space 576
+else
+        db 576 dup(?)
+endif
+
+
 ifndef PDAS
 ;	resb 5'120'000
 endif
 
+ifdef PDAS
 .balign 8
+else
+        dq ?
+endif
+
+ifdef PDAS
 .globl __ncallbacks
+else
+public __ncallbacks
+endif
+
 __ncallbacks:
+ifdef PDAS
 	.space 8
+else
+        db 8 dup(?)
+endif
+
+
 
 endif
 
