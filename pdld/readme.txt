@@ -116,3 +116,23 @@ The PE/COFF specification has the concept of an "archive", and
 import libraries are included in this. The first member of an
 archive/import library is called the "first linker member"
 and can be considered to be an "archive symbol table".
+
+
+Technical note:
+
+Microsoft link expects most members of the library to be
+the same name as the dll, in this case, kernel32.dll, like this:
+
+D:\devel\pdos\src>lib -nologo -list kernel32.lib
+kernel32.dll
+kernel32.dll
+kernel32.dll
+kernel32.dll
+kernel32.dll
+kernel32.dll
+...
+
+
+otherwise Microsoft link won't apply correct relocations to
+data appearing in the archive member containing
+__IMPORT_DESCRIPTOR_kernel32
