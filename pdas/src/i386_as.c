@@ -461,7 +461,7 @@ void machine_dependent_number_to_chars (unsigned char *p, value_t number, unsign
     }
 }
 
-static int cpu_flags_all_zero (struct cpu_flags *cpu_flags_p)
+static int cpu_flags_all_zero (const struct cpu_flags *cpu_flags_p)
 {
     struct cpu_flags temp = {0};
 
@@ -858,7 +858,7 @@ static int base_index_check (char *operand_string)
     return 0;
 }
 
-static int finalize_immediate (struct expr *expr, const char *imm_start)
+static int finalize_immediate (const struct expr *expr, const char *imm_start)
 {
     if (expr->type == EXPR_TYPE_INVALID || expr->type == EXPR_TYPE_ABSENT) {
         if (imm_start) {
@@ -881,7 +881,7 @@ static int finalize_immediate (struct expr *expr, const char *imm_start)
     return 0;
 }
 
-static int finalize_displacement (struct expr *expr, const char *disp_start)
+static int finalize_displacement (const struct expr *expr, const char *disp_start)
 {
     if (expr->type == EXPR_TYPE_INVALID || expr->type == EXPR_TYPE_ABSENT) {
         if (disp_start) {
@@ -2495,9 +2495,13 @@ static int match_template (char mnemonic_suffix)
         case QWORD_SUFFIX:
             suffix_check.no_qsuf = 1;
             break;
-        
-        case INTEL_SUFFIX:
-            suffix_check.no_intelsuf = 1;
+
+        default:
+            /* INTEL_SUFFIX cannot be directly used at the end of instruction,
+             * it is generated when parsing intel syntax operands,
+             * so it must be checked for this way.
+             */
+            if (instruction.suffix == INTEL_SUFFIX) suffix_check.no_intelsuf = 1;
             break;
     
     }
@@ -3516,7 +3520,7 @@ static void set_syntax (char **pp, int set_intel_syntax)
     *pp = skip_whitespace (*pp);
     
     if (!is_end_of_line (**pp)) {
-        char *s = *pp;
+        const char *s = *pp;
         char saved_c = get_symbol_name_end (pp);
         
         if (xstrcasecmp (s, "prefix") == 0) {
