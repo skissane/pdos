@@ -2,11 +2,7 @@ ifndef PDAS
 ; Written by Paul Edwards
 ; Released to the public domain
 
-ifdef SASM
-.amd64
-else
 .code
-endif
 
 ; I think rcx will have env
 ; And it looks like we only need to save rbx, rcx, rdx, r8, r9, rsp
