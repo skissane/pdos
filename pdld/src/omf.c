@@ -51,12 +51,12 @@ static int estimate (unsigned char *file,
         int big_fields;
         unsigned short record_len;
         
-        CHECK_READ (file, 3);
+        CHECK_READ (pos, 3);
         record_type = pos[0];
         big_fields = record_type & 1;
         record_type &= ~1;
         bytearray_read_2_bytes (&record_len, pos + 1, LITTLE_ENDIAN);
-        CHECK_READ (file, record_len);
+        CHECK_READ (pos, record_len);
         {
             size_t i;
             unsigned char checksum = 0;
@@ -66,7 +66,9 @@ static int estimate (unsigned char *file,
         }
         pos += 3;
 
-        if (record_type == RECORD_TYPE_EXTDEF
+        if (record_type == RECORD_TYPE_MODEND) {
+            break;
+        } else if (record_type == RECORD_TYPE_EXTDEF
             || record_type == RECORD_TYPE_LEXTDEF) {
             unsigned char *extdef_name = pos;
             const unsigned char *end = pos + record_len - 1;
@@ -161,28 +163,46 @@ static int read_omf_object (unsigned char *file,
     if (estimate (file, file_size, filename,
                   &num_segments, &num_extdefs, &num_pubdefs, &num_lnames)) return 1;
 
-    /* All indexes are 1-based. */
-    num_lnames++;
-    lnames = xcalloc (num_lnames, sizeof *lnames);
-    i_lnames = 1;
+    if (!num_segments && !num_extdefs && !num_pubdefs && !num_lnames) {
+        /* Probably DLL import. */
+        lnames = NULL;
+        part_p_array = NULL;
+        of = NULL;
+        local_name_suffix_size = 0;
+        local_name_suffix = NULL;
+        i_segments = i_extdefs = i_pubdefs = i_lnames = 0;
+    } else {
+        if (ld_state->target_machine == LD_TARGET_MACHINE_I386
+            || ld_state->target_machine == LD_TARGET_MACHINE_UNKNOWN) {
+            ld_state->target_machine = LD_TARGET_MACHINE_I386;
+        } else {
+            ld_error ("%s: OMF format used but other objects are not for i386", filename);
+            return 1;
+        }
+        
+        /* All indexes are 1-based. */
+        num_lnames++;
+        lnames = xcalloc (num_lnames, sizeof *lnames);
+        i_lnames = 1;
 
-    /* The layout of symbol table here is:
-     * empty symbol
-     * section symbols
-     * public symbols
-     * undefined symbols
-     */
-    num_segments++;
-    i_segments = 1;
-    i_pubdefs = num_segments;
-    i_extdefs = i_pubdefs + num_pubdefs;
+        /* The layout of symbol table here is:
+         * empty symbol
+         * section symbols
+         * public symbols
+         * undefined symbols
+         */
+        num_segments++;
+        i_segments = 1;
+        i_pubdefs = num_segments;
+        i_extdefs = i_pubdefs + num_pubdefs;
 
-    part_p_array = xmalloc (sizeof (*part_p_array) * num_segments);
-    of = object_file_make (num_segments + num_pubdefs + num_extdefs, filename);
+        part_p_array = xmalloc (sizeof (*part_p_array) * num_segments);
+        of = object_file_make (num_segments + num_pubdefs + num_extdefs, filename);
 
-    local_name_suffix_size = LOCAL_SYMBOL_NAME_SUFFIX_FORMAT_SIZE + strlen (filename);
-    local_name_suffix = xmalloc (local_name_suffix_size);
-    sprintf (local_name_suffix, LOCAL_SYMBOL_NAME_SUFFIX_FORMAT, filename, unique_id++);
+        local_name_suffix_size = LOCAL_SYMBOL_NAME_SUFFIX_FORMAT_SIZE + strlen (filename);
+        local_name_suffix = xmalloc (local_name_suffix_size);
+        sprintf (local_name_suffix, LOCAL_SYMBOL_NAME_SUFFIX_FORMAT, filename, unique_id++);
+    }
 
     pos = file;
     while (pos < file + file_size) {
@@ -205,11 +225,62 @@ static int read_omf_object (unsigned char *file,
                 ld_fatal_error ("%s: incorrect string length", filename);
             }
         } else if (record_type == RECORD_TYPE_COMENT) {
-            /* Nothing needs to be done. */
-        } else if (record_type == RECORD_TYPE_MODEND) {
-            if (pos + record_len != file + file_size) {
-                ld_fatal_error ("%s: MODEND record is not the last record");
+            unsigned char comment_class;
+            unsigned char *saved_pos = pos;
+
+            if (record_len < 3) {
+                ld_fatal_error ("%s: incorrect COMENT record length", filename);
             }
+
+            comment_class = pos[1];
+            if (comment_class == COMENT_CLASS_OMF_EXTENSION) {
+                if (record_len < 4) {
+                    ld_fatal_error ("%s: incorrect COMENT record length", filename);
+                }
+
+                pos += 2;
+                if (pos[0] == COMENT_OMF_SUBTYPE_IMPDEF) {
+                    char *internal_name, *module_name, *entry_ident;
+                    const unsigned char *end = pos + record_len - 3;
+                    
+                    if (record_len < 7) {
+                    bad_impdef:
+                        ld_fatal_error ("%s: incorrect COMENT record or string length", filename);
+                    }
+
+                    if (pos[1] != IMPDEF_BY_NAME) {
+                        ld_internal_error_at_source (__FILE__, __LINE__,
+                                                     "%s: IMPDEF by ordinal is not yet supported",
+                                                     filename);
+                    }
+
+                    pos += 2;
+                    if (pos + pos[0] + 1 > end) goto bad_impdef;
+                    internal_name = xstrndup (pos + 1, pos[0]);
+                    pos += pos[0] + 1;
+
+                    if (pos + pos[0] + 1 > end) goto bad_impdef;
+                    module_name = xstrndup (pos + 1, pos[0]);
+                    pos += pos[0] + 1;
+
+                    if (pos + pos[0] > end) goto bad_impdef;
+                    entry_ident = xstrndup (pos + 1, pos[0]);
+
+                    coff_direct_import (internal_name, module_name, entry_ident, filename);
+                    free (entry_ident);
+                    free (module_name);
+                    free (internal_name);
+                }
+            } else if (comment_class == 0xFE) {
+                /* Unknown but present in import libraries. */
+            }
+            
+            pos = saved_pos;
+        } else if (record_type == RECORD_TYPE_MODEND) {
+            /* MODEND is always the last record and if there is something beyond it,
+             * the object is likely part of OMF Library.
+             */
+            break;
         } else if (record_type == RECORD_TYPE_EXTDEF
                    || record_type == RECORD_TYPE_LEXTDEF) {
             unsigned char *extdef_name = pos;
@@ -545,13 +616,154 @@ static int read_omf_object (unsigned char *file,
     free (part_p_array);
 
     return 0;
-}        
+}
+
+#define BLOCK_SIZE 512
+#define ALREADY_READ_NAME "\0Already read"
+/* Copied from coff.c. */
+#define IMP_PREFIX_STR "__imp_"
+#define IMP_PREFIX_LEN 6
+
+static int read_omf_library (unsigned char *file,
+                             size_t file_size,
+                             const char *filename)
+{
+    
+    unsigned char *pos;
+    unsigned short record_len;
+    unsigned short page_size;
+    unsigned long dictionary_offset;
+    unsigned short dictionary_num_blocks;
+    unsigned char flags;
+
+    pos = file;
+
+    CHECK_READ (pos, 3);
+    bytearray_read_2_bytes (&record_len, pos + 1, LITTLE_ENDIAN);
+    CHECK_READ (pos, record_len);
+    pos += 3;
+
+    if (record_len < 7) {
+        ld_error ("%s: OMF Library Header length %u too short", filename, record_len);
+        return 1;
+    }
+
+    page_size = record_len + 3;
+    bytearray_read_4_bytes (&dictionary_offset, pos, LITTLE_ENDIAN);
+    bytearray_read_2_bytes (&dictionary_num_blocks, pos + 4, LITTLE_ENDIAN);
+    flags = pos[6];
+
+    if (dictionary_offset % BLOCK_SIZE) {
+        ld_error ("%s: OMF Library Dictionary misaligned", filename);
+        return 1;
+    }
+
+    if (!(flags & 0x1)) {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "%s: only case sensitive OMF dictionaries are supported currently",
+                                     filename);
+    }
+
+    /* RECORD_TYPE_LIBRARY_END record is somewhere before this point
+     * but it does not matter, it is just a separator.
+     */
+    pos = file + dictionary_offset;
+    CHECK_READ (pos, dictionary_num_blocks * BLOCK_SIZE);
+
+    {
+        unsigned short block;
+        unsigned char *base = pos;
+
+        for (block = 0; block < dictionary_num_blocks; block++) {
+            int i;
+            unsigned char *block_pos;
+            
+            block_pos = base + block * BLOCK_SIZE;
+            for (i = 0; i < 37; i++) {
+                unsigned short page_number;
+                char *new_filename;
+                int ret;
+                
+                if (!block_pos[i]) continue;
+
+                pos = block_pos + block_pos[i] * 2;
+                if (pos - block_pos + pos[0] > BLOCK_SIZE - 2) {
+                    ld_error ("%s: OMF Library Dictionary invalid string length", filename);
+                    return 1;
+                }
+
+                {
+                    const struct symbol *imp_symbol, *symbol;
+                    char *name = xmalloc (IMP_PREFIX_LEN + pos[0] + 1);
+
+                    memcpy (name, IMP_PREFIX_STR, IMP_PREFIX_LEN);
+                    memcpy (name + IMP_PREFIX_LEN, pos + 1, pos[0]);
+                    name[IMP_PREFIX_LEN + pos[0]] = '\0';
+
+                    imp_symbol = symbol_find (name);
+                    symbol = symbol_find (name + IMP_PREFIX_LEN);
+                    free (name);
+
+                    if ((imp_symbol == NULL
+                         || !symbol_is_undefined (imp_symbol))
+                        && (symbol == NULL
+                            || !symbol_is_undefined (symbol))) continue;
+                }
+
+                bytearray_read_2_bytes (&page_number, pos + 1 + pos[0], LITTLE_ENDIAN);
+
+                pos = file + page_number * page_size;
+                if (pos >= base) {
+                    ld_error ("%s: OMF Library member has invalid page number %u", filename, page_number);
+                    return 1;
+                }
+
+                if (pos[0] != RECORD_TYPE_THEADR) {
+                    if (pos[0] == '\0' && memcmp (pos, ALREADY_READ_NAME, sizeof (ALREADY_READ_NAME)) == 0) continue;
+                    
+                    ld_error ("%s: OMF Library member is not OMF object", filename);
+                    return 1;
+                }
+
+                {
+                    size_t archive_name_len = strlen (filename);
+                    size_t member_name_len = pos[3];
+
+                    new_filename = xmalloc (archive_name_len + 3 + 2 * sizeof (unsigned long) + 1 + member_name_len + 1 + 1);
+                    memcpy (new_filename, filename, archive_name_len);
+                    {
+                        char *p = new_filename + archive_name_len;
+                        p += sprintf (p, "+%#lx", (unsigned long)(pos - file));
+                        *p = '(';
+                        memcpy (p + 1, pos + 4, member_name_len);
+                        p[1 + member_name_len] = ')';
+                        p[1 + member_name_len + 1] = '\0';
+                    }
+                }
+
+                ret = read_omf_object (pos, base - pos, new_filename);
+                free (new_filename);
+                if (ret) return 1;
+
+                /* Prevents accidentally reading the same member twice. */
+                memcpy (pos, ALREADY_READ_NAME, sizeof (ALREADY_READ_NAME));
+            }
+        }
+    }
+
+    coff_archive_end ();
+    
+    return 0;
+}
 
 int omf_read (unsigned char *file, size_t file_size, const char *filename)
 {
     CHECK_READ (file, 3);
     if (file[0] == RECORD_TYPE_THEADR) {
         if (read_omf_object (file, file_size, filename)) return INPUT_FILE_ERROR;
+        return INPUT_FILE_FINISHED;
+    } else if (file[0] == RECORD_TYPE_LIBRARY_HEADER) {
+        if (read_omf_library (file, file_size, filename)) return INPUT_FILE_ERROR;
         return INPUT_FILE_FINISHED;
     } else {
         return INPUT_FILE_UNRECOGNIZED;

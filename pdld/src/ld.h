@@ -364,6 +364,10 @@ int coff_read (unsigned char *file, size_t file_size, const char *filename);
 
 int coff_is_import_header (unsigned char *file, size_t file_size);
 void coff_archive_end (void);
+void coff_direct_import (const char *internal_name,
+                         const char *dll_name,
+                         const char *real_import_name,
+                         const char *filename);
 
 void coff_print_help (void);
 void coff_use_option (int option_index, char *arg);

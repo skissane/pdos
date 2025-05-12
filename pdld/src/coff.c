@@ -2537,6 +2537,7 @@ static void import_generate_import (const char *import_name,
                                     short OrdinalHint,
                                     short ImportType,
                                     short ImportNameType,
+                                    const char *optional_real_import_name,
                                     const char *filename)
 {
     struct section_part *dot_idata5_part;
@@ -2605,7 +2606,14 @@ static void import_generate_import (const char *import_name,
                 break;
 
             case IMPORT_NAME:
-                real_import_name = xstrdup (import_name);
+                /* OMF import libraries explicitly write the real import name
+                 * instead of using IMPORT_NAME_NOPREFIX or IMPORT_NAME_UNDECORATE.
+                 */
+                if (optional_real_import_name) {
+                    real_import_name = xstrdup (optional_real_import_name);
+                } else {
+                    real_import_name = xstrdup (import_name);
+                }
                 break;
             
             case IMPORT_NAME_NOPREFIX:
@@ -2793,7 +2801,12 @@ static int read_import_object (unsigned char *file, size_t file_size, const char
         import_generate_head (current_import_dll_name, filename);
     }
     
-    import_generate_import (import_name, import_hdr.OrdinalHint, import_hdr.Type & 0x3, import_hdr.Type >> 2, filename);
+    import_generate_import (import_name,
+                            import_hdr.OrdinalHint,
+                            import_hdr.Type & 0x3,
+                            import_hdr.Type >> 2,
+                            NULL,
+                            filename);
 
     return 0;
 }
@@ -2858,6 +2871,30 @@ void coff_archive_end (void)
         free (current_import_dll_name);
         current_import_dll_name = NULL;
     }
+}
+
+void coff_direct_import (const char *internal_name,
+                         const char *dll_name,
+                         const char *real_import_name,
+                         const char *filename)
+{
+    if (ld_state->oformat == LD_OFORMAT_LX) {
+        ld_internal_error_at_source (__FILE__, __LINE__,
+                                     "%s: coff_direct_import () (OMF import) to LX is not yet supported",
+                                     filename);
+    }
+
+    if (current_import_dll_name && strcmp (dll_name, current_import_dll_name)) {
+        import_generate_end ();
+        free (current_import_dll_name);
+        current_import_dll_name = NULL;
+    }
+    if (current_import_dll_name == NULL) {
+        current_import_dll_name = xstrdup (dll_name);
+        import_generate_head (current_import_dll_name, filename);
+    }
+    
+    import_generate_import (internal_name, 0, IMPORT_CODE, IMPORT_NAME, real_import_name, filename);
 }
 
 #include "options.h"
