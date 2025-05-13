@@ -1677,6 +1677,14 @@ static void osfopen(void)
        x'02' M  (never both A and M)
     */
 
+    /* errors from MVS __aopen are negative numbers */
+    if ((int)myfile->hfile <= 0)
+    {
+        err = 1;
+        errno = -(int)myfile->hfile;
+        return;
+    }
+
     myfile->true_recfm = (mode >> 16) & 0xff;
 
     mode &= 0x03; /* only interested in the simple mode now */
@@ -1709,14 +1717,6 @@ static void osfopen(void)
         printf("curr TTR hex %x\n", data[2]);
         printf("max tracks decimal %u\n", data[3]);
 #endif
-    }
-
-    /* errors from MVS __aopen are negative numbers */
-    if ((int)myfile->hfile <= 0)
-    {
-        err = 1;
-        errno = -(int)myfile->hfile;
-        return;
     }
 
     /* recfm=f and v are effecively always line-buffered
