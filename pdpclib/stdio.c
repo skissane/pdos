@@ -7334,6 +7334,10 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
                 {
                     begwrite(stream, stream->lrecl);
                 }
+                else
+                {
+                    lenwrite = stream->lrecl;
+                }
                 memcpy(dptr, ptr, stream->szfbuf);
                 finwrite(stream);
                 ptr = (char *)ptr + stream->szfbuf;
