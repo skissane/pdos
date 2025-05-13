@@ -658,11 +658,16 @@ static int read_omf_library (unsigned char *file,
         return 1;
     }
 
+    /* For now it seems it does not matter whether the dictionary
+     * is marked as case sensitive or not as the content is the same.
+     */
+#if 0
     if (!(flags & 0x1)) {
         ld_internal_error_at_source (__FILE__, __LINE__,
                                      "%s: only case sensitive OMF dictionaries are supported currently",
                                      filename);
     }
+#endif
 
     /* RECORD_TYPE_LIBRARY_END record is somewhere before this point
      * but it does not matter, it is just a separator.
