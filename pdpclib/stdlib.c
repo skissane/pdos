@@ -1456,9 +1456,9 @@ __PDPCLIB_API__ int system(const char *string)
     {
         return (-1);
     }
-    strcpy(cmdt, cmd);
-    strcat(cmdt, " /c ");
-    strcat(cmdt, string);
+    strcpy((char *)cmdt, cmd);
+    strcat((char *)cmdt, " /c ");
+    strcat((char *)cmdt, string);
 #else
     len = strlen(string);
     cmdt[0] = (unsigned char)(len + 3);
