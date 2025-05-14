@@ -9,7 +9,8 @@ COPTS=-D__PDOS386__ \
     -D__64BIT__ \
     -D__NOBIVA__ -I . -I../pdpclib -I../src -I../bios -DNEED_MZ \
     -DNO_DLLENTRY -Dconst= \
-    -DUSE_MEMMGR -DDONT_MM
+    -DUSE_MEMMGR -DDONT_MM -DTARGET_64BIT \
+    -D__CC64__ -D__CC64OS__
 
 OBJ=genstart.obj pdos.obj ../bios/exeload.obj \
    ../pdpclib/__memmgr.obj ../src/fat.obj
