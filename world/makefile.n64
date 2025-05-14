@@ -1,0 +1,34 @@
+# build a win64 executable using cc64
+
+VPATH=./hashtab
+CPP=pdcc
+CC=cc64
+CFLAGS=
+LD=pdld
+LDFLAGS=-s -nostdlib --no-insert-timestamp --image-base 0x400000
+AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
+#AS=sasm -f win64 -DCC64
+#AS=x86_64-w64-mingw32-as
+COPTS=-I. -I../pdpclib -D__WIN32__ -D__NOBIVA__ -D__64BIT__ -D__CC64__
+
+OBJS=world.obj
+OBJS2=../pdpclib/x64supa.obj
+
+TARGET=world.exe
+
+all: clean $(TARGET)
+
+$(TARGET): $(OBJS)
+  $(LD) $(LDFLAGS) -o $(TARGET) ../pdpclib/w32start.obj $(OBJS) $(OBJS2) ../pdpclib/msvcrt.lib
+
+.c.obj:
+  $(CPP) -E $(COPTS) -o $*.i $<
+  $(CC) -c -out:$@ $*.i
+  rm -f $*.i
+
+.asm.obj:
+  $(AS) -o $@ $<
+
+clean:
+  rm -f $(OBJS) $(TARGET)
+
