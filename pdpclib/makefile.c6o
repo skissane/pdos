@@ -8,7 +8,8 @@ CC=cc64
 AS=sasm -f win64 -DCC64
 COPTS=-D__PDOS386__ \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
-    -DUSE_MEMMGR -DNOUNDMAIN -D__64BIT__ -Dconst=
+    -DUSE_MEMMGR -DNOUNDMAIN -D__64BIT__ -Dconst= \
+    -D__CC64OS__ -D__CC64__
 
 AR=xar
 
