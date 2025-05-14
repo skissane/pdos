@@ -1,0 +1,35 @@
+# This builds the PDOS-generic OS library for win64
+# using cc64
+
+# PDOS386 is a misnomer and should be renamed to PDOSGENOS
+# (not PDOSGEN which is for pdos-generic apps)
+
+CC=cc64
+AS=sasm -f win64 -DCC64
+COPTS=-D__PDOS386__ \
+    -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
+    -DUSE_MEMMGR -DNOUNDMAIN -D__64BIT__ -Dconst=
+
+AR=xar
+
+OBJS=stdio.obj string.obj stdlib.obj start.obj time.obj \
+    errno.obj assert.obj signal.obj locale.obj ctype.obj \
+    setjmp.obj math.obj x64supa.obj pdossupc.obj
+
+all: clean pdosgeno.lib
+
+pdosgeno.lib: $(OBJS)
+        rm -f pdosgeno.lib
+        $(AR) r pdosgeno.lib $(OBJS)
+        $(AR) s pdosgeno.lib
+
+.c.obj:
+        pdcc -E $(COPTS) -o $*.i $<
+        $(CC) -q -c -out:$@ $*.i
+        rm -f $*.i
+
+.asm.obj:
+        $(AS) -o $@ $<
+
+clean:
+        rm -f pdosgeno.lib
