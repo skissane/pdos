@@ -256,15 +256,15 @@ static int read_omf_object (unsigned char *file,
 
                     pos += 2;
                     if (pos + pos[0] + 1 > end) goto bad_impdef;
-                    internal_name = xstrndup (pos + 1, pos[0]);
+                    internal_name = xstrndup ((char *)pos + 1, pos[0]);
                     pos += pos[0] + 1;
 
                     if (pos + pos[0] + 1 > end) goto bad_impdef;
-                    module_name = xstrndup (pos + 1, pos[0]);
+                    module_name = xstrndup ((char *)pos + 1, pos[0]);
                     pos += pos[0] + 1;
 
                     if (pos + pos[0] > end) goto bad_impdef;
-                    entry_ident = xstrndup (pos + 1, pos[0]);
+                    entry_ident = xstrndup ((char *)pos + 1, pos[0]);
 
                     coff_direct_import (internal_name, module_name, entry_ident, filename);
                     free (entry_ident);

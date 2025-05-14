@@ -195,7 +195,7 @@ static void write_import_descriptor (unsigned char *pos)
     
     pos += SIZEOF_struct_IMPORT_Directory_Table_file;
     
-    strcpy (pos, ld_state->output_filename);
+    strcpy ((char *)pos, ld_state->output_filename);
     pos += strlen (ld_state->output_filename) + 1;
 
     reloc.Type = get_reloc_type ();
@@ -265,11 +265,11 @@ static void write_import_descriptor (unsigned char *pos)
     write_struct_string_table_header (pos, &strtab_hdr);
     pos += SIZEOF_struct_string_table_header_file;
 
-    strcpy (pos, symbol_names[0]);
+    strcpy ((char *)pos, symbol_names[0]);
     pos += strlen (symbol_names[0]) + 1;
-    strcpy (pos, symbol_names[1]);
+    strcpy ((char *)pos, symbol_names[1]);
     pos += strlen (symbol_names[1]) + 1;
-    strcpy (pos, symbol_names[2]);
+    strcpy ((char *)pos, symbol_names[2]);
 }
 
 static void write_null_import_descriptor (unsigned char *pos)
@@ -307,7 +307,7 @@ static void write_null_import_descriptor (unsigned char *pos)
     write_struct_string_table_header (pos, &strtab_hdr);
     pos += SIZEOF_struct_string_table_header_file;
 
-    strcpy (pos, "__NULL_IMPORT_DESCRIPTOR");
+    strcpy ((char *)pos, "__NULL_IMPORT_DESCRIPTOR");
 }
 
 static void write_null_thunk_data (unsigned char *pos)
@@ -353,7 +353,7 @@ static void write_null_thunk_data (unsigned char *pos)
     write_struct_string_table_header (pos, &strtab_hdr);
     pos += SIZEOF_struct_string_table_header_file;
 
-    strcpy (pos, symbol_names[2]);
+    strcpy ((char *)pos, symbol_names[2]);
 }
 
 void coff_implib_compat_write (unsigned char *file,
@@ -374,7 +374,7 @@ void coff_implib_compat_write (unsigned char *file,
                                  strlen (ld_state->output_filename) + 1,
                                  lu_timestamp);
     pos += SIZEOF_struct_IMAGE_ARCHIVE_MEMBER_HEADER_file;
-    strcpy (pos, ld_state->output_filename);
+    strcpy ((char *)pos, ld_state->output_filename);
     pos += strlen (ld_state->output_filename) + 1;
     pos = file + ALIGN (pos - file, 2);
     
