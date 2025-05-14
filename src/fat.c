@@ -378,7 +378,7 @@ unsigned int fatCreatFile(FAT *fat, const char *fnm, FATFILE *fatfile,
                 /* createLFNs is similar to fatPosition, but it
                  * is guaranteed that it will end on empty/deleted
                  * slot or return error. */
-                ret = createLFNs(fat, fat->search, fat->lfn_search_len);
+                ret = createLFNs(fat, (char *)fat->search, fat->lfn_search_len);
                 if (ret) return (ret);
                 p = fat->de;
             }
@@ -510,7 +510,7 @@ unsigned int fatCreatDir(FAT *fat, const char *dnm, const char *parentname,
             /* createLFNs is similar to fatPosition, but it
              * is guaranteed that it will end on empty/deleted
              * slot or return error. */
-            ret = createLFNs(fat, fat->search, fat->lfn_search_len);
+            ret = createLFNs(fat, (char *)fat->search, fat->lfn_search_len);
             if (ret) return (ret);
             p = fat->de;
         }
@@ -674,7 +674,7 @@ unsigned int fatCreatNewFile(FAT *fat, const char *fnm, FATFILE *fatfile,
             /* createLFNs is similar to fatPosition, but it
              * is guaranteed that it will end on empty/deleted
              * slot or return error. */
-            ret = createLFNs(fat, fat->search, fat->lfn_search_len);
+            ret = createLFNs(fat, (char *)fat->search, fat->lfn_search_len);
             if (ret) return (ret);
             p = fat->de;
         }
@@ -1658,9 +1658,9 @@ static void fatPosition(FAT *fat, const char *fnm)
     fat->currcluster = 0;
     fat->found_deleted = 0;
     fat->processing_root = 0;
-    fatNextSearch(fat, fat->search, &fat->upto);
+    fatNextSearch(fat, (char *)fat->search, &fat->upto);
     if (fat->notfound) return;
-    fatRootSearch(fat, fat->search);
+    fatRootSearch(fat, (char *)fat->search);
     if (fat->last) fat->processing_root = 1;
     if (fat->notfound)
     {
@@ -1684,10 +1684,10 @@ static void fatPosition(FAT *fat, const char *fnm)
     }
     while (!fat->last)
     {
-        fatNextSearch(fat, fat->search, &fat->upto);
+        fatNextSearch(fat, (char *)fat->search, &fat->upto);
         if (fat->notfound) break;
         fat->found_deleted = 0;
-        fatDirSearch(fat, fat->search);
+        fatDirSearch(fat, (char *)fat->search);
     }
     if ((fat->pos_result == FATPOS_ONEMPTY ||
         fat->pos_result == FATPOS_ENDCLUSTER)
@@ -2125,7 +2125,7 @@ static void fatDirSectorSearch(FAT *fat,
                      * same length as the one we search for. */
                     if (fat->lfn_search_len == *lfn_len &&
                         /* Checks if the checksum corresponds with 8.3 name. */
-                        generateChecksum(p->file_name) == *checksum &&
+                        generateChecksum((char *)p->file_name) == *checksum &&
                         /* Case-insensitive comparison to check
                          * if they are same. */
                         !cicmp(fat->search, lfn, *lfn_len))
@@ -2181,7 +2181,7 @@ static void fatDirSectorSearch(FAT *fat,
                     /* Checks, if there is LFN associated
                      * with this 8.3 entry. */
                     if (*lfn_len &&
-                        generateChecksum(p->file_name) == *checksum)
+                        generateChecksum((char *)p->file_name) == *checksum)
                     {
                         /* Information about the last (first physical)
                          * entry are stored in FAT structure so they
@@ -2778,7 +2778,7 @@ unsigned int fatRenameFile(FAT *fat,const char *old,const char *new)
     {
         /* Stores the old LFN. */
         memcpy(old_lfn,
-               strchr(fat->corrected_path, '\0') - old_lfn_len - 1,
+               strchr((char *)fat->corrected_path, '\0') - old_lfn_len - 1,
                old_lfn_len);
         /* Original has LFN, so LFN entries must be deleted. */
         deleteLFNs(fat);
@@ -3246,7 +3246,9 @@ static int createLFNs(FAT *fat, char *lfn, unsigned int lfn_len)
     {
         /* Otherwise we set a flag and generate 8.3 name ourselves. */
         fat->lossy_conversion = 1;
-        generate83Name(orig_lfn, lfn_len, shortname);
+        generate83Name((unsigned char *)orig_lfn,
+                       lfn_len,
+                       (unsigned char *)shortname);
     }
 
     /* Calculates how many free entries will
@@ -3507,9 +3509,9 @@ static int checkNumericTail(FAT *fat, char *shortname)
      * are in. */
     if (!fat->processing_root)
     {
-        strcpy(path, fat->corrected_path);
-        strcat(path, "."); /* this should be first entry in directory */
-        fatPosition(fat, path);
+        strcpy((char *)path, (char *)fat->corrected_path);
+        strcat((char *)path, "."); /* this should be first entry in directory */
+        fatPosition(fat, (char *)path);
         fat->processing_root = 0;
     }
     else
@@ -3695,8 +3697,8 @@ static int findFreeSpaceForLFN(FAT *fat, unsigned int required_free,
      * are in. */
     if (fat->corrected_path[0] != '\0')
     {
-        strcpy(path, fat->corrected_path);
-        fatPosition(fat, path);
+        strcpy((char *)path, (char *)fat->corrected_path);
+        fatPosition(fat, (char *)path);
         fat->processing_root = 0;
     }
     /* If corrrected_path is empty, we must be in
