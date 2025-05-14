@@ -1258,7 +1258,19 @@ static void osfopen(void)
     }
     else
     {
+#ifdef __PDOSGENOS__
+        myfile->hfile = (int)(ptrdiff_t)PosFopen(fnm, modus);
+        if (myfile->hfile == 0)
+        {
+            errind = 1;
+        }
+        else
+        {
+            errind = 0;
+        }
+#else
         myfile->hfile = __open(fnm, 2, &errind);
+#endif
         if (errind)
         {
             if ((modeType == 3) || (modeType == 6)
