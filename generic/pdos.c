@@ -493,6 +493,79 @@ static void runexe(char *prog_name)
 
 
 
+/* the intention is to replace PosOpenFile/PosCreatFile, PosReadFile etc
+   with PosFopen, PosFread etc. Starting with just PosOpenFile. These
+   new functions will probably not get interrupt numbers assigned, as
+   they are only used internally, and it is expected that apps use
+   the now-exported fopen, fread etc */
+
+/* currently a handle is being used instead of a pointer to the
+   handle location, but that is expected to be rectified in due course */
+
+void *PosFopen(const char *name, const char *mode)
+{
+    int ret;
+    int x;
+    int bios_file = 0;
+
+    /* printf("got request to open %s\n", name); */
+    for (x = 3; x < MAX_HANDLE; x++)
+    {
+        if (!handles[x].inuse) break;
+    }
+    if (x == MAX_HANDLE)
+    {
+        return (NULL);
+    }
+    if (name[0] == ':')
+    {
+        name++;
+        bios_file = 1;
+    }
+    else if (strchr(name, ':') != NULL)
+    {
+        /* this allows a device to be opened, but we need better
+           logic for when we want to reference a file on an FAT
+           drive */
+        bios_file = 1;
+    }
+    if (bios_file)
+    {
+        handles[x].fptr = bios->Xfopen(name, mode);
+        if (handles[x].fptr != NULL)
+        {
+            handles[x].inuse = 1;
+            return ((void *)(ptrdiff_t)x);
+        }
+        else
+        {
+            return (NULL);
+        }
+    }
+    {
+        char fullname[FILENAME_MAX];
+
+#if 0
+        strcpy(fullname, "");
+        if (name[0] == '\\')
+        {
+            /* if they provide the full path, don't use cwd */
+        }
+        else if (cwd[0] != '\0')
+        {
+            strcat(fullname, cwd);
+            strcat(fullname, "\\");
+        }
+        strcat(fullname, name);
+#endif
+        formatPath(name, fullname);
+        ret = fatOpenFile(&fat, fullname + 3, &handles[x].ff);
+    }
+    if (ret != 0) return (NULL);
+    handles[x].inuse = 1;
+    return ((void *)(ptrdiff_t)x);
+}
+
 int PosOpenFile(const char *name, int mode, int *handle)
 {
     int ret;
