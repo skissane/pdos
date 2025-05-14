@@ -20,12 +20,23 @@ extern char mycmdline[400];
 
 int biosmain(int argc, char **argv);
 
+
+#ifdef __CC64OS__
+extern long long __ncallbacks;
+#endif
+
+
 /* This name is known to certain versions of "ld" as the entry
 point of an application and there is no particular reason to not
 use it. */
 
 int __crt0(OS *bios_parm)
 {
+
+#ifdef __CC64OS__
+    __ncallbacks = 0;
+#endif
+
     bios = bios_parm;
     *bios->main = biosmain;
 
