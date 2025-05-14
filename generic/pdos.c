@@ -154,6 +154,10 @@ static int formatPath(const char *input, char *output);
 /* Don't rely on the BIOS having a C library capable of breaking down a
    command line buffer, but there will at least be a program name, possibly
    an empty string. Our own C library can break it down though. */
+
+#ifdef __CC64__
+$callback
+#endif
 int biosmain(int argc, char **argv)
 {
     if (argc >= 1)
@@ -471,7 +475,12 @@ static void runexe(char *prog_name)
 
     __mmgid += 256;
     printf("about to call app at address %p\n", pgastart);
+    /* printf("first byte is %x\n", *(unsigned char *)pgastart); */
+#ifdef __CC64__
+    ret = (*pgastart)(&os);
+#else
     ret = pgastart(&os);
+#endif
     printf("return from app is hex %x\n", ret);
     memmgrFreeId(&__memmgr, __mmgid);
     __mmgid -= 256;
