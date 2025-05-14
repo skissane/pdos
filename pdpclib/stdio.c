@@ -2735,10 +2735,14 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
                    but not PDOS */
                 if (p[0] == 0x1b)
                 {
+#ifndef __PDOS386__
                     if (genuine == -1)
                     {
                         genuine = (__magic() == 0x1234);
                     }
+#else
+                    genuine = 1;
+#endif
                     if (!genuine)
                     {
                         pending[0] = 0x1b;
