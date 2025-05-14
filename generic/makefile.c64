@@ -3,6 +3,9 @@
 
 # PDOS386 should be renamed to PDOSGENOS one day
 
+# We should get rid of that WINSUPP and consolidate
+# the exit/getmainargs functions
+
 CC=cc64
 AS=sasm -f win64 -DCC64
 COPTS=-D__PDOS386__ \
@@ -10,7 +13,7 @@ COPTS=-D__PDOS386__ \
     -D__NOBIVA__ -I . -I../pdpclib -I../src -I../bios -DNEED_MZ \
     -DNO_DLLENTRY -Dconst= \
     -DUSE_MEMMGR -DDONT_MM -DTARGET_64BIT \
-    -D__CC64__ -D__CC64OS__
+    -D__CC64__ -D__CC64OS__ -DW64EMUL -DWINSUPP
 
 OBJ=genstart.obj pdos.obj ../bios/exeload.obj \
    ../pdpclib/__memmgr.obj ../src/fat.obj
