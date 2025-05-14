@@ -57,11 +57,13 @@ unsigned long arbitrary_base= 0;
 #include <os2.h>
 #endif
 
-#if defined(W32DLL) || defined(W64DLL)
+#if defined(W32DLL) || defined(W64DLL) || defined(WINSUPP)
 #include <pos.h>
 #include <windows.h>
 
+#ifndef WINSUPP
 extern void *_imp___iob;
+#endif
 
 #endif
 
@@ -2757,7 +2759,7 @@ extern __DUMMYFILE *_imp___iob;
 
 
 
-#ifdef W32DLL
+#if defined(W32DLL) || defined(WINSUPP)
 #define MAXPARMS 50
 
 extern char **__envptr;
