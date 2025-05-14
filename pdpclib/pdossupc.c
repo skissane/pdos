@@ -13,6 +13,7 @@
 #define CTYP
 #endif
 
+#ifndef __PDOSGENOS__
 int CTYP __open(const char *filename, int mode, int *errind)
 {
     int handle;
@@ -21,6 +22,7 @@ int CTYP __open(const char *filename, int mode, int *errind)
     else *errind = 0;
     return (handle);
 }
+#endif
 
 int CTYP __creat(const char *filename, int mode, int *errind)
 {
