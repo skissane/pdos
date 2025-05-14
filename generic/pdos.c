@@ -56,7 +56,7 @@ extern int __minstart;
 #define BIOS_BUFSIZ BUFSIZ
 
 extern OS *bios;
-extern __start(char *p);
+extern int __start(char *p);
 
 static unsigned int currentDrive = 2;
 
@@ -1055,8 +1055,8 @@ int PosRenameFile(const char *old, const char *new)
 
 int PosExec(char *prog, POSEXEC_PARMBLOCK *parmblock)
 {
-    strcpy(mycmdline, parmblock->cmdtail);
-    strcpy(mycmdline2, parmblock->cmdtail);
+    strcpy(mycmdline, (char *)parmblock->cmdtail);
+    strcpy(mycmdline2, (char *)parmblock->cmdtail);
     runexe(prog);
     return (0);
 }
@@ -1102,7 +1102,7 @@ static int ff_search(void)
         if (readbytes != sizeof dirent) return (1);
         if (dirent.file_name[0] == '\0') return (1);
         if (dirent.file_name[0] == DIRENT_DEL) continue;
-        strncpy(origdta.file_name, dirent.file_name, 11);
+        strncpy(origdta.file_name, (char *)dirent.file_name, 11);
         origdta.file_name[11] = '\0';
         break;
     }
