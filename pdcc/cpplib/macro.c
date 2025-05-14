@@ -35,9 +35,6 @@ static void destroy_macro(cpp_macro *macro)
     cpp_token *token;
     
     free (macro->parameters);
-    for (token = macro->tokens; token < macro->tokens + macro->count; token++) {
-        _cpp_destroy_token (token);
-    }
     free (macro);
 }
 

@@ -17,98 +17,36 @@
 #include <stdlib.h>
 #include <string.h>
 
-void _cpp_init_tokenrow(tokenrow *row)
+void _cpp_init_tokenrow (cpp_reader *reader, tokenrow *row)
 {
-    row->start = xcalloc (TOKENROW_LEN, sizeof(cpp_token));
+    row->start = _cpp_alloc_mem (reader, TOKENROW_LEN * sizeof(cpp_token));
+    memset (row->start, 0, TOKENROW_LEN * sizeof (cpp_token));
     row->end = row->start + TOKENROW_LEN;
     row->prev = NULL;
     row->next = NULL;
 }
 
-static tokenrow *next_tokenrow(tokenrow *row)
+static tokenrow *next_tokenrow (cpp_reader *reader, tokenrow *row)
 {
     if (row->next == NULL)
     {
-        row->next = xmalloc(sizeof(tokenrow));
-        _cpp_init_tokenrow(row->next);
+        row->next = _cpp_alloc_mem (reader, sizeof (tokenrow));
+        _cpp_init_tokenrow (reader, row->next);
         row->next->prev = row;
     }
 
     return (row->next);
 }
 
-void _cpp_destroy_token (cpp_token *token)
+static void *alloc_mem_strndup (cpp_reader *reader, const char *str, size_t max_len)
 {
-    switch (token->type) {
-        case CPP_NUMBER:
-        
-        case CPP_CHAR:
-        case CPP_LCHAR:
-        case CPP_uCHAR:
-        case CPP_UCHAR:
-        case CPP_OTHER:
+    size_t len = strnlen (str, max_len);
+    char *p = _cpp_alloc_mem (reader, len + 1);
 
-        case CPP_STRING:
-        case CPP_LSTRING:
-        case CPP_uSTRING:
-        case CPP_USTRING:
-        case CPP_u8STRING:
-        case CPP_HEADER_NAME:
-            free ((void *)(token->value.string.text));
-            token->value.string.text = NULL;
-            break;
-    }
-}
+    p[len] = '\0';
+    memcpy (p, str, len);
 
-static void destroy_tokens (cpp_token *start)
-{
-    cpp_token *token;
-
-    for (token = start; token < start + TOKENROW_LEN; token++) {
-        switch (token->type) {
-            case CPP_NUMBER:
-            
-            case CPP_CHAR:
-            case CPP_LCHAR:
-            case CPP_uCHAR:
-            case CPP_UCHAR:
-            case CPP_OTHER:
-
-            case CPP_STRING:
-            case CPP_LSTRING:
-            case CPP_uSTRING:
-            case CPP_USTRING:
-            case CPP_u8STRING:
-            case CPP_HEADER_NAME:
-                free ((void *)(token->value.string.text));
-                token->value.string.text = NULL;
-                break;
-        }
-    }
-}
-
-static void free_all_tokens (tokenrow *base_row)
-{
-    tokenrow *row;
-
-    for (row = base_row; row; row = row->next) {
-        destroy_tokens (row->start);
-    }
-}
-
-void _cpp_destroy_tokenrows (tokenrow *base_row)
-{
-    tokenrow *row, *next_row;
-    
-    /* base_row is part of reader and should not be freed here. */
-    destroy_tokens (base_row->start);
-    free (base_row->start);
-    for (row = base_row->next; row; row = next_row) {
-        next_row = row->next;
-        destroy_tokens (row->start);
-        free (row->start);
-        free (row);
-    }
+    return p;
 }
 
 void _cpp_process_line_notes(cpp_reader *reader)
@@ -273,7 +211,7 @@ static void read_number(cpp_reader *reader, cpp_string *string)
     } while (0 /*+++Finish UCNs*/);
 
     string->len = cur - start;
-    result = xstrndup(start, string->len + 1);
+    result = alloc_mem_strndup (reader, start, string->len + 1);
     string->text = result;
 }
 
@@ -282,7 +220,7 @@ static void create_literal(cpp_reader *reader,
                            const char *start, size_t len,
                            enum cpp_tokentype type)
 {
-    char *result = xstrndup(start, len + 1);
+    char *result = alloc_mem_strndup (reader, start, len);
 
     token->type = type;
     token->value.string.text = result;
@@ -575,7 +513,6 @@ new_line:
         }
         if (reader->keep_tokens == 0)
         {
-            free_all_tokens (&(reader->base_tokenrow));
             reader->cur_tokenrow = &(reader->base_tokenrow);
             result = reader->cur_tokenrow->start;
             reader->cur_token = result + 1;
@@ -884,7 +821,7 @@ cpp_token *_cpp_lex_token(cpp_reader *reader)
     {
         if (reader->cur_token == reader->cur_tokenrow->end)
         {
-            reader->cur_tokenrow = next_tokenrow(reader->cur_tokenrow);
+            reader->cur_tokenrow = next_tokenrow (reader, reader->cur_tokenrow);
             reader->cur_token = reader->cur_tokenrow->start;
         }
         
@@ -997,7 +934,7 @@ cpp_token *_cpp_temp_token(cpp_reader *reader)
 
             while (1)
             {
-                row = next_tokenrow(row);
+                row = next_tokenrow (reader, row);
                 if (row->end - row->start > tokens_infront)
                 {
                     break;
@@ -1027,7 +964,7 @@ cpp_token *_cpp_temp_token(cpp_reader *reader)
     
     if (reader->cur_token == reader->cur_tokenrow->end)
     {
-        reader->cur_tokenrow = next_tokenrow(reader->cur_tokenrow);
+        reader->cur_tokenrow = next_tokenrow (reader, reader->cur_tokenrow);
         reader->cur_token = reader->cur_tokenrow->start;
     }
 

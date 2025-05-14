@@ -69,16 +69,16 @@ static char *dir_name_of_file(_cpp_file *file)
 static cpp_dir *make_cpp_dir(cpp_reader *reader,
                              const char *name)
 {
-    cpp_dir *dir = xmalloc(sizeof(*dir));
+    cpp_dir *dir = _cpp_alloc_mem (reader, sizeof (*dir));
 
     dir->next = reader->quote_include;
     {
-        size_t len = strlen(name);
-        dir->name = xmalloc(len + 1);
-        memcpy(dir->name, name, len + 1);
+        size_t len = strlen (name);
+        dir->name = _cpp_alloc_mem (reader, len + 1);
+        memcpy (dir->name, name, len + 1);
     }
 
-    return (dir);
+    return dir;
 }
 
 static cpp_dir *search_path_head(cpp_reader *reader,

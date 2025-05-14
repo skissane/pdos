@@ -78,7 +78,7 @@ cpp_reader *cpp_create_reader(enum c_lang lang, symtab *tab)
     reader->avoid_paste.value.source = NULL;
 
     /* Prepares memory for tokens. */
-    _cpp_init_tokenrow(&(reader->base_tokenrow));
+    _cpp_init_tokenrow (reader, &(reader->base_tokenrow));
     reader->cur_tokenrow = &(reader->base_tokenrow);
     reader->cur_token = reader->cur_tokenrow->start;
 
@@ -107,11 +107,11 @@ cpp_reader *cpp_create_reader(enum c_lang lang, symtab *tab)
 void cpp_destroy_reader(cpp_reader *reader)
 {
     _cpp_destroy_symtab (reader);
-    _cpp_destroy_tokenrows (&(reader->base_tokenrow));
     free (reader->macro_memory);
     free (reader->op_stack);
     free (reader->date);
     free (reader->Ztime);
+    _cpp_free_mem_list (reader->mem_list);
     free (reader);
 }
 
@@ -175,4 +175,29 @@ const char *cpp_read_main_file(cpp_reader *reader, const char *name)
     ret = name;
 end:
     return (ret);
+}
+
+struct mem_list {
+    struct mem_list *next;
+    unsigned char content[1];
+};
+
+void *_cpp_alloc_mem (cpp_reader *reader, size_t size)
+{
+    struct mem_list *new = xmalloc (sizeof (*new) + size);
+
+    new->next = reader->mem_list;
+    reader->mem_list = new;
+
+    return new->content;
+}
+
+void _cpp_free_mem_list (void *p)
+{
+    struct mem_list *mem_list, *next_mem_list;
+    
+    for (mem_list = p; mem_list; mem_list = next_mem_list) {
+        next_mem_list = mem_list->next;
+        free (mem_list);
+    }
 }

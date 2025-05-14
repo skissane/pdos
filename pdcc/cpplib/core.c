@@ -583,7 +583,13 @@ static const cpp_token *strigify_arg(cpp_reader *reader, macro_arg *arg)
 
     *(dest++) = '"';
     len = dest - memory;
-    return (new_string_token(reader, dest - len, len));
+    {
+        char *new = _cpp_alloc_mem (reader, len);
+        memcpy (new, dest - len, len);
+        free (memory);
+        memory = new;
+    }
+    return new_string_token (reader, memory, len);
 }
 
 static void expand_arg(cpp_reader *reader, macro_arg *arg)
