@@ -2,6 +2,8 @@
 
 # PDOS386 is a misnomer and should be renamed to PDOSGENOS
 # (not PDOSGEN which is for pdos-generic apps)
+# That migration process has now started in conjunction with
+# migrating to PosFopen etc
 
 # Need to disable builtins because an ASCII/EBCDIC issue
 # means that it thinks there is no '%' and can use an fputs
@@ -10,7 +12,7 @@ CC=gccmvs
 AS=as370 -mhlasm -mebcdic
 COPTS=-S -Os -fno-common -U__MVS__ -D__MF32__ -D__PDOS386__ \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
-    -DUSE_MEMMGR -fno-builtin -DNOUNDMAIN
+    -DUSE_MEMMGR -fno-builtin -DNOUNDMAIN -D__PDOSGENOS__
 
 all: clean pdosgeno.a
 
