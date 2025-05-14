@@ -474,6 +474,14 @@ unsigned int PosAbsoluteDiskWrite(int drive, unsigned long start_sector,
                                   unsigned int sectors,void *buf); /*INT26 */
 
 
+
+/* not currently assigned an interrupt number as only
+   used statically currently */
+void *PosFopen(const char *name, const char *mode);
+
+
+
+
 /*Structure for BPB*/
 typedef struct {
     unsigned char BytesPerSector[2];
