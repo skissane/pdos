@@ -24,7 +24,7 @@ OBJS=aout.obj aout_bytearray.obj atari.obj atari_bytearray.obj binary.obj bytear
     ld.obj libld.obj link.obj lx.obj lx_bytearray.obj \
     mainframe.obj map.obj read.obj sections.obj \
     symbols.obj tebc.obj xmalloc.obj \
-    vse.obj
+    vse.obj coff_implib_compat.obj macho.obj macho_bytearray.obj omf.obj
 
 TARGET=pdld.exe
 
