@@ -802,6 +802,7 @@ static cc_expr cc_parse_postfix_expr (cc_reader *reader)
     expr.id = cc_get_unique_id(reader);
 
     switch (cc_peek_token (reader)->type) {
+#ifndef __CC64__
         case CC_TOKEN_IDENT: {
 #ifdef __CC64__
             cc_token ident_tok;
@@ -876,6 +877,7 @@ static cc_expr cc_parse_postfix_expr (cc_reader *reader)
             } else cc_consume_token (reader);
             return expr;
 
+#endif
         default:
             cc_report (reader, CC_DL_ERROR, "Expected an expression but got \"%s\"",
                        g_token_info[cc_peek_token (reader)->type].name);
@@ -885,6 +887,7 @@ static cc_expr cc_parse_postfix_expr (cc_reader *reader)
 
 static cc_expr cc_parse_cast_expr (cc_reader *reader)
 {
+#ifndef __CC64__
     if (cc_peek_token (reader)->type == CC_TOKEN_LPAREN
         && cc_peek_2nd_token (reader)->type == CC_TOKEN_IDENT) {
         cc_expr expr = {0};
@@ -905,7 +908,8 @@ static cc_expr cc_parse_cast_expr (cc_reader *reader)
         *expr.data.cast.expr = cc_parse_postfix_expr (reader);
         return expr;
     }
-    
+#endif
+
     return cc_parse_postfix_expr (reader);
 }
 
@@ -1046,6 +1050,7 @@ static cc_expr cc_parse_binary_expr (cc_reader *reader)
                 return left;
         }
 
+#ifndef __CC64__
         cc_consume_token(reader);
 
         while (sp && stack[sp - 1].prio <= prio) {
@@ -1061,6 +1066,7 @@ static cc_expr cc_parse_binary_expr (cc_reader *reader)
             *expr.data.binary_op.right = left;
             left = expr;
         }
+#endif
 
         stack[sp].left = left;
         stack[sp].type = type;
@@ -1488,6 +1494,7 @@ decl:
         return expr;
     }
 
+#ifndef __CC64__
     case CC_TOKEN_KW_TYPEDEF:
     {
         cc_type s_type;
@@ -1520,6 +1527,7 @@ decl:
         
         return expr;
     }
+#endif
 
     default:
 default_:
@@ -1531,13 +1539,15 @@ default_:
 
 static cc_expr cc_parse_external_declaration (cc_reader *reader)
 {
+#ifndef __CC64__
     if (cc_peek_token (reader)->type == CC_TOKEN_SEMICOLON) {
         cc_expr expr = {0};
         cc_report (reader, CC_DL_WARNING, "extra ';' outside of a function is not allowed");
         cc_consume_token (reader);
         return expr;
     }
-    
+#endif
+
     return cc_parse_declaration_or_fndef (reader, 1);
 }
 
