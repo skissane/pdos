@@ -7,6 +7,8 @@
 # include it, due to cc64 limitations.
 
 
+TDIR=x64
+
 CPP=pdcc
 CC=cc64
 CFLAGS=
@@ -23,7 +25,7 @@ OBJS=main.obj c_ppout.obj inc_path.obj \
           cpplib/expr.obj cpplib/files.obj cpplib/chars.obj \
           cpplib/idents.obj cpplib/init.obj cpplib/lex.obj \
           cpplib/macro.obj cpplib/support.obj cpplib/symtab.obj \
-          cclib/cclib.obj cclib/asgen.obj cclib/lexer.obj cclib/diag.obj \
+          cclib/cclib.obj cclib/$(TDIR)/asgen.obj cclib/lexer.obj cclib/diag.obj \
           xmalloc.obj
 
 TARGET=pdcc.exe
