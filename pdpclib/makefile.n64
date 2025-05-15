@@ -9,6 +9,11 @@
 # revisit this situation at a later date. If not by
 # changing cc64 then perhaps allowing a definition file.
 
+# Note that for development purposes, I think there is an
+# "undocumented" option "-callback" which makes every
+# function a callback so that you can see if the issue
+# is you have failed to add a $callback to a function.
+
 CC=cc64
 AR=xar
 #AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
