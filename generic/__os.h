@@ -10,6 +10,17 @@
 /*                                                                   */
 /*********************************************************************/
 
+/* generally speaking, when you need to add a new C90 function here,
+   you need to update the following:
+
+   pdpclib/ctype.h (or whichever PDPCLIB header file is applicable)
+   bios/exeload.c (STDTHUNK - not strictly related)
+   generic/__os.h
+   generic/bios.c
+   generic/pdos.c
+   src/pdos.c
+*/
+
 /* Note that a BIOS that uses this interface is unlikely to populate
    all of these things, especially if running on hardware of the
    1980s era. You can expect restrictions such as only fopen (of a
@@ -204,6 +215,7 @@ typedef struct {
     int (*XPosGetReturnCode)(void);
     double (*Xstrtod)(const char *nptr, char **endptr);
     FILE *(*Xtmpfile)(void);
+    int (*ispunct)(int c);
 } OS;
 
 extern OS *__os;

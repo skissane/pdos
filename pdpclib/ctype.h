@@ -46,6 +46,7 @@ int toupper(int c);
 #define isupper __os->isupper
 #define toupper __os->toupper
 #define iscntrl __os->iscntrl
+#define ispunct __os->ispunct
 
 #else
 extern unsigned short *__isbuf;

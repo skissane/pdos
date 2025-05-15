@@ -2968,6 +2968,7 @@ STDTHUNK(time) \
 STDTHUNK(localtime) \
 STDTHUNK(fclose) \
 STDTHUNK(_errno) \
+STDTHUNK(ispunct) \
 STDTHUNK(_assert)
 
 

@@ -359,7 +359,7 @@ static OS bios = { __start, 0, 0, NULL /* cmd */, printf, 0, malloc, NULL, NULL,
   (getchar), (putchar), PosExec, longjmp,
   0 /* service call */,
   PosGetCommandLine, PosGetReturnCode,
-  strtod, tmpfile,
+  strtod, tmpfile, ispunct,
 };
 #endif
 
