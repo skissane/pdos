@@ -1,0 +1,29 @@
+# Produces win64 executable.
+# We link with the static library produced by makefile.c64
+# in order to make use of
+# PDPCLIB's ANSI escape sequence support
+
+CC=cc64
+AR=xar
+LD=pdld --no-insert-timestamp
+AS=pdas --64 --oformat coff
+LDFLAGS=
+AR=xar
+COPTS=-D__64BIT__ -D__WIN32__ -D__STATIC__ -D__CC64__ \
+    -I../pdpclib -I../bios -I. -I../src \
+    -DTARGET_64BIT -DNEED_MZ -DNO_DLLENTRY -DW64EMUL -D__CC64OS__ \
+    -DGENSHELL
+OBJS=../bios/exeload.obj
+
+all: clean bios.exe
+
+bios.exe: bios.obj $(OBJS)
+    $(LD) $(LDFLAGS) -s -o bios.exe ../pdpclib/p32start.obj bios.obj $(OBJS) ../pdpclib/pdpwin64.lib ../src/kernel32.lib
+
+.c.obj:
+    pdcc -E $(COPTS) -o $*.i $<
+    $(CC) -q -c -out:$@ $*.i
+    rm -f $*.i
+
+clean:
+    rm -f *.obj bios.exe
