@@ -93,6 +93,31 @@ __POSGENOS__ - I give up.
 
 */
 
+
+/* New requirement.
+
+   When running the PDOS-generic OS, we want to run both PDOS-generic
+   apps and Win 32/64 apps.
+
+   PDOS-generic apps need the OS structure as a parameter on entry
+   and will call __start themselves, as one of the callback functions.
+
+   Win 32/64 apps don't need any parameters, and they also won't call
+   __start, so file handles aren't marked for auto-closure.
+
+   To cope with this, the new proposal is a WINNEWMOD to define a new
+   behavior. exeload will signal whether msvcrt.dll was invoked. And
+   then PDOS-generic will set the genmain itself and call __start itself.
+   This will lead to mainCRTStartup in w32start.c being called with
+   argc and argv, but that is harmless. We could have another flag to
+   avoid that if required for some reason. __start will need to mark
+   argc and argv as already computed, so that when mainCRTStartup
+   calls getmainargs, it can return quickly because the work has
+   already been done. The w32exit/getmainargs hacks can probably be
+   removed from both bios.c and exeload.c after this new model has
+   been implemented.
+*/
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
