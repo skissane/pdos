@@ -60,9 +60,7 @@ extern int __start(char *p);
 
 static unsigned int currentDrive = 2;
 
-#ifdef WINNEWMOD
 extern int salone;
-#endif
 
 static int lastcc = 0;
 
