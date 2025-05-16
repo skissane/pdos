@@ -319,6 +319,28 @@ extern void *__lastsup; /* last thing supplied to memmgr */
 char **__eplist;
 char *__plist;
 
+
+#ifdef WINNEWMOD
+static int G_argc;
+static char **G_argv;
+static char *G_env[] = {NULL};
+
+/* not sure what this type is */
+typedef int _startupinfo;
+
+__PDPCLIB_API__ int __getmainargs(int *_Argc,
+                                  char ***_Argv,
+                                  char ***_Env,
+                                  int _DoWildCard,
+                                  _startupinfo *_StartInfo)
+{
+    *_Argc = G_argc;
+    *_Argv = G_argv;
+    *_Env = G_env;
+    return (0);
+}
+#endif
+
 #ifdef __WIN32__
 static DWORD stdin_dw;
 static DWORD stdout_dw;
@@ -1513,6 +1535,12 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
         else
         {
+
+#ifdef WINNEWMOD
+            G_argc = argc;
+            G_argv = argv;
+#endif
+
 #ifdef __CC64__
             rc = (*__genmain)(argc, argv);
 #else

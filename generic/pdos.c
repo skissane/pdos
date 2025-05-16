@@ -60,6 +60,10 @@ extern int __start(char *p);
 
 static unsigned int currentDrive = 2;
 
+#ifdef WINNEWMOD
+extern int salone;
+#endif
+
 static int lastcc = 0;
 
 /* do we want auto-translation of text files from ASCII to EBCDIC? */
@@ -476,11 +480,24 @@ static void runexe(char *prog_name)
     __mmgid += 256;
     printf("about to call app at address %p\n", pgastart);
     /* printf("first byte is %x\n", *(unsigned char *)pgastart); */
+
+    if (salone)
+    {
+        __genmain = (void *)pgastart;
+        ret = __start(mycmdline);
+        salone = 0;
+        __genmain = 0;
+    }
+    else
+    {
 #ifdef __CC64__
-    ret = (*pgastart)(&os);
+        ret = (*pgastart)(&os);
 #else
-    ret = pgastart(&os);
+        ret = pgastart(&os);
 #endif
+    }
+
+
     printf("return from app is hex %x\n", ret);
     memmgrFreeId(&__memmgr, __mmgid);
     __mmgid -= 256;

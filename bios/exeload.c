@@ -29,6 +29,7 @@
 
 /* is this a standalone program that won't call __start of its
    own free will? */
+/* ie is this a non-PDOS-generic app */
 int salone = 0;
 
 int use_arbitrary = 0; /* the arbitrary_base location has been set by caller */
@@ -57,14 +58,26 @@ unsigned long arbitrary_base= 0;
 #include <os2.h>
 #endif
 
-#if defined(W32DLL) || defined(W64DLL) || defined(WINSUPP)
+#if defined(W32DLL) || defined(W64DLL) || defined(WINSUPP) \
+    || defined(WINNEWMOD)
 #include <pos.h>
 #include <windows.h>
 
-#ifndef WINSUPP
+#if !defined(WINSUPP) /* && !defined(WINNEWMOD) */
 extern void *_imp___iob;
 #endif
 
+#endif
+
+
+#if defined(WINNEWMOD)
+#ifndef __SUBC__
+int __getmainargs(int *_Argc, char ***_Argv, char ***_Env, int _DoWildCard,
+                  int *_StartInfo);
+#else
+int __getmainargs(int *_Argc, void *_Argv, void *_Env, int _DoWildCard,
+                  int *_StartInfo);
+#endif
 #endif
 
 
@@ -183,6 +196,9 @@ int exeloadDoload(unsigned char **entry_point,
     FILE *fp;
     int ret = 1;
 
+#ifdef WINNEWMOD
+    salone = 0;
+#endif
     fp = fopen(progname, "rb");
     if (fp == NULL)
     {
@@ -2760,6 +2776,7 @@ extern __DUMMYFILE *_imp___iob;
 
 
 #if defined(W32DLL) || defined(WINSUPP)
+
 #define MAXPARMS 50
 
 extern char **__envptr;
@@ -2846,7 +2863,8 @@ void w32exit(int status)
 #endif
 
 
-#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL)
+#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL) \
+    || (defined(WINNEWMOD) && defined(__64BIT__))
 #define STDTHUNK(x) { #x, (void *)x },
 #else
 #define STDTHUNK(x) { #x, (unsigned long)x },
@@ -3395,9 +3413,11 @@ STDTHUNKLIST
                         }
                     }
                 }
-#elif defined(W32HACK) || defined(W32EMUL)
+#elif defined(W32HACK) || defined(W32EMUL) || \
+    (defined(WINNEWMOD) && !defined(__64BIT__))
                 unsigned long *thunk;
-                
+
+                salone = 1;
                 for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
                      *thunk != 0;
                      thunk++)
@@ -3462,6 +3482,19 @@ STDTHUNKLIST
                         else if (strcmp((char *)hintname, "__getmainargs") == 0)
                         {
                             *thunk = (unsigned long)getmainargs;
+                        }
+                        else if (strcmp((char *)hintname, "_iob") == 0)
+                        {
+                            *thunk = (unsigned long)_imp___iob;
+                        }
+#elif defined(WINNEWMOD)
+                        else if (strcmp((char *)hintname, "__getmainargs") == 0)
+                        {
+                            *thunk = (unsigned long)__getmainargs;
+                        }
+                        else if (strcmp(hintname, "exit") == 0)
+                        {
+                            *thunk = (unsigned long)exit;
                         }
                         else if (strcmp((char *)hintname, "_iob") == 0)
                         {
