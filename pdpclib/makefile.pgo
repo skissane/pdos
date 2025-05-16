@@ -6,7 +6,8 @@ AR=xar
 AS=pdas
 AS2=as86 -f coff
 COPTS=-fno-builtin -fno-common -S -O2 -U__WIN32__ -D__PDOS386__ \
-    -DNOLIBALLOC -D__NOBIVA__ -I . -I../src -DUSE_MEMMGR
+    -DNOLIBALLOC -D__NOBIVA__ -I . -I../src -DUSE_MEMMGR \
+    -D__GENSHELL__
 
 all: clean pdosgeno.a
 
