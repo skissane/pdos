@@ -312,7 +312,7 @@ __PDPCLIB_API__ FILE **__gterr(void)
 
 #if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__) \
     || defined(__W64SHELL__) \
-    || (defined(__ARM__) && (defined(__GENSHELL__) || defined(__WIN32__)))
+    || (/* defined(__ARM__) && */ (defined(__GENSHELL__) || defined(__WIN32__)))
 
 __PDPCLIB_API__ __DUMMYFILE _iob[3];
 
