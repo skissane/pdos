@@ -3332,9 +3332,11 @@ static int exeloadLoadPE(unsigned char **entry_point,
              * and the array has a null terminator. */
             for (; import_desc->OriginalFirstThunk; import_desc++)
             {
-#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL)
+#if defined(W64HACK) || defined(W64DLL) || defined(W64EMUL) \
+    || (defined(WINNEWMOD) && defined(__64BIT__))
                 void **thunk;
 
+                salone = 1;
                 for (thunk = (void *)(exeStart + (import_desc->FirstThunk));
                      *thunk != 0;
                      thunk++)
@@ -3389,6 +3391,16 @@ STDTHUNKLIST
                         {
                             /* already found and processed */
                         }
+#ifdef WINNEWMOD
+                        else if (strcmp((char *)hintname, "exit") == 0)
+                        {
+                            *thunk = (void *)exit;
+                        }
+                        else if (strcmp((char *)hintname, "__getmainargs") == 0)
+                        {
+                            *thunk = (void *)__getmainargs;
+                        }
+#else
                         else if (strcmp((char *)hintname, "exit") == 0)
                         {
                             *thunk = (void *)w32exit; /* rename this to genexit or whatever */
@@ -3397,6 +3409,7 @@ STDTHUNKLIST
                         {
                             *thunk = (void *)getmainargs;
                         }
+#endif
                         else if (strcmp((char *)hintname, "__iob_func") == 0)
                         {
                             *thunk = (void *)__iob_func;
