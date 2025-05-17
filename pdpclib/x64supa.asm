@@ -365,13 +365,13 @@ endif
 
 callbackstack:
 ifndef PDAS
-;8-level stack
+;80-level stack
 endif
 
 ifdef PDAS
-	.space 576
+	.space 5760
 else
-        db 576 dup(?)
+        db 5760 dup(?)
 endif
 
 
