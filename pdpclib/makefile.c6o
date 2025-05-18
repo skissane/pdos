@@ -5,8 +5,8 @@
 # (not PDOSGEN which is for pdos-generic apps)
 
 CC=cc64
-AS=sasm -f win64 -DCC64
-#AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
+#AS=sasm -f win64 -DCC64
+AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
 COPTS=-D__PDOS386__ \
     -DNOLIBALLOC -D__NOBIVA__ -I . -I../pdpclib -I../src \
     -DUSE_MEMMGR -DNOUNDMAIN -D__64BIT__ -Dconst= \
