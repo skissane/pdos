@@ -39,6 +39,10 @@ extern int __mmgid;
 
 extern int __minstart;
 
+#ifdef __CC64__
+extern int __ncallbacks;
+#endif
+
 #ifdef EBCDIC
 #define CHAR_ESC_STR "\x27"
 #else
@@ -413,6 +417,9 @@ static void runexe(char *prog_name)
     unsigned char *p = NULL;
     int ret;
     int old_ascii;
+#ifdef __CC64__
+    int old_n;
+#endif
 
     if (exeloadDoload(&entry_point, prog_name, &p) != 0)
     {
@@ -479,6 +486,9 @@ static void runexe(char *prog_name)
     printf("about to call app at address %p\n", pgastart);
     /* printf("first byte is %x\n", *(unsigned char *)pgastart); */
 
+#ifdef __CC64__
+    old_n = __ncallbacks;
+#endif
     if (salone)
     {
         __genmain = (void *)pgastart;
@@ -495,6 +505,12 @@ static void runexe(char *prog_name)
 #endif
     }
 
+#ifdef __CC64__
+    /* we need to restore the original n_callbacks value,
+       otherwise we get leaks, probably because a longjmp
+       is bypassing the pop */
+    __ncallbacks = old_n;
+#endif
 
     printf("return from app is hex %x\n", ret);
     memmgrFreeId(&__memmgr, __mmgid);
