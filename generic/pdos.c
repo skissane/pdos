@@ -79,6 +79,8 @@ extern int (*__genmain)(int argc, char **argv);
 char mycmdline[400];
 static char mycmdline2[400];
 
+static int allbios = 0; /* send all files to pseudobios? */
+
 /* if current directory is root directory, this is empty */
 static char cwd[FILENAME_MAX] = "";
 
@@ -220,23 +222,29 @@ int main(int argc, char **argv)
     {
         printf("must provide disk name as a parameter\n");
         printf("or at least -c config.sys or whatever\n");
+        printf("-allbios will send all files to pseudobios to open\n");
         bios->free(mem_base);
         bios->Xsetvbuf(bios->Xstdin, NULL, _IOLBF, 0);
         return (EXIT_FAILURE);
     }
     printf("before printing parm\n");
     printf("argv1 is %s\n", argv[1]);
-    if ((strcmp(argv[1], "-c") == 0)
-        || (strcmp(argv[1], "-C") == 0)
+    if ((strcmp(argv[argupto], "-c") == 0)
+        || (strcmp(argv[argupto], "-C") == 0)
        )
     {
-        config = argv[2];
+        config = argv[argupto + 1];
         argupto += 2;
+    }
+    if (strcmp(argv[argupto], "-allbios") == 0)
+    {
+        allbios = 1;
+        argupto++;
     }
     __envptr = "COMSPEC=\\COMMAND.EXE\0\0\0"; /* extra 3 NULs to signify no program name */
     if (argc > argupto)
     {
-        printf("about to open\n");
+        printf("about to open disk\n");
         /* for (;;) ; */
         disk = bios->Xfopen(argv[argupto], "r+b");
         if (disk == NULL)
@@ -560,6 +568,10 @@ void *PosFopen(const char *name, const char *mode)
            drive */
         bios_file = 1;
     }
+    else if (allbios)
+    {
+        bios_file = 1;
+    }
     if (bios_file)
     {
         handles[x].fptr = bios->Xfopen(name, mode);
@@ -603,7 +615,7 @@ int PosOpenFile(const char *name, int mode, int *handle)
     int x;
     int bios_file = 0;
 
-    /* printf("got request to open %s\n", name); */
+    /* printf("got request2 to open %s\n", name); */
     for (x = 3; x < MAX_HANDLE; x++)
     {
         if (!handles[x].inuse) break;
@@ -622,6 +634,10 @@ int PosOpenFile(const char *name, int mode, int *handle)
         /* this allows a device to be opened, but we need better
            logic for when we want to reference a file on an FAT
            drive */
+        bios_file = 1;
+    }
+    else if (allbios)
+    {
         bios_file = 1;
     }
     if (bios_file)
@@ -703,6 +719,10 @@ int PosCreatFile(const char *name, int attrib, int *handle)
         /* this allows a device to be opened, but we need better
            logic for when we want to reference a file on an FAT
            drive */
+        bios_file = 1;
+    }
+    else if (allbios)
+    {
         bios_file = 1;
     }
     if (bios_file)
