@@ -312,7 +312,8 @@ __PDPCLIB_API__ FILE **__gterr(void)
 
 #if (defined(__WIN32__) && !defined(__STATIC__)) || defined(__CC64OS__) \
     || defined(__W64SHELL__) \
-    || (/* defined(__ARM__) && */ (defined(__GENSHELL__) || defined(__WIN32__)))
+    || defined(__GENSHELL__) \
+    || (defined(__ARM__) && defined(__WIN32__))
 
 __PDPCLIB_API__ __DUMMYFILE _iob[3];
 
@@ -334,7 +335,8 @@ __PDPCLIB_API__ __DUMMYFILE *__iob_func(void)
 #if defined(__W32EMUL__) || defined(__W32DLL__) || defined(__W64SHELL__) \
     || defined(__GENSHELL__)
 #if !defined(__W64SHELL__) \
-    && !(/*defined(__ARM__) &&*/ (defined(__GENSHELL__) || defined(__WIN32__)))
+    && !defined(__GENSHELL__) \
+    && !(defined(__ARM__) && defined(__WIN32__))
 static __DUMMYFILE _iob[3];
 #endif
 __DUMMYFILE *_imp___iob = _iob;
