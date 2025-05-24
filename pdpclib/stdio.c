@@ -2573,7 +2573,7 @@ static void iread(FILE *stream, void *ptr, size_t toread, size_t *actualRead)
    can't enable this by default */
 #ifdef OLDWIN
     if ((stream == __stdin)
-        && (stream->bufTech = _IONBF)
+        && (stream->bufTech == _IONBF)
         && (toread >= 3)
        )
     {
