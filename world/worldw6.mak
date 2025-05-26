@@ -1,24 +1,24 @@
 # Produce Windows executables
-# links with PDPCLIB created by makefile.msv
+# links with PDPCLIB created by makefile.std
 # Provides an example of doing a Windows call
 
 CC=gccwin
 CFLAGS=-O2
-LD=ldwin
+LD=pdld --no-insert-timestamp
 LDFLAGS=
-AS=aswin
-AR=arwin
+AS=pdas --oformat coff
+AR=xar
 COPTS=-S $(CFLAGS) -fno-common -ansi -I. -I../pdpclib -I../src -D__WIN32__
 
 all: clean worldw.exe
 
-worldw.exe: worldw.o
-  $(LD) $(LDFLAGS) -s -o worldw.exe ../pdpclib/w32start.o worldw.o ../pdpclib/msvcrt.a ../src/kernel32.a
+worldw.exe: worldw.obj
+  $(LD) $(LDFLAGS) -s -o worldw.exe ../pdpclib/w32start.obj worldw.obj ../pdpclib/msvcrt.lib ../src/kernel32.lib
 
-.c.o:
+.c.obj:
   $(CC) $(COPTS) -o $*.s $<
   $(AS) -o $@ $*.s
   rm -f $*.s
 
 clean:
-  rm -f *.o worldw.exe
+  rm -f *.obj worldw.exe
