@@ -1129,6 +1129,12 @@ Another idea is for an fopen of COM1: to be redirected - in
 pdpclib - to a TCP/IP connection. Mainly for use in PdAndro.
 
 
+Be aware of these extensions for practical use:
+
+https://github.com/antoniusmisfit/pdos-goodies
+https://github.com/antoniusmisfit/Runbat
+
+
 
 OBTAINING
 ---------
