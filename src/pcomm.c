@@ -32,6 +32,8 @@
 #define false 0
 #define bool int
 
+#define MAX_COMMAND_BUF 400
+
 /* Written By NECDET COKYAZICI, Public Domain */
 void putch(int a);
 void bell(void);
@@ -41,12 +43,12 @@ void safegets(char *buffer, int size, bool use_history);
 #define MAX_COMMAND_HISTORY 32
 static int first_command_history = 0;
 static int last_command_history = 0;
-static char oldbufs[MAX_COMMAND_HISTORY][400];
+static char oldbufs[MAX_COMMAND_HISTORY][MAX_COMMAND_BUF];
 
 #define NEXT_HISTORY(idx) ((idx + 1) % MAX_COMMAND_HISTORY)
 #define PREVIOUS_HISTORY(idx) ((idx + MAX_COMMAND_HISTORY - 1) % MAX_COMMAND_HISTORY)
 
-static char buf[400];
+static char buf[MAX_COMMAND_BUF];
 #ifdef __32BIT__
 /* note that this later gets updated to include the full path of
    the executable, so might want to add FILENAME_MAX to the size.
@@ -601,7 +603,7 @@ int main(int argc, char **argv)
     while (!term)
     {
         putPrompt();
-        safegets(buf, sizeof buf, true);
+        safegets(buf, MAX_COMMAND_BUF, true);
 
         processInput(true);
     }
@@ -2680,11 +2682,14 @@ void safegets(char *buffer, int size, bool use_history)
             }
             else if (!iscntrl((unsigned char)a))
             {
-                putch(a);
-                memmove(buffer+pos+1, buffer+pos, i-pos+1);
-                buffer[pos] = a;
-                pos++;
-                i++;
+                /*Allow the user to enter (MAX_COMMAND_BUF - 1) characters.*/
+                if (pos < MAX_COMMAND_BUF - 1) {
+                    putch(a);
+                    memmove(buffer+pos+1, buffer+pos, i-pos+1);
+                    buffer[pos] = a;
+                    pos++;
+                    i++;
+                }
             }
             else
             {
