@@ -8,7 +8,8 @@ it to be trashed.
 
 
 "const" causes some things to go haywire. I think offsets are
-wrong. Can't remember.
+wrong. Can't remember. Workaround is to remove all references
+to const by using the preprocessor to define const to nothing.
 
 
 You can't do some things after a return statement. Like some
