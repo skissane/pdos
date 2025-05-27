@@ -9,9 +9,9 @@
 CC=cc64
 AR=xar
 LD=pdld --no-insert-timestamp
+AS=sasm -f win64 -DCC64
 #AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
 #AS=ml64 -DCC64
-AS=sasm -f win64 -DCC64
 COPTS=-D__64BIT__ -D__EFI__ -D__EFIBIOS__ -U__WIN32__ -I. \
     -D__CC64__ -D__CC64OS__ -D__NO_LONG_LONG__
 
