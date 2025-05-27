@@ -16,8 +16,8 @@
 
 CC=cc64
 AR=xar
-AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
-#AS=sasm -f win64 -DCC64
+AS=sasm -f win64 -DCC64
+#AS=pdas --oformat coff --64 --defsym PDAS=1 --defsym CC64=1 --no-pseudo-dot
 #AS=ml64 -DCC64
 LD=pdld
 COPTS=-D__CC64__ -D__WIN32__ -D__64BIT__ -D__PDPCLIB_DLL -D__NOBIVA__ -DNOUNDMAIN -I . -I ../src
