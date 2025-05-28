@@ -930,8 +930,6 @@ int main(int argc, char **argv)
 #if 1
 #if SHIMCM32
     rc = shimcm32_run();
-#elif __CC64__
-    rc = (*genstart)(&bios);
 #elif defined(__gnu_linux__) && defined(__M68K__)
     rc = callami(cmd);
 #else
@@ -944,7 +942,11 @@ int main(int argc, char **argv)
     }
     else
     {
+#if __CC64__
+        rc = (*genstart)(&bios);
+#else
         rc = genstart(&bios);
+#endif
     }
 #endif
 #else
