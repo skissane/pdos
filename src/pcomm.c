@@ -2335,10 +2335,7 @@ static int cmd_mcd_run(char *dnm)
     int rc = 0;
     CMD_REQUIRES_ARGS(dnm);
     rc = cmd_md_run(dnm);
-    if (rc != 0)
-    {
-        rc = cmd_cd_run(dnm);
-    }
+    rc = cmd_cd_run(dnm);
     return rc;
 }
 
