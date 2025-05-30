@@ -3670,7 +3670,7 @@ static int cmd_save_run(char *arg)
     }
 
     /* Open the file */
-    fh = (append)?fopen(fileName, "a"):fopen(fileName, "w");
+    fh = fopen(fileName, append?"a":"w");
     if (!fh)
     {
         printf("ERROR: Failed to open file '%s' for writing/appending\n", fileName);
