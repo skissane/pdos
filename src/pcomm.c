@@ -3570,6 +3570,7 @@ static int cmd_save_run(char *arg)
     char *fileName = NULL;    /* Holds the file name */
     bool interactive = false; /* Option /I - Interactive mode */
     bool overwrite = false;   /* Option /O - Overwrite */
+    bool append = false;      /* Option /A - Append */
     bool quiet = false;       /* Option /Q - Quiet Mode */
     char *delimiter = NULL;   /* Option /D... - Set Delimiter */
     bool exists = false;      /* Does file exist? */
@@ -3605,6 +3606,11 @@ static int cmd_save_run(char *arg)
             arg += 2;
             continue;
         }
+	/* Option /A - Append */
+	if (ins_strncmp(arg,"/A",2) == 0) {
+            append=true;
+	    arg += 2;
+	    continue;
         /* Option /Q - Quiet */
         if (ins_strncmp(arg,"/Q",2) == 0) {
             quiet = 1;
@@ -3664,10 +3670,10 @@ static int cmd_save_run(char *arg)
     }
 
     /* Open the file */
-    fh = fopen(fileName, "w");
+    fh = (append)?fopen(fileName, "a"):fopen(fileName, "w");
     if (!fh)
     {
-        printf("ERROR: Failed to open file '%s' for writing\n", fileName);
+        printf("ERROR: Failed to open file '%s' for writing/appending\n", fileName);
         return 1;
     }
 
