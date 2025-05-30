@@ -33,6 +33,9 @@
 #define bool int
 
 #define MAX_COMMAND_BUF 400
+#define DOT_COM_EXTEND 4
+#define DOT_EXE_EXTEND 4
+#define DOT_BAT_EXTEND 4
 
 /* Written By NECDET COKYAZICI, Public Domain */
 void putch(int a);
@@ -53,7 +56,7 @@ static char buf[MAX_COMMAND_BUF];
 /* note that this later gets updated to include the full path of
    the executable, so might want to add FILENAME_MAX to the size.
    And use a define for this value of 400 too */
-static unsigned char cmdt[400];
+static unsigned char cmdt[MAX_COMMAND_BUF];
 #else
 static unsigned char cmdt[140];
 #endif
@@ -655,7 +658,7 @@ static int processInput(bool save_in_history)
     cmdBlock *block;
     int ret;
 
-    char new_buf[sizeof (buf)];
+    char new_buf[MAX_COMMAND_BUF];
     struct {
         char *name;
         int to_handle_num;
@@ -1050,7 +1053,7 @@ static void promptSymProc_underscore(char *prompt, int *index)
 static int runCmdLine(char *cmdLine)
 {
     int rc;
-    char savebuf[sizeof buf];
+    char savebuf[MAX_COMMAND_BUF];
 
     strcpy(savebuf, buf);
     strcpy(buf, cmdLine);
@@ -1062,7 +1065,7 @@ static int runCmdLine(char *cmdLine)
 /* $[ - run command terminated by ] */
 static void promptSymProc_lbracket(char *prompt, int *index)
 {
-    char cbuf[sizeof buf];
+    char cbuf[MAX_COMMAND_BUF];
     int j = 0;
     while (prompt[*index] != 0 && prompt[*index] != ']')
     {
@@ -1262,7 +1265,7 @@ static int cmd_type_run(char *file)
 
     if (fp != NULL)
     {
-        while (fgets(buf, sizeof buf, fp) != NULL)
+        while (fgets(buf, MAX_COMMAND_BUF, fp) != NULL)
         {
             /* Print line numbers if requested by /L */
             if (l)
@@ -1633,11 +1636,15 @@ static int doExec(char *b,char *p)
     char *t;
     size_t ln;
     size_t ln2;
+    size_t ln3;
+    size_t ln4;
+    int err;
     char tempbuf[FILENAME_MAX];
     char *z;
 
     s = path;
     ln = strlen(p);
+    ln3 = strlen(b);
 #ifndef __32BIT__
     if (ln >= 0x7e)
     {
@@ -1647,7 +1654,7 @@ static int doExec(char *b,char *p)
             return (1);
         }
         /* reconstitute temporarily */
-        z = b + strlen(b);
+        z = b + ln3;
         *z = ' ';
         PosSetEnv("CMDLINE", b);
         __envptr = PosGetEnvBlock();
@@ -1662,7 +1669,7 @@ static int doExec(char *b,char *p)
         memcpy(cmdt + ln + 1, "\r", 2);
     }
 #endif
-
+    err = 0;
     while(*s != '\0')
     {
         t = strchr(s, ';');
@@ -1680,8 +1687,16 @@ static int doExec(char *b,char *p)
             tempbuf[ln2++] = '\\';
         }
 
+        ln4 = ln2 + ln3;
+        if (ln4 > (FILENAME_MAX - DOT_COM_EXTEND) ||
+            ln4 > (FILENAME_MAX - DOT_EXE_EXTEND) ||
+            ln4 > (FILENAME_MAX - DOT_BAT_EXTEND))    
+        {
+            err = 1;
+            break;
+        }
         strcpy(tempbuf + ln2, b);
-        ln2 += strlen(b);
+        ln2 += ln3;
         strcpy(tempbuf + ln2, ".com");
 
         if (exists(tempbuf))
@@ -1724,7 +1739,7 @@ static int doExec(char *b,char *p)
         }
     }
 
-    if (*s == '\0')
+    if (*s == '\0' || err == 1)
     {
         printf("Command '%s' not found\n", b);
         return 1;
@@ -2427,7 +2442,7 @@ static int readBat(char *fnm)
     if (fp != NULL)
     {
         currentBatchFp = fp;
-        while (fgets(buf, sizeof buf, fp) != NULL)
+        while (fgets(buf, MAX_COMMAND_BUF, fp) != NULL)
         {
             /* If GOTO target set, scan for matching label */
             if (*gotoTarget != 0)
@@ -2962,7 +2977,7 @@ static int cmd_keybmap_run(char *arg)
             printf("can't open %s for reading\n", arg);
             return 1;
         }
-        cnt = fread(buf, 1, sizeof buf, fp);
+        cnt = fread(buf, 1, MAX_COMMAND_BUF, fp);
         fclose(fp);
         if (cnt != 256)
         {
@@ -3060,7 +3075,7 @@ static int cmd_scanmap_run(char *arg)
             printf("can't open %s for reading\n", arg);
             return 1;
         }
-        cnt = fread(buf, 1, sizeof buf, fp);
+        cnt = fread(buf, 1, MAX_COMMAND_BUF, fp);
         fclose(fp);
         if (cnt != 256)
         {
@@ -3103,7 +3118,7 @@ static int cmd_accmap_run(char *arg)
             printf("can't open %s for reading\n", p);
             return 1;
         }
-        cnt = fread(buf, 1, sizeof buf, fp);
+        cnt = fread(buf, 1, MAX_COMMAND_BUF, fp);
         fclose(fp);
         if (cnt != 256)
         {
@@ -3138,7 +3153,7 @@ static int cmd_scrnmap_run(char *arg)
             printf("can't open %s for reading\n", arg);
             return 1;
         }
-        cnt = fread(buf, 1, sizeof buf, fp);
+        cnt = fread(buf, 1, MAX_COMMAND_BUF, fp);
         fclose(fp);
         if (cnt != 256)
         {
@@ -3577,7 +3592,7 @@ static int cmd_save_run(char *arg)
     int attrs;                /* Attributes of existing file */
     FILE *fh;                 /* File to which we will write */
     int lineCount = 0;        /* How many lines processed so far */
-    char line[sizeof buf];    /* Buffer for read lines */
+    char line[MAX_COMMAND_BUF];    /* Buffer for read lines */
 
     /* Strip out the file name */
     CMD_REQUIRES_ARGS(arg);
