@@ -3626,6 +3626,7 @@ static int cmd_save_run(char *arg)
             append=true;
 	    arg += 2;
 	    continue;
+        }
         /* Option /Q - Quiet */
         if (ins_strncmp(arg,"/Q",2) == 0) {
             quiet = 1;
