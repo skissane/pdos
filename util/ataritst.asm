@@ -19,8 +19,8 @@ myentry:
 #        sub    sp, #4
         lea -4(sp), sp
 
-# 4 = TOS Cconout syscall
-        move.w #4, 0(sp)
+# 2 = TOS Cconout opcode
+        move.w #2, 0(sp)
 
         move.w 'H', 2(sp)
         trap #1
