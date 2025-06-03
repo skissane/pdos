@@ -285,3 +285,44 @@ Rename:
         RTS
 
 .endif
+
+
+
+.ifdef ATARI
+
+# I don't know how to do a nice block move, so instead
+# I assume that 20 bytes are valid (atrsupc has 24 in fact)
+# and just ignore the count
+
+        .globl ___asmt1
+
+___asmt1:
+        link a6, #0
+
+# preserve d1
+        move.l d1, -(sp)
+# preserve a5
+        move.l a5, -(sp)
+
+        move.l 8(a6),d1
+        move.l 12(a6),a5
+
+        lea -20(sp),sp
+        move.l 0(a5), d0
+        move.l d0, 0(sp)
+        move.l 4(a5), d0
+        move.l d0, 4(sp)
+        move.l 8(a5), d0
+        move.l d0, 8(sp)
+        move.l 12(a5), d0
+        move.l d0, 12(sp)
+        move.l 16(a5), d0
+        move.l d0, 16(sp)
+        trap #1
+        lea 20(sp),sp
+
+        move.l (sp)+, a5
+        move.l (sp)+, d1
+        unlk a6
+        rts
+.endif
