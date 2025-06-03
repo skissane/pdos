@@ -1,0 +1,26 @@
+# This builds Atari (a.out-like) executables for Atari TOS 68000
+
+CC=gccami
+AR=arami
+LD=pdld --oformat atari
+AS=asami
+
+COPTS=-m68000 -S -O2 -D__ATARI__ -D__NOBIVA__ -I. -fno-common \
+    -DNEEDDIV
+
+pdptest.exe: atrstart.o pdptest.o stdio.o string.o stdlib.o \
+       start.o time.o errno.o assert.o signal.o locale.o \
+       ctype.o setjmp.o math.o amisupa.o fpfuncsa.o atrsupc.o
+  rm -f atari.a
+  $(AR) r atari.a stdio.o string.o stdlib.o atrsupc.o
+  $(AR) r atari.a start.o time.o errno.o assert.o signal.o locale.o
+  $(AR) r atari.a ctype.o setjmp.o math.o amisupa.o fpfuncsa.o
+  $(LD) -s -nostdlib -o pdptest.exe atrstart.o pdptest.o atari.a
+
+.c.o:
+  $(CC) $(COPTS) -o $*.s $<
+  $(AS) -o $*.o $*.s
+  rm -f $*.s
+
+.asm.o:
+  $(AS) --defsym ATARI=1 -o $@ $<
