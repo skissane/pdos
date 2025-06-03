@@ -39,7 +39,7 @@
     || defined(__VSE__) || defined(__PDOS386__) \
     || defined(__CMS__) || defined(__WIN32__) || defined(__gnu_linux__) \
     || defined(__AMIGA__) ||defined(__SMALLERC__) || defined(__ARM__) \
-    || defined(__EFI__))
+    || defined(__EFI__) || defined(__ATARI__))
 #define INT_MIN (-INT_MAX-1)
 
 #if defined(__FORCE_ALL_64__)

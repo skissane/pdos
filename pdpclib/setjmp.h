@@ -44,7 +44,7 @@ typedef struct {
 #elif defined(__MVS__) || defined(__CMS__) || defined(__VSE__) \
     || defined(__MF32__)
     int regs[15];
-#elif defined(__AMIGA__)
+#elif defined(__AMIGA__) || defined(__ATARI__)
     long a0;
     long a1;
     long a2;
