@@ -3670,6 +3670,10 @@ static void iwrite(FILE *stream,
     long tempWritten;
 #endif
 
+#ifdef __ATARI__
+    long tempWritten;
+#endif
+
 #ifdef __OS2__
 #ifdef __16BIT__
     USHORT tempWritten;
@@ -3766,6 +3770,15 @@ static void iwrite(FILE *stream,
 
 #ifdef __AMIGA__
     tempWritten = Write(stream->hfile, ptr, towrite);
+    if (tempWritten == -1)
+    {
+        stream->errorInd = 1;
+        tempWritten = 0;
+        errno = 1;
+    }
+#endif
+#ifdef __ATARI__
+    tempWritten = __Fwrite(stream->hfile, towrite, ptr);
     if (tempWritten == -1)
     {
         stream->errorInd = 1;
