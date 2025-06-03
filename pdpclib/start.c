@@ -430,6 +430,8 @@ int __start(char *p, char *pgmname, int tso)
 int __start(int argc, char **argv)
 #elif defined(__AMIGA__)
 int __start(unsigned long cmdlen, char *p, void *pdosbase)
+#elif defined(__ATARI__)
+int __start(void *sp, void *a0, void *a1)
 #elif defined(__SMALLERC__)
 __PDPCLIB_API__ int CTYP __start(char *p, unsigned short osver)
 #else
@@ -446,7 +448,8 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #if !defined(__EFI__) && !defined(__MACOS__)
     int argc;
     char **argv = int_argv;
-#else
+#endif
+#if defined(__EFI__) || defined(__MACOS__) || defined(__ATARI__)
     char *p;
 #endif
     int rc;
@@ -520,6 +523,10 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     {
         return (-1);
     }
+#endif
+
+#ifdef __ATARI__
+    p = "";
 #endif
 
 #ifdef __WIN32__
