@@ -56,7 +56,7 @@ int __rmdir(const char *filename);
 int __getdents(int dirfile, void *buf, int n);
 #endif
 
-#if defined(__gnu_linux__) && defined(__M68K__)
+#if defined(__gnu_linux__) && defined(AMIGACLONE)
 static int callami(char *buf);
 #endif
 
@@ -930,7 +930,7 @@ int main(int argc, char **argv)
 #if 1
 #if SHIMCM32
     rc = shimcm32_run();
-#elif defined(__gnu_linux__) && defined(__M68K__)
+#elif defined(__gnu_linux__) && defined(AMIGACLONE)
     rc = callami(cmd);
 #else
     if (salone)
@@ -1479,7 +1479,7 @@ static EFI_STATUS check_path(unsigned char *path)
 
 
 
-#if defined(__gnu_linux__) && defined(__M68K__)
+#if defined(__gnu_linux__) && defined(AMIGACLONE)
 
 #include <clib/dos_protos.h>
 
