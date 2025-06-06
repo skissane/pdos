@@ -1,5 +1,5 @@
-# Produces Linux ELF executable for 68020
-# Links against C library produced by makefile.ami
+# Produces Linux ELF executable for 68000
+# Links against C library produced by makefile.l68
 
 CC=gccami
 CFLAGS=-O2
@@ -7,9 +7,9 @@ LD=pdld --oformat elf
 LDFLAGS=
 AS=asami
 AR=arami
-COPTS=-S $(CFLAGS) -m68020 -ansi -I../pdpclib -I../src -D__gnu_linux__ \
+COPTS=-S $(CFLAGS) -m68000 -ansi -I../pdpclib -I../src -D__gnu_linux__ \
     -D__NOBIVA__ -DNEED_AMIGA -fno-common -D__M68K__ \
-    -I../amiga -DNOBIG
+    -I../amiga -DNOBIG -DAMIGACLONE
 
 all: clean bios.exe
 
