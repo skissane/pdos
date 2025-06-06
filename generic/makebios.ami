@@ -1,4 +1,4 @@
-# Produces Amiga hunk executable for Amiga 68020
+# Produces Amiga hunk executable for Amiga 68000
 # Links against C library produced by makefile.ami
 
 CC=gccami
@@ -7,7 +7,7 @@ LD=ldami
 LDFLAGS=
 AS=asami
 AR=arami
-COPTS=-S $(CFLAGS) -m68020 -ansi -I../pdpclib -D__AMIGA__ \
+COPTS=-S $(CFLAGS) -m68000 -ansi -I../pdpclib -I../src -D__AMIGA__ \
     -D__NOBIVA__ -DNEED_AMIGA -fno-common
 
 all: clean bios.exe
