@@ -187,6 +187,12 @@ static int exeloadLoadAmiga(unsigned char **entry_point,
                             unsigned char **loadloc);
 
 #endif
+#if NEED_ATARI
+static int exeloadLoadAtari(unsigned char **entry_point,
+                            FILE *fp,
+                            unsigned char **loadloc);
+
+#endif
 int exeloadDoload(unsigned char **entry_point,
                   char *progname,
                   unsigned char **loadloc)
@@ -215,6 +221,9 @@ int exeloadDoload(unsigned char **entry_point,
 #endif
 #if NEED_AMIGA
     if (ret == 1) ret = exeloadLoadAmiga(entry_point, fp, loadloc);
+#endif
+#if NEED_ATARI
+    if (ret == 1) ret = exeloadLoadAtari(entry_point, fp, loadloc);
 #endif
 #if NEED_MACHO
     if (ret == 1) ret = exeloadLoadMacho((unsigned char **)entry_point,
@@ -386,6 +395,161 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
     }
 
     *entry_point = exeStart + firstbit.a_entry;
+    if (*loadloc == NULL)
+    {
+        *loadloc = exeStart;
+    }
+
+    return (0);
+}
+#endif
+
+
+
+#if NEED_ATARI
+static int exeloadLoadAtari(unsigned char **entry_point,
+                            FILE *fp,
+                            unsigned char **loadloc)
+{
+    unsigned char firstbit[0x1c];
+    unsigned long exeLen;
+    unsigned char *exeStart;
+    unsigned char *bss;
+    unsigned int *corrections;
+    unsigned int i;
+    unsigned int offs;
+    unsigned int type;
+    unsigned int zapdata;
+    unsigned char *zap;
+    unsigned long a_text, a_data, a_bss;
+
+
+    if ((fseek(fp, 0, SEEK_SET) != 0)
+        || (fread(&firstbit, sizeof(firstbit), 1, fp) != 1))
+    {
+        return (1);
+    }
+    if ((firstbit[0] != 0x60)
+        || (firstbit[1] != 0x1A))
+    {
+        /* The file is not Atari */
+        return (1);
+    }
+
+    a_text = (firstbit[2] << 24)
+             | (firstbit[3] << 16)
+             | (firstbit[4] << 8)
+             | firstbit[5];
+
+    a_data = (firstbit[6] << 24)
+             | (firstbit[7] << 16)
+             | (firstbit[8] << 8)
+             | firstbit[9];
+
+    a_bss = (firstbit[10] << 24)
+             | (firstbit[11] << 16)
+             | (firstbit[12] << 8)
+             | firstbit[13];
+
+    exeLen = a_text + a_data + a_bss;
+    if (*loadloc != NULL)
+    {
+        exeStart = *loadloc;
+    }
+    else
+    {
+        exeStart = malloc(exeLen);
+        if (exeStart == NULL)
+        {
+            printf("Insufficient memory to load program\n");
+            return (2);
+        }
+    }
+
+    /* printf("loading %lu bytes of text\n", a_text); */
+    if (fread(exeStart, a_text, 1, fp) != 1)
+    {
+        printf("Error occured while reading text\n");
+        return (2);
+    }
+    if (a_data != 0)
+    {
+        /* printf("loading %lu bytes of data\n", a_data); */
+        if (fread(exeStart + a_text,
+                  a_data,
+                  1,
+                  fp) != 1)
+        {
+            printf("Error occured while reading data\n");
+            return (2);
+        }
+    }
+
+    /* initialise BSS */
+    bss = exeStart + a_text + a_data;
+    memset(bss, '\0', a_bss);
+#if 0
+    /* Relocations. */
+    {
+        zap = exeStart;
+        zapdata = (unsigned int)zap;
+        if (firstbit.a_trsize != 0)
+        {
+            corrections = malloc(firstbit.a_trsize);
+            if (corrections == NULL)
+            {
+                printf("insufficient memory %lu\n", firstbit.a_trsize);
+                return (2);
+            }
+            if (fread(corrections, firstbit.a_trsize, 1, fp) != 1)
+            {
+                printf("Error occured while reading A.OUT text relocations\n");
+                free(corrections);
+                return (2);
+            }
+            for (i = 0; i < firstbit.a_trsize / 4; i += 2)
+            {
+                offs = corrections[i];
+                type = corrections[i + 1];
+                if (((type >> 24) & 0xff) != 0x04)
+                {
+                    continue;
+                }
+                *(unsigned int *)(zap + offs) += zapdata;
+            }
+            free(corrections);
+        }
+        if (firstbit.a_drsize != 0)
+        {
+            corrections = malloc(firstbit.a_drsize);
+            if (corrections == NULL)
+            {
+                printf("insufficient memory %lu\n", firstbit.a_drsize);
+                return (2);
+            }
+            if (fread(corrections, firstbit.a_drsize, 1, fp) != 1)
+            {
+                printf("Error occured while reading A.OUT data relocations\n");
+                free(corrections);
+                return (2);
+            }
+            zap = exeStart + firstbit.a_text;
+            for (i = 0; i < firstbit.a_drsize / 4; i += 2)
+            {
+                offs = corrections[i];
+                type = corrections[i + 1];
+                if (((type >> 24) & 0xff) != 0x04)
+                {
+                    continue;
+                }
+                *(unsigned int *)(zap + offs) += zapdata;
+            }
+            free(corrections);
+        }
+    }
+#endif
+
+    *entry_point = exeStart;
     if (*loadloc == NULL)
     {
         *loadloc = exeStart;
