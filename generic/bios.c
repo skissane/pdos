@@ -193,6 +193,7 @@ static OS bios = { their_start, 0, 0, cmd, printf, 0, malloc, NULL, NULL,
   0, /* PosGetCommandLine */
   0, /* PosGetReturnCode */
   strtod, tmpfile, ispunct,
+  0, /* Atari trap1 */
 };
 
 static int (*genstart)(OS *bios);
