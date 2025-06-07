@@ -112,6 +112,7 @@ static OS os = { __start, 0, 0, mycmdline, printf, 0, malloc, NULL, NULL,
   PosGetCommandLine2,
   PosGetReturnCode,
   strtod, tmpfile, ispunct,
+  0, /* Atari trap1 */
 };
 
 static int (*pgastart)(OS *os);
@@ -158,6 +159,10 @@ static void convertPath(char *dirname);
 static int formatPath(const char *input, char *output);
 
 
+#ifdef ATARICLONE
+static long atariTrap1(short cnt, void *s);
+#endif
+
 /* The BIOS C library will call this, and then we call our own C library */
 /* Don't rely on the BIOS having a C library capable of breaking down a
    command line buffer, but there will at least be a program name, possibly
@@ -190,6 +195,10 @@ int main(int argc, char **argv)
     os.Xstdin = stdin;
     os.Xstdout = stdout;
     os.Xstderr = stderr;
+
+#ifdef ATARICLONE
+    os.Xtrap1 = atariTrap1;
+#endif
 
     bios->Xsetvbuf(bios->Xstdin, NULL, _IONBF, 0);
     handles[0].fptr = bios->Xstdin;
@@ -410,6 +419,29 @@ static int service_call(int svcnum, void *a, void *b)
         len -= 4;
         buf += 4;
         printf("%.*s\n", len, buf);
+    }
+    return (0);
+}
+#endif
+
+
+
+#ifdef ATARICLONE
+static long atariTrap1(short cnt, void *s_in)
+{
+    int opcode;
+
+    printf("got trap1\n");
+    opcode = *(short *)s_in;
+    if (opcode == 64)
+    {
+        struct { short opcode;
+                 short handle;
+                 long count;
+                 void *buf; } *s = (void *)s_in;
+
+        printf("opcode is 64\n");
+        fwrite(s->buf, 1, s->count, stdout);
     }
     return (0);
 }
