@@ -9,7 +9,7 @@ AS=asami
 AR=arami
 COPTS=-S $(CFLAGS) -m68000 -ansi -I../pdpclib -I../src -D__gnu_linux__ \
     -D__NOBIVA__ -DNEED_AMIGA -fno-common -D__M68K__ \
-    -I../amiga -DNOBIG -DAMIGACLONE
+    -I../amiga -DNOBIG -DAMIGACLONE -DGENSHELL
 
 all: clean bios.exe
 
