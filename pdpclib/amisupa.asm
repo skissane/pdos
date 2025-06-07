@@ -16,9 +16,20 @@
         .globl ___setj
         .globl ___longj
 
+
+# stack will have
+# jmp_buf
+# ret address
+# old a6
+# old a5
+
+# and a6 will be pointing to old a6
+# and a5 will point to the jmp_buf
+
 ___setj:
         link a6, #0
         move.l a5, -(sp)
+# get jmp_buf into a5
         move.l 8(a6),a5
 
         move.l a0, 0(a5)
@@ -29,7 +40,7 @@ ___setj:
         move.l a5, 20(a5)
 # Defer storing original a6 into location 24
 
-# Stack that we want (basically) is in a6 now
+# Stack (a7) that we want (basically) is in a6 now
         move.l a6, 28(a5)
         move.l d0, 32(a5)
         move.l d1, 36(a5)
@@ -53,6 +64,15 @@ ___setj:
         unlk a6
         rts
 
+
+# stack is
+# retval (won't be 0 and won't be used)
+# jmp_buf
+# ret address (won't be used)
+# old a6 (don't care)
+
+# a6 points to old a6
+# a5 will point to jmp_buf
 
 ___longj:
         link a6, #0
