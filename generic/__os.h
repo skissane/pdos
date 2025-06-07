@@ -216,6 +216,7 @@ typedef struct {
     double (*Xstrtod)(const char *nptr, char **endptr);
     FILE *(*Xtmpfile)(void);
     int (*ispunct)(int c);
+    long (*Xtrap1)(short cnt, void *s);
 } OS;
 
 extern OS *__os;
