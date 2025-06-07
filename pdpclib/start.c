@@ -154,6 +154,12 @@ extern int __consdn;
 #include <windows.h>
 #endif
 
+#ifdef __ATARI__
+#include <__os.h>
+extern long (*__trap1)(short cnt, void *s);
+OS *__os;
+#endif
+
 int __runnum = 0;
 
 int __G_live = 0;
@@ -474,6 +480,11 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #endif
 #ifdef __ZPDOSGPB__
     char parmbuf[65];
+#endif
+
+#ifdef __ATARI__
+    __os = *((void **)sp + 1);
+    __trap1 = __os->Xtrap1;
 #endif
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
@@ -1636,7 +1647,7 @@ void __exit(int status)
     {
 /* The Amiga doesn't have a good exita - and all environments should
    probably do the same - ie rely on longjmp working */
-#if !defined(__AMIGA__)
+#if !defined(__AMIGA__) && !defined(__ATARI__)
     __exita(status);
 #endif
 
