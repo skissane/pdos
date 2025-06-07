@@ -360,6 +360,7 @@ static OS bios = { __start, 0, 0, NULL /* cmd */, printf, 0, malloc, NULL, NULL,
   0 /* service call */,
   PosGetCommandLine, PosGetReturnCode,
   strtod, tmpfile, ispunct,
+  0, /* Atari trap1 */
 };
 #endif
 
