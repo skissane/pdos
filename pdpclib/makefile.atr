@@ -6,7 +6,7 @@ LD=pdld --oformat atari
 AS=asami
 
 COPTS=-m68000 -S -O2 -D__ATARI__ -D__NOBIVA__ -I. -fno-common \
-    -DNEEDDIV
+    -DNEEDDIV -I../generic -I../src
 
 pdptest.exe: atrstart.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
