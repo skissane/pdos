@@ -4,8 +4,6 @@ CC=gccami
 AR=arami
 LD=ldami
 AS=asami
-# Changing this to 68000 requires support routines that
-# do not currently exist
 COPTS=-m68000 -S -O2 -D__AMIGA__ -D__NOBIVA__ -I. -I../amiga -fno-common \
     -DNEEDDIV
 
