@@ -407,6 +407,11 @@ static int exeloadLoadAOUT(unsigned char **entry_point,
 
 
 #if NEED_ATARI
+#define getword(p) ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
+#define putword(p, val) (p[0] = (unsigned char)((val >> 24) & 0xff), \
+                         p[1] = (unsigned char)((val >> 16) & 0xff), \
+                         p[2] = (unsigned char)((val >> 8) & 0xff), \
+                         p[3] = (unsigned char)(val & 0xff))
 static int exeloadLoadAtari(unsigned char **entry_point,
                             FILE *fp,
                             unsigned char **loadloc)
@@ -488,6 +493,42 @@ static int exeloadLoadAtari(unsigned char **entry_point,
     /* initialise BSS */
     bss = exeStart + a_text + a_data;
     memset(bss, '\0', a_bss);
+
+    if (/* !ph_absflags */1) {
+        /* Relocation information fill remaining bytes of the file,
+         * there is no field indicating their size.
+         */
+        unsigned long offset;
+        unsigned char *relocs = malloc (10000 /* Arbitrary. */ + 1);
+        /* The + 1 makes sure missing null terminator does not cause problems. */
+        memset (relocs, 0, 10000 + 1);
+        fread (relocs, 10000, 1, fp);
+
+        offset = getword (relocs);
+        if (offset) {
+            const unsigned char *p = relocs + 4;
+
+            while (1) {
+                unsigned long field;
+                unsigned char *src = exeStart + offset;
+
+                field = getword (src);
+                field += (unsigned long)exeStart;
+                putword (src, field);
+
+                while (*p == 1) {
+                    offset += 254;
+                    p++;
+                }
+                if (!*p) break;
+
+                offset += *p;
+                p++;
+            }
+        }
+
+        free (relocs);
+    }
 #if 0
     /* Relocations. */
     {
