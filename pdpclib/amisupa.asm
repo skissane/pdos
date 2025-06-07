@@ -67,6 +67,7 @@ ___setj:
 
 # stack is
 # retval (won't be 0 and won't be used)
+# (actually, retval isn't on the stack)
 # jmp_buf
 # ret address (won't be used)
 # old a6 (don't care)
