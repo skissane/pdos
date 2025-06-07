@@ -11,7 +11,7 @@ AS=asami
 LD=pdld --oformat elf
 
 COPTS=-S -O2 -m68000 -D__gnu_linux__ -D__NOBIVA__ -I. -fno-common \
-    -DNEEDDIV
+    -DNEEDDIV -D__M68K__
 
 pdptest: l68supa.o pdptest.o stdio.o string.o stdlib.o \
        start.o time.o errno.o assert.o signal.o locale.o \
