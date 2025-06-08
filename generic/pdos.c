@@ -433,6 +433,7 @@ static long atariTrap1(short cnt, void *s_in)
 
     printf("got trap1\n");
     opcode = *(short *)s_in;
+    printf("opcode is %d\n", opcode);
     if (opcode == 64)
     {
         struct { short opcode;
@@ -440,8 +441,22 @@ static long atariTrap1(short cnt, void *s_in)
                  long count;
                  void *buf; } *s = (void *)s_in;
 
-        printf("opcode is 64\n");
         fwrite(s->buf, 1, s->count, stdout);
+    }
+    else if (opcode == 72)
+    {
+        struct { short opcode;
+                 long count; } *s = (void *)s_in;
+
+        return ((long)malloc(s->count));
+    }
+    else if (opcode == 73)
+    {
+        struct { short opcode;
+                 void *buf; } *s = (void *)s_in;
+
+        free(s->buf);
+        return (0);
     }
     return (0);
 }
@@ -453,6 +468,16 @@ static int callatr(char *cmd, OS *os, void *st)
 {
     unsigned char basepage[256];
     int rc;
+
+    memset(basepage, 0, sizeof basepage);
+
+    /* there may be an ARGV standard to allow longer
+       command lines */
+    if (strlen(cmd) <= 124)
+    {
+        basepage[128] = strlen(cmd);
+        strcpy(basepage + 129, cmd);
+    }
 
     rc = callatr2(basepage, (unsigned char *)0xffffffff, os, st);
     return (rc);
