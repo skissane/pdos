@@ -445,6 +445,18 @@ static long atariTrap1(short cnt, void *s_in)
     }
     return (0);
 }
+
+
+int callatr2(unsigned char *basepage, unsigned char *altbase, OS *os, void *st);
+
+static int callatr(char *cmd, OS *os, void *st)
+{
+    unsigned char basepage[256];
+    int rc;
+
+    rc = callatr2(basepage, (unsigned char *)0xffffffff, os, st);
+    return (rc);
+}
 #endif
 
 
@@ -529,6 +541,12 @@ static void runexe(char *prog_name)
 #ifdef __CC64__
     old_n = __ncallbacks;
 #endif
+
+
+#ifdef ATARICLONE
+    ret = callatr(mycmdline, &os, entry_point);
+#else
+
     if (salone)
     {
         __genmain = (void *)pgastart;
@@ -544,6 +562,8 @@ static void runexe(char *prog_name)
         ret = pgastart(&os);
 #endif
     }
+#endif
+
 
 #ifdef __CC64__
     /* we need to restore the original n_callbacks value,
