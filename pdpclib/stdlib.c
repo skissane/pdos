@@ -296,6 +296,14 @@ __PDPCLIB_API__ void *malloc(size_t size)
     *x = size;
     return (x + 1);
 #endif
+#ifdef __ATARI__
+    size_t *x;
+
+    x = (void *)__Malloc(size + sizeof(size_t));
+    if (x == NULL) return (NULL);
+    *x = size;
+    return (x + 1);
+#endif
 #ifdef __EFI__
 
 /* Note that at some point we probably want to constrain memory allocation to
@@ -667,6 +675,13 @@ __PDPCLIB_API__ void free(void *ptr)
     {
         ptr = (char *)ptr - sizeof(size_t);
         FreeMem(ptr, *(size_t *)ptr + sizeof(size_t));
+    }
+#endif
+#ifdef __ATARI__
+    if (ptr != NULL)
+    {
+        ptr = (char *)ptr - sizeof(size_t);
+        __Mfree(ptr);
     }
 #endif
 #ifdef __EFI__
