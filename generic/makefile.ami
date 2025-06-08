@@ -1,11 +1,9 @@
-# produce pdos.exe
+# produce pdos.exe as an Amiga hunk PDOS-generic app
 # Links against pdosgeno.a built with makefile.amg
 
 # Define ATARICLONE if you want a mini Atari clone
-# So what you end up with is an Amiga executable that
-# can run under either real Amiga or the l68k Amiga
-# clone, which can be used to run Atari executables
-# instead of PDOS-generic executables
+# This is expected to run under the pseudobios produced
+# by makefile.l6g
 
 CC=gccami
 CFLAGS=-O2
@@ -21,13 +19,16 @@ COPTS=-S $(CFLAGS) -ansi -I. -I../bios -I../pdpclib -I../src \
 
 all: clean pdos.exe
 
-pdos.exe: genstart.o pdos.o ../bios/exeload.o ../src/fat.o
-    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../src/fat.o ../pdpclib/pdosgeno.a
+pdos.exe: genstart.o pdos.o ../bios/exeload.o ../src/fat.o atrextra.o
+    $(LD) $(LDFLAGS) -s -N -e ___crt0 -o pdos.exe genstart.o pdos.o ../bios/exeload.o ../src/fat.o atrextra.o ../pdpclib/pdosgeno.a
 
 .c.o:
     $(CC) $(COPTS) -o $*.s $<
     $(AS) -o $@ $*.s
     rm -f $*.s
+
+.asm.o:
+    $(AS) -o $@ $<
 
 clean:
     rm -f *.o pdos.exe
