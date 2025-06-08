@@ -500,6 +500,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     {
         basepage = a0;
     }
+    p = basepage + 128 + 1; /* I assume Atari NUL-terminates? */
 #endif
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
@@ -549,10 +550,6 @@ __PDPCLIB_API__ int CTYP __start(char *p)
     {
         return (-1);
     }
-#endif
-
-#ifdef __ATARI__
-    p = "";
 #endif
 
 #ifdef __WIN32__
@@ -1369,7 +1366,7 @@ __PDPCLIB_API__ int CTYP __start(char *p)
         }
     }
 #endif
-#if defined(__WIN32__) || defined(__PDOS386__)
+#if defined(__WIN32__) || defined(__PDOS386__) || defined(__ATARI__)
     /* Windows and PDOS-32 get the full command line string. */
     argv[0] = p;
     p = strchr(p, ' ');
