@@ -275,7 +275,7 @@ static unsigned char *dptr;
 static size_t lenwrite;
 static int    inseek = 0;
 static size_t lenread;
-#define __aread(a,b) ((__aread)((a),(b),&lenread))
+/*#define __aread(a,b) ((__aread)((a),(b),&lenread))*/
 #endif
 
 
@@ -7114,6 +7114,22 @@ fgets: if variable record + no remainder
 #endif
 
 #if defined(__MVS__) || defined(__CMS__)
+static int iread(FILE *stream, unsigned char **ptr)
+{
+    int rc;
+    rc = __aread(stream->hfile, ptr, &lenread);
+    if (rc != 0)
+    {
+        stream->eofInd = 1;
+        return rc;
+    }
+    if (stream->update)
+    {
+        stream->asmbuf = *ptr;
+    }
+    return rc;
+}
+
 __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
 {
     unsigned char *eptr;
@@ -7123,9 +7139,8 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
 
     if (stream->quickText)
     {
-        if (__aread(stream->hfile, &dptr) != 0)
+        if (iread(stream, &dptr) != 0)
         {
-            stream->eofInd = 1;
             stream->quickText = 0;
             return (NULL);
         }
@@ -7162,9 +7177,8 @@ __PDPCLIB_API__ char *fgets(char *s, int n, FILE *stream)
             if ((stream->endbuf == stream->fbuf)
                 && (n > (stream->lrecl + 2)))
             {
-                if (__aread(stream->hfile, &dptr) != 0)
+                if (iread(stream, &dptr) != 0)
                 {
-                    stream->eofInd = 1;
                     return (NULL);
                 }
                 eptr = dptr + stream->lrecl - 1;
@@ -7358,17 +7372,7 @@ __PDPCLIB_API__ size_t fwrite(const void *ptr,
                to an MVS-provided area. */
             while (bytes >= stream->szfbuf)
             {
-                /* don't override dptr if update mode
-                   and I think this assumes a read (any read)
-                   has been done prior */
-                if (!stream->update)
-                {
-                    begwrite(stream, stream->lrecl);
-                }
-                else
-                {
-                    lenwrite = stream->lrecl;
-                }
+                begwrite(stream, stream->lrecl);
                 memcpy(dptr, ptr, stream->szfbuf);
                 finwrite(stream);
                 ptr = (char *)ptr + stream->szfbuf;
@@ -7765,9 +7769,8 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
         if ((nmemb == 1) && (size == stream->lrecl))
         {
-            if (__aread(stream->hfile, &dptr) != 0)
+            if (iread(stream, &dptr) != 0)
             {
-                stream->eofInd = 1;
                 stream->quickBin = 0;
                 return (0);
             }
@@ -7823,12 +7826,11 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
             while (totalread < bytes)
             {
-                if (__aread(stream->hfile, &dptr) != 0)
+                if (iread(stream, &dptr) != 0)
                 {
-                    stream->eofInd = 1;
                     break;
                 }
-
+                
                 eptr = dptr + stream->lrecl - 1;
                 while ((*eptr == ' ') && (eptr >= dptr))
                 {
@@ -7878,9 +7880,8 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
             while (totalread < bytes)
             {
-                if (__aread(stream->hfile, &dptr) != 0)
+                if (iread(stream, &dptr) != 0)
                 {
-                    stream->eofInd = 1;
                     break;
                 }
 
@@ -7920,9 +7921,8 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
             while (totalread < bytes)
             {
-                if (__aread(stream->hfile, &dptr) != 0)
+                if (iread(stream, &dptr) != 0)
                 {
-                    stream->eofInd = 1;
                     break;
                 }
 
@@ -7975,9 +7975,8 @@ __PDPCLIB_API__ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
             while (totalread < bytes)
             {
-                if (__aread(stream->hfile, &dptr) != 0)
+                if (iread(stream, &dptr) != 0)
                 {
-                    stream->eofInd = 1;
                     break;
                 }
 
