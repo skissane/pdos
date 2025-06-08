@@ -481,10 +481,25 @@ __PDPCLIB_API__ int CTYP __start(char *p)
 #ifdef __ZPDOSGPB__
     char parmbuf[65];
 #endif
+#ifdef __ATARI__
+    unsigned char *basepage;
+#endif
 
 #ifdef __ATARI__
-    __os = *((void **)sp + 1);
-    __trap1 = __os->Xtrap1;
+    if (a0 == NULL)
+    {
+        basepage = *((void **)sp + 1);
+    }
+    else if (a0 == (void *)0xffffffffUL)
+    {
+        basepage = *((void **)sp + 1);
+        __os = a1;
+        __trap1 = __os->Xtrap1;
+    }
+    else
+    {
+        basepage = a0;
+    }
 #endif
 
 #if !defined(__MVS__) && !defined(__CMS__) && !defined(__VSE__)
